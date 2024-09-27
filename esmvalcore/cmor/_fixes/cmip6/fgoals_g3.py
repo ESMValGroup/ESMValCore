@@ -1,4 +1,6 @@
 """Fixes for FGOALS-g3 model."""
+
+import dask.array as da
 import iris
 
 from ..common import OceanFixGrid
@@ -22,7 +24,13 @@ class Tos(OceanFixGrid):
         """Fix metadata.
 
         FGOALS-g3 data contain latitude and longitude data set to >1e30 in some
-        places.
+        places. Note that the corresponding data is all masked.
+
+        Example files:
+        v20191030/siconc_SImon_FGOALS-g3_piControl_r1i1p1f1_gn_070001-079912.nc
+        v20191030/siconc_SImon_FGOALS-g3_piControl_r1i1p1f1_gn_080001-089912.nc
+        v20200706/siconc_SImon_FGOALS-g3_ssp534-over_r1i1p1f1_gn_201501-210012
+        .nc
 
         Parameters
         ----------
@@ -32,13 +40,13 @@ class Tos(OceanFixGrid):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('latitude').points[
-            cube.coord('latitude').points > 1000.0] = 0.0
-        cube.coord('longitude').points[
-            cube.coord('longitude').points > 1000.0] = 0.0
+        for coord_name in ["latitude", "longitude"]:
+            coord = cube.coord(coord_name)
+            bad_indices = coord.core_points() > 1000.0
+            coord.points = da.ma.where(bad_indices, 0.0, coord.core_points())
+
         return super().fix_metadata(cubes)
 
 
@@ -51,7 +59,7 @@ class Mrsos(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        FGOALS-g3 mrsos data contains error in co-ordinate bounds.
+        FGOALS-g3 mrsos data contains error in coordinate bounds.
 
         Parameters
         ----------

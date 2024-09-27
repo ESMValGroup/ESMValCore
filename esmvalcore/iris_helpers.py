@@ -1,4 +1,5 @@
 """Auxiliary functions for :mod:`iris`."""
+
 from __future__ import annotations
 
 from typing import Dict, Iterable, List, Literal, Sequence
@@ -111,7 +112,7 @@ def date2num(date, unit, dtype=np.float64):
 
 def merge_cube_attributes(
     cubes: Sequence[Cube],
-    delimiter: str = ' ',
+    delimiter: str = " ",
 ) -> None:
     """Merge attributes of all given cubes in-place.
 
@@ -142,22 +143,32 @@ def merge_cube_attributes(
     # Step 1: collect all attribute values in a list
     attributes: Dict[str, List[NetCDFAttr]] = {}
     for cube in cubes:
-        for (attr, val) in cube.attributes.items():
+        for attr, val in cube.attributes.items():
             attributes.setdefault(attr, [])
             attributes[attr].append(val)
 
-    # Step 2: if values are not equal, first convert them to strings (so that
+    # Step 2: use the first cube in which an attribute occurs to decide if an
+    # attribute is global or local.
+    final_attributes = iris.cube.CubeAttrsDict()
+    for cube in cubes:
+        for attr, value in cube.attributes.locals.items():
+            if attr not in final_attributes:
+                final_attributes.locals[attr] = value
+        for attr, value in cube.attributes.globals.items():
+            if attr not in final_attributes:
+                final_attributes.globals[attr] = value
+
+    # Step 3: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
-    # and use the delimiter to join all elements to a single string
-    final_attributes: Dict[str, NetCDFAttr] = {}
-    for (attr, vals) in attributes.items():
+    # and use the delimiter to join all elements to a single string.
+    for attr, vals in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
         if len(set_of_str) == 1:
             final_attributes[attr] = vals[0]
         else:
             final_attributes[attr] = delimiter.join(set_of_str)
 
-    # Step 3: modify the cubes in-place
+    # Step 4: modify the cubes in-place
     for cube in cubes:
         cube.attributes = final_attributes
 
@@ -165,7 +176,7 @@ def merge_cube_attributes(
 def _rechunk(
     array: da.core.Array,
     complete_dims: list[int],
-    remaining_dims: int | Literal['auto'],
+    remaining_dims: int | Literal["auto"],
 ) -> da.core.Array:
     """Rechunk a given array so that it is not chunked along given dims."""
     new_chunks: list[str | int] = [remaining_dims] * array.ndim
@@ -177,7 +188,7 @@ def _rechunk(
 def _rechunk_dim_metadata(
     cube: Cube,
     complete_dims: Iterable[int],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> None:
     """Rechunk dimensional metadata of a cube (in-place)."""
     # Non-dimensional coords that span complete_dims
@@ -218,7 +229,7 @@ def _rechunk_dim_metadata(
 def rechunk_cube(
     cube: Cube,
     complete_coords: Iterable[Coord | str],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> Cube:
     """Rechunk cube so that it is not chunked along given dimensions.
 
@@ -282,8 +293,8 @@ def has_regular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
@@ -311,8 +322,8 @@ def has_irregular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim == 2 and lon.ndim == 2:
@@ -338,8 +349,8 @@ def has_unstructured_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:

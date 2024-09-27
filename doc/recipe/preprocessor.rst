@@ -97,7 +97,7 @@ supported too if proper keyword arguments are specified:
 ``hmean``                      :const:`iris.analysis.HMEAN`                      no
 ``max``                        :const:`iris.analysis.MAX`                        no
 ``mean``                       :const:`iris.analysis.MEAN`                       yes
-``median``                     :const:`iris.analysis.MEDIAN` [#f2]_                no
+``median``                     :const:`iris.analysis.MEDIAN` [#f2]_              no
 ``min``                        :const:`iris.analysis.MIN`                        no
 ``peak``                       :const:`iris.analysis.PEAK`                       no
 ``percentile``                 :const:`iris.analysis.PERCENTILE`                 no
@@ -611,7 +611,7 @@ See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 .. _masking:
 
 Masking
-=======
+========
 
 Introduction to masking
 -----------------------
@@ -890,15 +890,15 @@ The arguments are defined below:
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
-ESMValCore has a number of built-in regridding schemes, which are presented in
-:ref:`built-in regridding schemes`. Additionally, it is also possible to use
-third party regridding schemes designed for use with :doc:`Iris
-<iris:index>`. This is explained in :ref:`generic regridding schemes`.
+ESMValCore provides three default regridding schemes, which are presented in
+:ref:`default regridding schemes`. Additionally, it is also possible to use
+third party regridding schemes designed for use with :meth:`iris.cube.Cube.regrid`.
+This is explained in :ref:`generic regridding schemes`.
 
 Grid types
 ~~~~~~~~~~
 
-In ESMValCore, we distinguish between three grid types (note that these might
+In ESMValCore, we distinguish between various grid types (note that these might
 differ from other definitions):
 
 * **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
@@ -907,30 +907,34 @@ differ from other definitions):
   longitude coordinates with common dimensions.
 * **Unstructured grid**: A grid with 1D latitude and 1D longitude coordinates
   with common dimensions (i.e., a simple list of points).
+* **Mesh**: A mesh as supported by Iris and described in :ref:`iris:ugrid`.
 
-.. _built-in regridding schemes:
+.. _default regridding schemes:
 
-Built-in regridding schemes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``linear``: Bilinear regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Linear` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='bilinear'`.
   For source data on an unstructured grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredLinear`.
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='nearest'`.
   For source data on an unstructured grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
 * ``area_weighted``: First-order conservative (area-weighted) regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='conservative'`.
   Source data on an unstructured grid is not supported.
 
 .. _generic regridding schemes:
@@ -950,7 +954,9 @@ afforded by the built-in schemes described above.
 
 To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
 allows the use of any scheme designed for Iris. The scheme must be installed
-and importable. To use this feature, the ``scheme`` key passed to the
+and importable. Several such schemes are provided by :mod:`iris.analysis` and
+:mod:`esmvalcore.preprocessor.regrid_schemes`.
+To use this feature, the ``scheme`` key passed to the
 preprocessor must be a dictionary instead of a simple string that contains all
 necessary information. That includes a ``reference`` to the desired scheme
 itself, as well as any arguments that should be passed through to the
@@ -996,10 +1002,13 @@ module, the second refers to the scheme, i.e. some callable that will be called
 with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
-One package that aims to capitalize on the :ref:`support for unstructured grids
-introduced in Iris 3.2 <iris:ugrid>` is :doc:`iris-esmf-regrid:index`.
+One package that aims to capitalize on the :ref:`support for meshes
+introduced in Iris 3.2 <iris:ugrid>` is :doc:`esmf_regrid:index`.
 It aims to provide lazy regridding for structured regular and irregular grids,
-as well as unstructured grids.
+as well as meshes. It is recommended to use these schemes through
+the :obj:`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` scheme though,
+as that provides more efficient handling of masks.
+
 An example of its usage in a preprocessor is:
 
 .. code-block:: yaml
@@ -1009,8 +1018,11 @@ An example of its usage in a preprocessor is:
         regrid:
           target_grid: 2.5x2.5
           scheme:
-            reference: esmf_regrid.schemes:ESMFAreaWeighted
+            reference: esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid
+            method: conservative
             mdtol: 0.7
+            use_src_mask: true
+            collapse_src_mask_along: ZT
 
 Additionally, the use of generic schemes that take source and target grid cubes as
 arguments is also supported. The call function for such schemes must be defined as
@@ -1018,7 +1030,7 @@ arguments is also supported. The call function for such schemes must be defined 
 The `regrid` module will automatically pass the source and grid cubes as inputs
 of the scheme. An example of this usage is
 the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
-scheme available in :doc:`iris-esmf-regrid:index`:
+scheme available in :doc:`esmf_regrid:index`:
 
 .. code-block:: yaml
 
@@ -1570,29 +1582,44 @@ resample_hours:
 ``resample_hours``
 ------------------
 
-This function changes the frequency of the data in the cube by extracting the
-timesteps that belongs to the desired frequency. It is important to note that
-it is mainly mean to be used with instantaneous data
+Change the frequency of x-hourly data to y-hourly data by either eliminating
+extra time steps or interpolation.
+This is intended to be used with instantaneous data.
 
 Parameters:
-    * interval: New frequency of the data. Must be a divisor of 24
-    * offset: First desired hour. Default 0. Must be lower than the interval
+    * `interval` (:obj:`int`): New frequency of the data. Must be a divisor of 24.
+    * `offset` (:obj:`int`): First hour of the desired output data (default:
+      0). Must be lower than the value of `interval`.
+    * `interpolate` (``None`` or :obj:`str`): If `interpolate` is ``None``
+      (default), convert x-hourly data to y-hourly (y > x) by eliminating extra
+      time steps. If `interpolate` is 'nearest' or 'linear', use
+      nearest-neighbor or bilinear interpolation to convert general x-hourly
+      data to general y-hourly data.
 
 Examples:
-    * Convert to 12-hourly, by getting timesteps at 0:00 and 12:00:
 
-        .. code-block:: yaml
+* Convert to 12-hourly data by getting time steps at 0:00 and 12:00:
 
-            resample_hours:
-              hours: 12
+    .. code-block:: yaml
 
-    * Convert to 12-hourly, by getting timesteps at 6:00 and 18:00:
+        resample_hours:
+          hours: 12
 
-        .. code-block:: yaml
+* Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
-            resample_hours:
-              hours: 12
-	      offset: 6
+    .. code-block:: yaml
+
+        resample_hours:
+          hours: 12
+          offset: 6
+
+* Convert to 3-hourly data using bilinear interpolation:
+
+    .. code-block:: yaml
+
+        resample_hours:
+          hours: 3
+          interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
 
@@ -2395,7 +2422,7 @@ See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 .. _detrend:
 
 Detrend
-=======
+========
 
 ESMValCore also supports detrending along any dimension using
 the preprocessor function 'detrend'.
