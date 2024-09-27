@@ -682,7 +682,7 @@ Key                  Description                            Default value if not
                                                             recipe if default DRS is used)
 ```special_attr``    A special attribute in the filename    No default
                      `ACCESS-ESM` raw data, it's related to
-                     frquency of raw data
+                     frequency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
                      use the cmoriser
