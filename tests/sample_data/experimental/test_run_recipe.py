@@ -24,11 +24,11 @@ from esmvalcore.experimental.recipe_output import (
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 AUTHOR_TAGS = {
-    'authors': {
-        'doe_john': {
-            'name': 'Doe, John',
-            'institute': 'Testing',
-            'orcid': 'https://orcid.org/0000-0000-0000-0000',
+    "authors": {
+        "doe_john": {
+            "name": "Doe, John",
+            "institute": "Testing",
+            "orcid": "https://orcid.org/0000-0000-0000-0000",
         }
     }
 }
@@ -44,20 +44,20 @@ def get_mock_distributed_client(monkeypatch):
 
     monkeypatch.setattr(
         esmvalcore._task,
-        'get_distributed_client',
+        "get_distributed_client",
         get_distributed_client,
     )
 
 
 @pytest.fixture
 def recipe():
-    recipe = get_recipe(Path(__file__).with_name('recipe_api_test.yml'))
+    recipe = get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
     return recipe
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('ssh', (True, False))
-@pytest.mark.parametrize('task', (None, 'example/ta'))
+@pytest.mark.parametrize("ssh", (True, False))
+@pytest.mark.parametrize("task", (None, "example/ta"))
 def test_run_recipe(
     monkeypatch, cfg_default, task, ssh, recipe, tmp_path, caplog
 ):
@@ -68,9 +68,9 @@ def test_run_recipe(
     caplog.set_level(logging.INFO)
     caplog.clear()
     if ssh:
-        monkeypatch.setitem(os.environ, 'SSH_CONNECTION', '0.0 0 1.1 1')
+        monkeypatch.setitem(os.environ, "SSH_CONNECTION", "0.0 0 1.1 1")
     else:
-        monkeypatch.delitem(os.environ, 'SSH_CONNECTION', raising=False)
+        monkeypatch.delitem(os.environ, "SSH_CONNECTION", raising=False)
 
     TAGS.set_tag_values(AUTHOR_TAGS)
 
@@ -78,18 +78,18 @@ def test_run_recipe(
     assert isinstance(recipe._repr_html_(), str)
 
     sample_data_config = esmvaltool_sample_data.get_rootpaths()
-    monkeypatch.setitem(CFG, 'rootpath', sample_data_config['rootpath'])
-    monkeypatch.setitem(CFG, 'drs', {'CMIP6': 'SYNDA'})
+    monkeypatch.setitem(CFG, "rootpath", sample_data_config["rootpath"])
+    monkeypatch.setitem(CFG, "drs", {"CMIP6": "SYNDA"})
     session = cfg_default.start_session(recipe.path.stem)
-    session['output_dir'] = tmp_path / 'esmvaltool_output'
-    session['max_parallel_tasks'] = 1
-    session['remove_preproc_dir'] = False
+    session["output_dir"] = tmp_path / "esmvaltool_output"
+    session["max_parallel_tasks"] = 1
+    session["remove_preproc_dir"] = False
 
     output = recipe.run(task=task, session=session)
 
     assert len(output) > 0
     assert isinstance(output, RecipeOutput)
-    assert (output.session.session_dir / 'index.html').exists()
+    assert (output.session.session_dir / "index.html").exists()
 
     assert (output.session.run_dir / output.info.filename).exists()
     assert isinstance(output.read_main_log(), str)
@@ -121,10 +121,10 @@ def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
     """
     TAGS.set_tag_values(AUTHOR_TAGS)
 
-    monkeypatch.setitem(CFG, 'output_dir', tmp_path)
+    monkeypatch.setitem(CFG, "output_dir", tmp_path)
 
     session = CFG.start_session(recipe.path.stem)
 
     with pytest.raises(RecipeError):
-        task = 'example/non-existant'
+        task = "example/non-existent"
         _ = recipe.run(task, session)

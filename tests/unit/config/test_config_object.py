@@ -7,8 +7,8 @@ import pytest
 
 import esmvalcore
 import esmvalcore.config._config_object
-from esmvalcore.config._config_object import DEFAULT_CONFIG_DIR
 from esmvalcore.config import Config, Session
+from esmvalcore.config._config_object import DEFAULT_CONFIG_DIR
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
@@ -18,46 +18,43 @@ from tests.integration.test_main import arguments
 
 def test_config_class():
     config = {
-        'log_level': 'info',
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'output_dir': './esmvaltool_output',
-        'auxiliary_data_dir': './auxiliary_data',
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'profile_diagnostic': False,
-        'rootpath': {
-            'CMIP6': '~/data/CMIP6'
-        },
-        'drs': {
-            'CMIP6': 'default'
-        },
+        "log_level": "info",
+        "exit_on_warning": False,
+        "output_file_type": "png",
+        "output_dir": "./esmvaltool_output",
+        "auxiliary_data_dir": "./auxiliary_data",
+        "save_intermediary_cubes": False,
+        "remove_preproc_dir": True,
+        "max_parallel_tasks": None,
+        "profile_diagnostic": False,
+        "rootpath": {"CMIP6": "~/data/CMIP6"},
+        "drs": {"CMIP6": "default"},
     }
 
     cfg = Config(config)
 
-    assert isinstance(cfg['output_dir'], Path)
-    assert isinstance(cfg['auxiliary_data_dir'], Path)
+    assert isinstance(cfg["output_dir"], Path)
+    assert isinstance(cfg["auxiliary_data_dir"], Path)
 
     from esmvalcore.config._config import CFG as CFG_DEV
+
     assert CFG_DEV
 
 
 def test_config_update():
-    config = Config({'output_dir': 'directory'})
-    fail_dict = {'output_dir': 123}
+    config = Config({"output_dir": "directory"})
+    fail_dict = {"output_dir": 123}
 
     with pytest.raises(InvalidConfigParameter):
         config.update(fail_dict)
 
 
 def test_set_bad_item():
-    config = Config({'output_dir': 'config'})
+    config = Config({"output_dir": "config"})
     with pytest.raises(InvalidConfigParameter) as err_exc:
-        config['bad_item'] = 47
+        config["bad_item"] = 47
 
-    assert str(err_exc.value) == '`bad_item` is not a valid config parameter.'
+    assert str(err_exc.value) == "`bad_item` is not a valid config parameter."
 
 
 def test_config_init():
@@ -67,7 +64,7 @@ def test_config_init():
 
 # TODO: remove in v2.14.0
 def test_load_from_file(monkeypatch):
-    default_config_file = DEFAULT_CONFIG_DIR / 'config-user.yml'
+    default_config_file = DEFAULT_CONFIG_DIR / "config-user.yml"
     config = Config()
     assert not config
     with pytest.warns(ESMValCoreDeprecationWarning):
@@ -81,18 +78,18 @@ def test_load_from_file_filenotfound(monkeypatch):
     config = Config()
     assert not config
 
-    expected_path = Path.home() / '.esmvaltool' / 'not_existent_file.yml'
+    expected_path = Path.home() / ".esmvaltool" / "not_existent_file.yml"
     msg = f"Config file '{expected_path}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
-        config.load_from_file('not_existent_file.yml')
+        config.load_from_file("not_existent_file.yml")
 
 
 # TODO: remove in v2.14.0
 def test_load_from_file_invalidconfigparameter(monkeypatch, tmp_path):
     """Test `Config.load_from_file`."""
     monkeypatch.chdir(tmp_path)
-    cfg_path = tmp_path / 'test.yml'
-    cfg_path.write_text('invalid_param: 42')
+    cfg_path = tmp_path / "test.yml"
+    cfg_path.write_text("invalid_param: 42")
 
     config = Config()
     assert not config
@@ -108,15 +105,15 @@ def test_load_from_file_invalidconfigparameter(monkeypatch, tmp_path):
 def test_config_key_error():
     config = Config()
     with pytest.raises(KeyError):
-        config['invalid_key']
+        config["invalid_key"]
 
 
 def test_reload(cfg_default, monkeypatch, tmp_path):
     """Test `Config.reload`."""
     monkeypatch.setattr(
         esmvalcore.config._config_object,
-        'USER_CONFIG_DIR',
-        tmp_path / 'this' / 'is' / 'an' / 'empty' / 'dir',
+        "USER_CONFIG_DIR",
+        tmp_path / "this" / "is" / "an" / "empty" / "dir",
     )
     cfg = Config()
 
@@ -127,10 +124,10 @@ def test_reload(cfg_default, monkeypatch, tmp_path):
 
 def test_reload_fail(monkeypatch, tmp_path):
     """Test `Config.reload`."""
-    config_file = tmp_path / 'invalid_config_file.yml'
-    config_file.write_text('invalid_option: 1')
+    config_file = tmp_path / "invalid_config_file.yml"
+    config_file.write_text("invalid_option: 1")
     monkeypatch.setattr(
-        esmvalcore.config._config_object, 'USER_CONFIG_DIR', tmp_path
+        esmvalcore.config._config_object, "USER_CONFIG_DIR", tmp_path
     )
     cfg = Config()
 
@@ -139,142 +136,142 @@ def test_reload_fail(monkeypatch, tmp_path):
 
 
 def test_session():
-    config = Config({'output_dir': 'config'})
+    config = Config({"output_dir": "config"})
 
-    session = config.start_session('recipe_name')
+    session = config.start_session("recipe_name")
     assert session == config
 
-    session['output_dir'] = 'session'
+    session["output_dir"] = "session"
     assert session != config
 
 
 def test_session_key_error():
     session = Session({})
     with pytest.raises(KeyError):
-        session['invalid_key']
+        session["invalid_key"]
 
 
 # TODO: remove in v2.14.0
 def test_session_config_dir():
-    session = Session({'config_file': '/path/to/config.yml'})
+    session = Session({"config_file": "/path/to/config.yml"})
     with pytest.warns(ESMValCoreDeprecationWarning):
         config_dir = session.config_dir
-    assert config_dir == Path('/path/to')
+    assert config_dir == Path("/path/to")
 
 
 TEST_GET_CFG_PATH = [
-    (None, None, None, '~/.esmvaltool/config-user.yml', False),
+    (None, None, None, "~/.esmvaltool/config-user.yml", False),
     (
         None,
         None,
-        ('any_other_module', '--config_file=cli.yml'),
-        '~/.esmvaltool/config-user.yml',
+        ("any_other_module", "--config_file=cli.yml"),
+        "~/.esmvaltool/config-user.yml",
         False,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--max_parallel_tasks=4'),
-        '~/.esmvaltool/config-user.yml',
+        ("esmvaltool", "run", "--max_parallel_tasks=4"),
+        "~/.esmvaltool/config-user.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', '--config_file'),
-        '~/.esmvaltool/config-user.yml',
+        ("esmvaltool", "--config_file"),
+        "~/.esmvaltool/config-user.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config_file=/cli.yml'),
-        '/cli.yml',
+        ("esmvaltool", "run", "--config_file=/cli.yml"),
+        "/cli.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config_file=/cli.yml'),
-        '/cli.yml',
+        ("esmvaltool", "run", "--config_file=/cli.yml"),
+        "/cli.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config-file', '/cli.yml'),
-        '/cli.yml',
+        ("esmvaltool", "run", "--config-file", "/cli.yml"),
+        "/cli.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        '/cli.yml',
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "/cli.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config-file=relative_cli.yml'),
-        '~/.esmvaltool/relative_cli.yml',
+        ("esmvaltool", "run", "--config-file=relative_cli.yml"),
+        "~/.esmvaltool/relative_cli.yml",
         True,
     ),
     (
         None,
         None,
-        ('esmvaltool', 'run', '--config-file=existing_cfg.yml'),
-        'existing_cfg.yml',
+        ("esmvaltool", "run", "--config-file=existing_cfg.yml"),
+        "existing_cfg.yml",
         True,
     ),
     (
         None,
-        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        '/env.yml',
+        {"_ESMVALTOOL_USER_CONFIG_FILE_": "/env.yml"},
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "/env.yml",
         True,
     ),
     (
         None,
-        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
+        {"_ESMVALTOOL_USER_CONFIG_FILE_": "/env.yml"},
         None,
-        '/env.yml',
+        "/env.yml",
         True,
     ),
     (
         None,
-        {'_ESMVALTOOL_USER_CONFIG_FILE_': 'existing_cfg.yml'},
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        'existing_cfg.yml',
+        {"_ESMVALTOOL_USER_CONFIG_FILE_": "existing_cfg.yml"},
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "existing_cfg.yml",
         True,
     ),
     (
-        '/filename.yml',
-        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        '/filename.yml',
+        "/filename.yml",
+        {"_ESMVALTOOL_USER_CONFIG_FILE_": "/env.yml"},
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "/filename.yml",
         True,
     ),
     (
-        '/filename.yml',
+        "/filename.yml",
         None,
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        '/filename.yml',
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "/filename.yml",
         True,
     ),
-    ('/filename.yml', None, None, '/filename.yml', False),
+    ("/filename.yml", None, None, "/filename.yml", False),
     (
-        'filename.yml',
+        "filename.yml",
         None,
         None,
-        '~/.esmvaltool/filename.yml',
+        "~/.esmvaltool/filename.yml",
         False,
     ),
     (
-        'existing_cfg.yml',
-        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
-        ('esmvaltool', 'run', '--config-file=/cli.yml'),
-        'existing_cfg.yml',
+        "existing_cfg.yml",
+        {"_ESMVALTOOL_USER_CONFIG_FILE_": "/env.yml"},
+        ("esmvaltool", "run", "--config-file=/cli.yml"),
+        "existing_cfg.yml",
         True,
     ),
 ]
@@ -282,35 +279,35 @@ TEST_GET_CFG_PATH = [
 
 # TODO: remove in v2.14.0
 @pytest.mark.parametrize(
-    'filename,env,cli_args,output,env_var_set', TEST_GET_CFG_PATH
+    "filename,env,cli_args,output,env_var_set", TEST_GET_CFG_PATH
 )
 def test_get_config_user_path(
     filename, env, cli_args, output, env_var_set, monkeypatch, tmp_path
 ):
     """Test `Config._get_config_user_path`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_FILE_', raising=False)
+    monkeypatch.delenv("_ESMVALTOOL_USER_CONFIG_FILE_", raising=False)
 
     # Create empty test file
     monkeypatch.chdir(tmp_path)
-    (tmp_path / 'existing_cfg.yml').write_text('')
+    (tmp_path / "existing_cfg.yml").write_text("")
 
-    if output == 'existing_cfg.yml':
-        output = tmp_path / 'existing_cfg.yml'
+    if output == "existing_cfg.yml":
+        output = tmp_path / "existing_cfg.yml"
     else:
         output = Path(output).expanduser()
 
     if env is not None:
-        for (key, val) in env.items():
+        for key, val in env.items():
             monkeypatch.setenv(key, val)
     if cli_args is None:
-        cli_args = ['python']
+        cli_args = ["python"]
 
     with arguments(*cli_args):
         config_path = Config._get_config_user_path(filename)
         if env_var_set:
-            assert os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] == str(output)
+            assert os.environ["_ESMVALTOOL_USER_CONFIG_FILE_"] == str(output)
         else:
-            assert '_ESMVALTOOL_USER_CONFIG_FILE_' not in os.environ
+            assert "_ESMVALTOOL_USER_CONFIG_FILE_" not in os.environ
     assert isinstance(config_path, Path)
     assert config_path == output
 
@@ -318,24 +315,24 @@ def test_get_config_user_path(
 # TODO: remove in v2.14.0
 def test_load_user_config_filenotfound():
     """Test `Config._load_user_config`."""
-    expected_path = Path.home() / '.esmvaltool' / 'not_existent_file.yml'
+    expected_path = Path.home() / ".esmvaltool" / "not_existent_file.yml"
     msg = f"Config file '{expected_path}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
-        Config._load_user_config('not_existent_file.yml')
+        Config._load_user_config("not_existent_file.yml")
 
 
 # TODO: remove in v2.14.0
 def test_load_user_config_no_exception():
     """Test `Config._load_user_config`."""
-    Config._load_user_config('not_existent_file.yml', raise_exception=False)
+    Config._load_user_config("not_existent_file.yml", raise_exception=False)
 
 
 # TODO: remove in v2.14.0
 def test_load_user_config_invalidconfigparameter(monkeypatch, tmp_path):
     """Test `Config._load_user_config`."""
     monkeypatch.chdir(tmp_path)
-    cfg_path = tmp_path / 'test.yml'
-    cfg_path.write_text('invalid_param: 42')
+    cfg_path = tmp_path / "test.yml"
+    cfg_path.write_text("invalid_param: 42")
 
     msg = (
         f"Failed to parse user configuration file {cfg_path}: `invalid_param` "
@@ -347,30 +344,30 @@ def test_load_user_config_invalidconfigparameter(monkeypatch, tmp_path):
 
 def test_get_user_config_dir_and_source_with_env(tmp_path, monkeypatch):
     """Test `_get_user_config_dir` and `_get_user_config_source`."""
-    monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(tmp_path))
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", str(tmp_path))
 
     config_dir = esmvalcore.config._config_object._get_user_config_dir()
     config_src = esmvalcore.config._config_object._get_user_config_source()
 
     assert config_dir == tmp_path
-    assert config_src == 'ESMVALTOOL_CONFIG_DIR environment variable'
+    assert config_src == "ESMVALTOOL_CONFIG_DIR environment variable"
 
 
 def test_get_user_config_dir_and_source_no_env(tmp_path, monkeypatch):
     """Test `_get_user_config_dir` and `_get_user_config_source`."""
-    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+    monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
 
     config_dir = esmvalcore.config._config_object._get_user_config_dir()
     config_src = esmvalcore.config._config_object._get_user_config_source()
 
-    assert config_dir == Path('~/.config/esmvaltool').expanduser()
-    assert config_src == 'default user configuration directory'
+    assert config_dir == Path("~/.config/esmvaltool").expanduser()
+    assert config_src == "default user configuration directory"
 
 
 def test_get_user_config_dir_with_env_fail(tmp_path, monkeypatch):
     """Test `_get_user_config_dir` and `_get_user_config_source`."""
-    empty_path = tmp_path / 'this' / 'does' / 'not' / 'exist'
-    monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(empty_path))
+    empty_path = tmp_path / "this" / "does" / "not" / "exist"
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", str(empty_path))
 
     msg = (
         "Invalid configuration directory specified via ESMVALTOOL_CONFIG_DIR "
@@ -383,39 +380,39 @@ def test_get_user_config_dir_with_env_fail(tmp_path, monkeypatch):
 # TODO: remove in v2.14.0
 def test_get_global_config_deprecated(mocker, tmp_path):
     """Test ``_get_global_config``."""
-    config_file = tmp_path / 'old_config_user.yml'
-    config_file.write_text('output_dir: /new/output/dir')
+    config_file = tmp_path / "old_config_user.yml"
+    config_file.write_text("output_dir: /new/output/dir")
     mocker.patch.object(
         esmvalcore.config._config_object.Config,
-        '_get_config_user_path',
+        "_get_config_user_path",
         return_value=config_file,
     )
     with pytest.warns(ESMValCoreDeprecationWarning):
         cfg = esmvalcore.config._config_object._get_global_config()
 
-    assert cfg['output_dir'] == Path('/new/output/dir')
+    assert cfg["output_dir"] == Path("/new/output/dir")
 
 
 @pytest.mark.parametrize(
-    'dirs,output_file_type,rootpath',
+    "dirs,output_file_type,rootpath",
     [
-        ([], 'png', {'default': '~/climate_data'}),
-        (['/this/path/does/not/exist'], 'png', {'default': '~/climate_data'}),
-        (['{tmp_path}/config1'], '1', {'default': '1', '1': '1'}),
+        ([], "png", {"default": "~/climate_data"}),
+        (["/this/path/does/not/exist"], "png", {"default": "~/climate_data"}),
+        (["{tmp_path}/config1"], "1", {"default": "1", "1": "1"}),
         (
-            ['{tmp_path}/config1', '/this/path/does/not/exist'],
-            '1',
-            {'default': '1', '1': '1'},
+            ["{tmp_path}/config1", "/this/path/does/not/exist"],
+            "1",
+            {"default": "1", "1": "1"},
         ),
         (
-            ['{tmp_path}/config1', '{tmp_path}/config2'],
-            '2b',
-            {'default': '2b', '1': '1', '2': '2b'},
+            ["{tmp_path}/config1", "{tmp_path}/config2"],
+            "2b",
+            {"default": "2b", "1": "1", "2": "2b"},
         ),
         (
-            ['{tmp_path}/config2', '{tmp_path}/config1'],
-            '1',
-            {'default': '1', '1': '1', '2': '2b'},
+            ["{tmp_path}/config2", "{tmp_path}/config1"],
+            "1",
+            {"default": "1", "1": "1", "2": "2b"},
         ),
     ],
 )
@@ -423,40 +420,46 @@ def test_load_from_dirs_always_default(
     dirs, output_file_type, rootpath, tmp_path
 ):
     """Test `Config.load_from_dirs`."""
-    config1 = tmp_path / 'config1' / '1.yml'
-    config2a = tmp_path / 'config2' / '2a.yml'
-    config2b = tmp_path / 'config2' / '2b.yml'
+    config1 = tmp_path / "config1" / "1.yml"
+    config2a = tmp_path / "config2" / "2a.yml"
+    config2b = tmp_path / "config2" / "2b.yml"
     config1.parent.mkdir(parents=True, exist_ok=True)
     config2a.parent.mkdir(parents=True, exist_ok=True)
-    config1.write_text(dedent(
-        """
+    config1.write_text(
+        dedent(
+            """
         output_file_type: '1'
         rootpath:
           default: '1'
           '1': '1'
         """
-    ))
-    config2a.write_text(dedent(
-        """
+        )
+    )
+    config2a.write_text(
+        dedent(
+            """
         output_file_type: '2a'
         rootpath:
           default: '2a'
           '2': '2a'
         """
-    ))
-    config2b.write_text(dedent(
-        """
+        )
+    )
+    config2b.write_text(
+        dedent(
+            """
         output_file_type: '2b'
         rootpath:
           default: '2b'
           '2': '2b'
         """
-    ))
+        )
+    )
 
     config_dirs = []
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
-    for (name, path) in rootpath.items():
+    for name, path in rootpath.items():
         path = Path(path).expanduser().absolute()
         rootpath[name] = [path]
 
@@ -465,20 +468,20 @@ def test_load_from_dirs_always_default(
 
     cfg.load_from_dirs(config_dirs)
 
-    assert cfg['output_file_type'] == output_file_type
-    assert cfg['rootpath'] == rootpath
+    assert cfg["output_file_type"] == output_file_type
+    assert cfg["rootpath"] == rootpath
 
 
 @pytest.mark.parametrize(
-    'cli_config_dir,output',
+    "cli_config_dir,output",
     [
-        (None, [DEFAULT_CONFIG_DIR, '~/.config/esmvaltool']),
-        (Path('/c'), [DEFAULT_CONFIG_DIR, '~/.config/esmvaltool', '/c']),
+        (None, [DEFAULT_CONFIG_DIR, "~/.config/esmvaltool"]),
+        (Path("/c"), [DEFAULT_CONFIG_DIR, "~/.config/esmvaltool", "/c"]),
     ],
 )
 def test_get_all_config_dirs(cli_config_dir, output, monkeypatch):
     """Test `_get_all_config_dirs`."""
-    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+    monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
     excepted = []
     for out in output:
         excepted.append(Path(out).expanduser().absolute())
@@ -491,22 +494,22 @@ def test_get_all_config_dirs(cli_config_dir, output, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    'cli_config_dir,output',
+    "cli_config_dir,output",
     [
-        (None, ['defaults', 'default user configuration directory']),
+        (None, ["defaults", "default user configuration directory"]),
         (
-            Path('/c'),
+            Path("/c"),
             [
-                'defaults',
-                'default user configuration directory',
-                'command line argument',
+                "defaults",
+                "default user configuration directory",
+                "command line argument",
             ],
         ),
     ],
 )
 def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
     """Test `_get_all_config_sources`."""
-    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+    monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
     config_srcs = esmvalcore.config._config_object._get_all_config_sources(
         cli_config_dir
     )

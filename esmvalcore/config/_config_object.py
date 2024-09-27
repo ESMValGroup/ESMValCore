@@ -1,4 +1,5 @@
 """Importable config object."""
+
 from __future__ import annotations
 
 import os
@@ -24,20 +25,22 @@ from esmvalcore.exceptions import (
     InvalidConfigParameter,
 )
 
-URL = ('https://docs.esmvaltool.org/projects/'
-       'ESMValCore/en/latest/quickstart/configure.html')
+URL = (
+    "https://docs.esmvaltool.org/projects/"
+    "ESMValCore/en/latest/quickstart/configure.html"
+)
 
 # Configuration directory in which defaults are stored
 DEFAULT_CONFIG_DIR = (
-    Path(esmvalcore.__file__).parent / 'config' / 'configurations' / 'defaults'
+    Path(esmvalcore.__file__).parent / "config" / "configurations" / "defaults"
 )
 
 
 def _get_user_config_dir() -> Path:
     """Get user configuration directory."""
-    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
+    if "ESMVALTOOL_CONFIG_DIR" in os.environ:
         user_config_dir = (
-            Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
+            Path(os.environ["ESMVALTOOL_CONFIG_DIR"]).expanduser().absolute()
         )
         if not user_config_dir.is_dir():
             raise NotADirectoryError(
@@ -46,14 +49,14 @@ def _get_user_config_dir() -> Path:
                 f"{user_config_dir} is not an existing directory"
             )
         return user_config_dir
-    return Path.home() / '.config' / 'esmvaltool'
+    return Path.home() / ".config" / "esmvaltool"
 
 
 def _get_user_config_source() -> str:
     """Get source of user configuration directory."""
-    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
-        return 'ESMVALTOOL_CONFIG_DIR environment variable'
-    return 'default user configuration directory'
+    if "ESMVALTOOL_CONFIG_DIR" in os.environ:
+        return "ESMVALTOOL_CONFIG_DIR environment variable"
+    return "default user configuration directory"
 
 
 # User configuration directory
@@ -70,15 +73,16 @@ class Config(ValidatedConfig):
     :obj:`esmvalcore.config.CFG` instead.
 
     """
+
     # TODO: remove in v2.14.0
-    _DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
+    _DEFAULT_USER_CONFIG_DIR = Path.home() / ".esmvaltool"
 
     _validate = _validators
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
     _warn_if_missing = (
-        ('drs', URL),
-        ('rootpath', URL),
+        ("drs", URL),
+        ("rootpath", URL),
     )
 
     def __init__(self, *args, **kwargs):
@@ -116,10 +120,10 @@ class Config(ValidatedConfig):
         """
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                'ignore',
+                "ignore",
                 message="Do not instantiate `Config` objects directly",
                 category=UserWarning,
-                module='esmvalcore',
+                module="esmvalcore",
             )
             new = cls()
         new.update(Config._load_default_config())
@@ -128,7 +132,7 @@ class Config(ValidatedConfig):
 
         try:
             mapping = cls._read_config_file(config_user_path)
-            mapping['config_file'] = config_user_path
+            mapping["config_file"] = config_user_path
         except FileNotFoundError:
             if raise_exception:
                 raise
@@ -151,10 +155,10 @@ class Config(ValidatedConfig):
         """Load the default configuration."""
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                'ignore',
+                "ignore",
                 message="Do not instantiate `Config` objects directly",
                 category=UserWarning,
-                module='esmvalcore',
+                module="esmvalcore",
             )
             new = cls()
 
@@ -173,7 +177,7 @@ class Config(ValidatedConfig):
                 f"Config file '{config_user_path}' does not exist"
             )
 
-        with open(config_user_path, 'r', encoding='utf-8') as file:
+        with open(config_user_path, "r", encoding="utf-8") as file:
             cfg = yaml.safe_load(file)
 
         return cfg
@@ -181,7 +185,7 @@ class Config(ValidatedConfig):
     # TODO: remove in v2.14.0
     @staticmethod
     def _get_config_user_path(
-        filename: Optional[os.PathLike | str] = None
+        filename: Optional[os.PathLike | str] = None,
     ) -> Path:
         """Get path to user configuration file.
 
@@ -221,10 +225,10 @@ class Config(ValidatedConfig):
         # (2) Try to get user configuration file from internal
         # _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
         if (
-                config_user is None and
-                '_ESMVALTOOL_USER_CONFIG_FILE_' in os.environ
+            config_user is None
+            and "_ESMVALTOOL_USER_CONFIG_FILE_" in os.environ
         ):
-            config_user = os.environ['_ESMVALTOOL_USER_CONFIG_FILE_']
+            config_user = os.environ["_ESMVALTOOL_USER_CONFIG_FILE_"]
 
         # (3) Try to get user configuration file from CLI arguments
         if config_user is None:
@@ -232,7 +236,7 @@ class Config(ValidatedConfig):
 
         # (4) Default location
         if config_user is None:
-            config_user = Config._DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
+            config_user = Config._DEFAULT_USER_CONFIG_DIR / "config-user.yml"
 
         config_user = Path(config_user).expanduser()
 
@@ -244,8 +248,8 @@ class Config(ValidatedConfig):
         # If used within the esmvaltool program, make sure that subsequent
         # calls of this method (also in suprocesses) use the correct user
         # configuration file
-        if Path(sys.argv[0]).name == 'esmvaltool':
-            os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] = str(config_user)
+        if Path(sys.argv[0]).name == "esmvaltool":
+            os.environ["_ESMVALTOOL_USER_CONFIG_FILE_"] = str(config_user)
 
         return config_user
 
@@ -265,15 +269,15 @@ class Config(ValidatedConfig):
         file exists.
 
         """
-        if Path(sys.argv[0]).name != 'esmvaltool':
+        if Path(sys.argv[0]).name != "esmvaltool":
             return None
 
         for arg in sys.argv:
-            for opt in ('--config-file', '--config_file'):
+            for opt in ("--config-file", "--config_file"):
                 if opt in arg:
                     # Parse '--config-file=/file.yml' or
                     # '--config_file=/file.yml'
-                    partition = arg.partition('=')
+                    partition = arg.partition("=")
                     if partition[2]:
                         return partition[2]
 
@@ -419,10 +423,10 @@ class Config(ValidatedConfig):
         """
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                'ignore',
+                "ignore",
                 message="Do not instantiate `Session` objects directly",
                 category=UserWarning,
-                module='esmvalcore',
+                module="esmvalcore",
             )
             session = Session(config=self.copy(), name=name)
         return session
@@ -447,16 +451,16 @@ class Session(ValidatedConfig):
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
 
-    relative_preproc_dir = Path('preproc')
-    relative_work_dir = Path('work')
-    relative_plot_dir = Path('plots')
-    relative_run_dir = Path('run')
-    relative_main_log = Path('run', 'main_log.txt')
-    relative_main_log_debug = Path('run', 'main_log_debug.txt')
-    relative_cmor_log = Path('run', 'cmor_log.txt')
-    _relative_fixed_file_dir = Path('preproc', 'fixed_files')
+    relative_preproc_dir = Path("preproc")
+    relative_work_dir = Path("work")
+    relative_plot_dir = Path("plots")
+    relative_run_dir = Path("run")
+    relative_main_log = Path("run", "main_log.txt")
+    relative_main_log_debug = Path("run", "main_log_debug.txt")
+    relative_cmor_log = Path("run", "cmor_log.txt")
+    _relative_fixed_file_dir = Path("preproc", "fixed_files")
 
-    def __init__(self, config: dict, name: str = 'session'):
+    def __init__(self, config: dict, name: str = "session"):
         super().__init__(config)
         self.session_name: str | None = None
         self.set_session_name(name)
@@ -467,7 +471,7 @@ class Session(ValidatedConfig):
         )
         warnings.warn(msg, UserWarning)
 
-    def set_session_name(self, name: str = 'session'):
+    def set_session_name(self, name: str = "session"):
         """Set the name for the session.
 
         The `name` is used to name the session directory, e.g.
@@ -479,7 +483,7 @@ class Session(ValidatedConfig):
     @property
     def session_dir(self):
         """Return session directory."""
-        return self['output_dir'] / self.session_name
+        return self["output_dir"] / self.session_name
 
     @property
     def preproc_dir(self):
@@ -517,9 +521,9 @@ class Session(ValidatedConfig):
             "version 2.14.0."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
-        if self.get('config_file') is None:
+        if self.get("config_file") is None:
             return None
-        return Path(self['config_file']).parent
+        return Path(self["config_file"]).parent
 
     @property
     def main_log(self):
@@ -556,11 +560,11 @@ def _get_all_config_dirs(cli_config_dir: Optional[Path]) -> list[Path]:
 def _get_all_config_sources(cli_config_dir: Optional[Path]) -> list[str]:
     """Get all sources of configuration directories."""
     config_sources: list[str] = [
-        'defaults',
+        "defaults",
         USER_CONFIG_SOURCE,
     ]
     if cli_config_dir is not None:
-        config_sources.append('command line argument')
+        config_sources.append("command line argument")
     return config_sources
 
 
@@ -568,10 +572,10 @@ def _get_global_config() -> Config:
     """Get global configuration object."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            'ignore',
+            "ignore",
             message="Do not instantiate `Config` objects directly",
             category=UserWarning,
-            module='esmvalcore',
+            module="esmvalcore",
         )
         config_obj = Config()
     config_obj.reload()
