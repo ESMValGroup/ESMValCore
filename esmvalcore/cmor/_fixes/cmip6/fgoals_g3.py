@@ -1,4 +1,5 @@
 """Fixes for FGOALS-g3 model."""
+
 import dask.array as da
 import iris
 
@@ -41,7 +42,7 @@ class Tos(OceanFixGrid):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        for coord_name in ['latitude', 'longitude']:
+        for coord_name in ["latitude", "longitude"]:
             coord = cube.coord(coord_name)
             bad_indices = coord.core_points() > 1000.0
             coord.points = da.ma.where(bad_indices, 0.0, coord.core_points())

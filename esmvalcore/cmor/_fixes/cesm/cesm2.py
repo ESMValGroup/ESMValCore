@@ -29,7 +29,7 @@ class AllVars(NativeDatasetFix):
 
     # Dictionary to map invalid units in the data to valid entries
     INVALID_UNITS = {
-        'fraction': '1',
+        "fraction": "1",
     }
 
     def fix_metadata(self, cubes):
@@ -68,16 +68,16 @@ class AllVars(NativeDatasetFix):
         """
         # Only modify time points if data contains a time dimension, is monthly
         # data, and does not describe point measurements.
-        if not self.vardef.has_coord_with_standard_name('time'):
+        if not self.vardef.has_coord_with_standard_name("time"):
             return
-        if self.extra_facets['frequency'] != 'mon':
+        if self.extra_facets["frequency"] != "mon":
             return
         for cell_method in cube.cell_methods:
-            if 'point' in cell_method.method:
+            if "point" in cell_method.method:
                 return
 
         # Fix time coordinate
-        time_coord = cube.coord('time')
+        time_coord = cube.coord("time")
         if time_coord.has_bounds():
             time_coord.points = time_coord.core_bounds().mean(axis=-1)
         self.fix_regular_time(cube, coord=time_coord)

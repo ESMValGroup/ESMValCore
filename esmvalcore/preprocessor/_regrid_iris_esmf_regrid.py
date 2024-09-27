@@ -1,4 +1,5 @@
 """Iris-esmf-regrid based regridding scheme."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -21,9 +22,9 @@ from esmvalcore.preprocessor._shared import (
 )
 
 METHODS = {
-    'conservative': ESMFAreaWeightedRegridder,
-    'bilinear': ESMFBilinearRegridder,
-    'nearest': ESMFNearestRegridder,
+    "conservative": ESMFAreaWeightedRegridder,
+    "bilinear": ESMFBilinearRegridder,
+    "nearest": ESMFNearestRegridder,
 }
 
 
@@ -116,16 +117,17 @@ class IrisESMFRegrid:
         mdtol: float | None = None,
         use_src_mask: None | bool | np.ndarray = None,
         use_tgt_mask: None | bool | np.ndarray = None,
-        collapse_src_mask_along: Iterable[str] = ('Z', ),
-        collapse_tgt_mask_along: Iterable[str] = ('Z', ),
+        collapse_src_mask_along: Iterable[str] = ("Z",),
+        collapse_tgt_mask_along: Iterable[str] = ("Z",),
         src_resolution: int | None = None,
         tgt_resolution: int | None = None,
-        tgt_location: Literal['face', 'node'] | None = None,
+        tgt_location: Literal["face", "node"] | None = None,
     ) -> None:
         if method not in METHODS:
             raise ValueError(
                 "`method` should be one of 'bilinear', 'conservative', or "
-                "'nearest'")
+                "'nearest'"
+            )
 
         if use_src_mask is None:
             use_src_mask = method != "nearest"
@@ -133,35 +135,41 @@ class IrisESMFRegrid:
             use_tgt_mask = method != "nearest"
 
         self.kwargs: dict[str, Any] = {
-            'method': method,
-            'use_src_mask': use_src_mask,
-            'use_tgt_mask': use_tgt_mask,
-            'collapse_src_mask_along': collapse_src_mask_along,
-            'collapse_tgt_mask_along': collapse_tgt_mask_along,
-            'tgt_location': tgt_location,
+            "method": method,
+            "use_src_mask": use_src_mask,
+            "use_tgt_mask": use_tgt_mask,
+            "collapse_src_mask_along": collapse_src_mask_along,
+            "collapse_tgt_mask_along": collapse_tgt_mask_along,
+            "tgt_location": tgt_location,
         }
-        if method == 'nearest':
+        if method == "nearest":
             if mdtol is not None:
                 raise TypeError(
                     "`mdol` can only be specified when `method='bilinear'` "
-                    "or `method='conservative'`")
+                    "or `method='conservative'`"
+                )
         else:
-            self.kwargs['mdtol'] = mdtol
-        if method == 'conservative':
-            self.kwargs['src_resolution'] = src_resolution
-            self.kwargs['tgt_resolution'] = tgt_resolution
+            self.kwargs["mdtol"] = mdtol
+        if method == "conservative":
+            self.kwargs["src_resolution"] = src_resolution
+            self.kwargs["tgt_resolution"] = tgt_resolution
         elif src_resolution is not None:
-            raise TypeError("`src_resolution` can only be specified when "
-                            "`method='conservative'`")
+            raise TypeError(
+                "`src_resolution` can only be specified when "
+                "`method='conservative'`"
+            )
         elif tgt_resolution is not None:
-            raise TypeError("`tgt_resolution` can only be specified when "
-                            "`method='conservative'`")
+            raise TypeError(
+                "`tgt_resolution` can only be specified when "
+                "`method='conservative'`"
+            )
 
     def __repr__(self) -> str:
         """Return string representation of class."""
-        kwargs_str = ", ".join(f"{k}={repr(v)}"
-                               for k, v in self.kwargs.items())
-        return f'{self.__class__.__name__}({kwargs_str})'
+        kwargs_str = ", ".join(
+            f"{k}={repr(v)}" for k, v in self.kwargs.items()
+        )
+        return f"{self.__class__.__name__}({kwargs_str})"
 
     @staticmethod
     def _get_mask(
@@ -174,19 +182,25 @@ class IrisESMFRegrid:
         that are not horizontal or specified in `collapse_mask_along`.
         """
         horizontal_dims = get_dims_along_axes(cube, ["X", "Y"])
-        axes = tuple(elem for elem in collapse_mask_along
-                     if isinstance(elem, str) and elem.upper() in ("T", "Z"))
+        axes = tuple(
+            elem
+            for elem in collapse_mask_along
+            if isinstance(elem, str) and elem.upper() in ("T", "Z")
+        )
         other_dims = (
-            get_dims_along_axes(cube, axes) +  # type: ignore[arg-type]
-            get_dims_along_coords(cube, collapse_mask_along))
+            get_dims_along_axes(cube, axes)  # type: ignore[arg-type]
+            + get_dims_along_coords(cube, collapse_mask_along)
+        )
 
         slices = tuple(
             slice(None) if i in horizontal_dims + other_dims else 0
-            for i in range(cube.ndim))
+            for i in range(cube.ndim)
+        )
         subcube = cube[slices]
         subcube_other_dims = (
-            get_dims_along_axes(subcube, axes) +  # type: ignore[arg-type]
-            get_dims_along_coords(subcube, collapse_mask_along))
+            get_dims_along_axes(subcube, axes)  # type: ignore[arg-type]
+            + get_dims_along_coords(subcube, collapse_mask_along)
+        )
 
         mask = da.ma.getmaskarray(subcube.core_data())
         return mask.all(axis=subcube_other_dims)
@@ -195,9 +209,11 @@ class IrisESMFRegrid:
         self,
         src_cube: iris.cube.Cube,
         tgt_cube: iris.cube.Cube | iris.mesh.MeshXY,
-    ) -> (ESMFAreaWeightedRegridder
-          | ESMFBilinearRegridder
-          | ESMFNearestRegridder):
+    ) -> (
+        ESMFAreaWeightedRegridder
+        | ESMFBilinearRegridder
+        | ESMFNearestRegridder
+    ):
         """Create an :doc:`esmf_regrid:index` based regridding function.
 
         Parameters
@@ -215,13 +231,13 @@ class IrisESMFRegrid:
             An :doc:`esmf_regrid:index` regridder.
         """
         kwargs = self.kwargs.copy()
-        regridder_cls = METHODS[kwargs.pop('method')]
-        src_mask = kwargs.pop('use_src_mask')
-        collapse_mask_along = kwargs.pop('collapse_src_mask_along')
+        regridder_cls = METHODS[kwargs.pop("method")]
+        src_mask = kwargs.pop("use_src_mask")
+        collapse_mask_along = kwargs.pop("collapse_src_mask_along")
         if src_mask is True:
             src_mask = self._get_mask(src_cube, collapse_mask_along)
-        tgt_mask = kwargs.pop('use_tgt_mask')
-        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along')
+        tgt_mask = kwargs.pop("use_tgt_mask")
+        collapse_mask_along = kwargs.pop("collapse_tgt_mask_along")
         if tgt_mask is True:
             tgt_mask = self._get_mask(tgt_cube, collapse_mask_along)
         src_mask, tgt_mask = dask.compute(src_mask, tgt_mask)

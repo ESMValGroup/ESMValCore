@@ -17,8 +17,9 @@ class EmacFix(NativeDatasetFix):
         """Extract single cube."""
         # If no var_name given, use the CMOR short_name
         if var_name is None:
-            var_name = self.extra_facets.get('raw_name',
-                                             self.vardef.short_name)
+            var_name = self.extra_facets.get(
+                "raw_name", self.vardef.short_name
+            )
 
         # Convert to list if only a single var_name is given
         if isinstance(var_name, str):

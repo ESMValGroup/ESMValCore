@@ -1,4 +1,5 @@
 """Utilities for CMOR module."""
+
 from __future__ import annotations
 
 import logging
@@ -13,13 +14,13 @@ from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
 logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
-    'alevel': {
-        'CMIP5': ['alt40', 'plevs'],
-        'CMIP6': ['alt16', 'plev3'],
-        'obs4MIPs': ['alt16', 'plev3'],
+    "alevel": {
+        "CMIP5": ["alt40", "plevs"],
+        "CMIP6": ["alt16", "plev3"],
+        "obs4MIPs": ["alt16", "plev3"],
     },
-    'zlevel': {
-        'CMIP3': ['pressure'],
+    "zlevel": {
+        "CMIP3": ["pressure"],
     },
 }
 
@@ -156,18 +157,18 @@ def _get_new_generic_level_coord(
     """
     new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
     new_coord.generic_level = True
-    new_coord.generic_lev_coords = (
-        var_info.coordinates[generic_level_coord_name].generic_lev_coords
-    )
+    new_coord.generic_lev_coords = var_info.coordinates[
+        generic_level_coord_name
+    ].generic_lev_coords
     return new_coord
 
 
 def _get_simplified_calendar(calendar: str) -> str:
     """Simplify calendar."""
     calendar_aliases = {
-        'all_leap': '366_day',
-        'noleap': '365_day',
-        'gregorian': 'standard',
+        "all_leap": "366_day",
+        "noleap": "365_day",
+        "gregorian": "standard",
     }
     return calendar_aliases.get(calendar, calendar)
 
@@ -186,9 +187,9 @@ def _get_single_cube(
             break
 
     if dataset_str is None:
-        dataset_str = ''
+        dataset_str = ""
     else:
-        dataset_str = f' in {dataset_str}'
+        dataset_str = f" in {dataset_str}"
 
     if not cube:
         raise ValueError(
@@ -201,5 +202,9 @@ def _get_single_cube(
         "extra variables are usually metadata (cell area, latitude "
         "descriptions) that was not saved according to CF-conventions. It is "
         "possible that errors appear further on because of this.\nFull list "
-        "of cubes encountered: %s", short_name, dataset_str, cube_list)
+        "of cubes encountered: %s",
+        short_name,
+        dataset_str,
+        cube_list,
+    )
     return cube

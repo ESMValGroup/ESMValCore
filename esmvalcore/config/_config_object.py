@@ -1,4 +1,5 @@
 """Importable config object."""
+
 from __future__ import annotations
 
 import os
@@ -21,8 +22,10 @@ from ._config_validators import (
 )
 from ._validated_config import ValidatedConfig
 
-URL = ('https://docs.esmvaltool.org/projects/'
-       'ESMValCore/en/latest/quickstart/configure.html')
+URL = (
+    "https://docs.esmvaltool.org/projects/"
+    "ESMValCore/en/latest/quickstart/configure.html"
+)
 
 
 class Config(ValidatedConfig):
@@ -32,14 +35,15 @@ class Config(ValidatedConfig):
     :obj:`esmvalcore.config.CFG` instead.
 
     """
-    _DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
+
+    _DEFAULT_USER_CONFIG_DIR = Path.home() / ".esmvaltool"
 
     _validate = _validators
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
     _warn_if_missing = (
-        ('drs', URL),
-        ('rootpath', URL),
+        ("drs", URL),
+        ("rootpath", URL),
     )
 
     @classmethod
@@ -72,7 +76,7 @@ class Config(ValidatedConfig):
 
         try:
             mapping = cls._read_config_file(config_user_path)
-            mapping['config_file'] = config_user_path
+            mapping["config_file"] = config_user_path
         except FileNotFoundError:
             if raise_exception:
                 raise
@@ -94,21 +98,21 @@ class Config(ValidatedConfig):
         """Load the default configuration."""
         new = cls()
 
-        package_config_user_path = Path(
-            esmvalcore.__file__
-        ).parent / 'config-user.yml'
+        package_config_user_path = (
+            Path(esmvalcore.__file__).parent / "config-user.yml"
+        )
         mapping = cls._read_config_file(package_config_user_path)
 
         # Add defaults that are not available in esmvalcore/config-user.yml
-        mapping['check_level'] = CheckLevels.DEFAULT
-        mapping['config_file'] = package_config_user_path
-        mapping['diagnostics'] = None
-        mapping['extra_facets_dir'] = tuple()
-        mapping['max_datasets'] = None
-        mapping['max_years'] = None
-        mapping['resume_from'] = []
-        mapping['run_diagnostic'] = True
-        mapping['skip_nonexistent'] = False
+        mapping["check_level"] = CheckLevels.DEFAULT
+        mapping["config_file"] = package_config_user_path
+        mapping["diagnostics"] = None
+        mapping["extra_facets_dir"] = tuple()
+        mapping["max_datasets"] = None
+        mapping["max_years"] = None
+        mapping["resume_from"] = []
+        mapping["run_diagnostic"] = True
+        mapping["skip_nonexistent"] = False
 
         new.update(mapping)
 
@@ -122,14 +126,14 @@ class Config(ValidatedConfig):
                 f"Config file '{config_user_path}' does not exist"
             )
 
-        with open(config_user_path, 'r', encoding='utf-8') as file:
+        with open(config_user_path, "r", encoding="utf-8") as file:
             cfg = yaml.safe_load(file)
 
         return cfg
 
     @staticmethod
     def _get_config_user_path(
-        filename: Optional[os.PathLike | str] = None
+        filename: Optional[os.PathLike | str] = None,
     ) -> Path:
         """Get path to user configuration file.
 
@@ -169,10 +173,10 @@ class Config(ValidatedConfig):
         # (2) Try to get user configuration file from internal
         # _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
         if (
-                config_user is None and
-                '_ESMVALTOOL_USER_CONFIG_FILE_' in os.environ
+            config_user is None
+            and "_ESMVALTOOL_USER_CONFIG_FILE_" in os.environ
         ):
-            config_user = os.environ['_ESMVALTOOL_USER_CONFIG_FILE_']
+            config_user = os.environ["_ESMVALTOOL_USER_CONFIG_FILE_"]
 
         # (3) Try to get user configuration file from CLI arguments
         if config_user is None:
@@ -180,7 +184,7 @@ class Config(ValidatedConfig):
 
         # (4) Default location
         if config_user is None:
-            config_user = Config._DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
+            config_user = Config._DEFAULT_USER_CONFIG_DIR / "config-user.yml"
 
         config_user = Path(config_user).expanduser()
 
@@ -192,8 +196,8 @@ class Config(ValidatedConfig):
         # If used within the esmvaltool program, make sure that subsequent
         # calls of this method (also in suprocesses) use the correct user
         # configuration file
-        if Path(sys.argv[0]).name == 'esmvaltool':
-            os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] = str(config_user)
+        if Path(sys.argv[0]).name == "esmvaltool":
+            os.environ["_ESMVALTOOL_USER_CONFIG_FILE_"] = str(config_user)
 
         return config_user
 
@@ -212,15 +216,15 @@ class Config(ValidatedConfig):
         file exists.
 
         """
-        if Path(sys.argv[0]).name != 'esmvaltool':
+        if Path(sys.argv[0]).name != "esmvaltool":
             return None
 
         for arg in sys.argv:
-            for opt in ('--config-file', '--config_file'):
+            for opt in ("--config-file", "--config_file"):
                 if opt in arg:
                     # Parse '--config-file=/file.yml' or
                     # '--config_file=/file.yml'
-                    partition = arg.partition('=')
+                    partition = arg.partition("=")
                     if partition[2]:
                         return partition[2]
 
@@ -243,13 +247,13 @@ class Config(ValidatedConfig):
 
     def reload(self):
         """Reload the config file."""
-        if 'config_file' not in self:
+        if "config_file" not in self:
             raise ValueError(
                 "Cannot reload configuration, option 'config_file' is "
                 "missing; make sure to only use the `CFG` object from the "
                 "`esmvalcore.config` module"
             )
-        self.load_from_file(self['config_file'])
+        self.load_from_file(self["config_file"])
 
     def start_session(self, name: str):
         """Start a new session from this configuration object.
@@ -285,21 +289,21 @@ class Session(ValidatedConfig):
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
 
-    relative_preproc_dir = Path('preproc')
-    relative_work_dir = Path('work')
-    relative_plot_dir = Path('plots')
-    relative_run_dir = Path('run')
-    relative_main_log = Path('run', 'main_log.txt')
-    relative_main_log_debug = Path('run', 'main_log_debug.txt')
-    relative_cmor_log = Path('run', 'cmor_log.txt')
-    _relative_fixed_file_dir = Path('preproc', 'fixed_files')
+    relative_preproc_dir = Path("preproc")
+    relative_work_dir = Path("work")
+    relative_plot_dir = Path("plots")
+    relative_run_dir = Path("run")
+    relative_main_log = Path("run", "main_log.txt")
+    relative_main_log_debug = Path("run", "main_log_debug.txt")
+    relative_cmor_log = Path("run", "cmor_log.txt")
+    _relative_fixed_file_dir = Path("preproc", "fixed_files")
 
-    def __init__(self, config: dict, name: str = 'session'):
+    def __init__(self, config: dict, name: str = "session"):
         super().__init__(config)
         self.session_name: str | None = None
         self.set_session_name(name)
 
-    def set_session_name(self, name: str = 'session'):
+    def set_session_name(self, name: str = "session"):
         """Set the name for the session.
 
         The `name` is used to name the session directory, e.g.
@@ -311,7 +315,7 @@ class Session(ValidatedConfig):
     @property
     def session_dir(self):
         """Return session directory."""
-        return self['output_dir'] / self.session_name
+        return self["output_dir"] / self.session_name
 
     @property
     def preproc_dir(self):
@@ -336,7 +340,7 @@ class Session(ValidatedConfig):
     @property
     def config_dir(self):
         """Return user config directory."""
-        return Path(self['config_file']).parent
+        return Path(self["config_file"]).parent
 
     @property
     def main_log(self):

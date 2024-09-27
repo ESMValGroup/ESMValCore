@@ -1,4 +1,5 @@
 """Auxiliary functions for :mod:`iris`."""
+
 from __future__ import annotations
 
 from typing import Dict, Iterable, List, Literal, Sequence
@@ -111,7 +112,7 @@ def date2num(date, unit, dtype=np.float64):
 
 def merge_cube_attributes(
     cubes: Sequence[Cube],
-    delimiter: str = ' ',
+    delimiter: str = " ",
 ) -> None:
     """Merge attributes of all given cubes in-place.
 
@@ -142,7 +143,7 @@ def merge_cube_attributes(
     # Step 1: collect all attribute values in a list
     attributes: Dict[str, List[NetCDFAttr]] = {}
     for cube in cubes:
-        for (attr, val) in cube.attributes.items():
+        for attr, val in cube.attributes.items():
             attributes.setdefault(attr, [])
             attributes[attr].append(val)
 
@@ -160,7 +161,7 @@ def merge_cube_attributes(
     # Step 3: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string.
-    for (attr, vals) in attributes.items():
+    for attr, vals in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
         if len(set_of_str) == 1:
             final_attributes[attr] = vals[0]
@@ -175,7 +176,7 @@ def merge_cube_attributes(
 def _rechunk(
     array: da.core.Array,
     complete_dims: list[int],
-    remaining_dims: int | Literal['auto'],
+    remaining_dims: int | Literal["auto"],
 ) -> da.core.Array:
     """Rechunk a given array so that it is not chunked along given dims."""
     new_chunks: list[str | int] = [remaining_dims] * array.ndim
@@ -187,7 +188,7 @@ def _rechunk(
 def _rechunk_dim_metadata(
     cube: Cube,
     complete_dims: Iterable[int],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> None:
     """Rechunk dimensional metadata of a cube (in-place)."""
     # Non-dimensional coords that span complete_dims
@@ -228,7 +229,7 @@ def _rechunk_dim_metadata(
 def rechunk_cube(
     cube: Cube,
     complete_coords: Iterable[Coord | str],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> Cube:
     """Rechunk cube so that it is not chunked along given dimensions.
 
@@ -292,8 +293,8 @@ def has_regular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
@@ -321,8 +322,8 @@ def has_irregular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim == 2 and lon.ndim == 2:
@@ -348,8 +349,8 @@ def has_unstructured_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:

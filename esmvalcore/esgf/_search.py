@@ -1,4 +1,5 @@
 """Module for finding files on ESGF."""
+
 import itertools
 import logging
 from functools import lru_cache
@@ -21,12 +22,12 @@ logger = logging.getLogger(__name__)
 
 def get_esgf_facets(variable):
     """Translate variable to facets for searching on ESGF."""
-    project = variable.get('project', '')
-    facets = {'project': project}
+    project = variable.get("project", "")
+    facets = {"project": project}
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             values = variable[our_name]
-            if values == '*':
+            if values == "*":
                 # Wildcards can be specified on ESGF by omitting the facet
                 continue
 
@@ -36,11 +37,11 @@ def get_esgf_facets(variable):
                 values = [values]
 
             for i, value in enumerate(values):
-                if our_name == 'dataset':
+                if our_name == "dataset":
                     # Replace dataset name by ESGF name for dataset
                     values[i] = DATASET_MAP[project].get(value, value)
 
-            facets[esgf_name] = ','.join(values)
+            facets[esgf_name] = ",".join(values)
 
     return facets
 
@@ -52,17 +53,17 @@ def select_latest_versions(files, versions):
     def same_file(file):
         """Return a versionless identifier for a file."""
         # Dataset without the version number
-        dataset = file.dataset.rsplit('.', 1)[0]
+        dataset = file.dataset.rsplit(".", 1)[0]
         return (dataset, file.name)
 
     if isinstance(versions, str):
-        versions = (versions, )
+        versions = (versions,)
 
     files = sorted(files, key=same_file)
     for _, group in itertools.groupby(files, key=same_file):
         group = sorted(group, reverse=True)
         if versions:
-            selection = [f for f in group if f.facets['version'] in versions]
+            selection = [f for f in group if f.facets["version"] in versions]
             if not selection:
                 # Skip the file if it is not the requested version(s).
                 continue
@@ -70,8 +71,11 @@ def select_latest_versions(files, versions):
         latest_version = group[0]
         result.append(latest_version)
         if len(group) > 1:
-            logger.debug("Only using the latest version %s, not %s",
-                         latest_version, group[1:])
+            logger.debug(
+                "Only using the latest version %s, not %s",
+                latest_version,
+                group[1:],
+            )
 
     return result
 
@@ -129,8 +133,10 @@ def _search_index_nodes(facets):
             logger.debug("Unable to connect to %s due to %s", url, error)
             errors.append(error)
 
-    raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
-                            "\n".join(f"- {e}" for e in errors))
+    raise FileNotFoundError(
+        "Failed to search ESGF, unable to connect:\n"
+        + "\n".join(f"- {e}" for e in errors)
+    )
 
 
 def esgf_search_files(facets):
@@ -150,16 +156,17 @@ def esgf_search_files(facets):
 
     files = ESGFFile._from_results(results, facets)
 
-    msg = 'none' if not files else '\n' + '\n'.join(str(f) for f in files)
-    logger.debug("Found the following files matching facets %s: %s", facets,
-                 msg)
+    msg = "none" if not files else "\n" + "\n".join(str(f) for f in files)
+    logger.debug(
+        "Found the following files matching facets %s: %s", facets, msg
+    )
 
     return files
 
 
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
-    if '*' in timerange:
+    if "*" in timerange:
         # TODO: support * combined with a period
         return files
 
@@ -327,15 +334,16 @@ def find_files(*, project, short_name, dataset, **facets):
     if project not in FACETS:
         raise ValueError(
             f"Unable to download from ESGF, because project {project} is not"
-            " on it or is not supported by the esmvalcore.esgf module.")
+            " on it or is not supported by the esmvalcore.esgf module."
+        )
 
     # The project is required for the function to work.
-    facets['project'] = project
+    facets["project"] = project
     # The dataset and short_name facet are not strictly required,
     # but without these it seems likely that the user is requesting
     # more results than they intended.
-    facets['dataset'] = dataset
-    facets['short_name'] = short_name
+    facets["dataset"] = dataset
+    facets["short_name"] = short_name
 
     # Convert lists to tuples to allow caching results
     for facet, value in facets.items():
@@ -355,12 +363,12 @@ def cached_search(**facets):
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
 
-    if 'version' not in facets or facets['version'] != '*':
-        files = select_latest_versions(files, facets.get('version'))
+    if "version" not in facets or facets["version"] != "*":
+        files = select_latest_versions(files, facets.get("version"))
 
     _replace_years_with_timerange(facets)
-    if 'timerange' in facets:
-        files = select_by_time(files, facets['timerange'])
-        logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
+    if "timerange" in facets:
+        files = select_by_time(files, facets["timerange"])
+        logger.debug("Selected files:\n%s", "\n".join(str(f) for f in files))
 
     return files

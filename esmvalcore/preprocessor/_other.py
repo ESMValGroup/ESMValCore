@@ -1,4 +1,5 @@
 """Preprocessor functions that do not fit into any of the categories."""
+
 from __future__ import annotations
 
 import logging
@@ -46,8 +47,10 @@ def clip(cube, minimum=None, maximum=None):
         clipped cube.
     """
     if minimum is None and maximum is None:
-        raise ValueError("Either minimum, maximum or both have to be\
-                          specified.")
+        raise ValueError(
+            "Either minimum, maximum or both have to be\
+                          specified."
+        )
     elif minimum is not None and maximum is not None:
         if maximum < minimum:
             raise ValueError("Maximum should be equal or larger than minimum.")
@@ -62,7 +65,7 @@ def histogram(
     bins: int | Sequence[float] = 10,
     bin_range: tuple[float, float] | None = None,
     weights: np.ndarray | da.Array | bool | None = None,
-    normalization: Literal['sum', 'integral'] | None = None,
+    normalization: Literal["sum", "integral"] | None = None,
 ) -> Cube:
     """Calculate histogram.
 
@@ -141,7 +144,7 @@ def histogram(
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
             f"int"
         )
-    allowed_norms = (None, 'sum', 'integral')
+    allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
         raise ValueError(
             f"Expected one of {allowed_norms} for normalization, got "
@@ -211,7 +214,7 @@ def _get_histogram_weights(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
     weights: np.ndarray | da.Array | bool | None,
-    normalization: Literal['sum', 'integral'] | None,
+    normalization: Literal["sum", "integral"] | None,
 ) -> np.ndarray | da.Array:
     """Get histogram weights."""
     axes = get_all_coord_dims(cube, coords)
@@ -244,7 +247,7 @@ def _calculate_histogram_lazy(
     along_axes: tuple[int, ...],
     bin_edges: np.ndarray,
     bin_range: tuple[float, float],
-    normalization: Literal['sum', 'integral'] | None = None,
+    normalization: Literal["sum", "integral"] | None = None,
 ) -> da.Array:
     """Calculate histogram over data along axes (lazy version).
 
@@ -268,9 +271,9 @@ def _calculate_histogram_lazy(
         )[0]
         hist_sum = hist.sum()
         hist = da.ma.masked_array(hist, mask=da.allclose(hist_sum, 0.0))
-        if normalization == 'sum':
+        if normalization == "sum":
             hist = hist / hist_sum
-        elif normalization == 'integral':
+        elif normalization == "integral":
             diffs = np.array(np.diff(bin_edges), dtype=data.dtype)
             hist = hist / hist_sum / diffs
         hist = da.ma.masked_invalid(hist)
@@ -282,7 +285,7 @@ def _calculate_histogram_lazy(
         # the `axes` argument to da.apply_gufunc are the rightmost dimensions.
         # Thus, we need to use `along_axes=(ndim-n_axes, ..., ndim-2, ndim-1)`
         # for _calculate_histogram_eager here.
-        axes_in_chunk = tuple(range(data.ndim - n_axes,  data.ndim))
+        axes_in_chunk = tuple(range(data.ndim - n_axes, data.ndim))
 
         # The call signature depends also on the number of axes in `axes`, and
         # will be (a,b,...)->(nbins) where a,b,... are the data dimensions that
@@ -294,7 +297,7 @@ def _calculate_histogram_lazy(
             data,
             weights,
             axes=[along_axes, along_axes, (-1,)],
-            output_sizes={'nbins': len(bin_edges) - 1},
+            output_sizes={"nbins": len(bin_edges) - 1},
             along_axes=axes_in_chunk,
             bin_edges=bin_edges,
             bin_range=bin_range,
@@ -311,7 +314,7 @@ def _calculate_histogram_eager(
     along_axes: tuple[int, ...],
     bin_edges: np.ndarray,
     bin_range: tuple[float, float],
-    normalization: Literal['sum', 'integral'] | None = None,
+    normalization: Literal["sum", "integral"] | None = None,
 ) -> np.ndarray:
     """Calculate histogram over data along axes (eager version).
 
@@ -340,7 +343,7 @@ def _calculate_histogram_eager(
             arr, bins=bin_edges, range=bin_range, weights=wgts
         )[0]
 
-    v_histogram = np.vectorize(_get_hist_values, signature='(n),(n)->(m)')
+    v_histogram = np.vectorize(_get_hist_values, signature="(n),(n)->(m)")
     hist = v_histogram(reshaped_data, reshaped_weights)
 
     # Mask points where all input data were masked (these are the ones where
@@ -350,13 +353,13 @@ def _calculate_histogram_eager(
     hist = np.ma.array(hist, mask=np.broadcast_to(mask, hist.shape))
 
     # Apply normalization
-    if normalization == 'sum':
+    if normalization == "sum":
         hist = hist / np.ma.array(hist_sum, mask=mask)
-    elif normalization == 'integral':
+    elif normalization == "integral":
         hist = (
-            hist /
-            np.ma.array(hist_sum, mask=mask) /
-            np.ma.array(np.diff(bin_edges), dtype=data.dtype)
+            hist
+            / np.ma.array(hist_sum, mask=mask)
+            / np.ma.array(np.diff(bin_edges), dtype=data.dtype)
         )
 
     return hist
@@ -367,12 +370,12 @@ def _get_histogram_cube(
     data: np.ndarray | da.Array,
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
-    normalization: Literal['sum', 'integral'] | None,
+    normalization: Literal["sum", "integral"] | None,
 ):
     """Get cube with correct metadata for histogram."""
     # Calculate bin centers using 2-window running mean and get corresponding
     # coordinate
-    bin_centers = np.convolve(bin_edges, np.ones(2), 'valid') / 2.0
+    bin_centers = np.convolve(bin_edges, np.ones(2), "valid") / 2.0
     bin_coord = DimCoord(
         bin_centers,
         bounds=np.stack((bin_edges[:-1], bin_edges[1:]), axis=-1),
@@ -389,25 +392,24 @@ def _get_histogram_cube(
 
     # Get histogram cube
     long_name_suffix = (
-        '' if cube.long_name is None else f' of {cube.long_name}'
+        "" if cube.long_name is None else f" of {cube.long_name}"
     )
-    var_name_suffix = '' if cube.var_name is None else f'_{cube.var_name}'
-    dim_spec = (
-        [(d, cube.coord_dims(d)) for d in cube.dim_coords] +
-        [(bin_coord, cube.ndim)]
-    )
-    if normalization == 'sum':
+    var_name_suffix = "" if cube.var_name is None else f"_{cube.var_name}"
+    dim_spec = [(d, cube.coord_dims(d)) for d in cube.dim_coords] + [
+        (bin_coord, cube.ndim)
+    ]
+    if normalization == "sum":
         long_name = f"Relative Frequency{long_name_suffix}"
         var_name = f"relative_frequency{var_name_suffix}"
-        units = '1'
-    elif normalization == 'integral':
+        units = "1"
+    elif normalization == "integral":
         long_name = f"Density{long_name_suffix}"
         var_name = f"density{var_name_suffix}"
         units = cube.units**-1
     else:
         long_name = f"Frequency{long_name_suffix}"
         var_name = f"frequency{var_name_suffix}"
-        units = '1'
+        units = "1"
     hist_cube = Cube(
         data,
         standard_name=None,
@@ -420,8 +422,8 @@ def _get_histogram_cube(
         aux_coords_and_dims=[(a, cube.coord_dims(a)) for a in cube.aux_coords],
         aux_factories=cube.aux_factories,
         ancillary_variables_and_dims=[
-            (a, cube.ancillary_variable_dims(a)) for a in
-            cube.ancillary_variables()
+            (a, cube.ancillary_variable_dims(a))
+            for a in cube.ancillary_variables()
         ],
         cell_measures_and_dims=[
             (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()

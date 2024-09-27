@@ -40,91 +40,99 @@ def generate_validator_testcases(valid):
 
     validation_tests = (
         {
-            'validator': validate_bool,
-            'success': ((True, True), (False, False)),
-            'fail': ((_, ValueError) for _ in ('fail', 2, -1, []))
+            "validator": validate_bool,
+            "success": ((True, True), (False, False)),
+            "fail": ((_, ValueError) for _ in ("fail", 2, -1, [])),
         },
         {
-            'validator': validate_check_level,
-            'success': (
+            "validator": validate_check_level,
+            "success": (
                 (1, 1),
                 (5, 5),
-                ('dEBUG', 1),
-                ('default', 3),
+                ("dEBUG", 1),
+                ("default", 3),
             ),
-            'fail': (
+            "fail": (
                 (6, ValueError),
                 (0, ValueError),
-                ('fail', ValueError),
+                ("fail", ValueError),
             ),
         },
         {
-            'validator':
-            validate_diagnostics,
-            'success': (
-                ('/', {'/'}),
-                ('a ', {'a/*'}),
-                ('/ a ', {'/', 'a/*'}),
-                ('/ a a', {'/', 'a/*'}),
-                (('/', 'a'), {'/', 'a/*'}),
+            "validator": validate_diagnostics,
+            "success": (
+                ("/", {"/"}),
+                ("a ", {"a/*"}),
+                ("/ a ", {"/", "a/*"}),
+                ("/ a a", {"/", "a/*"}),
+                (("/", "a"), {"/", "a/*"}),
                 ([], set()),
             ),
-            'fail': (
+            "fail": (
                 (1, TypeError),
                 ([1, 2], TypeError),
             ),
         },
         {
-            'validator':
-            _listify_validator(validate_float, n_items=2),
-            'success':
-            ((_, [1.5, 2.5])
-             for _ in ('1.5, 2.5', [1.5, 2.5], [1.5, 2.5], (1.5, 2.5),
-                       np.array((1.5, 2.5)))),
-            'fail': ((_, ValueError) for _ in ('fail', ('a', 1), (1, 2, 3)))
+            "validator": _listify_validator(validate_float, n_items=2),
+            "success": (
+                (_, [1.5, 2.5])
+                for _ in (
+                    "1.5, 2.5",
+                    [1.5, 2.5],
+                    [1.5, 2.5],
+                    (1.5, 2.5),
+                    np.array((1.5, 2.5)),
+                )
+            ),
+            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
         },
         {
-            'validator':
-            _listify_validator(validate_float, n_items=2),
-            'success':
-            ((_, [1.5, 2.5])
-             for _ in ('1.5, 2.5', [1.5, 2.5], [1.5, 2.5], (1.5, 2.5),
-                       np.array((1.5, 2.5)))),
-            'fail': ((_, ValueError) for _ in ('fail', ('a', 1), (1, 2, 3)))
+            "validator": _listify_validator(validate_float, n_items=2),
+            "success": (
+                (_, [1.5, 2.5])
+                for _ in (
+                    "1.5, 2.5",
+                    [1.5, 2.5],
+                    [1.5, 2.5],
+                    (1.5, 2.5),
+                    np.array((1.5, 2.5)),
+                )
+            ),
+            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
         },
         {
-            'validator':
-            _listify_validator(validate_int, n_items=2),
-            'success':
-            ((_, [1, 2])
-             for _ in ('1, 2', [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))),
-            'fail': ((_, ValueError) for _ in ('fail', ('a', 1), (1, 2, 3)))
+            "validator": _listify_validator(validate_int, n_items=2),
+            "success": (
+                (_, [1, 2])
+                for _ in ("1, 2", [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))
+            ),
+            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
         },
         {
-            'validator': validate_bool_or_none,
-            'success': ((None, None), (True, True), (False, False)),
-            'fail': (('A', ValueError), (1, ValueError)),
+            "validator": validate_bool_or_none,
+            "success": ((None, None), (True, True), (False, False)),
+            "fail": (("A", ValueError), (1, ValueError)),
         },
         {
-            'validator': validate_int_or_none,
-            'success': ((None, None), ),
-            'fail': (),
+            "validator": validate_int_or_none,
+            "success": ((None, None),),
+            "fail": (),
         },
         {
-            'validator': validate_int_positive_or_none,
-            'success': ((None, None), ),
-            'fail': (),
+            "validator": validate_int_positive_or_none,
+            "success": ((None, None),),
+            "fail": (),
         },
         {
-            'validator':
-            validate_path,
-            'success': (
-                ('a/b/c', Path.cwd() / 'a' / 'b' / 'c'),
-                ('/a/b/c/', Path('/', 'a', 'b', 'c')),
-                ('~/', Path.home()),
+            "validator": validate_path,
+            "success": (
+                ("a/b/c", Path.cwd() / "a" / "b" / "c"),
+                ("/a/b/c/", Path("/", "a", "b", "c")),
+                ("~/", Path.home()),
                 (Path.home(), Path.home()),
             ),
-            'fail': (
+            "fail": (
                 (None, ValueError),
                 (123, ValueError),
                 (False, ValueError),
@@ -132,152 +140,140 @@ def generate_validator_testcases(valid):
             ),
         },
         {
-            'validator': validate_path_or_none,
-            'success': (
-                ('a/b/c', Path.cwd() / 'a' / 'b' / 'c'),
-                ('/a/b/c/', Path('/', 'a', 'b', 'c')),
-                ('~/', Path.home()),
+            "validator": validate_path_or_none,
+            "success": (
+                ("a/b/c", Path.cwd() / "a" / "b" / "c"),
+                ("/a/b/c/", Path("/", "a", "b", "c")),
+                ("~/", Path.home()),
                 (None, None),
             ),
-            'fail': (
+            "fail": (
                 (123, ValueError),
                 (False, ValueError),
                 ([], ValueError),
             ),
         },
         {
-            'validator':
-            validate_rootpath,
-            'success': (
+            "validator": validate_rootpath,
+            "success": (
                 # Test a single path
-                ({
-                    'default': '/a'
-                }, {
-                    'default': [Path('/a')]
-                }),
-                ({
-                    'default': Path('/a')
-                }, {
-                    'default': [Path('/a')]
-                }),
+                ({"default": "/a"}, {"default": [Path("/a")]}),
+                ({"default": Path("/a")}, {"default": [Path("/a")]}),
                 # Test a list of paths
-                ({
-                    'CMIP6': ['/a', '/b']
-                }, {
-                    'CMIP6': [Path('/a'), Path('/b')]
-                }),
-                ({
-                    'CMIP6': [Path('/a'), Path('/b')]
-                }, {
-                    'CMIP6': [Path('/a'), Path('/b')]
-                }),
+                ({"CMIP6": ["/a", "/b"]}, {"CMIP6": [Path("/a"), Path("/b")]}),
+                (
+                    {"CMIP6": [Path("/a"), Path("/b")]},
+                    {"CMIP6": [Path("/a"), Path("/b")]},
+                ),
                 # Test a dict of paths
                 (
                     {
-                        'CMIP6': {
-                            '/a': 'DKRZ',
-                            '/b': 'ESGF',
+                        "CMIP6": {
+                            "/a": "DKRZ",
+                            "/b": "ESGF",
                         },
                     },
                     {
-                        'CMIP6': {
-                            Path('/a'): 'DKRZ',
-                            Path('/b'): 'ESGF',
+                        "CMIP6": {
+                            Path("/a"): "DKRZ",
+                            Path("/b"): "ESGF",
                         },
                     },
-                )),
-            'fail': (),
+                ),
+            ),
+            "fail": (),
         },
         {
-            'validator': validate_positive,
-            'success': (
+            "validator": validate_positive,
+            "success": (
                 (0.1, 0.1),
                 (1, 1),
                 (1.5, 1.5),
             ),
-            'fail': (
+            "fail": (
                 (0, ValueError),
                 (-1, ValueError),
-                ('fail', TypeError),
+                ("fail", TypeError),
             ),
         },
         {
-            'validator':
-            _listify_validator(validate_string),
-            'success': (
-                ('', []),
-                ('a,b', ['a', 'b']),
-                ('abc', ['abc']),
-                ('abc, ', ['abc']),
-                ('abc, ,', ['abc']),
-                (['a', 'b'], ['a', 'b']),
-                (('a', 'b'), ['a', 'b']),
-                (iter(['a', 'b']), ['a', 'b']),
-                (np.array(['a', 'b']), ['a', 'b']),
-                ((1, 2), ['1', '2']),
-                (np.array([1, 2]), ['1', '2']),
+            "validator": _listify_validator(validate_string),
+            "success": (
+                ("", []),
+                ("a,b", ["a", "b"]),
+                ("abc", ["abc"]),
+                ("abc, ", ["abc"]),
+                ("abc, ,", ["abc"]),
+                (["a", "b"], ["a", "b"]),
+                (("a", "b"), ["a", "b"]),
+                (iter(["a", "b"]), ["a", "b"]),
+                (np.array(["a", "b"]), ["a", "b"]),
+                ((1, 2), ["1", "2"]),
+                (np.array([1, 2]), ["1", "2"]),
             ),
-            'fail': (
+            "fail": (
                 (set(), ValueError),
                 (1, ValueError),
-            )
-        },
-        {
-            'validator': validate_string_or_none,
-            'success': ((None, None), ),
-            'fail': (),
-        },
-        {
-            'validator': validate_search_esgf,
-            'success': (
-                ('never', 'never'),
-                ('NEVER', 'never'),
-                ('when_missing', 'when_missing'),
-                ('WhEN_MIssIng', 'when_missing'),
-                ('always', 'always'),
-                ('Always', 'always'),
             ),
-            'fail': (
+        },
+        {
+            "validator": validate_string_or_none,
+            "success": ((None, None),),
+            "fail": (),
+        },
+        {
+            "validator": validate_search_esgf,
+            "success": (
+                ("never", "never"),
+                ("NEVER", "never"),
+                ("when_missing", "when_missing"),
+                ("WhEN_MIssIng", "when_missing"),
+                ("always", "always"),
+                ("Always", "always"),
+            ),
+            "fail": (
                 (0, ValueError),
                 (3.14, ValueError),
                 (True, ValueError),
-                ('fail', ValueError),
+                ("fail", ValueError),
             ),
         },
     )
 
     for validator_dict in validation_tests:
-        validator = validator_dict['validator']
+        validator = validator_dict["validator"]
         if valid:
-            for arg, target in validator_dict['success']:
+            for arg, target in validator_dict["success"]:
                 yield validator, arg, target
         else:
-            for arg, error_type in validator_dict['fail']:
+            for arg, error_type in validator_dict["fail"]:
                 yield validator, arg, error_type
 
 
-@pytest.mark.parametrize('validator, arg, target',
-                         generate_validator_testcases(True))
+@pytest.mark.parametrize(
+    "validator, arg, target", generate_validator_testcases(True)
+)
 def test_validator_valid(validator, arg, target):
     res = validator(arg)
     assert res == target
 
 
-@pytest.mark.parametrize('validator, arg, exception_type',
-                         generate_validator_testcases(False))
+@pytest.mark.parametrize(
+    "validator, arg, exception_type", generate_validator_testcases(False)
+)
 def test_validator_invalid(validator, arg, exception_type):
     with pytest.raises(exception_type):
         validator(arg)
 
 
-@pytest.mark.parametrize('remove_version', (current_version, '0.0.1', '9.9.9'))
+@pytest.mark.parametrize("remove_version", (current_version, "0.0.1", "9.9.9"))
 def test_handle_deprecation(remove_version):
     """Test ``_handle_deprecation``."""
-    option = 'test_var'
-    deprecated_version = '2.7.0'
-    more_info = ' More information on this is not available.'
+    option = "test_var"
+    deprecated_version = "2.7.0"
+    more_info = " More information on this is not available."
 
-    if remove_version != '9.9.9':
+    if remove_version != "9.9.9":
         msg = (
             r"The configuration option or command line argument `test_var` "
             r"has been removed in ESMValCore version .* More information on "
@@ -302,32 +298,32 @@ def test_handle_deprecation(remove_version):
 def test_validate_config_developer_none():
     """Test ``validate_config_developer``."""
     path = validate_config_developer(None)
-    assert path == Path(esmvalcore.__file__).parent / 'config-developer.yml'
+    assert path == Path(esmvalcore.__file__).parent / "config-developer.yml"
 
 
 def test_validate_config_developer(tmp_path):
     """Test ``validate_config_developer``."""
     custom_table_path = (
-        Path(esmvalcore.__file__).parent / 'cmor' / 'tables' / 'custom'
+        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "custom"
     )
     cfg_dev = {
-        'custom': {'cmor_path': custom_table_path},
-        'CMIP3': {'input_dir': {'default': '/'}},
-        'CMIP5': {'input_dir': {'default': '/'}},
-        'CMIP6': {'input_dir': {'default': '/'}},
-        'CORDEX': {'input_dir': {'default': '/'}},
-        'OBS': {'input_dir': {'default': '/'}},
-        'OBS6': {'input_dir': {'default': '/'}},
-        'obs4MIPs': {'input_dir': {'default': '/'}},
-        'ana4mips': {'input_dir': {'default': '/'}},
-        'native6': {'input_dir': {'default': '/'}},
-        'EMAC': {'input_dir': {'default': '/'}},
-        'IPSLCM': {'input_dir': {'default': '/'}},
-        'ICON': {'input_dir': {'default': '/'}},
-        'CESM': {'input_dir': {'default': '/'}},
+        "custom": {"cmor_path": custom_table_path},
+        "CMIP3": {"input_dir": {"default": "/"}},
+        "CMIP5": {"input_dir": {"default": "/"}},
+        "CMIP6": {"input_dir": {"default": "/"}},
+        "CORDEX": {"input_dir": {"default": "/"}},
+        "OBS": {"input_dir": {"default": "/"}},
+        "OBS6": {"input_dir": {"default": "/"}},
+        "obs4MIPs": {"input_dir": {"default": "/"}},
+        "ana4mips": {"input_dir": {"default": "/"}},
+        "native6": {"input_dir": {"default": "/"}},
+        "EMAC": {"input_dir": {"default": "/"}},
+        "IPSLCM": {"input_dir": {"default": "/"}},
+        "ICON": {"input_dir": {"default": "/"}},
+        "CESM": {"input_dir": {"default": "/"}},
     }
-    cfg_dev_file = tmp_path / 'cfg-developer.yml'
-    with open(cfg_dev_file, mode='w', encoding='utf-8') as file:
+    cfg_dev_file = tmp_path / "cfg-developer.yml"
+    with open(cfg_dev_file, mode="w", encoding="utf-8") as file:
         yaml.safe_dump(cfg_dev, file)
 
     path = validate_config_developer(cfg_dev_file)

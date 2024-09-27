@@ -1,4 +1,5 @@
 """Fixes for ERA5."""
+
 import datetime
 import logging
 
@@ -17,58 +18,60 @@ logger = logging.getLogger(__name__)
 def get_frequency(cube):
     """Determine time frequency of input cube."""
     try:
-        time = cube.coord(axis='T')
+        time = cube.coord(axis="T")
     except iris.exceptions.CoordinateNotFoundError:
-        return 'fx'
+        return "fx"
 
-    time.convert_units('days since 1850-1-1 00:00:00.0')
+    time.convert_units("days since 1850-1-1 00:00:00.0")
     if len(time.points) == 1:
-        if cube.long_name != 'Geopotential':
-            raise ValueError('Unable to infer frequency of cube '
-                             f'with length 1 time dimension: {cube}')
-        return 'fx'
+        if cube.long_name != "Geopotential":
+            raise ValueError(
+                "Unable to infer frequency of cube "
+                f"with length 1 time dimension: {cube}"
+            )
+        return "fx"
 
     interval = time.points[1] - time.points[0]
     if interval - 1 / 24 < 1e-4:
-        return 'hourly'
+        return "hourly"
 
-    return 'monthly'
+    return "monthly"
 
 
 def fix_hourly_time_coordinate(cube):
     """Shift aggregated variables 30 minutes back in time."""
-    if get_frequency(cube) == 'hourly':
-        time = cube.coord(axis='T')
+    if get_frequency(cube) == "hourly":
+        time = cube.coord(axis="T")
         time.points = time.points - 1 / 48
     return cube
 
 
 def fix_accumulated_units(cube):
     """Convert accumulations to fluxes."""
-    if get_frequency(cube) == 'monthly':
-        cube.units = cube.units * 'd-1'
-    elif get_frequency(cube) == 'hourly':
-        cube.units = cube.units * 'h-1'
+    if get_frequency(cube) == "monthly":
+        cube.units = cube.units * "d-1"
+    elif get_frequency(cube) == "hourly":
+        cube.units = cube.units * "h-1"
     return cube
 
 
 def multiply_with_density(cube, density=1000):
     """Convert precipitatin from m to kg/m2."""
     cube.data = cube.core_data() * density
-    cube.units *= 'kg m**-3'
+    cube.units *= "kg m**-3"
     return cube
 
 
 def remove_time_coordinate(cube):
     """Remove time coordinate for invariant parameters."""
     cube = cube[0]
-    cube.remove_coord('time')
+    cube.remove_coord("time")
     return cube
 
 
 def divide_by_gravity(cube):
     """Convert geopotential to height."""
-    cube.units = cube.units / 'm s-2'
+    cube.units = cube.units / "m s-2"
     cube.data = cube.core_data() / 9.80665
     return cube
 
@@ -80,8 +83,8 @@ class Clt(Fix):
         """Fix metadata."""
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
-            cube.units = '%'
-            cube.data = cube.core_data() * 100.
+            cube.units = "%"
+            cube.data = cube.core_data() * 100.0
 
         return cubes
 
@@ -93,8 +96,8 @@ class Cl(Fix):
         """Fix metadata."""
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
-            cube.units = '%'
-            cube.data = cube.core_data() * 100.
+            cube.units = "%"
+            cube.data = cube.core_data() * 100.0
 
         return cubes
 
@@ -106,7 +109,7 @@ class Evspsbl(Fix):
         """Fix metadata."""
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
-            cube.units = 'm'
+            cube.units = "m"
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -123,7 +126,7 @@ class Evspsblpot(Fix):
         """Fix metadata."""
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
-            cube.units = 'm'
+            cube.units = "m"
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -179,7 +182,7 @@ class Prsn(Fix):
         """Fix metadata."""
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
-            cube.units = 'm'
+            cube.units = "m"
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -206,7 +209,7 @@ class Rlds(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -219,7 +222,7 @@ class Rlns(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -232,7 +235,7 @@ class Rlus(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'up'
+            cube.attributes["positive"] = "up"
 
         return cubes
 
@@ -244,7 +247,7 @@ class Rls(Fix):
         """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -257,7 +260,7 @@ class Rsds(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -270,7 +273,7 @@ class Rsns(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -283,7 +286,7 @@ class Rsus(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'up'
+            cube.attributes["positive"] = "up"
 
         return cubes
 
@@ -296,7 +299,7 @@ class Rsdt(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -309,7 +312,7 @@ class Rss(Fix):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
+            cube.attributes["positive"] = "down"
 
         return cubes
 
@@ -352,17 +355,17 @@ class AllVars(Fix):
         # Fix coordinate increasing direction
         slices = []
         for coord in cube.coords():
-            if coord.var_name in ('latitude', 'pressure_level'):
+            if coord.var_name in ("latitude", "pressure_level"):
                 slices.append(slice(None, None, -1))
             else:
                 slices.append(slice(None))
         cube = cube[tuple(slices)]
 
         # Add scalar height coordinates
-        if 'height2m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 2.)
-        if 'height10m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 10.)
+        if "height2m" in self.vardef.dimensions:
+            add_scalar_height_coord(cube, 2.0)
+        if "height10m" in self.vardef.dimensions:
+            add_scalar_height_coord(cube, 10.0)
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
@@ -372,18 +375,21 @@ class AllVars(Fix):
             # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
-                coord_def = CMOR_TABLES['CMIP6'].coords['plev19']
+                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]
             coord = cube.coord(axis=axis)
-            if axis == 'T':
-                coord.convert_units('days since 1850-1-1 00:00:00.0')
-            if axis == 'Z':
+            if axis == "T":
+                coord.convert_units("days since 1850-1-1 00:00:00.0")
+            if axis == "Z":
                 coord.convert_units(coord_def.units)
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
-            coord.points = coord.core_points().astype('float64')
-            if (not coord.has_bounds() and len(coord.core_points()) > 1
-                    and coord_def.must_have_bounds == "yes"):
+            coord.points = coord.core_points().astype("float64")
+            if (
+                not coord.has_bounds()
+                and len(coord.core_points()) > 1
+                and coord_def.must_have_bounds == "yes"
+            ):
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
@@ -393,8 +399,8 @@ class AllVars(Fix):
     @staticmethod
     def _fix_monthly_time_coord(cube):
         """Set the monthly time coordinates to the middle of the month."""
-        if get_frequency(cube) == 'monthly':
-            coord = cube.coord(axis='T')
+        if get_frequency(cube) == "monthly":
+            coord = cube.coord(axis="T")
             end = []
             for cell in coord.cells():
                 month = cell.point.month + 1
@@ -424,11 +430,12 @@ class AllVars(Fix):
             cube = self._fix_coordinates(cube)
             self._fix_units(cube)
 
-            cube.data = cube.core_data().astype('float32')
+            cube.data = cube.core_data().astype("float32")
             year = datetime.datetime.now().year
-            cube.attributes['comment'] = (
-                'Contains modified Copernicus Climate Change '
-                f'Service Information {year}')
+            cube.attributes["comment"] = (
+                "Contains modified Copernicus Climate Change "
+                f"Service Information {year}"
+            )
 
             fixed_cubes.append(cube)
 

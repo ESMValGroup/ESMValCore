@@ -1,4 +1,5 @@
 """Diagnostics and tags management."""
+
 import logging
 import os
 from pathlib import Path
@@ -32,22 +33,22 @@ class Diagnostics:
     @property
     def recipes(self):
         """Return the location of the recipes."""
-        return self.path / 'recipes'
+        return self.path / "recipes"
 
     @property
     def references(self):
         """Return location of the references (bibtex files)."""
-        return self.path / 'references'
+        return self.path / "references"
 
     @property
     def tags_config(self):
         """Return location of the tags config."""
-        return self.path / 'config-references.yml'
+        return self.path / "config-references.yml"
 
     @property
     def scripts(self):
         """Return location of diagnostic scripts."""
-        return self.path / 'diag_scripts'
+        return self.path / "diag_scripts"
 
     def load_tags(self):
         """Load the tags config into an instance of ``TagsManager``."""
@@ -67,7 +68,7 @@ class Diagnostics:
                 path = Path.cwd()
             else:
                 path = Path(esmvaltool.__file__).absolute().parent
-        logger.debug('Using diagnostics from %s', path)
+        logger.debug("Using diagnostics from %s", path)
         return cls(path)
 
 
@@ -83,7 +84,7 @@ class TagsManager(dict):
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
             logger.debug("Loading tags from %s", filename)
-            with open(filename, 'r', encoding='utf-8') as file:
+            with open(filename, "r", encoding="utf-8") as file:
                 tags = cls(yaml.safe_load(file))
                 tags.source_file = filename
                 return tags
@@ -132,13 +133,14 @@ class TagsManager(dict):
             Name of the tag
         """
         if section not in self:
-            postfix = f' in {self.source_file}' if self.source_file else ''
+            postfix = f" in {self.source_file}" if self.source_file else ""
             raise ValueError(f"Section '{section}' does not exist{postfix}")
 
         if tag not in self[section]:
-            postfix = f' of {self.source_file}' if self.source_file else ''
+            postfix = f" of {self.source_file}" if self.source_file else ""
             raise ValueError(
-                f"Tag '{tag}' does not exist in section '{section}'{postfix}")
+                f"Tag '{tag}' does not exist in section '{section}'{postfix}"
+            )
 
         return self[section][tag]
 

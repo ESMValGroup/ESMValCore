@@ -1,4 +1,5 @@
 """Test the `Recipe` class implementing the `esmvaltool recipes` command."""
+
 import textwrap
 
 import esmvalcore.config._diagnostics
@@ -8,15 +9,15 @@ from esmvalcore._main import Recipes
 def test_list(mocker, tmp_path, capsys):
     """Test the command `esmvaltool recipes list`."""
     recipe_dir = tmp_path
-    recipe1 = recipe_dir / 'recipe_test1.yml'
-    recipe2 = recipe_dir / 'subdir' / 'recipe_test2.yml'
+    recipe1 = recipe_dir / "recipe_test1.yml"
+    recipe2 = recipe_dir / "subdir" / "recipe_test2.yml"
     recipe1.touch()
     recipe2.parent.mkdir()
     recipe2.touch()
 
     diagnostics = mocker.patch.object(
         esmvalcore.config._diagnostics,
-        'DIAGNOSTICS',
+        "DIAGNOSTICS",
         create_autospec=True,
     )
     diagnostics.recipes = recipe_dir
@@ -38,12 +39,12 @@ def test_list(mocker, tmp_path, capsys):
 def test_show(mocker, tmp_path, capsys):
     """Test the command `esmvaltool recipes list`."""
     recipe_dir = tmp_path
-    recipe = recipe_dir / 'recipe_test.yml'
+    recipe = recipe_dir / "recipe_test.yml"
     recipe.write_text("example")
 
     diagnostics = mocker.patch.object(
         esmvalcore.config._diagnostics,
-        'DIAGNOSTICS',
+        "DIAGNOSTICS",
         create_autospec=True,
     )
     diagnostics.recipes = recipe_dir

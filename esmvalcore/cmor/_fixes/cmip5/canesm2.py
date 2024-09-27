@@ -1,7 +1,7 @@
 """Fixes for CanESM2 model."""
+
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
-
 
 Cl = ClFixHybridPressureCoord
 

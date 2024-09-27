@@ -1,4 +1,5 @@
 """Fixes for EC-Earth3 model."""
+
 import cf_units
 import numpy as np
 
@@ -12,17 +13,19 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            if cube.attributes.get('variant_label', '') == 'r3i1p1f1':
+            if cube.attributes.get("variant_label", "") == "r3i1p1f1":
                 round_coordinates(
                     [cube],
                     decimals=3,
-                    coord_names=['latitude'],
+                    coord_names=["latitude"],
                 )
-                if (cube.attributes.get('experiment_id', '') == 'historical'
-                        and cube.coords('time')):
-                    time_coord = cube.coord('time')
-                    time_coord.units = cf_units.Unit(time_coord.units.origin,
-                                                     'proleptic_gregorian')
+                if cube.attributes.get(
+                    "experiment_id", ""
+                ) == "historical" and cube.coords("time"):
+                    time_coord = cube.coord("time")
+                    time_coord.units = cf_units.Unit(
+                        time_coord.units.origin, "proleptic_gregorian"
+                    )
         return cubes
 
 
@@ -43,7 +46,7 @@ class Siconca(Fix):
         -------
         iris.cube.Cube
         """
-        cube.data = cube.core_data() * 100.
+        cube.data = cube.core_data() * 100.0
         return cube
 
 
@@ -67,7 +70,7 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            latitude = cube.coord('latitude')
+            latitude = cube.coord("latitude")
             latitude.points = np.round(latitude.core_points(), 8)
             latitude.bounds = np.round(latitude.core_bounds(), 8)
 
