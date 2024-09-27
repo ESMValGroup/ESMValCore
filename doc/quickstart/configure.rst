@@ -4,6 +4,8 @@
 Configuration
 *************
 
+.. _config_overview:
+
 Overview
 ========
 
@@ -17,11 +19,12 @@ nested dictionary for its configuration.
   Its main aim is to simplify the configuration by moving from many different
   configuration files for individual components to one configuration object
   that consists of a single nested dictionary (similar to `Dask's configuration
-  <https://docs.dask.org/en/stable/configuration.html>`__).  This change will
-  not be implemented in one large pull request but rather in a step-by-step
-  procedure.  Thus, the configuration might appear inconsistent until this
-  redesign is finished.  A detailed plan for this new configuration is outlined
-  in :issue:`2371`.
+  <https://docs.dask.org/en/stable/configuration.html>`__).
+  This change will not be implemented in one large pull request but rather in a
+  step-by-step procedure.
+  Thus, the configuration might appear inconsistent until this redesign is
+  finished.
+  A detailed plan for this new configuration is outlined in :issue:`2371`.
 
 
 .. _config_for_cli:
@@ -32,6 +35,8 @@ Specify configuration for ``esmvaltool`` command line tool
 When running recipes via the :ref:`command line <running>`, configuration
 options can be specified via YAML files and command line arguments.
 
+
+.. _config_yaml_files:
 
 YAML files
 ----------
@@ -597,9 +602,6 @@ out by CMOR and DRS. For a detailed description of these standards and their
 adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
 relate these standards to the data retrieval mechanism of the ESMValCore.
 
-By default, esmvaltool looks for it in the home directory,
-inside the '.esmvaltool' folder.
-
 Users can get a copy of this file with default values by running
 
 .. code-block:: bash
@@ -613,6 +615,14 @@ If the option ``--path`` is omitted, the file will be created in
 
   Remember to change the configuration option ``config_developer_file`` if you
   want to use a custom config developer file.
+
+.. warning::
+
+  For now, make sure that the custom ``config-developer.yml`` is **not** saved
+  in the ESMValTool/Core configuration directories (see
+  :ref:`config_yaml_files` for details).
+  This will change in the future due to the :ref:`redesign of ESMValTool/Core's
+  configuration <config_overview>`.
 
 Example of the CMIP6 project configuration:
 
