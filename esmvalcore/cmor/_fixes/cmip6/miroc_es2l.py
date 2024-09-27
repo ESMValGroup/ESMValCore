@@ -1,6 +1,6 @@
 """Fixes for MIROC-ES2L model."""
-from ..common import ClFixHybridPressureCoord
 
+from ..common import ClFixHybridPressureCoord
 
 Cl = ClFixHybridPressureCoord
 

@@ -101,7 +101,7 @@ Please keep the following considerations in mind when programming:
   code.
 - If you find yourself copy-pasting a piece of code and making minor changes
   to every copy, instead put the repeated bit of code in a function that you can
-  re-use, and provide the changed bits as function arguments.
+  reuse, and provide the changed bits as function arguments.
 - Be careful when changing existing unit tests to make your new feature work.
   You might be breaking existing features if you have to change existing tests.
 
@@ -210,6 +210,14 @@ This includes checks for invalid syntax and formatting errors.
 automatically just before you commit your code.
 It knows knows which tool to run for each filetype, and therefore provides
 a convenient way to check your code.
+Install the pre-commit hooks by running
+
+.. code-block:: bash
+
+    pre-commit install
+
+to make sure your code is formatted correctly and does not contain mistakes
+whenever you commit some changes.
 
 Python
 ~~~~~~
@@ -229,20 +237,22 @@ the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://pr
 
    prospector esmvalcore/preprocessor/_regrid.py
 
-In addition to prospector, we use `flake8 <https://flake8.pycqa.org/en/latest/>`_
-to automatically check for bugs and formatting mistakes and
+In addition to prospector, we use `ruff <https://docs.astral.sh/ruff/>`_
+to automatically format the code and to check for certain bugs and
 `mypy <https://mypy.readthedocs.io>`_ for checking that
 `type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
 correct.
 Note that `type hints`_ are completely optional, but if you do choose to add
 them, they should be correct.
+Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
 is checked in two ways:
 
-#. As part of the unit tests, flake8_ and mypy_ are run by
-   `CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_,
-   see the section on Tests_ for more information.
+#. A check that the code is formatted using the pre-commit hooks and does
+   not contain any mistakes that can be found by analyzing the code without
+   running it, is performed by
+   `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
 #. `Codacy <https://app.codacy.com/gh/ESMValGroup/ESMValCore/pullRequests>`_
    is a service that runs prospector (and other code quality tools) on changed
    files and reports the results.
@@ -259,42 +269,25 @@ If you suspect prospector or Codacy may be wrong, please ask the
 Note that running prospector locally will give you quicker and sometimes more
 accurate results than waiting for Codacy.
 
-Most formatting issues in Python code can be fixed automatically by
-running the commands
+Formatting issues in Python code can be fixed automatically by running the
+command
 
 ::
 
-   isort some_file.py
-
-to sort the imports in `the standard way <https://www.python.org/dev/peps/pep-0008/#imports>`__
-using `isort <https://pycqa.github.io/isort/>`__ and
-
-::
-
-   yapf -i some_file.py
-
-to add/remove whitespace as required by the standard using `yapf <https://github.com/google/yapf>`__,
-
-::
-
-   docformatter -i some_file.py
-
-to run `docformatter <https://github.com/myint/docformatter>`__ which helps
-formatting the docstrings (such as line length, spaces).
+   pre-commit run --all
 
 YAML
 ~~~~
 
-Please use `yamllint <https://yamllint.readthedocs.io>`_ to check that your
-YAML files do not contain mistakes.
-``yamllint`` checks for valid syntax, common mistakes like key repetition and
-cosmetic problems such as line length, trailing spaces, wrong indentation, etc.
+We use `yamllint <https://yamllint.readthedocs.io>`_ to check that YAML files
+do not contain mistakes. This is automatically run by pre-commit.
 
 Any text file
 ~~~~~~~~~~~~~
 
 A generic tool to check for common spelling mistakes is
 `codespell <https://pypi.org/project/codespell/>`__.
+This is automatically run by pre-commit.
 
 .. _documentation:
 
@@ -379,13 +372,13 @@ the individual checks.
 To build the documentation on your own computer, go to the directory where the
 repository was cloned and run
 
-::
+.. code-block:: bash
 
    sphinx-build doc doc/build
 
 or
 
-::
+.. code-block:: bash
 
    sphinx-build -Ea doc doc/build
 
@@ -393,7 +386,8 @@ to build it from scratch.
 
 Make sure that your newly added documentation builds without warnings or
 errors and looks correctly formatted.
-CircleCI_ will build the documentation with the command:
+`CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_
+will build the documentation with the command:
 
 .. code-block:: bash
 
@@ -720,7 +714,7 @@ If the Codacy check keeps failing, please run prospector locally.
 If necessary, ask the pull request author to do the same and to address the
 reported issues.
 See the section on code_quality_ for more information.
-Never merge a pull request with failing CircleCI or readthedocs checks.
+Never merge a pull request with failing pre-commit, CircleCI, or readthedocs checks.
 
 
 .. _how-to-make-a-release:
@@ -743,15 +737,15 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-The release of ESMValCore is tied to the release of ESMValTool. 
+The release of ESMValCore is tied to the release of ESMValTool.
 The detailed steps can be found in the ESMValTool
 :ref:`documentation <esmvaltool:release_steps>`.
-To start the procedure, ESMValCore gets released as a 
+To start the procedure, ESMValCore gets released as a
 release candidate to test the recipes in ESMValTool. If bugs are found
-during the testing phase of the release candidate, make as many release 
-candidates for ESMValCore as needed in order to fix them. 
+during the testing phase of the release candidate, make as many release
+candidates for ESMValCore as needed in order to fix them.
 
-To make a new release of the package, be it a release candidate or the final release, 
+To make a new release of the package, be it a release candidate or the final release,
 follow these steps:
 
 1. Check that all tests and builds work
@@ -795,13 +789,13 @@ Use the script
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
-Open a discussion to allow members of the development team to nominate pull 
-requests as highlights. Add the most voted pull requests as highlights at the 
-beginning of changelog. After the highlights section, list any backward 
-incompatible changes that the release may include. The 
+Open a discussion to allow members of the development team to nominate pull
+requests as highlights. Add the most voted pull requests as highlights at the
+beginning of changelog. After the highlights section, list any backward
+incompatible changes that the release may include. The
 :ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
-lists the information that should be provided by the developer of any backward 
-incompatible change. Make sure to also list any deprecations that the release 
+lists the information that should be provided by the developer of any backward
+incompatible change. Make sure to also list any deprecations that the release
 may include, as well as a brief description on how to upgrade a deprecated feature.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
