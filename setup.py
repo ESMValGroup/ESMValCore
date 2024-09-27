@@ -39,7 +39,7 @@ REQUIREMENTS = {
         "fire",
         "geopy",
         "humanfriendly",
-        "iris-grib",
+        "iris-grib>=0.20.0",  # iris-grib/issues/520
         "isodate",
         "jinja2",
         "nc-time-axis",  # needed by iris.plot

@@ -20,7 +20,7 @@ dependencies:
   - humanfriendly
   - iris >=3.10.0
   - iris-esmf-regrid >=0.11.0
-  - iris-grib
+  - iris-grib >=0.20.0  # github.com/SciTools/iris-grib/issues/520
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
