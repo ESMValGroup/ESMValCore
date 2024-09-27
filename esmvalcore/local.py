@@ -637,7 +637,7 @@ def find_files(
     -------
     list[LocalFile]
         The files that were found.
-    """  # pylint: disable=line-too-long
+    """
     facets = dict(facets)
     if 'original_short_name' in facets:
         facets['short_name'] = facets['original_short_name']

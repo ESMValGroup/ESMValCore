@@ -850,10 +850,11 @@ def test_awhea_fix(cubes_2d):
     cube = fixed_cubes[0]
     assert cube.var_name == 'awhea'
     assert cube.standard_name is None
-    assert cube.long_name == ('Global Mean Net Surface Heat Flux Over Open '
-                              'Water')
-    assert cube.units == 'W m-2'
-    assert 'positive' not in cube.attributes
+    assert cube.long_name == (
+        "Global Mean Net Surface Heat Flux Over Open Water"
+    )
+    assert cube.units == "W m-2"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[1.0]]])
 
@@ -922,12 +923,13 @@ def test_clwvi_fix(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'clwvi'
-    assert cube.standard_name == ('atmosphere_mass_content_of_cloud_'
-                                  'condensed_water')
-    assert cube.long_name == 'Condensed Water Path'
-    assert cube.units == 'kg m-2'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "clwvi"
+    assert cube.standard_name == (
+        "atmosphere_mass_content_of_cloud_condensed_water"
+    )
+    assert cube.long_name == "Condensed Water Path"
+    assert cube.units == "kg m-2"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[2.0]]])
 
@@ -1005,12 +1007,13 @@ def test_evspsbl_fix(cubes_2d):
     fix = get_fix('Amon', 'evspsbl')
     cube = fix.fix_data(cube)
 
-    assert cube.var_name == 'evspsbl'
-    assert cube.standard_name == 'water_evapotranspiration_flux'
-    assert cube.long_name == ('Evaporation Including Sublimation and '
-                              'Transpiration')
-    assert cube.units == 'kg m-2 s-1'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "evspsbl"
+    assert cube.standard_name == "water_evapotranspiration_flux"
+    assert cube.long_name == (
+        "Evaporation Including Sublimation and Transpiration"
+    )
+    assert cube.units == "kg m-2 s-1"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[-1.0]]])
 
@@ -1107,12 +1110,13 @@ def test_od550aer_fix(cubes_3d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'od550aer'
-    assert cube.standard_name == ('atmosphere_optical_thickness_due_to_'
-                                  'ambient_aerosol_particles')
-    assert cube.long_name == 'Ambient Aerosol Optical Thickness at 550nm'
-    assert cube.units == '1'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "od550aer"
+    assert cube.standard_name == (
+        "atmosphere_optical_thickness_due_to_ambient_aerosol_particles"
+    )
+    assert cube.long_name == "Ambient Aerosol Optical Thickness at 550nm"
+    assert cube.units == "1"
+    assert "positive" not in cube.attributes
 
     check_lambda550nm(cube)
 
@@ -1389,12 +1393,13 @@ def test_rlutcs_fix(cubes_2d):
     fix = get_fix('Amon', 'rlutcs')
     cube = fix.fix_data(cube)
 
-    assert cube.var_name == 'rlutcs'
-    assert cube.standard_name == ('toa_outgoing_longwave_flux_assuming_clear_'
-                                  'sky')
-    assert cube.long_name == 'TOA Outgoing Clear-Sky Longwave Radiation'
-    assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'up'
+    assert cube.var_name == "rlutcs"
+    assert cube.standard_name == (
+        "toa_outgoing_longwave_flux_assuming_clear_sky"
+    )
+    assert cube.long_name == "TOA Outgoing Clear-Sky Longwave Radiation"
+    assert cube.units == "W m-2"
+    assert cube.attributes["positive"] == "up"
 
     np.testing.assert_allclose(cube.data, [[[-1.0]]])
 
@@ -1524,12 +1529,13 @@ def test_rsutcs_fix(cubes_2d):
     fix = get_fix('Amon', 'rsutcs')
     cube = fix.fix_data(cube)
 
-    assert cube.var_name == 'rsutcs'
-    assert cube.standard_name == ('toa_outgoing_shortwave_flux_assuming_clear_'
-                                  'sky')
-    assert cube.long_name == 'TOA Outgoing Clear-Sky Shortwave Radiation'
-    assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'up'
+    assert cube.var_name == "rsutcs"
+    assert cube.standard_name == (
+        "toa_outgoing_shortwave_flux_assuming_clear_sky"
+    )
+    assert cube.long_name == "TOA Outgoing Clear-Sky Shortwave Radiation"
+    assert cube.units == "W m-2"
+    assert cube.attributes["positive"] == "up"
 
     np.testing.assert_allclose(cube.data, [[[-1.0]]])
 
@@ -1550,12 +1556,13 @@ def test_rtmt_fix(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'rtmt'
-    assert cube.standard_name == ('net_downward_radiative_flux_at_top_of_'
-                                  'atmosphere_model')
-    assert cube.long_name == 'Net Downward Radiative Flux at Top of Model'
-    assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'down'
+    assert cube.var_name == "rtmt"
+    assert cube.standard_name == (
+        "net_downward_radiative_flux_at_top_of_atmosphere_model"
+    )
+    assert cube.long_name == "Net Downward Radiative Flux at Top of Model"
+    assert cube.units == "W m-2"
+    assert cube.attributes["positive"] == "down"
 
     np.testing.assert_allclose(cube.data, [[[2.0]]])
 
@@ -1835,12 +1842,13 @@ def test_toz_fix(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'toz'
-    assert cube.standard_name == ('equivalent_thickness_at_stp_of_atmosphere_'
-                                  'ozone_content')
-    assert cube.long_name == 'Total Column Ozone'
-    assert cube.units == 'm'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "toz"
+    assert cube.standard_name == (
+        "equivalent_thickness_at_stp_of_atmosphere_ozone_content"
+    )
+    assert cube.long_name == "Total Column Ozone"
+    assert cube.units == "m"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[1e-5]]])
 
@@ -1946,10 +1954,11 @@ def test_MP_BC_tot_fix(cubes_1d):  # noqa: N802
     cube = fixed_cubes[0]
     assert cube.var_name == 'MP_BC_tot'
     assert cube.standard_name is None
-    assert cube.long_name == ('total mass of black carbon (sum of all aerosol '
-                              'modes)')
-    assert cube.units == 'kg'
-    assert 'positive' not in cube.attributes
+    assert cube.long_name == (
+        "total mass of black carbon (sum of all aerosol modes)"
+    )
+    assert cube.units == "kg"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [4.0])
 
@@ -2097,10 +2106,11 @@ def test_MP_DU_tot_fix(cubes_1d):  # noqa: N802
     cube = fixed_cubes[0]
     assert cube.var_name == 'MP_DU_tot'
     assert cube.standard_name is None
-    assert cube.long_name == ('total mass of mineral dust (sum of all aerosol '
-                              'modes)')
-    assert cube.units == 'kg'
-    assert 'positive' not in cube.attributes
+    assert cube.long_name == (
+        "total mass of mineral dust (sum of all aerosol modes)"
+    )
+    assert cube.units == "kg"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [4.0])
 
@@ -2344,10 +2354,11 @@ def test_MP_SO4mm_tot_fix(cubes_1d):  # noqa: N802
     cube = fixed_cubes[0]
     assert cube.var_name == 'MP_SO4mm_tot'
     assert cube.standard_name is None
-    assert cube.long_name == ('total mass of aerosol sulfate (sum of all '
-                              'aerosol modes)')
-    assert cube.units == 'kg'
-    assert 'positive' not in cube.attributes
+    assert cube.long_name == (
+        "total mass of aerosol sulfate (sum of all aerosol modes)"
+    )
+    assert cube.units == "kg"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [4.0])
 
@@ -2373,10 +2384,11 @@ def test_MP_SS_tot_fix(cubes_1d):  # noqa: N802
     cube = fixed_cubes[0]
     assert cube.var_name == 'MP_SS_tot'
     assert cube.standard_name is None
-    assert cube.long_name == ('total mass of sea salt (sum of all aerosol '
-                              'modes)')
-    assert cube.units == 'kg'
-    assert 'positive' not in cube.attributes
+    assert cube.long_name == (
+        "total mass of sea salt (sum of all aerosol modes)"
+    )
+    assert cube.units == "kg"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [3.0])
 

@@ -157,8 +157,9 @@ def accumulate_coordinate(
         coord = cube.coord(coordinate)
     except iris.exceptions.CoordinateNotFoundError as err:
         raise ValueError(
-            "Requested coordinate %s not found in cube %s",
-            coordinate, cube.summary(shorten=True)) from err
+            f"Requested coordinate {coordinate} not found in cube "
+            f"{cube.summary(shorten=True)}",
+        ) from err
 
     if coord.ndim > 1:
         raise NotImplementedError(

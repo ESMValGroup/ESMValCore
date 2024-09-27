@@ -25,7 +25,8 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
-"""  # noqa: line-too-long pylint: disable=line-too-long
+"""
+
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
@@ -283,13 +284,16 @@ class Recipes():
 
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
-        configure_logging(console_log_level='info')
+        from .exceptions import RecipeError
+
+        configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
-                f'Recipe {recipe} not found. To list all available recipes, '
-                'execute "esmvaltool list"')
-        logger.info('Copying installed recipe to the current folder...')
+            raise RecipeError(
+                f"Recipe {recipe} not found. To list all available recipes, "
+                'execute "esmvaltool list"'
+            )
+        logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
         logger.info('Recipe %s successfully copied', recipe)
 
@@ -306,13 +310,16 @@ class Recipes():
         """
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
-        configure_logging(console_log_level='info')
+        from .exceptions import RecipeError
+
+        configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
-                f'Recipe {recipe} not found. To list all available recipes, '
-                'execute "esmvaltool list"')
-        msg = f'Recipe {recipe}'
+            raise RecipeError(
+                f"Recipe {recipe} not found. To list all available recipes, "
+                'execute "esmvaltool list"'
+            )
+        msg = f"Recipe {recipe}"
         logger.info(msg)
         logger.info('=' * len(msg))
         print(installed_recipe.read_text(encoding='utf-8'))
@@ -571,8 +578,6 @@ class ESMValTool():
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-    import sys
-
     from .exceptions import RecipeError
 
     # Workaround to avoid using more for the output
