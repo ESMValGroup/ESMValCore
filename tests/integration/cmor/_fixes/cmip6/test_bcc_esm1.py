@@ -1,4 +1,5 @@
 """Test fixes for BCC-ESM1."""
+
 from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import (
     Cl,
     Cli,
@@ -17,7 +18,7 @@ from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -28,7 +29,7 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'cli')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
 
 
@@ -39,7 +40,7 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'clw')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Amon", "clw")
     assert fix == [Clw(None), GenericFix(None)]
 
 
@@ -50,7 +51,7 @@ def test_clw_fix():
 
 def test_get_siconc_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'SImon', 'siconc')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "SImon", "siconc")
     assert fix == [Siconc(None), GenericFix(None)]
 
 
@@ -61,7 +62,7 @@ def test_siconc_fix():
 
 def test_get_so_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'so')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Omon", "so")
     assert fix == [So(None), GenericFix(None)]
 
 
@@ -72,7 +73,7 @@ def test_so_fix():
 
 def test_get_sos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'sos')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Omon", "sos")
     assert fix == [Sos(None), GenericFix(None)]
 
 
@@ -83,7 +84,7 @@ def test_sos_fix():
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'tos')
+    fix = Fix.get_fixes("CMIP6", "BCC-ESM1", "Omon", "tos")
     assert fix == [Tos(None), GenericFix(None)]
 
 

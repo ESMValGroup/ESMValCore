@@ -1,4 +1,5 @@
 """Fixes for EC-Earth model."""
+
 import iris
 import numpy as np
 from dask import array as da
@@ -90,11 +91,11 @@ class Tas(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            if not cube.coords(var_name='height'):
+            if not cube.coords(var_name="height"):
                 add_scalar_height_coord(cube)
 
-            if cube.coord('time').long_name is None:
-                cube.coord('time').long_name = 'time'
+            if cube.coord("time").long_name is None:
+                cube.coord("time").long_name = "time"
 
         return cubes
 
@@ -114,16 +115,18 @@ class Areacello(Fix):
         -------
         iris.cube.CubeList
         """
-        areacello = cubes.extract('Areas of grid cell')[0]
-        lat = cubes.extract('latitude')[0]
-        lon = cubes.extract('longitude')[0]
+        areacello = cubes.extract("Areas of grid cell")[0]
+        lat = cubes.extract("latitude")[0]
+        lon = cubes.extract("longitude")[0]
 
         areacello.add_aux_coord(cube_to_aux_coord(lat), (0, 1))
         areacello.add_aux_coord(cube_to_aux_coord(lon), (0, 1))
 
-        return iris.cube.CubeList([
-            areacello,
-        ])
+        return iris.cube.CubeList(
+            [
+                areacello,
+            ]
+        )
 
 
 class Pr(Fix):
@@ -148,7 +151,7 @@ class Pr(Fix):
         new_list = iris.cube.CubeList()
         for cube in cubes:
             try:
-                time_coord = cube.coord('time')
+                time_coord = cube.coord("time")
             except iris.exceptions.CoordinateNotFoundError:
                 new_list.append(cube)
             else:
