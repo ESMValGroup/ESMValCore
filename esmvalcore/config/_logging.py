@@ -11,17 +11,17 @@ from typing import Literal, Optional, Union
 import yaml
 
 
-class FilterMultipleNames():
+class FilterMultipleNames:
     """Only allow/Disallow events from loggers with specific names."""
 
     def __init__(
         self,
         names: Iterable[str],
-        mode: Literal['allow', 'disallow'],
+        mode: Literal["allow", "disallow"],
     ) -> None:
         """Initialize filter."""
         self.names = names
-        if mode == 'allow':
+        if mode == "allow":
             self.starts_with_name = True
         else:
             self.starts_with_name = False
@@ -40,14 +40,14 @@ def _purge_file_handlers(cfg: dict) -> None:
     This is used to remove file handlers which require an output
     directory to be set.
     """
-    cfg['handlers'] = {
+    cfg["handlers"] = {
         name: handler
-        for name, handler in cfg['handlers'].items()
-        if 'filename' not in handler
+        for name, handler in cfg["handlers"].items()
+        if "filename" not in handler
     }
-    prev_root = cfg['root']['handlers']
-    cfg['root']['handlers'] = [
-        name for name in prev_root if name in cfg['handlers']
+    prev_root = cfg["root"]["handlers"]
+    cfg["root"]["handlers"] = [
+        name for name in prev_root if name in cfg["handlers"]
     ]
 
 
@@ -58,31 +58,31 @@ def _get_log_files(
     """Initialize log files for the file handlers."""
     log_files = []
 
-    handlers = cfg['handlers']
+    handlers = cfg["handlers"]
 
     for handler in handlers.values():
-        filename = handler.get('filename', None)
+        filename = handler.get("filename", None)
 
         if filename:
             if output_dir is None:
-                raise ValueError('`output_dir` must be defined')
+                raise ValueError("`output_dir` must be defined")
 
             if not os.path.isabs(filename):
-                handler['filename'] = os.path.join(output_dir, filename)
+                handler["filename"] = os.path.join(output_dir, filename)
 
-            log_files.append(handler['filename'])
+            log_files.append(handler["filename"])
 
     return log_files
 
 
 def _update_stream_level(cfg: dict, level=None):
     """Update the log level for the stream handlers."""
-    handlers = cfg['handlers']
+    handlers = cfg["handlers"]
 
     for handler in handlers.values():
-        if level is not None and 'stream' in handler:
-            if handler['stream'] in ('ext://sys.stdout', 'ext://sys.stderr'):
-                handler['level'] = level.upper()
+        if level is not None and "stream" in handler:
+            if handler["stream"] in ("ext://sys.stdout", "ext://sys.stderr"):
+                handler["level"] = level.upper()
 
 
 def configure_logging(
@@ -107,11 +107,11 @@ def configure_logging(
         Filenames that will be logged to.
     """
     if cfg_file is None:
-        cfg_file = Path(__file__).parent / 'config-logging.yml'
+        cfg_file = Path(__file__).parent / "config-logging.yml"
 
     cfg_file = Path(cfg_file).absolute()
 
-    with open(cfg_file, 'r', encoding='utf-8') as file_handler:
+    with open(cfg_file, "r", encoding="utf-8") as file_handler:
         cfg = yaml.safe_load(file_handler)
 
     if output_dir is None:

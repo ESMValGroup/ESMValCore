@@ -1,4 +1,5 @@
 """Find files on the local filesystem."""
+
 from __future__ import annotations
 
 import itertools
@@ -37,13 +38,14 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
     if not daterange:
         # Retry with extended context for CMIP3
         context = r"(?:^|[-_.]|$)"
-        date_range_pattern_with_context = (context + date_range_pattern +
-                                           context)
+        date_range_pattern_with_context = (
+            context + date_range_pattern + context
+        )
         daterange = re.search(date_range_pattern_with_context, stem)
 
     if daterange:
         start_point = daterange.group(group)
-        end_group = '_'.join([group, 'end'])
+        end_group = "_".join([group, "end"])
         end_point = daterange.group(end_group)
     else:
         # Check for single dates in the filename
@@ -53,8 +55,8 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
             start_point = end_point = dates[0][0]
         elif len(dates) > 1:
             # Check for dates at start or (exclusive or) end of filename
-            start = re.search(r'^' + pattern, stem)
-            end = re.search(pattern + r'$', stem)
+            start = re.search(r"^" + pattern, stem)
+            end = re.search(pattern + r"$", stem)
             if start and not end:
                 start_point = end_point = start.group(group)
             elif end:
@@ -64,7 +66,8 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
 
 
 def _get_start_end_date(
-        file: str | Path | LocalFile | ESGFFile) -> tuple[str, str]:
+    file: str | Path | LocalFile | ESGFFile,
+) -> tuple[str, str]:
     """Get the start and end dates as a string from a file name.
 
     Examples of allowed dates: 1980, 198001, 1980-01, 19801231, 1980-12-31,
@@ -93,7 +96,7 @@ def _get_start_end_date(
     ValueError
         Start or end date cannot be determined.
     """
-    if hasattr(file, 'name'):  # Path, LocalFile, ESGFFile
+    if hasattr(file, "name"):  # Path, LocalFile, ESGFFile
         stem = Path(file.name).stem
     else:  # str
         stem = Path(file).stem
@@ -101,59 +104,71 @@ def _get_start_end_date(
     start_date = end_date = None
 
     # Build regex
-    time_pattern = (r"(?P<hour>[0-2][0-9]"
-                    r"(?P<minute>[0-5][0-9]"
-                    r"(?P<second>[0-5][0-9])?)?Z?)")
-    date_pattern = (r"(?P<year>[0-9]{4})"
-                    r"(?P<month>-?[01][0-9]"
-                    r"(?P<day>-?[0-3][0-9]"
-                    rf"(T?{time_pattern})?)?)?")
-    datetime_pattern = (rf"(?P<datetime>{date_pattern})")
+    time_pattern = (
+        r"(?P<hour>[0-2][0-9]"
+        r"(?P<minute>[0-5][0-9]"
+        r"(?P<second>[0-5][0-9])?)?Z?)"
+    )
+    date_pattern = (
+        r"(?P<year>[0-9]{4})"
+        r"(?P<month>-?[01][0-9]"
+        r"(?P<day>-?[0-3][0-9]"
+        rf"(T?{time_pattern})?)?)?"
+    )
+    datetime_pattern = rf"(?P<datetime>{date_pattern})"
     end_datetime_pattern = datetime_pattern.replace(">", "_end>")
 
     # Dates can either be delimited by '-', '_', or '_cat_' (the latter for
     # CMIP3)
-    date_range_pattern = (datetime_pattern + r"[-_](?:cat_)?" +
-                          end_datetime_pattern)
+    date_range_pattern = (
+        datetime_pattern + r"[-_](?:cat_)?" + end_datetime_pattern
+    )
 
     # Find dates using the regex
-    start_date, end_date = _get_from_pattern(datetime_pattern,
-                                             date_range_pattern, stem,
-                                             'datetime')
+    start_date, end_date = _get_from_pattern(
+        datetime_pattern, date_range_pattern, stem, "datetime"
+    )
 
     # As final resort, try to get the dates from the file contents
-    if ((start_date is None or end_date is None)
-            and isinstance(file, (str, Path)) and Path(file).exists()):
+    if (
+        (start_date is None or end_date is None)
+        and isinstance(file, (str, Path))
+        and Path(file).exists()
+    ):
         logger.debug("Must load file %s for daterange ", file)
         cubes = iris.load(file)
 
         for cube in cubes:
             logger.debug(cube)
             try:
-                time = cube.coord('time')
+                time = cube.coord("time")
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             start_date = isodate.date_isoformat(
-                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE)
+                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+            )
 
             end_date = isodate.date_isoformat(
-                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE)
+                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+            )
             break
 
     if start_date is None or end_date is None:
         raise ValueError(
             f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file")
+            f"time coordinate can not be read from the file"
+        )
 
     # Remove potential '-' characters from datetimes
-    start_date = start_date.replace('-', '')
-    end_date = end_date.replace('-', '')
+    start_date = start_date.replace("-", "")
+    end_date = end_date.replace("-", "")
 
     return start_date, end_date
 
 
 def _get_start_end_year(
-        file: str | Path | LocalFile | ESGFFile) -> tuple[int, int]:
+    file: str | Path | LocalFile | ESGFFile,
+) -> tuple[int, int]:
     """Get the start and end year as int from a file name.
 
     See :func:`_get_start_end_date`.
@@ -187,26 +202,26 @@ def _dates_to_timerange(start_date, end_date):
     end_date = str(end_date)
 
     # Pad years with 0s if not wildcard or relative time range
-    if start_date != '*' and not start_date.startswith('P'):
+    if start_date != "*" and not start_date.startswith("P"):
         start_date = start_date.zfill(4)
-    if end_date != '*' and not end_date.startswith('P'):
+    if end_date != "*" and not end_date.startswith("P"):
         end_date = end_date.zfill(4)
 
-    return f'{start_date}/{end_date}'
+    return f"{start_date}/{end_date}"
 
 
 def _replace_years_with_timerange(variable):
     """Set `timerange` tag from tags `start_year` and `end_year`."""
-    start_year = variable.get('start_year')
-    end_year = variable.get('end_year')
+    start_year = variable.get("start_year")
+    end_year = variable.get("end_year")
     if start_year and end_year:
-        variable['timerange'] = _dates_to_timerange(start_year, end_year)
+        variable["timerange"] = _dates_to_timerange(start_year, end_year)
     elif start_year:
-        variable['timerange'] = _dates_to_timerange(start_year, start_year)
+        variable["timerange"] = _dates_to_timerange(start_year, start_year)
     elif end_year:
-        variable['timerange'] = _dates_to_timerange(end_year, end_year)
-    variable.pop('start_year', None)
-    variable.pop('end_year', None)
+        variable["timerange"] = _dates_to_timerange(end_year, end_year)
+    variable.pop("start_year", None)
+    variable.pop("end_year", None)
 
 
 def _parse_period(timerange):
@@ -219,40 +234,44 @@ def _parse_period(timerange):
     start_date = None
     end_date = None
     time_format = None
-    datetime_format = (isodate.DATE_BAS_COMPLETE + 'T' +
-                       isodate.TIME_BAS_COMPLETE)
-    if timerange.split('/')[0].startswith('P'):
+    datetime_format = (
+        isodate.DATE_BAS_COMPLETE + "T" + isodate.TIME_BAS_COMPLETE
+    )
+    if timerange.split("/")[0].startswith("P"):
         try:
-            end_date = isodate.parse_datetime(timerange.split('/')[1])
+            end_date = isodate.parse_datetime(timerange.split("/")[1])
             time_format = datetime_format
         except isodate.ISO8601Error:
-            end_date = isodate.parse_date(timerange.split('/')[1])
+            end_date = isodate.parse_date(timerange.split("/")[1])
             time_format = isodate.DATE_BAS_COMPLETE
-        delta = isodate.parse_duration(timerange.split('/')[0])
+        delta = isodate.parse_duration(timerange.split("/")[0])
         start_date = end_date - delta
-    elif timerange.split('/')[1].startswith('P'):
+    elif timerange.split("/")[1].startswith("P"):
         try:
-            start_date = isodate.parse_datetime(timerange.split('/')[0])
+            start_date = isodate.parse_datetime(timerange.split("/")[0])
             time_format = datetime_format
         except isodate.ISO8601Error:
-            start_date = isodate.parse_date(timerange.split('/')[0])
+            start_date = isodate.parse_date(timerange.split("/")[0])
             time_format = isodate.DATE_BAS_COMPLETE
-        delta = isodate.parse_duration(timerange.split('/')[1])
+        delta = isodate.parse_duration(timerange.split("/")[1])
         end_date = start_date + delta
 
     if time_format == datetime_format:
         start_date = str(
-            isodate.datetime_isoformat(start_date, format=datetime_format))
+            isodate.datetime_isoformat(start_date, format=datetime_format)
+        )
         end_date = str(
-            isodate.datetime_isoformat(end_date, format=datetime_format))
+            isodate.datetime_isoformat(end_date, format=datetime_format)
+        )
     elif time_format == isodate.DATE_BAS_COMPLETE:
-        start_date = str(isodate.date_isoformat(start_date,
-                                                format=time_format))
+        start_date = str(
+            isodate.date_isoformat(start_date, format=time_format)
+        )
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
     if start_date is None and end_date is None:
-        start_date = timerange.split('/')[0]
-        end_date = timerange.split('/')[1]
+        start_date = timerange.split("/")[0]
+        end_date = timerange.split("/")[1]
 
     return start_date, end_date
 
@@ -271,12 +290,12 @@ def _truncate_dates(date, file_date):
     zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
     """
-    date = re.sub("[^0-9]", '', date)
-    file_date = re.sub("[^0-9]", '', file_date)
+    date = re.sub("[^0-9]", "", date)
+    file_date = re.sub("[^0-9]", "", file_date)
     if len(date) < len(file_date):
-        file_date = file_date[0:len(date)]
+        file_date = file_date[0 : len(date)]
     elif len(date) > len(file_date):
-        date = date[0:len(file_date)]
+        date = date[0 : len(file_date)]
 
     return int(date), int(file_date)
 
@@ -290,7 +309,7 @@ def _select_files(filenames, timerange):
     Otherwise, the file selection occurs taking into account the time
     resolution of the file.
     """
-    if '*' in timerange:
+    if "*" in timerange:
         # TODO: support * combined with a period
         return filenames
 
@@ -314,19 +333,22 @@ def _replace_tags(
 ) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        pathset = set((paths.strip('/'), ))
+        pathset = set((paths.strip("/"),))
     else:
-        pathset = set(path.strip('/') for path in paths)
+        pathset = set(path.strip("/") for path in paths)
     tlist: set[str] = set()
     for path in pathset:
-        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
-    if 'sub_experiment' in variable:
+        tlist = tlist.union(re.findall(r"{([^}]*)}", path))
+    if "sub_experiment" in variable:
         new_paths: set[str] = set()
         for path in pathset:
             new_paths.update(
-                (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
-                 re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
-            tlist.add('sub_experiment')
+                (
+                    re.sub(r"(\b{ensemble}\b)", r"{sub_experiment}-\1", path),
+                    re.sub(r"({ensemble})", r"{sub_experiment}-\1", path),
+                )
+            )
+            tlist.add("sub_experiment")
         pathset = new_paths
 
     for tag in tlist:
@@ -335,11 +357,13 @@ def _replace_tags(
 
         if tag in variable:
             replacewith = variable[tag]
-        elif tag == 'version':
-            replacewith = '*'
+        elif tag == "version":
+            replacewith = "*"
         else:
-            raise RecipeError(f"Dataset key '{tag}' must be specified for "
-                              f"{variable}, check your recipe entry")
+            raise RecipeError(
+                f"Dataset key '{tag}' must be specified for "
+                f"{variable}, check your recipe entry"
+            )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
 
@@ -353,17 +377,17 @@ def _replace_tag(paths, tag, replacewith):
             result.extend(_replace_tag(paths, tag, item))
     else:
         text = _apply_caps(str(replacewith), lower, upper)
-        result.extend(p.replace('{' + tag + '}', text) for p in paths)
+        result.extend(p.replace("{" + tag + "}", text) for p in paths)
     return list(set(result))
 
 
 def _get_caps_options(tag):
     lower = False
     upper = False
-    if tag.endswith('.lower'):
+    if tag.endswith(".lower"):
         lower = True
         tag = tag[0:-6]
-    elif tag.endswith('.upper'):
+    elif tag.endswith(".upper"):
         upper = True
         tag = tag[0:-6]
     return tag, lower, upper
@@ -391,8 +415,10 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
         return value
 
     raise KeyError(
-        'drs {} for {} project not specified in config-developer file'.format(
-            structure, project))
+        "drs {} for {} project not specified in config-developer file".format(
+            structure, project
+        )
+    )
 
 
 @dataclass(order=True, frozen=True)
@@ -407,8 +433,11 @@ class DataSource:
         """Compose the globs that will be used to look for files."""
         dirname_globs = _replace_tags(self.dirname_template, facets)
         filename_globs = _replace_tags(self.filename_template, facets)
-        return sorted(self.rootpath / d / f for d in dirname_globs
-                      for f in filename_globs)
+        return sorted(
+            self.rootpath / d / f
+            for d in dirname_globs
+            for f in filename_globs
+        )
 
     def find_files(self, **facets) -> list[LocalFile]:
         """Find files."""
@@ -423,8 +452,8 @@ class DataSource:
                 files.append(file)
         files.sort()  # sorting makes it easier to see what was found
 
-        if 'timerange' in facets:
-            files = _select_files(files, facets['timerange'])
+        if "timerange" in facets:
+            files = _select_files(files, facets["timerange"])
         return files
 
 
@@ -433,51 +462,55 @@ _ROOTPATH_WARNED = set()
 
 def _get_data_sources(project: str) -> list[DataSource]:
     """Get a list of data sources."""
-    rootpaths = CFG['rootpath']
-    for key in (project, 'default'):
+    rootpaths = CFG["rootpath"]
+    for key in (project, "default"):
         if key in rootpaths:
             paths = rootpaths[key]
             nonexistent = tuple(p for p in paths if not os.path.exists(p))
             if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
-                    key, ', '.join(str(p) for p in nonexistent))
+                    key,
+                    ", ".join(str(p) for p in nonexistent),
+                )
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
-                structure = CFG['drs'].get(project, 'default')
+                structure = CFG["drs"].get(project, "default")
                 paths = {p: structure for p in paths}
             sources: list[DataSource] = []
             for path, structure in paths.items():
-                dir_templates = _select_drs('input_dir', project, structure)
-                file_templates = _select_drs('input_file', project, structure)
+                dir_templates = _select_drs("input_dir", project, structure)
+                file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
                     DataSource(path, d, f)
-                    for d in dir_templates for f in file_templates
+                    for d in dir_templates
+                    for f in file_templates
                 )
             return sources
 
     raise KeyError(
         f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the user configuration.")
+        "the user configuration."
+    )
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     """Return the full path to the output (preprocessed) file."""
-    cfg = get_project_config(variable['project'])
+    cfg = get_project_config(variable["project"])
 
     # Join different experiment names
-    if isinstance(variable.get('exp'), (list, tuple)):
+    if isinstance(variable.get("exp"), (list, tuple)):
         variable = dict(variable)
-        variable['exp'] = '-'.join(variable['exp'])
-    outfile = _replace_tags(cfg['output_file'], variable)[0]
-    if 'timerange' in variable:
-        timerange = variable['timerange'].replace('/', '-')
-        outfile = Path(f'{outfile}_{timerange}')
+        variable["exp"] = "-".join(variable["exp"])
+    outfile = _replace_tags(cfg["output_file"], variable)[0]
+    if "timerange" in variable:
+        timerange = variable["timerange"].replace("/", "-")
+        outfile = Path(f"{outfile}_{timerange}")
     outfile = Path(f"{outfile}.nc")
     return Path(
         preproc_dir,
-        variable.get('diagnostic', ''),
-        variable.get('variable_group', ''),
+        variable.get("diagnostic", ""),
+        variable.get("variable_group", ""),
         outfile,
     )
 
@@ -485,8 +518,13 @@ def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
 def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     """Get ensemble/multi-model filename depending on settings."""
     relevant_keys = [
-        'project', 'dataset', 'exp', 'ensemble_statistics',
-        'multi_model_statistics', 'mip', 'short_name'
+        "project",
+        "dataset",
+        "exp",
+        "ensemble_statistics",
+        "multi_model_statistics",
+        "mip",
+        "short_name",
     ]
 
     filename_segments = []
@@ -494,8 +532,8 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
         if key in attributes:
             attribute = attributes[key]
             if isinstance(attribute, (list, tuple)):
-                attribute = '-'.join(attribute)
-            filename_segments.extend(attribute.split('_'))
+                attribute = "-".join(attribute)
+            filename_segments.extend(attribute.split("_"))
 
     # Remove duplicate segments:
     filename_segments = list(dict.fromkeys(filename_segments))
@@ -505,9 +543,9 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
 
     outfile = Path(
         preproc_dir,
-        attributes['diagnostic'],
-        attributes['variable_group'],
-        '_'.join(filename_segments),
+        attributes["diagnostic"],
+        attributes["variable_group"],
+        "_".join(filename_segments),
     )
 
     return outfile
@@ -516,14 +554,13 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
     keys = []
-    for key in re.findall(r'{(.*?)}[^-]', f'{drs} '):
-        key = key.split('.')[0]  # Remove trailing .lower and .upper
+    for key in re.findall(r"{(.*?)}[^-]", f"{drs} "):
+        key = key.split(".")[0]  # Remove trailing .lower and .upper
         keys.append(key)
     start, end = -len(keys) - 1, -1
     values = path.parts[start:end]
     facets = {
-        key: values[idx]
-        for idx, key in enumerate(keys) if "{" not in key
+        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
     }
 
     if len(facets) != len(keys):
@@ -532,13 +569,14 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
         for idx, key in enumerate(keys):
             if key not in facets:
                 facet1, facet2 = key.split("}-{")
-                facets[facet2] = values[idx].replace(f'{facets[facet1]}-', '')
+                facets[facet2] = values[idx].replace(f"{facets[facet1]}-", "")
 
     return facets
 
 
 def _filter_versions_called_latest(
-        files: list['LocalFile']) -> list['LocalFile']:
+    files: list["LocalFile"],
+) -> list["LocalFile"]:
     """Filter out versions called 'latest' if they are duplicates.
 
     On compute clusters it is usual to have a symbolic link to the
@@ -547,26 +585,30 @@ def _filter_versions_called_latest(
     """
     resolved_valid_versions = {
         f.resolve(strict=False)
-        for f in files if f.facets.get('version') != 'latest'
+        for f in files
+        if f.facets.get("version") != "latest"
     }
     return [
-        f for f in files if f.facets.get('version') != 'latest' or f.resolve(
-            strict=False) not in resolved_valid_versions
+        f
+        for f in files
+        if f.facets.get("version") != "latest"
+        or f.resolve(strict=False) not in resolved_valid_versions
     ]
 
 
-def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
+def _select_latest_version(files: list["LocalFile"]) -> list["LocalFile"]:
     """Select only the latest version of files."""
 
     def filename(file):
         return file.name
 
     def version(file):
-        return file.facets.get('version', '')
+        return file.facets.get("version", "")
 
     result = []
-    for _, group in itertools.groupby(sorted(files, key=filename),
-                                      key=filename):
+    for _, group in itertools.groupby(
+        sorted(files, key=filename), key=filename
+    ):
         duplicates = sorted(group, key=version)
         latest = duplicates[-1]
         result.append(latest)
@@ -638,22 +680,22 @@ def find_files(
         The files that were found.
     """
     facets = dict(facets)
-    if 'original_short_name' in facets:
-        facets['short_name'] = facets['original_short_name']
+    if "original_short_name" in facets:
+        facets["short_name"] = facets["original_short_name"]
 
     files = []
     filter_latest = False
-    data_sources = _get_data_sources(facets['project'])  # type: ignore
+    data_sources = _get_data_sources(facets["project"])  # type: ignore
     for data_source in data_sources:
         for file in data_source.find_files(**facets):
-            if file.facets.get('version') == 'latest':
+            if file.facets.get("version") == "latest":
                 filter_latest = True
             files.append(file)
 
     if filter_latest:
         files = _filter_versions_called_latest(files)
 
-    if 'version' not in facets:
+    if "version" not in facets:
         files = _select_latest_version(files)
 
     files.sort()  # sorting makes it easier to see what was found
@@ -678,7 +720,7 @@ class LocalFile(type(Path())):  # type: ignore
         When using :func:`find_files`, facets are read from the directory
         structure. Facets stored in filenames are not yet supported.
         """
-        if not hasattr(self, '_facets'):
+        if not hasattr(self, "_facets"):
             self._facets: Facets = {}
         return self._facets
 
