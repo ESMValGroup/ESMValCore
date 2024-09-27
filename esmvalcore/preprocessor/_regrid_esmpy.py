@@ -289,7 +289,7 @@ def get_grid(
     grid = esmpy.Grid(
         np.vstack(esmpy_lat.shape),
         num_peri_dims=num_peri_dims,
-        staggerloc=[esmpy.StaggerLoc.CENTER]
+        staggerloc=[esmpy.StaggerLoc.CENTER],
     )
     grid.get_coords(ESMF_LON)[...] = esmpy_lon
     grid.get_coords(ESMF_LAT)[...] = esmpy_lat

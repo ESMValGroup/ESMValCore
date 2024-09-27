@@ -15,7 +15,8 @@ def _get_first_unmasked_data(array, axis):
     indices_first_positive = da.argmax(numerical_mask, axis=axis)
     indices = da.meshgrid(
         *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
-        indexing='ij')
+        indexing="ij",
+    )
 
     indices = list(indices)
     indices.insert(axis, indices_first_positive)
