@@ -1502,7 +1502,7 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
                   - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
-        """)  # noqa:
+        """)
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.datasets) == 14
