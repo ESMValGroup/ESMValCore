@@ -116,7 +116,7 @@ def extract_time(
         start_year = int(start_year)
     if end_year is not None:
         end_year = int(end_year)
-    if (not start_year) ^ (not end_year):
+    if (start_year is None) ^ (end_year is None):
         raise ValueError(
             "If start_year or end_year is None, both "
             "start_year and end_year have to be None. "
