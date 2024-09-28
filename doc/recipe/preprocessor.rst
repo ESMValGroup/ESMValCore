@@ -1307,9 +1307,9 @@ daily maximum of any given variable.
 ``extract_time``
 ----------------
 
-This function subsets a dataset between two points in times. It removes all
-times in the dataset before the first time and after the last time point.
-The required arguments are relatively self explanatory:
+This function extracts data within specific time criteria. The
+preprocessor removes all times which fall outside the specified
+time range. The required arguments are relatively self explanatory:
 
 * ``start_year``
 * ``start_month``
@@ -1318,9 +1318,37 @@ The required arguments are relatively self explanatory:
 * ``end_month``
 * ``end_day``
 
-These start and end points are set using the datasets native calendar.
-All six arguments should be given as integers - the named month string
-will not be accepted.
+The start and end points are set using the datasets native calendar.
+``start_month``, ``start_day``, ``end_month``, and ``end_day`` should
+be given as integers - the named month string will not be accepted.
+``start_year`` and ``end_year`` should both be either integers or
+'null'. If ``start_year`` and ``end_year`` are 'null', the date
+ranges (``start_month``-``start_day`` to ``end_month``-``end_day``)
+are selected in each year. For example, ranges Feb 3 - Apr 6 in each year
+are selected with following use:
+
+.. code-block:: yaml
+
+    extract_time:
+        start_year: null
+        start_month: 2
+        start_day: 3
+        end_year: null
+        end_month: 4
+        end_day: 6
+
+And the period between Feb 3, 2001 - Apr 6, 2004 is selected as follows:
+
+.. code-block:: yaml
+
+    extract_time:
+        start_year: 2001
+        start_month: 2
+        start_day: 3
+        end_year: 2004
+        end_month: 4
+        end_day: 6
+
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
 
