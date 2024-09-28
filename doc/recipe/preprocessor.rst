@@ -1330,24 +1330,24 @@ are selected with following use:
 .. code-block:: yaml
 
     extract_time:
-        start_year: null
-        start_month: 2
-        start_day: 3
-        end_year: null
-        end_month: 4
-        end_day: 6
+      start_year: null
+      start_month: 2
+      start_day: 3
+      end_year: null
+      end_month: 4
+      end_day: 6
 
 And the period between Feb 3, 2001 - Apr 6, 2004 is selected as follows:
 
 .. code-block:: yaml
 
     extract_time:
-        start_year: 2001
-        start_month: 2
-        start_day: 3
-        end_year: 2004
-        end_month: 4
-        end_day: 6
+      start_year: 2001
+      start_month: 2
+      start_day: 3
+      end_year: 2004
+      end_month: 4
+      end_day: 6
 
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
