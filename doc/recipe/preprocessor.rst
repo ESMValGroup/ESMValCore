@@ -611,7 +611,7 @@ See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 .. _masking:
 
 Masking
-========
+=======
 
 Introduction to masking
 -----------------------
@@ -1918,9 +1918,10 @@ Parameters:
     region to be extracted.
     If the file contains multiple shapes behaviour depends on the
     ``decomposed`` parameter.
-    This path can be relative to ``auxiliary_data_dir`` defined in the
-    :ref:`user configuration file` or relative to
-    ``esmvalcore/preprocessor/shapefiles`` (in that priority order).
+    This path can be relative to the directory specified via the
+    :ref:`configuration option <config_options>` ``auxiliary_data_dir`` or
+    relative to ``esmvalcore/preprocessor/shapefiles`` (in that priority
+    order).
     Alternatively, a string (see "Shapefile name" below) can be given to load
     one of the following shapefiles that are shipped with ESMValCore:
 
@@ -2422,7 +2423,7 @@ See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 .. _detrend:
 
 Detrend
-========
+=======
 
 ESMValCore also supports detrending along any dimension using
 the preprocessor function 'detrend'.
