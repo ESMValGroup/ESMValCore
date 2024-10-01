@@ -18,9 +18,11 @@ from tests.integration.test_main import arguments
 def environment(**kwargs):
     """Temporary environment variables."""
     backup = deepcopy(os.environ)
-    os.environ = kwargs
+    os.environ.clear()
+    os.environ.update(kwargs)
     yield
-    os.environ = backup
+    os.environ.clear()
+    os.environ.update(backup)
 
 
 def test_config_class():

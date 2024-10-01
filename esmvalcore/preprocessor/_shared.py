@@ -82,7 +82,7 @@ def get_iris_aggregator(
             f"scheduled for removal in version 2.12.0. Please use 'std_dev' "
             f"instead. This is an exact replacement."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         operator = "std_dev"
         cap_operator = "STD_DEV"
     elif re.match(r"^(P\d{1,2})(\.\d*)?$", cap_operator):
@@ -94,7 +94,7 @@ def get_iris_aggregator(
             f"`percent=XX.YY` instead. Example: `percent=95.0` for 'p95.0'. "
             f"This is an exact replacement."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         aggregator_kwargs["percent"] = float(operator[1:])
         operator = "percentile"
         cap_operator = "PERCENTILE"
@@ -122,7 +122,7 @@ def get_iris_aggregator(
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"
-        )
+        ) from exc
 
     return (aggregator, aggregator_kwargs)
 

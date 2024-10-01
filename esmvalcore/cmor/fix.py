@@ -167,7 +167,7 @@ def fix_metadata(
             "longer perform CMOR checks. Fixes and CMOR checks have been "
             "clearly separated in ESMValCore version 2.10.0."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
     # Update extra_facets with variable information given as regular arguments
     # to this function
@@ -292,7 +292,7 @@ def fix_data(
             "longer perform CMOR checks. Fixes and CMOR checks have been "
             "clearly separated in ESMValCore version 2.10.0."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
     # Update extra_facets with variable information given as regular arguments
     # to this function

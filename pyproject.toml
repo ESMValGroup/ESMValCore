@@ -33,6 +33,7 @@ disable = [
 line-length = 79
 [tool.ruff.lint]
 select = [
+    "B",
     "E",       # pycodestyle
     "F",       # pyflakes
     "I",       # isort
@@ -41,6 +42,10 @@ select = [
 ]
 ignore = [
     "E501",  # Disable line-too-long as this is taken care of by the formatter.
+]
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+    "B011",  # `assert False` is valid test code.
 ]
 [tool.ruff.lint.isort]
 known-first-party = ["esmvalcore"]

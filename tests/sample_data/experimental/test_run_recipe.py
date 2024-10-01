@@ -96,7 +96,7 @@ def test_run_recipe(monkeypatch, task, ssh, recipe, tmp_path, caplog):
     assert isinstance(output.read_main_log(), str)
     assert isinstance(output.read_main_log_debug(), str)
 
-    for task, task_output in output.items():
+    for _, task_output in output.items():
         assert isinstance(task_output, TaskOutput)
         assert len(task_output) > 0
 

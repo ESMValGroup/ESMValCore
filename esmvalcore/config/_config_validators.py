@@ -362,7 +362,7 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
 
 # Example usage: see removed files in

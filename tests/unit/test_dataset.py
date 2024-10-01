@@ -110,7 +110,7 @@ def test_session_setter():
     assert ds._session is None
     assert ds.supplementaries[0]._session is None
 
-    ds.session
+    ds.session  # noqa: B018
 
     assert isinstance(ds.session, esmvalcore.config.Session)
     assert ds.session == ds.supplementaries[0].session

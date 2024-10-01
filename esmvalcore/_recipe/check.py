@@ -44,12 +44,12 @@ def ncl_version():
     try:
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as exc:
         logger.error("Failed to execute '%s'", " ".join(" ".join(cmd)))
         raise RecipeError(
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
-        )
+        ) from exc
 
     version = version.strip()
     logger.info("Found NCL version %s", version)
@@ -565,7 +565,7 @@ def _check_regular_stat(step, step_settings):
     try:
         get_iris_aggregator(operator, **operator_kwargs)
     except ValueError as exc:
-        raise RecipeError(f"Invalid options for {step}: {exc}")
+        raise RecipeError(f"Invalid options for {step}: {exc}") from exc
 
 
 def _check_mm_stat(step, step_settings):
@@ -575,11 +575,11 @@ def _check_mm_stat(step, step_settings):
         try:
             (operator, kwargs) = _get_operator_and_kwargs(stat)
         except ValueError as exc:
-            raise RecipeError(str(exc))
+            raise RecipeError(str(exc)) from exc
         try:
             get_iris_aggregator(operator, **kwargs)
         except ValueError as exc:
-            raise RecipeError(f"Invalid options for {step}: {exc}")
+            raise RecipeError(f"Invalid options for {step}: {exc}") from exc
 
 
 def regridding_schemes(settings: dict):
@@ -626,4 +626,4 @@ def regridding_schemes(settings: dict):
                 f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
                 f"/recipe/preprocessor.html#generic-regridding-schemes for "
                 f"details."
-            )
+            ) from exc
