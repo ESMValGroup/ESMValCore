@@ -80,12 +80,12 @@ def extract_time(
     cube:
         Input cube.
     start_year:
-        Start year. If None, the date ranges (start_month-start_day to
-        end_month-end_day) are selected in each year. For example,
+        Start year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
         ranges Feb 3 - Apr 6 in each year are selected if
-        start_year: None, start_month: 2, start_day: 3,
-        end_year: None, end_month: 4, end_day: 6. If start_year is
-        None, end_year has to be None too.
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `start_year` is
+        ``None``, `end_year` has to be ``None`` too.
     start_month:
         Start month.
     start_day:
