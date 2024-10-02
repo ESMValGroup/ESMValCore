@@ -393,33 +393,8 @@ def test_get_global_config_deprecated(mocker, tmp_path):
     assert cfg["output_dir"] == Path("/new/output/dir")
 
 
-@pytest.mark.parametrize(
-    "dirs,output_file_type,rootpath",
-    [
-        ([], "png", {"default": "~/climate_data"}),
-        (["/this/path/does/not/exist"], "png", {"default": "~/climate_data"}),
-        (["{tmp_path}/config1"], "1", {"default": "1", "1": "1"}),
-        (
-            ["{tmp_path}/config1", "/this/path/does/not/exist"],
-            "1",
-            {"default": "1", "1": "1"},
-        ),
-        (
-            ["{tmp_path}/config1", "{tmp_path}/config2"],
-            "2b",
-            {"default": "2b", "1": "1", "2": "2b"},
-        ),
-        (
-            ["{tmp_path}/config2", "{tmp_path}/config1"],
-            "1",
-            {"default": "1", "1": "1", "2": "2b"},
-        ),
-    ],
-)
-def test_load_from_dirs_always_default(
-    dirs, output_file_type, rootpath, tmp_path
-):
-    """Test `Config.load_from_dirs`."""
+def _setup_config_dirs(tmp_path):
+    """Setup test configuration directories."""
     config1 = tmp_path / "config1" / "1.yml"
     config2a = tmp_path / "config2" / "2a.yml"
     config2b = tmp_path / "config2" / "2b.yml"
@@ -456,6 +431,36 @@ def test_load_from_dirs_always_default(
         )
     )
 
+
+@pytest.mark.parametrize(
+    "dirs,output_file_type,rootpath",
+    [
+        ([], "png", {"default": "~/climate_data"}),
+        (["/this/path/does/not/exist"], "png", {"default": "~/climate_data"}),
+        (["{tmp_path}/config1"], "1", {"default": "1", "1": "1"}),
+        (
+            ["{tmp_path}/config1", "/this/path/does/not/exist"],
+            "1",
+            {"default": "1", "1": "1"},
+        ),
+        (
+            ["{tmp_path}/config1", "{tmp_path}/config2"],
+            "2b",
+            {"default": "2b", "1": "1", "2": "2b"},
+        ),
+        (
+            ["{tmp_path}/config2", "{tmp_path}/config1"],
+            "1",
+            {"default": "1", "1": "1", "2": "2b"},
+        ),
+    ],
+)
+def test_load_from_dirs_always_default(
+    dirs, output_file_type, rootpath, tmp_path
+):
+    """Test `Config.load_from_dirs`."""
+    _setup_config_dirs(tmp_path)
+
     config_dirs = []
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
@@ -465,11 +470,14 @@ def test_load_from_dirs_always_default(
 
     cfg = Config()
     assert not cfg
+    cfg["rootpath"] = {"X": "x"}
+    cfg["search_esgf"] = "when_missing"
 
     cfg.load_from_dirs(config_dirs)
 
     assert cfg["output_file_type"] == output_file_type
     assert cfg["rootpath"] == rootpath
+    assert cfg["search_esgf"] == "never"
 
 
 @pytest.mark.parametrize(
@@ -514,3 +522,52 @@ def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
         cli_config_dir
     )
     assert config_srcs == output
+
+
+@pytest.mark.parametrize(
+    "dirs,output_file_type,rootpath",
+    [
+        ([], None, {"X": "x"}),
+        (["/this/path/does/not/exist"], None, {"X": "x"}),
+        (["{tmp_path}/config1"], "1", {"default": "1", "1": "1", "X": "x"}),
+        (
+            ["{tmp_path}/config1", "/this/path/does/not/exist"],
+            "1",
+            {"default": "1", "1": "1", "X": "x"},
+        ),
+        (
+            ["{tmp_path}/config1", "{tmp_path}/config2"],
+            "2b",
+            {"default": "2b", "1": "1", "2": "2b", "X": "x"},
+        ),
+        (
+            ["{tmp_path}/config2", "{tmp_path}/config1"],
+            "1",
+            {"default": "1", "1": "1", "2": "2b", "X": "x"},
+        ),
+    ],
+)
+def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
+    """Test `Config.update_from_dirs`."""
+    _setup_config_dirs(tmp_path)
+
+    config_dirs = []
+    for dir_ in dirs:
+        config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
+    for name, path in rootpath.items():
+        path = Path(path).expanduser().absolute()
+        rootpath[name] = [path]
+
+    cfg = Config()
+    assert not cfg
+    cfg["rootpath"] = {"X": "x"}
+    cfg["search_esgf"] = "when_missing"
+
+    cfg.update_from_dirs(config_dirs)
+
+    if output_file_type is None:
+        assert "output_file_type" not in cfg
+    else:
+        assert cfg["output_file_type"] == output_file_type
+    assert cfg["rootpath"] == rootpath
+    assert cfg["search_esgf"] == "when_missing"
