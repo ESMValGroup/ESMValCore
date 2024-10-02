@@ -91,12 +91,12 @@ def extract_time(
     start_day:
         Start day.
     end_year:
-        End year. If None, the date ranges (start_month-start_day to
-        end_month-end_day) are selected in each year. For example,
+        End year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
         ranges Feb 3 - Apr 6 in each year are selected if
-        start_year: None, start_month: 2, start_day: 3,
-        end_year: None, end_month: 4, end_day: 6. If end_year is None,
-        start_year has to be None too.
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `end_year` is ``None``,
+        `start_year` has to be ``None`` too.
     end_month:
         End month.
     end_day:
