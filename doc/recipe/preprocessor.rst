@@ -1322,7 +1322,7 @@ The start and end points are set using the datasets native calendar.
 ``start_month``, ``start_day``, ``end_month``, and ``end_day`` should
 be given as integers - the named month string will not be accepted.
 ``start_year`` and ``end_year`` should both be either integers or
-'null'. If ``start_year`` and ``end_year`` are 'null', the date
+``null``. If ``start_year`` and ``end_year`` are ``null``, the date
 ranges (``start_month``-``start_day`` to ``end_month``-``end_day``)
 are selected in each year. For example, ranges Feb 3 - Apr 6 in each year
 are selected with following use:
