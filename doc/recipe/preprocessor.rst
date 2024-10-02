@@ -1325,7 +1325,7 @@ be given as integers - the named month string will not be accepted.
 ``null``. If ``start_year`` and ``end_year`` are ``null``, the date
 ranges (``start_month``-``start_day`` to ``end_month``-``end_day``)
 are selected in each year. For example, ranges Feb 3 - Apr 6 in each year
-are selected with following use:
+are selected with the following preprocessor:
 
 .. code-block:: yaml
 
