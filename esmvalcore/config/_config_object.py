@@ -438,13 +438,12 @@ class Config(ValidatedConfig):
         """Update configuration object from directories.
 
         This will first search for all YAML files within the given directories
-        and merge them together using :func:`dask.config.collect` (if identical values
-        are provided in multiple files, the value from the last file will be used).
-        Then, the
-        current configuration is merged with these new configuration options
-        using :func:`dask.config.merge` (new values are preferred over old
-        values). Nested objects are properly considered; see
-        :func:`dask.config.update` for details.
+        and merge them together using :func:`dask.config.collect` (if identical
+        values are provided in multiple files, the value from the last file
+        will be used).  Then, the current configuration is merged with these
+        new configuration options using :func:`dask.config.merge` (new values
+        are preferred over old values). Nested objects are properly considered;
+        see :func:`dask.config.update` for details.
 
         Note
         ----
