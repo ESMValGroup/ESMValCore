@@ -2,6 +2,117 @@
 requires = ["setuptools >= 40.6.0", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[project]
+authors = [
+    {name = "ESMValTool Development Team", email = "esmvaltool-dev@listserv.dfn.de"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dynamic = [
+    "readme",
+    "version",
+]
+description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
+dependencies = [
+    "cartopy",
+    "cf-units",
+    "dask[array,distributed]!=2024.8.0",  # ESMValCore/issues/2503
+    "dask-jobqueue",
+    "esgf-pyclient>=0.3.1",
+    "esmf-regrid>=0.11.0",
+    "esmpy!=8.1.0",  # not on PyPI
+    "filelock",
+    "fiona",
+    "fire",
+    "geopy",
+    "humanfriendly",
+    "iris-grib",
+    "isodate",
+    "jinja2",
+    "nc-time-axis",  # needed by iris.plot
+    "nested-lookup",
+    "netCDF4",
+    "numpy!=1.24.3,<2.0.0",  # avoid pulling 2.0.0rc1
+    "packaging",
+    "pandas",
+    "pillow",
+    "prov",
+    "psutil",
+    "py-cordex",
+    "pybtex",
+    "pyyaml",
+    "requests",
+    "scipy>=1.6",
+    "scitools-iris>=3.10.0",
+    "shapely>=2.0.0",
+    "stratify>=0.3",
+    "yamale",
+]
+license = {text = "Apache License, Version 2.0"}
+name = "ESMValCore"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=3.9,!=6.0.0rc1,!=6.0.0",
+    "pytest-cov>=2.10.1",
+    "pytest-env",
+    "pytest-html!=2.1.0",
+    "pytest-metadata>=1.5.1",
+    "pytest-mock",
+    "pytest-xdist",
+    "ESMValTool_sample_data==0.0.3",
+]
+doc = [
+    "autodocsumm>=0.2.2",
+    "ipython",
+    "nbsphinx",
+    "sphinx>=6.1.3",
+    "pydata_sphinx_theme",
+]
+develop = [
+    "esmvalcore[test,doc]",
+    "pre-commit",
+    "pylint",
+    "pydocstyle",
+    "vprof",
+]
+
+[project.scripts]
+esmvaltool = "esmvalcore._main:run"
+
+[project.urls]
+Code = "https://github.com/ESMValGroup/ESMValCore"
+Community = "https://github.com/ESMValGroup/Community"
+Documentation = "https://docs.esmvaltool.org"
+Homepage = "https://esmvaltool.org"
+Issues = "https://github.com/ESMValGroup/ESMValCore/issues"
+
+[tool.setuptools]
+include-package-data = true
+license-files = ["LICENSE"]
+packages = ["esmvalcore"]
+zip-safe = false
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown"}
+
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
 
@@ -29,6 +140,33 @@ disable = [
     "line-too-long",     # Disable line-too-long as this is taken care of by the formatter.
     "locally-disabled",  # Disable messages about disabling checks
 ]
+
+[tool.pytest.ini_options]
+addopts = """\
+    --doctest-modules \
+    --ignore=esmvalcore/cmor/tables/ \
+    --cov=esmvalcore \
+    --cov-report=xml:test-reports/coverage.xml \
+    --cov-report=html:test-reports/coverage_html \
+    --html=test-reports/report.html \
+"""
+env = {MPLBACKEND = "Agg"}
+log_level = "WARNING"
+markers = [
+    "installation: Test requires installation of dependencies",
+    "use_sample_data: Run functional tests using real data",
+]
+
+[tool.coverage.run]
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
 [tool.ruff]
 line-length = 79
 [tool.ruff.lint]
@@ -44,3 +182,10 @@ ignore = [
 ]
 [tool.ruff.lint.isort]
 known-first-party = ["esmvalcore"]
+
+[tool.mypy]
+# See https://mypy.readthedocs.io/en/stable/config_file.html
+ignore_missing_imports = true
+
+[tool.pydocstyle]
+convention = "numpy"

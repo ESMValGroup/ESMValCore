@@ -443,7 +443,7 @@ previous command. To only run tests from a single file, run the command
    pytest tests/unit/test_some_file.py
 
 If you would like to avoid loading the default pytest configuration from
-`setup.cfg <https://github.com/ESMValGroup/ESMValCore/blob/main/setup.cfg>`_
+`pyproject.toml <https://github.com/ESMValGroup/ESMValCore/blob/main/pyproject.toml>`_
 because this can be a bit slow for running just a few tests, use
 
 .. code-block:: bash
@@ -653,7 +653,7 @@ the following files:
 - ``environment.yml``
   contains all the development dependencies; these are all from
   `conda-forge <https://conda-forge.org/>`_
-- ``setup.py``
+- ``pyproject.toml``
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
