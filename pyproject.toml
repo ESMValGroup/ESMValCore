@@ -197,6 +197,9 @@ known-first-party = ["esmvalcore"]
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
 ignore_missing_imports = true
+enable_error_code = [
+    "truthy-bool",
+]
 
 [tool.pydocstyle]
 convention = "numpy"
