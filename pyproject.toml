@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools >= 40.6.0", "wheel", "setuptools_scm>=6.2"]
+requires = [
+    "setuptools >= 40.6.0",
+    "setuptools_scm>=6.2",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -70,7 +73,7 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 test = [
-    "pytest>=3.9,!=6.0.0rc1,!=6.0.0",
+    "pytest>6.0.0",
     "pytest-cov>=2.10.1",
     "pytest-env",
     "pytest-html!=2.1.0",
@@ -142,23 +145,31 @@ disable = [
 ]
 
 [tool.pytest.ini_options]
-addopts = """\
-    --doctest-modules \
-    --ignore=esmvalcore/cmor/tables/ \
-    --cov=esmvalcore \
-    --cov-report=xml:test-reports/coverage.xml \
-    --cov-report=html:test-reports/coverage_html \
-    --html=test-reports/report.html \
-"""
+addopts = [
+    "-ra",
+    "--strict-config",
+    "--strict-markers",
+    "--doctest-modules",
+    "--ignore=esmvalcore/cmor/tables/",
+    "--cov",
+    "--cov-report=xml:test-reports/coverage.xml",
+    "--cov-report=html:test-reports/coverage_html",
+    "--html=test-reports/report.html",
+]
+log_cli_level = "INFO"
 env = {MPLBACKEND = "Agg"}
 log_level = "WARNING"
+minversion = "6"
 markers = [
     "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
 ]
+testpaths = ["tests"]
+xfail_strict = true
 
 [tool.coverage.run]
 parallel = true
+source = ["esmvalcore"]
 
 [tool.coverage.report]
 exclude_lines = [
