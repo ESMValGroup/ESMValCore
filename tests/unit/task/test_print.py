@@ -108,7 +108,7 @@ def test_repr_simple_tree(preproc_task, diagnostic_task):
 
 
 def test_repr_full_tree(preproc_task, diagnostic_task):
-    """Test a more comlicated task tree."""
+    """Test a more complicated task tree."""
     derive_input_task_1 = copy.deepcopy(preproc_task)
     derive_input_task_1.name = "diag_1/tas_derive_input_1"
 

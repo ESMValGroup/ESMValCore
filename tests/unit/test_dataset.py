@@ -9,7 +9,7 @@ import pytest
 import esmvalcore.dataset
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config import CFG
+from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -112,7 +112,7 @@ def test_session_setter():
 
     ds.session
 
-    assert isinstance(ds.session, esmvalcore.config.Session)
+    assert isinstance(ds.session, Session)
     assert ds.session == ds.supplementaries[0].session
 
 
@@ -708,7 +708,7 @@ def test_from_files(session, monkeypatch):
 
 def test_from_files_with_supplementary(session, monkeypatch):
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -722,7 +722,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "v20190827",
         "tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_199001-199912.nc",
     )
-    file.facets = {
+    file1.facets = {
         "activity": "CMIP",
         "institute": "CAS",
         "dataset": "FGOALS-g3",
@@ -733,7 +733,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20190827",
     }
-    afile = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -747,7 +747,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "v20210615",
         "areacella_fx_FGOALS-g3_historical_r1i1p1f1_gn.nc",
     )
-    afile.facets = {
+    file2.facets = {
         "activity": "CMIP",
         "institute": "CAS",
         "dataset": "FGOALS-g3",
@@ -758,7 +758,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20210615",
     }
-    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file, afile))
+    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
 
     dataset = Dataset(
         short_name="tas",
@@ -796,7 +796,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
 def test_from_files_with_globs(monkeypatch, session):
     """Test `from_files` with wildcards in dataset and supplementary."""
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -810,7 +810,7 @@ def test_from_files_with_globs(monkeypatch, session):
         "v20181126",
         "tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc",
     )
-    file.facets = {
+    file1.facets = {
         "activity": "CMIP",
         "dataset": "BCC-CSM2-MR",
         "exp": "historical",
@@ -822,7 +822,7 @@ def test_from_files_with_globs(monkeypatch, session):
         "short_name": "tas",
         "version": "v20181126",
     }
-    afile = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.local.LocalFile(
         rootpath,
         "CMIP6",
         "GMMIP",
@@ -836,7 +836,7 @@ def test_from_files_with_globs(monkeypatch, session):
         "v20190613",
         "areacella_fx_BCC-CSM2-MR_hist-resIPO_r1i1p1f1_gn.nc",
     )
-    afile.facets = {
+    file2.facets = {
         "activity": "GMMIP",
         "dataset": "BCC-CSM2-MR",
         "ensemble": "r1i1p1f1",
@@ -869,7 +869,7 @@ def test_from_files_with_globs(monkeypatch, session):
     dataset.session = session
     print(dataset)
 
-    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file, afile))
+    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
 
     datasets = list(dataset.from_files())
 
@@ -1563,10 +1563,10 @@ def test_set_version():
     file_v1.facets["version"] = "v1"
     file_v2 = esmvalcore.local.LocalFile("/path/to/v2/tas.nc")
     file_v2.facets["version"] = "v2"
-    afile = esmvalcore.local.LocalFile("/path/to/v3/areacella.nc")
-    afile.facets["version"] = "v3"
+    areacella_file = esmvalcore.local.LocalFile("/path/to/v3/areacella.nc")
+    areacella_file.facets["version"] = "v3"
     dataset.files = [file_v2, file_v1]
-    dataset.supplementaries[0].files = [afile]
+    dataset.supplementaries[0].files = [areacella_file]
     dataset.set_version()
     assert dataset.facets["version"] == ["v1", "v2"]
     assert dataset.supplementaries[0].facets["version"] == "v3"

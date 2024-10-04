@@ -101,7 +101,7 @@ Please keep the following considerations in mind when programming:
   code.
 - If you find yourself copy-pasting a piece of code and making minor changes
   to every copy, instead put the repeated bit of code in a function that you can
-  re-use, and provide the changed bits as function arguments.
+  reuse, and provide the changed bits as function arguments.
 - Be careful when changing existing unit tests to make your new feature work.
   You might be breaking existing features if you have to change existing tests.
 
@@ -571,7 +571,7 @@ users.
 
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
-:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+:ref:`Python API <api>`, or the :ref:`configuration format <config>`,
 keep in mind that this may affect many users.
 To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
