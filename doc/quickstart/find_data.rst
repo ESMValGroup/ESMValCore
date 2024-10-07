@@ -104,8 +104,6 @@ Supported native reanalysis/observational datasets
 
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
-
-
 To use these datasets, put the files containing the data in the directory that
 you have :ref:`configured <config_options>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
