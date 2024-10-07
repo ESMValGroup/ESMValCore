@@ -1,5 +1,5 @@
 ###############################################################################
-# Example user configuration file for ESMValTool
+# Default configuration settings
 ###############################################################################
 #
 # Note for users:
@@ -11,14 +11,6 @@
 # option, these are listed after ``---``. The option in square brackets is the
 # default value, i.e., the one that is used if this option is omitted in the
 # file.
-#
-###############################################################################
-#
-# Note for developers:
-# -------------------
-# Two identical copies of this file (``ESMValTool/config-user-example.yml`` and
-# ``ESMValCore/esmvalcore/config-user.yml``) exist. If you change one of it,
-# make sure to apply the changes to the other.
 #
 ###############################################################################
 ---
