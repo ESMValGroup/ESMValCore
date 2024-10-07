@@ -205,8 +205,11 @@ def test_do_not_clean_preproc_dir(session):
     assert session._fixed_file_dir.exists()
 
 
+@mock.patch("esmvalcore._main.ESMValTool._get_config_info")
 @mock.patch("esmvalcore._main.entry_points")
-def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
+def test_header(
+    mock_entry_points, mock_get_config_info, monkeypatch, tmp_path, caplog
+):
     tmp_path.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(
         esmvalcore.config._config_object, "USER_CONFIG_DIR", tmp_path
@@ -220,6 +223,9 @@ def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
     entry_point.name = "Entry name"
     mock_entry_points.return_value = [entry_point]
     cli_config_dir = tmp_path / "this" / "does" / "not" / "exist"
+
+    # TODO: remove in v2.14.0
+    mock_get_config_info.return_value = "config_dir (SOURCE)"
 
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
@@ -235,11 +241,7 @@ def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
     assert caplog.messages[4] == "MyEntry: v42.42.42"
     assert caplog.messages[5] == "----------------"
     assert caplog.messages[6] == (
-        f"Reading configuration files from:\n"
-        f"{Path(esmvalcore.__file__).parent}/config/configurations/defaults "
-        f"(defaults)\n"
-        f"{tmp_path} (SOURCE)\n"
-        f"{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line argument)"
+        "Reading configuration files from:\nconfig_dir (SOURCE)"
     )
     assert caplog.messages[7] == (
         "Writing program log files to:\n"

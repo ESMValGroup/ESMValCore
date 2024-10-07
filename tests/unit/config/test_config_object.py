@@ -73,12 +73,14 @@ def test_load_from_file(monkeypatch):
 
 
 # TODO: remove in v2.14.0
-def test_load_from_file_filenotfound(monkeypatch):
+def test_load_from_file_filenotfound(monkeypatch, tmp_path):
     """Test `Config.load_from_file`."""
     config = Config()
     assert not config
 
-    expected_path = Path.home() / ".esmvaltool" / "not_existent_file.yml"
+    expected_path = (
+        tmp_path / "nonexistent_config_dir" / "not_existent_file.yml"
+    )
     msg = f"Config file '{expected_path}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
         config.load_from_file("not_existent_file.yml")
@@ -110,6 +112,9 @@ def test_config_key_error():
 
 def test_reload(cfg_default, monkeypatch, tmp_path):
     """Test `Config.reload`."""
+    # TODO: remove in v2.14.0
+    monkeypatch.delenv("_ESMVALTOOL_USER_CONFIG_FILE_", raising=False)
+
     monkeypatch.setattr(
         esmvalcore.config._config_object,
         "USER_CONFIG_DIR",
@@ -124,6 +129,9 @@ def test_reload(cfg_default, monkeypatch, tmp_path):
 
 def test_reload_fail(monkeypatch, tmp_path):
     """Test `Config.reload`."""
+    # TODO: remove in v2.14.0
+    monkeypatch.delenv("_ESMVALTOOL_USER_CONFIG_FILE_", raising=False)
+
     config_file = tmp_path / "invalid_config_file.yml"
     config_file.write_text("invalid_option: 1")
     monkeypatch.setattr(
@@ -160,26 +168,32 @@ def test_session_config_dir():
 
 
 TEST_GET_CFG_PATH = [
-    (None, None, None, "~/.esmvaltool/config-user.yml", False),
+    (
+        None,
+        None,
+        None,
+        "{tmp_path}/nonexistent_config_dir/config-user.yml",
+        False,
+    ),
     (
         None,
         None,
         ("any_other_module", "--config_file=cli.yml"),
-        "~/.esmvaltool/config-user.yml",
+        "{tmp_path}/nonexistent_config_dir/config-user.yml",
         False,
     ),
     (
         None,
         None,
         ("esmvaltool", "run", "--max_parallel_tasks=4"),
-        "~/.esmvaltool/config-user.yml",
+        "{tmp_path}/nonexistent_config_dir/config-user.yml",
         True,
     ),
     (
         None,
         None,
         ("esmvaltool", "--config_file"),
-        "~/.esmvaltool/config-user.yml",
+        "{tmp_path}/nonexistent_config_dir/config-user.yml",
         True,
     ),
     (
@@ -214,7 +228,7 @@ TEST_GET_CFG_PATH = [
         None,
         None,
         ("esmvaltool", "run", "--config-file=relative_cli.yml"),
-        "~/.esmvaltool/relative_cli.yml",
+        "{tmp_path}/nonexistent_config_dir/relative_cli.yml",
         True,
     ),
     (
@@ -264,7 +278,7 @@ TEST_GET_CFG_PATH = [
         "filename.yml",
         None,
         None,
-        "~/.esmvaltool/filename.yml",
+        "{tmp_path}/nonexistent_config_dir/filename.yml",
         False,
     ),
     (
@@ -285,6 +299,7 @@ def test_get_config_user_path(
     filename, env, cli_args, output, env_var_set, monkeypatch, tmp_path
 ):
     """Test `Config._get_config_user_path`."""
+    output = output.format(tmp_path=tmp_path)
     monkeypatch.delenv("_ESMVALTOOL_USER_CONFIG_FILE_", raising=False)
 
     # Create empty test file
@@ -313,9 +328,11 @@ def test_get_config_user_path(
 
 
 # TODO: remove in v2.14.0
-def test_load_user_config_filenotfound():
+def test_load_user_config_filenotfound(tmp_path):
     """Test `Config._load_user_config`."""
-    expected_path = Path.home() / ".esmvaltool" / "not_existent_file.yml"
+    expected_path = (
+        tmp_path / "nonexistent_config_dir" / "not_existent_file.yml"
+    )
     msg = f"Config file '{expected_path}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
         Config._load_user_config("not_existent_file.yml")

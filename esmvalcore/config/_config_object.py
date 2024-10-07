@@ -385,6 +385,7 @@ class Config(ValidatedConfig):
         # TODO: remove in v2.14.0
         self.clear()
         _deprecated_config_user_path = Config._get_config_user_path()
+        print(_deprecated_config_user_path)
         if _deprecated_config_user_path.is_file():
             deprecation_msg = (
                 f"Usage of the single configuration file "
@@ -401,6 +402,7 @@ class Config(ValidatedConfig):
             return
 
         # New since v2.12.0
+        print(USER_CONFIG_DIR)
         try:
             self.load_from_dirs([USER_CONFIG_DIR])
         except InvalidConfigParameter as exc:
