@@ -210,9 +210,9 @@ class O3(Fix):
     def fix_metadata(self, cubes):
         """Convert mass mixing ratios to mole fractions."""
         for cube in cubes:
-            cube.units = "kg kg-1"
-            # Convert to molar mixing ratios, which is almost identical to mole
-            # fraction for small amounts of substances (which we have here)
+            # Original units are kg kg-1. Convert these to molar mixing ratios,
+            # which is almost identical to mole fraction for small amounts of
+            # substances (which we have here)
             cube.data = cube.core_data() * 28.9644 / 47.9982
             cube.units = "mol mol-1"
         return cubes
@@ -463,8 +463,11 @@ class Toz(Fix):
     def fix_metadata(self, cubes):
         """Convert 'kg m-2' to 'm'."""
         for cube in cubes:
-            cube.units = "kg m-2"
-            # 1 DU = 1e-5 m = 2.1415e-5 kg m-2 --> 1m = 2.1415 kg m-2
+            # Original units are kg m-2. Convert these to m here.
+            # 1 DU = 0.4462 mmol m-2 = 21.415 mg m-2 = 2.1415e-5 kg m-2
+            # (assuming O3 molar mass of 48 g mol-1)
+            # Since 1 mm of pure O3 layer is defined as 100 DU
+            # --> 1m ~ 2.1415 kg m-2
             cube.data = cube.core_data() / 2.1415
             cube.units = "m"
         return cubes
