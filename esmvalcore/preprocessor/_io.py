@@ -457,7 +457,7 @@ def save(
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
             "The cube is probably unchanged.",
-            cubes,
+            str(cubes),
             filename,
         )
         return filename
@@ -465,10 +465,11 @@ def save(
     for cube in cubes:
         logger.debug(
             "Saving cube:\n%s\nwith %s data to %s",
-            cube,
+            str(cube),
             "lazy" if cube.has_lazy_data() else "realized",
             filename,
         )
+
     if optimize_access:
         cube = cubes[0]
         if optimize_access == "map":
