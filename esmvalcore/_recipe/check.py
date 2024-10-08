@@ -392,7 +392,10 @@ def _check_format_years(date):
 
 def _check_timerange_values(date, timerange):
     try:
-        isodate.parse_date(date)
+        if "T" in date:
+            isodate.parse_datetime(date)
+        else:
+            isodate.parse_date(date)
     except ValueError:
         try:
             isodate.parse_duration(date)
