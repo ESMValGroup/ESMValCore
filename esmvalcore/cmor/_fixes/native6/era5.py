@@ -5,14 +5,17 @@ import logging
 
 import iris
 import numpy as np
+from iris.util import reverse
 
-from esmvalcore.iris_helpers import date2num
-
-from ...table import CMOR_TABLES
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
+from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.iris_helpers import date2num, has_unstructured_grid
+from esmvalcore.preprocessor import regrid
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_ERA5_GRID = "0.25x0.25"
 
 
 def get_frequency(cube):
@@ -24,7 +27,11 @@ def get_frequency(cube):
 
     time.convert_units("days since 1850-1-1 00:00:00.0")
     if len(time.points) == 1:
-        if cube.long_name != "Geopotential":
+        acceptable_long_names = (
+            "Geopotential",
+            "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
+        )
+        if cube.long_name not in acceptable_long_names:
             raise ValueError(
                 "Unable to infer frequency of cube "
                 f"with length 1 time dimension: {cube}"
@@ -32,9 +39,11 @@ def get_frequency(cube):
         return "fx"
 
     interval = time.points[1] - time.points[0]
+
     if interval - 1 / 24 < 1e-4:
         return "hourly"
-
+    if interval - 1.0 < 1e-4:
+        return "daily"
     return "monthly"
 
 
@@ -52,6 +61,11 @@ def fix_accumulated_units(cube):
         cube.units = cube.units * "d-1"
     elif get_frequency(cube) == "hourly":
         cube.units = cube.units * "h-1"
+    elif get_frequency(cube) == "daily":
+        raise NotImplementedError(
+            f"Fixing of accumulated units of cube "
+            f"{cube.summary(shorten=True)} is not implemented for daily data"
+        )
     return cube
 
 
@@ -76,6 +90,27 @@ def divide_by_gravity(cube):
     return cube
 
 
+class Albsn(Fix):
+    """Fixes for albsn."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = "1"
+        return cubes
+
+
+class Cli(Fix):
+    """Fixes for cli."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg kg-1"
+        return cubes
+
+
 class Clt(Fix):
     """Fixes for clt."""
 
@@ -86,6 +121,16 @@ class Clt(Fix):
             cube.units = "%"
             cube.data = cube.core_data() * 100.0
 
+        return cubes
+
+
+class Clw(Fix):
+    """Fixes for clw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg kg-1"
         return cubes
 
 
@@ -136,6 +181,16 @@ class Evspsblpot(Fix):
         return cubes
 
 
+class Hus(Fix):
+    """Fixes for hus."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg kg-1"
+        return cubes
+
+
 class Mrro(Fix):
     """Fixes for mrro."""
 
@@ -146,6 +201,20 @@ class Mrro(Fix):
             fix_accumulated_units(cube)
             multiply_with_density(cube)
 
+        return cubes
+
+
+class O3(Fix):
+    """Fixes for o3."""
+
+    def fix_metadata(self, cubes):
+        """Convert mass mixing ratios to mole fractions."""
+        for cube in cubes:
+            # Original units are kg kg-1. Convert these to molar mixing ratios,
+            # which is almost identical to mole fraction for small amounts of
+            # substances (which we have here)
+            cube.data = cube.core_data() * 28.9644 / 47.9982
+            cube.units = "mol mol-1"
         return cubes
 
 
@@ -190,6 +259,26 @@ class Prsn(Fix):
         return cubes
 
 
+class Prw(Fix):
+    """Fixes for prw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg m-2"
+        return cubes
+
+
+class Ps(Fix):
+    """Fixes for ps."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "Pa"
+        return cubes
+
+
 class Ptype(Fix):
     """Fixes for ptype."""
 
@@ -198,6 +287,16 @@ class Ptype(Fix):
         for cube in cubes:
             cube.units = 1
 
+        return cubes
+
+
+class Rainmxrat27(Fix):
+    """Fixes for rainmxrat27."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg kg-1"
         return cubes
 
 
@@ -317,6 +416,27 @@ class Rss(Fix):
         return cubes
 
 
+class Sftlf(Fix):
+    """Fixes for sftlf."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = "1"
+        return cubes
+
+
+class Snowmxrat27(Fix):
+    """Fixes for snowmxrat27."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg kg-1"
+        return cubes
+
+
 class Tasmax(Fix):
     """Fixes for tasmax."""
 
@@ -337,6 +457,22 @@ class Tasmin(Fix):
         return cubes
 
 
+class Toz(Fix):
+    """Fixes for toz."""
+
+    def fix_metadata(self, cubes):
+        """Convert 'kg m-2' to 'm'."""
+        for cube in cubes:
+            # Original units are kg m-2. Convert these to m here.
+            # 1 DU = 0.4462 mmol m-2 = 21.415 mg m-2 = 2.1415e-5 kg m-2
+            # (assuming O3 molar mass of 48 g mol-1)
+            # Since 1 mm of pure O3 layer is defined as 100 DU
+            # --> 1m ~ 2.1415 kg m-2
+            cube.data = cube.core_data() / 2.1415
+            cube.units = "m"
+        return cubes
+
+
 class Zg(Fix):
     """Fixes for Geopotential."""
 
@@ -352,21 +488,13 @@ class AllVars(Fix):
 
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
-        # Fix coordinate increasing direction
-        slices = []
-        for coord in cube.coords():
-            if coord.var_name in ("latitude", "pressure_level"):
-                slices.append(slice(None, None, -1))
-            else:
-                slices.append(slice(None))
-        cube = cube[tuple(slices)]
-
         # Add scalar height coordinates
         if "height2m" in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.0)
         if "height10m" in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.0)
 
+        # Fix coord metadata
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
             # ERA5 uses regular pressure level coordinate. In case the cmor
@@ -390,9 +518,24 @@ class AllVars(Fix):
                 and len(coord.core_points()) > 1
                 and coord_def.must_have_bounds == "yes"
             ):
-                coord.guess_bounds()
+                # Do not guess bounds for lat and lon on unstructured grids
+                if not (
+                    coord.name() in ("latitude", "longitude")
+                    and has_unstructured_grid(cube)
+                ):
+                    coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
+
+        # Fix coordinate increasing direction
+        if cube.coords("latitude") and not has_unstructured_grid(cube):
+            lat = cube.coord("latitude")
+            if lat.points[0] > lat.points[-1]:
+                cube = reverse(cube, "latitude")
+        if cube.coords("air_pressure"):
+            plev = cube.coord("air_pressure")
+            if plev.points[0] < plev.points[-1]:
+                cube = reverse(cube, "air_pressure")
 
         return cube
 
@@ -426,10 +569,8 @@ class AllVars(Fix):
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
-
             cube = self._fix_coordinates(cube)
             self._fix_units(cube)
-
             cube.data = cube.core_data().astype("float32")
             year = datetime.datetime.now().year
             cube.attributes["comment"] = (
@@ -440,3 +581,16 @@ class AllVars(Fix):
             fixed_cubes.append(cube)
 
         return fixed_cubes
+
+    def fix_data(self, cube):
+        """Fix data."""
+        regridding_enabled = self.extra_facets.get("regrid", True)
+        if regridding_enabled and has_unstructured_grid(cube):
+            logger.debug(
+                "Automatically regrid ERA5 data (variable %s) to %s° "
+                "grid using bilinear regridding",
+                self.vardef.short_name,
+                DEFAULT_ERA5_GRID,
+            )
+            cube = regrid(cube, DEFAULT_ERA5_GRID, "linear")
+        return cube

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 version_scheme = "release-branch-semver"
 
 [tool.codespell]
-skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml"
+skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml,tests/sample_data/iris-sample-data/LICENSE"
 ignore-words-list = "vas,hist,oce"
 
 [tool.pylint.main]
