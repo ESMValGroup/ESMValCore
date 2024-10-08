@@ -9,7 +9,6 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._mask import (
-    _apply_mask,
     _get_fx_mask,
     count_spells,
     mask_above_threshold,
@@ -58,30 +57,6 @@ class Test(tests.Test):
             0,
         )
         self.fx_data = np.array([20.0, 60.0, 50.0])
-
-    def test_apply_fx_mask_on_nonmasked_data(self):
-        """Test _apply_fx_mask func."""
-        dummy_fx_mask = np.ma.array((True, False, True))
-        app_mask = _apply_mask(
-            dummy_fx_mask, self.time_cube.data[0:3].astype("float64")
-        )
-        fixed_mask = np.ma.array(
-            self.time_cube.data[0:3].astype("float64"), mask=dummy_fx_mask
-        )
-        self.assert_array_equal(fixed_mask, app_mask)
-
-    def test_apply_fx_mask_on_masked_data(self):
-        """Test _apply_fx_mask func."""
-        dummy_fx_mask = np.ma.array((True, True, True))
-        masked_data = np.ma.array(
-            self.time_cube.data[0:3].astype("float64"),
-            mask=np.ma.array((False, True, False)),
-        )
-        app_mask = _apply_mask(dummy_fx_mask, masked_data)
-        fixed_mask = np.ma.array(
-            self.time_cube.data[0:3].astype("float64"), mask=dummy_fx_mask
-        )
-        self.assert_array_equal(fixed_mask, app_mask)
 
     def test_count_spells(self):
         """Test count_spells func."""
