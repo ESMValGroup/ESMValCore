@@ -45,7 +45,7 @@ REQUIREMENTS = {
         "nc-time-axis",  # needed by iris.plot
         "nested-lookup",
         "netCDF4",
-        "numpy!=1.24.3,<2.0.0",  # avoid pulling 2.0.0rc1
+        "numpy!=1.24.3",
         "packaging",
         "pandas",
         "pillow",
