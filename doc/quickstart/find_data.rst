@@ -148,8 +148,9 @@ ERA5 (in GRIB format available on DKRZ's Levante)
 ERA5 data in monthly, daily, and hourly resolution is `available on Levante
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
 in its native GRIB format.
-To read these data with ESMValCore, use the root path ``/pool/data/ERA5`` with
-DRS ``DKRZ-ERA5-GRIB`` in your :ref:`user configuration file`, for example:
+To read these data with ESMValCore, use the :ref:`rootpath
+<config_option_rootpath>` ``/pool/data/ERA5`` with :ref:`DRS
+<config_option_drs>` ``DKRZ-ERA5-GRIB`` in your configuration, for example:
 
 .. code-block:: yaml
 
@@ -721,6 +722,8 @@ of directory structure the root paths are structured by. It is important to
 first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
+
+.. _config_option_drs:
 
 Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
 ---------------------------------------------
