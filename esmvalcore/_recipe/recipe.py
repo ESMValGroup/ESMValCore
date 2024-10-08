@@ -220,7 +220,10 @@ def _get_default_settings(dataset):
     settings["remove_supplementary_variables"] = {}
 
     # Configure saving cubes to file
-    settings["save"] = {"compress": session["compress_netcdf"]}
+    settings["save"] = {
+        "compress": session["compress_netcdf"],
+        "compute": False,
+    }
     if facets["short_name"] != facets["original_short_name"]:
         settings["save"]["alias"] = facets["short_name"]
 
@@ -381,6 +384,8 @@ def _get_downstream_settings(step, order, products):
         if key in remaining_steps:
             if all(p.settings.get(key, object()) == value for p in products):
                 settings[key] = value
+    # Set the compute argument to the save step.
+    settings["save"] = {"compute": some_product.settings["save"]["compute"]}
     return settings
 
 
