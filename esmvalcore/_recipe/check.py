@@ -366,20 +366,28 @@ def _check_delimiter(timerange):
 
 
 def _check_duration_periods(timerange):
-    try:
-        isodate.parse_duration(timerange[0])
-    except ValueError:
-        pass
-    else:
+    if "P" in timerange[0] and "P" in timerange[1]:
+        raise RecipeError(
+            f"Invalid value encountered for `timerange` {timerange}. "
+            "Cannot set both the beginning and the end "
+            "as duration periods."
+        )
+
+    if "P" in timerange[0]:
+        try:
+            isodate.parse_duration(timerange[0])
+        except isodate.isoerror.ISO8601Error as exc:
+            raise RecipeError(exc + "\n" + \
+                f"Invalid value encountered for `timerange` {timerange}. "
+                f"{timerange[0]} is not valid duration according to ISO8601."
+            )
+    elif "P" in timerange[1]:
         try:
             isodate.parse_duration(timerange[1])
-        except ValueError:
-            pass
-        else:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                "Cannot set both the beginning and the end "
-                "as duration periods."
+        except isodate.isoerror.ISO8601Error as exc:
+            raise RecipeError(exc + "\n" + \
+                f"Invalid value encountered for `timerange` {timerange}. "
+                f"{timerange[1]} is not valid duration according to ISO8601."
             )
 
 
@@ -394,20 +402,19 @@ def _check_timerange_values(date, timerange):
     try:
         if "T" in date:
             isodate.parse_datetime(date)
+        elif "P" in date:
+            isodate.parse_duration(date)
         else:
             isodate.parse_date(date)
-    except ValueError:
-        try:
-            isodate.parse_duration(date)
-        except ValueError as exc:
+    except isodate.isoerror.ISO8601Error as exc:
             if date != "*":
-                raise RecipeError(
+                raise RecipeError(exc + "\n" + \
                     "Invalid value encountered for `timerange`. "
-                    "Valid value must follow ISO 8601 standard "
+                    "Valid value must follow ISO8601 standard "
                     "for dates and duration periods, or be "
                     "set to '*' to load available years. "
                     f"Got {timerange} instead."
-                ) from exc
+                )
 
 
 def valid_time_selection(timerange):
