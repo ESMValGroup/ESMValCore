@@ -157,6 +157,7 @@ BAD_TIMERANGES = [
     ),
     (
         "199035345/19923463164526",
+        "Unrecognised ISO 8601 date format: '199035345'\n"
         "Invalid value encountered for `timerange`. Valid value must follow "
         "ISO 8601 standard for dates and duration periods, or be set to '*' "
         "to load available years. Got ['199035345', '19923463164526'] instead.",
@@ -174,6 +175,9 @@ def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)
+    print(str(rec_err.value))
+    print("\n")
+    print(message)
     assert str(rec_err.value) == message
 
 
