@@ -374,7 +374,7 @@ def _check_duration_periods(timerange):
             "as duration periods."
         )
 
-    if "P" in timerange[0]:
+    if timerange[0].startswith("P"):
         try:
             isodate.parse_duration(timerange[0])
         except isodate.isoerror.ISO8601Error as exc:
@@ -382,7 +382,7 @@ def _check_duration_periods(timerange):
                 str(exc) + "\n" + "Invalid value encountered for `timerange`. "
                 f"{timerange[0]} is not valid duration according to ISO 8601."
             )
-    elif "P" in timerange[1]:
+    elif timerange[1].startswith("P"):
         try:
             isodate.parse_duration(timerange[1])
         except isodate.isoerror.ISO8601Error as exc:
@@ -403,7 +403,7 @@ def _check_timerange_values(date, timerange):
     # P must always be in a duration string
     # if T in date, that is a datetime; otherwise it's date
     try:
-        if "P" in date:
+        if date.startswith("P"):
             isodate.parse_duration(date)
         elif "T" in date:
             isodate.parse_datetime(date)
