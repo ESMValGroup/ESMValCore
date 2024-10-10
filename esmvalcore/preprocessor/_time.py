@@ -117,17 +117,17 @@ def _parse_start_date(date):
     """Parse start of the input `timerange` tag given in ISO 8601 format.
 
     Returns a datetime.datetime object.
+
+    Raises an ISO8601 parser error if data can not be parsed.
     """
-    if date.startswith("P"):
+    if "P" in date:
         start_date = isodate.parse_duration(date)
+    elif "T" in date:
+        start_date = isodate.parse_datetime(date)
     else:
-        try:
-            start_date = isodate.parse_datetime(date)
-        except isodate.isoerror.ISO8601Error:
-            start_date = isodate.parse_date(date)
-            start_date = datetime.datetime.combine(
-                start_date, datetime.time.min
-            )
+        start_date = isodate.parse_date(date)
+        start_date = datetime.datetime.combine(start_date, datetime.time.min)
+
     return start_date
 
 
