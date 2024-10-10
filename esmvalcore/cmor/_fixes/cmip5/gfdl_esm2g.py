@@ -37,7 +37,7 @@ class AllVars(Fix):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
         """
@@ -116,6 +116,7 @@ class Usi(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+
         Returns
         -------
         iris.cube.CubeList
@@ -137,6 +138,7 @@ class Vsi(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+
         Returns
         -------
         iris.cube.CubeList

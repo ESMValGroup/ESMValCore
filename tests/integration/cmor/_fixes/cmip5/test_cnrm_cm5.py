@@ -19,7 +19,7 @@ class TestMsftmyz(unittest.TestCase):
         self.fix = Msftmyz(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "CNRM-CM5", "Amon", "msftmyz"),
             [Msftmyz(None), GenericFix(None)],
@@ -41,7 +41,7 @@ class TestMsftmyzba(unittest.TestCase):
         self.fix = Msftmyzba(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "CNRM-CM5", "Amon", "msftmyzba"),
             [Msftmyzba(None), GenericFix(None)],

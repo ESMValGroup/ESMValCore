@@ -8,7 +8,7 @@ from esmvalcore.config import CFG, Config
 
 @pytest.fixture
 def cfg_default(mocker):
-    """Configuration object with defaults."""
+    """Create a configuration object with default values."""
     cfg = deepcopy(CFG)
     cfg.load_from_dirs([])
     return cfg

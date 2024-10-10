@@ -1,8 +1,4 @@
-"""
-Unit tests for the
-:func:`esmvalcore.preprocessor.regrid.extract_point` function.
-
-"""
+"""Unit tests for :func:`esmvalcore.preprocessor.extract_point`."""
 
 import unittest
 from unittest import mock

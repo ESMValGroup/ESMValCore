@@ -11,14 +11,14 @@ from esmvalcore.preprocessor.regrid_schemes import (
 
 
 def set_data_to_const(cube, _, const=1.0):
-    """Dummy function to test ``GenericFuncScheme``."""
+    """Compute something to test ``GenericFuncScheme``."""
     cube = cube.copy(np.full(cube.shape, const))
     return cube
 
 
 @pytest.fixture
 def generic_func_scheme():
-    """Generic function scheme."""
+    """Create a GenericFunctionScheme."""
     return GenericFuncScheme(set_data_to_const, const=2)
 
 

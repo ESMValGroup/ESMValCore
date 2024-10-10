@@ -1,4 +1,4 @@
-"""Unit test for :func:`esmvalcore.preprocessor._regrid`"""
+"""Unit test for :func:`esmvalcore.preprocessor._regrid`."""
 
 from decimal import Decimal
 
