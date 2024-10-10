@@ -487,12 +487,21 @@ class TestClipTimerange(tests.Test):
                 coord_name
             )
 
-    def test_clip_timerange_invalid_isodate(self):
+    def test_clip_timerange_start_date_invalid_isodate(self):
         cube = self._create_cube(
             [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
         )
         with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
             clip_timerange(cube, "1950010101/1950")
+        mssg = "Unrecognised ISO 8601 date format: '1950010101'"
+        assert mssg in str(exc)
+
+    def test_clip_timerange_end_date_invalid_isodate(self):
+        cube = self._create_cube(
+            [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
+        )
+        with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
+            clip_timerange(cube, "1950/1950010101")
         mssg = "Unrecognised ISO 8601 date format: '1950010101'"
         assert mssg in str(exc)
 
