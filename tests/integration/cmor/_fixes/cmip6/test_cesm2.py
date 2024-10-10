@@ -61,7 +61,6 @@ AIR_PRESSURE_BOUNDS = np.array(
 )
 
 
-@pytest.mark.sequential
 @pytest.mark.skipif(
     sys.version_info < (3, 7, 6), reason="requires python3.7.6 or newer"
 )

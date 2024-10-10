@@ -609,9 +609,10 @@ class DiagnosticTask(BaseTask):
 
         returncode = None
 
-        with resource_usage_logger(process.pid, self.resource_log), open(
-            self.log, "ab"
-        ) as log:
+        with (
+            resource_usage_logger(process.pid, self.resource_log),
+            open(self.log, "ab") as log,
+        ):
             last_line = [""]
             while returncode is None:
                 returncode = process.poll()
