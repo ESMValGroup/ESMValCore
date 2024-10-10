@@ -1,4 +1,4 @@
-"""Tests for the ICON on-the-fly CMORizer."""
+"""Test the ICON on-the-fly CMORizer."""
 
 from copy import deepcopy
 from datetime import datetime
@@ -134,7 +134,7 @@ def cubes_2d_lat_lon_grid():
 
 @pytest.fixture
 def simple_unstructured_cube():
-    """Simple cube with unstructured grid."""
+    """Create a cube with an unstructured grid."""
     time_coord = DimCoord(
         [0],
         var_name="time",

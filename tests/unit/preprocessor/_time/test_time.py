@@ -320,8 +320,10 @@ class TestClipTimerange(tests.Test):
             assert sliced_backward.coord("time").cell(0).point.day == 1
 
     def test_clip_timerange_duration_seconds(self):
-        """Test timerange with duration periods with resolution up to
-        seconds."""
+        """Test clip_timerange.
+
+        Test with duration periods with resolution up to seconds.
+        """
         data = np.arange(8)
         times = np.arange(0, 48, 6)
         calendars = [
@@ -1256,7 +1258,7 @@ class TestDailyStatistics(tests.Test):
 
 @pytest.fixture
 def cube_1d_time():
-    """Simple 1D cube with time coordinate of length one."""
+    """Create a 1D cube with a time coordinate of length one."""
     units = Unit("days since 2000-01-01", calendar="standard")
     time_coord = iris.coords.DimCoord(
         units.date2num(datetime(2024, 1, 26, 14, 57, 28)),

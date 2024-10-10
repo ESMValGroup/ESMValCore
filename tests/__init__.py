@@ -19,11 +19,7 @@ class Test(unittest.TestCase):
     """Provides esmvaltool specific testing functionality."""
 
     def _remove_testcase_patches(self):
-        """
-        Helper method to remove per-testcase patches installed by
-        :meth:`patch`.
-
-        """
+        """Remove per-testcase patches installed by :meth:`patch`."""
         # Remove all patches made, ignoring errors.
         for patch in self.testcase_patches:
             patch.stop()

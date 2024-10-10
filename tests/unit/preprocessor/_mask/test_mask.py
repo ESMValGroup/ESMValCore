@@ -115,7 +115,7 @@ class Test(tests.Test):
         self.assert_array_equal(expected, computed)
 
     def test_mask_glaciated(self):
-        """Test to mask glaciated (NE mask)"""
+        """Test to mask glaciated (NE mask)."""
         result = mask_glaciated(self.arr, mask_out="glaciated")
         expected = np.ma.masked_array(
             self.data2, mask=np.array([[True, True], [False, False]])

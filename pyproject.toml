@@ -33,6 +33,7 @@ disable = [
 line-length = 79
 [tool.ruff.lint]
 select = [
+    "D",       # pydocstyle
     "E",       # pycodestyle
     "F",       # pyflakes
     "I",       # isort
@@ -41,6 +42,18 @@ select = [
 ]
 ignore = [
     "E501",  # Disable line-too-long as this is taken care of by the formatter.
+    "D105",  # Disable Missing docstring in magic method as these are well defined.
+]
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+    # Docstrings in tests are only needed if the code is not self-explanatory.
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
 ]
 [tool.ruff.lint.isort]
 known-first-party = ["esmvalcore"]
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

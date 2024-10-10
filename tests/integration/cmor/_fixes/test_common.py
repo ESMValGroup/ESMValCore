@@ -305,7 +305,6 @@ def get_tos_cubes(wrong_ij_names=False, ij_bounds=False):
 
 def get_tos_regular_grid_cubes():
     """Cubes containing tos variable."""
-
     time_coord = iris.coords.DimCoord(
         1.0,
         bounds=[0.0, 2.0],
