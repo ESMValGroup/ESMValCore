@@ -405,11 +405,10 @@ def _check_timerange_values(date, timerange):
     try:
         if "P" in date:
             isodate.parse_duration(date)
+        elif "T" in date:
+            isodate.parse_datetime(date)
         else:
-            if "T" in date:
-                isodate.parse_datetime(date)
-            else:
-                isodate.parse_date(date)
+            isodate.parse_date(date)
     except isodate.isoerror.ISO8601Error as exc:
         if date != "*":
             raise RecipeError(
