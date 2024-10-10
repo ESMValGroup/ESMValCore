@@ -9,7 +9,7 @@ import pytest
 import esmvalcore.dataset
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config import CFG
+from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -112,7 +112,7 @@ def test_session_setter():
 
     ds.session  # noqa: B018
 
-    assert isinstance(ds.session, esmvalcore.config.Session)
+    assert isinstance(ds.session, Session)
     assert ds.session == ds.supplementaries[0].session
 
 
