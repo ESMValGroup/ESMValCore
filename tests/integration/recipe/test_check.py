@@ -174,6 +174,13 @@ BAD_TIMERANGES = [
         "Invalid value encountered for `timerange`. "
         "P11X is not valid duration according to ISO 8601.",
     ),
+    (
+        "19923463164526/P11X",
+        "ISO 8601 time designator 'T' missing. "
+        "Unable to parse datetime string '11X'\n"
+        "Invalid value encountered for `timerange`. "
+        "P11X is not valid duration according to ISO 8601.",
+    ),
 ]
 
 
