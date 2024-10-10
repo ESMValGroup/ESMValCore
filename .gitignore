@@ -108,3 +108,7 @@ doc/_sidebar.rst.inc
 
 # ESMF log files
 *.ESMF_LogFile
+
+# pixi environments
+.pixi
+*.egg-info

@@ -71,6 +71,68 @@ license = {text = "Apache License, Version 2.0"}
 name = "ESMValCore"
 requires-python = ">=3.10"
 
+[tool.pixi.dependencies]
+cartopy = "*"
+cf-units = "*"
+cftime = "*"
+dask = "!=2024.8.0"
+dask-jobqueue = "*"
+distributed = "*"
+esgf-pyclient = ">=0.3.1"
+esmpy = ">=8.6.0"
+filelock = "*"
+fiona = "*"
+fire = "*"
+geopy = "*"
+humanfriendly = "*"
+iris = ">=3.10.0"
+iris-esmf-regrid = ">=0.11.0"
+iris-grib = "*"
+isodate = "*"
+jinja2 = "*"
+libnetcdf = "!=4.9.1"
+nc-time-axis = "*"
+nested-lookup = "*"
+netcdf4 = "*"
+numpy = "!=1.24.3,<2.0.0"
+packaging = "*"
+pandas = "*"
+pillow = "*"
+prov = "*"
+psutil = "*"
+py-cordex = "*"
+pybtex = "*"
+python = ">=3.10"
+python-stratify = ">=0.3"
+pyyaml = "*"
+requests = "*"
+scipy = ">=1.6"
+shapely = ">=2.0.0"
+yamale = "*"
+
+[tool.pixi.pypi-dependencies]
+ESMValCore = { path = ".", editable = true }  # Editable installs
+
+[tool.pixi.project]
+channels = ["conda-forge", "nodefaults"]
+platforms = ["linux-64", "osx-64"]
+
+[tool.pixi.feature.py310.dependencies]
+python = "3.10.*"
+[tool.pixi.feature.py311.dependencies]
+python = "3.11.*"
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.environments]
+# py310 = { features = ["py310", "test"], solve-group = "py310"}
+# py311 = { features = ["py311", "test"], solve-group = "py311"}
+# py312 = { features = ["py312", "test"], solve-group = "py312"}
+default = { features = ["develop"], solve-group = "default"}
+test = { features = ["test"], solve-group = "default"}
+doc = { features = ["doc"], solve-group = "default"}
+develop = { features = ["develop"], solve-group = "default"}
+
 [project.optional-dependencies]
 test = [
     "pytest>6.0.0",
