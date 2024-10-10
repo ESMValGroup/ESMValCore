@@ -45,7 +45,7 @@ def ncl_version():
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
     except subprocess.CalledProcessError as exc:
-        logger.error("Failed to execute '%s'", " ".join(" ".join(cmd)))
+        logger.error("Failed to execute '%s'", " ".join(cmd))
         raise RecipeError(
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
