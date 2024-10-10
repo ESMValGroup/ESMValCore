@@ -175,9 +175,6 @@ def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)
-    print(str(rec_err.value))
-    print("\n")
-    print(message)
     assert str(rec_err.value) == message
 
 
