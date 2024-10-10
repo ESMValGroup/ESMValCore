@@ -366,8 +366,8 @@ def _check_delimiter(timerange):
 
 
 def _check_duration_periods(timerange):
-    # P must always be in a duration string
-    if "P" in timerange[0] and "P" in timerange[1]:
+    # isodate duration must always start with P
+    if timerange[0].startswith("P") and timerange[1].startswith("P"):
         raise RecipeError(
             "Invalid value encountered for `timerange`. "
             "Cannot set both the beginning and the end "
