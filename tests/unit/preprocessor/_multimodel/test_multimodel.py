@@ -195,11 +195,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 
 def get_cube_for_equal_coords_test(num_cubes):
     """Set up cubes with equal auxiliary coordinates."""
-    cubes = []
-
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates("monthly")
-        cubes.append(cube)
+    cubes = [generate_cube_from_dates("monthly") for _ in range(num_cubes)]
 
     # Create cubes that have one exactly equal coordinate ('year'), one
     # coordinate with matching names ('m') and one coordinate with non-matching

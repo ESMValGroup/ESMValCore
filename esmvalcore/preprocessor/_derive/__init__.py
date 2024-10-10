@@ -27,7 +27,7 @@ def _get_all_derived_variables():
         module = importlib.import_module(
             f"esmvalcore.preprocessor._derive.{short_name}"
         )
-        derivers[short_name] = getattr(module, "DerivedVariable")
+        derivers[short_name] = module.DerivedVariable
     return derivers
 
 

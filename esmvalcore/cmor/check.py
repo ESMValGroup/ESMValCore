@@ -133,7 +133,7 @@ class CMORCheck:
                 "checks have been clearly separated in ESMValCore version "
                 "2.10.0."
             )
-            warnings.warn(msg, ESMValCoreDeprecationWarning)
+            warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
         # TODO: remove in v2.12
 

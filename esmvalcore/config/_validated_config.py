@@ -121,6 +121,7 @@ class ValidatedConfig(MutableMapping):
                 warnings.warn(
                     f"`{key}` is not defined{more_info}",
                     MissingConfigParameter,
+                    stacklevel=1,
                 )
 
     def copy(self):

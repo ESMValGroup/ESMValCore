@@ -311,7 +311,7 @@ def validate_extra_facets_dir(value):
             "ESMValCore version 2.12.0 and is scheduled for removal in "
             "version 2.14.0. Please use a list instead."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         value = list(value)
     return validate_pathlist(value)
 
@@ -371,7 +371,7 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
 
 # TODO: remove in v2.14.0

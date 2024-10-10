@@ -8,7 +8,7 @@ except ImportError as exc:
     try:
         import ESMF as esmpy  # noqa: N811
     except ImportError:
-        raise exc
+        raise exc from None
 import warnings
 
 import iris
@@ -78,8 +78,8 @@ class ESMPyRegridder:
     ):
         """Initialize class instance."""
         # These regridders are not lazy, so load source and target data once.
-        src_cube.data  # pylint: disable=pointless-statement
-        tgt_cube.data  # pylint: disable=pointless-statement
+        src_cube.data  # # noqa: B018 pylint: disable=pointless-statement
+        tgt_cube.data  # # noqa: B018 pylint: disable=pointless-statement
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
         self.method = method
@@ -100,7 +100,7 @@ class ESMPyRegridder:
 
         """
         # These regridders are not lazy, so load source data once.
-        cube.data  # pylint: disable=pointless-statement
+        cube.data  # # noqa: B018 pylint: disable=pointless-statement
         src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
         regridder = build_regridder(
             src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold
@@ -140,7 +140,7 @@ class _ESMPyScheme:
             "`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` "
             "instead."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         self.mask_threshold = mask_threshold
 
     def __repr__(self) -> str:

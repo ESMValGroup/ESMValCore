@@ -74,7 +74,7 @@ class DerivedVariable(DerivedVariableBase):
                     contains_dimension=t_coord_dim, dim_coords=False
                 )
             ]
-            for coord, dims in dim_coords + aux_coords:
+            for coord, _ in dim_coords + aux_coords:
                 cube.remove_coord(coord)
         new_cube = cube * volume
         new_cube *= RHO_CP

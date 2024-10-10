@@ -120,9 +120,9 @@ def test_histogram_defaults(cube, lazy):
     )
     np.testing.assert_allclose(result.data.mask, [False] * 10)
     bin_coord = result.coord("air_temperature")
-    bin_coord.shape == (10,)
-    bin_coord.dtype == np.float64
-    bin_coord.bounds_dtype == np.float64
+    assert bin_coord.shape == (10,)
+    assert bin_coord.dtype == np.float64
+    assert bin_coord.bounds_dtype == np.float64
     np.testing.assert_allclose(
         bin_coord.points,
         [0.35, 1.05, 1.75, 2.45, 3.15, 3.85, 4.55, 5.25, 5.95, 6.65],
@@ -196,9 +196,9 @@ def test_histogram_over_time(cube, lazy, weights, normalization):
     np.testing.assert_allclose(result.data, expected_data)
     np.testing.assert_allclose(result.data.mask, expected_data.mask)
     bin_coord = result.coord("air_temperature")
-    bin_coord.shape == (10,)
-    bin_coord.dtype == np.float64
-    bin_coord.bounds_dtype == np.float64
+    assert bin_coord.shape == (3,)
+    assert bin_coord.dtype == np.float64
+    assert bin_coord.bounds_dtype == np.float64
     np.testing.assert_allclose(bin_coord.points, [5.5, 7.5, 9.5])
     np.testing.assert_allclose(
         bin_coord.bounds,
@@ -231,9 +231,9 @@ def test_histogram_fully_masked(cube, lazy, normalization):
     )
     np.testing.assert_equal(result.data.mask, [True] * 10)
     bin_coord = result.coord("air_temperature")
-    bin_coord.shape == (10,)
-    bin_coord.dtype == np.float64
-    bin_coord.bounds_dtype == np.float64
+    assert bin_coord.shape == (10,)
+    assert bin_coord.dtype == np.float64
+    assert bin_coord.bounds_dtype == np.float64
     np.testing.assert_allclose(
         bin_coord.points,
         [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5],
@@ -303,9 +303,9 @@ def test_histogram_weights(cube, lazy, weights, normalization):
     np.testing.assert_allclose(result.data, expected_data)
     np.testing.assert_allclose(result.data.mask, expected_data.mask)
     bin_coord = result.coord("air_temperature")
-    bin_coord.shape == (10,)
-    bin_coord.dtype == np.float64
-    bin_coord.bounds_dtype == np.float64
+    assert bin_coord.shape == (3,)
+    assert bin_coord.dtype == np.float64
+    assert bin_coord.bounds_dtype == np.float64
     np.testing.assert_allclose(bin_coord.points, [1.0, 3.0, 6.0])
     np.testing.assert_allclose(
         bin_coord.bounds,

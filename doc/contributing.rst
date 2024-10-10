@@ -602,7 +602,7 @@ that feature should be removed in version 2.7:
                "ESMValCore version 2.5 and is scheduled for removal in "
                "version 2.7. Add additional text (e.g., description of "
                "alternatives) here.")
-           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
        # Other code
 
