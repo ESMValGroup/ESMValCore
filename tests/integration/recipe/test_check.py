@@ -157,10 +157,10 @@ BAD_TIMERANGES = [
     ),
     (
         "199035345/19923463164526",
-        "Unrecognised ISO 8601 date format: '199035345'\n"
         "Invalid value encountered for `timerange`. Valid value must follow "
         "ISO 8601 standard for dates and duration periods, or be set to '*' "
-        "to load available years. Got ['199035345', '19923463164526'] instead.",
+        "to load available years. Got ['199035345', '19923463164526'] instead.\n"
+        "Unrecognised ISO 8601 date format: '199035345'",
     ),
     (
         "P11Y/P42Y",
@@ -169,17 +169,17 @@ BAD_TIMERANGES = [
     ),
     (
         "P11X/19923463164526",
-        "ISO 8601 time designator 'T' missing. "
-        "Unable to parse datetime string '11X'\n"
         "Invalid value encountered for `timerange`. "
-        "P11X is not valid duration according to ISO 8601.",
+        "P11X is not valid duration according to ISO 8601.\n"
+        "ISO 8601 time designator 'T' missing. "
+        "Unable to parse datetime string '11X'",
     ),
     (
         "19923463164526/P11X",
-        "ISO 8601 time designator 'T' missing. "
-        "Unable to parse datetime string '11X'\n"
         "Invalid value encountered for `timerange`. "
-        "P11X is not valid duration according to ISO 8601.",
+        "P11X is not valid duration according to ISO 8601.\n"
+        "ISO 8601 time designator 'T' missing. "
+        "Unable to parse datetime string '11X'",
     ),
 ]
 
