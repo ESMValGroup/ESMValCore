@@ -114,16 +114,17 @@ def _parse_start_date(date):
     """Parse start of the input `timerange` tag given in ISO 8601 format.
 
     Returns a datetime.datetime object.
+
+    Raises an ISO8601 parser error if data can not be parsed.
     """
     if date.startswith('P'):
         start_date = isodate.parse_duration(date)
+    elif "T" in date:
+        start_date = isodate.parse_datetime(date)
     else:
-        try:
-            start_date = isodate.parse_datetime(date)
-        except isodate.isoerror.ISO8601Error:
-            start_date = isodate.parse_date(date)
-            start_date = datetime.datetime.combine(
-                start_date, datetime.time.min)
+        start_date = isodate.parse_date(date)
+        start_date = datetime.datetime.combine(start_date, datetime.time.min)
+
     return start_date
 
 
@@ -131,6 +132,8 @@ def _parse_end_date(date):
     """Parse end of the input `timerange` given in ISO 8601 format.
 
     Returns a datetime.datetime object.
+
+    Raises an ISO8601 parser error if data can not be parsed.
     """
     if date.startswith('P'):
         end_date = isodate.parse_duration(date)
@@ -141,9 +144,9 @@ def _parse_end_date(date):
             month, year = get_next_month(int(date[4:]), int(date[0:4]))
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
-            try:
+            if "T" in date:
                 end_date = isodate.parse_datetime(date)
-            except isodate.ISO8601Error:
+            else:
                 end_date = isodate.parse_date(date)
                 end_date = datetime.datetime.combine(end_date,
                                                      datetime.time.min)
@@ -258,6 +261,8 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     ------
     ValueError
         Time ranges are outside the cube's time limits.
+    isodate.isoerror.ISO8601Error:
+        Start/end times can not be parsed by isodate.
 
     """
     start_date = _parse_start_date(timerange.split('/')[0])

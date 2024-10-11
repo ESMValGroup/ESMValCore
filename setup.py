@@ -32,7 +32,7 @@ REQUIREMENTS = {
         'dask[array,distributed]',
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmf-regrid',
+        'esmf-regrid>=0.11.0',
         'esmpy!=8.1.0',  # not on PyPI
         'filelock',
         'fiona',
@@ -40,7 +40,7 @@ REQUIREMENTS = {
         'geopy',
         'humanfriendly',
         "importlib_metadata;python_version<'3.10'",
-        'isodate',
+        'isodate>=0.7.0',  # incompatible with very old 0.6.1
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
