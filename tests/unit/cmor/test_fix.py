@@ -121,6 +121,7 @@ class TestFixMetadata:
         self.fixed_cube = self._create_mock_cube()
         self.mock_fix = Mock()
         self.mock_fix.fix_metadata.return_value = [self.intermediate_cube]
+        self.mock_fix.GROUP_CUBES_BY_DATE = False
         self.checker = Mock()
         self.check_metadata = self.checker.return_value.check_metadata
         self.expected_get_fixes_call = {
