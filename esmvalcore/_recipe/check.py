@@ -401,9 +401,8 @@ def _check_format_years(date):
 
 def _check_timerange_values(date, timerange):
     # Wildcards are fine
-    if date == '*':
+    if date == "*":
         return
-    
     # P must always be in a duration string
     # if T in date, that is a datetime; otherwise it's date
     try:
