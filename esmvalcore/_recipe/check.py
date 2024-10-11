@@ -379,16 +379,20 @@ def _check_duration_periods(timerange):
             isodate.parse_duration(timerange[0])
         except isodate.isoerror.ISO8601Error as exc:
             raise RecipeError(
-                str(exc) + "\n" + "Invalid value encountered for `timerange`. "
+                "Invalid value encountered for `timerange`. "
                 f"{timerange[0]} is not valid duration according to ISO 8601."
+                + "\n"
+                + str(exc)
             )
     elif timerange[1].startswith("P"):
         try:
             isodate.parse_duration(timerange[1])
         except isodate.isoerror.ISO8601Error as exc:
             raise RecipeError(
-                str(exc) + "\n" + "Invalid value encountered for `timerange`. "
+                "Invalid value encountered for `timerange`. "
                 f"{timerange[1]} is not valid duration according to ISO 8601."
+                + "\n"
+                + str(exc)
             )
 
 
@@ -414,11 +418,11 @@ def _check_timerange_values(date, timerange):
             isodate.parse_date(date)
     except isodate.isoerror.ISO8601Error as exc:
         raise RecipeError(
-            str(exc) + "\n" + "Invalid value encountered for `timerange`. "
+            "Invalid value encountered for `timerange`. "
             "Valid value must follow ISO 8601 standard "
             "for dates and duration periods, or be "
             "set to '*' to load available years. "
-            f"Got {timerange} instead."
+            f"Got {timerange} instead." + "\n" + str(exc)
         )
 
 
