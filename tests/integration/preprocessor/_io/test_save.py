@@ -1,5 +1,8 @@
 """Integration tests for :func:`esmvalcore.preprocessor.save`"""
 
+import logging
+import re
+
 import iris
 import netCDF4
 import numpy as np
@@ -73,6 +76,15 @@ def test_delayed_save(cube, filename):
     delayed.compute()
     loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
+
+
+def test_save_noop(cube, filename, caplog):
+    """Test save."""
+    cube.data = cube.lazy_data()
+    save([cube], filename)
+    with caplog.at_level(logging.DEBUG):
+        save([cube], filename)
+    assert re.findall("Not saving cubes .* to avoid data loss.", caplog.text)
 
 
 def test_save_create_parent_dir(cube, tmp_path):
