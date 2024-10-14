@@ -142,12 +142,24 @@ DRS for ``native6``).
 
 .. _read_native_era5_grib:
 
-ERA5 (in GRIB format available on DKRZ's Levante)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERA5 (in GRIB format available on DKRZ's Levante or downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ERA5 data in monthly, daily, and hourly resolution is `available on Levante
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
 in its native GRIB format.
+
+.. note::
+  ERA5 data in its native GRIB format can also be downloaded from the
+  `Copernicus Climate Data Store (CDS)
+  <https://cds.climate.copernicus.eu/datasets>`__.
+  For example, hourly data on pressure levels is available `here
+  <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=download>`__.
+  Reading self-downloaded ERA5 data in GRIB format is experimental and likely
+  requires additional setup from the user like setting up the proper directory
+  structure for the input files and/or creating a custom :ref:`DRS
+  <config_option_drs>`.
+
 To read these data with ESMValCore, use the :ref:`rootpath
 <config_option_rootpath>` ``/pool/data/ERA5`` with :ref:`DRS
 <config_option_drs>` ``DKRZ-ERA5-GRIB`` in your configuration, for example:
