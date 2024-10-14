@@ -470,9 +470,16 @@ successful.
 Test coverage
 ~~~~~~~~~~~~~
 
-To check which parts of your code are `covered by unit tests`_, open the file
-``test-reports/coverage_html/index.html`` (available after running a ``pytest``
-command) and browse to the relevant file.
+To check which parts of your code are `covered by unit tests`_, run the command
+
+.. code-block:: bash
+
+   pytest --cov
+
+and open the file ``test-reports/coverage_html/index.html`` and browse to the
+relevant file. Note that tracking code coverage slows down the test runs,
+therefore it is disabled by default and needs to be requested by providing
+``pytest`` with the ``--cov`` flag.
 
 CircleCI will upload the coverage results from running the tests to codecov and
 Codacy.

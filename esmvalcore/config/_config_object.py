@@ -317,8 +317,17 @@ class Config(ValidatedConfig):
         self.clear()
         self.update(Config._load_user_config(filename))
 
+    @staticmethod
+    def _get_config_dict_from_dirs(dirs: Iterable[str | Path]) -> dict:
+        """Get configuration :obj:`dict` from directories."""
+        dirs_str: list[str] = []
+        for config_dir in dirs:
+            config_dir = Path(config_dir).expanduser().absolute()
+            dirs_str.append(str(config_dir))
+        return dask.config.collect(paths=dirs_str, env={})
+
     def load_from_dirs(self, dirs: Iterable[str | Path]) -> None:
-        """Load configuration object from directories.
+        """Clear and load configuration object from directories.
 
         This searches for all YAML files within the given directories and
         merges them together using :func:`dask.config.collect`. Nested objects
@@ -344,23 +353,17 @@ class Config(ValidatedConfig):
             Invalid configuration option given.
 
         """
-        dirs_str: list[str] = []
-
         # Always consider default options; these have the lowest priority
-        dirs_str.append(str(DEFAULT_CONFIG_DIR))
+        dirs = [DEFAULT_CONFIG_DIR] + list(dirs)
 
-        for config_dir in dirs:
-            config_dir = Path(config_dir).expanduser().absolute()
-            dirs_str.append(str(config_dir))
-
-        new_config_dict = dask.config.collect(paths=dirs_str, env={})
+        new_config_dict = self._get_config_dict_from_dirs(dirs)
         self.clear()
         self.update(new_config_dict)
 
         self.check_missing()
 
     def reload(self) -> None:
-        """Reload the configuration object.
+        """Clear and reload the configuration object.
 
         This will read all YAML files in the user configuration directory (by
         default ``~/.config/esmvaltool``, but this can be changed with the
@@ -430,6 +433,39 @@ class Config(ValidatedConfig):
             )
             session = Session(config=self.copy(), name=name)
         return session
+
+    def update_from_dirs(self, dirs: Iterable[str | Path]) -> None:
+        """Update configuration object from directories.
+
+        This will first search for all YAML files within the given directories
+        and merge them together using :func:`dask.config.collect` (if identical
+        values are provided in multiple files, the value from the last file
+        will be used).  Then, the current configuration is merged with these
+        new configuration options using :func:`dask.config.merge` (new values
+        are preferred over old values). Nested objects are properly considered;
+        see :func:`dask.config.update` for details.
+
+        Note
+        ----
+        Just like :func:`dask.config.collect`, this silently ignores
+        non-existing directories.
+
+        Parameters
+        ----------
+        dirs:
+            A list of directories to search for YAML configuration files.
+
+        Raises
+        ------
+        esmvalcore.exceptions.InvalidConfigParameter
+            Invalid configuration option given.
+
+        """
+        new_config_dict = self._get_config_dict_from_dirs(dirs)
+        merged_config_dict = dask.config.merge(self, new_config_dict)
+        self.update(merged_config_dict)
+
+        self.check_missing()
 
 
 class Session(ValidatedConfig):

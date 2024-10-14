@@ -88,6 +88,13 @@ To load the configuration object from custom directories, use:
     >>> dirs = ['my/default/config', 'my/custom/config']
     >>> CFG.load_from_dirs(dirs)
 
+To update the existing configuration object from custom directories, use:
+
+.. code-block:: python
+
+    >>> dirs = ['my/default/config', 'my/custom/config']
+    >>> CFG.update_from_dirs(dirs)
+
 
 Session
 *******
