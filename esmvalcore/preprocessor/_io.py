@@ -410,6 +410,7 @@ def save(
     optimize_access: str = "",
     compress: bool = False,
     alias: str = "",
+    compute: bool = True,
     **kwargs,
 ) -> Delayed | None:
     """Save iris cubes to file.
@@ -437,8 +438,18 @@ def save(
     alias:
         Var name to use when saving instead of the one in the cube.
 
+    compute : bool, default=True
+        Default is ``True``, meaning complete the file immediately, and return ``None``.
+
+        When ``False``, create the output file but don't write any lazy array content to
+        its variables, such as lazy cube data or aux-coord points and bounds.
+        Instead return a :class:`dask.delayed.Delayed` which, when computed, will
+        stream all the lazy content via :meth:`dask.store`, to complete the file.
+        Several such data saves can be performed in parallel, by passing a list of them
+        into a :func:`dask.compute` call.
+
     **kwargs:
-        See :meth:`iris.fileformats.netcdf.saver.save` for additional
+        See :func:`iris.fileformats.netcdf.saver.save` for additional
         keyword arguments.
 
     Returns
