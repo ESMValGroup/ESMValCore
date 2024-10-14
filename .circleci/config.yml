@@ -236,7 +236,6 @@ workflows:
       - run_tests
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
-      - test_with_upstream_developments
 
   nightly:
     triggers:
