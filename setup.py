@@ -39,8 +39,8 @@ REQUIREMENTS = {
         "fire",
         "geopy",
         "humanfriendly",
-        "iris-grib",
-        "isodate",
+        "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
+        "isodate>=0.7.0",  # incompatible with very old 0.6.1
         "jinja2",
         "nc-time-axis",  # needed by iris.plot
         "nested-lookup",
