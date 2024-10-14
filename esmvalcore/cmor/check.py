@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from collections import namedtuple
 from collections.abc import Callable
 from enum import IntEnum
@@ -20,7 +19,6 @@ import numpy as np
 from iris.coords import Coord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
     _get_generic_lev_coord_names,
@@ -28,7 +26,6 @@ from esmvalcore.cmor._utils import (
     _get_simplified_calendar,
 )
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_unstructured_grid
 
 
@@ -70,18 +67,6 @@ class CMORCheck:
     fail_on_error: bool
         If true, CMORCheck stops on the first error. If false, it collects
         all possible errors before stopping.
-    automatic_fixes: bool
-        If True, CMORCheck will try to apply automatic fixes for any
-        detected error, if possible.
-
-        .. deprecated:: 2.10.0
-            This option has been deprecated in ESMValCore version 2.10.0 and is
-            scheduled for removal in version 2.12.0. Please use the functions
-            :func:`~esmvalcore.preprocessor.fix_metadata`,
-            :func:`~esmvalcore.preprocessor.fix_data`, or
-            :meth:`esmvalcore.dataset.Dataset.load` (which automatically
-            includes the first two functions) instead. Fixes and CMOR checks
-            have been clearly separated in ESMValCore version 2.10.0.
     check_level: CheckLevels
         Level of strictness of the checks.
 
@@ -104,7 +89,6 @@ class CMORCheck:
         frequency=None,
         fail_on_error=False,
         check_level=CheckLevels.DEFAULT,
-        automatic_fixes=False,
     ):
         self._cube = cube
         self._failerr = fail_on_error
@@ -118,26 +102,6 @@ class CMORCheck:
         if not frequency:
             frequency = self._cmor_var.frequency
         self.frequency = frequency
-        self.automatic_fixes = automatic_fixes
-
-        # Deprecate automatic_fixes (remove in v2.12)
-        if automatic_fixes:
-            msg = (
-                "The option `automatic_fixes` has been deprecated in "
-                "ESMValCore version 2.10.0 and is scheduled for removal in "
-                "version 2.12.0. Please use the functions "
-                "esmvalcore.preprocessor.fix_metadata(), "
-                "esmvalcore.preprocessor.fix_data(), or "
-                "esmvalcore.dataset.Dataset.load() (which automatically "
-                "includes the first two functions) instead. Fixes and CMOR "
-                "checks have been clearly separated in ESMValCore version "
-                "2.10.0."
-            )
-            warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-
-        # TODO: remove in v2.12
-
-        self._generic_fix = GenericFix(var_info, frequency=frequency)
 
     @cached_property
     def _unstructured_grid(self) -> bool:
@@ -170,10 +134,6 @@ class CMORCheck:
         """
         if logger is not None:
             self._logger = logger
-
-        # TODO: remove in v2.12
-        if self.automatic_fixes:
-            [self._cube] = self._generic_fix.fix_metadata([self._cube])
 
         self._check_var_metadata()
         self._check_fill_value()
@@ -219,10 +179,6 @@ class CMORCheck:
         """
         if logger is not None:
             self._logger = logger
-
-        # TODO: remove in v2.12
-        if self.automatic_fixes:
-            self._cube = self._generic_fix.fix_data(self._cube)
 
         self._check_coords_data()
 
@@ -345,7 +301,6 @@ class CMORCheck:
 
     def _get_effective_units(self):
         """Get effective units."""
-        # TODO: remove entire function in v2.12
         if self._cmor_var.units.lower() == "psu":
             units = "1.0"
         else:
@@ -605,12 +560,6 @@ class CMORCheck:
                 coord = self._cube.coord(var_name=var_name, dim_coords=True)
             except iris.exceptions.CoordinateNotFoundError:
                 continue
-
-            # TODO: remove in v2.12
-            if self.automatic_fixes:
-                (self._cube, coord) = self._generic_fix._fix_coord_direction(
-                    self._cube, coordinate, coord
-                )
 
             self._check_coord_monotonicity_and_direction(
                 coordinate, coord, var_name
@@ -935,7 +884,6 @@ def _get_cmor_checker(
     frequency: None | str = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
-    automatic_fixes: bool = False,  # TODO: remove in v2.12
 ) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker."""
     var_info = get_var_info(project, mip, short_name)
@@ -947,7 +895,6 @@ def _get_cmor_checker(
             frequency=frequency,
             fail_on_error=fail_on_error,
             check_level=check_level,
-            automatic_fixes=automatic_fixes,
         )
 
     return _checker
