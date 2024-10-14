@@ -571,7 +571,7 @@ users.
 
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
-:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+:ref:`Python API <api>`, or the :ref:`configuration format <config>`,
 keep in mind that this may affect many users.
 To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing

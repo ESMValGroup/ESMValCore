@@ -790,23 +790,21 @@ class Recipe:
             isinstance(err, InputFilesNotFound) for err in exc.failed_tasks
         ):
             logger.error(
-                "Not all input files required to run the recipe could be"
-                " found."
+                "Not all input files required to run the recipe could be "
+                "found."
             )
             logger.error(
-                "If the files are available locally, please check"
-                " your `rootpath` and `drs` settings in your user "
-                "configuration file %s",
-                self.session["config_file"],
+                "If the files are available locally, please check "
+                "your `rootpath` and `drs` settings in your configuration "
+                "file(s)"
             )
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, set `search_esgf: when_missing` or "
-                "`search_esgf: always` in %s, or run the recipe with the "
-                "extra command line argument --search_esgf=when_missing or "
-                "--search_esgf=always",
+                "`download_dir: %s`, use `search_esgf: when_missing` or "
+                "`search_esgf: always` in your configuration file(s), or run "
+                "the recipe with the command line argument "
+                "--search_esgf=when_missing or --search_esgf=always",
                 self.session["download_dir"],
-                self.session["config_file"],
             )
             logger.info(
                 "Note that automatic download is only available for files"
