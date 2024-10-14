@@ -465,6 +465,9 @@ def save(
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
 
+    if Path(filename).suffix.lower() == ".nc":
+        kwargs["compute"] = compute
+
     # Rename some arguments
     kwargs["target"] = filename
     kwargs["zlib"] = compress
