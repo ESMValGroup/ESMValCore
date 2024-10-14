@@ -507,7 +507,7 @@ class AllVars(Fix):
             coord = cube.coord(axis=axis)
             if axis == "T":
                 coord.convert_units("days since 1850-1-1 00:00:00.0")
-            if axis == "Z":
+            if axis in ("X", "Y", "Z"):
                 coord.convert_units(coord_def.units)
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
