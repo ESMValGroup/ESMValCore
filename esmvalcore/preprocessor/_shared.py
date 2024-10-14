@@ -7,7 +7,6 @@ Utility functions that can be used for multiple preprocessor steps
 from __future__ import annotations
 
 import logging
-import re
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
@@ -22,7 +21,6 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_regular_grid
 from esmvalcore.typing import DataType
 
@@ -73,31 +71,6 @@ def get_iris_aggregator(
     """
     cap_operator = operator.upper()
     aggregator_kwargs = dict(operator_kwargs)
-
-    # Deprecations
-    if cap_operator == "STD":
-        msg = (
-            f"The operator '{operator}' for computing the standard deviation "
-            f"has been deprecated in ESMValCore version 2.10.0 and is "
-            f"scheduled for removal in version 2.12.0. Please use 'std_dev' "
-            f"instead. This is an exact replacement."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
-        operator = "std_dev"
-        cap_operator = "STD_DEV"
-    elif re.match(r"^(P\d{1,2})(\.\d*)?$", cap_operator):
-        msg = (
-            f"Specifying percentile operators with the syntax 'pXX.YY' (here: "
-            f"'{operator}') has been deprecated in ESMValCore version 2.10.0 "
-            f"and is scheduled for removal in version 2.12.0. Please use "
-            f"`operator='percentile'` with the keyword argument "
-            f"`percent=XX.YY` instead. Example: `percent=95.0` for 'p95.0'. "
-            f"This is an exact replacement."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
-        aggregator_kwargs["percent"] = float(operator[1:])
-        operator = "percentile"
-        cap_operator = "PERCENTILE"
 
     # Check if valid aggregator is found
     if not hasattr(iris.analysis, cap_operator):

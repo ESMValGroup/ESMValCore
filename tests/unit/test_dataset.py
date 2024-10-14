@@ -1735,7 +1735,6 @@ def test_load(mocker, session):
             "timerange": "2000/2005",
         },
         "fix_metadata": {
-            "check_level": CheckLevels.DEFAULT,
             "session": session,
             "dataset": "CanESM2",
             "ensemble": "r1i1p1",
@@ -1757,7 +1756,6 @@ def test_load(mocker, session):
             "timerange": "2000/2005",
         },
         "fix_data": {
-            "check_level": CheckLevels.DEFAULT,
             "session": session,
             "dataset": "CanESM2",
             "ensemble": "r1i1p1",

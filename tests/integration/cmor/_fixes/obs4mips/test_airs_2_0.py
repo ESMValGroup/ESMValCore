@@ -20,14 +20,7 @@ def test_fix_metadata_hur():
         ]
     )
 
-    fixed_cubes = fix_metadata(
-        cubes,
-        "hur",
-        "obs4MIPs",
-        "AIRS-2-0",
-        "Amon",
-        check_level=5,
-    )
+    fixed_cubes = fix_metadata(cubes, "hur", "obs4MIPs", "AIRS-2-0", "Amon")
 
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
