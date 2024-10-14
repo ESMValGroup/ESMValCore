@@ -577,6 +577,10 @@ class AllVars(Fix):
                 "Contains modified Copernicus Climate Change "
                 f"Service Information {year}"
             )
+            if "GRIB_PARAM" in cube.attributes:
+                cube.attributes["GRIB_PARAM"] = str(
+                    cube.attributes["GRIB_PARAM"]
+                )
 
             fixed_cubes.append(cube)
 
