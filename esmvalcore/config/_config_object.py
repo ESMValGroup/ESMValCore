@@ -92,7 +92,7 @@ class Config(ValidatedConfig):
             "Do not instantiate `Config` objects directly, this will lead "
             "to unexpected behavior. Use `esmvalcore.config.CFG` instead."
         )
-        warnings.warn(msg, UserWarning, stacklevel=1)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     # TODO: remove in v2.14.0
     @classmethod
