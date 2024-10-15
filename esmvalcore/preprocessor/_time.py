@@ -833,6 +833,10 @@ def climate_statistics(
     """
     period = period.lower()
 
+    if len(cube.coord('time').points)<2: 
+        print('WARNING: Cannot preform climate statistics on single point')
+        return cube
+
     # Use Cube.collapsed when full period is requested
     if period in ('full', ):
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
