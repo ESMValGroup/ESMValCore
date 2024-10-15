@@ -1,4 +1,4 @@
-"""Integration tests for the :func:`esmvalcore.preprocessor.regrid`."""
+"""Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
 import unittest
 
