@@ -1,5 +1,4 @@
-"""Integration tests for the
-:func:`esmvalcore.preprocessor.regrid.extract_levels` function."""
+"""Tests for :func:`esmvalcore.preprocessor.regrid.extract_levels` function."""
 
 import unittest
 
