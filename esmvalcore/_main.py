@@ -579,6 +579,7 @@ class ESMValTool:
                 zip(
                     config_dirs,
                     _get_all_config_sources(cli_config_dir),
+                    strict=False,
                 )
             )
 

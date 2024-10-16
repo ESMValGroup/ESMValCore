@@ -134,6 +134,7 @@ def _make_cube(
             for a, name in zip(
                 np.meshgrid(node_data_x, node_data_y),
                 ["longitude", "latitude"],
+                strict=False,
             )
         ]
         face_data_x = np.arange(x) + 1
@@ -143,6 +144,7 @@ def _make_cube(
             for a, name in zip(
                 np.meshgrid(face_data_x, face_data_y),
                 ["longitude", "latitude"],
+                strict=False,
             )
         ]
         # Build the face connectivity indices by creating an array of squares

@@ -109,9 +109,12 @@ def _get_resource_usage(process, start_time, children=True):
             continue
 
         # Create and yield log entry
-        entries = [sum(entry) for entry in zip(*cache.values())]
+        entries = [sum(entry) for entry in zip(*cache.values(), strict=False)]
         entries.insert(0, time.time() - start_time)
-        entries = [round(entry, p) for entry, p in zip(entries, precision)]
+        entries = [
+            round(entry, p)
+            for entry, p in zip(entries, precision, strict=False)
+        ]
         entries.insert(0, datetime.datetime.utcnow())
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)

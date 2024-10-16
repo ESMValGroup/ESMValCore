@@ -912,7 +912,7 @@ def test_ignore_tas_scalar_height_coord():
     tas_2m = generate_cube_from_dates("monthly")
     tas_1p5m = generate_cube_from_dates("monthly")
 
-    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5]):
+    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5], strict=False):
         cube.rename("air_temperature")
         cube.attributes["short_name"] = "tas"
         cube.add_aux_coord(
