@@ -470,9 +470,16 @@ successful.
 Test coverage
 ~~~~~~~~~~~~~
 
-To check which parts of your code are `covered by unit tests`_, open the file
-``test-reports/coverage_html/index.html`` (available after running a ``pytest``
-command) and browse to the relevant file.
+To check which parts of your code are `covered by unit tests`_, run the command
+
+.. code-block:: bash
+
+   pytest --cov
+
+and open the file ``test-reports/coverage_html/index.html`` and browse to the
+relevant file. Note that tracking code coverage slows down the test runs,
+therefore it is disabled by default and needs to be requested by providing
+``pytest`` with the ``--cov`` flag.
 
 CircleCI will upload the coverage results from running the tests to codecov and
 Codacy.
@@ -602,7 +609,7 @@ that feature should be removed in version 2.7:
                "ESMValCore version 2.5 and is scheduled for removal in "
                "version 2.7. Add additional text (e.g., description of "
                "alternatives) here.")
-           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
        # Other code
 

@@ -1335,7 +1335,7 @@ def test_update_shapefile_path_abs(session, tmp_path):
 
     # Test with Path and str object
     for shapefile_in in (shapefile, str(shapefile)):
-        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        shapefile_out = _update_shapefile_path(shapefile_in, session=session)
         assert isinstance(shapefile_out, Path)
         assert shapefile_out == shapefile
 
