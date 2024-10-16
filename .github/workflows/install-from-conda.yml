@@ -49,7 +49,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p conda_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
@@ -85,7 +84,6 @@ jobs:
           architecture: ${{ matrix.architecture }}
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p conda_install_osx_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
