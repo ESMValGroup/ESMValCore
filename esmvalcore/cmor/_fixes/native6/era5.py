@@ -304,6 +304,44 @@ class Rsdt(Fix):
         return cubes
 
 
+class Rsut(Fix):
+    """Fixes for rsut."""
+
+    # Enable grouping cubes by date for fix_metadata since multiple variables
+    # from multiple files are needed
+    GROUP_CUBES_BY_DATE = True
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        Derive rsut as
+
+        rsut = rsdt - rsnt
+
+        with
+
+        rsut = TOA Outgoing Shortwave Radiation
+        rsdt = TOA Incoming Shortwave Radiation
+        rsnt = TOA Net Incoming Shortwave Radiation
+
+        """
+        rsdt_cube = cubes.extract_cube(
+            iris.NameConstraint(long_name="TOA incident solar radiation")
+        )
+        rsnt_cube = cubes.extract_cube(
+            iris.NameConstraint(
+                long_name="Mean top net short-wave radiation flux"
+            )
+        )
+        rsdt_cube = Rsdt(None).fix_metadata([rsdt_cube])[0]
+        rsdt_cube.convert_units(self.vardef.units)
+
+        rsdt_cube.data = rsdt_cube.core_data() - rsnt_cube.core_data()
+        rsdt_cube.attributes["positive"] = "up"
+
+        return iris.cube.CubeList([rsdt_cube])
+
+
 class Rss(Fix):
     """Fixes for Rss."""
 
