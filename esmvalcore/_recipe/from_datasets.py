@@ -219,7 +219,7 @@ def _group_ensemble_names(ensemble_names: Iterable[str]) -> list[str]:
     groups = []
     for ensemble_range in ensemble_ranges:
         txt = ""
-        for name, value in zip("ripf", ensemble_range):
+        for name, value in zip("ripf", ensemble_range, strict=False):
             txt += name
             if value[0] == value[1]:
                 txt += f"{value[0]}"

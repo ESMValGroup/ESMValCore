@@ -11,7 +11,7 @@ class TestMsftmyz(unittest.TestCase):
     """Test msftmyz fixes."""
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "MRI-ESM1", "Amon", "msftmyz"),
             [Msftmyz(None), GenericFix(None)],

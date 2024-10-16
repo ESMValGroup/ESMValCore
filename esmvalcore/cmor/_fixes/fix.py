@@ -141,7 +141,7 @@ class Fix:
 
         Raises
         ------
-        Exception
+        ValueError
             No cube is found.
 
         Returns
@@ -155,7 +155,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception(f'Cube for variable "{short_name}" not found')
+        raise ValueError(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.

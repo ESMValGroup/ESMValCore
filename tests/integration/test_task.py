@@ -47,7 +47,7 @@ class MockBaseTask(BaseTask):
 
 @pytest.fixture
 def example_tasks(tmp_path):
-    """Example tasks for testing the task runners."""
+    """Create example tasks for testing the task runners."""
     tasks = TaskSet()
     for i in range(3):
         task = MockBaseTask(
@@ -341,7 +341,9 @@ CMD_diag_fail = {
 def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
     """Run DiagnosticTask that will not fail."""
 
-    def _run(self, input_filesi=[]):
+    def _run(self, input_filesi=None):
+        if input_filesi is None:
+            input_filesi = []
         print(f"running task {self.name}")
 
     task = _get_diagnostic_tasks(tmp_path, diag_text, executable[1])
@@ -356,7 +358,9 @@ def test_diagnostic_run_task_fail(
 ):
     """Run DiagnosticTask that will fail."""
 
-    def _run(self, input_filesi=[]):
+    def _run(self, input_filesi=None):
+        if input_filesi is None:
+            input_filesi = []
         print(f"running task {self.name}")
 
     task = _get_diagnostic_tasks(tmp_path, diag_text[0], executable[1])

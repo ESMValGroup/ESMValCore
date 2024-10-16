@@ -22,7 +22,7 @@ class TestGenericFix:
 
     @pytest.fixture(autouse=True)
     def setup(self, mocker):
-        """Setup tests."""
+        """Set up tests."""
         self.mock_debug = mocker.patch(
             "esmvalcore.cmor._fixes.fix.GenericFix._debug_msg", autospec=True
         )

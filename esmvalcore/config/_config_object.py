@@ -92,7 +92,7 @@ class Config(ValidatedConfig):
             "Do not instantiate `Config` objects directly, this will lead "
             "to unexpected behavior. Use `esmvalcore.config.CFG` instead."
         )
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     # TODO: remove in v2.14.0
     @classmethod
@@ -313,7 +313,7 @@ class Config(ValidatedConfig):
             "ESMValCore version 2.12.0 and is scheduled for removal in "
             "version 2.14.0. Please use `CFG.load_from_dirs()` instead."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         self.clear()
         self.update(Config._load_user_config(filename))
 
@@ -399,7 +399,9 @@ class Config(ValidatedConfig):
                 f"alternatively use a custom `--config_dir`) and omit "
                 f"`--config_file`."
             )
-            warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+            warnings.warn(
+                deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
+            )
             self.update(Config._load_user_config(raise_exception=False))
             return
 
@@ -505,7 +507,7 @@ class Session(ValidatedConfig):
             "to unexpected behavior. Use "
             "`esmvalcore.config.CFG.start_session` instead."
         )
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     def set_session_name(self, name: str = "session"):
         """Set the name for the session.
@@ -556,7 +558,7 @@ class Session(ValidatedConfig):
             "ESMValCore version 2.12.0 and is scheduled for removal in "
             "version 2.14.0."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         if self.get("config_file") is None:
             return None
         return Path(self["config_file"]).parent

@@ -110,7 +110,7 @@ class TestLoad(unittest.TestCase):
             )
             for coord in cube.coords():
                 for attr in attributes:
-                    self.assertTrue(attr not in cube.attributes)
+                    self.assertTrue(attr not in coord.attributes)
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""
@@ -138,7 +138,9 @@ class TestLoad(unittest.TestCase):
     def load_with_warning(*_, **__):
         """Mock load with a warning."""
         warnings.warn(
-            "This is a custom expected warning", category=UserWarning
+            "This is a custom expected warning",
+            category=UserWarning,
+            stacklevel=2,
         )
         return CubeList([Cube(0)])
 
