@@ -1,7 +1,7 @@
 # To build this container, go to ESMValCore root folder and execute:
 # This container is used to run the tests on CircleCI.
 # docker build -t esmvalcore:development . -f docker/Dockerfile.dev
-FROM condaforge/mambaforge
+FROM condaforge/miniforge3
 
 WORKDIR /src/ESMValCore
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y curl git ssh && apt clean

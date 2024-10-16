@@ -1,6 +1,6 @@
 # To build this container, go to ESMValCore root folder and execute:
 # docker build -t esmvalcore:latest . -f docker/Dockerfile
-FROM condaforge/mambaforge
+FROM condaforge/miniforge3
 
 WORKDIR /src/ESMValCore
 COPY environment.yml .
