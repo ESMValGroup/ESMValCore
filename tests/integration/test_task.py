@@ -47,7 +47,7 @@ class MockBaseTask(BaseTask):
 
 @pytest.fixture
 def example_tasks(tmp_path):
-    """Example tasks for testing the task runners."""
+    """Create example tasks for testing the task runners."""
     tasks = TaskSet()
     for i in range(3):
         task = MockBaseTask(

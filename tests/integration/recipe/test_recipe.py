@@ -569,7 +569,6 @@ def test_default_preprocessor_custom_order(
     tmp_path, patched_datafinder, session
 ):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         preprocessors:
           default_custom_order:
@@ -631,7 +630,6 @@ def test_invalid_preprocessor(tmp_path, patched_datafinder, session):
 
 def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         datasets:
           - dataset: HadGEM3-GC31-LL
