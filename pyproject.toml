@@ -151,7 +151,6 @@ addopts = [
     "--strict-markers",
     "--doctest-modules",
     "--ignore=esmvalcore/cmor/tables/",
-    "--cov",
     "--cov-report=xml:test-reports/coverage.xml",
     "--cov-report=html:test-reports/coverage_html",
     "--html=test-reports/report.html",
