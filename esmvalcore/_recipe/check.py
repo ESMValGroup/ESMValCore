@@ -171,7 +171,7 @@ def _group_years(years):
     ends.append(year)
 
     ranges = []
-    for start, end in zip(starts, ends):
+    for start, end in zip(starts, ends, strict=False):
         ranges.append(f"{start}" if start == end else f"{start}-{end}")
 
     return ", ".join(ranges)

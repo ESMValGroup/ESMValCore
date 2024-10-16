@@ -12,7 +12,7 @@ dependencies:
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy !=8.1.0
+  - esmpy
   - filelock
   - fiona
   - fire

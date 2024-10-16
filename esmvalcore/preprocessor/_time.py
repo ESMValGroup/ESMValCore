@@ -672,7 +672,10 @@ def seasonal_statistics(
         seasons = cube.coord("clim_season").points
         tar_days = [(len(sea) * 29, len(sea) * 31) for sea in seasons]
 
-        return [dt[0] <= dn <= dt[1] for dn, dt in zip(num_days, tar_days)]
+        return [
+            dt[0] <= dn <= dt[1]
+            for dn, dt in zip(num_days, tar_days, strict=False)
+        ]
 
     full_seasons = spans_full_season(result)
     result = result[full_seasons]

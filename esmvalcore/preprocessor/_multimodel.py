@@ -82,13 +82,13 @@ def _unify_time_coordinates(cubes):
             # monthly data
             dates = [
                 datetime(year, month, 15, 0, 0, 0)
-                for year, month in zip(years, months)
+                for year, month in zip(years, months, strict=False)
             ]
         elif 0 not in np.diff(days):
             # daily data
             dates = [
                 datetime(year, month, day, 0, 0, 0)
-                for year, month, day in zip(years, months, days)
+                for year, month, day in zip(years, months, days, strict=False)
             ]
             if coord.units != t_unit:
                 logger.warning(
