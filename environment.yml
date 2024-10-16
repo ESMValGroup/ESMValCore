@@ -27,7 +27,7 @@ dependencies:
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
+  - numpy !=1.24.3
   - packaging
   - pandas
   - pillow

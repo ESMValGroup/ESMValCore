@@ -17,6 +17,8 @@ def _get_first_unmasked_data(array, axis):
         *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
         indexing="ij",
     )
+
+    indices = list(indices)
     indices.insert(axis, indices_first_positive)
     first_unmasked_data = np.array(array)[tuple(indices)]
     return first_unmasked_data
