@@ -113,8 +113,7 @@ def test_select_files_sub_daily_resolution():
 
 
 def test_select_files_time_period():
-    """Test file selection works with time range given as duration periods of
-    various resolution."""
+    """Test file selection works with `timerange` given as a period."""
     filename_date = "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
     filename_datetime = (
         "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
@@ -153,8 +152,7 @@ def test_select_files_time_period():
 
 
 def test_select_files_varying_format():
-    """Test file selection works with time range of various time resolutions
-    and formats."""
+    """Test file selection works with various `timerange`s."""
     filename = "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
 
     files = [

@@ -411,7 +411,7 @@ def test_get_global_config_deprecated(mocker, tmp_path):
 
 
 def _setup_config_dirs(tmp_path):
-    """Setup test configuration directories."""
+    """Set up test configuration directories."""
     config1 = tmp_path / "config1" / "1.yml"
     config2a = tmp_path / "config2" / "2a.yml"
     config2b = tmp_path / "config2" / "2b.yml"
