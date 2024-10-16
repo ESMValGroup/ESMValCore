@@ -182,6 +182,7 @@ line-length = 79
 [tool.ruff.lint]
 select = [
     "D",       # pydocstyle
+    "B",
     "E",       # pycodestyle
     "F",       # pyflakes
     "I",       # isort
@@ -194,6 +195,7 @@ ignore = [
 ]
 [tool.ruff.lint.per-file-ignores]
 "tests/**.py" = [
+    "B011",  # `assert False` is valid test code.
     # Docstrings in tests are only needed if the code is not self-explanatory.
     "D100",  # Missing docstring in public module
     "D101",  # Missing docstring in public class

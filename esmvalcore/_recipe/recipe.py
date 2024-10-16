@@ -418,11 +418,11 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     called from the input products, the products that are created here need to
     be added to their ancestors products' settings ().
     """
-    products = {p for p in input_products if step in p.settings}
-    if not products:
+    multiproducts = {p for p in input_products if step in p.settings}
+    if not multiproducts:
         return input_products, {}
 
-    settings = list(products)[0].settings[step]
+    settings = list(multiproducts)[0].settings[step]
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
@@ -431,14 +431,16 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
 
-    downstream_settings = _get_downstream_settings(step, order, products)
+    downstream_settings = _get_downstream_settings(step, order, multiproducts)
 
     relevant_settings = {
         "output_products": defaultdict(dict)
     }  # pass to ancestors
 
     output_products = set()
-    for identifier, products in _group_products(products, by_key=grouping):
+    for identifier, products in _group_products(
+        multiproducts, by_key=grouping
+    ):
         common_attributes = _get_common_attributes(products, settings)
 
         statistics = settings.get("statistics", [])

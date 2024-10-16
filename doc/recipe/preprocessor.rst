@@ -611,7 +611,7 @@ See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 .. _masking:
 
 Masking
-=======
+========
 
 Introduction to masking
 -----------------------
@@ -2451,7 +2451,7 @@ See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 .. _detrend:
 
 Detrend
-=======
+========
 
 ESMValCore also supports detrending along any dimension using
 the preprocessor function 'detrend'.

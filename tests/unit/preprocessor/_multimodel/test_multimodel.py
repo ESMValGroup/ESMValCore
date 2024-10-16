@@ -195,11 +195,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 
 def get_cube_for_equal_coords_test(num_cubes):
     """Set up cubes with equal auxiliary coordinates."""
-    cubes = []
-
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates("monthly")
-        cubes.append(cube)
+    cubes = [generate_cube_from_dates("monthly") for _ in range(num_cubes)]
 
     # Create cubes that have one exactly equal coordinate ('year'), one
     # coordinate with matching names ('m') and one coordinate with non-matching
@@ -916,7 +912,7 @@ def test_ignore_tas_scalar_height_coord():
     tas_2m = generate_cube_from_dates("monthly")
     tas_1p5m = generate_cube_from_dates("monthly")
 
-    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5]):
+    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5], strict=False):
         cube.rename("air_temperature")
         cube.attributes["short_name"] = "tas"
         cube.add_aux_coord(

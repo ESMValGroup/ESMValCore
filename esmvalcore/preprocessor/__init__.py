@@ -717,13 +717,13 @@ class PreprocessingTask(BaseTask):
                         if step in product.settings:
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
-                        product.cubes  # pylint: disable=pointless-statement
+                        product.cubes  # noqa: B018 pylint: disable=pointless-statement
                         product.close()
                         saved.add(product.filename)
 
         for product in self.products:
             if product.filename not in saved:
-                product.cubes  # pylint: disable=pointless-statement
+                product.cubes  # noqa: B018 pylint: disable=pointless-statement
                 product.close()
 
         metadata_files = write_metadata(
