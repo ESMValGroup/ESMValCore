@@ -19,7 +19,6 @@ def test_get_tas_fix():
 @pytest.fixture
 def cubes():
     """``tas`` cube."""
-
     cube = iris.cube.Cube(
         [200.0],  # chilly, isn't it ?
         var_name="tas",

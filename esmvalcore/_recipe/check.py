@@ -44,12 +44,12 @@ def ncl_version():
     try:
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
-    except subprocess.CalledProcessError:
-        logger.error("Failed to execute '%s'", " ".join(" ".join(cmd)))
+    except subprocess.CalledProcessError as exc:
+        logger.error("Failed to execute '%s'", " ".join(cmd))
         raise RecipeError(
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
-        )
+        ) from exc
 
     version = version.strip()
     logger.info("Found NCL version %s", version)
@@ -171,7 +171,7 @@ def _group_years(years):
     ends.append(year)
 
     ranges = []
-    for start, end in zip(starts, ends):
+    for start, end in zip(starts, ends, strict=False):
         ranges.append(f"{start}" if start == end else f"{start}-{end}")
 
     return ", ".join(ranges)
@@ -366,21 +366,34 @@ def _check_delimiter(timerange):
 
 
 def _check_duration_periods(timerange):
-    try:
-        isodate.parse_duration(timerange[0])
-    except ValueError:
-        pass
-    else:
+    # isodate duration must always start with P
+    if timerange[0].startswith("P") and timerange[1].startswith("P"):
+        raise RecipeError(
+            "Invalid value encountered for `timerange`. "
+            "Cannot set both the beginning and the end "
+            "as duration periods."
+        )
+
+    if timerange[0].startswith("P"):
         try:
-            isodate.parse_duration(timerange[1])
-        except ValueError:
-            pass
-        else:
+            isodate.parse_duration(timerange[0])
+        except isodate.isoerror.ISO8601Error as exc:
             raise RecipeError(
                 "Invalid value encountered for `timerange`. "
-                "Cannot set both the beginning and the end "
-                "as duration periods."
-            )
+                f"{timerange[0]} is not valid duration according to ISO 8601."
+                + "\n"
+                + str(exc)
+            ) from exc
+    elif timerange[1].startswith("P"):
+        try:
+            isodate.parse_duration(timerange[1])
+        except isodate.isoerror.ISO8601Error as exc:
+            raise RecipeError(
+                "Invalid value encountered for `timerange`. "
+                f"{timerange[1]} is not valid duration according to ISO 8601."
+                + "\n"
+                + str(exc)
+            ) from exc
 
 
 def _check_format_years(date):
@@ -391,20 +404,26 @@ def _check_format_years(date):
 
 
 def _check_timerange_values(date, timerange):
+    # Wildcards are fine
+    if date == "*":
+        return
+    # P must always be in a duration string
+    # if T in date, that is a datetime; otherwise it's date
     try:
-        isodate.parse_date(date)
-    except ValueError:
-        try:
+        if date.startswith("P"):
             isodate.parse_duration(date)
-        except ValueError as exc:
-            if date != "*":
-                raise RecipeError(
-                    "Invalid value encountered for `timerange`. "
-                    "Valid value must follow ISO 8601 standard "
-                    "for dates and duration periods, or be "
-                    "set to '*' to load available years. "
-                    f"Got {timerange} instead."
-                ) from exc
+        elif "T" in date:
+            isodate.parse_datetime(date)
+        else:
+            isodate.parse_date(date)
+    except isodate.isoerror.ISO8601Error as exc:
+        raise RecipeError(
+            "Invalid value encountered for `timerange`. "
+            "Valid value must follow ISO 8601 standard "
+            "for dates and duration periods, or be "
+            "set to '*' to load available years. "
+            f"Got {timerange} instead." + "\n" + str(exc)
+        ) from exc
 
 
 def valid_time_selection(timerange):
@@ -565,7 +584,7 @@ def _check_regular_stat(step, step_settings):
     try:
         get_iris_aggregator(operator, **operator_kwargs)
     except ValueError as exc:
-        raise RecipeError(f"Invalid options for {step}: {exc}")
+        raise RecipeError(f"Invalid options for {step}: {exc}") from exc
 
 
 def _check_mm_stat(step, step_settings):
@@ -575,11 +594,11 @@ def _check_mm_stat(step, step_settings):
         try:
             (operator, kwargs) = _get_operator_and_kwargs(stat)
         except ValueError as exc:
-            raise RecipeError(str(exc))
+            raise RecipeError(str(exc)) from exc
         try:
             get_iris_aggregator(operator, **kwargs)
         except ValueError as exc:
-            raise RecipeError(f"Invalid options for {step}: {exc}")
+            raise RecipeError(f"Invalid options for {step}: {exc}") from exc
 
 
 def regridding_schemes(settings: dict):
@@ -626,4 +645,4 @@ def regridding_schemes(settings: dict):
                 f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
                 f"/recipe/preprocessor.html#generic-regridding-schemes for "
                 f"details."
-            )
+            ) from exc

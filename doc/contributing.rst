@@ -443,7 +443,7 @@ previous command. To only run tests from a single file, run the command
    pytest tests/unit/test_some_file.py
 
 If you would like to avoid loading the default pytest configuration from
-`setup.cfg <https://github.com/ESMValGroup/ESMValCore/blob/main/setup.cfg>`_
+`pyproject.toml <https://github.com/ESMValGroup/ESMValCore/blob/main/pyproject.toml>`_
 because this can be a bit slow for running just a few tests, use
 
 .. code-block:: bash
@@ -470,9 +470,16 @@ successful.
 Test coverage
 ~~~~~~~~~~~~~
 
-To check which parts of your code are `covered by unit tests`_, open the file
-``test-reports/coverage_html/index.html`` (available after running a ``pytest``
-command) and browse to the relevant file.
+To check which parts of your code are `covered by unit tests`_, run the command
+
+.. code-block:: bash
+
+   pytest --cov
+
+and open the file ``test-reports/coverage_html/index.html`` and browse to the
+relevant file. Note that tracking code coverage slows down the test runs,
+therefore it is disabled by default and needs to be requested by providing
+``pytest`` with the ``--cov`` flag.
 
 CircleCI will upload the coverage results from running the tests to codecov and
 Codacy.
@@ -571,7 +578,7 @@ users.
 
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
-:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+:ref:`Python API <api>`, or the :ref:`configuration format <config>`,
 keep in mind that this may affect many users.
 To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
@@ -602,7 +609,7 @@ that feature should be removed in version 2.7:
                "ESMValCore version 2.5 and is scheduled for removal in "
                "version 2.7. Add additional text (e.g., description of "
                "alternatives) here.")
-           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
        # Other code
 
@@ -653,7 +660,7 @@ the following files:
 - ``environment.yml``
   contains all the development dependencies; these are all from
   `conda-forge <https://conda-forge.org/>`_
-- ``setup.py``
+- ``pyproject.toml``
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
