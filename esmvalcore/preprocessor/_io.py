@@ -49,7 +49,7 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def _restore_lat_lon_units(cube, field, filename):
+def _restore_lat_lon_units(cube, field, filename):  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees
     # regardless of value in file, so reinstating file value
