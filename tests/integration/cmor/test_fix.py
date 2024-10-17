@@ -418,9 +418,6 @@ class TestGenericFix:
         with pytest.raises(CMORCheckError):
             cmor_check_metadata(fixed_cube, project, mip, short_name)
 
-        print(self.mock_debug.mock_calls)
-        print(self.mock_warning.mock_calls)
-
         assert self.mock_debug.call_count == 3
         assert self.mock_warning.call_count == 9
 
@@ -867,3 +864,30 @@ class TestGenericFix:
 
         assert self.mock_debug.call_count == 0
         assert self.mock_warning.call_count == 0
+
+    def test_fix_metadata_no_time_in_table(self):
+        """Test ``fix_data``."""
+        short_name = "sftlf"
+        project = "CMIP6"
+        dataset = "__MODEL_WITH_NO_EXPLICIT_FIX__"
+        mip = "fx"
+        cube = self.cubes_2d_latlon[0][0]
+        cube.units = "%"
+        cube.data = da.full(cube.shape, 1.0, dtype=cube.dtype)
+
+        fixed_cubes = fix_metadata(
+            [cube],
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+        assert fixed_cube.has_lazy_data()
+
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 3
+        assert self.mock_warning.call_count == 6
