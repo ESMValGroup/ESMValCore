@@ -325,7 +325,7 @@ def _sort_cubes_by_time(cubes):
         msg = "One or more cubes {} are missing".format(
             cubes
         ) + " time coordinate: {}".format(str(exc))
-        raise ValueError(msg)
+        raise ValueError(msg) from exc
     except TypeError as error:
         msg = (
             "Cubes cannot be sorted "

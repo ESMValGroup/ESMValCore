@@ -1,6 +1,7 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
 import os.path
+import subprocess
 from pathlib import Path
 from typing import Any, List
 from unittest import mock
@@ -14,6 +15,80 @@ from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
+
+
+def test_ncl_version(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        return_value="6.6.2\n",
+    )
+    check.ncl_version()
+
+
+def test_ncl_version_too_low(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        return_value="6.3.2\n",
+    )
+    with pytest.raises(
+        RecipeError,
+        match="NCL version 6.4 or higher is required",
+    ):
+        check.ncl_version()
+
+
+def test_ncl_version_no_ncl(mocker):
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=None,
+    )
+    with pytest.raises(
+        RecipeError,
+        match="cannot find an NCL installation",
+    ):
+        check.ncl_version()
+
+
+def test_ncl_version_broken(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        side_effect=subprocess.CalledProcessError(1, [ncl, "-V"]),
+    )
+    with pytest.raises(
+        RecipeError,
+        match="NCL installation appears to be broken",
+    ):
+        check.ncl_version()
+
 
 ERR_ALL = "Looked for files matching%s"
 ERR_RANGE = "No input data available for years {} in files:\n{}"
@@ -122,15 +197,15 @@ GOOD_TIMERANGES = [
     "*",
     "1990/1992",
     "19900101/19920101",
-    "19900101T12H00M00S/19920101T12H00M00",
+    "19900101T120000/19920101T120000",
     "1990/*",
     "*/1992",
     "1990/P2Y",
     "19900101/P2Y2M1D",
-    "19900101TH00M00S/P2Y2M1DT12H00M00S",
+    "19900101T0000/P2Y2M1DT12H00M00S",
     "P2Y/1992",
     "P2Y2M1D/19920101",
-    "P2Y2M1D/19920101T12H00M00S",
+    "P2Y2M1D/19920101T120000",
     "P2Y/*",
     "P2Y2M1D/*",
     "P2Y21DT12H00M00S/*",
@@ -159,12 +234,27 @@ BAD_TIMERANGES = [
         "199035345/19923463164526",
         "Invalid value encountered for `timerange`. Valid value must follow "
         "ISO 8601 standard for dates and duration periods, or be set to '*' "
-        "to load available years. Got ['199035345', '19923463164526'] instead.",
+        "to load available years. Got ['199035345', '19923463164526'] instead.\n"
+        "Unrecognised ISO 8601 date format: '199035345'",
     ),
     (
         "P11Y/P42Y",
         "Invalid value encountered for `timerange`. Cannot set both "
         "the beginning and the end as duration periods.",
+    ),
+    (
+        "P11X/19923463164526",
+        "Invalid value encountered for `timerange`. "
+        "P11X is not valid duration according to ISO 8601.\n"
+        "ISO 8601 time designator 'T' missing. "
+        "Unable to parse datetime string '11X'",
+    ),
+    (
+        "19923463164526/P11X",
+        "Invalid value encountered for `timerange`. "
+        "P11X is not valid duration according to ISO 8601.\n"
+        "ISO 8601 time designator 'T' missing. "
+        "Unable to parse datetime string '11X'",
     ),
 ]
 

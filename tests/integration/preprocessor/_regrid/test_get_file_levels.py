@@ -1,5 +1,4 @@
-"""Integration test for
-:func:`esmvalcore.preprocessor.regrid.get_reference_levels`."""
+"""Tests for :func:`esmvalcore.preprocessor.regrid.get_reference_levels`."""
 
 import iris.coords
 import iris.cube

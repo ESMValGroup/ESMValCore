@@ -1,8 +1,4 @@
-"""
-Integration tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
-function.
-
-"""
+"""Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
 import iris
 import numpy as np

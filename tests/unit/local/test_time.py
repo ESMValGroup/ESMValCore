@@ -212,8 +212,10 @@ def test_fails_if_no_date_present():
 
 
 def test_get_timerange_from_years():
-    """Test a `timerange` tag with value `start_year/end_year` can be built
-    from tags `start_year` and `end_year`."""
+    """Test a `timerange` with value `start_year/end_year` can be built.
+
+    From `start_year` and `end_year`.
+    """
     variable = {"start_year": 2000, "end_year": 2002}
 
     _replace_years_with_timerange(variable)
@@ -224,8 +226,10 @@ def test_get_timerange_from_years():
 
 
 def test_get_timerange_from_start_year():
-    """Test a `timerange` tag with value `start_year/start_year` can be built
-    from tag `start_year` when an `end_year` is not given."""
+    """Test a `timerange` with value `start_year/start_year` can be built.
+
+    From `start_year` when an `end_year` is not given.
+    """
     variable = {"start_year": 2000}
 
     _replace_years_with_timerange(variable)
@@ -235,8 +239,10 @@ def test_get_timerange_from_start_year():
 
 
 def test_get_timerange_from_end_year():
-    """Test a `timerange` tag with value `end_year/end_year` can be built from
-    tag `end_year` when a `start_year` is not given."""
+    """Test a `timerange` with value `end_year/end_year` can be built.
+
+    From `end_year` when a `start_year` is not given.
+    """
     variable = {"end_year": 2002}
 
     _replace_years_with_timerange(variable)
