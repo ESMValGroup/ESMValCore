@@ -61,6 +61,12 @@ class Cl(Fix):
         b_bnds = dataset.variables["b_bnds"]
         b_bnds.data = b_bnds.data[::-1, :]
         cubes = ncdata.iris.to_iris(dataset)
+
+        # Add the source file as an attribute to support grouping by file
+        # when calling fix_metadata.
+        for cube in cubes:
+            cube.attributes["source_file"] = str(filepath)
+
         return cubes
 
     def fix_metadata(self, cubes):

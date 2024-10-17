@@ -49,21 +49,15 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def _load_callback(raw_cube, field, _):
-    """Use this callback to fix anything Iris tries to break."""
-    # Remove attributes that cause issues with merging and concatenation
-    _delete_attributes(
-        raw_cube, ("creation_date", "tracking_id", "history", "comment")
-    )
-    for coord in raw_cube.coords():
-        # Iris chooses to change longitude and latitude units to degrees
-        # regardless of value in file, so reinstating file value
+def _restore_lat_lon_units(cube, field, filename):
+    """Use this callback to restore the original lat/lon units."""
+    # Iris chooses to change longitude and latitude units to degrees
+    # regardless of value in file, so reinstating file value
+    for coord in cube.coords():
         if coord.standard_name in ["longitude", "latitude"]:
             units = _get_attr_from_field_coord(field, coord.var_name, "units")
             if units is not None:
                 coord.units = units
-        # CMOR sometimes adds a history to the coordinates.
-        _delete_attributes(coord, ("history",))
 
 
 def _delete_attributes(iris_object, atts):
@@ -143,7 +137,7 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_load_callback)
+            raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
@@ -389,6 +383,15 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         return cubes
     if len(cubes) == 1:
         return cubes[0]
+
+    for cube in cubes:
+        # Remove attributes that cause issues with merging and concatenation
+        _delete_attributes(
+            cube, ("creation_date", "tracking_id", "history", "comment")
+        )
+        for coord in cube.coords():
+            # CMOR sometimes adds a history to the coordinates.
+            _delete_attributes(coord, ("history",))
 
     cubes = _concatenate_cubes_by_experiment(cubes)
 
