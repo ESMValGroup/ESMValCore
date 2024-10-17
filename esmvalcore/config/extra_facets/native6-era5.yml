@@ -17,8 +17,8 @@ ERA5:
   # Settings for all variables of all MIPs
   '*':
     '*':
+      automatic_regrid: true
       family: E5
-      regrid: true
       type: an
       typeid: '00'
       version: v1

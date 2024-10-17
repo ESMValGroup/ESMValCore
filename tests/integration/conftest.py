@@ -100,21 +100,33 @@ def _get_files(root_path, facets, tracking_id):
     return files, globs
 
 
-@pytest.fixture
-def patched_datafinder(tmp_path, monkeypatch):
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
+def _tracking_ids(i=0):
+    while True:
+        yield i
+        i += 1
 
-    tracking_id = tracking_ids()
 
+def _get_find_files_func(path: Path, suffix: str = ".nc"):
     def find_files(*, debug: bool = False, **facets):
-        files, file_globs = _get_files(tmp_path, facets, tracking_id)
+        files, file_globs = _get_files(path, facets, _tracking_ids())
+        files = [f.with_suffix(suffix) for f in files]
+        file_globs = [g.with_suffix(suffix) for g in file_globs]
         if debug:
             return files, file_globs
         return files
 
+    return find_files
+
+
+@pytest.fixture
+def patched_datafinder(tmp_path, monkeypatch):
+    find_files = _get_find_files_func(tmp_path)
+    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
+
+
+@pytest.fixture
+def patched_datafinder_grib(tmp_path, monkeypatch):
+    find_files = _get_find_files_func(tmp_path, suffix=".grib")
     monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
 
 
@@ -129,13 +141,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     Otherwise, return files just like `patched_datafinder`.
 
     """
-
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
-
-    tracking_id = tracking_ids()
+    tracking_id = _tracking_ids()
 
     def find_files(*, debug: bool = False, **facets):
         files, file_globs = _get_files(tmp_path, facets, tracking_id)

@@ -11,11 +11,8 @@ from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import date2num, has_unstructured_grid
-from esmvalcore.preprocessor import regrid
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_ERA5_GRID = "0.25x0.25"
 
 
 def get_frequency(cube):
@@ -585,16 +582,3 @@ class AllVars(Fix):
             fixed_cubes.append(cube)
 
         return fixed_cubes
-
-    def fix_data(self, cube):
-        """Fix data."""
-        regridding_enabled = self.extra_facets.get("regrid", True)
-        if regridding_enabled and has_unstructured_grid(cube):
-            logger.debug(
-                "Automatically regrid ERA5 data (variable %s) to %s° "
-                "grid using bilinear regridding",
-                self.vardef.short_name,
-                DEFAULT_ERA5_GRID,
-            )
-            cube = regrid(cube, DEFAULT_ERA5_GRID, "linear")
-        return cube

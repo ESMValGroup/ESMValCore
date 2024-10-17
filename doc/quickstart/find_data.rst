@@ -205,16 +205,14 @@ By default, these data is regridded to a regular 0.25°x0.25° grid as
 <https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__
 using bilinear interpolation.
 
-To disable this, you can use the facet ``regrid: false`` in the recipe:
+To disable this, you can use the facet ``automatic_regrid: false`` in the
+recipe:
 
 .. code-block:: yaml
 
   datasets:
     - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, regrid: false}
-
-It is recommended to disable the default regridding if regridding is setup in
-the :ref:`preprocessor <Horizontal regridding>`.
+       short_name: tas, mip: Amon, automatic_regrid: false}
 
 - Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
   ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,

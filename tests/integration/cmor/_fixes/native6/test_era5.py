@@ -9,7 +9,6 @@ from cf_units import Unit
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-import esmvalcore.cmor._fixes.native6.era5
 from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
@@ -18,7 +17,7 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     fix_accumulated_units,
     get_frequency,
 )
-from esmvalcore.cmor.fix import fix_data, fix_metadata
+from esmvalcore.cmor.fix import fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
 from esmvalcore.preprocessor import cmor_check_metadata
 
@@ -1551,38 +1550,3 @@ def test_unstructured_grid(unstructured_grid_cubes):
     lon = fixed_cube.coord("longitude")
     np.testing.assert_allclose(lon.points, [179, 180, 180, 179])
     assert lon.bounds is None
-
-
-@pytest.mark.parametrize("regrid", [None, False, True])
-def test_automatic_regridding_unstructured_cube(
-    regrid, unstructured_grid_cubes, monkeypatch
-):
-    """Test automatic regridding."""
-    monkeypatch.setattr(
-        esmvalcore.cmor._fixes.native6.era5, "DEFAULT_ERA5_GRID", "60x60"
-    )
-    cube = unstructured_grid_cubes[0]
-
-    fix_kwargs = {}
-    if regrid is not None:
-        fix_kwargs["regrid"] = regrid
-    fixed_cube = fix_data(cube, "tas", "native6", "era5", "Amon", **fix_kwargs)
-
-    if regrid is None or regrid is True:
-        assert fixed_cube.shape == (2, 3, 6)
-    else:
-        assert fixed_cube.shape == (2, 4)
-
-
-@pytest.mark.parametrize("regrid", [None, False, True])
-def test_automatic_regridding_regular_cube(regrid):
-    """Test automatic regridding."""
-    cube = era5_2d("monthly")[0]
-
-    fix_kwargs = {}
-    if regrid is not None:
-        fix_kwargs["regrid"] = regrid
-    fixed_cube = fix_data(cube, "tas", "native6", "era5", "Amon", **fix_kwargs)
-
-    assert fixed_cube.shape == (3, 3, 3)
-    assert fixed_cube is cube

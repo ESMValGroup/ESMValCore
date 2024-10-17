@@ -37,6 +37,7 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
+from esmvalcore.preprocessor._io import GRIB_FORMATS
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -225,6 +226,29 @@ def _get_default_settings(dataset):
         settings["save"]["alias"] = facets["short_name"]
 
     return settings
+
+
+def _add_dataset_specific_settings(dataset: Dataset, settings: dict) -> None:
+    """Add dataset-specific settings."""
+    project = dataset.facets["project"]
+    dataset_name = dataset.facets["dataset"]
+    file_suffixes = [Path(file.name).suffix for file in dataset.files]
+
+    # Automatic regridding for native ERA5 data in GRIB format if regridding
+    # step is not already present (can be disabled with facet
+    # automatic_regrid=False)
+    if all(
+        [
+            project == "native6",
+            dataset_name == "ERA5",
+            any(grib_format in file_suffixes for grib_format in GRIB_FORMATS),
+            "regrid" not in settings,
+            dataset.facets.get("automatic_regrid", True),
+        ]
+    ):
+        # Settings recommended by ECMWF
+        # (https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation)
+        settings["regrid"] = {"target_grid": "0.25x0.25", "scheme": "linear"}
 
 
 def _exclude_dataset(settings, facets, step):
@@ -541,6 +565,7 @@ def _get_preprocessor_products(
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
+        _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
         input_datasets = _get_input_datasets(dataset)
         missing = _check_input_files(input_datasets)
