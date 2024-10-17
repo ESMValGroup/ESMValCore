@@ -1,4 +1,4 @@
-"""Integration tests for :func:`esmvalcore.preprocessor.save`"""
+"""Integration tests for :func:`esmvalcore.preprocessor.save`."""
 
 import logging
 import re

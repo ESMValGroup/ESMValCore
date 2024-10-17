@@ -33,13 +33,9 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
-
-if (sys.version_info.major, sys.version_info.minor) < (3, 10):
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points  # type: ignore
 
 import fire
 
@@ -583,6 +579,7 @@ class ESMValTool:
                 zip(
                     config_dirs,
                     _get_all_config_sources(cli_config_dir),
+                    strict=False,
                 )
             )
 

@@ -329,10 +329,10 @@ def test_rechunk_cube_partly_lazy(cube_3d, complete_dims):
     input_cube = cube_3d.copy()
 
     # Realize some arrays
-    input_cube.data
-    input_cube.coord("xyz").points
-    input_cube.coord("xyz").bounds
-    input_cube.cell_measure("cell_measure").data
+    input_cube.data  # noqa: B018
+    input_cube.coord("xyz").points  # noqa: B018
+    input_cube.coord("xyz").bounds  # noqa: B018
+    input_cube.cell_measure("cell_measure").data  # noqa: B018
 
     result = rechunk_cube(input_cube, complete_dims, remaining_dims=2)
 

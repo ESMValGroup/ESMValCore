@@ -441,8 +441,7 @@ class Test(tests.Test):
         )
 
     def test_extract_volume_mean(self):
-        """Test to extract the top two layers and compute the weighted average
-        of a cube."""
+        """Test extracting the top layers and computing the weighted mean."""
         grid_volume = calculate_volume(self.grid_4d)
         assert isinstance(grid_volume, np.ndarray)
         measure = iris.coords.CellMeasure(
@@ -479,10 +478,10 @@ class Test(tests.Test):
         self.assertFalse(result.cell_measures("ocean_volume"))
 
     def test_volume_nolevbounds(self):
-        """Test to take the volume weighted average of a cube with no bounds
-        in the z axis.
-        """
+        """Test to take the volume weighted average of a cube.
 
+        Test a cube with no bounds in the z axis.
+        """
         self.assertFalse(self.grid_4d_znobounds.coord(axis="z").has_bounds())
         result = volume_statistics(self.grid_4d_znobounds, "mean")
 
@@ -493,7 +492,7 @@ class Test(tests.Test):
         self.assertFalse(result.cell_measures("ocean_volume"))
 
     def test_calculate_volume_lazy(self):
-        """Test that calculate_volume returns a lazy volume
+        """Test that calculate_volume returns a lazy volume.
 
         The volume chunks should match those of the input cube for
         computational efficiency.
@@ -553,16 +552,22 @@ class Test(tests.Test):
         self.assertEqual(result.units, "kg m-3")
 
     def test_volume_statistics_masked_level(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube where
-        the last depth level is fully masked."""
+        """Test to take the volume weighted average.
+
+        This is a test for a (2,3,2,2) cube where the last depth level is fully
+        masked.
+        """
         self.grid_4d.data[:, -1, :, :] = np.ma.masked_all((2, 2, 2))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array([1.0, 1.0], mask=False)
         self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_masked_timestep(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube where
-        the first timestep is fully masked."""
+        """Test taking the volume weighted average.
+
+        This is a test for a (2,3,2,2) cube where the first timestep is fully
+        masked.
+        """
         self.grid_4d.data[0, :, :, :] = np.ma.masked_all((3, 2, 2))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array([1.0, 1], mask=[True, False])
@@ -653,8 +658,7 @@ class Test(tests.Test):
         self.assertEqual(result.units, "kg m-3")
 
     def test_volume_statistics_invalid_bounds(self):
-        """Test z-axis bounds is not 2 in last dimension"""
-
+        """Test z-axis bounds is not 2 in last dimension."""
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_invalid_z_bounds, "mean")
         assert (
@@ -663,8 +667,7 @@ class Test(tests.Test):
         ) in str(err.exception)
 
     def test_volume_statistics_invalid_units(self):
-        """Test z-axis units cannot be converted to m"""
-
+        """Test z-axis units cannot be converted to m."""
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_sigma_space, "mean")
         assert (

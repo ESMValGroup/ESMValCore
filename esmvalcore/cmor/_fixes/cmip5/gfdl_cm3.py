@@ -9,7 +9,7 @@ class AllVars(BaseAllVars):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
         """
@@ -56,7 +56,7 @@ class Sftof(Fix):
 
 
 class Tos(Fix):
-    """Fixes for tos"""
+    """Fixes for tos."""
 
     def fix_metadata(self, cubes):
         """

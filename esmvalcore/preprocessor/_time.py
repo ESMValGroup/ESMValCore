@@ -62,10 +62,10 @@ for _coord in (
 
 def extract_time(
     cube: Cube,
-    start_year: int,
+    start_year: int | None,
     start_month: int,
     start_day: int,
-    end_year: int,
+    end_year: int | None,
     end_month: int,
     end_day: int,
 ) -> Cube:
@@ -80,13 +80,23 @@ def extract_time(
     cube:
         Input cube.
     start_year:
-        Start year.
+        Start year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `start_year` is
+        ``None``, `end_year` has to be ``None`` too.
     start_month:
         Start month.
     start_day:
         Start day.
     end_year:
-        End year.
+        End year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `end_year` is ``None``,
+        `start_year` has to be ``None`` too.
     end_month:
         End month.
     end_day:
@@ -101,13 +111,24 @@ def extract_time(
     ------
     ValueError
         Time ranges are outside the cube time limits.
-
     """
+    if start_year is not None:
+        start_year = int(start_year)
+    if end_year is not None:
+        end_year = int(end_year)
+    if (start_year is None) ^ (end_year is None):
+        raise ValueError(
+            "If start_year or end_year is None, both "
+            "start_year and end_year have to be None. "
+            f"Currently, start_year is {start_year} "
+            f"and end_year is {end_year}."
+        )
+
     t_1 = PartialDateTime(
-        year=int(start_year), month=int(start_month), day=int(start_day)
+        year=start_year, month=int(start_month), day=int(start_day)
     )
     t_2 = PartialDateTime(
-        year=int(end_year), month=int(end_month), day=int(end_day)
+        year=end_year, month=int(end_month), day=int(end_day)
     )
 
     return _extract_datetime(cube, t_1, t_2)
@@ -221,7 +242,7 @@ def _extract_datetime(
         if isinstance(end_datetime.day, int) and end_datetime.day > 30:
             end_datetime.day = 30
 
-    if not cube.coord_dims(time_coord):
+    if (not cube.coord_dims(time_coord)) or (start_datetime.year is None):
         constraint = iris.Constraint(
             time=lambda t: start_datetime <= t.point < end_datetime
         )
@@ -270,7 +291,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     ------
     ValueError
         Time ranges are outside the cube's time limits.
-    isodate.isoerror.ISO8601Error:
+    isodate.isoerror.ISO8601Error
         Start/end times can not be parsed by isodate.
 
     """
@@ -330,7 +351,6 @@ def extract_season(cube: Cube, season: str) -> Cube:
     ------
     ValueError
         Requested season is not present in the cube.
-
     """
     season = season.upper()
 
@@ -384,7 +404,6 @@ def extract_month(cube: Cube, month: int) -> Cube:
     ------
     ValueError
         Requested month is not present in the cube.
-
     """
     if month not in range(1, 13):
         raise ValueError("Please provide a month number between 1 and 12.")
@@ -464,7 +483,6 @@ def hourly_statistics(
     -------
     iris.cube.Cube
         Hourly statistics cube.
-
     """
     if not cube.coords("hour_group"):
         iris.coord_categorisation.add_categorised_coord(
@@ -517,7 +535,6 @@ def daily_statistics(
     -------
     iris.cube.Cube
         Daily statistics cube.
-
     """
     if not cube.coords("day_of_year"):
         iris.coord_categorisation.add_day_of_year(cube, "time")
@@ -558,7 +575,6 @@ def monthly_statistics(
     -------
     iris.cube.Cube
         Monthly statistics cube.
-
     """
     if not cube.coords("month_number"):
         iris.coord_categorisation.add_month_number(cube, "time")
@@ -603,7 +619,6 @@ def seasonal_statistics(
     -------
     iris.cube.Cube
         Seasonal statistic cube.
-
     """
     seasons = tuple(sea.upper() for sea in seasons)
 
@@ -650,7 +665,6 @@ def seasonal_statistics(
         -------
         list[bool]
             Truth statements if time bounds are within (month*29, month*31)
-
         """
         time = cube.coord("time")
         num_days = [(tt.bounds[0, 1] - tt.bounds[0, 0]) for tt in time]
@@ -658,7 +672,10 @@ def seasonal_statistics(
         seasons = cube.coord("clim_season").points
         tar_days = [(len(sea) * 29, len(sea) * 31) for sea in seasons]
 
-        return [dt[0] <= dn <= dt[1] for dn, dt in zip(num_days, tar_days)]
+        return [
+            dt[0] <= dn <= dt[1]
+            for dn, dt in zip(num_days, tar_days, strict=False)
+        ]
 
     full_seasons = spans_full_season(result)
     result = result[full_seasons]
@@ -694,7 +711,6 @@ def annual_statistics(
     -------
     iris.cube.Cube
         Annual statistics cube.
-
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -736,7 +752,6 @@ def decadal_statistics(
     -------
     iris.cube.Cube
         Decadal statistics cube.
-
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -1059,7 +1074,6 @@ def regrid_time(
     NotImplementedError
         An invalid `frequency` is given or `calendar` is set for a
         non-supported frequency.
-
     """
     # Do not overwrite input cube
     cube = cube.copy()
@@ -1244,7 +1258,6 @@ def timeseries_filter(
         Cube does not have time coordinate.
     NotImplementedError:
         `filter_type` is not implemented.
-
     """
     try:
         cube.coord("time")
@@ -1320,7 +1333,6 @@ def resample_hours(
         `interval` is not a divisor of 24; invalid `interpolate` given; or
         input data does not contain any target hour (if `interpolate` is
         ``None``).
-
     """
     allowed_intervals = (1, 2, 3, 4, 6, 12)
     if interval not in allowed_intervals:
@@ -1419,7 +1431,6 @@ def resample_time(
     -------
     iris.cube.Cube
         Cube with the new frequency.
-
     """
     time = cube.coord("time")
     dates = time.units.num2date(time.points)
@@ -1458,7 +1469,6 @@ def _get_lst_offset(lon_coord: Coord) -> np.ndarray:
     ----
     This function expects longitude in degrees. Can be in [0, 360] or [-180,
     180] format.
-
     """
     # Make sure that longitude is in degrees and shift it to [-180, 180] first
     # (do NOT overwrite input coordinate)
@@ -1475,7 +1485,6 @@ def _get_lsts(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
     ----
     LSTs outside of the time bins given be the time coordinate bounds are put
     into a bin below/above the time coordinate.
-
     """
     # Pad time coordinate with 1 time step at both sides for the bins for LSTs
     # outside of the time coordinate
@@ -1521,7 +1530,6 @@ def _get_time_index_and_mask(
     (LSTs) are given.  E.g., for hourly data with first time point 01:00:00
     UTC, LST in Berlin is already 02:00:00 (assuming no daylight saving time).
     Thus, for 01:00:00 LST on this day, there is no value for Berlin.
-
     """
     # Make sure that time coordinate has bounds (these are necessary for the
     # binning) and uses 'hours' as reference units
@@ -1586,7 +1594,6 @@ def _transform_to_lst_eager(
     reorder the data along the time axis based on the longitude axis.
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
-
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
@@ -1630,7 +1637,6 @@ def _transform_to_lst_lazy(
     reorder the data along the time axis based on the longitude axis.
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
-
     """
     new_data = da.apply_gufunc(
         _transform_to_lst_eager,
@@ -1661,7 +1667,6 @@ def _transform_arr_to_lst(
     ----
     This function either calls `_transform_to_lst_eager` or
     `_transform_to_lst_lazy` depending on the type of input data.
-
     """
     if isinstance(data, np.ndarray):
         func = _transform_to_lst_eager  # type: ignore
@@ -1843,7 +1848,6 @@ def local_solar_time(cube: Cube) -> Cube:
         Input cube has multidimensional `longitude` coordinate.
     ValueError
         `time` coordinate of input cube is not monotonically increasing.
-
     """
     # Make sure that cube has valid time and longitude coordinates
     _check_cube_coords(cube)

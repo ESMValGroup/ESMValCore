@@ -1,6 +1,7 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
 import os.path
+import subprocess
 from pathlib import Path
 from typing import Any, List
 from unittest import mock
@@ -14,6 +15,80 @@ from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
+
+
+def test_ncl_version(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        return_value="6.6.2\n",
+    )
+    check.ncl_version()
+
+
+def test_ncl_version_too_low(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        return_value="6.3.2\n",
+    )
+    with pytest.raises(
+        RecipeError,
+        match="NCL version 6.4 or higher is required",
+    ):
+        check.ncl_version()
+
+
+def test_ncl_version_no_ncl(mocker):
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=None,
+    )
+    with pytest.raises(
+        RecipeError,
+        match="cannot find an NCL installation",
+    ):
+        check.ncl_version()
+
+
+def test_ncl_version_broken(mocker):
+    ncl = "/path/to/ncl"
+    mocker.patch.object(
+        check,
+        "which",
+        autospec=True,
+        return_value=ncl,
+    )
+    mocker.patch.object(
+        check.subprocess,
+        "check_output",
+        autospec=True,
+        side_effect=subprocess.CalledProcessError(1, [ncl, "-V"]),
+    )
+    with pytest.raises(
+        RecipeError,
+        match="NCL installation appears to be broken",
+    ):
+        check.ncl_version()
+
 
 ERR_ALL = "Looked for files matching%s"
 ERR_RANGE = "No input data available for years {} in files:\n{}"
