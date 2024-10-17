@@ -249,6 +249,11 @@ def _add_dataset_specific_settings(dataset: Dataset, settings: dict) -> None:
         # Settings recommended by ECMWF
         # (https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation)
         settings["regrid"] = {"target_grid": "0.25x0.25", "scheme": "linear"}
+        logger.debug(
+            "Automatically regrid native6 ERA5 data in GRIB format with the "
+            "settings %s",
+            settings["regrid"],
+        )
 
 
 def _exclude_dataset(settings, facets, step):
