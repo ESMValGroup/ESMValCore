@@ -1,8 +1,5 @@
 """Tests for the fixes of CESM2."""
 
-import os
-import unittest.mock
-
 import iris
 import numpy as np
 import pytest
@@ -60,10 +57,7 @@ AIR_PRESSURE_BOUNDS = np.array(
 )
 
 
-@unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath", autospec=True
-)
-def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
+def test_cl_fix_file(tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / "cesm2_cl.nc"
     cubes = iris.load(str(nc_path))
@@ -82,15 +76,8 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     assert not raw_cube.coords("air_pressure")
 
     # Apply fix
-    mock_get_filepath.return_value = os.path.join(
-        tmp_path, "fixed_cesm2_cl.nc"
-    )
     fix = Cl(None)
-    fixed_file = fix.fix_file(nc_path, tmp_path)
-    mock_get_filepath.assert_called_once_with(
-        tmp_path, nc_path, add_unique_suffix=False
-    )
-    fixed_cubes = iris.load(fixed_file)
+    fixed_cubes = fix.fix_file(nc_path, tmp_path)
     assert len(fixed_cubes) == 2
     var_names = [cube.var_name for cube in fixed_cubes]
     assert "cl" in var_names

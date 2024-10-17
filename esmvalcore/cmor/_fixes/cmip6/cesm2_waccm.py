@@ -1,6 +1,7 @@
 """Fixes for CESM2-WACCM model."""
 
-from netCDF4 import Dataset
+import ncdata.iris
+import ncdata.netcdf4
 
 from ..common import SiconcFixScalarCoord
 from .cesm2 import Cl as BaseCl
@@ -10,7 +11,7 @@ from .cesm2 import Tas as BaseTas
 
 
 class Cl(BaseCl):
-    """Fixes for cl."""
+    """Fixes for ``cl``."""
 
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
@@ -37,31 +38,31 @@ class Cl(BaseCl):
         -------
         str
             Path to the fixed file.
-
         """
-        new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
-        )
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][:, ::-1]
-        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][:, ::-1]
-        dataset.close()
-        return new_path
+        dataset = ncdata.netcdf4.from_nc4(filepath)
+        self._fix_formula_terms(dataset)
+        a_bnds = dataset.variables["a_bnds"]
+        a_bnds.data = a_bnds.data[:, ::-1]
+        b_bnds = dataset.variables["b_bnds"]
+        b_bnds.data = b_bnds.data[:, ::-1]
+        cubes = ncdata.iris.to_iris(dataset)
+
+        # Add the source file as an attribute to support grouping by file
+        # when calling fix_metadata.
+        for cube in cubes:
+            cube.attributes["source_file"] = str(filepath)
+
+        return cubes
 
 
 Cli = Cl
 
-
 Clw = Cl
-
 
 Fgco2 = BaseFgco2
 
-
 Omon = BaseOmon
 
-
 Siconc = SiconcFixScalarCoord
-
 
 Tas = BaseTas
