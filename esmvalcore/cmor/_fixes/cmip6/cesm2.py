@@ -1,6 +1,6 @@
 """Fixes for CESM2 model."""
 
-import ncdata.dataset_like
+import ncdata
 import ncdata.iris
 import ncdata.netcdf4
 import numpy as np
@@ -18,6 +18,15 @@ from ..shared import (
 
 class Cl(Fix):
     """Fixes for ``cl``."""
+
+    @staticmethod
+    def _fix_formula_terms(dataset: ncdata.NcData) -> None:
+        """Fix ``formula_terms`` attribute."""
+        lev = dataset.variables["lev"]
+        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
+        lev.set_attrval(
+            "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
+        )
 
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
@@ -46,15 +55,11 @@ class Cl(Fix):
             Path to the fixed file.
         """
         dataset = ncdata.netcdf4.from_nc4(filepath)
+        self._fix_formula_terms(dataset)
         a_bnds = dataset.variables["a_bnds"]
         a_bnds.data = a_bnds.data[::-1, :]
         b_bnds = dataset.variables["b_bnds"]
         b_bnds.data = b_bnds.data[::-1, :]
-        lev = dataset.variables["lev"]
-        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
-        lev.set_attrval(
-            "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
-        )
         cubes = ncdata.iris.to_iris(dataset)
         return cubes
 

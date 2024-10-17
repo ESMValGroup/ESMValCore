@@ -40,15 +40,11 @@ class Cl(BaseCl):
             Path to the fixed file.
         """
         dataset = ncdata.netcdf4.from_nc4(filepath)
+        self._fix_formula_terms(dataset)
         a_bnds = dataset.variables["a_bnds"]
         a_bnds.data = a_bnds.data[:, ::-1]
         b_bnds = dataset.variables["b_bnds"]
         b_bnds.data = b_bnds.data[:, ::-1]
-        lev = dataset.variables["lev"]
-        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
-        lev.set_attrval(
-            "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
-        )
         cubes = ncdata.iris.to_iris(dataset)
         return cubes
 
