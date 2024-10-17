@@ -1517,6 +1517,7 @@ def unstructured_grid_cubes():
         units="K",
         dim_coords_and_dims=[(time, 0)],
         aux_coords_and_dims=[(lat, 1), (lon, 1)],
+        attributes={"GRIB_PARAM": (1, 1)},
     )
     return CubeList([cube])
 
@@ -1550,3 +1551,5 @@ def test_unstructured_grid(unstructured_grid_cubes):
     lon = fixed_cube.coord("longitude")
     np.testing.assert_allclose(lon.points, [179, 180, 180, 179])
     assert lon.bounds is None
+
+    assert fixed_cube.attributes["GRIB_PARAM"] == "(1, 1)"
