@@ -45,13 +45,17 @@ class Cl(Fix):
         str
             Path to the fixed file.
         """
-        ncdataset = ncdata.netcdf4.from_nc4(filepath)
-        dataset = ncdata.dataset_like.Nc4DatasetLike(ncdataset)
-        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
-        dataset.variables[
-            "lev"
-        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
-        cubes = ncdata.iris.to_iris(ncdataset)
+        dataset = ncdata.netcdf4.from_nc4(filepath)
+        a_bnds = dataset.variables["a_bnds"]
+        a_bnds.data = a_bnds.data[::-1, :]
+        b_bnds = dataset.variables["b_bnds"]
+        b_bnds.data = b_bnds.data[::-1, :]
+        lev = dataset.variables["lev"]
+        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
+        lev.set_attrval(
+            "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
+        )
+        cubes = ncdata.iris.to_iris(dataset)
         return cubes
 
     def fix_metadata(self, cubes):
@@ -72,9 +76,7 @@ class Cl(Fix):
         cube = self.get_cube_from_list(cubes)
         lev_coord = cube.coord(var_name="lev")
         a_coord = cube.coord(var_name="a")
-        a_coord.bounds = a_coord.core_bounds()[::-1, :]
         b_coord = cube.coord(var_name="b")
-        b_coord.bounds = b_coord.core_bounds()[::-1, :]
         lev_coord.points = a_coord.core_points() + b_coord.core_points()
         lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
         lev_coord.units = "1"
