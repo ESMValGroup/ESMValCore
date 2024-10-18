@@ -3,19 +3,18 @@
 import contextlib
 import importlib
 import logging
-from pathlib import Path
 
 import yaml
 from distributed import Client
 
-logger = logging.getLogger(__name__)
+from esmvalcore.config import CFG
 
-CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
+logger = logging.getLogger(__name__)
 
 
 def check_distributed_config():
     """Check the Dask distributed configuration."""
-    if not CONFIG_FILE.exists():
+    if not CFG["dask_config"].exists():
         logger.warning(
             "Using the Dask basic scheduler. This may lead to slow "
             "computations and out-of-memory errors. "
@@ -32,8 +31,8 @@ def check_distributed_config():
 def get_distributed_client():
     """Get a Dask distributed client."""
     dask_args = {}
-    if CONFIG_FILE.exists():
-        config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
+    if CFG["dask_config"].exists():
+        config = yaml.safe_load(CFG["dask_config"].read_text(encoding="utf-8"))
         if config is not None:
             dask_args = config
 
@@ -48,7 +47,7 @@ def get_distributed_client():
             logger.warning(
                 "Not using Dask 'cluster' settings from %s because a cluster "
                 "'address' is already provided in 'client'.",
-                CONFIG_FILE,
+                CFG["dask_config"],
             )
     elif cluster_args:
         # Start cluster.

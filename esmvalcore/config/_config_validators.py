@@ -321,6 +321,7 @@ _validators = {
     "check_level": validate_check_level,
     "compress_netcdf": validate_bool,
     "config_developer_file": validate_config_developer,
+    "dask_config": validate_path,
     "diagnostics": validate_diagnostics,
     "download_dir": validate_path,
     "drs": validate_drs,

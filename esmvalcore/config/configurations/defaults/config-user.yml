@@ -14,6 +14,7 @@
 #
 ###############################################################################
 ---
+dask_config: ~/.esmvaltool/dask.yml
 
 # Destination directory where all output will be written
 # Includes log files and performance stats.
