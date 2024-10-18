@@ -167,7 +167,7 @@ enable_error_code = [
 
 [tool.codespell]
 skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml"
-ignore-words-list = "vas,hist,oce"
+ignore-words-list = "vas,hist,oce,pres"
 
 [tool.ruff]
 line-length = 79
