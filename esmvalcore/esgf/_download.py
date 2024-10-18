@@ -22,7 +22,6 @@ from humanfriendly import format_size, format_timespan
 from esmvalcore.typing import Facets
 
 from ..local import LocalFile
-from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
 logger = logging.getLogger(__name__)
@@ -363,8 +362,7 @@ class ESGFFile:
     def __repr__(self):
         """Represent the file as a string."""
         hosts = [urlparse(u).hostname for u in self.urls]
-        return (f"ESGFFile:{self._get_relative_path()}"
-                f" on hosts {hosts}")
+        return f"ESGFFile:{self._get_relative_path()} on hosts {hosts}"
 
     def __eq__(self, other):
         """Compare `self` to `other`."""
@@ -460,13 +458,13 @@ class ESGFFile:
 
         logger.debug("Downloading %s to %s", url, tmp_file)
         start_time = datetime.datetime.now()
-        response = requests.get(url,
-                                stream=True,
-                                timeout=TIMEOUT,
-                                cert=get_credentials())
+        response = requests.get(url, stream=True, timeout=TIMEOUT)
         response.raise_for_status()
         with tmp_file.open("wb") as file:
-            for chunk in response.iter_content(chunk_size=None):
+            # Specify chunk_size to avoid
+            # https://github.com/psf/requests/issues/5536
+            megabyte = 2**20
+            for chunk in response.iter_content(chunk_size=megabyte):
                 if hasher is not None:
                     hasher.update(chunk)
                 file.write(chunk)
@@ -500,9 +498,7 @@ def get_download_message(files):
     lines = []
     for file in files:
         total_size += file.size
-        lines.append(f"{format_size(file.size)}"
-                     "\t"
-                     f"{file}")
+        lines.append(f"{format_size(file.size)}\t{file}")
 
     lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {format_size(total_size)}")

@@ -25,7 +25,8 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
-"""  # noqa: line-too-long pylint: disable=line-too-long
+"""
+
 # pylint: disable=import-outside-toplevel
 import logging
 import os
@@ -250,13 +251,16 @@ class Recipes():
 
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
-        configure_logging(console_log_level='info')
+        from .exceptions import RecipeError
+
+        configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
-                f'Recipe {recipe} not found. To list all available recipes, '
-                'execute "esmvaltool list"')
-        logger.info('Copying installed recipe to the current folder...')
+            raise RecipeError(
+                f"Recipe {recipe} not found. To list all available recipes, "
+                'execute "esmvaltool list"'
+            )
+        logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
         logger.info('Recipe %s successfully copied', recipe)
 
@@ -273,13 +277,16 @@ class Recipes():
         """
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
-        configure_logging(console_log_level='info')
+        from .exceptions import RecipeError
+
+        configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
-                f'Recipe {recipe} not found. To list all available recipes, '
-                'execute "esmvaltool list"')
-        msg = f'Recipe {recipe}'
+            raise RecipeError(
+                f"Recipe {recipe} not found. To list all available recipes, "
+                'execute "esmvaltool list"'
+            )
+        msg = f"Recipe {recipe}"
         logger.info(msg)
         logger.info('=' * len(msg))
         print(installed_recipe.read_text(encoding='utf-8'))
@@ -444,10 +451,6 @@ class ESMValTool():
                                       console_log_level=session['log_level'])
         self._log_header(session['config_file'], log_files)
 
-        if session['search_esgf'] != 'never':
-            from .esgf._logon import logon
-            logon()
-
         # configure resource logger and run program
         from ._task import resource_usage_logger
         resource_log = session.run_dir / 'resource_usage.txt'
@@ -455,6 +458,13 @@ class ESMValTool():
             process_recipe(recipe_file=recipe, session=session)
 
         self._clean_preproc(session)
+
+        if session.cmor_log.read_text(encoding='utf-8'):
+            logger.warning(
+                "Input data is not (fully) CMOR-compliant, see %s for details",
+                session.cmor_log,
+            )
+
         logger.info("Run was successful")
 
     @staticmethod
@@ -510,8 +520,6 @@ class ESMValTool():
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-    import sys
-
     from .exceptions import RecipeError
 
     # Workaround to avoid using more for the output

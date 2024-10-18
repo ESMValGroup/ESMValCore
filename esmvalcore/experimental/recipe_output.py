@@ -1,7 +1,9 @@
 """API for handing recipe output."""
 import base64
+import getpass
 import logging
 import os.path
+import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -228,6 +230,38 @@ class RecipeOutput(Mapping):
 
         return cls(task_output, session=session, info=info)
 
+    def _log_ssh_html_info(self):
+        """Log information about accessing index.html on an SSH server."""
+        if 'SSH_CONNECTION' not in os.environ:
+            return
+        server_ip = os.environ['SSH_CONNECTION'].split()[2]
+        server_ip_env = '${server}'
+        server = f'{getpass.getuser()}@{server_ip_env}'
+        port = '31415'
+        port_env = '${port}'
+        command = (
+            f'server={server_ip} && port={port} && '
+            f'ssh -t -L {port_env}:localhost:{port_env} {server} '
+            f'{sys.executable} -m http.server {port_env} -d '
+            f'{self.session.session_dir}'
+        )
+        logger.info(
+            "It looks like you are connected to a remote machine via SSH. To "
+            "show the output html file, you can try the following command on "
+            "your local machine:\n%s\nThen visit http://localhost:%s in your "
+            "browser",
+            command,
+            port,
+        )
+        logger.info(
+            "If the port %s is already in use, you can replace it with any "
+            "other free one (e.g., 12789). If you are connected through a "
+            "jump host, replace the server IP address %s with your SSH server "
+            "name",
+            port,
+            server_ip,
+        )
+
     def write_html(self):
         """Write output summary to html document.
 
@@ -242,6 +276,7 @@ class RecipeOutput(Mapping):
             file.write(html_dump)
 
         logger.info("Wrote recipe output to:\nfile://%s", filename)
+        self._log_ssh_html_info()
 
     def render(self, template=None):
         """Render output as html.

@@ -2,6 +2,7 @@
 import datetime
 from copy import deepcopy
 from itertools import permutations
+from pprint import pformat
 from unittest import mock
 
 import dask.array as da
@@ -22,6 +23,7 @@ from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
     has_irregular_grid,
+    has_regular_grid,
     has_unstructured_grid,
     merge_cube_attributes,
     rechunk_cube,
@@ -140,8 +142,10 @@ def test_date2num_scalar(date, dtype, expected, units):
     assert num.dtype == dtype
 
 
-def assert_attribues_equal(attrs_1: dict, attrs_2: dict) -> None:
+def assert_attributes_equal(attrs_1: dict, attrs_2: dict) -> None:
     """Check attributes using :func:`numpy.testing.assert_array_equal`."""
+    print(pformat(dict(attrs_1)))
+    print(pformat(dict(attrs_2)))
     assert len(attrs_1) == len(attrs_2)
     for (attr, val) in attrs_1.items():
         assert attr in attrs_2
@@ -209,7 +213,7 @@ def test_merge_cube_attributes(cubes):
     merge_cube_attributes(cubes)
     assert len(cubes) == 3
     for cube in cubes:
-        assert_attribues_equal(cube.attributes, expected_attributes)
+        assert_attributes_equal(cube.attributes, expected_attributes)
 
 
 def test_merge_cube_attributes_0_cubes():
@@ -223,7 +227,20 @@ def test_merge_cube_attributes_1_cube():
     expected_attributes = deepcopy(cubes[0].attributes)
     merge_cube_attributes(cubes)
     assert len(cubes) == 1
-    assert_attribues_equal(cubes[0].attributes, expected_attributes)
+    assert_attributes_equal(cubes[0].attributes, expected_attributes)
+
+
+def test_merge_cube_attributes_global_local():
+    cube1 = CUBES[0].copy()
+    cube2 = CUBES[1].copy()
+    cube1.attributes.globals['attr1'] = 1
+    cube1.attributes.globals['attr2'] = 1
+    cube1.attributes.globals['attr3'] = 1
+    cube2.attributes.locals['attr1'] = 1
+    merge_cube_attributes([cube1, cube2])
+    for cube in [cube1, cube2]:
+        for attr in ['attr1', 'attr2', 'attr3']:
+            assert attr in cube.attributes.globals
 
 
 @pytest.fixture
@@ -302,7 +319,8 @@ def test_rechunk_cube_fully_lazy(cube_3d):
     assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
 
 
-def test_rechunk_cube_partly_lazy(cube_3d):
+@pytest.mark.parametrize('complete_dims', [['x', 'y'], ['xy']])
+def test_rechunk_cube_partly_lazy(cube_3d, complete_dims):
     """Test ``rechunk_cube``."""
     input_cube = cube_3d.copy()
 
@@ -312,7 +330,7 @@ def test_rechunk_cube_partly_lazy(cube_3d):
     input_cube.coord('xyz').bounds
     input_cube.cell_measure('cell_measure').data
 
-    result = rechunk_cube(input_cube, ['x', 'y'], remaining_dims=2)
+    result = rechunk_cube(input_cube, complete_dims, remaining_dims=2)
 
     assert input_cube == cube_3d
     assert result == cube_3d
@@ -331,15 +349,6 @@ def test_rechunk_cube_partly_lazy(cube_3d):
     assert not result.coord('xyz').has_lazy_bounds()
     assert not result.cell_measure('cell_measure').has_lazy_data()
     assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
-
-
-def test_rechunk_cube_invalid_coord_fail(cube_3d):
-    """Test ``rechunk_cube``."""
-    msg = (
-        "Complete coordinates must be 1D coordinates, got 2D coordinate 'xy'"
-    )
-    with pytest.raises(CoordinateMultiDimError, match=msg):
-        rechunk_cube(cube_3d, ['xy'])
 
 
 @pytest.fixture
@@ -364,6 +373,71 @@ def lat_coord_2d():
 def lon_coord_2d():
     """2D longitude coordinate."""
     return AuxCoord([[0, 1]], standard_name='longitude')
+
+
+def test_has_regular_grid_no_lat_lon():
+    """Test `has_regular_grid`."""
+    cube = Cube(0)
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_no_lat(lon_coord_1d):
+    """Test `has_regular_grid`."""
+    cube = Cube([0, 1], dim_coords_and_dims=[(lon_coord_1d, 0)])
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_no_lon(lat_coord_1d):
+    """Test `has_regular_grid`."""
+    cube = Cube([0, 1], dim_coords_and_dims=[(lat_coord_1d, 0)])
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_2d_lat(lat_coord_2d, lon_coord_1d):
+    """Test `has_regular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lon_coord_1d, 1)],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1))],
+    )
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_2d_lon(lat_coord_1d, lon_coord_2d):
+    """Test `has_regular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lat_coord_1d, 1)],
+        aux_coords_and_dims=[(lon_coord_2d, (0, 1))],
+    )
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_2d_lat_lon(lat_coord_2d, lon_coord_2d):
+    """Test `has_regular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1)), (lon_coord_2d, (0, 1))],
+    )
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_unstructured(lat_coord_1d, lon_coord_1d):
+    """Test `has_regular_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)],
+    )
+    assert has_regular_grid(cube) is False
+
+
+def test_has_regular_grid_true(lat_coord_1d, lon_coord_1d):
+    """Test `has_regular_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        dim_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 1)],
+    )
+    assert has_regular_grid(cube) is True
 
 
 def test_has_irregular_grid_no_lat_lon():

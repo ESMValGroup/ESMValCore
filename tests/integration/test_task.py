@@ -6,6 +6,7 @@ from functools import partial
 from multiprocessing.pool import ThreadPool
 
 import pytest
+import yaml
 
 import esmvalcore
 from esmvalcore._task import (
@@ -245,6 +246,23 @@ def test_py_diagnostic_task_constructor(tmp_path):
     assert task.output_dir == tmp_path / 'mydiag'
 
 
+def test_py_diagnostic_task_write_settings(tmp_path):
+    """Test DiagnosticTask writtes settings in the user's order."""
+    diag_script = tmp_path / 'diag_cow.py'
+    task = _get_single_diagnostic_task(tmp_path, diag_script)
+    my_arg_dict = {
+        'b': [1],
+        'a': 3.,
+        'c': False
+    }
+    task.settings.update(my_arg_dict)
+    settings = task.write_settings()
+    with open(settings, 'r') as stream:
+        settings_data = yaml.safe_load(stream)
+
+    assert list(settings_data) == ['run_dir', 'b', 'a', 'c']
+
+
 def test_diagnostic_diag_script_none(tmp_path):
     """Test case when diagnostic script doesn't exist."""
     diag_script = tmp_path / 'diag_cow.py'
@@ -252,8 +270,9 @@ def test_diagnostic_diag_script_none(tmp_path):
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = ("Cannot execute script '{}' "
-           "({}): file does not exist.".format(script_file, script_file))
+    ept = "Cannot execute script '{}' ({}): file does not exist.".format(
+        script_file, script_file
+    )
     assert ept == str(err_msg.value)
 
 

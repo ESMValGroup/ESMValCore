@@ -170,15 +170,15 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 def _get_pressure_level_widths(array, air_pressure_axis=1):
     """Compute pressure level widths.
 
-    For a 1D array with pressure level columns, return a 1D array with
-    pressure level widths.
+    For array with pressure level columns, return array with pressure
+    level widths.
 
     """
     array = np.copy(array)
     if np.any(np.diff(array, axis=air_pressure_axis) > 0.0):
         raise ValueError("Pressure level value increased with height")
 
-    # Calculate centers
+    # Calculate array of centers between two neighboring pressure levels
     indices = [slice(None)] * array.ndim
     array_shifted = np.roll(array, -1, axis=air_pressure_axis)
     index_0 = deepcopy(indices)

@@ -1,0 +1,20 @@
+SOURCE: CMIP6
+!============
+variable_entry:    prodlnox
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg s-1
+long_name:         Tendency of atmosphere mass content of NOx from lightning
+comment:           Production NOX (NO+NO2) by lightning globally integrated
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+out_name:          prodlnox
+type:              real
+!----------------------------------
+!

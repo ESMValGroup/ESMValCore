@@ -22,7 +22,7 @@ def get_cube(name, lat=((0.5, 1.5), (2.5, 3.5)), lon=((0.5, 1.5), (2.5, 3.5))):
 
 
 @mock.patch(
-    'esmvalcore.preprocessor._regrid_esmpy.ESMPyRegridder.__call__',
+    'esmvalcore.preprocessor._derive.sispeed.regrid',
     autospec=True,
 )
 def test_sispeed_calculation(mock_regrid):
@@ -38,7 +38,7 @@ def test_sispeed_calculation(mock_regrid):
 
 
 @mock.patch(
-    'esmvalcore.preprocessor._regrid_esmpy.ESMPyRegridder.__call__',
+    'esmvalcore.preprocessor._derive.sispeed.regrid',
     autospec=True,
 )
 def test_sispeed_calculation_coord_differ(mock_regrid):

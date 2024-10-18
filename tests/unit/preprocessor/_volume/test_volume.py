@@ -2,6 +2,7 @@
 
 import unittest
 
+import dask.array as da
 import iris
 import iris.fileformats
 import numpy as np
@@ -56,12 +57,34 @@ class Test(tests.Test):
                                               [25., 250.]],
                                       units='m',
                                       attributes={'positive': 'down'})
+        scoord = iris.coords.DimCoord([36., 36.5, 37.],
+                                      long_name='ocean_sigma_coordinate',
+                                      bounds=[[35.5, 36.25], [36.25, 36.75],
+                                              [36.75, 37.5]],
+                                      units='kg m-3',
+                                      attributes={'positive': 'down'})
+        zcoord_nobounds = iris.coords.DimCoord([0.5, 5., 50.],
+                                               long_name='zcoord',
+                                               units='m',
+                                               attributes={'positive': 'down'})
         zcoord_4d = iris.coords.AuxCoord(
             np.broadcast_to([[[[0.5]], [[5.]], [[50.]]]], (2, 3, 2, 2)),
             long_name='zcoord',
             bounds=np.broadcast_to(
                 [[[[[0., 2.5]]], [[[2.5, 25.]]], [[[25., 250.]]]]],
                 (2, 3, 2, 2, 2),
+            ),
+            units='m',
+            attributes={'positive': 'down'},
+        )
+        zcoord_3d_invalid_bounds = iris.coords.AuxCoord(
+            np.broadcast_to([[[0.5]], [[5.]], [[50.]]], (3, 2, 2)),
+            long_name='zcoord',
+            bounds=np.broadcast_to(
+                [[[[0., 2.5, 2.5, 3.]]],
+                 [[[2.5, 25., 25., 30.]]],
+                 [[[25., 250., 250., 300.]]]],
+                (3, 2, 2, 4),
             ),
             units='m',
             attributes={'positive': 'down'},
@@ -77,6 +100,15 @@ class Test(tests.Test):
                                      units='degrees_north',
                                      coord_system=coord_sys)
 
+        lons2d = iris.coords.AuxCoord([[1.5, 2.5], [1.2, 2.7]],
+                                      standard_name='longitude',
+                                      units='degrees_east',
+                                      coord_system=coord_sys)
+        lats2d = iris.coords.AuxCoord([[1.5, 2.5], [1.2, 2.7]],
+                                      standard_name='latitude',
+                                      units='degrees_north',
+                                      coord_system=coord_sys)
+
         coords_spec3 = [(zcoord, 0), (lats2, 1), (lons2, 2)]
         self.grid_3d = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
 
@@ -84,6 +116,17 @@ class Test(tests.Test):
         self.grid_4d = iris.cube.Cube(
             data2,
             dim_coords_and_dims=coords_spec4,
+            units='kg m-3',
+        )
+
+        self.grid_4d_lazy = self.grid_4d.copy()
+        self.grid_4d_lazy.data = self.grid_4d_lazy.lazy_data().rechunk(
+            (1, 2, None, None))
+
+        coords_spec4_sigma = [(time, 0), (scoord, 1), (lats2, 2), (lons2, 3)]
+        self.grid_4d_sigma_space = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=coords_spec4_sigma,
             units='kg m-3',
         )
 
@@ -98,6 +141,28 @@ class Test(tests.Test):
             data2,
             dim_coords_and_dims=[(time, 0), (lats2, 2), (lons2, 3)],
             aux_coords_and_dims=[(zcoord_4d, (0, 1, 2, 3))],
+            units='kg m-3',
+        )
+
+        self.grid_4d_znobounds = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=[
+                (time, 0), (zcoord_nobounds, 1), (lats2, 2), (lons2, 3)
+            ],
+            units='kg m-3',
+        )
+
+        self.grid_4d_irregular = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=[(time, 0), (zcoord, 1)],
+            aux_coords_and_dims=[(lats2d, (2, 3)), (lons2d, (2, 3))],
+            units='kg m-3',
+        )
+
+        self.grid_invalid_z_bounds = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=[(time, 0), (lats2, 2), (lons2, 3)],
+            aux_coords_and_dims=[(zcoord_3d_invalid_bounds, (1, 2, 3))],
             units='kg m-3',
         )
 
@@ -337,6 +402,7 @@ class Test(tests.Test):
         """Test to extract the top two layers and compute the weighted average
         of a cube."""
         grid_volume = calculate_volume(self.grid_4d)
+        assert isinstance(grid_volume, np.ndarray)
         measure = iris.coords.CellMeasure(grid_volume,
                                           standard_name='ocean_volume',
                                           units='m3',
@@ -368,6 +434,32 @@ class Test(tests.Test):
         self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
         self.assertFalse(result.cell_measures('ocean_volume'))
 
+    def test_volume_nolevbounds(self):
+        """Test to take the volume weighted average of a cube with no bounds
+        in the z axis.
+        """
+
+        self.assertFalse(self.grid_4d_znobounds.coord(axis='z').has_bounds())
+        result = volume_statistics(self.grid_4d_znobounds, 'mean')
+
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+        self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
+        self.assertFalse(result.cell_measures('ocean_volume'))
+
+    def test_calculate_volume_lazy(self):
+        """Test that calculate_volume returns a lazy volume
+
+        The volume chunks should match those of the input cube for
+        computational efficiency.
+        """
+        chunks = self.grid_4d_lazy.core_data().chunks
+        volume = calculate_volume(self.grid_4d_lazy)
+        assert self.grid_4d_lazy.has_lazy_data()
+        assert isinstance(volume, da.Array)
+        assert volume.chunks == chunks
+
     def test_volume_statistics_cell_measure(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.
 
@@ -380,6 +472,23 @@ class Test(tests.Test):
                                           measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+
+    def test_volume_statistics_cell_measure_lazy(self):
+        """Test to take the volume weighted average of a lazy (2,3,2,2) cube.
+
+        The volume measure is pre-loaded in the cube.
+        """
+        grid_volume = calculate_volume(self.grid_4d_lazy)
+        measure = iris.coords.CellMeasure(grid_volume,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
+        self.grid_4d_lazy.add_cell_measure(measure, range(0, measure.ndim))
+        result = volume_statistics(self.grid_4d_lazy, 'mean')
+        assert result.has_lazy_data()
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')
@@ -467,49 +576,110 @@ class Test(tests.Test):
                          str(err.exception))
 
     def test_volume_statistics_2d_lat_fail(self):
-        # Create dummy 2D latitude from depth
-        new_lat_coord = self.grid_4d_z.coord('zcoord')[0, 0, :, :]
-        new_lat_coord.rename('latitude')
-        self.grid_4d_z.remove_coord('latitude')
-        self.grid_4d_z.add_aux_coord(new_lat_coord, (2, 3))
         with self.assertRaises(CoordinateMultiDimError):
-            volume_statistics(self.grid_4d_z, 'mean')
+            volume_statistics(self.grid_4d_irregular, 'mean')
 
-    def test_volume_statistics_4d_depth_fail(self):
-        # Fails because depth coord dims are (0, ...), but must be (1, ...)
+    def test_volume_statistics_2d_lat_cellarea(self):
+        measure = iris.coords.CellMeasure(np.arange(1, 5).reshape(2, 2),
+                                          standard_name='cell_area',
+                                          units='m2',
+                                          measure='area')
+        self.grid_4d_irregular.add_cell_measure(measure, (2, 3))
+
+        result = volume_statistics(self.grid_4d_irregular, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d_irregular.data = data
+
+        result = volume_statistics(self.grid_4d_irregular, 'mean')
+        expected = np.ma.array([10.56, 22.56], mask=False)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+
+    def test_volume_statistics_invalid_bounds(self):
+        """Test z-axis bounds is not 2 in last dimension"""
+
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_invalid_z_bounds, 'mean')
+        self.assertIn(
+            "Z axis bounds shape found (3, 2, 2, 4). Bounds should be "
+            "2 in the last dimension to compute the thickness.",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_invalid_units(self):
+        """Test z-axis units cannot be converted to m"""
+
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d_sigma_space, 'mean')
+        self.assertIn(
+            "Cannot compute volume using the Z-axis. "
+            "Unable to convert from 'Unit('kg m-3')' to 'Unit('m')'.",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_z_axis_time_error(self):
+        # Fails because depth z-axis coord depends on time dimensions
+        # which would aggregate also along that dimension
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_z, 'mean')
         self.assertIn(
-            "Supplementary variables are needed to calculate grid cell "
-            "volumes for cubes with 4D depth coordinate, got cube ",
-            str(err.exception),
+            "X and Y axis coordinates depend on (2, 3) dimensions, "
+            "while X, Y, and Z axis depends on (0, 1, 2, 3) dimensions. "
+            "This may indicate Z axis depending on other dimension than "
+            "space that could provoke invalid aggregation...",
+            str(err.exception)
         )
 
-    def test_volume_statistics_2d_depth_fail(self):
+        grid_3d_no_x = self.grid_4d_z[..., 0]
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(grid_3d_no_x, 'mean')
+        self.assertIn(
+            "X and Y axis coordinates depend on (2,) dimensions, "
+            "while X, Y, and Z axis depends on (0, 1, 2) dimensions. "
+            "This may indicate Z axis depending on other dimension than "
+            "space that could provoke invalid aggregation...",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_missing_axis(self):
+        # x axis is missing
+        grid_no_x = self.grid_4d[..., 0]
+        volume_statistics(grid_no_x, 'mean')
+
+        # y axis is missing
+        grid_no_y = self.grid_4d[..., 0, :]
+        volume_statistics(grid_no_y, 'mean')
+
+        # z axis is missing
+        grid_no_z = self.grid_4d[:, 0]
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(grid_no_z, 'mean')
+        self.assertIn("Cannot compute volume with scalar Z-axis",
+                      str(err.exception))
+
+    def test_volume_statistics_2d_depth(self):
         # Create new 2D depth coord
         new_z_coord = self.grid_4d_z.coord('zcoord')[0, :, :, 0]
         self.grid_4d_z.remove_coord('zcoord')
         self.grid_4d_z.add_aux_coord(new_z_coord, (1, 2))
-        with self.assertRaises(ValueError) as err:
-            volume_statistics(self.grid_4d_z, 'mean')
-        self.assertIn(
-            "Supplementary variables are needed to calculate grid cell "
-            "volumes for cubes with 2D depth coordinate, got cube ",
-            str(err.exception),
-        )
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])
         expected = np.ones((1, 1)) * 250.
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_3d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d)
         expected = np.ones((2, 2)) * 250.
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_transect_latitude(self):

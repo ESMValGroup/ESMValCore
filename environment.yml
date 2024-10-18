@@ -8,36 +8,35 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - compilers
-  - dask
+  - dask !=2024.8.0  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy !=8.1.0
+  - esmpy >=8.6.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
-  - importlib_metadata  # required for Python < 3.10
-  - iris >=3.6.1
-  - iris-esmf-regrid >=0.7.0
+  - iris >=3.10.0
+  - iris-esmf-regrid >=0.11.0
+  - iris-grib
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3
+  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
   - packaging
-  - pandas !=2.2.0,!=2.2.1  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
+  - pandas
   - pillow
   - pip !=21.3
   - prov
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9,<3.12
+  - python >=3.10
   - python-stratify >=0.3
   - pyyaml
   - requests
@@ -51,8 +50,6 @@ dependencies:
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
-  - flake8
-  - mypy >=0.990
   - pytest >=3.9,!=6.0.0rc1,!=6.0.0
   - pytest-cov >=2.10.1
   - pytest-env
@@ -61,15 +58,9 @@ dependencies:
   - pytest-mock
   - pytest-xdist
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
-  # Still for testing, MyPy library stubs
-  - types-requests
-  - types-PyYAML
   # Python packages needed for installing in development mode
-  - codespell
-  - docformatter
-  - isort
   - pre-commit
-  - prospector >=1.9.0
+  - pylint
   # Not on conda forge - vprof
-  - yamllint
-  - yapf
+  - pip:
+      - ESMValTool_sample_data

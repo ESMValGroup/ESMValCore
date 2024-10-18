@@ -4,11 +4,12 @@ import logging
 
 from iris.cube import Cube
 
-from ._shared import get_iris_aggregator
+from ._shared import get_iris_aggregator, preserve_float_dtype
 
 logger = logging.getLogger(__name__)
 
 
+@preserve_float_dtype
 def rolling_window_statistics(
     cube: Cube,
     coordinate: str,

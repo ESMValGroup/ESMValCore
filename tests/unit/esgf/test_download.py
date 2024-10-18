@@ -399,12 +399,6 @@ def test_single_download(mocker, tmp_path, checksum):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     mocker.patch.object(_download, 'HOSTS_FILE', hosts_file)
 
-    credentials = '/path/to/creds.pem'
-    mocker.patch.object(_download,
-                        'get_credentials',
-                        autospec=True,
-                        return_value=credentials)
-
     response = mocker.create_autospec(requests.Response,
                                       spec_set=True,
                                       instance=True)
@@ -455,11 +449,11 @@ def test_single_download(mocker, tmp_path, checksum):
     # File was downloaded only once
     get.assert_called_once()
     # From the correct URL
-    get.assert_called_with(url, stream=True, timeout=300, cert=credentials)
+    get.assert_called_with(url, stream=True, timeout=300)
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size
-    response.iter_content.assert_called_with(chunk_size=None)
+    response.iter_content.assert_called_with(chunk_size=2**20)
 
 
 def test_download_skip_existing(tmp_path, caplog):
@@ -618,6 +612,5 @@ def test_download_noop(caplog):
     caplog.set_level('DEBUG')
     esmvalcore.esgf.download([], dest_folder='/does/not/exist')
 
-    msg = ("All required data is available locally,"
-           " not downloading anything.")
+    msg = "All required data is available locally, not downloading anything."
     assert msg in caplog.text

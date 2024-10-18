@@ -495,8 +495,11 @@ class AllVars(IconFix):
         # Finally, add date and day fraction to get final datetime and convert
         # it to correct units. Note: we also round to next second, otherwise
         # this results in times that are off by 1s (e.g., 13:59:59 instead of
-        # 14:00:00).
-        rounded_datetimes = (year_month_day + day_float).round('s')
+        # 14:00:00). We round elements individually since rounding the
+        # pd.Series object directly is broken
+        # (https://github.com/pandas-dev/pandas/issues/57002).
+        datetimes = year_month_day + day_float
+        rounded_datetimes = pd.Series(dt.round('s') for dt in datetimes)
         with warnings.catch_warnings():
             # We already fixed the deprecated code as recommended in the
             # warning, but it still shows up -> ignore it

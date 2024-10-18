@@ -16,7 +16,7 @@ import esmvalcore
 import esmvalcore._task
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
-    _representative_dataset,
+    _representative_datasets,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
@@ -97,7 +97,8 @@ def create_test_file(filename, tracking_id=None):
     attributes = {}
     if tracking_id is not None:
         attributes['tracking_id'] = tracking_id
-    cube = iris.cube.Cube([], attributes=attributes)
+    cube = iris.cube.Cube([])
+    cube.attributes.globals = attributes
 
     iris.save(cube, filename)
 
@@ -1490,8 +1491,8 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
-                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
-                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1, institute: CAS}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1, institute: CAS}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
@@ -1501,7 +1502,7 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
                   - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
-        """)  # noqa:
+        """)
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.datasets) == 14
@@ -2022,7 +2023,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4MIPs,
+                  - {dataset: TEST, project: obs4MIPs, tier: 1,
                      supplementary_variables: [{short_name: sftlf, mip: fx}]}
             scripts: null
         """)
@@ -2360,7 +2361,9 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    filename = _representative_dataset(dataset).files[0]
+    datasets = _representative_datasets(dataset)
+    assert len(datasets) == 1
+    filename = datasets[0].files[0]
     path = Path(filename)
     assert path.name == 'atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc'
 
@@ -2384,11 +2387,9 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    representative_dataset = _representative_dataset(dataset)
+    representative_datasets = _representative_datasets(dataset)
 
-    expect_required_var = {
-        # Added by get_required
-        'short_name': 'rsdscs',
+    expected_facets = {
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -2399,22 +2400,40 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
         'project': 'ICON',
         'timerange': '1990/2000',
         # Added by _add_cmor_info
-        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'rsdscs',
-        'standard_name':
-        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
         'units': 'W m-2',
         # Added by _add_extra_facets
         'var_type': 'atm_2d_ml',
     }
     if force_derivation:
-        expected_dataset = Dataset(**expect_required_var)
-        expected_dataset.session = session
+        expected_datasets = [
+            Dataset(
+                short_name='rsdscs',
+                long_name='Surface Downwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsdscs',
+                standard_name=(
+                    'surface_downwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+            Dataset(
+                short_name='rsuscs',
+                long_name='Surface Upwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsuscs',
+                standard_name=(
+                    'surface_upwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+        ]
     else:
-        expected_dataset = dataset
+        expected_datasets = [dataset]
+    for dataset in expected_datasets:
+        dataset.session = session
 
-    assert representative_dataset == expected_dataset
+    assert representative_datasets == expected_datasets
 
 
 def test_get_derive_input_variables(patched_datafinder, session):
@@ -2964,7 +2983,7 @@ def test_bias_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
-def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
+def test_invalid_bias_type(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           test_bias:
@@ -2990,8 +3009,8 @@ def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of ('absolute', 'relative') for `bias_type`, got "
-        "'INVALID'"
+        "Expected one of ('absolute', 'relative') for option `bias_type` of "
+        "preprocessor `bias`, got 'INVALID'"
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
@@ -3140,3 +3159,169 @@ def test_deprecated_unstructured_nearest_scheme(
             scripts: null
         """)
     get_recipe(tmp_path, content, session)
+
+
+def test_wildcard_derived_var(
+    tmp_path, patched_failing_datafinder, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              swcre:
+                mip: Amon
+                derive: true
+                force_derivation: true
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: '*', institute: '*', exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.datasets) == 1
+    dataset = recipe.datasets[0]
+    assert dataset.facets['dataset'] == 'BBB'
+    assert dataset.facets['institute'] == 'B'
+    assert dataset.facets['short_name'] == 'swcre'
+
+
+def test_distance_metric_no_ref(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 0" in exc.value.failed_tasks[0].message
+
+
+def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5, reference_for_metric: true}
+                  - {dataset: CESM2, reference_for_metric: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 2" in exc.value.failed_tasks[0].message
+
+
+def test_invalid_metric(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: INVALID
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2, reference_for_metric: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected one of ('rmse', 'weighted_rmse', 'pearsonr', "
+        "'weighted_pearsonr', 'emd', 'weighted_emd') for option `metric` of "
+        "preprocessor `distance_metric`, got 'INVALID'"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_invalid_interpolate(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_resample_hours:
+            resample_hours:
+              interval: 1
+              interpolate: INVALID
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_resample_hours
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2, reference_for_bias: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected one of (None, 'nearest', 'linear') for option `interpolate` "
+        "of preprocessor `resample_hours`, got 'INVALID'"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg

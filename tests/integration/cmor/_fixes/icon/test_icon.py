@@ -349,15 +349,20 @@ def check_lat_lon(cube):
     assert cube.coords('longitude', mesh_coords=True)
 
     # Check dimensional coordinate describing the mesh
-    assert cube.coords('first spatial index for variables stored on an '
-                       'unstructured grid', dim_coords=True)
-    i_coord = cube.coord('first spatial index for variables stored on an '
-                         'unstructured grid', dim_coords=True)
-    assert i_coord.var_name == 'i'
+    assert cube.coords(
+        "first spatial index for variables stored on an unstructured grid",
+        dim_coords=True,
+    )
+    i_coord = cube.coord(
+        "first spatial index for variables stored on an unstructured grid",
+        dim_coords=True,
+    )
+    assert i_coord.var_name == "i"
     assert i_coord.standard_name is None
-    assert i_coord.long_name == ('first spatial index for variables stored on '
-                                 'an unstructured grid')
-    assert i_coord.units == '1'
+    assert i_coord.long_name == (
+        "first spatial index for variables stored on an unstructured grid"
+    )
+    assert i_coord.units == "1"
     np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
     assert i_coord.bounds is None
 
@@ -383,9 +388,9 @@ def check_mesh(mesh):
     assert mesh.topology_dimension == 2
 
     # Check face coordinates
-    assert len(mesh.coords(include_faces=True)) == 2
+    assert len(mesh.coords(location='face')) == 2
 
-    mesh_face_lat = mesh.coord(include_faces=True, axis='y')
+    mesh_face_lat = mesh.coord(location='face', axis='y')
     assert mesh_face_lat.var_name == 'lat'
     assert mesh_face_lat.standard_name == 'latitude'
     assert mesh_face_lat.long_name == 'latitude'
@@ -411,7 +416,7 @@ def check_mesh(mesh):
         rtol=1e-5
     )
 
-    mesh_face_lon = mesh.coord(include_faces=True, axis='x')
+    mesh_face_lon = mesh.coord(location='face', axis='x')
     assert mesh_face_lon.var_name == 'lon'
     assert mesh_face_lon.standard_name == 'longitude'
     assert mesh_face_lon.long_name == 'longitude'
@@ -438,9 +443,9 @@ def check_mesh(mesh):
     )
 
     # Check node coordinates
-    assert len(mesh.coords(include_nodes=True)) == 2
+    assert len(mesh.coords(location='node')) == 2
 
-    mesh_node_lat = mesh.coord(include_nodes=True, axis='y')
+    mesh_node_lat = mesh.coord(location='node', axis='y')
     assert mesh_node_lat.var_name == 'nlat'
     assert mesh_node_lat.standard_name == 'latitude'
     assert mesh_node_lat.long_name == 'node latitude'
@@ -453,7 +458,7 @@ def check_mesh(mesh):
     )
     assert mesh_node_lat.bounds is None
 
-    mesh_node_lon = mesh.coord(include_nodes=True, axis='x')
+    mesh_node_lon = mesh.coord(location='node', axis='x')
     assert mesh_node_lon.var_name == 'nlon'
     assert mesh_node_lon.standard_name == 'longitude'
     assert mesh_node_lon.long_name == 'node longitude'
@@ -516,6 +521,7 @@ def test_get_areacella_fix():
 def test_areacella_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix('fx', 'areacella')
+    fix.extra_facets['var_type'] = 'fx'
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1
@@ -538,6 +544,7 @@ def test_get_areacello_fix():
 def test_areacello_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix('Ofx', 'areacello')
+    fix.extra_facets['var_type'] = 'fx'
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1
@@ -575,12 +582,13 @@ def test_clwvi_fix(cubes_regular_grid):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'clwvi'
-    assert cube.standard_name == ('atmosphere_mass_content_of_cloud_'
-                                  'condensed_water')
-    assert cube.long_name == 'Condensed Water Path'
-    assert cube.units == 'kg m-2'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "clwvi"
+    assert cube.standard_name == (
+        "atmosphere_mass_content_of_cloud_condensed_water"
+    )
+    assert cube.long_name == "Condensed Water Path"
+    assert cube.units == "kg m-2"
+    assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[0.0, 2000.0], [4000.0, 6000.0]]])
 
@@ -601,12 +609,13 @@ def test_lwp_fix(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'lwp'
-    assert cube.standard_name == ('atmosphere_mass_content_of_cloud_liquid_'
-                                  'water')
-    assert cube.long_name == 'Liquid Water Path'
-    assert cube.units == 'kg m-2'
-    assert 'positive' not in cube.attributes
+    assert cube.var_name == "lwp"
+    assert cube.standard_name == (
+        "atmosphere_mass_content_of_cloud_liquid_water"
+    )
+    assert cube.long_name == "Liquid Water Path"
+    assert cube.units == "kg m-2"
+    assert "positive" not in cube.attributes
 
     check_time(cube)
     check_lat_lon(cube)
@@ -805,15 +814,20 @@ def test_tas_dim_height2m_already_present(cubes_2d):
 
     assert cube.mesh is None
 
-    assert cube.coords('first spatial index for variables stored on an '
-                       'unstructured grid', dim_coords=True)
-    i_coord = cube.coord('first spatial index for variables stored on an '
-                         'unstructured grid', dim_coords=True)
-    assert i_coord.var_name == 'i'
+    assert cube.coords(
+        "first spatial index for variables stored on an unstructured grid",
+        dim_coords=True,
+    )
+    i_coord = cube.coord(
+        "first spatial index for variables stored on an unstructured grid",
+        dim_coords=True,
+    )
+    assert i_coord.var_name == "i"
     assert i_coord.standard_name is None
-    assert i_coord.long_name == ('first spatial index for variables stored on '
-                                 'an unstructured grid')
-    assert i_coord.units == '1'
+    assert i_coord.long_name == (
+        "first spatial index for variables stored on an unstructured grid"
+    )
+    assert i_coord.units == "1"
     np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
     assert i_coord.bounds is None
 
@@ -2380,11 +2394,12 @@ def test_rtmt_fix(cubes_regular_grid):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == 'rtmt'
-    assert cube.standard_name == ('net_downward_radiative_flux_at_top_of'
-                                  '_atmosphere_model')
-    assert cube.long_name == 'Net Downward Radiative Flux at Top of Model'
-    assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'down'
+    assert cube.var_name == "rtmt"
+    assert cube.standard_name == (
+        "net_downward_radiative_flux_at_top_of_atmosphere_model"
+    )
+    assert cube.long_name == "Net Downward Radiative Flux at Top of Model"
+    assert cube.units == "W m-2"
+    assert cube.attributes["positive"] == "down"
 
     np.testing.assert_allclose(cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])

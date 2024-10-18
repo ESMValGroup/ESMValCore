@@ -20,6 +20,7 @@ from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.esgf.facets import FACETS
 
 from .._task import write_ncl_settings
 
@@ -35,54 +36,7 @@ VARIABLE_KEYS = {
     'alternative_dataset',
 }
 
-
-def _fix_aux_factories(cube):
-    """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
-
-    Necessary because of bug in :mod:`iris` (see issue #2478).
-    """
-    coord_names = [coord.name() for coord in cube.coords()]
-
-    # Hybrid sigma pressure coordinate
-    # TODO possibly add support for other hybrid coordinates
-    if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridPressureFactory(
-            delta=cube.coord(var_name='ap'),
-            sigma=cube.coord(var_name='b'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridPressureFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Hybrid sigma height coordinate
-    if 'atmosphere_hybrid_height_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridHeightFactory(
-            delta=cube.coord(var_name='lev'),
-            sigma=cube.coord(var_name='b'),
-            orography=cube.coord(var_name='orog'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Atmosphere sigma coordinate
-    if 'atmosphere_sigma_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.AtmosphereSigmaFactory(
-            pressure_at_top=cube.coord(var_name='ptop'),
-            sigma=cube.coord(var_name='lev'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory,
-                          iris.aux_factory.AtmosphereSigmaFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
+iris.FUTURE.save_split_attrs = True
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -161,7 +115,12 @@ def load(
         'message': "Ignoring netCDF variable '.*' invalid units '.*'",
         'category': UserWarning,
         'module': 'iris',
-    })
+    })  # iris < 3.8
+    ignore_warnings.append({
+        'message': "Ignoring invalid units .* on netCDF variable .*",
+        'category': UserWarning,
+        'module': 'iris',
+    })  # iris >= 3.8
 
     # Filter warnings
     with catch_warnings():
@@ -348,6 +307,36 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
+def _concatenate_cubes_by_experiment(
+    cubes: list[iris.cube.Cube],
+) -> list[iris.cube.Cube]:
+    """Concatenate cubes by experiment.
+
+    This ensures overlapping (branching) experiments are handled correctly.
+    """
+    # get the possible facet names in CMIP3, 5, 6 for exp
+    # currently these are 'experiment', 'experiment_id'
+    exp_facet_names = {
+        project["exp"] for project in FACETS.values() if "exp" in project
+    }
+
+    def get_exp(cube: iris.cube.Cube) -> str:
+        for key in exp_facet_names:
+            if key in cube.attributes:
+                return cube.attributes[key]
+        return ""
+
+    experiments = {get_exp(cube) for cube in cubes}
+    if len(experiments) > 1:
+        # first do experiment-wise concatenation, then time-based
+        cubes = [
+            concatenate([cube for cube in cubes if get_exp(cube) == exp])
+            for exp in experiments
+        ]
+
+    return cubes
+
+
 def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     """Concatenate all cubes after fixing metadata.
 
@@ -373,6 +362,8 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     if len(cubes) == 1:
         return cubes[0]
 
+    cubes = _concatenate_cubes_by_experiment(cubes)
+
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
     _fix_calendars(cubes)
@@ -383,8 +374,6 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         result = result[0]
     else:
         _get_concatenation_error(result)
-
-    _fix_aux_factories(result)
 
     return result
 
@@ -476,7 +465,19 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
-    iris.save(cubes, **kwargs)
+
+    # Ignore some warnings when saving
+    with catch_warnings():
+        filterwarnings(
+            'ignore',
+            message=(
+                ".* is being added as CF data variable attribute, but .* "
+                "should only be a CF global attribute"
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        iris.save(cubes, **kwargs)
 
     return filename
 

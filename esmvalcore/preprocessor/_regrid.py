@@ -11,7 +11,6 @@ import ssl
 import warnings
 from copy import deepcopy
 from decimal import Decimal
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -22,6 +21,7 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -30,16 +30,21 @@ from esmvalcore.cmor._fixes.shared import (
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
-from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._shared import (
+    get_dims_along_axes,
+)
+from esmvalcore.preprocessor._shared import (
+    get_array_module,
+    preserve_float_dtype,
+)
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
 )
 from esmvalcore.preprocessor.regrid_schemes import (
-    ESMPyAreaWeighted,
-    ESMPyLinear,
-    ESMPyNearest,
     GenericFuncScheme,
+    IrisESMFRegrid,
+    UnstructuredLinear,
     UnstructuredNearest,
 )
 
@@ -74,22 +79,37 @@ POINT_INTERPOLATION_SCHEMES = {
     'nearest': Nearest(extrapolation_mode='mask'),
 }
 
-# Supported horizontal regridding schemes for regular grids
+# Supported horizontal regridding schemes for regular grids (= rectilinear
+# grids; i.e., grids that can be described with 1D latitude and 1D longitude
+# coordinates orthogonal to each other)
 HORIZONTAL_SCHEMES_REGULAR = {
     'area_weighted': AreaWeighted(),
     'linear': Linear(extrapolation_mode='mask'),
     'nearest': Nearest(extrapolation_mode='mask'),
 }
 
-# Supported horizontal regridding schemes for irregular grids
+# Supported horizontal regridding schemes for irregular grids (= general
+# curvilinear grids; i.e., grids that can be described with 2D latitude and 2D
+# longitude coordinates with common dimensions)
 HORIZONTAL_SCHEMES_IRREGULAR = {
-    'area_weighted': ESMPyAreaWeighted(),
-    'linear': ESMPyLinear(),
-    'nearest': ESMPyNearest(),
+    'area_weighted': IrisESMFRegrid(method='conservative'),
+    'linear': IrisESMFRegrid(method='bilinear'),
+    'nearest': IrisESMFRegrid(method='nearest'),
 }
 
-# Supported horizontal regridding schemes for unstructured grids
+# Supported horizontal regridding schemes for meshes
+# https://scitools-iris.readthedocs.io/en/stable/further_topics/ugrid/index.html
+HORIZONTAL_SCHEMES_MESH = {
+    'area_weighted': IrisESMFRegrid(method='conservative'),
+    'linear': IrisESMFRegrid(method='bilinear'),
+    'nearest': IrisESMFRegrid(method='nearest'),
+}
+
+# Supported horizontal regridding schemes for unstructured grids (i.e., grids,
+# that can be described with 1D latitude and 1D longitude coordinate with
+# common dimensions)
 HORIZONTAL_SCHEMES_UNSTRUCTURED = {
+    'linear': UnstructuredLinear(),
     'nearest': UnstructuredNearest(),
 }
 
@@ -277,8 +297,9 @@ def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
         List of latitudes
     """
     if step_latitude == 0:
-        raise ValueError('Latitude step cannot be 0, '
-                         f'got step_latitude={step_latitude}.')
+        raise ValueError(
+            f"Latitude step cannot be 0, got step_latitude={step_latitude}."
+        )
 
     if step_longitude == 0:
         raise ValueError('Longitude step cannot be 0, '
@@ -500,11 +521,9 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
-        # Generate a target grid from the provided cell-specification,
-        # and cache the resulting stock cube for later use.
-        target_grid_cube = _global_stock_cube(
-            target_grid, lat_offset, lon_offset
-        )
+        # Generate a target grid from the provided cell-specification
+        target_grid_cube = _global_stock_cube(target_grid, lat_offset,
+                                              lon_offset)
         # Align the target grid coordinate system to the source
         # coordinate system.
         src_cs = cube.coord_system()
@@ -524,31 +543,7 @@ def _get_target_grid_cube(
     return target_grid_cube
 
 
-def _attempt_irregular_regridding(cube: Cube, scheme: str) -> bool:
-    """Check if irregular regridding with ESMF should be used."""
-    if not has_irregular_grid(cube):
-        return False
-    if scheme not in HORIZONTAL_SCHEMES_IRREGULAR:
-        raise ValueError(
-            f"Regridding scheme '{scheme}' does not support irregular data, "
-            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}"
-        )
-    return True
-
-
-def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
-    """Check if unstructured regridding should be used."""
-    if not has_unstructured_grid(cube):
-        return False
-    if scheme not in HORIZONTAL_SCHEMES_UNSTRUCTURED:
-        raise ValueError(
-            f"Regridding scheme '{scheme}' does not support unstructured "
-            f"data, expected one of {list(HORIZONTAL_SCHEMES_UNSTRUCTURED)}"
-        )
-    return True
-
-
-def _load_scheme(src_cube: Cube, scheme: str | dict):
+def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
 
@@ -560,8 +555,7 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
             "version 2.13.0. Please use the scheme `nearest` instead. This is "
             "an exact replacement for data on unstructured grids. Since "
             "version 2.11.0, ESMValCore is able to determine the most "
-            "suitable regridding scheme based on the input data."
-        )
+            "suitable regridding scheme based on the input data.")
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         scheme = 'nearest'
 
@@ -573,32 +567,34 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
             "iris.analysis:Linear` and `extrapolation_mode: extrapolate` "
             "instead (see https://docs.esmvaltool.org/projects/ESMValCore/en/"
             "latest/recipe/preprocessor.html#generic-regridding-schemes)."
-            "This is an exact replacement."
-        )
+            "This is an exact replacement.")
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         scheme = 'linear'
         loaded_scheme = Linear(extrapolation_mode='extrapolate')
         logger.debug("Loaded regridding scheme %s", loaded_scheme)
         return loaded_scheme
 
-    # Scheme is a dict -> assume this describes a generic regridding scheme
     if isinstance(scheme, dict):
+        # Scheme is a dict -> assume this describes a generic regridding scheme
         loaded_scheme = _load_generic_scheme(scheme)
-
-    # Scheme is a str -> load appropriate regridding scheme depending on the
-    # type of input data
-    elif _attempt_irregular_regridding(src_cube, scheme):
-        loaded_scheme = HORIZONTAL_SCHEMES_IRREGULAR[scheme]
-    elif _attempt_unstructured_regridding(src_cube, scheme):
-        loaded_scheme = HORIZONTAL_SCHEMES_UNSTRUCTURED[scheme]
     else:
-        loaded_scheme = HORIZONTAL_SCHEMES_REGULAR.get(scheme)
+        # Scheme is a str -> load appropriate regridding scheme depending on
+        # the type of input data
+        if has_irregular_grid(src_cube) or has_irregular_grid(tgt_cube):
+            grid_type = 'irregular'
+        elif src_cube.mesh is not None or tgt_cube.mesh is not None:
+            grid_type = 'mesh'
+        elif has_unstructured_grid(src_cube):
+            grid_type = 'unstructured'
+        else:
+            grid_type = 'regular'
 
-    if loaded_scheme is None:
-        raise ValueError(
-            f"Got invalid regridding scheme string '{scheme}', expected one "
-            f"of {list(HORIZONTAL_SCHEMES_REGULAR)}"
-        )
+        schemes = globals()[f"HORIZONTAL_SCHEMES_{grid_type.upper()}"]
+        if scheme not in schemes:
+            raise ValueError(
+                f"Regridding scheme '{scheme}' not available for {grid_type} "
+                f"data, expected one of: {', '.join(schemes)}")
+        loaded_scheme = schemes[scheme]
 
     logger.debug("Loaded regridding scheme %s", loaded_scheme)
 
@@ -613,8 +609,7 @@ def _load_generic_scheme(scheme: dict):
         object_ref = scheme.pop("reference")
     except KeyError as key_err:
         raise ValueError(
-            "No reference specified for generic regridding."
-        ) from key_err
+            "No reference specified for generic regridding.") from key_err
     module_name, separator, scheme_name = object_ref.partition(":")
     try:
         obj: Any = importlib.import_module(module_name)
@@ -622,8 +617,7 @@ def _load_generic_scheme(scheme: dict):
         raise ValueError(
             f"Could not import specified generic regridding module "
             f"'{module_name}'. Please double check spelling and that the "
-            f"required module is installed."
-        ) from import_err
+            f"required module is installed.") from import_err
     if separator:
         for attr in scheme_name.split('.'):
             obj = getattr(obj, attr)
@@ -639,12 +633,82 @@ def _load_generic_scheme(scheme: dict):
     return loaded_scheme
 
 
+_CACHED_REGRIDDERS: dict[tuple, dict] = {}
+
+
+def _get_regridder(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+    cache_weights: bool,
+):
+    """Get regridder to actually perform regridding.
+
+    Note
+    ----
+    If possible, this uses an existing regridder to reduce runtime (see also
+    https://scitools-iris.readthedocs.io/en/latest/userguide/
+    interpolation_and_regridding.html#caching-a-regridder.)
+    """
+    # (1) Weights caching enabled
+    if cache_weights:
+        # To search for a matching regridder in the cache, first check the
+        # regridding scheme name and shapes of source and target coordinates.
+        # Only if these match, check coordinates themselves (this is much more
+        # expensive).
+        coord_key = _get_coord_key(src_cube, tgt_cube)
+        name_shape_key = _get_name_and_shape_key(src_cube, tgt_cube, scheme)
+        if name_shape_key in _CACHED_REGRIDDERS:
+            # We cannot simply do a test for `coord_key in
+            # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a
+            # coordinate is simply its id() (thus, coordinates loaded from two
+            # different files would never be considered equal)
+            for (key, regridder) in _CACHED_REGRIDDERS[name_shape_key].items():
+                if key == coord_key:
+                    return regridder
+
+        # Regridder is not in cached -> return a new one and cache it
+        loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+        _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+        _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+
+    # (2) Weights caching disabled
+    else:
+        loaded_scheme = _load_scheme(src_cube, tgt_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+
+    return regridder
+
+
+def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
+    """Get dict key from coordinates."""
+    src_lat = src_cube.coord('latitude')
+    src_lon = src_cube.coord('longitude')
+    tgt_lat = tgt_cube.coord('latitude')
+    tgt_lon = tgt_cube.coord('longitude')
+    return (src_lat, src_lon, tgt_lat, tgt_lon)
+
+
+def _get_name_and_shape_key(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+) -> tuple:
+    """Get dict key from scheme name and coordinate shapes."""
+    name = str(scheme)
+    shapes = [c.shape for c in _get_coord_key(src_cube, tgt_cube)]
+    return (name, *shapes)
+
+
+@preserve_float_dtype
 def regrid(
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
     scheme: str | dict,
     lat_offset: bool = True,
     lon_offset: bool = True,
+    cache_weights: bool = False,
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -679,10 +743,11 @@ def regrid(
         be specified (see above).
     scheme:
         The regridding scheme to perform. If the source grid is structured
-        (regular or irregular), can be one of the built-in schemes ``linear``,
-        ``nearest``, ``area_weighted``. If the source grid is unstructured, can
-        be one of the built-in schemes ``nearest``.  Alternatively, a `dict`
-        that specifies generic regridding can be given (see below).
+        (i.e., rectilinear or curvilinear), can be one of the built-in schemes
+        ``linear``, ``nearest``, ``area_weighted``. If the source grid is
+        unstructured, can be one of the built-in schemes ``linear``,
+        ``nearest``.  Alternatively, a `dict` that specifies generic regridding
+        can be given (see below).
     lat_offset:
         Offset the grid centers of the latitude coordinate w.r.t. the pole by
         half a grid step. This argument is ignored if `target_grid` is a cube
@@ -691,6 +756,14 @@ def regrid(
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step. This argument is ignored if
         `target_grid` is a cube or file.
+    cache_weights:
+        If ``True``, cache regridding weights for later usage. This can speed
+        up the regridding of different datasets with similar source and target
+        grids massively, but may take up a lot of memory for extremely
+        high-resolution data. This option is ignored for schemes that do not
+        support weights caching. More details on this are given in the section
+        on :ref:`caching_regridding_weights`. To clear the cache, use
+        :func:`esmvalcore.preprocessor.regrid.cache_clear`.
 
     Returns
     -------
@@ -707,7 +780,7 @@ def regrid(
     regridding schemes, that is anything that can be passed as a scheme to
     :meth:`iris.cube.Cube.regrid` is possible. This enables the use of further
     parameters for existing schemes, as well as the use of more advanced
-    schemes for example for unstructured meshes.
+    schemes for example for unstructured grids.
     To use this functionality, a dictionary must be passed for the scheme with
     a mandatory entry of ``reference`` in the form specified for the object
     reference of the `entry point data model <https://packaging.python.org/en/
@@ -738,11 +811,13 @@ def regrid(
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
     """
     # Load target grid and select appropriate scheme
     target_grid_cube = _get_target_grid_cube(
-        cube, target_grid, lat_offset=lat_offset, lon_offset=lon_offset,
+        cube,
+        target_grid,
+        lat_offset=lat_offset,
+        lon_offset=lon_offset,
     )
 
     # Horizontal grids from source and target (almost) match
@@ -750,55 +825,67 @@ def regrid(
     if _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ['latitude', 'longitude']:
             cube.coord(coord).points = (
-                target_grid_cube.coord(coord).core_points()
-            )
+                target_grid_cube.coord(coord).core_points())
             cube.coord(coord).bounds = (
-                target_grid_cube.coord(coord).core_bounds()
-            )
+                target_grid_cube.coord(coord).core_bounds())
         return cube
 
-    # Load scheme, rechunk and regrid
+    # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()
-    loaded_scheme = _load_scheme(cube, scheme)
+    regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
+
+    # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
-    cube = cube.regrid(target_grid_cube, loaded_scheme)
+    cube = regridder(cube)
 
     return cube
 
 
+def _cache_clear():
+    """Clear regridding weights cache."""
+    _CACHED_REGRIDDERS.clear()
+
+
+regrid.cache_clear = _cache_clear  # type: ignore
+
+
 def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
     """Re-chunk cube with optimal chunk sizes for target grid."""
-    if not cube.has_lazy_data() or cube.ndim < 3:
-        # Only rechunk lazy multidimensional data
+    if not cube.has_lazy_data():
+        # Only rechunk lazy data
         return cube
 
-    lon_coord = target_grid.coord(axis='X')
-    lat_coord = target_grid.coord(axis='Y')
-    if lon_coord.ndim != 1 or lat_coord.ndim != 1:
-        # This function only supports 1D lat/lon coordinates.
-        return cube
+    # Extract grid dimension information from source cube
+    src_grid_indices = get_dims_along_axes(cube, ["X", "Y"])
+    src_grid_shape = tuple(cube.shape[i] for i in src_grid_indices)
+    src_grid_ndims = len(src_grid_indices)
 
-    lon_dim, = target_grid.coord_dims(lon_coord)
-    lat_dim, = target_grid.coord_dims(lat_coord)
-    grid_indices = sorted((lon_dim, lat_dim))
-    target_grid_shape = tuple(target_grid.shape[i] for i in grid_indices)
+    # Extract grid dimension information from target cube.
+    tgt_grid_indices = get_dims_along_axes(target_grid, ["X", "Y"])
+    tgt_grid_shape = tuple(target_grid.shape[i] for i in tgt_grid_indices)
+    tgt_grid_ndims = len(tgt_grid_indices)
 
-    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid_shape):
+    if 2 * np.prod(src_grid_shape) > np.prod(tgt_grid_shape):
         # Only rechunk if target grid is more than a factor of 2 larger,
         # because rechunking will keep the original chunk in memory.
         return cube
 
-    data = cube.lazy_data()
-
     # Compute a good chunk size for the target array
-    tgt_shape = data.shape[:-2] + target_grid_shape
-    tgt_chunks = data.chunks[:-2] + target_grid_shape
-    tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
-    tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
+    # This uses the fact that horizontal dimension(s) are the last dimension(s)
+    # of the input cube and also takes into account that iris regridding needs
+    # unchunked data along the grid dimensions.
+    data = cube.lazy_data()
+    tgt_shape = data.shape[:-src_grid_ndims] + tgt_grid_shape
+    tgt_chunks = data.chunks[:-src_grid_ndims] + tgt_grid_shape
+
+    tgt_data = da.empty(tgt_shape, chunks=tgt_chunks, dtype=data.dtype)
+    tgt_data = tgt_data.rechunk(
+        {i: "auto"
+         for i in range(tgt_data.ndim - tgt_grid_ndims)})
 
     # Adjust chunks to source array and rechunk
-    chunks = tgt_data.chunks[:-2] + data.shape[-2:]
+    chunks = tgt_data.chunks[:-tgt_grid_ndims] + data.shape[-src_grid_ndims:]
     cube.data = data.rechunk(chunks)
 
     return cube
@@ -827,7 +914,6 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     -------
     bool
         ``True`` if grids are close; ``False`` if not.
-
     """
     # Go through the 2 expected horizontal coordinates longitude and latitude.
     for coord in ['latitude', 'longitude']:
@@ -933,52 +1019,6 @@ def _create_cube(src_cube, data, src_levels, levels):
         result = result[tuple(slicer)]
 
     return result
-
-
-def is_lazy_masked_data(array):
-    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
-    return isinstance(array, da.Array) and isinstance(
-        da.utils.meta_from_array(array), np.ma.MaskedArray)
-
-
-def broadcast_to_shape(array, shape, dim_map, chunks=None):
-    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
-    if isinstance(array, da.Array):
-        if chunks is not None:
-            chunks = list(chunks)
-            for src_idx, tgt_idx in enumerate(dim_map):
-                # Only use the specified chunks along new dimensions or on
-                # dimensions that have size 1 in the source array.
-                if array.shape[src_idx] != 1:
-                    chunks[tgt_idx] = array.chunks[src_idx]
-        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
-    else:
-        broadcast = partial(np.broadcast_to, shape=shape)
-
-    n_orig_dims = len(array.shape)
-    n_new_dims = len(shape) - n_orig_dims
-    array = array.reshape(array.shape + (1,) * n_new_dims)
-
-    # Get dims in required order.
-    array = np.moveaxis(array, range(n_orig_dims), dim_map)
-    new_array = broadcast(array)
-
-    if np.ma.isMA(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = np.ma.getmask(array)
-        if mask is np.ma.nomask:
-            new_mask = np.ma.nomask
-        else:
-            new_mask = broadcast(mask)
-        new_array = np.ma.array(new_array, mask=new_mask)
-
-    elif is_lazy_masked_data(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = da.ma.getmaskarray(array)
-        new_mask = broadcast(mask)
-        new_array = da.ma.masked_array(new_array, new_mask)
-
-    return new_array
 
 
 def _vertical_interpolate(cube, src_levels, levels, interpolation,
@@ -1108,7 +1148,7 @@ def _rechunk_aux_factory_dependencies(
     cube_chunks = cube.lazy_data().chunks
     for coord in factory.dependencies.values():
         coord_dims = cube.coord_dims(coord)
-        if coord_dims is not None:
+        if coord_dims:
             coord = coord.copy()
             chunks = tuple(cube_chunks[i] for i in coord_dims)
             coord.points = coord.lazy_points().rechunk(chunks)
@@ -1118,6 +1158,7 @@ def _rechunk_aux_factory_dependencies(
     return cube
 
 
+@preserve_float_dtype
 def extract_levels(
     cube: iris.cube.Cube,
     levels: np.typing.ArrayLike | da.Array,
@@ -1308,6 +1349,7 @@ def get_reference_levels(dataset):
     return coord.points.tolist()
 
 
+@preserve_float_dtype
 def extract_coordinate_points(cube, definition, scheme):
     """Extract points from any coordinate with interpolation.
 

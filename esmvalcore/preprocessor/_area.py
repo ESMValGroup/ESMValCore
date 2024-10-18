@@ -6,7 +6,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -16,14 +15,15 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from iris.coords import AuxCoord, CellMeasure
+from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     get_normalized_cube,
-    guess_bounds,
+    preserve_float_dtype,
+    try_adding_calculated_cell_area,
     update_weights_kwargs,
 )
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -189,6 +189,7 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
+@preserve_float_dtype
 def zonal_statistics(
     cube: Cube,
     operator: str,
@@ -235,10 +236,10 @@ def zonal_statistics(
     result = cube.collapsed('longitude', agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-    result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
 
+@preserve_float_dtype
 def meridional_statistics(
     cube: Cube,
     operator: str,
@@ -284,89 +285,14 @@ def meridional_statistics(
     result = cube.collapsed('latitude', agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-    result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
-
-
-def compute_area_weights(cube):
-    """Compute area weights."""
-    with warnings.catch_warnings(record=True) as caught_warnings:
-        warnings.filterwarnings(
-            'always',
-            message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
-            category=UserWarning,
-            module='iris.analysis.cartography',
-        )
-        weights = iris.analysis.cartography.area_weights(cube)
-        for warning in caught_warnings:
-            logger.debug(
-                "%s while computing area weights of the following cube:\n%s",
-                warning.message, cube)
-    return weights
-
-
-def _try_adding_calculated_cell_area(cube: Cube) -> None:
-    """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
-    if cube.cell_measures('cell_area'):
-        return
-
-    logger.debug(
-        "Found no cell measure 'cell_area' in cube %s. Check availability of "
-        "supplementary variables",
-        cube.summary(shorten=True),
-    )
-    logger.debug("Attempting to calculate grid cell area")
-
-    regular_grid = all([
-        cube.coord('latitude').points.ndim == 1,
-        cube.coord('longitude').points.ndim == 1,
-        cube.coord_dims('latitude') != cube.coord_dims('longitude'),
-    ])
-    rotated_pole_grid = all([
-        cube.coord('latitude').points.ndim == 2,
-        cube.coord('longitude').points.ndim == 2,
-        cube.coords('grid_latitude'),
-        cube.coords('grid_longitude'),
-    ])
-
-    # For regular grids, calculate grid cell areas with iris function
-    if regular_grid:
-        cube = guess_bounds(cube, ['latitude', 'longitude'])
-        logger.debug("Calculating grid cell areas for regular grid")
-        cell_areas = compute_area_weights(cube)
-
-    # For rotated pole grids, use grid_latitude and grid_longitude to calculate
-    # grid cell areas
-    elif rotated_pole_grid:
-        cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
-        cube_tmp = cube.copy()
-        cube_tmp.remove_coord('latitude')
-        cube_tmp.coord('grid_latitude').rename('latitude')
-        cube_tmp.remove_coord('longitude')
-        cube_tmp.coord('grid_longitude').rename('longitude')
-        logger.debug("Calculating grid cell areas for rotated pole grid")
-        cell_areas = compute_area_weights(cube_tmp)
-
-    # For all other cases, grid cell areas cannot be calculated
-    else:
-        logger.error(
-            "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular or unstructured grid of cube %s",
-            cube.summary(shorten=True),
-        )
-        raise CoordinateMultiDimError(cube.coord('latitude'))
-
-    # Add new cell measure
-    cell_measure = CellMeasure(
-        cell_areas, standard_name='cell_area', units='m2', measure='area',
-    )
-    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
 
 
 @register_supplementaries(
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
+@preserve_float_dtype
 def area_statistics(
     cube: Cube,
     operator: str,
@@ -414,28 +340,17 @@ def area_statistics(
         `cell_area` is not available.
 
     """
-    original_dtype = cube.dtype
     has_cell_measure = bool(cube.cell_measures('cell_area'))
 
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
-        agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
+        agg, agg_kwargs, 'cell_area', cube, try_adding_calculated_cell_area
     )
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-
-    # Make sure to preserve dtype
-    new_dtype = result.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "area_statistics changed dtype from %s to %s, changing back",
-            original_dtype,
-            new_dtype,
-        )
-        result.data = result.core_data().astype(original_dtype)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('cell_area'):
@@ -938,6 +853,23 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
         for measure in cube.cell_measures():
+            # Cell measures that are time-dependent, with 4 dimension and
+            # an original shape of (time, depth, lat, lon), need to be
+            # broadcasted to the cube with 5 dimensions and shape
+            # (time, shape_id, depth, lat, lon)
+            if measure.ndim > 3 and result.ndim > 4:
+                data = measure.core_data()
+                data = da.expand_dims(data, axis=(1,))
+                data = da.broadcast_to(data, result.shape)
+                measure = iris.coords.CellMeasure(
+                    data,
+                    standard_name=measure.standard_name,
+                    long_name=measure.long_name,
+                    units=measure.units,
+                    measure=measure.measure,
+                    var_name=measure.var_name,
+                    attributes=measure.attributes,
+                )
             add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_variable in cube.ancillary_variables():
