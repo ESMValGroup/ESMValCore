@@ -117,10 +117,12 @@ def test_no_scheme_parameter(test_cube):
 
 @patch("esmvalcore.preprocessor._regrid.ssl.create_default_context")
 def test_create_default_ssl_context_raises_exception(mock_create, test_cube):
-    """Test the original way 'extract_location' worked before adding the
-    default SSL context, see
-    https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
-    information."""
+    """Test the original way 'extract_location' worked.
+
+    Test the way `extract_location` worked before adding the default SSL
+    context, see https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
+    information.
+    """
     mock_create.side_effect = ssl.SSLSyscallError
     extract_location(test_cube, scheme="nearest", location="Peñacaballera")
     mock_create.assert_called_once()

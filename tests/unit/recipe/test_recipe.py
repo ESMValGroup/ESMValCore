@@ -20,7 +20,7 @@ class MockRecipe(_recipe.Recipe):
     """Mocked Recipe class with simple constructor."""
 
     def __init__(self, cfg, diagnostics):
-        """Simple constructor used for testing."""
+        """Create a mock recipe for testing."""
         self.session = cfg
         self.diagnostics = diagnostics
 

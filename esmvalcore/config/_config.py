@@ -1,4 +1,4 @@
-"""Functions dealing with config-user.yml / config-developer.yml."""
+"""Functions dealing with config-developer.yml and extra facets."""
 
 from __future__ import annotations
 
@@ -52,7 +52,8 @@ def _load_extra_facets(project, extra_facets_dir):
 
 
 def get_extra_facets(dataset, extra_facets_dir):
-    """Read configuration files with additional variable information."""
+    """Read files with additional variable information ("extra facets")."""
+    extra_facets_dir = tuple(extra_facets_dir)
     project_details = _load_extra_facets(
         dataset.facets["project"],
         extra_facets_dir,

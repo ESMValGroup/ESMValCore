@@ -1,4 +1,4 @@
-"""Unit test for :func:`esmvalcore.preprocessor._regrid`"""
+"""Unit test for :func:`esmvalcore.preprocessor._regrid`."""
 
 from decimal import Decimal
 
@@ -32,7 +32,7 @@ SPEC_KEYS = (
     "step_latitude",
 )
 PASSING_SPECS = tuple(
-    dict(zip(SPEC_KEYS, spec))
+    dict(zip(SPEC_KEYS, spec, strict=False))
     for spec in (
         (0, 360, 5, -90, 90, 5),
         (0, 360, 20, -90, 90, 20),
@@ -52,7 +52,7 @@ PASSING_SPECS = tuple(
 )
 
 FAILING_SPECS = tuple(
-    dict(zip(SPEC_KEYS, spec))
+    dict(zip(SPEC_KEYS, spec, strict=False))
     for spec in (
         # (0, 360, 5, -90, 90, 5),
         (0, 360, 5, -90, 180, 5),

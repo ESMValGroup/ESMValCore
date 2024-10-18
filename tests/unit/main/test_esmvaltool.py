@@ -8,11 +8,12 @@ import pytest
 import esmvalcore._main
 import esmvalcore._task
 import esmvalcore.config
+import esmvalcore.config._config_object
 import esmvalcore.config._logging
 import esmvalcore.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,9 +23,10 @@ def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
     session = mocker.MagicMock()
 
-    cfg_dict = {}
+    cfg_dict = {"resume_from": []}
     session.__getitem__.side_effect = cfg_dict.__getitem__
     session.__setitem__.side_effect = cfg_dict.__setitem__
+    session.update.side_effect = cfg_dict.update
 
     output_dir = tmp_path / "esmvaltool_output"
     session.session_dir = output_dir / "recipe_test"
@@ -54,7 +56,7 @@ def session(cfg):
         ("check_level", "strict"),
     ],
 )
-def test_run_command_line_config(mocker, cfg, argument, value):
+def test_run_command_line_config(mocker, cfg, argument, value, tmp_path):
     """Check that the configuration is updated from the command line."""
     mocker.patch.object(
         esmvalcore.config,
@@ -65,17 +67,19 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 
     program = ESMValTool()
     recipe_file = "/path/to/recipe_test.yml"
-    config_file = "/path/to/config-user.yml"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
 
     mocker.patch.object(program, "_get_recipe", return_value=Path(recipe_file))
     mocker.patch.object(program, "_run")
 
-    program.run(recipe_file, config_file, **{argument: value})
+    program.run(recipe_file, config_dir=config_dir, **{argument: value})
 
-    cfg.load_from_file.assert_called_with(config_file)
     cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
     program._get_recipe.assert_called_with(recipe_file)
-    program._run.assert_called_with(program._get_recipe.return_value, session)
+    program._run.assert_called_with(
+        program._get_recipe.return_value, session, config_dir
+    )
 
     assert session[argument] == value
 
@@ -84,7 +88,6 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 def test_run(mocker, session, search_esgf):
     session["search_esgf"] = search_esgf
     session["log_level"] = "default"
-    session["config_file"] = "/path/to/config-user.yml"
     session["remove_preproc_dir"] = True
     session["save_intermediary_cubes"] = False
     session.cmor_log.read_text.return_value = "WARNING: attribute not present"
@@ -113,7 +116,7 @@ def test_run(mocker, session, search_esgf):
         create_autospec=True,
     )
 
-    ESMValTool()._run(recipe, session=session)
+    ESMValTool()._run(recipe, session=session, cli_config_dir=None)
 
     # Check that the correct functions have been called
     esmvalcore.config._logging.configure_logging.assert_called_once_with(
@@ -150,6 +153,36 @@ def test_run_session_dir_exists_alternative_fails(mocker, session):
         program._create_session_dir(session)
 
 
+def test_run_missing_config_dir(tmp_path):
+    """Test `ESMValTool.run`."""
+    config_dir = tmp_path / "path" / "does" / "not" / "exist"
+    program = ESMValTool()
+
+    msg = (
+        f"Invalid --config_dir given: {config_dir} is not an existing "
+        f"directory"
+    )
+    with pytest.raises(NotADirectoryError, match=msg):
+        program.run("/recipe_dir/recipe_test.yml", config_dir=config_dir)
+
+
+def test_run_invalid_config_dir(monkeypatch, tmp_path):
+    """Test `ESMValTool.run`."""
+    monkeypatch.delitem(  # TODO: remove in v2.14.0
+        esmvalcore.config.CFG._mapping, "config_file", raising=False
+    )
+    config_path = tmp_path / "config.yml"
+    config_path.write_text("invalid: option")
+    program = ESMValTool()
+
+    msg = (
+        rf"Failed to parse configuration directory {tmp_path} \(command line "
+        rf"argument\): `invalid` is not a valid config parameter."
+    )
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        program.run("/recipe_dir/recipe_test.yml", config_dir=tmp_path)
+
+
 def test_clean_preproc_dir(session):
     session.preproc_dir.mkdir(parents=True)
     session._fixed_file_dir.mkdir(parents=True)
@@ -172,17 +205,32 @@ def test_do_not_clean_preproc_dir(session):
     assert session._fixed_file_dir.exists()
 
 
+@mock.patch("esmvalcore._main.ESMValTool._get_config_info")
 @mock.patch("esmvalcore._main.entry_points")
-def test_header(mock_entry_points, caplog):
+def test_header(
+    mock_entry_points, mock_get_config_info, monkeypatch, tmp_path, caplog
+):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        esmvalcore.config._config_object, "USER_CONFIG_DIR", tmp_path
+    )
+    monkeypatch.setattr(
+        esmvalcore.config._config_object, "USER_CONFIG_SOURCE", "SOURCE"
+    )
     entry_point = mock.Mock()
     entry_point.dist.name = "MyEntry"
     entry_point.dist.version = "v42.42.42"
     entry_point.name = "Entry name"
     mock_entry_points.return_value = [entry_point]
+    cli_config_dir = tmp_path / "this" / "does" / "not" / "exist"
+
+    # TODO: remove in v2.14.0
+    mock_get_config_info.return_value = "config_dir (SOURCE)"
+
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
-            "path_to_config_file",
             ["path_to_log_file1", "path_to_log_file2"],
+            cli_config_dir,
         )
 
     assert len(caplog.messages) == 8
@@ -192,7 +240,9 @@ def test_header(mock_entry_points, caplog):
     assert caplog.messages[3] == f"ESMValCore: {__version__}"
     assert caplog.messages[4] == "MyEntry: v42.42.42"
     assert caplog.messages[5] == "----------------"
-    assert caplog.messages[6] == "Using config file path_to_config_file"
+    assert caplog.messages[6] == (
+        "Reading configuration files from:\nconfig_dir (SOURCE)"
+    )
     assert caplog.messages[7] == (
         "Writing program log files to:\n"
         "path_to_log_file1\n"

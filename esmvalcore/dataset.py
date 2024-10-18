@@ -761,7 +761,6 @@ class Dataset:
             ),
         }
         settings["fix_metadata"] = {
-            "check_level": self.session["check_level"],
             "session": self.session,
             **self.facets,
         }
@@ -778,7 +777,6 @@ class Dataset:
                 "timerange": self.facets["timerange"],
             }
         settings["fix_data"] = {
-            "check_level": self.session["check_level"],
             "session": self.session,
             **self.facets,
         }

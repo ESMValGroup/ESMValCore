@@ -115,7 +115,7 @@ ESGF_FACETS = (
 
 
 @pytest.mark.parametrize(
-    "our_facets, esgf_facets", zip(OUR_FACETS, ESGF_FACETS)
+    "our_facets, esgf_facets", zip(OUR_FACETS, ESGF_FACETS, strict=False)
 )
 def test_get_esgf_facets(our_facets, esgf_facets):
     """Test that facet translation by get_esgf_facets works as expected."""

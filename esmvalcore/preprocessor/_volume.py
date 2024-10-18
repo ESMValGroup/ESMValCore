@@ -510,7 +510,10 @@ def extract_transect(
         )
 
     for dim_name, dim_cut, coord in zip(
-        ["latitude", "longitude"], [latitude, longitude], [lats, lons]
+        ["latitude", "longitude"],
+        [latitude, longitude],
+        [lats, lons],
+        strict=False,
     ):
         # ####
         # Look for the first coordinate.

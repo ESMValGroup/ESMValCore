@@ -1,7 +1,6 @@
 """Tests for the fixes of CESM2-WACCM."""
 
 import os
-import sys
 import unittest.mock
 
 import iris
@@ -36,9 +35,6 @@ def test_cl_fix():
     assert issubclass(Cl, BaseCl)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7, 6), reason="requires python3.7.6 or newer"
-)
 @unittest.mock.patch(
     "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath", autospec=True
 )

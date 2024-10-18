@@ -12,6 +12,7 @@ import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
 import iris.fileformats
+import isodate
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -155,6 +156,14 @@ class TestTimeSlice(tests.Test):
         sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
         assert_array_equal(np.array([59]), sliced.coord("time").points)
 
+    def test_extract_time_none_years(self):
+        """Test extract slice if both end and start year are None."""
+        sliced = extract_time(self.cube, None, 2, 5, None, 4, 17)
+        assert_array_equal(
+            np.array([45.0, 75.0, 105.0, 405.0, 435.0, 465.0]),
+            sliced.coord("time").points,
+        )
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         self.cube.coord("time").guess_bounds()
@@ -179,6 +188,28 @@ class TestTimeSlice(tests.Test):
         cube = _create_sample_cube()[0]
         sliced = extract_time(cube, 1950, 1, 1, 1950, 12, 31)
         assert cube == sliced
+
+    def test_extract_time_start_none_year(self):
+        """Test extract_time when only start_year is None."""
+        cube = self.cube.coord("time").guess_bounds()
+        msg = (
+            "If start_year or end_year is None, both start_year and "
+            "end_year have to be None. Currently, start_year is None and "
+            "end_year is 1950."
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_time(cube, None, 1, 1, 1950, 2, 1)
+
+    def test_extract_time_end_none_year(self):
+        """Test extract_time when only end_year is None."""
+        cube = self.cube.coord("time").guess_bounds()
+        msg = (
+            "If start_year or end_year is None, both start_year and "
+            "end_year have to be None. Currently, start_year is 1950 and "
+            "end_year is None."
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_time(cube, 1950, 1, 1, None, 2, 1)
 
 
 class TestClipTimerange(tests.Test):
@@ -320,8 +351,10 @@ class TestClipTimerange(tests.Test):
             assert sliced_backward.coord("time").cell(0).point.day == 1
 
     def test_clip_timerange_duration_seconds(self):
-        """Test timerange with duration periods with resolution up to
-        seconds."""
+        """Test clip_timerange.
+
+        Test with duration periods with resolution up to seconds.
+        """
         data = np.arange(8)
         times = np.arange(0, 48, 6)
         calendars = [
@@ -485,6 +518,24 @@ class TestClipTimerange(tests.Test):
             assert sliced_cube.coord_dims(coord_name) == cube_3.coord_dims(
                 coord_name
             )
+
+    def test_clip_timerange_start_date_invalid_isodate(self):
+        cube = self._create_cube(
+            [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
+        )
+        with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
+            clip_timerange(cube, "1950010101/1950")
+        mssg = "Unrecognised ISO 8601 date format: '1950010101'"
+        assert mssg in str(exc)
+
+    def test_clip_timerange_end_date_invalid_isodate(self):
+        cube = self._create_cube(
+            [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
+        )
+        with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
+            clip_timerange(cube, "1950/1950010101")
+        mssg = "Unrecognised ISO 8601 date format: '1950010101'"
+        assert mssg in str(exc)
 
 
 class TestExtractSeason(tests.Test):
@@ -1256,7 +1307,7 @@ class TestDailyStatistics(tests.Test):
 
 @pytest.fixture
 def cube_1d_time():
-    """Simple 1D cube with time coordinate of length one."""
+    """Create a 1D cube with a time coordinate of length one."""
     units = Unit("days since 2000-01-01", calendar="standard")
     time_coord = iris.coords.DimCoord(
         units.date2num(datetime(2024, 1, 26, 14, 57, 28)),
@@ -1749,7 +1800,9 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
     metadata = copy.deepcopy(cube.metadata)
     result = anomalies(cube, period, reference, standardize=standardize)
     assert result.metadata == metadata
-    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+    for coord_cube, coord_res in zip(
+        cube.coords(), result.coords(), strict=False
+    ):
         if coord_cube.has_bounds() and coord_res.has_bounds():
             assert_array_equal(coord_cube.bounds, coord_res.bounds)
         assert coord_cube == coord_res

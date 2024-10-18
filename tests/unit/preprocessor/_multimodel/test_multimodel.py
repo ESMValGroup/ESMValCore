@@ -195,11 +195,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 
 def get_cube_for_equal_coords_test(num_cubes):
     """Set up cubes with equal auxiliary coordinates."""
-    cubes = []
-
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates("monthly")
-        cubes.append(cube)
+    cubes = [generate_cube_from_dates("monthly") for _ in range(num_cubes)]
 
     # Create cubes that have one exactly equal coordinate ('year'), one
     # coordinate with matching names ('m') and one coordinate with non-matching
@@ -247,23 +243,17 @@ VALIDATION_DATA_SUCCESS = (
     ("full", "mean", (5, 5, 3)),
     ("full", {"operator": "mean"}, (5, 5, 3)),
     ("full", "std_dev", (5.656854249492381, 4, 2.8284271247461903)),
-    ("full", "std", (5.656854249492381, 4, 2.8284271247461903)),
     ("full", "min", (1, 1, 1)),
     ("full", "max", (9, 9, 5)),
     ("full", "median", (5, 5, 3)),
     ("full", {"operator": "percentile", "percent": 50.0}, (5, 5, 3)),
-    ("full", "p50", (5, 5, 3)),
-    ("full", "p99.5", (8.96, 8.96, 4.98)),
     ("full", "peak", (9, 9, 5)),
     ("overlap", "mean", (5, 5)),
     ("overlap", "std_dev", (5.656854249492381, 4)),
-    ("overlap", "std", (5.656854249492381, 4)),
     ("overlap", "min", (1, 1)),
     ("overlap", "max", (9, 9)),
     ("overlap", "median", (5, 5)),
     ("overlap", {"operator": "percentile", "percent": 50.0}, (5, 5)),
-    ("overlap", "p50", (5, 5)),
-    ("overlap", "p99.5", (8.96, 8.96)),
     ("overlap", "peak", (9, 9)),
     # test multiple statistics
     ("overlap", ("min", "max"), ((1, 1), (9, 9))),
@@ -701,7 +691,6 @@ def generate_cubes_with_non_overlapping_timecoords():
     )
 
 
-@pytest.mark.xfail(reason="Multimodel statistics returns the original cubes.")
 def test_edge_case_time_no_overlap_fail():
     """Test case when time coords do not overlap using span='overlap'.
 
@@ -923,7 +912,7 @@ def test_ignore_tas_scalar_height_coord():
     tas_2m = generate_cube_from_dates("monthly")
     tas_1p5m = generate_cube_from_dates("monthly")
 
-    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5]):
+    for cube, height in zip([tas_2m, tas_1p5m], [2.0, 1.5], strict=False):
         cube.rename("air_temperature")
         cube.attributes["short_name"] = "tas"
         cube.add_aux_coord(
@@ -1470,7 +1459,6 @@ STATS = [
     {"operator": "median"},
     "min",
     "max",
-    "p42.314",
     {"operator": "percentile", "percent": 42.314},
     "std_dev",
 ]

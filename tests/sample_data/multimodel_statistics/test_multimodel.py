@@ -33,7 +33,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
 
 def assert_coords_equal(this: list, other: list):
     """Assert coords list `this` equals coords list `other`."""
-    for this_coord, other_coord in zip(this, other):
+    for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)
         assert this_coord.var_name == other_coord.var_name
         assert this_coord.standard_name == other_coord.standard_name

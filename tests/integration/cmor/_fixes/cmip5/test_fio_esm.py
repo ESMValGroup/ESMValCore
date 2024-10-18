@@ -31,7 +31,7 @@ class TestCh4(unittest.TestCase):
         self.fix = Ch4(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "FIO-ESM", "Amon", "ch4"),
             [Ch4(None), GenericFix(None)],
@@ -53,7 +53,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "FIO-ESM", "Amon", "co2"),
             [Co2(None), GenericFix(None)],

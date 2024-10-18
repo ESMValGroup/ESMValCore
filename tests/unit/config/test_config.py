@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
@@ -15,7 +14,7 @@ from esmvalcore.config._config import (
     importlib_files,
 )
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),
@@ -167,32 +166,19 @@ def test_get_project_config(mocker):
         _config.get_project_config("non-existent-project")
 
 
-CONFIG_USER_FILE = importlib_files("esmvalcore") / "config-user.yml"
-
-
-@pytest.fixture
-def default_config():
-    # Load default configuration
-    CFG.load_from_file(CONFIG_USER_FILE)
-    # Run test
-    yield
-    # Restore default configuration
-    CFG.load_from_file(CONFIG_USER_FILE)
-
-
-def test_load_default_config(monkeypatch, default_config):
+def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
     project_cfg = {}
     monkeypatch.setattr(_config, "CFG", project_cfg)
     default_dev_file = importlib_files("esmvalcore") / "config-developer.yml"
-    cfg = CFG.start_session("recipe_example")
+
+    session = cfg_default.start_session("recipe_example")
 
     default_cfg = {
         "auxiliary_data_dir": Path.home() / "auxiliary_data",
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
         "config_developer_file": default_dev_file,
-        "config_file": CONFIG_USER_FILE,
         "diagnostics": None,
         "download_dir": Path.home() / "climate_data",
         "drs": {
@@ -203,7 +189,7 @@ def test_load_default_config(monkeypatch, default_config):
             "obs4MIPs": "ESGF",
         },
         "exit_on_warning": False,
-        "extra_facets_dir": tuple(),
+        "extra_facets_dir": [],
         "log_level": "info",
         "max_datasets": None,
         "max_parallel_tasks": None,
@@ -229,38 +215,39 @@ def test_load_default_config(monkeypatch, default_config):
         "config_dir",
     }
     # Check that only allowed keys are in it
-    assert set(default_cfg) == set(cfg)
+    assert set(default_cfg) == set(session)
 
     # Check that all required directories are available
-    assert all(hasattr(cfg, attr) for attr in directory_attrs)
+    assert all(hasattr(session, attr) for attr in directory_attrs)
 
     # Check default values
     for key in default_cfg:
-        assert cfg[key] == default_cfg[key]
+        assert session[key] == default_cfg[key]
 
     # Check output directories
-    assert str(cfg.session_dir).startswith(
+    assert str(session.session_dir).startswith(
         str(Path.home() / "esmvaltool_output" / "recipe_example")
     )
     for path in ("preproc", "work", "run"):
-        assert getattr(cfg, path + "_dir") == cfg.session_dir / path
-    assert cfg.plot_dir == cfg.session_dir / "plots"
-    assert cfg.config_dir == Path(esmvalcore.__file__).parent
+        assert getattr(session, path + "_dir") == session.session_dir / path
+    assert session.plot_dir == session.session_dir / "plots"
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        assert session.config_dir is None
 
     # Check that projects were configured
     assert project_cfg
 
 
-def test_rootpath_obs4mips_case_correction(default_config):
+def test_rootpath_obs4mips_case_correction(monkeypatch):
     """Test that the name of the obs4MIPs project is correct in rootpath."""
-    CFG["rootpath"] = {"obs4mips": "/path/to/data"}
+    monkeypatch.setitem(CFG, "rootpath", {"obs4mips": "/path/to/data"})
     assert "obs4mips" not in CFG["rootpath"]
     assert CFG["rootpath"]["obs4MIPs"] == [Path("/path/to/data")]
 
 
-def test_drs_obs4mips_case_correction(default_config):
+def test_drs_obs4mips_case_correction(monkeypatch):
     """Test that the name of the obs4MIPs project is correct in rootpath."""
-    CFG["drs"] = {"obs4mips": "ESGF"}
+    monkeypatch.setitem(CFG, "drs", {"obs4mips": "ESGF"})
     assert "obs4mips" not in CFG["drs"]
     assert CFG["drs"]["obs4MIPs"] == "ESGF"
 
