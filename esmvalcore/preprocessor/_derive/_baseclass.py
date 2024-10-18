@@ -1,4 +1,5 @@
 """Contains the base class for derived variables."""
+
 from abc import abstractmethod
 
 

@@ -1,4 +1,5 @@
 """Fixes for FGOALS-s2 model."""
+
 import iris
 
 from ..fix import Fix
@@ -24,7 +25,7 @@ class AllVars(Fix):
         """
         for cube in cubes:
             try:
-                lat_coord = cube.coord('latitude')
+                lat_coord = cube.coord("latitude")
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             if lat_coord.ndim != 1:

@@ -12,6 +12,7 @@ from .recipe import Recipe
 
 class RecipeList(list):
     """Container for recipes."""
+
     def find(self, query: Pattern[str]):
         """Search for recipes matching the search query or pattern.
 
@@ -56,9 +57,9 @@ def get_all_recipes(subdir: Optional[str] = None) -> list:
         List of available recipes
     """
     if subdir is None:
-        subdir = '**'
+        subdir = "**"
     rootdir = DIAGNOSTICS.recipes
-    files = rootdir.glob(f'{subdir}/*.yml')
+    files = rootdir.glob(f"{subdir}/*.yml")
     return RecipeList(Recipe(file) for file in files)
 
 
@@ -90,9 +91,9 @@ def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
     locations = Path(), DIAGNOSTICS.recipes
 
     if isinstance(name, str):
-        filenames = (name, name + '.yml')
+        filenames = (name, name + ".yml")
     else:
-        filenames = (name, )
+        filenames = (name,)
 
     for location in locations:
         for filename in filenames:
@@ -100,4 +101,4 @@ def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
             if try_path.exists():
                 return Recipe(try_path)
 
-    raise FileNotFoundError(f'Could not find `{name}` in {locations}.')
+    raise FileNotFoundError(f"Could not find `{name}` in {locations}.")

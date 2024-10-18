@@ -1,4 +1,5 @@
 """Fixes for MPI-ESM1-2-HR model."""
+
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord, round_coordinates
@@ -10,11 +11,11 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            if cube.attributes.get('variant_label', '') == 'r2i1p1f1':
+            if cube.attributes.get("variant_label", "") == "r2i1p1f1":
                 round_coordinates(
                     [cube],
                     decimals=11,
-                    coord_names=['latitude'],
+                    coord_names=["latitude"],
                 )
         return cubes
 
@@ -67,8 +68,8 @@ class Ta(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
+            plev = cube.coord("air_pressure")
+            plev.var_name = "plev"
 
         return cubes
 

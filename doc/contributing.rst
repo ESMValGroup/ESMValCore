@@ -101,7 +101,7 @@ Please keep the following considerations in mind when programming:
   code.
 - If you find yourself copy-pasting a piece of code and making minor changes
   to every copy, instead put the repeated bit of code in a function that you can
-  re-use, and provide the changed bits as function arguments.
+  reuse, and provide the changed bits as function arguments.
 - Be careful when changing existing unit tests to make your new feature work.
   You might be breaking existing features if you have to change existing tests.
 

@@ -1,4 +1,5 @@
 """API for handing recipe output."""
+
 import base64
 import getpass
 import logging
@@ -31,10 +32,11 @@ class TaskOutput:
 
     def __init__(self, name: str, files: dict):
         self.name = name
-        self.title = name.replace('_', ' ').replace(TASKSEP, ': ').title()
+        self.title = name.replace("_", " ").replace(TASKSEP, ": ").title()
         self.files = tuple(
             OutputFile.create(filename, attributes)
-            for filename, attributes in files.items())
+            for filename, attributes in files.items()
+        )
 
     def __str__(self):
         """Return string representation."""
@@ -42,10 +44,10 @@ class TaskOutput:
 
     def __repr__(self):
         """Return canonical string representation."""
-        indent = '  '
-        string = f'{self.name}:\n'
+        indent = "  "
+        string = f"{self.name}:\n"
         for file in self.files:
-            string += f'{indent}{file}\n'
+            string += f"{indent}{file}\n"
         return string
 
     def __len__(self):
@@ -59,15 +61,15 @@ class TaskOutput:
     @property
     def image_files(self) -> tuple:
         """Return a tuple of image objects."""
-        return tuple(item for item in self.files if item.kind == 'image')
+        return tuple(item for item in self.files if item.kind == "image")
 
     @property
     def data_files(self) -> tuple:
         """Return a tuple of data objects."""
-        return tuple(item for item in self.files if item.kind == 'data')
+        return tuple(item for item in self.files if item.kind == "data")
 
     @classmethod
-    def from_task(cls, task) -> 'TaskOutput':
+    def from_task(cls, task) -> "TaskOutput":
         """Create an instance of `TaskOutput` from a Task.
 
         Where task is an instance of `esmvalcore._task.BaseTask`.
@@ -94,15 +96,15 @@ class DiagnosticOutput:
     def __init__(self, name, task_output, title=None, description=None):
         self.name = name
         self.title = title if title else name.title()
-        self.description = description if description else ''
+        self.description = description if description else ""
         self.task_output = task_output
 
     def __repr__(self):
         """Return canonical string representation."""
-        indent = '  '
-        string = f'{self.name}:\n'
+        indent = "  "
+        string = f"{self.name}:\n"
         for task_output in self.task_output:
-            string += f'{indent}{task_output}\n'
+            string += f"{indent}{task_output}\n"
         return string
 
 
@@ -152,12 +154,12 @@ class RecipeOutput(Mapping):
         # Create diagnostic output
         filters: dict = {}
         for name, tasks in diagnostics.items():
-            diagnostic_info = info.data['diagnostics'][name]
+            diagnostic_info = info.data["diagnostics"][name]
             self.diagnostics[name] = DiagnosticOutput(
                 name=name,
                 task_output=tasks,
-                title=diagnostic_info.get('title'),
-                description=diagnostic_info.get('description'),
+                title=diagnostic_info.get("title"),
+                description=diagnostic_info.get("description"),
             )
 
             # Add data to filters
@@ -177,7 +179,7 @@ class RecipeOutput(Mapping):
             values = attributes[attr]
             # `set()` to avoid duplicates
             attr_list = filters.get(attr, set())
-            if (isinstance(values, str) or not isinstance(values, Sequence)):
+            if isinstance(values, str) or not isinstance(values, Sequence):
                 attr_list.add(values)
             else:
                 attr_list.update(values)
@@ -192,7 +194,7 @@ class RecipeOutput(Mapping):
 
     def __repr__(self):
         """Return canonical string representation."""
-        string = '\n'.join(repr(item) for item in self._task_output.values())
+        string = "\n".join(repr(item) for item in self._task_output.values())
 
         return string
 
@@ -220,10 +222,10 @@ class RecipeOutput(Mapping):
         recipe_output : dict
             Output from `_recipe.Recipe.get_product_output`
         """
-        task_output = recipe_output['task_output']
-        recipe_data = recipe_output['recipe_data']
-        session = recipe_output['session']
-        recipe_filename = recipe_output['recipe_filename']
+        task_output = recipe_output["task_output"]
+        recipe_data = recipe_output["recipe_data"]
+        session = recipe_output["session"]
+        recipe_filename = recipe_output["recipe_filename"]
 
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
@@ -232,18 +234,18 @@ class RecipeOutput(Mapping):
 
     def _log_ssh_html_info(self):
         """Log information about accessing index.html on an SSH server."""
-        if 'SSH_CONNECTION' not in os.environ:
+        if "SSH_CONNECTION" not in os.environ:
             return
-        server_ip = os.environ['SSH_CONNECTION'].split()[2]
-        server_ip_env = '${server}'
-        server = f'{getpass.getuser()}@{server_ip_env}'
-        port = '31415'
-        port_env = '${port}'
+        server_ip = os.environ["SSH_CONNECTION"].split()[2]
+        server_ip_env = "${server}"
+        server = f"{getpass.getuser()}@{server_ip_env}"
+        port = "31415"
+        port_env = "${port}"
         command = (
-            f'server={server_ip} && port={port} && '
-            f'ssh -t -L {port_env}:localhost:{port_env} {server} '
-            f'{sys.executable} -m http.server {port_env} -d '
-            f'{self.session.session_dir}'
+            f"server={server_ip} && port={port} && "
+            f"ssh -t -L {port_env}:localhost:{port_env} {server} "
+            f"{sys.executable} -m http.server {port_env} -d "
+            f"{self.session.session_dir}"
         )
         logger.info(
             "It looks like you are connected to a remote machine via SSH. To "
@@ -267,12 +269,12 @@ class RecipeOutput(Mapping):
 
         A html file `index.html` gets written to the session directory.
         """
-        filename = self.session.session_dir / 'index.html'
+        filename = self.session.session_dir / "index.html"
 
-        template = get_template('recipe_output_page.j2')
+        template = get_template("recipe_output_page.j2")
         html_dump = self.render(template=template)
 
-        with open(filename, 'w', encoding='utf-8') as file:
+        with open(filename, "w", encoding="utf-8") as file:
             file.write(html_dump)
 
         logger.info("Wrote recipe output to:\nfile://%s", filename)
@@ -286,7 +288,7 @@ class RecipeOutput(Mapping):
             customize the output.
         """
         if not template:
-            template = get_template(self.__class__.__name__ + '.j2')
+            template = get_template(self.__class__.__name__ + ".j2")
         rendered = template.render(
             diagnostics=self.diagnostics.values(),
             session=self.session,
@@ -299,14 +301,14 @@ class RecipeOutput(Mapping):
 
     def read_main_log(self) -> str:
         """Read log file."""
-        return self.session.main_log.read_text(encoding='utf-8')
+        return self.session.main_log.read_text(encoding="utf-8")
 
     def read_main_log_debug(self) -> str:
         """Read debug log file."""
-        return self.session.main_log_debug.read_text(encoding='utf-8')
+        return self.session.main_log_debug.read_text(encoding="utf-8")
 
 
-class OutputFile():
+class OutputFile:
     """Base container for recipe output files.
 
     Use `OutputFile.create(path='<path>', attributes=attributes)` to
@@ -334,27 +336,28 @@ class OutputFile():
 
     def __repr__(self):
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self.path.name!r})'
+        return f"{self.__class__.__name__}({self.path.name!r})"
 
     @property
     def caption(self) -> str:
         """Return the caption of the file (fallback to path)."""
-        return self.attributes.get('caption', str(self.path))
+        return self.attributes.get("caption", str(self.path))
 
     @property
     def authors(self) -> tuple:
         """List of recipe authors."""
         if self._authors is None:
-            authors = self.attributes['authors']
+            authors = self.attributes["authors"]
             self._authors = tuple(
-                Contributor.from_dict(author) for author in authors)
+                Contributor.from_dict(author) for author in authors
+            )
         return self._authors
 
     @property
     def references(self) -> tuple:
         """List of project references."""
         if self._references is None:
-            tags = self.attributes.get('references', [])
+            tags = self.attributes.get("references", [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
@@ -379,24 +382,24 @@ class OutputFile():
     @property
     def citation_file(self):
         """Return path of citation file (bibtex format)."""
-        return self._get_derived_path('_citation', '.bibtex')
+        return self._get_derived_path("_citation", ".bibtex")
 
     @property
     def data_citation_file(self):
         """Return path of data citation info (txt format)."""
-        return self._get_derived_path('_data_citation_info', '.txt')
+        return self._get_derived_path("_data_citation_info", ".txt")
 
     @property
     def provenance_xml_file(self):
         """Return path of provenance file (xml format)."""
-        return self._get_derived_path('_provenance', '.xml')
+        return self._get_derived_path("_provenance", ".xml")
 
     @classmethod
     def create(
         cls,
         path: str,
         attributes: Optional[dict] = None,
-    ) -> 'OutputFile':
+    ) -> "OutputFile":
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
@@ -404,9 +407,9 @@ class OutputFile():
         item_class: Type[OutputFile]
 
         ext = Path(path).suffix
-        if ext in ('.png', ):
+        if ext in (".png",):
             item_class = ImageFile
-        elif ext in ('.nc', ):
+        elif ext in (".nc",):
             item_class = DataFile
         else:
             item_class = cls
@@ -417,13 +420,13 @@ class OutputFile():
 class ImageFile(OutputFile):
     """Container for image output."""
 
-    kind = 'image'
+    kind = "image"
 
     def to_base64(self) -> str:
         """Encode image as base64 to embed in a Jupyter notebook."""
         with open(self.path, "rb") as file:
             encoded = base64.b64encode(file.read())
-        return encoded.decode('utf-8')
+        return encoded.decode("utf-8")
 
     def _repr_html_(self):
         """Render png as html in Jupyter notebook."""
@@ -434,12 +437,13 @@ class ImageFile(OutputFile):
 class DataFile(OutputFile):
     """Container for data output."""
 
-    kind = 'data'
+    kind = "data"
 
     def load_xarray(self):
         """Load data using xarray."""
         # local import because `ESMValCore` does not depend on `xarray`
         import xarray as xr
+
         return xr.load_dataset(self.path)
 
     def load_iris(self):

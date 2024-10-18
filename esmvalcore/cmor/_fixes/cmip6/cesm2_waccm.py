@@ -1,4 +1,5 @@
 """Fixes for CESM2-WACCM model."""
+
 from netCDF4 import Dataset
 
 from ..common import SiconcFixScalarCoord
@@ -41,9 +42,9 @@ class Cl(BaseCl):
         new_path = self._fix_formula_terms(
             filepath, output_dir, add_unique_suffix=add_unique_suffix
         )
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][:, ::-1]
-        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][:, ::-1]
+        dataset = Dataset(new_path, mode="a")
+        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][:, ::-1]
+        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][:, ::-1]
         dataset.close()
         return new_path
 

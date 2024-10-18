@@ -1,4 +1,5 @@
 """Fixes for IPSLCM6 TS output format."""
+
 import logging
 import subprocess
 import time
@@ -32,7 +33,8 @@ class AllVars(Fix):
 
         """
         if "_" + self.extra_facets.get(
-                "group", "non-sense") + ".nc" not in str(filepath):
+            "group", "non-sense"
+        ) + ".nc" not in str(filepath):
             # No need to filter the file
             logger.debug("Not filtering for %s", filepath)
             return filepath
@@ -76,13 +78,13 @@ class AllVars(Fix):
         # Iris function does not support to have more than one
         # coordinate with standard_name='time'
         for coordinate in cube.coords(dim_coords=False):
-            if coordinate.standard_name == 'time':
-                coordinate.standard_name = ''
+            if coordinate.standard_name == "time":
+                coordinate.standard_name = ""
 
         # Fix variable name for time_counter
         for coordinate in cube.coords(dim_coords=True):
-            if coordinate.var_name == 'time_counter':
-                coordinate.var_name = 'time'
+            if coordinate.var_name == "time_counter":
+                coordinate.var_name = "time"
 
         positive = self.extra_facets.get("positive")
         if positive:

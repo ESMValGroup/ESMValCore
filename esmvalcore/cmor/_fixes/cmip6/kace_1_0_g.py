@@ -1,4 +1,5 @@
 """Fixes for KACE-1-0-G."""
+
 import logging
 
 import numpy as np
@@ -46,6 +47,6 @@ class AllVars(Fix):
             "Using 'area_weighted' regridder scheme in Omon variables "
             "for dataset %s causes discontinuities in the longitude "
             "coordinate.",
-            self.extra_facets['dataset'],
+            self.extra_facets["dataset"],
         )
         return cubes

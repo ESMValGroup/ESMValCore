@@ -1,7 +1,7 @@
 .. _api_recipe:
 
 Recipes
-=======
+========
 
 This section describes the :py:mod:`~esmvalcore.experimental.recipe` submodule of the API (:py:mod:`esmvalcore.experimental`).
 

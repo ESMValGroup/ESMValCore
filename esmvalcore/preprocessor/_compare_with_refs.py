@@ -1,4 +1,5 @@
 """Preprocessor functions for comparisons of data with reference datasets."""
+
 from __future__ import annotations
 
 import logging
@@ -33,13 +34,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-BiasType = Literal['absolute', 'relative']
+BiasType = Literal["absolute", "relative"]
 
 
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Optional[Cube] = None,
-    bias_type: BiasType = 'absolute',
+    bias_type: BiasType = "absolute",
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
 ) -> set[PreprocessorFile] | CubeList:
@@ -114,12 +115,12 @@ def bias(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-        (reference, ref_product) = _get_ref(products, 'reference_for_bias')
+        (reference, ref_product) = _get_ref(products, "reference_for_bias")
     else:
         ref_product = None
 
     # Mask reference cube appropriately for relative biases
-    if bias_type == 'relative':
+    if bias_type == "relative":
         reference = reference.copy()
         npx = get_array_module(reference.core_data())
         reference.data = npx.ma.masked_inside(
@@ -145,7 +146,7 @@ def bias(
         cube = _calculate_bias(cube, reference, bias_type)
 
         # Adapt metadata and provenance information
-        product.attributes['units'] = str(cube.units)
+        product.attributes["units"] = str(cube.units)
         if ref_product is not None:
             product.wasderivedfrom(ref_product)
 
@@ -188,12 +189,12 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
-    if bias_type == 'absolute':
+    if bias_type == "absolute":
         cube = cube - reference
         new_units = cube.units
-    elif bias_type == 'relative':
+    elif bias_type == "relative":
         cube = (cube - reference) / reference
-        new_units = '1'
+        new_units = "1"
     else:
         raise ValueError(
             f"Expected one of ['absolute', 'relative'] for bias_type, got "
@@ -207,12 +208,12 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
 
 
 MetricType = Literal[
-    'rmse',
-    'weighted_rmse',
-    'pearsonr',
-    'weighted_pearsonr',
-    'emd',
-    'weighted_emd',
+    "rmse",
+    "weighted_rmse",
+    "pearsonr",
+    "weighted_pearsonr",
+    "emd",
+    "weighted_emd",
 ]
 
 
@@ -333,7 +334,7 @@ def distance_metric(
             )
         reference_products = []
         for product in products:
-            if product.attributes.get('reference_for_metric', False):
+            if product.attributes.get("reference_for_metric", False):
                 reference_products.append(product)
         if len(reference_products) != 1:
             raise ValueError(
@@ -372,10 +373,10 @@ def distance_metric(
         cube = _calculate_metric(cube, reference, metric, coords, **kwargs)
 
         # Adapt metadata and provenance information
-        product.attributes['standard_name'] = cube.standard_name
-        product.attributes['long_name'] = cube.long_name
-        product.attributes['short_name'] = cube.var_name
-        product.attributes['units'] = str(cube.units)
+        product.attributes["standard_name"] = cube.standard_name
+        product.attributes["long_name"] = cube.long_name
+        product.attributes["short_name"] = cube.var_name
+        product.attributes["units"] = str(cube.units)
         if product != reference_product:
             product.wasderivedfrom(reference_product)
 
@@ -413,14 +414,14 @@ def _calculate_metric(
     # possible since some operations (e.g., sqrt()) are not available for cubes
     coords = get_all_coords(cube, coords)
     metrics_funcs = {
-        'rmse': partial(_calculate_rmse, weighted=False, **kwargs),
-        'weighted_rmse': partial(_calculate_rmse, weighted=True, **kwargs),
-        'pearsonr': partial(_calculate_pearsonr, weighted=False, **kwargs),
-        'weighted_pearsonr': partial(
+        "rmse": partial(_calculate_rmse, weighted=False, **kwargs),
+        "weighted_rmse": partial(_calculate_rmse, weighted=True, **kwargs),
+        "pearsonr": partial(_calculate_pearsonr, weighted=False, **kwargs),
+        "weighted_pearsonr": partial(
             _calculate_pearsonr, weighted=True, **kwargs
         ),
-        'emd': partial(_calculate_emd, weighted=False, **kwargs),
-        'weighted_emd': partial(_calculate_emd, weighted=True, **kwargs),
+        "emd": partial(_calculate_emd, weighted=False, **kwargs),
+        "weighted_emd": partial(_calculate_emd, weighted=True, **kwargs),
     }
     if metric not in metrics_funcs:
         raise ValueError(
@@ -449,15 +450,15 @@ def _calculate_rmse(
     # Data
     axis = get_all_coord_dims(cube, coords)
     weights = get_weights(cube, coords) if weighted else None
-    squared_error = (cube.core_data() - reference.core_data())**2
+    squared_error = (cube.core_data() - reference.core_data()) ** 2
     npx = get_array_module(squared_error)
     rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
 
     # Metadata
     metadata = CubeMetadata(
         None,
-        'RMSE' if cube.long_name is None else f'RMSE of {cube.long_name}',
-        'rmse' if cube.var_name is None else f'rmse_{cube.var_name}',
+        "RMSE" if cube.long_name is None else f"RMSE of {cube.long_name}",
+        "rmse" if cube.var_name is None else f"rmse_{cube.var_name}",
         cube.units,
         cube.attributes,
         cube.cell_methods,
@@ -477,7 +478,7 @@ def _calculate_pearsonr(
     """Calculate Pearson correlation coefficient."""
     # Here, we want to use common_mask=True in iris.analysis.stats.pearsonr
     # (iris' default is common_mask=False)
-    kwargs.setdefault('common_mask', True)
+    kwargs.setdefault("common_mask", True)
 
     # Data
     weights = get_weights(cube, coords) if weighted else None
@@ -489,11 +490,12 @@ def _calculate_pearsonr(
     metadata = CubeMetadata(
         None,
         (
-            "Pearson's r" if cube.long_name is None
+            "Pearson's r"
+            if cube.long_name is None
             else f"Pearson's r of {cube.long_name}"
         ),
-        'pearsonr' if cube.var_name is None else f'pearsonr_{cube.var_name}',
-        '1',
+        "pearsonr" if cube.var_name is None else f"pearsonr_{cube.var_name}",
+        "1",
         cube.attributes,
         cube.cell_methods,
     )
@@ -521,7 +523,7 @@ def _calculate_emd(
         bins=n_bins,
         bin_range=bin_range,
         weights=weights,
-        normalization='sum',
+        normalization="sum",
     )
     pmf_ref = histogram(
         reference,
@@ -529,7 +531,7 @@ def _calculate_emd(
         bins=n_bins,
         bin_range=bin_range,
         weights=weights,
-        normalization='sum',
+        normalization="sum",
     )
     bin_centers = pmf.coord(cube.name()).points
 
@@ -541,7 +543,7 @@ def _calculate_emd(
     if cube.has_lazy_data() and reference.has_lazy_data():
         emd = da.apply_gufunc(
             _get_emd,
-            '(i),(i),(i)->()',
+            "(i),(i),(i)->()",
             pmf.lazy_data(),
             pmf_ref.lazy_data(),
             bin_centers,
@@ -550,14 +552,14 @@ def _calculate_emd(
             vectorize=True,
         )
     else:
-        v_get_emd = np.vectorize(_get_emd, signature='(n),(n),(n)->()')
+        v_get_emd = np.vectorize(_get_emd, signature="(n),(n),(n)->()")
         emd = v_get_emd(pmf.data, pmf_ref.data, bin_centers)
 
     # Metadata
     metadata = CubeMetadata(
         None,
-        'EMD' if cube.long_name is None else f'EMD of {cube.long_name}',
-        'emd' if cube.var_name is None else f'emd_{cube.var_name}',
+        "EMD" if cube.long_name is None else f"EMD of {cube.long_name}",
+        "emd" if cube.var_name is None else f"emd_{cube.var_name}",
         cube.units,
         cube.attributes,
         cube.cell_methods,

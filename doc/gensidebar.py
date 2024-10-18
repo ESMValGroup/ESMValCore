@@ -38,7 +38,7 @@ def generate_sidebar(conf, conf_api):
     def _endl():
         lines.append("")
 
-    def _write(project, desc, link, mapping=conf['intersphinx_mapping']):
+    def _write(project, desc, link, mapping=conf["intersphinx_mapping"]):
         if project != conf_api:
             if do_gen:
                 args = desc, mapping[project][0], link
