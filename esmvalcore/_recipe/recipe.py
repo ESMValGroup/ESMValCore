@@ -418,11 +418,11 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     called from the input products, the products that are created here need to
     be added to their ancestors products' settings ().
     """
-    products = {p for p in input_products if step in p.settings}
-    if not products:
+    multiproducts = {p for p in input_products if step in p.settings}
+    if not multiproducts:
         return input_products, {}
 
-    settings = list(products)[0].settings[step]
+    settings = list(multiproducts)[0].settings[step]
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
@@ -431,14 +431,16 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
 
-    downstream_settings = _get_downstream_settings(step, order, products)
+    downstream_settings = _get_downstream_settings(step, order, multiproducts)
 
     relevant_settings = {
         "output_products": defaultdict(dict)
     }  # pass to ancestors
 
     output_products = set()
-    for identifier, products in _group_products(products, by_key=grouping):
+    for identifier, products in _group_products(
+        multiproducts, by_key=grouping
+    ):
         common_attributes = _get_common_attributes(products, settings)
 
         statistics = settings.get("statistics", [])
@@ -785,23 +787,21 @@ class Recipe:
             isinstance(err, InputFilesNotFound) for err in exc.failed_tasks
         ):
             logger.error(
-                "Not all input files required to run the recipe could be"
-                " found."
+                "Not all input files required to run the recipe could be "
+                "found."
             )
             logger.error(
-                "If the files are available locally, please check"
-                " your `rootpath` and `drs` settings in your user "
-                "configuration file %s",
-                self.session["config_file"],
+                "If the files are available locally, please check "
+                "your `rootpath` and `drs` settings in your configuration "
+                "file(s)"
             )
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, set `search_esgf: when_missing` or "
-                "`search_esgf: always` in %s, or run the recipe with the "
-                "extra command line argument --search_esgf=when_missing or "
-                "--search_esgf=always",
+                "`download_dir: %s`, use `search_esgf: when_missing` or "
+                "`search_esgf: always` in your configuration file(s), or run "
+                "the recipe with the command line argument "
+                "--search_esgf=when_missing or --search_esgf=always",
                 self.session["download_dir"],
-                self.session["config_file"],
             )
             logger.info(
                 "Note that automatic download is only available for files"

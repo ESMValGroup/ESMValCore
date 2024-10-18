@@ -11,7 +11,6 @@ from cf_units import Unit
 from iris.coords import AuxCoord
 from iris.cube import Cube
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._shared import (
     _compute_area_weights,
@@ -91,16 +90,6 @@ def test_get_iris_aggregator_percentile(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize("kwargs", [{}, {"alphap": 0.5}])
-@pytest.mark.parametrize("operator", ["p10", "P10.5"])
-def test_get_iris_aggregator_pxxyy(operator, kwargs):
-    """Test ``get_iris_aggregator``."""
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
-    assert agg == iris.analysis.PERCENTILE
-    assert agg_kwargs == {"percent": float(operator[1:]), **kwargs}
-
-
 @pytest.mark.parametrize("kwargs", [{}, {"weights": True}])
 @pytest.mark.parametrize("operator", ["rms", "rMs", "RMS"])
 def test_get_iris_aggregator_rms(operator, kwargs):
@@ -111,18 +100,11 @@ def test_get_iris_aggregator_rms(operator, kwargs):
 
 
 @pytest.mark.parametrize("kwargs", [{}, {"ddof": 1}])
-@pytest.mark.parametrize("operator", ["std", "STD", "std_dev", "STD_DEV"])
+@pytest.mark.parametrize("operator", ["std_dev", "STD_DEV"])
 def test_get_iris_aggregator_std(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    if operator.lower() == "std":
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter(
-                "error", category=ESMValCoreDeprecationWarning
-            )
-            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
+    with warnings.catch_warnings():
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.STD_DEV
     assert agg_kwargs == kwargs
 
@@ -199,7 +181,7 @@ def test_aggregator_accept_weights(aggregator, result):
 
 @preserve_float_dtype
 def _dummy_func(obj, arg, kwarg=2.0):
-    """Dummy function to test `preserve_float_dtype`."""
+    """Compute something to test `preserve_float_dtype`."""
     obj = obj * arg * kwarg
     if isinstance(obj, Cube):
         obj.data = obj.core_data().astype(np.float64)
