@@ -362,8 +362,7 @@ class ESGFFile:
     def __repr__(self):
         """Represent the file as a string."""
         hosts = [urlparse(u).hostname for u in self.urls]
-        return (f"ESGFFile:{self._get_relative_path()}"
-                f" on hosts {hosts}")
+        return f"ESGFFile:{self._get_relative_path()} on hosts {hosts}"
 
     def __eq__(self, other):
         """Compare `self` to `other`."""
@@ -499,9 +498,7 @@ def get_download_message(files):
     lines = []
     for file in files:
         total_size += file.size
-        lines.append(f"{format_size(file.size)}"
-                     "\t"
-                     f"{file}")
+        lines.append(f"{format_size(file.size)}\t{file}")
 
     lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {format_size(total_size)}")

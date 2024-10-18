@@ -17,8 +17,9 @@ class DerivedVariable(DerivedVariableBase):
             required = [{'short_name': 'msftmz', 'optional': True},
                         {'short_name': 'msftyz', 'optional': True}]
         else:
-            raise ValueError(f"Project {project} can not be used "
-                             f"for Amoc derivation.")
+            raise ValueError(
+                f"Project {project} can not be used for Amoc derivation."
+            )
 
         return required
 

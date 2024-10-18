@@ -1,6 +1,5 @@
-SOURCE: CMIP6
 !============
-variable_entry:    tozStderr
+variable_entry:    soz
 !============
 modeling_realm:    atmos
 !----------------------------------
@@ -10,8 +9,8 @@ standard_name:     equivalent_thickness_at_stp_of_atmosphere_ozone_content
 units:             m
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Total Ozone Column Error
-comment:           Total ozone column error calculated at 0 degrees C and 1 bar, such that 1m = 1e5 DU.
+long_name:         Stratospheric Ozone Column (O3 mole fraction >= 125 ppb)
+comment:           stratospheric ozone column calculated at 0 degrees C and 1 bar, such that 1m = 1e5 DU. Here, the stratosphere is defined as the region where O3 mole fraction >= 125 ppb.
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

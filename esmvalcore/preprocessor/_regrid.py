@@ -297,8 +297,9 @@ def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
         List of latitudes
     """
     if step_latitude == 0:
-        raise ValueError('Latitude step cannot be 0, '
-                         f'got step_latitude={step_latitude}.')
+        raise ValueError(
+            f"Latitude step cannot be 0, got step_latitude={step_latitude}."
+        )
 
     if step_longitude == 0:
         raise ValueError('Longitude step cannot be 0, '

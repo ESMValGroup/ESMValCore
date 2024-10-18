@@ -270,8 +270,9 @@ def test_diagnostic_diag_script_none(tmp_path):
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = ("Cannot execute script '{}' "
-           "({}): file does not exist.".format(script_file, script_file))
+    ept = "Cannot execute script '{}' ({}): file does not exist.".format(
+        script_file, script_file
+    )
     assert ept == str(err_msg.value)
 
 
