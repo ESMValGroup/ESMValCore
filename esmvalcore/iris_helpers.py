@@ -361,7 +361,7 @@ def has_unstructured_grid(cube: Cube) -> bool:
     return True
 
 
-# List containing special cases for convert_units. Each list item is another
+# List containing special cases for unit conversion. Each list item is another
 # list. Each of these sublists defines one special conversion. Each element in
 # the sublists is a tuple (standard_name, units). Note: All units for a single
 # special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
