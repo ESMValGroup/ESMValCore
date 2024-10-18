@@ -1,15 +1,14 @@
 """Unit test for the :func:`esmvalcore.preprocessor._units` function."""
 
+import unittest
+
 import cf_units
 import iris
 import iris.fileformats
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._units import (
-    accumulate_coordinate,
-    convert_units,
-)
+from esmvalcore.preprocessor._units import accumulate_coordinate, convert_units
 
 
 class TestConvertUnits(tests.Test):
@@ -256,3 +255,7 @@ class TestFluxToTotal(tests.Test):
         expected_units = cf_units.Unit("kg")
         self.assertEqual(result.units, expected_units)
         self.assert_array_equal(result.data, expected_data)
+
+
+if __name__ == "__main__":
+    unittest.main()
