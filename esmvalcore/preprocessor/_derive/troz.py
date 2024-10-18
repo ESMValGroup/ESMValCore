@@ -29,28 +29,28 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name='mole_fraction_of_ozone_in_air')
+            iris.Constraint(name="mole_fraction_of_ozone_in_air")
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name='surface_air_pressure')
+            iris.Constraint(name="surface_air_pressure")
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
         # interpolate it to regular pressure levels
-        if len(o3_cube.coord_dims('air_pressure')) > 1:
+        if len(o3_cube.coord_dims("air_pressure")) > 1:
             o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
         # coordinate and collapsed ps cube if necessary to ensure that they
         # have correct shapes
-        if not o3_cube.coords('longitude'):
+        if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed('longitude', iris.analysis.MEAN)
-            ps_cube.remove_coord('longitude')
+            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 
         # Mask O3 mole fraction using the given threshold
-        o3_cube.convert_units('1e-9')
+        o3_cube.convert_units("1e-9")
         mask = o3_cube.lazy_data() >= STRATOSPHERIC_O3_THRESHOLD
         mask |= da.ma.getmaskarray(o3_cube.lazy_data())
         o3_cube.data = da.ma.masked_array(o3_cube.lazy_data(), mask=mask)
