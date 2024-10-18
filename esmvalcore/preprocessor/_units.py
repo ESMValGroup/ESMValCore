@@ -49,8 +49,8 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
     Note that for precipitation variables, a water density of ``1000 kg m-3``
     is assumed.
 
-    Argumentss
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube (modified in place).
     units:

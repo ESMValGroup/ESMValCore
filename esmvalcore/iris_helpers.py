@@ -93,8 +93,8 @@ def date2num(date, unit, dtype=np.float64):
     This is a custom version of :meth:`cf_units.Unit.date2num` that
     guarantees the correct dtype for the return value.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     date : :class:`datetime.datetime` or :class:`cftime.datetime`
     unit : :class:`cf_units.Unit`
     dtype : a numpy dtype
@@ -439,8 +439,8 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
     that will raise an error if the input cube's
     :attr:`~iris.cube.Cube.standard_name` has been changed.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube (modified in place).
     units:
