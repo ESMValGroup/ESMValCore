@@ -11,6 +11,8 @@ import dask.array as da
 import iris
 import numpy as np
 from cf_units import Unit
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ SPECIAL_CASES = [
 ]
 
 
-def _try_special_conversions(cube, units):
+def _try_special_conversions(cube: Cube, units: str | Unit) -> bool:
     """Try special conversion."""
     for special_case in SPECIAL_CASES:
         for std_name, special_units in special_case:
@@ -72,16 +74,15 @@ def _try_special_conversions(cube, units):
     return False
 
 
-def convert_units(cube, units):
-    """Convert the units of a cube to new ones.
-
-    This converts units of a cube.
+def convert_units(cube: Cube, units: str | Unit) -> Cube:
+    """Convert the units of a cube to new ones (in-place).
 
     Note
     ----
     Allows special unit conversions which transforms one quantity to another
-    (physically related) quantity. These quantities are identified via their
-    ``standard_name`` and their ``units`` (units convertible to the ones
+    (physically related) quantity, which may also change the input cube's
+    :attr:`~iris.cube.Cube.standard_name`. These quantities are identified via
+    their ``standard_name`` and their ``units`` (units convertible to the ones
     defined are also supported). For example, this enables conversions between
     precipitation fluxes measured in ``kg m-2 s-1`` and precipitation rates
     measured in ``mm day-1`` (and vice versa).
@@ -105,15 +106,23 @@ def convert_units(cube, units):
 
     Arguments
     ---------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    units: str
-        New units in udunits form.
+    units:
+        New units.
 
     Returns
     -------
     iris.cube.Cube
-        converted cube.
+        Converted cube. Just returned for convenience; input cube is modified
+        in place.
+
+    Raises
+    ------
+    iris.exceptions.UnitConversionError
+        Old units are unknown.
+    ValueError
+        Old units are not convertible to new units.
 
     """
     try:
@@ -125,10 +134,51 @@ def convert_units(cube, units):
     return cube
 
 
+def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
+    """Safe unit conversion (change of `standard_name` not allowed; in-place).
+
+    This is a safe version of :func:`esmvalcore.preprocessor.convert_units`
+    that will raise an error if the input cube's
+    :attr:`~iris.cube.Cube.standard_name` has been changed.
+
+    Arguments
+    ---------
+    cube:
+        Input cube.
+    units:
+        New units.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Converted cube. Just returned for convenience; input cube is modified
+        in place.
+
+    Raises
+    ------
+    iris.exceptions.UnitConversionError
+        Old units are unknown.
+    ValueError
+        Old units are not convertible to new units or unit conversion required
+        change of `standard_name`.
+
+    """
+    old_units = cube.units
+    old_standard_name = cube.standard_name
+    cube = convert_units(cube, units)
+    if cube.standard_name != old_standard_name:
+        raise ValueError(
+            f"Cannot safely convert units from '{old_units}' to '{units}'; "
+            f"standard_name changed from '{old_standard_name}' to "
+            f"'{cube.standard_name}'"
+        )
+    return cube
+
+
 def accumulate_coordinate(
-    cube: iris.cube.Cube,
-    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord,
-) -> iris.cube.Cube:
+    cube: Cube,
+    coordinate: str | DimCoord | AuxCoord,
+) -> Cube:
     """Weight data using the bounds from a given coordinate.
 
     The resulting cube will then have units given by
@@ -137,7 +187,7 @@ def accumulate_coordinate(
     Parameters
     ----------
     cube:
-        Data cube for the flux
+        Data cube for the flux.
 
     coordinate:
         Name of the coordinate that will be used as weights.
@@ -145,7 +195,7 @@ def accumulate_coordinate(
     Returns
     -------
     iris.cube.Cube
-        Cube with the aggregated data
+        Cube with the aggregated data.
 
     Raises
     ------
@@ -169,7 +219,7 @@ def accumulate_coordinate(
         )
 
     array_module = da if coord.has_lazy_bounds() else np
-    factor = iris.coords.AuxCoord(
+    factor = AuxCoord(
         array_module.diff(coord.core_bounds())[..., -1],
         var_name=coord.var_name,
         long_name=coord.long_name,

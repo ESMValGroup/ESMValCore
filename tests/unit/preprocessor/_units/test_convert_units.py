@@ -6,9 +6,16 @@ import cf_units
 import iris
 import iris.fileformats
 import numpy as np
+import pytest
+from iris.cube import Cube
+from iris.exceptions import UnitConversionError
 
 import tests
-from esmvalcore.preprocessor._units import accumulate_coordinate, convert_units
+from esmvalcore.preprocessor._units import (
+    accumulate_coordinate,
+    convert_units,
+    safe_convert_units,
+)
 
 
 class TestConvertUnits(tests.Test):
@@ -255,6 +262,62 @@ class TestFluxToTotal(tests.Test):
         expected_units = cf_units.Unit("kg")
         self.assertEqual(result.units, expected_units)
         self.assert_array_equal(result.data, expected_data)
+
+
+@pytest.mark.parametrize(
+    "old_units,new_units,old_standard_name,new_standard_name,err_msg",
+    [
+        ("m", "km", "altitude", "altitude", None),
+        ("Pa", "hPa", "air_pressure", "air_pressure", None),
+        (
+            "m",
+            "DU",
+            "equivalent_thickness_at_stp_of_atmosphere_ozone_content",
+            "equivalent_thickness_at_stp_of_atmosphere_ozone_content",
+            None,
+        ),
+        (
+            "m",
+            "s",
+            "altitude",
+            ValueError,
+            r"Unable to convert from 'Unit\('m'\)' to 'Unit\('s'\)'",
+        ),
+        (
+            "unknown",
+            "s",
+            "air_temperature",
+            UnitConversionError,
+            r"Cannot convert from unknown units",
+        ),
+        (
+            "kg m-2 s-1",
+            "mm day-1",
+            "precipitation_flux",
+            ValueError,
+            r"Cannot safely convert units from 'kg m-2 s-1' to 'mm day-1'; "
+            r"standard_name changed from 'precipitation_flux' to "
+            r"'lwe_precipitation_rate'",
+        ),
+    ],
+)
+def test_safe_convert_units(
+    old_units, new_units, old_standard_name, new_standard_name, err_msg
+):
+    """Test ``esmvalcore.preprocessor._units.safe_convert_units``."""
+    cube = Cube(0, standard_name=old_standard_name, units=old_units)
+
+    # Exceptions
+    if isinstance(new_standard_name, type):
+        with pytest.raises(new_standard_name, match=err_msg):
+            safe_convert_units(cube, new_units)
+        return
+
+    # Regular test cases
+    new_cube = safe_convert_units(cube, new_units)
+    assert new_cube is cube
+    assert new_cube.standard_name == new_standard_name
+    assert new_cube.units == new_units
 
 
 if __name__ == "__main__":
