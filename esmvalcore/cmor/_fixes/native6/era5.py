@@ -6,8 +6,7 @@ import logging
 import iris
 import numpy as np
 
-from esmvalcore.iris_helpers import date2num
-from esmvalcore.preprocessor._units import safe_convert_units
+from esmvalcore.iris_helpers import date2num, safe_convert_units
 
 from ...table import CMOR_TABLES
 from ..fix import Fix

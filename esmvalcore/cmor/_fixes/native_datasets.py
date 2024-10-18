@@ -5,7 +5,7 @@ from typing import Dict
 
 from iris import NameConstraint
 
-from esmvalcore.preprocessor._units import safe_convert_units
+from esmvalcore.iris_helpers import safe_convert_units
 
 from ..fix import Fix
 from .shared import (

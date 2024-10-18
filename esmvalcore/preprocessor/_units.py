@@ -14,64 +14,9 @@ from cf_units import Unit
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 
+from esmvalcore.iris_helpers import _try_special_unit_conversions
+
 logger = logging.getLogger(__name__)
-
-
-# List containing special cases for convert_units. Each list item is another
-# list. Each of these sublists defines one special conversion. Each element in
-# the sublists is a tuple (standard_name, units). Note: All units for a single
-# special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
-# mm s-1 for precipitation
-SPECIAL_CASES = [
-    [
-        ("precipitation_flux", "kg m-2 s-1"),
-        ("lwe_precipitation_rate", "mm s-1"),
-    ],
-    [
-        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
-        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
-    ],
-]
-
-
-def _try_special_conversions(cube: Cube, units: str | Unit) -> bool:
-    """Try special conversion."""
-    for special_case in SPECIAL_CASES:
-        for std_name, special_units in special_case:
-            # Special unit conversion only works if all of the following
-            # criteria are met:
-            # - the cube's standard_name is one of the supported
-            #   standard_names
-            # - the cube's units are convertible to the ones defined for
-            #   that given standard_name
-            # - the desired target units are convertible to the units of
-            #   one of the other standard_names in that special case
-
-            # Step 1: find suitable source name and units
-            if cube.standard_name == std_name and cube.units.is_convertible(
-                special_units
-            ):
-                for target_std_name, target_units in special_case:
-                    if target_units == special_units:
-                        continue
-
-                    # Step 2: find suitable target name and units
-                    if Unit(units).is_convertible(target_units):
-                        cube.standard_name = target_std_name
-
-                        # In order to avoid two calls to cube.convert_units,
-                        # determine the conversion factor between the cube's
-                        # units and the source units first and simply add this
-                        # factor to the target units (remember that the source
-                        # units and the target units should be "physically
-                        # identical").
-                        factor = cube.units.convert(1.0, special_units)
-                        cube.units = f"{factor} {target_units}"
-                        cube.convert_units(units)
-                        return True
-
-    # If no special case has been detected, return False
-    return False
 
 
 def convert_units(cube: Cube, units: str | Unit) -> Cube:
@@ -104,10 +49,10 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
     Note that for precipitation variables, a water density of ``1000 kg m-3``
     is assumed.
 
-    Arguments
+    Argumentss
     ---------
     cube:
-        Input cube.
+        Input cube (modified in place).
     units:
         New units.
 
@@ -128,50 +73,9 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
     try:
         cube.convert_units(units)
     except ValueError:
-        if not _try_special_conversions(cube, units):
+        if not _try_special_unit_conversions(cube, units):
             raise
 
-    return cube
-
-
-def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
-    """Safe unit conversion (change of `standard_name` not allowed; in-place).
-
-    This is a safe version of :func:`esmvalcore.preprocessor.convert_units`
-    that will raise an error if the input cube's
-    :attr:`~iris.cube.Cube.standard_name` has been changed.
-
-    Arguments
-    ---------
-    cube:
-        Input cube.
-    units:
-        New units.
-
-    Returns
-    -------
-    iris.cube.Cube
-        Converted cube. Just returned for convenience; input cube is modified
-        in place.
-
-    Raises
-    ------
-    iris.exceptions.UnitConversionError
-        Old units are unknown.
-    ValueError
-        Old units are not convertible to new units or unit conversion required
-        change of `standard_name`.
-
-    """
-    old_units = cube.units
-    old_standard_name = cube.standard_name
-    cube = convert_units(cube, units)
-    if cube.standard_name != old_standard_name:
-        raise ValueError(
-            f"Cannot safely convert units from '{old_units}' to '{units}'; "
-            f"standard_name changed from '{old_standard_name}' to "
-            f"'{cube.standard_name}'"
-        )
     return cube
 
 
