@@ -1,4 +1,4 @@
-"""CMOR-like reformatting of ICON-Seamless (NWP physics)."""
+"""CMOR-like reformatting of ICON-XPP (NWP physics)."""
 
 import logging
 
@@ -54,7 +54,7 @@ class Zg(IconFix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        Convert geopotential Phi given by ICON-Seamless to geopotential height
+        Convert geopotential Phi given by ICON-XPP to geopotential height
         Z using Z = Phi / g0 (g0 is standard acceleration of gravity).
 
         """

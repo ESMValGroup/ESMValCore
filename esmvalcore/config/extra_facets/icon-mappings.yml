@@ -78,7 +78,7 @@ ICON:
     zg: {var_type: atm_3d_ml}
 
 
-ICON-Seamless:
+ICON-XPP:
 
   '*':
     # Cell measures
