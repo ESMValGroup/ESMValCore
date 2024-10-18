@@ -28,6 +28,7 @@ from esmvalcore.cmor._utils import (
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid
+from esmvalcore.preprocessor._units import safe_convert_units
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -455,7 +456,7 @@ class GenericFix(Fix):
             if str(cube.units) != units:
                 old_units = cube.units
                 try:
-                    cube.convert_units(units)
+                    safe_convert_units(cube, units)
                 except (ValueError, UnitConversionError):
                     self._warning_msg(
                         cube,

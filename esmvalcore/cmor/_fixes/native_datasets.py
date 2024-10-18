@@ -5,6 +5,8 @@ from typing import Dict
 
 from iris import NameConstraint
 
+from esmvalcore.preprocessor._units import safe_convert_units
+
 from ..fix import Fix
 from .shared import (
     add_scalar_height_coord,
@@ -77,7 +79,7 @@ class NativeDatasetFix(Fix):
                     f"Failed to fix invalid units '{invalid_units}' for "
                     f"variable '{self.vardef.short_name}'"
                 ) from exc
-        cube.convert_units(self.vardef.units)
+        safe_convert_units(cube, self.vardef.units)
 
         # Fix attributes
         if self.vardef.positive != "":

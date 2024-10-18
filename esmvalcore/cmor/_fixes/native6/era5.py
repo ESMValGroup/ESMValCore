@@ -7,6 +7,7 @@ import iris
 import numpy as np
 
 from esmvalcore.iris_helpers import date2num
+from esmvalcore.preprocessor._units import safe_convert_units
 
 from ...table import CMOR_TABLES
 from ..fix import Fix
@@ -414,10 +415,6 @@ class AllVars(Fix):
             coord.points = 0.5 * (start + end)
             coord.bounds = np.column_stack([start, end])
 
-    def _fix_units(self, cube):
-        """Fix units."""
-        cube.convert_units(self.vardef.units)
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = iris.cube.CubeList()
@@ -428,7 +425,7 @@ class AllVars(Fix):
             cube.long_name = self.vardef.long_name
 
             cube = self._fix_coordinates(cube)
-            self._fix_units(cube)
+            cube = safe_convert_units(cube, self.vardef.units)
 
             cube.data = cube.core_data().astype("float32")
             year = datetime.datetime.now().year
