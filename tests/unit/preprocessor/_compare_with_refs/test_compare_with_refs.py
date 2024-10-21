@@ -78,7 +78,7 @@ def regular_cubes():
 
 @pytest.fixture
 def ref_cubes():
-    """Reference cubes."""
+    """Create reference cubes."""
     cube_data = np.full((2, 2, 2), 2.0)
     cube_data[1, 1, 1] = 4.0
     cube = get_3d_cube(

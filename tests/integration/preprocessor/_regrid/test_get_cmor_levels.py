@@ -1,9 +1,4 @@
-"""
-Integration tests for the :func:
-`esmvalcore.preprocessor.regrid.get_cmor_levels`
-function.
-
-"""
+"""Tests for :func:`esmvalcore.preprocessor.regrid.get_cmor_levels`."""
 
 import unittest
 

@@ -8,8 +8,7 @@ from iris.aux_factory import HybridHeightFactory, HybridPressureFactory
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor.check import CheckLevels, CMORCheckError
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.cmor.check import CMORCheckError
 from esmvalcore.preprocessor import (
     cmor_check_data,
     cmor_check_metadata,
@@ -18,31 +17,12 @@ from esmvalcore.preprocessor import (
 )
 
 
-# TODO: remove in v2.12
-@pytest.fixture(autouse=True)
-def disable_fix_cmor_checker(mocker):
-    """Disable the CMOR checker in fixes (will be default in v2.12)."""
-
-    class MockChecker:
-        def __init__(self, cube):
-            self._cube = cube
-
-        def check_metadata(self):
-            return self._cube
-
-        def check_data(self):
-            return self._cube
-
-    mock = mocker.patch("esmvalcore.cmor.fix._get_cmor_checker")
-    mock.return_value = MockChecker
-
-
 class TestGenericFix:
     """Tests for ``GenericFix``."""
 
     @pytest.fixture(autouse=True)
     def setup(self, mocker):
-        """Setup tests."""
+        """Set up tests."""
         self.mock_debug = mocker.patch(
             "esmvalcore.cmor._fixes.fix.GenericFix._debug_msg", autospec=True
         )
@@ -887,27 +867,3 @@ class TestGenericFix:
 
         assert self.mock_debug.call_count == 0
         assert self.mock_warning.call_count == 0
-
-    def test_deprecate_check_level_fix_metadata(self):
-        """Test deprecation of check level in ``fix_metadata``."""
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            fix_metadata(
-                self.cubes_4d,
-                "ta",
-                "CMIP6",
-                "MODEL",
-                "Amon",
-                check_level=CheckLevels.RELAXED,
-            )
-
-    def test_deprecate_check_level_fix_data(self):
-        """Test deprecation of check level in ``fix_data``."""
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            fix_metadata(
-                self.cubes_4d,
-                "ta",
-                "CMIP6",
-                "MODEL",
-                "Amon",
-                check_level=CheckLevels.RELAXED,
-            )
