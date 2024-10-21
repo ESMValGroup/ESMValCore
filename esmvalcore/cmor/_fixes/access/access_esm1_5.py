@@ -7,6 +7,8 @@ from iris.cube import CubeList
 
 from ._base_fix import AccessFix
 
+from cf_units import Unit
+
 logger = logging.getLogger(__name__)
 
 
@@ -121,6 +123,7 @@ class Tas(AccessFix):
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
+<<<<<<< HEAD
         if cube.coord("height").points[0] != 2:
             cube.coord("height").points = [2]
 

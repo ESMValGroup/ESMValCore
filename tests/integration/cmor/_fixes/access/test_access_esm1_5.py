@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import AuxCoord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.access.access_esm1_5
@@ -172,7 +172,6 @@ def check_tas_metadata(cubes):
     assert "positive" not in cube.attributes
     return cube
 
-
 def check_tos_metadata(cubes):
     """Check tas metadata."""
     assert len(cubes) == 1
@@ -183,7 +182,6 @@ def check_tos_metadata(cubes):
     assert cube.units == "degC"
     return cube
 
-
 def check_so_metadata(cubes):
     """Check tas metadata."""
     assert len(cubes) == 1
@@ -193,7 +191,6 @@ def check_so_metadata(cubes):
     assert cube.long_name == "Sea Water Salinity"
     assert cube.units == Unit(0.001)
     return cube
-
 
 def check_pr_metadata(cubes):
     """Check pr metadata."""
@@ -226,7 +223,6 @@ def check_lat(cube):
     assert lat.units == "degrees_north"
     assert lat.attributes == {}
 
-
 def check_ocn_lat(cube):
     """Check latitude coordinate of ocean variable cube."""
 
@@ -251,7 +247,6 @@ def check_heightxm(cube, height_value):
     assert height.attributes == {"positive": "up"}
     np.testing.assert_allclose(height.points, [height_value])
     assert height.bounds is None
-
 
 def check_ocean_dim_coords(cube):
     """Check dim_coords of ocean variables."""
@@ -557,8 +552,8 @@ def test_tos_fix(test_data_path):
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, (1, 2)),
-        (lon_ocn_aux_coord, (1, 2)),
+        (lat_ocn_aux_coord, 0),
+        (lon_ocn_aux_coord, 1),
     ]
 
     cube_tos = Cube(
@@ -580,21 +575,21 @@ def test_tos_fix(test_data_path):
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
-    assert fixed_cube.shape == (12, 300, 360)
+    assert fixed_cube.shape == (12, 2, 2)
 
 
 def test_so_fix(test_data_path):
     """Test fix 'so'."""
     coord_dim = [
         (time_ocn_coord, 0),
-        (depth_ocn_coord, 1),
+        (depth_ocn_coord, 1)
         (lat_ocn_coord, 2),
         (lon_ocn_coord, 3),
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, (2, 3)),
-        (lon_ocn_aux_coord, (2, 3)),
+        (lat_ocn_aux_coord, 0),
+        (lon_ocn_aux_coord, 1),
     ]
 
     cube_so = Cube(
