@@ -66,3 +66,11 @@ ACCESS-ESM1-5:
         - fld_s01i201 
       modeling_realm: atm
     
+    tos:
+      raw_name: sst
+      modeling_realm: ocn
+    
+    so:
+      raw_name: salt
+      modeling_realm: ocn
+    
