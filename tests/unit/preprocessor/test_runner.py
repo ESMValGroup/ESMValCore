@@ -1,5 +1,8 @@
+import operator
 from pathlib import Path
 
+import dask
+import distributed
 import iris.cube
 import pytest
 
@@ -68,3 +71,15 @@ def test_preprocess_debug(mocker, debug):
         )
     else:
         esmvalcore.preprocessor.save.assert_not_called()
+
+
+@pytest.mark.parametrize("use_distributed", [False, True])
+def test_compute_with_progress(capsys, use_distributed):
+    if use_distributed:
+        distributed.Client(n_workers=1, threads_per_worker=1)
+
+    delayeds = [dask.delayed(operator.add)(1, 1)]
+    esmvalcore.preprocessor._compute_with_progress(delayeds)
+    # Assert that some progress bar has been written to stdout.
+    progressbar = capsys.readouterr().out
+    assert progressbar
