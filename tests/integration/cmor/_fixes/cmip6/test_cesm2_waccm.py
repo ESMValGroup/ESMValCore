@@ -19,6 +19,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -35,7 +36,8 @@ def test_cl_fix():
 def test_cl_fix_file(tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / "cesm2_waccm_cl.nc"
-    fix = Cl(None)
+    vardef = get_var_info("CMIP6", "Amon", "cl")
+    fix = Cl(vardef)
     (fixed_cube,) = fix.fix_file(nc_path, tmp_path)
     lev_coord = fixed_cube.coord(var_name="lev")
     a_coord = fixed_cube.coord(var_name="a")

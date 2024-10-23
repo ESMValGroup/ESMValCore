@@ -41,18 +41,18 @@ class Cl(BaseCl):
         """
         dataset = ncdata.netcdf4.from_nc4(filepath)
         self._fix_formula_terms(dataset)
+
+        # Correct order of bounds data
         a_bnds = dataset.variables["a_bnds"]
         a_bnds.data = a_bnds.data[:, ::-1]
         b_bnds = dataset.variables["b_bnds"]
         b_bnds.data = b_bnds.data[:, ::-1]
-        cubes = ncdata.iris.to_iris(dataset)
 
-        # Add the source file as an attribute to support grouping by file
-        # when calling fix_metadata.
-        for cube in cubes:
-            cube.attributes["source_file"] = str(filepath)
+        # Remove 'title' attribute that duplicates long name
+        for var_name in dataset.variables:
+            dataset.variables[var_name].attributes.pop("title", None)
 
-        return cubes
+        return self.ncdata_to_iris(dataset, filepath)
 
 
 Cli = Cl

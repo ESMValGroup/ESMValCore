@@ -27,6 +27,8 @@ class Cl(Fix):
         lev.set_attrval(
             "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
         )
+        lev.set_attrval("units", "1")
+        dataset.variables["lev_bnds"].attributes.pop("units")
 
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
@@ -56,42 +58,26 @@ class Cl(Fix):
         """
         dataset = ncdata.netcdf4.from_nc4(filepath)
         self._fix_formula_terms(dataset)
+
+        # Correct order of bounds data
         a_bnds = dataset.variables["a_bnds"]
         a_bnds.data = a_bnds.data[::-1, :]
         b_bnds = dataset.variables["b_bnds"]
         b_bnds.data = b_bnds.data[::-1, :]
-        cubes = ncdata.iris.to_iris(dataset)
 
-        # Add the source file as an attribute to support grouping by file
-        # when calling fix_metadata.
-        for cube in cubes:
-            cube.attributes["source_file"] = str(filepath)
+        # Correct lev and lev_bnds data
+        lev = dataset.variables["lev"]
+        lev.data = dataset.variables["a"].data + dataset.variables["b"].data
+        lev_bnds = dataset.variables["lev_bnds"]
+        lev_bnds.data = (
+            dataset.variables["a_bnds"].data + dataset.variables["b_bnds"].data
+        )
 
-        return cubes
+        # Remove 'title' attribute that duplicates long name
+        for var_name in dataset.variables:
+            dataset.variables[var_name].attributes.pop("title", None)
 
-    def fix_metadata(self, cubes):
-        """Fix ``atmosphere_hybrid_sigma_pressure_coordinate``.
-
-        See discussion in #882 for more details on that.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name="lev")
-        a_coord = cube.coord(var_name="a")
-        b_coord = cube.coord(var_name="b")
-        lev_coord.points = a_coord.core_points() + b_coord.core_points()
-        lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = "1"
-        return cubes
+        return self.ncdata_to_iris(dataset, filepath)
 
 
 Cli = Cl
