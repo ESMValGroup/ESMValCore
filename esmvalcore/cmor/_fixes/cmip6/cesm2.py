@@ -1,9 +1,9 @@
 """Fixes for CESM2 model."""
 
-from shutil import copyfile
-
+import ncdata
+import ncdata.iris
+import ncdata.netcdf4
 import numpy as np
-from netCDF4 import Dataset
 
 from ..common import SiconcFixScalarCoord
 from ..fix import Fix
@@ -19,24 +19,16 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(
-        self,
-        filepath,
-        output_dir,
-        add_unique_suffix=False,
-    ):
+    @staticmethod
+    def _fix_formula_terms(dataset: ncdata.NcData) -> None:
         """Fix ``formula_terms`` attribute."""
-        new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+        lev = dataset.variables["lev"]
+        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
+        lev.set_attrval(
+            "standard_name", "atmosphere_hybrid_sigma_pressure_coordinate"
         )
-        copyfile(filepath, new_path)
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
-        dataset.variables[
-            "lev"
-        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
-        dataset.close()
-        return new_path
+        lev.set_attrval("units", "1")
+        dataset.variables["lev_bnds"].attributes.pop("units")
 
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
@@ -63,44 +55,32 @@ class Cl(Fix):
         -------
         str
             Path to the fixed file.
-
         """
-        new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+        dataset = ncdata.netcdf4.from_nc4(filepath)
+        self._fix_formula_terms(dataset)
+
+        # Correct order of bounds data
+        a_bnds = dataset.variables["a_bnds"]
+        a_bnds.data = a_bnds.data[::-1, :]
+        b_bnds = dataset.variables["b_bnds"]
+        b_bnds.data = b_bnds.data[::-1, :]
+
+        # Correct lev and lev_bnds data
+        lev = dataset.variables["lev"]
+        lev.data = dataset.variables["a"].data + dataset.variables["b"].data
+        lev_bnds = dataset.variables["lev_bnds"]
+        lev_bnds.data = (
+            dataset.variables["a_bnds"].data + dataset.variables["b_bnds"].data
         )
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][::-1, :]
-        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][::-1, :]
-        dataset.close()
-        return new_path
 
-    def fix_metadata(self, cubes):
-        """Fix ``atmosphere_hybrid_sigma_pressure_coordinate``.
+        # Remove 'title' attribute that duplicates long name
+        for var_name in dataset.variables:
+            dataset.variables[var_name].attributes.pop("title", None)
 
-        See discussion in #882 for more details on that.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name="lev")
-        a_coord = cube.coord(var_name="a")
-        b_coord = cube.coord(var_name="b")
-        lev_coord.points = a_coord.core_points() + b_coord.core_points()
-        lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = "1"
-        return cubes
+        return self.ncdata_to_iris(dataset, filepath)
 
 
 Cli = Cl
-
 
 Clw = Cl
 
@@ -119,7 +99,6 @@ class Fgco2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_depth_coord(cube)
@@ -130,8 +109,7 @@ class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        """Fix latitude_bounds and longitude_bounds dtype and round to 4 d.p.
 
         Parameters
         ----------
@@ -141,7 +119,6 @@ class Prw(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             for coord_name in ["latitude", "longitude"]:
@@ -159,8 +136,7 @@ class Tas(Prw):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (2m) coordinate.
+        """Add height (2m) coordinate.
 
         Fix also done for prw.
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
@@ -173,7 +149,6 @@ class Tas(Prw):
         Returns
         -------
         iris.cube.CubeList
-
         """
         super().fix_metadata(cubes)
         # Specific code for tas
@@ -197,7 +172,6 @@ class Sftlf(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typeland_coord(cube)
@@ -218,7 +192,6 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesea_coord(cube)
@@ -232,8 +205,7 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """
-        Round times to 1 d.p. for monthly means.
+        """Round times to 1 d.p. for monthly means.
 
         Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
 
@@ -245,7 +217,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -271,7 +242,6 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             if cube.coords(axis="Z"):
