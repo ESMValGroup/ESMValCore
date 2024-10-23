@@ -165,8 +165,28 @@ class Fix:
         raise ValueError(f'Cube for variable "{short_name}" not found')
 
     def ncdata_to_iris(
-        self, dataset: ncdata.NcData, filepath: Path
+        self,
+        dataset: ncdata.NcData,
+        filepath: Path,
     ) -> CubeList:
+        """Convert an :obj:`~ncdata.NcData` object to an Iris cubelist.
+
+        This function mimics the behaviour of
+        :func:`esmvalcore.preprocessor.load`.
+
+        Parameters
+        ----------
+        dataset:
+            The :obj:`~ncdata.NcData` object to convert.
+        filepath:
+            The path that the dataset was loaded from.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            :obj:`iris.cube.CubeList` containing the requested cube.
+
+        """
         # Filter warnings
         with catch_warnings():
             # Ignore warnings about missing cell measures that are stored in
