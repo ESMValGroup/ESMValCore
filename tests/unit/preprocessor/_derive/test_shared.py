@@ -179,7 +179,7 @@ def test_low_lev_below_surf_press():
     """Test for lowest level below surface pressure."""
     plev = 970
     top_limit = 5
-    col = np.array([np.NaN, 900, 800])
+    col = np.array([np.nan, 900, 800])
     col = np.insert(col, 0, plev)
     col = np.append(col, top_limit)
     result = np.array([0, 120, 845])
@@ -197,7 +197,7 @@ def test_low_lev_below_surf_press():
         np.atleast_3d(result),
     )
 
-    col = np.array([np.NaN, np.NaN, 900, 800])
+    col = np.array([np.nan, np.nan, 900, 800])
     col = np.insert(col, 0, plev)
     col = np.append(col, top_limit)
     result = np.array([0, 0, 120, 845])
