@@ -819,7 +819,7 @@ class Dataset:
                 **settings["load"],
             )
             # Combine the cubes into a single cube per file.
-            cubes = dask.delayed(preprocess)(
+            cubes = dask.delayed(preprocess, pure=False)(
                 cubes,
                 "fix_metadata",
                 input_files=[input_file],
@@ -831,7 +831,7 @@ class Dataset:
             result.append(cube)
 
         # Concatenate the cubes from all files.
-        result = dask.delayed(preprocess)(
+        result = dask.delayed(preprocess, pure=False)(
             result,
             "concatenate",
             input_files=input_files,
@@ -855,6 +855,7 @@ class Dataset:
                 "timerange": self.facets["timerange"],
             }
         settings["fix_data"] = {
+            "pure": False,
             "session": self.session,
             **self.facets,
         }
@@ -866,7 +867,8 @@ class Dataset:
             "short_name": self.facets["short_name"],
         }
         for step, kwargs in settings.items():
-            result = dask.delayed(preprocess)(
+            pure = settings.pop("pure", True)
+            result = dask.delayed(preprocess, pure=pure)(
                 result,
                 step,
                 input_files=input_files,
