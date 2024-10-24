@@ -9,7 +9,7 @@ class AllVars(BaseAllVars):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
         """

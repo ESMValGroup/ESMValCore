@@ -103,10 +103,10 @@ For example, the following command would run a recipe
 
 .. code-block:: bash
 
-   docker run -e HOME -v "$HOME":"$HOME" -v /data:/data esmvalgroup/esmvalcore:stable -c ~/config-user.yml ~/recipes/recipe_example.yml
+   docker run -e HOME -v "$HOME":"$HOME" -v /data:/data esmvalgroup/esmvalcore:stable ~/recipes/recipe_example.yml
 
 with the environmental variable ``$HOME`` available inside the container and the data
-in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration file, recipe, and data.
+in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration, recipe, and data.
 
 It might be useful to define a `bash alias
 <https://opensource.com/article/19/7/bash-aliases>`_
@@ -131,7 +131,7 @@ following command
 
 .. code-block:: bash
 
-   singularity run docker://esmvalgroup/esmvalcore:stable -c ~/config-user.yml ~/recipes/recipe_example.yml
+   singularity run docker://esmvalgroup/esmvalcore:stable ~/recipes/recipe_example.yml
 
 Note that the container does not see the data available in the host by default.
 You can make host data available with ``-B /path:/path/in/container``.
@@ -158,7 +158,7 @@ To run the container using the image file ``esmvalcore.sif`` use:
 
 .. code-block:: bash
 
-   singularity run esmvalcore.sif -c ~/config-user.yml ~/recipes/recipe_example.yml
+   singularity run esmvalcore.sif ~/recipes/recipe_example.yml
 
 .. _installation-from-source:
 

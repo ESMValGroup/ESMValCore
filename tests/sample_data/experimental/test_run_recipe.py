@@ -12,7 +12,6 @@ import iris
 import pytest
 
 import esmvalcore._task
-from esmvalcore.config._config_object import CFG_DEFAULT
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
@@ -59,7 +58,9 @@ def recipe():
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize("ssh", (True, False))
 @pytest.mark.parametrize("task", (None, "example/ta"))
-def test_run_recipe(monkeypatch, task, ssh, recipe, tmp_path, caplog):
+def test_run_recipe(
+    monkeypatch, cfg_default, task, ssh, recipe, tmp_path, caplog
+):
     """Test running a basic recipe using sample data.
 
     Recipe contains no provenance and no diagnostics.
@@ -79,9 +80,7 @@ def test_run_recipe(monkeypatch, task, ssh, recipe, tmp_path, caplog):
     sample_data_config = esmvaltool_sample_data.get_rootpaths()
     monkeypatch.setitem(CFG, "rootpath", sample_data_config["rootpath"])
     monkeypatch.setitem(CFG, "drs", {"CMIP6": "SYNDA"})
-    session = CFG.start_session(recipe.path.stem)
-    session.clear()
-    session.update(CFG_DEFAULT)
+    session = cfg_default.start_session(recipe.path.stem)
     session["output_dir"] = tmp_path / "esmvaltool_output"
     session["max_parallel_tasks"] = 1
     session["remove_preproc_dir"] = False
@@ -96,7 +95,7 @@ def test_run_recipe(monkeypatch, task, ssh, recipe, tmp_path, caplog):
     assert isinstance(output.read_main_log(), str)
     assert isinstance(output.read_main_log_debug(), str)
 
-    for task, task_output in output.items():
+    for _, task_output in output.items():
         assert isinstance(task_output, TaskOutput)
         assert len(task_output) > 0
 

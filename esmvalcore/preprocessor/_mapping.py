@@ -57,10 +57,10 @@ def ref_to_dims_index_as_index(cube, ref):
     """Get dim for index ref."""
     try:
         dim = int(ref)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
         raise ValueError(
             "{} Incompatible type {} for slicing".format(ref, type(ref))
-        )
+        ) from exc
     if dim < 0 or dim > cube.ndim:
         msg = (
             "Requested an iterator over a dimension ({}) "

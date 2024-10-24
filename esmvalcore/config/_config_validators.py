@@ -204,10 +204,6 @@ validate_pathlist = _listify_validator(
     validate_path, docstring="Return a list of paths."
 )
 
-validate_pathtuple = _listify_validator(
-    validate_path, docstring="Return a tuple of paths.", return_type=tuple
-)
-
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(
     validate_int_positive, allow_none=True
@@ -222,7 +218,7 @@ def validate_rootpath(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in 'rootpath' in config-user.yml"
+                "written as 'obs4MIPs' in configured 'rootpath'"
             )
             key = "obs4MIPs"
         if isinstance(paths, Path):
@@ -247,7 +243,7 @@ def validate_drs(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in 'drs' in config-user.yml"
+                "written as 'obs4MIPs' in configured 'drs'"
             )
             key = "obs4MIPs"
         new_mapping[key] = validate_string(drs)
@@ -306,34 +302,47 @@ def validate_diagnostics(
     }
 
 
+# TODO: remove in v2.14.0
+def validate_extra_facets_dir(value):
+    """Validate extra_facets_dir."""
+    if isinstance(value, tuple):
+        msg = (
+            "Specifying `extra_facets_dir` as tuple has been deprecated in "
+            "ESMValCore version 2.12.0 and is scheduled for removal in "
+            "version 2.14.0. Please use a list instead."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
+        value = list(value)
+    return validate_pathlist(value)
+
+
 _validators = {
-    # From user config
     "auxiliary_data_dir": validate_path,
+    "check_level": validate_check_level,
     "compress_netcdf": validate_bool,
     "config_developer_file": validate_config_developer,
+    "diagnostics": validate_diagnostics,
     "download_dir": validate_path,
     "drs": validate_drs,
     "exit_on_warning": validate_bool,
-    "extra_facets_dir": validate_pathtuple,
+    "extra_facets_dir": validate_extra_facets_dir,
     "log_level": validate_string,
+    "max_datasets": validate_int_positive_or_none,
     "max_parallel_tasks": validate_int_or_none,
+    "max_years": validate_int_positive_or_none,
     "output_dir": validate_path,
     "output_file_type": validate_string,
     "profile_diagnostic": validate_bool,
     "remove_preproc_dir": validate_bool,
+    "resume_from": validate_pathlist,
     "rootpath": validate_rootpath,
     "run_diagnostic": validate_bool,
     "save_intermediary_cubes": validate_bool,
     "search_esgf": validate_search_esgf,
-    # From CLI
-    "check_level": validate_check_level,
-    "diagnostics": validate_diagnostics,
-    "max_datasets": validate_int_positive_or_none,
-    "max_years": validate_int_positive_or_none,
-    "resume_from": validate_pathlist,
     "skip_nonexistent": validate_bool,
     # From recipe
     "write_ncl_interface": validate_bool,
+    # TODO: remove in v2.14.0
     # config location
     "config_file": validate_path,
 }
@@ -362,15 +371,43 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
+
+
+# TODO: remove in v2.14.0
+def deprecate_config_file(validated_config, value, validated_value):
+    """Deprecate ``config_file`` option.
+
+    Parameters
+    ----------
+    validated_config: ValidatedConfig
+        ``ValidatedConfig`` instance which will be modified in place.
+    value: Any
+        Raw input value for ``config_file`` option.
+    validated_value: Any
+        Validated value for ``config_file`` option.
+
+    """
+    validated_config  # noqa
+    value  # noqa
+    validated_value  # noqa
+    option = "config_file"
+    deprecated_version = "2.12.0"
+    remove_version = "2.14.0"
+    more_info = " Please use the option `config_dir` instead."
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
 
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecators: dict[str, Callable] = {}
+_deprecators: dict[str, Callable] = {
+    "config_file": deprecate_config_file,  # TODO: remove in v2.14.0
+}
 
 
 # Default values for deprecated options
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecated_options_defaults: dict[str, Any] = {}
+_deprecated_options_defaults: dict[str, Any] = {
+    "config_file": None,  # TODO: remove in v2.14.0
+}
