@@ -1,4 +1,5 @@
 """Contains the base class for dataset fixes."""
+
 from __future__ import annotations
 
 import importlib
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
+generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
 
 
 class Fix:
@@ -139,7 +141,7 @@ class Fix:
 
         Raises
         ------
-        Exception
+        ValueError
             No cube is found.
 
         Returns
@@ -153,7 +155,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception(f'Cube for variable "{short_name}" not found')
+        raise ValueError(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
@@ -234,9 +236,9 @@ class Fix:
         """
         vardef = get_var_info(project, mip, short_name)
 
-        project = project.replace('-', '_').lower()
-        dataset = dataset.replace('-', '_').lower()
-        short_name = short_name.replace('-', '_').lower()
+        project = project.replace("-", "_").lower()
+        dataset = dataset.replace("-", "_").lower()
+        short_name = short_name.replace("-", "_").lower()
 
         if extra_facets is None:
             extra_facets = {}
@@ -244,30 +246,40 @@ class Fix:
         fixes = []
 
         fixes_modules = []
-        if project == 'cordex':
-            driver = extra_facets['driver'].replace('-', '_').lower()
-            extra_facets['dataset'] = dataset
+        if project == "cordex":
+            driver = extra_facets["driver"].replace("-", "_").lower()
+            extra_facets["dataset"] = dataset
             try:
-                fixes_modules.append(importlib.import_module(
-                    f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}'
-                ))
+                fixes_modules.append(
+                    importlib.import_module(
+                        f"esmvalcore.cmor._fixes.{project}.{driver}.{dataset}"
+                    )
+                )
             except ImportError:
                 pass
-            fixes_modules.append(importlib.import_module(
-                'esmvalcore.cmor._fixes.cordex.cordex_fixes'))
+            fixes_modules.append(
+                importlib.import_module(
+                    "esmvalcore.cmor._fixes.cordex.cordex_fixes"
+                )
+            )
         else:
             try:
-                fixes_modules.append(importlib.import_module(
-                    f'esmvalcore.cmor._fixes.{project}.{dataset}'))
+                fixes_modules.append(
+                    importlib.import_module(
+                        f"esmvalcore.cmor._fixes.{project}.{dataset}"
+                    )
+                )
             except ImportError:
                 pass
 
         for fixes_module in fixes_modules:
             classes = dict(
-                (name.lower(), value) for (name, value) in
-                inspect.getmembers(fixes_module, inspect.isclass)
+                (name.lower(), value)
+                for (name, value) in inspect.getmembers(
+                    fixes_module, inspect.isclass
+                )
             )
-            for fix_name in (short_name, mip.lower(), 'allvars'):
+            for fix_name in (short_name, mip.lower(), "allvars"):
                 if fix_name in classes:
                     fixes.append(
                         classes[fix_name](
@@ -343,7 +355,7 @@ class GenericFix(Fix):
 
         """
         # Make sure the this fix also works when no extra_facets are given
-        if 'project' in self.extra_facets and 'dataset' in self.extra_facets:
+        if "project" in self.extra_facets and "dataset" in self.extra_facets:
             dataset_str = (
                 f"{self.extra_facets['project']}:"
                 f"{self.extra_facets['dataset']}"
@@ -390,19 +402,19 @@ class GenericFix(Fix):
     @staticmethod
     def _msg_suffix(cube: Cube) -> str:
         """Get prefix for log messages."""
-        if 'source_file' in cube.attributes:
+        if "source_file" in cube.attributes:
             return f"\n(for file {cube.attributes['source_file']})"
         return f"\n(for variable {cube.var_name})"
 
     def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
-        logger.debug(msg, *args)
+        generic_fix_logger.debug(msg, *args)
 
     def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
-        logger.warning(msg, *args)
+        generic_fix_logger.warning(msg, *args)
 
     @staticmethod
     def _set_range_in_0_360(array: np.ndarray) -> np.ndarray:
@@ -429,8 +441,8 @@ class GenericFix(Fix):
 
     def _get_effective_units(self) -> str:
         """Get effective units."""
-        if self.vardef.units.lower() == 'psu':
-            return '1'
+        if self.vardef.units.lower() == "psu":
+            return "1"
         return self.vardef.units
 
     def _fix_units(self, cube: Cube) -> Cube:
@@ -496,9 +508,9 @@ class GenericFix(Fix):
 
     def _fix_psu_units(self, cube: Cube) -> Cube:
         """Fix psu units."""
-        if cube.attributes.get('invalid_units', '').lower() == 'psu':
-            cube.units = '1'
-            cube.attributes.pop('invalid_units')
+        if cube.attributes.get("invalid_units", "").lower() == "psu":
+            cube.units = "1"
+            cube.attributes.pop("invalid_units")
             self._debug_msg(cube, "Units converted from 'psu' to '1'")
         return cube
 
@@ -520,7 +532,7 @@ class GenericFix(Fix):
         """Fix alternative generic level coordinates."""
         # Avoid overriding existing variable information
         cmor_var_coordinates = self.vardef.coordinates.copy()
-        for (coord_name, cmor_coord) in cmor_var_coordinates.items():
+        for coord_name, cmor_coord in cmor_var_coordinates.items():
             if not cmor_coord.generic_level:
                 continue  # Ignore non-generic-level coordinates
             if not cmor_coord.generic_lev_coords:
@@ -556,9 +568,10 @@ class GenericFix(Fix):
             # Search for alternative coordinates (i.e., regular level
             # coordinates); if none found, do nothing
             try:
-                (alternative_coord,
-                 cube_coord) = _get_alternative_generic_lev_coord(
-                    cube, coord_name, self.vardef.table_type
+                (alternative_coord, cube_coord) = (
+                    _get_alternative_generic_lev_coord(
+                        cube, coord_name, self.vardef.table_type
+                    )
                 )
             except ValueError:  # no alternatives found
                 continue
@@ -577,11 +590,13 @@ class GenericFix(Fix):
         cube_coord: Coord,
     ) -> None:
         """Fix CMIP6 multidimensional latitude and longitude coordinates."""
-        is_cmip6_multidim_lat_lon = all([
-            'CMIP6' in self.vardef.table_type,
-            cube_coord.ndim > 1,
-            cube_coord.standard_name in ('latitude', 'longitude'),
-        ])
+        is_cmip6_multidim_lat_lon = all(
+            [
+                "CMIP6" in self.vardef.table_type,
+                cube_coord.ndim > 1,
+                cube_coord.standard_name in ("latitude", "longitude"),
+            ]
+        )
         if is_cmip6_multidim_lat_lon:
             self._debug_msg(
                 cube,
@@ -673,7 +688,7 @@ class GenericFix(Fix):
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
         """Fix longitude coordinate to be in [0, 360]."""
-        if not cube_coord.standard_name == 'longitude':
+        if not cube_coord.standard_name == "longitude":
             return (cube, cube_coord)
 
         points = cube_coord.core_points()
@@ -695,7 +710,7 @@ class GenericFix(Fix):
         # nbounds>2 implies an irregular grid with bounds given as vertices
         # of the cell polygon.
         if cube_coord.ndim == 1 and cube_coord.nbounds in (0, 2):
-            lon_extent = CoordExtent(cube_coord, 0.0, 360., True, False)
+            lon_extent = CoordExtent(cube_coord, 0.0, 360.0, True, False)
             cube = cube.intersection(lon_extent)
         else:
             new_lons = cube_coord.core_points().copy()
@@ -723,12 +738,14 @@ class GenericFix(Fix):
         cube_coord: Coord,
     ) -> None:
         """Fix coordinate bounds."""
-        if cmor_coord.must_have_bounds != 'yes' or cube_coord.has_bounds():
+        if cmor_coord.must_have_bounds != "yes" or cube_coord.has_bounds():
             return
 
         # Skip guessing bounds for unstructured grids
         if has_unstructured_grid(cube) and cube_coord.standard_name in (
-                'latitude', 'longitude'):
+            "latitude",
+            "longitude",
+        ):
             self._debug_msg(
                 cube,
                 "Will not guess bounds for coordinate %s of unstructured grid",
@@ -761,10 +778,11 @@ class GenericFix(Fix):
         # Skip fix for a variety of reasons
         if cube_coord.ndim > 1:
             return (cube, cube_coord)
-        if cube_coord.dtype.kind == 'U':
+        if cube_coord.dtype.kind == "U":
             return (cube, cube_coord)
         if has_unstructured_grid(cube) and cube_coord.standard_name in (
-                'latitude', 'longitude'
+            "latitude",
+            "longitude",
         ):
             return (cube, cube_coord)
         if len(cube_coord.core_points()) == 1:
@@ -773,10 +791,10 @@ class GenericFix(Fix):
             return (cube, cube_coord)
 
         # Fix coordinates with wrong direction
-        if cmor_coord.stored_direction == 'increasing':
+        if cmor_coord.stored_direction == "increasing":
             if cube_coord.core_points()[0] > cube_coord.core_points()[1]:
                 (cube, cube_coord) = self._reverse_coord(cube, cube_coord)
-        elif cmor_coord.stored_direction == 'decreasing':
+        elif cmor_coord.stored_direction == "decreasing":
             if cube_coord.core_points()[0] < cube_coord.core_points()[1]:
                 (cube, cube_coord) = self._reverse_coord(cube, cube_coord)
 
@@ -788,7 +806,7 @@ class GenericFix(Fix):
         old_units = cube_coord.units
         cube_coord.convert_units(
             Unit(
-                'days since 1850-1-1 00:00:00',
+                "days since 1850-1-1 00:00:00",
                 calendar=cube_coord.units.calendar,
             )
         )
@@ -799,9 +817,9 @@ class GenericFix(Fix):
 
         # Fix units of time-related cube attributes
         attrs = cube.attributes
-        parent_time = 'parent_time_units'
+        parent_time = "parent_time_units"
         if parent_time in attrs:
-            if attrs[parent_time] in 'no parent':
+            if attrs[parent_time] in "no parent":
                 pass
             else:
                 try:
@@ -809,24 +827,26 @@ class GenericFix(Fix):
                 except ValueError:
                     pass
                 else:
-                    attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+                    attrs[parent_time] = "days since 1850-1-1 00:00:00"
 
-                    branch_parent = 'branch_time_in_parent'
+                    branch_parent = "branch_time_in_parent"
                     if branch_parent in attrs:
                         attrs[branch_parent] = parent_units.convert(
-                            attrs[branch_parent], cube_coord.units)
+                            attrs[branch_parent], cube_coord.units
+                        )
 
-                    branch_child = 'branch_time_in_child'
+                    branch_child = "branch_time_in_child"
                     if branch_child in attrs:
                         attrs[branch_child] = old_units.convert(
-                            attrs[branch_child], cube_coord.units)
+                            attrs[branch_child], cube_coord.units
+                        )
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
-        times = {'time', 'time1', 'time2', 'time3'}
+        times = {"time", "time1", "time2", "time3"}
         key = times.intersection(self.vardef.coordinates)
-        cmor = self.vardef.coordinates[' '.join(key)]
-        if cmor.must_have_bounds == 'yes' and not cube_coord.has_bounds():
+        cmor = self.vardef.coordinates[" ".join(key)]
+        if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
             cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
             self._warning_msg(
                 cube,
@@ -837,10 +857,10 @@ class GenericFix(Fix):
     def _fix_time_coord(self, cube: Cube) -> Cube:
         """Fix time coordinate."""
         # Make sure to get dimensional time coordinate if possible
-        if cube.coords('time', dim_coords=True):
-            cube_coord = cube.coord('time', dim_coords=True)
-        elif cube.coords('time'):
-            cube_coord = cube.coord('time')
+        if cube.coords("time", dim_coords=True):
+            cube_coord = cube.coord("time", dim_coords=True)
+        elif cube.coords("time"):
+            cube_coord = cube.coord("time")
         else:
             return cube
 
@@ -852,7 +872,7 @@ class GenericFix(Fix):
         self._fix_time_units(cube, cube_coord)
 
         # Remove time_origin from coordinate attributes
-        cube_coord.attributes.pop('time_origin', None)
+        cube_coord.attributes.pop("time_origin", None)
 
         # Fix time bounds
         self._fix_time_bounds(cube, cube_coord)
@@ -880,7 +900,6 @@ class GenericFix(Fix):
     def _fix_coords(self, cube: Cube) -> Cube:
         """Fix non-time coordinates."""
         for cmor_coord in self.vardef.coordinates.values():
-
             # Cannot fix generic level coords with no unique CMOR information
             if cmor_coord.generic_level and not cmor_coord.out_name:
                 continue
@@ -891,7 +910,7 @@ class GenericFix(Fix):
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
 
             # Fixes for time coord are done separately
-            if cube_coord.var_name == 'time':
+            if cube_coord.var_name == "time":
                 continue
 
             # Fixes
