@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - cartopy
+  - cartopy >=0.24  # forced for Python 3.13, remove when env stable
   - cf-units
   - cftime
   - dask !=2024.8.0  # github.com/ESMValGroup/ESMValCore/issues/2503
