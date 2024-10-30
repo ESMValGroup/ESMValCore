@@ -50,7 +50,7 @@ dependencies = [
     "nc-time-axis",  # needed by iris.plot
     "nested-lookup",
     "netCDF4",
-    "numpy!=1.24.3,<2.0.0",  # avoid pulling 2.0.0rc1
+    "numpy!=1.24.3",  # only numpy>=2 built with Python 3.13
     "packaging",
     "pandas",
     "pillow",
