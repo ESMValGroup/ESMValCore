@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - cartopy >=0.24  # forced for Python 3.13, remove when env stable
+  - cartopy
   - cf-units
   - cftime
   - dask !=2024.8.0  # github.com/ESMValGroup/ESMValCore/issues/2503
@@ -27,7 +27,7 @@ dependencies:
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
+  - numpy !=1.24.3i  # ,<2.0.0  only Numpy>=2 built with Python 3.13
   - packaging
   - pandas
   - pillow
