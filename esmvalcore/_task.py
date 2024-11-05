@@ -392,7 +392,9 @@ class DiagnosticTask(BaseTask):
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
             # Try diagnostics_root
-            script_file = (diagnostics_root / Path(script).expanduser()).absolute()
+            script_file = (
+                diagnostics_root / Path(script).expanduser()
+            ).absolute()
         if not script_file.is_file():
             raise DiagnosticError(f"{err_msg}: file does not exist.")
 
