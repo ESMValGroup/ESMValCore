@@ -199,7 +199,7 @@ ACCESS:
   cmor_strict: false
   input_dir:
     default:
-      - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netcdf'
+      - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
       - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/'
   input_file:
     default: 
