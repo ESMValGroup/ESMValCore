@@ -64,3 +64,6 @@ Siconc = SiconcFixScalarCoord
 
 
 Tas = BaseTas
+
+class Tasmin(Tas):
+    """Fixes for tasmin."""

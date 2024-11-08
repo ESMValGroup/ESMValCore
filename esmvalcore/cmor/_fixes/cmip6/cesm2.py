@@ -282,3 +282,7 @@ class Omon(Fix):
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
         return cubes
+
+
+class Tasmin(Tas):
+    """Fixes for tasmin."""
