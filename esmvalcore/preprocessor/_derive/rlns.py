@@ -12,12 +12,8 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [
-            {
-                'short_name': 'rlds'
-            },
-            {
-                'short_name': 'rlus'
-            },
+            {"short_name": "rlds"},
+            {"short_name": "rlus"},
         ]
         return required
 
@@ -25,9 +21,11 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute surface net downward longwave radiation."""
         rlds_cube = cubes.extract_cube(
-            Constraint(name='surface_downwelling_longwave_flux_in_air'))
+            Constraint(name="surface_downwelling_longwave_flux_in_air")
+        )
         rlus_cube = cubes.extract_cube(
-            Constraint(name='surface_upwelling_longwave_flux_in_air'))
+            Constraint(name="surface_upwelling_longwave_flux_in_air")
+        )
 
         rlns_cube = rlds_cube - rlus_cube
 

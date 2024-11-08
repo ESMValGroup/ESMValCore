@@ -1,4 +1,5 @@
 """Config validation objects."""
+
 from __future__ import annotations
 
 import pprint
@@ -88,15 +89,17 @@ class ValidatedConfig(MutableMapping):
         """Return canonical string representation."""
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
-        repr_split = pprint.pformat(self._mapping, indent=1,
-                                    width=80 - indent).split('\n')
-        repr_indented = ('\n' + ' ' * indent).join(repr_split)
-        return '{}({})'.format(class_name, repr_indented)
+        repr_split = pprint.pformat(
+            self._mapping, indent=1, width=80 - indent
+        ).split("\n")
+        repr_indented = ("\n" + " " * indent).join(repr_split)
+        return "{}({})".format(class_name, repr_indented)
 
     def __str__(self):
         """Return string representation."""
-        return '\n'.join(
-            map('{0[0]}: {0[1]}'.format, sorted(self._mapping.items())))
+        return "\n".join(
+            map("{0[0]}: {0[1]}".format, sorted(self._mapping.items()))
+        )
 
     def __iter__(self):
         """Yield sorted list of keys."""
@@ -112,11 +115,14 @@ class ValidatedConfig(MutableMapping):
 
     def check_missing(self):
         """Check and warn for missing variables."""
-        for (key, more_info) in self._warn_if_missing:
+        for key, more_info in self._warn_if_missing:
             if key not in self:
-                more_info = f' ({more_info})' if more_info else ''
-                warnings.warn(f'`{key}` is not defined{more_info}',
-                              MissingConfigParameter)
+                more_info = f" ({more_info})" if more_info else ""
+                warnings.warn(
+                    f"`{key}` is not defined{more_info}",
+                    MissingConfigParameter,
+                    stacklevel=1,
+                )
 
     def copy(self):
         """Copy the keys/values of this object to a dict."""

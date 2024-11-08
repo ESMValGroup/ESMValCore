@@ -20,7 +20,7 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 # Increase this number anytime you change the cached input data to the tests.
 TEST_REVISION = 1
 
-SPAN_PARAMS = ('overlap', 'full')
+SPAN_PARAMS = ("overlap", "full")
 
 
 def assert_array_almost_equal(this, other, rtol=1e-7):
@@ -33,7 +33,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
 
 def assert_coords_equal(this: list, other: list):
     """Assert coords list `this` equals coords list `other`."""
-    for this_coord, other_coord in zip(this, other):
+    for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)
         assert this_coord.var_name == other_coord.var_name
         assert this_coord.standard_name == other_coord.standard_name
@@ -51,7 +51,7 @@ def assert_metadata_equal(this, other):
 def fix_metadata(cubes):
     """Fix metadata."""
     for cube in cubes:
-        cube.coord('air_pressure').bounds = None
+        cube.coord("air_pressure").bounds = None
 
 
 def preprocess_data(cubes, time_slice: Optional[dict] = None):
@@ -64,8 +64,8 @@ def preprocess_data(cubes, time_slice: Optional[dict] = None):
 
     # regrid to first cube
     regrid_kwargs = {
-        'grid': first_cube,
-        'scheme': iris.analysis.Nearest(),
+        "grid": first_cube,
+        "scheme": iris.analysis.Nearest(),
     }
 
     cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
@@ -81,9 +81,11 @@ def get_cache_key(value):
     clear`.
     """
     py_version = platform.python_version()
-    return (f'{value}_iris-{iris.__version__}_'
-            f'numpy-{np.__version__}_python-{py_version}'
-            f'rev-{TEST_REVISION}')
+    return (
+        f"{value}_iris-{iris.__version__}_"
+        f"numpy-{np.__version__}_python-{py_version}"
+        f"rev-{TEST_REVISION}"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -94,23 +96,24 @@ def timeseries_cubes_month(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode('latin1'))
+        cubes = pickle.loads(data.encode("latin1"))
     else:
         # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
-            'start_year': 1985,
-            'end_year': 1987,
-            'start_month': 12,
-            'end_month': 2,
-            'start_day': 1,
-            'end_day': 1,
+            "start_year": 1985,
+            "end_year": 1987,
+            "start_month": 12,
+            "end_month": 2,
+            "start_day": 1,
+            "end_day": 1,
         }
-        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')
+        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table="Amon")
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set(cache_key,
-                                 pickle.dumps(cubes).decode('latin1'))
+        request.config.cache.set(
+            cache_key, pickle.dumps(cubes).decode("latin1")
+        )
 
     fix_metadata(cubes)
 
@@ -125,29 +128,30 @@ def timeseries_cubes_day(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode('latin1'))
+        cubes = pickle.loads(data.encode("latin1"))
 
     else:
         # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
-            'start_year': 2001,
-            'end_year': 2002,
-            'start_month': 12,
-            'end_month': 2,
-            'start_day': 1,
-            'end_day': 1,
+            "start_year": 2001,
+            "end_year": 2002,
+            "start_month": 12,
+            "end_month": 2,
+            "start_day": 1,
+            "end_day": 1,
         }
-        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
+        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table="day")
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set(cache_key,
-                                 pickle.dumps(cubes).decode('latin1'))
+        request.config.cache.set(
+            cache_key, pickle.dumps(cubes).decode("latin1")
+        )
 
     fix_metadata(cubes)
 
     def calendar(cube):
-        return cube.coord('time').units.calendar
+        return cube.coord("time").units.calendar
 
     # groupby requires sorted list
     grouped = groupby(sorted(cubes, key=calendar), key=calendar)
@@ -161,10 +165,9 @@ def multimodel_test(cubes, statistic, span, **kwargs):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
-    result = multi_model_statistics(products=cubes,
-                                    statistics=statistics,
-                                    span=span,
-                                    **kwargs)
+    result = multi_model_statistics(
+        products=cubes, statistics=statistics, span=span, **kwargs
+    )
     assert isinstance(result, dict)
     assert statistic in result
 
@@ -180,11 +183,11 @@ def multimodel_regression_test(cubes, span, name):
     fail the first time with a RuntimeError, because the reference data
     are being written.
     """
-    statistic = 'mean'
+    statistic = "mean"
     result = multimodel_test(cubes, statistic=statistic, span=span)
     result_cube = result[statistic]
 
-    filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
+    filename = Path(__file__).with_name(f"{name}-{span}-{statistic}.nc")
     if filename.exists():
         reference_cube = iris.load_cube(str(filename))
 
@@ -195,11 +198,11 @@ def multimodel_regression_test(cubes, span, name):
     else:
         # The test will fail if no regression data are available.
         iris.save(result_cube, filename)
-        raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
+        raise RuntimeError(f"Wrote reference data to {filename.absolute()}")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_month(timeseries_cubes_month, span):
     """Test statistic fail due to differing input coordinates (pressure).
 
@@ -207,7 +210,7 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
 
     """
     cubes = timeseries_cubes_month
-    name = 'timeseries_monthly'
+    name = "timeseries_monthly"
     msg = (
         "Multi-model statistics failed to merge input cubes into a single "
         "array"
@@ -217,61 +220,61 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_day_standard(timeseries_cubes_day, span):
     """Test statistic."""
-    calendar = 'standard' if cf_units.__version__ >= '3.1' else 'gregorian'
+    calendar = "standard" if cf_units.__version__ >= "3.1" else "gregorian"
     cubes = timeseries_cubes_day[calendar]
-    name = f'timeseries_daily_{calendar}'
+    name = f"timeseries_daily_{calendar}"
     multimodel_regression_test(name=name, span=span, cubes=cubes)
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_day_365_day(timeseries_cubes_day, span):
     """Test statistic."""
-    calendar = '365_day'
+    calendar = "365_day"
     cubes = timeseries_cubes_day[calendar]
-    name = f'timeseries_daily_{calendar}'
+    name = f"timeseries_daily_{calendar}"
     multimodel_regression_test(name=name, span=span, cubes=cubes)
 
 
 @pytest.mark.skip(
-    reason='Cannot calculate statistics with single cube in list'
+    reason="Cannot calculate statistics with single cube in list"
 )
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_day_360_day(timeseries_cubes_day, span):
     """Test statistic."""
-    calendar = '360_day'
+    calendar = "360_day"
     cubes = timeseries_cubes_day[calendar]
-    name = f'timeseries_daily_{calendar}'
+    name = f"timeseries_daily_{calendar}"
     multimodel_regression_test(name=name, span=span, cubes=cubes)
 
 
 @pytest.mark.skip(
-    reason='Cannot calculate statistics with single cube in list'
+    reason="Cannot calculate statistics with single cube in list"
 )
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_day_julian(timeseries_cubes_day, span):
     """Test statistic."""
-    calendar = 'julian'
+    calendar = "julian"
     cubes = timeseries_cubes_day[calendar]
-    name = f'timeseries_daily_{calendar}'
+    name = f"timeseries_daily_{calendar}"
     multimodel_regression_test(name=name, span=span, cubes=cubes)
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_regression_day_proleptic_gregorian(
     timeseries_cubes_day,
     span,
 ):
     """Test statistic."""
-    calendar = 'proleptic_gregorian'
+    calendar = "proleptic_gregorian"
     cubes = timeseries_cubes_day[calendar]
-    name = f'timeseries_daily_{calendar}'
+    name = f"timeseries_daily_{calendar}"
     msg = (
         "Multi-model statistics failed to merge input cubes into a single "
         "array"
@@ -281,15 +284,15 @@ def test_multimodel_regression_day_proleptic_gregorian(
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_no_vertical_dimension(timeseries_cubes_month, span):
     """Test statistic without vertical dimension using monthly data."""
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]
-    multimodel_test(cubes, span=span, statistic='mean')
+    multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_merge_error(timeseries_cubes_month, span):
     """Test statistic with slightly different vertical coordinates.
 
@@ -302,19 +305,19 @@ def test_multimodel_merge_error(timeseries_cubes_month, span):
         "array"
     )
     with pytest.raises(ValueError, match=msg):
-        multimodel_test(cubes, span=span, statistic='mean')
+        multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_only_time_dimension(timeseries_cubes_month, span):
     """Test statistic without only the time dimension using monthly data."""
     cubes = [cube[:, 0, 0, 0] for cube in timeseries_cubes_month]
-    multimodel_test(cubes, span=span, statistic='mean')
+    multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     """Test statistic without time dimension using monthly data.
 
@@ -326,23 +329,23 @@ def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
-    result = multimodel_test(cubes, span=span, statistic='mean')['mean']
+    result = multimodel_test(cubes, span=span, statistic="mean")["mean"]
     assert result.shape == (3, 2)
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_scalar_cubes(timeseries_cubes_month, span):
     """Test statistic with scalar cubes."""
     cubes = [cube[0, 0, 0, 0] for cube in timeseries_cubes_month]
 
-    result = multimodel_test(cubes, span=span, statistic='mean')['mean']
+    result = multimodel_test(cubes, span=span, statistic="mean")["mean"]
     assert result.shape == ()
-    assert result.coord('time').bounds is None
+    assert result.coord("time").bounds is None
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     """Test statistic fail on 0D and 1D time dimension using monthly data.
 
@@ -357,11 +360,11 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
 
     msg = "Tried to align cubes in multi-model statistics, but failed for cube"
     with pytest.raises(ValueError, match=msg):
-        multimodel_test(cubes, span=span, statistic='mean')
+        multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     """Test statistic fail on 0D and 1D time dimension using monthly data.
 
@@ -381,12 +384,12 @@ def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     )
     with pytest.raises(ValueError, match=msg):
         multimodel_test(
-            cubes, span=span, statistic='mean', ignore_scalar_coords=True
+            cubes, span=span, statistic="mean", ignore_scalar_coords=True
         )
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
     """Test statistic fail if only some cubes have time dimension.
 
@@ -400,7 +403,7 @@ def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
 
     # Remove time dimension for one cube
     cubes[1] = cubes[1][0]
-    cubes[1].remove_coord('time')
+    cubes[1].remove_coord("time")
 
     msg = (
         "Multi-model statistics failed to merge input cubes into a single "
@@ -408,11 +411,11 @@ def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
         "dimension."
     )
     with pytest.raises(ValueError, match=msg):
-        multimodel_test(cubes, span=span, statistic='mean')
+        multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     """Test statistic fail on different scalar time dimensions.
 
@@ -425,16 +428,16 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
     # Use different scalar time point and bounds for one cube
-    cubes[1].coord('time').points = 20.0
-    cubes[1].coord('time').bounds = [0.0, 40.0]
+    cubes[1].coord("time").points = 20.0
+    cubes[1].coord("time").bounds = [0.0, 40.0]
 
     msg = "Tried to align cubes in multi-model statistics, but failed for cube"
     with pytest.raises(ValueError, match=msg):
-        multimodel_test(cubes, span=span, statistic='mean')
+        multimodel_test(cubes, span=span, statistic="mean")
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     """Ignore different scalar time dimensions.
 
@@ -447,17 +450,17 @@ def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
     # Use different scalar time point and bounds for one cube
-    cubes[1].coord('time').points = 20.0
-    cubes[1].coord('time').bounds = [0.0, 40.0]
+    cubes[1].coord("time").points = 20.0
+    cubes[1].coord("time").bounds = [0.0, 40.0]
 
     result = multimodel_test(
-        cubes, span=span, statistic='mean', ignore_scalar_coords=True
-    )['mean']
+        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+    )["mean"]
     assert result.shape == (3, 2)
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
     """Test statistic does not fail on different scalar coords when ignored.
 
@@ -468,22 +471,22 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
-    for (idx, cube) in enumerate(cubes):
-        aux_coord = AuxCoord(0.0, var_name=f'name_{idx}')
+    for idx, cube in enumerate(cubes):
+        aux_coord = AuxCoord(0.0, var_name=f"name_{idx}")
         cube.add_aux_coord(aux_coord, ())
 
     result = multimodel_test(
-        cubes, span=span, statistic='mean', ignore_scalar_coords=True
-    )['mean']
+        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+    )["mean"]
     assert result.shape == (3, 2)
 
     # Make sure that the input cubes still contain the scalar coords
-    for (idx, cube) in enumerate(cubes):
-        assert cube.coord(var_name=f'name_{idx}', dimensions=())
+    for idx, cube in enumerate(cubes):
+        assert cube.coord(var_name=f"name_{idx}", dimensions=())
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize('span', SPAN_PARAMS)
+@pytest.mark.parametrize("span", SPAN_PARAMS)
 def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
     """Test statistic fail on different scalar coords.
 
@@ -494,8 +497,8 @@ def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
-    for (idx, cube) in enumerate(cubes):
-        aux_coord = AuxCoord(0.0, var_name=f'name_{idx}')
+    for idx, cube in enumerate(cubes):
+        aux_coord = AuxCoord(0.0, var_name=f"name_{idx}")
         cube.add_aux_coord(aux_coord, ())
 
     msg = (
@@ -503,4 +506,4 @@ def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
         "array"
     )
     with pytest.raises(ValueError, match=msg):
-        multimodel_test(cubes, span=span, statistic='mean')
+        multimodel_test(cubes, span=span, statistic="mean")

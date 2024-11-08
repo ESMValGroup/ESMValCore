@@ -1,0 +1,26 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tosStderr
+!============
+modeling_realm:    ocean
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             K
+cell_methods:      time: mean
+cell_measures:     area: areacello
+long_name:         Sea Surface Temperature Error
+comment:           
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          tosStderr
+type:              real
+valid_min:         0
+valid_max:
+ok_min_mean_abs:   0
+ok_max_mean_abs:
+!----------------------------------
+!
