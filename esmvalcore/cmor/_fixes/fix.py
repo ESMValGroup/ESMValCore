@@ -9,13 +9,14 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
-from warnings import catch_warnings, filterwarnings
 
 import dask
 import iris
 import ncdata.iris
+import ncdata.iris_xarray
 import ncdata.threadlock_sharing
 import numpy as np
+import xarray as xr
 from cf_units import Unit
 from iris.coords import Coord, CoordExtent
 from iris.cube import Cube, CubeList
@@ -32,6 +33,7 @@ from esmvalcore.cmor._utils import (
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
+from esmvalcore.preprocessor._io import _ignore_warnings
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -170,59 +172,79 @@ class Fix:
                 return cube
         raise ValueError(f'Cube for variable "{short_name}" not found')
 
-    def ncdata_to_iris(
-        self,
-        dataset: ncdata.NcData,
-        filepath: Path,
-    ) -> CubeList:
-        """Convert an :obj:`~ncdata.NcData` object to an Iris cubelist.
+    @staticmethod
+    def _get_attribute(
+        data: ncdata.NcData | ncdata.NcVariable | xr.Dataset | xr.DataArray,
+        attribute_name: str,
+    ) -> Any:
+        """Get attribute from an ncdata or xarray object."""
+        if hasattr(data, "attributes"):  # ncdata.NcData | ncdata.NcVariable
+            attribute = data.attributes[attribute_name].value
+        else:  # xr.Dataset | xr.DataArray
+            attribute = data.attrs[attribute_name]
+        return attribute
 
-        This function mimics the behaviour of
+    def dataset_to_iris(
+        self,
+        dataset: ncdata.NcData | xr.Dataset,
+        filepath: Path,
+        ignore_warnings: Optional[list[dict]] = None,
+    ) -> CubeList:
+        """Convert dataset to :class:`~iris.cube.CubeList`.
+
+        This function mimics the behavior of
         :func:`esmvalcore.preprocessor.load`.
 
         Parameters
         ----------
         dataset:
-            The :obj:`~ncdata.NcData` object to convert.
+            The dataset object to convert.
         filepath:
             The path that the dataset was loaded from.
 
         Returns
         -------
-        iris.cube.CubeList
-            :obj:`iris.cube.CubeList` containing the requested cube.
+        CubeList
+            :class:`~iris.cube.CubeList` containing the requested cubes.
+
+        Raises
+        ------
+        TypeError
+            Invalid type for ``dataset`` given.
 
         """
-        # Filter warnings
-        with catch_warnings():
-            # Ignore warnings about missing cell measures that are stored in
-            # a separate file for CMIP data.
-            filterwarnings(
-                message="Missing CF-netCDF measure variable .*",
-                category=UserWarning,
-                module="iris",
-                action="ignore",
+        if isinstance(dataset, ncdata.NcData):
+            conversion_func = ncdata.iris.to_iris
+            variables = dataset.variables
+        elif isinstance(dataset, xr.Dataset):
+            conversion_func = ncdata.iris_xarray.cubes_from_xarray
+            variables = dataset.data_vars
+        else:
+            raise TypeError(
+                f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
+                f"type {type(dataset)}"
             )
-            cubes = ncdata.iris.to_iris(dataset)
 
-        cube = self.get_cube_from_list(cubes)
+        with _ignore_warnings(ignore_warnings):
+            cubes = conversion_func(dataset)
 
         # Restore the lat/lon coordinate units that iris changes to degrees
         for coord_name in ["latitude", "longitude"]:
-            try:
-                coord = cube.coord(coord_name)
-            except iris.exceptions.CoordinateNotFoundError:
-                pass
-            else:
-                if coord.var_name in dataset.variables:
-                    nc_coord = dataset.variables[coord.var_name]
-                    coord.units = nc_coord.attributes["units"].value
+            for cube in cubes:
+                try:
+                    coord = cube.coord(coord_name)
+                except iris.exceptions.CoordinateNotFoundError:
+                    pass
+                else:
+                    if coord.var_name in variables:
+                        coord = variables[coord.var_name]
+                        coord.units = self._get_attribute(coord, "units")
 
-        # Add the source file as an attribute to support grouping by file
-        # when calling fix_metadata.
-        cube.attributes["source_file"] = str(filepath)
+                # Add the source file as an attribute to support grouping by
+                # file when calling fix_metadata.
+                cube.attributes["source_file"] = str(filepath)
 
-        return iris.cube.CubeList([cube])
+        return cubes
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
