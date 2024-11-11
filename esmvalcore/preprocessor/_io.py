@@ -49,21 +49,15 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def _load_callback(raw_cube, field, _):
-    """Use this callback to fix anything Iris tries to break."""
-    # Remove attributes that cause issues with merging and concatenation
-    _delete_attributes(
-        raw_cube, ("creation_date", "tracking_id", "history", "comment")
-    )
-    for coord in raw_cube.coords():
-        # Iris chooses to change longitude and latitude units to degrees
-        # regardless of value in file, so reinstating file value
+def _restore_lat_lon_units(cube, field, filename):  # pylint: disable=unused-argument
+    """Use this callback to restore the original lat/lon units."""
+    # Iris chooses to change longitude and latitude units to degrees
+    # regardless of value in file, so reinstating file value
+    for coord in cube.coords():
         if coord.standard_name in ["longitude", "latitude"]:
             units = _get_attr_from_field_coord(field, coord.var_name, "units")
             if units is not None:
                 coord.units = units
-        # CMOR sometimes adds a history to the coordinates.
-        _delete_attributes(coord, ("history",))
 
 
 def _delete_attributes(iris_object, atts):
@@ -73,7 +67,7 @@ def _delete_attributes(iris_object, atts):
 
 
 def load(
-    file: str | Path,
+    file: str | Path | iris.cube.Cube,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
@@ -81,7 +75,8 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded. Could be string or POSIX Path object.
+        File to be loaded. If ``file`` is already an Iris Cube, it will be
+        put in a CubeList and returned.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -97,6 +92,9 @@ def load(
     ValueError
         Cubes are empty.
     """
+    if isinstance(file, iris.cube.Cube):
+        return iris.cube.CubeList([file])
+
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
@@ -139,7 +137,7 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_load_callback)
+            raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
@@ -385,6 +383,15 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         return cubes
     if len(cubes) == 1:
         return cubes[0]
+
+    for cube in cubes:
+        # Remove attributes that cause issues with merging and concatenation
+        _delete_attributes(
+            cube, ("creation_date", "tracking_id", "history", "comment")
+        )
+        for coord in cube.coords():
+            # CMOR sometimes adds a history to the coordinates.
+            _delete_attributes(coord, ("history",))
 
     cubes = _concatenate_cubes_by_experiment(cubes)
 
