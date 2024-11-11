@@ -170,12 +170,8 @@ class UnstructuredLinearRegridder:
         src_points_with_convex_hull = self._add_convex_hull_twice(
             src_points, hull.vertices
         )
-
-        # explicitly casting to int32 since without it, in Numpy 2.0
-        # one gets OverflowError: Python integer 360 out of bounds for int8
-        # see notes https://numpy.org/devdocs/numpy_2_0_migration_guide.html
-        src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= 360
-        src_points_with_convex_hull[-n_hull:, 1] += 360
+        src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= 360.0
+        src_points_with_convex_hull[-n_hull:, 1] += 360.0
 
         # Actual weights calculation
         (weights, indices) = self._calculate_weights(
