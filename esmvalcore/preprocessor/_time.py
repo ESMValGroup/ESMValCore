@@ -632,7 +632,9 @@ def seasonal_statistics(
             cube, "time", name="clim_season", seasons=seasons
         )
     else:
-        old_seasons = sorted(set(cube.coord("clim_season").points))
+        old_seasons = sorted(
+            {str(s) for s in cube.coord("clim_season").points}
+        )
         if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
