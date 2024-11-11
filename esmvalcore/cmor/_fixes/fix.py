@@ -187,7 +187,7 @@ class Fix:
     def dataset_to_iris(
         self,
         dataset: ncdata.NcData | xr.Dataset,
-        filepath: Path,
+        filepath: str | Path,
         ignore_warnings: Optional[list[dict]] = None,
     ) -> CubeList:
         """Convert dataset to :class:`~iris.cube.CubeList`.

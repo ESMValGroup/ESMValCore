@@ -3,8 +3,10 @@
 import os
 from pathlib import Path
 
+import ncdata.iris
+import ncdata.iris_xarray
 import pytest
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
@@ -18,6 +20,7 @@ from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config import CFG
+from tests import create_realistic_4d_cube
 
 
 def test_get_fix():
@@ -205,3 +208,28 @@ def test_frequency_not_from_vardef():
     vardef = get_var_info("CMIP6", "Amon", "tas")
     fix = Fix(vardef, frequency="3hr")
     assert fix.frequency == "3hr"
+
+
+@pytest.fixture
+def dummy_cubes():
+    return CubeList([create_realistic_4d_cube()])
+
+
+@pytest.fixture
+def dummy_ncdata(dummy_cubes):
+    return ncdata.iris.from_iris(dummy_cubes)
+
+
+@pytest.fixture
+def dummy_xrdataset(dummy_cubes):
+    return ncdata.iris_xarray.cubes_to_xarray(dummy_cubes)
+
+
+def test_dataset_to_iris_ncdata(dummy_cubes, dummy_ncdata):
+    cubes = Fix(None).dataset_to_iris(dummy_ncdata, "path/to/file.nc")
+
+    cube = cubes.extract_cube("air_temperature")
+
+    assert cube.coord("latitude").units == "degrees_north"
+    assert cube.coord("longitude").units == "degrees_east"
+    assert cube.attributes["source_file"] == "path/to/file.nc"
