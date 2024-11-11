@@ -284,8 +284,6 @@ def get_grid(
     else:
         num_peri_dims = 0
 
-    # previous to numpy 2.0, a np.array(esmpy_lat.shape) was used
-    # numpy>=2.0 throws ValueError: matrix transpose with ndim<2 is undefined
     grid = esmpy.Grid(
         np.vstack(esmpy_lat.shape),
         num_peri_dims=num_peri_dims,
