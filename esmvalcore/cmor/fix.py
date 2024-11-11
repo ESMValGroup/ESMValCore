@@ -33,8 +33,9 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     frequency: Optional[str] = None,
+    ignore_warnings: Optional[list[dict]] = None,
     **extra_facets,
-) -> str | Path:
+) -> str | Path | Cube | CubeList:
     """Fix files before ESMValTool can load them.
 
     These fixes are only for issues that prevent iris from loading the cube or
@@ -62,14 +63,19 @@ def fix_file(
         Current session which includes configuration and directory information.
     frequency:
         Variable's data frequency, if available.
+    ignore_warnings:
+        Keyword arguments passed to :func:`warnings.filterwarnings` used to
+        ignore warnings during data loading. Only relevant if this function
+        returns cubes instead of a path. Each list element corresponds to one
+        call to :func:`warnings.filterwarnings`.
     **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    str or pathlib.Path
-        Path to the fixed file.
+    str | Path | Cube | CubeList:
+        Fixed cube(s) or a path to them.
 
     """
     # Update extra_facets with variable information given as regular arguments
@@ -94,7 +100,10 @@ def fix_file(
         frequency=frequency,
     ):
         file = fix.fix_file(
-            file, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
+            ignore_warnings=ignore_warnings,
         )
     return file
 

@@ -12,7 +12,13 @@ from .cesm2 import Tas as BaseTas
 class Cl(BaseCl):
     """Fixes for cl."""
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        filepath,
+        output_dir,
+        add_unique_suffix=False,
+        ignore_warnings=None,
+    ):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.

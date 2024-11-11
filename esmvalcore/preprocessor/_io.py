@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import logging
 import os
+from collections.abc import Generator, Iterable
 from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -17,7 +19,8 @@ import iris.exceptions
 import numpy as np
 import yaml
 from cf_units import suppress_errors
-from iris.cube import CubeList
+from iris.coords import Coord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
@@ -41,6 +44,7 @@ iris.FUTURE.save_split_attrs = True
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
+    """Get attribute from netCDF field coordinate."""
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()
         attr_val = [value for (key, value) in attrs if key == attr]
@@ -49,7 +53,11 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def _restore_lat_lon_units(cube, field, filename):  # pylint: disable=unused-argument
+def _restore_lat_lon_units(
+    cube,
+    field,
+    filename,
+):  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees
     # regardless of value in file, so reinstating file value
@@ -60,14 +68,56 @@ def _restore_lat_lon_units(cube, field, filename):  # pylint: disable=unused-arg
                 coord.units = units
 
 
-def _delete_attributes(iris_object, atts):
+def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
+    """Delete attributes from Iris cube or coordinate."""
     for att in atts:
         if att in iris_object.attributes:
             del iris_object.attributes[att]
 
 
+@contextlib.contextmanager
+def _ignore_warnings(
+    warnings_to_ignore: Optional[list[dict]] = None,
+) -> Generator[None]:
+    """Ignore warnings context."""
+    if warnings_to_ignore is None:
+        warnings_to_ignore = []
+
+    default_warnings_to_ignore: list[dict] = [
+        {
+            "message": "Missing CF-netCDF measure variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+        {  # iris < 3.8
+            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
+            "category": UserWarning,
+            "module": "iris",
+        },
+        {  # iris >= 3.8
+            "message": "Ignoring invalid units .* on netCDF variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+    ]
+
+    with contextlib.ExitStack() as stack:
+        # Regular warnings
+        stack.enter_context(catch_warnings())
+        for warning_kwargs in warnings_to_ignore + default_warnings_to_ignore:
+            warning_kwargs.setdefault("action", "ignore")
+            filterwarnings(**warning_kwargs)
+
+        # Suppress UDUNITS-2 error messages that cannot be ignored with
+        # warnings.filterwarnings
+        # (see https://github.com/SciTools/cf-units/issues/240)
+        stack.enter_context(suppress_errors())
+
+        yield
+
+
 def load(
-    file: str | Path | iris.cube.Cube,
+    file: str | Path | Cube | CubeList,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
@@ -75,8 +125,9 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded. If ``file`` is already an Iris Cube, it will be
-        put in a CubeList and returned.
+        File to be loaded. If ``file`` is already a :class:`~iris.cube.Cube` or
+        :class:`~iris.cube.CubeList`, this object will be returned as a
+        :class:`~iris.cube.CubeList`.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -92,52 +143,16 @@ def load(
     ValueError
         Cubes are empty.
     """
-    if isinstance(file, iris.cube.Cube):
-        return iris.cube.CubeList([file])
+    if isinstance(file, Cube):
+        return CubeList([file])
+    if isinstance(file, CubeList):
+        return file
 
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
-    if ignore_warnings is None:
-        ignore_warnings = []
-
-    # Avoid duplication of ignored warnings when load() is called more often
-    # than once
-    ignore_warnings = list(ignore_warnings)
-
-    # Default warnings ignored for every dataset
-    ignore_warnings.append(
-        {
-            "message": "Missing CF-netCDF measure variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )
-    ignore_warnings.append(
-        {
-            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )  # iris < 3.8
-    ignore_warnings.append(
-        {
-            "message": "Ignoring invalid units .* on netCDF variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )  # iris >= 3.8
-
-    # Filter warnings
-    with catch_warnings():
-        for warning_kwargs in ignore_warnings:
-            warning_kwargs.setdefault("action", "ignore")
-            filterwarnings(**warning_kwargs)
-        # Suppress UDUNITS-2 error messages that cannot be ignored with
-        # warnings.filterwarnings
-        # (see https://github.com/SciTools/cf-units/issues/240)
-        with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+    with _ignore_warnings(ignore_warnings):
+        raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
@@ -166,7 +181,7 @@ def _concatenate_cubes(cubes, check_level):
             "and derived coordinates present in the cubes.",
         )
 
-    concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
+    concatenated = CubeList(cubes).concatenate(**kwargs)
 
     return concatenated
 
@@ -186,7 +201,7 @@ class _TimesHelper:
         return self.times[key]
 
 
-def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
+def _check_time_overlaps(cubes: CubeList) -> CubeList:
     """Handle time overlaps.
 
     Parameters
@@ -205,7 +220,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
         return cubes
 
     class _TrackedCube(NamedTuple):
-        cube: iris.cube.Cube
+        cube: Cube
         times: iris.coords.DimCoord
         start: float
         end: float
@@ -217,7 +232,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
             start, end = times.core_points()[[0, -1]]
             return cls(cube, times, start, end)
 
-    new_cubes = iris.cube.CubeList()
+    new_cubes = CubeList()
     current_cube = _TrackedCube.from_cube(cubes[0])
     for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
         if new_cube.start > current_cube.end:
@@ -298,7 +313,7 @@ def _get_concatenation_error(cubes):
     """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
     try:
-        iris.cube.CubeList(cubes).concatenate_cube()
+        CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
     logger.error("Can not concatenate cubes into a single one: %s", msg)
@@ -329,9 +344,7 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def _concatenate_cubes_by_experiment(
-    cubes: list[iris.cube.Cube],
-) -> list[iris.cube.Cube]:
+def _concatenate_cubes_by_experiment(cubes: list[Cube]) -> list[Cube]:
     """Concatenate cubes by experiment.
 
     This ensures overlapping (branching) experiments are handled correctly.
@@ -342,7 +355,7 @@ def _concatenate_cubes_by_experiment(
         project["exp"] for project in FACETS.values() if "exp" in project
     }
 
-    def get_exp(cube: iris.cube.Cube) -> str:
+    def get_exp(cube: Cube) -> str:
         for key in exp_facet_names:
             if key in cube.attributes:
                 return cube.attributes[key]

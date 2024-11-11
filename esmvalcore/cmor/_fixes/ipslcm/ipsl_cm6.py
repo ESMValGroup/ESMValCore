@@ -17,7 +17,13 @@ VARNAME_KEY = "ipsl_varname"
 class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        filepath,
+        output_dir,
+        add_unique_suffix=False,
+        ignore_warnings=None,
+    ):
         """Select IPSLCM variable in filepath.
 
         This is done only if input file is a multi-variable one. This

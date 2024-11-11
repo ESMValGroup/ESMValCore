@@ -85,7 +85,8 @@ class Fix:
         filepath: Path,
         output_dir: Path,
         add_unique_suffix: bool = False,
-    ) -> str | Path:
+        ignore_warnings: Optional[list[dict]] = None,
+    ) -> str | Path | Cube | CubeList:
         """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or cannot be
@@ -100,13 +101,18 @@ class Fix:
             Output directory for fixed files.
         add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
+        ignore_warnings:
+            Keyword arguments passed to :func:`warnings.filterwarnings` used to
+            ignore warnings during data loading. Only relevant if this function
+            returns cubes instead of a path. Each list element corresponds to
+            one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------
-        str or pathlib.Path
-            Path to the corrected file. It can be different from the original
-            filepath if a fix has been applied, but if not it should be the
-            original filepath.
+        str | Path | Cube | CubeList:
+            Fixed cube(s) or a path to them. If a path is given, it can be
+            different from the original filepath if a fix has been applied, but
+            if not it should be the original filepath.
 
         """
         return filepath
