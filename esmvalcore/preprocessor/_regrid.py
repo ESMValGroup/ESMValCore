@@ -209,7 +209,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
 
     # Construct the resultant stock cube, with dummy data.
     shape = (latdata.size, londata.size)
-    dummy = np.empty(shape, dtype=np.dtype("int8"))
+    dummy = np.empty(shape, dtype=np.int32)
     coords_spec = [(lats, 0), (lons, 1)]
     cube = Cube(dummy, dim_coords_and_dims=coords_spec)
 
