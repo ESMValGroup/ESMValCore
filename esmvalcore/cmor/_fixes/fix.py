@@ -214,6 +214,11 @@ class Fix:
             The dataset object to convert.
         filepath:
             The path that the dataset was loaded from.
+        ignore_warnings:
+            Keyword arguments passed to :func:`warnings.filterwarnings` used to
+            ignore warnings during data loading. Only relevant if this function
+            returns cubes instead of a path. Each list element corresponds to
+            one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------
