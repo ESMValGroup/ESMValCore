@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
 
-# Enable lock sharing between Iris and ncdata
+# Enable lock sharing between ncdata and iris/xarray
 ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
 
 
