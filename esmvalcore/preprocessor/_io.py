@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
 import copy
 import logging
 import os
-from collections.abc import Generator, Iterable
+from collections.abc import Iterable
 from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -18,13 +17,15 @@ import iris.aux_factory
 import iris.exceptions
 import numpy as np
 import yaml
-from cf_units import suppress_errors
 from iris.coords import Coord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
-from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.iris_helpers import (
+    ignore_warnings_context,
+    merge_cube_attributes,
+)
 
 from .._task import write_ncl_settings
 
@@ -75,47 +76,6 @@ def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
             del iris_object.attributes[att]
 
 
-@contextlib.contextmanager
-def _ignore_warnings(
-    warnings_to_ignore: Optional[list[dict]] = None,
-) -> Generator[None]:
-    """Ignore warnings context."""
-    if warnings_to_ignore is None:
-        warnings_to_ignore = []
-
-    default_warnings_to_ignore: list[dict] = [
-        {
-            "message": "Missing CF-netCDF measure variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        },
-        {  # iris < 3.8
-            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
-            "category": UserWarning,
-            "module": "iris",
-        },
-        {  # iris >= 3.8
-            "message": "Ignoring invalid units .* on netCDF variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        },
-    ]
-
-    with contextlib.ExitStack() as stack:
-        # Regular warnings
-        stack.enter_context(catch_warnings())
-        for warning_kwargs in warnings_to_ignore + default_warnings_to_ignore:
-            warning_kwargs.setdefault("action", "ignore")
-            filterwarnings(**warning_kwargs)
-
-        # Suppress UDUNITS-2 error messages that cannot be ignored with
-        # warnings.filterwarnings
-        # (see https://github.com/SciTools/cf-units/issues/240)
-        stack.enter_context(suppress_errors())
-
-        yield
-
-
 def load(
     file: str | Path | Cube | CubeList,
     ignore_warnings: Optional[list[dict]] = None,
@@ -151,7 +111,7 @@ def load(
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
-    with _ignore_warnings(ignore_warnings):
+    with ignore_warnings_context(ignore_warnings):
         raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 

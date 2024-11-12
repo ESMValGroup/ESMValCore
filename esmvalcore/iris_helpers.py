@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Literal, Sequence
+import contextlib
+from collections.abc import Generator, Iterable
+from typing import Literal, Optional, Sequence
+from warnings import catch_warnings, filterwarnings
 
 import dask.array as da
 import iris
+import iris.aux_factory
 import iris.cube
+import iris.exceptions
 import iris.util
 import numpy as np
-from cf_units import Unit
+from cf_units import Unit, suppress_errors
 from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
@@ -142,7 +147,7 @@ def merge_cube_attributes(
         return
 
     # Step 1: collect all attribute values in a list
-    attributes: Dict[str, List[NetCDFAttr]] = {}
+    attributes: dict[str, list[NetCDFAttr]] = {}
     for cube in cubes:
         for attr, val in cube.attributes.items():
             attributes.setdefault(attr, [])
@@ -477,3 +482,52 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             f"'{cube.standard_name}'"
         )
     return cube
+
+
+@contextlib.contextmanager
+def ignore_warnings_context(
+    warnings_to_ignore: Optional[list[dict]] = None,
+) -> Generator[None]:
+    """Ignore warnings (context manager).
+
+    Parameters
+    ----------
+    warnings_to_ignore:
+        Additional warnings to ignore (by default, Iris warnings about missing
+        CF-netCDF measure variables and invalid units are ignored).
+
+    """
+    if warnings_to_ignore is None:
+        warnings_to_ignore = []
+
+    default_warnings_to_ignore: list[dict] = [
+        {
+            "message": "Missing CF-netCDF measure variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+        {  # iris < 3.8
+            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
+            "category": UserWarning,
+            "module": "iris",
+        },
+        {  # iris >= 3.8
+            "message": "Ignoring invalid units .* on netCDF variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+    ]
+
+    with contextlib.ExitStack() as stack:
+        # Regular warnings
+        stack.enter_context(catch_warnings())
+        for warning_kwargs in warnings_to_ignore + default_warnings_to_ignore:
+            warning_kwargs.setdefault("action", "ignore")
+            filterwarnings(**warning_kwargs)
+
+        # Suppress UDUNITS-2 error messages that cannot be ignored with
+        # warnings.filterwarnings
+        # (see https://github.com/SciTools/cf-units/issues/240)
+        stack.enter_context(suppress_errors())
+
+        yield

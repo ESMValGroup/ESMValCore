@@ -32,8 +32,11 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
-from esmvalcore.preprocessor._io import _ignore_warnings
+from esmvalcore.iris_helpers import (
+    has_unstructured_grid,
+    ignore_warnings_context,
+    safe_convert_units,
+)
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -235,7 +238,7 @@ class Fix:
                 f"type {type(dataset)}"
             )
 
-        with _ignore_warnings(ignore_warnings):
+        with ignore_warnings_context(ignore_warnings):
             cubes = conversion_func(dataset)
 
         # Restore the lat/lon coordinate units that iris changes to degrees
