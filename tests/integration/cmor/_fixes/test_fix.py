@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from iris.cube import Cube, CubeList
+from iris.warnings import IrisUnknownCellMethodWarning
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
@@ -258,6 +259,24 @@ def test_dataset_to_iris_ignore_warnings(conversion_func, dummy_cubes):
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_no_ignore_warnings(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
+    if isinstance(dataset, xr.Dataset):
+        dataset.ta.attrs["cell_methods"] = "time: invalid_method"
+    else:
+        dataset.variables["ta"].set_attrval(
+            "cell_methods", "time: invalid_method"
+        )
+
+    msg = r"NetCDF variable 'ta' contains unknown cell method 'invalid_method'"
+    with pytest.warns(IrisUnknownCellMethodWarning, match=msg):
         Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
 
 
