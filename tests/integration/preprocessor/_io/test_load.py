@@ -52,11 +52,17 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
 
-    def test_load_noop(self):
-        """Test loading an Iris cube."""
+    def test_load_cube(self):
+        """Test loading an Iris Cube."""
         cube = _create_sample_cube()
         cubes = load(cube)
-        assert [cube] == cubes
+        assert cubes == CubeList([cube])
+
+    def test_load_cubes(self):
+        """Test loading an Iris CubeList."""
+        cube = _create_sample_cube()
+        cubes = load(CubeList([cube]))
+        assert cubes == CubeList([cube])
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""
