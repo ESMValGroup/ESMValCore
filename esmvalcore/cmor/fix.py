@@ -36,17 +36,17 @@ def fix_file(
     ignore_warnings: Optional[list[dict]] = None,
     **extra_facets,
 ) -> str | Path | Cube | CubeList:
-    """Fix files before ESMValTool can load them.
+    """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-    These fixes are only for issues that prevent iris from loading the cube or
-    that cannot be fixed after the cube is loaded.
-
-    Original files are not overwritten.
+    This is mainly intended to fix errors that prevent loading the data with
+    Iris (e.g., those related to `missing_value` or `_FillValue`) or operations
+    that are more efficient with other packages (e.g., loading files with lots
+    of variables is much faster with Xarray than Iris).
 
     Parameters
     ----------
     file:
-        Path to the original file.
+        Path to the original file. Original files are not overwritten.
     short_name:
         Variable's short name.
     project:
@@ -76,6 +76,15 @@ def fix_file(
     -------
     str | Path | Cube | CubeList:
         Fixed cube(s) or a path to them.
+
+    .. warning::
+        A path should only be returned if it points to the original (unchanged)
+        file (i.e., a fix was not necessary). If a fix is necessary, this
+        function should return a :class:`~iris.cube.Cube` or
+        :class:`~iris.cube.CubeList`, which can for example be created from an
+        :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object using the
+        helper function `Fix.dataset_to_iris()`. Under no circumstances a copy
+        of the input data should be created (this is very inefficient).
 
     """
     # Update extra_facets with variable information given as regular arguments

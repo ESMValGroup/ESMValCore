@@ -89,16 +89,17 @@ class Fix:
         add_unique_suffix: bool = False,
         ignore_warnings: Optional[list[dict]] = None,
     ) -> str | Path | Cube | CubeList:
-        """Apply fixes to the files prior to creating the cube.
+        """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-        Should be used only to fix errors that prevent loading or cannot be
-        fixed in the cube (e.g., those related to `missing_value` or
-        `_FillValue`).
+        This is mainly intended to fix errors that prevent loading the data
+        with Iris (e.g., those related to `missing_value` or `_FillValue`) or
+        operations that are more efficient with other packages (e.g., loading
+        files with lots of variables is much faster with Xarray than Iris).
 
         Parameters
         ----------
         filepath:
-            File to fix.
+            File to fix. Original files should not be overwritten.
         output_dir:
             Output directory for fixed files.
         add_unique_suffix:

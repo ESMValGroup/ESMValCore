@@ -272,9 +272,11 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - ``fix_file``: apply fixes directly to a copy of the file.
-      Copying the files is costly, so only errors that prevent Iris to load the
-      file are fixed here.
+    - ``fix_file``: apply fixes before loading them with Iris.
+      This is mainly intended to fix errors that prevent loading the data with
+      Iris (e.g., those related to `missing_value` or `_FillValue`) or
+      operations that are more efficient with other packages (e.g., loading
+      files with lots of variables is much faster with Xarray than Iris).
       See :func:`esmvalcore.preprocessor.fix_file`.
 
     - ``fix_metadata``: metadata fixes are done just before concatenating the
