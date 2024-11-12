@@ -225,10 +225,10 @@ class Fix:
         """
         if isinstance(dataset, ncdata.NcData):
             conversion_func = ncdata.iris.to_iris
-            variables = dataset.variables
+            ds_coords = dataset.variables
         elif isinstance(dataset, xr.Dataset):
             conversion_func = ncdata.iris_xarray.cubes_from_xarray
-            variables = dataset.data_vars
+            ds_coords = dataset.coords
         else:
             raise TypeError(
                 f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
@@ -246,9 +246,9 @@ class Fix:
                 except iris.exceptions.CoordinateNotFoundError:
                     pass
                 else:
-                    if coord.var_name in variables:
-                        coord = variables[coord.var_name]
-                        coord.units = self._get_attribute(coord, "units")
+                    if coord.var_name in ds_coords:
+                        ds_coord = ds_coords[coord.var_name]
+                        coord.units = self._get_attribute(ds_coord, "units")
 
                 # Add the source file as an attribute to support grouping by
                 # file when calling fix_metadata.

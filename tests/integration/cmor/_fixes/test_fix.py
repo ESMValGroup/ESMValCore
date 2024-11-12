@@ -222,6 +222,11 @@ def dummy_cubes():
     return CubeList([cube])
 
 
+@pytest.fixture
+def empty_cubes():
+    return CubeList([Cube(0.0)])
+
+
 @pytest.mark.parametrize(
     "conversion_func",
     [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
@@ -241,9 +246,32 @@ def test_dataset_to_iris(conversion_func, dummy_cubes):
     assert cube.var_name == dummy_cubes[0].var_name
     assert cube.long_name == dummy_cubes[0].long_name
     assert cube.units == dummy_cubes[0].units
-    assert cube.coord("latitude").units == "degrees_north"
-    assert cube.coord("longitude").units == "degrees_east"
+    assert str(cube.coord("latitude").units) == "degrees_north"
+    assert str(cube.coord("longitude").units) == "degrees_east"
     assert cube.attributes["source_file"] == "path/to/file.nc"
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_empty_cube(conversion_func, empty_cubes):
+    dataset = conversion_func(empty_cubes)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+
+    assert cube.has_lazy_data()
+    np.testing.assert_allclose(cube.data, np.array(0.0))
+    assert cube.standard_name is None
+    assert cube.var_name == "unknown"
+    assert cube.long_name is None
+    assert cube.units == "unknown"
+    assert not cube.coords()
 
 
 @pytest.mark.parametrize(
