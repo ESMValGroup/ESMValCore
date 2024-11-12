@@ -110,9 +110,8 @@ class Fix:
             Adds a unique suffix to ``output_dir`` for thread safety.
         ignore_warnings:
             Keyword arguments passed to :func:`warnings.filterwarnings` used to
-            ignore warnings during data loading. Only relevant if this function
-            returns cubes instead of a path. Each list element corresponds to
-            one call to :func:`warnings.filterwarnings`.
+            ignore warnings during data loading. Each list element corresponds
+            to one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------
@@ -216,9 +215,8 @@ class Fix:
             The path that the dataset was loaded from.
         ignore_warnings:
             Keyword arguments passed to :func:`warnings.filterwarnings` used to
-            ignore warnings during data loading. Only relevant if this function
-            returns cubes instead of a path. Each list element corresponds to
-            one call to :func:`warnings.filterwarnings`.
+            ignore warnings during data loading. Each list element corresponds
+            to one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------
