@@ -24,7 +24,7 @@ class Test(tests.Test):
     def setUp(self):
         self.shape = (3, 2, 1)
         self.z = self.shape[0]
-        self.dtype = np.dtype("int8")
+        self.dtype = np.int32
         data = np.arange(np.prod(self.shape), dtype=self.dtype).reshape(
             self.shape
         )
