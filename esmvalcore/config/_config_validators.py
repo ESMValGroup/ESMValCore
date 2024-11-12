@@ -230,7 +230,8 @@ def validate_rootpath(value):
 
             # dask.config.merge cannot handle Paths as dict keys -> we convert
             # the validated Path back to a string and handle this downstream in
-            # local.py
+            # local.py (see
+            # https://github.com/ESMValGroup/ESMValCore/issues/2577)
             new_mapping[key] = {
                 str(validate_path(path)): validate_string(drs)
                 for path, drs in paths.items()
