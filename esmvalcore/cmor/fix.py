@@ -39,9 +39,9 @@ def fix_file(
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
     This is mainly intended to fix errors that prevent loading the data with
-    Iris (e.g., those related to `missing_value` or `_FillValue`) or operations
-    that are more efficient with other packages (e.g., loading files with lots
-    of variables is much faster with Xarray than Iris).
+    Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
+    operations that are more efficient with other packages (e.g., loading files
+    with lots of variables is much faster with Xarray than Iris).
 
     Parameters
     ----------
@@ -58,7 +58,7 @@ def fix_file(
     output_dir:
         Output directory for fixed files.
     add_unique_suffix:
-        Adds a unique suffix to `output_dir` for thread safety.
+        Adds a unique suffix to ``output_dir`` for thread safety.
     session:
         Current session which includes configuration and directory information.
     frequency:

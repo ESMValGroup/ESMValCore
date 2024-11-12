@@ -92,18 +92,19 @@ class Fix:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
-        with Iris (e.g., those related to `missing_value` or `_FillValue`) or
-        operations that are more efficient with other packages (e.g., loading
-        files with lots of variables is much faster with Xarray than Iris).
+        with Iris (e.g., those related to ``missing_value`` or ``_FillValue``)
+        or operations that are more efficient with other packages (e.g.,
+        loading files with lots of variables is much faster with Xarray than
+        Iris).
 
         Parameters
         ----------
         filepath:
-            File to fix. Original files should not be overwritten.
+            Path to the original file. Original files should not be overwritten.
         output_dir:
             Output directory for fixed files.
         add_unique_suffix:
-            Adds a unique suffix to `output_dir` for thread safety.
+            Adds a unique suffix to ``output_dir`` for thread safety.
         ignore_warnings:
             Keyword arguments passed to :func:`warnings.filterwarnings` used to
             ignore warnings during data loading. Only relevant if this function
@@ -113,9 +114,17 @@ class Fix:
         Returns
         -------
         str | Path | Cube | CubeList:
-            Fixed cube(s) or a path to them. If a path is given, it can be
-            different from the original filepath if a fix has been applied, but
-            if not it should be the original filepath.
+            Fixed cube(s) or a path to them.
+
+        .. warning::
+            A path should only be returned if it points to the original
+            (unchanged) file (i.e., a fix was not necessary). If a fix is
+            necessary, this function should return a :class:`~iris.cube.Cube`
+            or :class:`~iris.cube.CubeList`, which can for example be created
+            from an :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object
+            using the helper function `Fix.dataset_to_iris()`. Under no
+            circumstances a copy of the input data should be created (this is
+            very inefficient).
 
         """
         return filepath
