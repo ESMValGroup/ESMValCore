@@ -7,6 +7,9 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Cl,
@@ -16,6 +19,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Omon,
     Siconc,
     Tas,
+    Tasmin,
     Tos,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
@@ -420,3 +424,74 @@ def test_fgco2_fix_metadata():
 def test_siconc_fix():
     """Test fix for ``siconc``."""
     assert Siconc is SiconcFixScalarCoord
+
+
+class TestTasmin(unittest.TestCase):
+    """Test tasmin fixes."""
+
+    def setUp(self):
+        """Prepare tests."""
+        wrong_time_coord = AuxCoord(
+            points=[1.0, 2.0, 1.0, 2.0, 3.0],
+            var_name="time",
+            standard_name="time",
+            units="days since 1850-01-01",
+        )
+
+        correct_time_coord = AuxCoord(
+            points=[1.0, 2.0, 3.0],
+            var_name="time",
+            standard_name="time",
+            units="days since 1850-01-01",
+        )
+
+        lat_coord = DimCoord(
+            [0.0],
+            standard_name="latitude",
+            var_name="lat",
+        )
+
+        lon_coord = DimCoord(
+            [0.0],
+            standard_name="longitude",
+            var_name="lon",
+        )
+
+        self.time_coord = correct_time_coord
+        self.wrong_cube = CubeList(
+            [Cube(np.ones((5, 1, 1)), var_name="tasmin", units="K")]
+        )
+        self.wrong_cube[0].add_aux_coord(wrong_time_coord, 0)
+        self.wrong_cube[0].add_dim_coord(lat_coord, 1)
+        self.wrong_cube[0].add_dim_coord(lon_coord, 2)
+        self.correct_cube = CubeList(
+            [Cube(np.ones(3), var_name="tasmin", units="K")]
+        )
+        self.correct_cube[0].add_aux_coord(correct_time_coord, 0)
+
+        self.fix = Tasmin(None)
+
+    def test_get(self):
+        """Test fix get."""
+        self.assertListEqual(
+            Fix.get_fixes("CMIP6", "NCAR", "day", "tasmin"),
+            [Tasmin(None)],
+        )
+
+    def test_tasmin_fix_metadata(self):
+        """Test metadata fix."""
+        out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
+        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+
+        time = out_wrong_cube[0].coord("time")
+        assert time == self.time_coord
+
+        time = out_correct_cube[0].coord("time")
+        assert time == self.time_coord
+
+    def test_tasmin_fix_metadata_no_time(self):
+        """Test metadata fix with no time coord."""
+        self.correct_cube[0].remove_coord("time")
+        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+        with self.assertRaises(CoordinateNotFoundError):
+            out_correct_cube[0].coord("time")
