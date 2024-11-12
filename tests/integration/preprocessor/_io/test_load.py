@@ -10,7 +10,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.preprocessor._io import load
+from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 
 
 def _create_sample_cube():
@@ -71,6 +71,13 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
         self.assertEqual(cube.coord("latitude").units, "degrees_north")
+
+    def test_get_attr_from_field_coord_none(self):
+        """Test ``_get_attr_from_field_coord``."""
+        attr = _get_attr_from_field_coord(
+            unittest.mock.sentinel.ncfield, None, "attr"
+        )
+        assert attr is None
 
     @unittest.mock.patch("iris.load_raw", autospec=True)
     def test_fail_empty_cubes(self, mock_load_raw):
