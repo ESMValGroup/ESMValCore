@@ -10,7 +10,11 @@ from iris.util import reverse
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.table import CMOR_TABLES
-from esmvalcore.iris_helpers import date2num, has_unstructured_grid
+from esmvalcore.iris_helpers import (
+    date2num,
+    has_unstructured_grid,
+    safe_convert_units,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +243,10 @@ class Pr(Fix):
             multiply_with_density(cube)
 
         return cubes
+
+
+class Prc(Pr):
+    """Fix for Prc."""
 
 
 class Prsn(Fix):
@@ -554,10 +562,6 @@ class AllVars(Fix):
             coord.points = 0.5 * (start + end)
             coord.bounds = np.column_stack([start, end])
 
-    def _fix_units(self, cube):
-        """Fix units."""
-        cube.convert_units(self.vardef.units)
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = iris.cube.CubeList()
@@ -567,7 +571,7 @@ class AllVars(Fix):
                 cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
             cube = self._fix_coordinates(cube)
-            self._fix_units(cube)
+            cube = safe_convert_units(cube, self.vardef.units)
             cube.data = cube.core_data().astype("float32")
             year = datetime.datetime.now().year
             cube.attributes["comment"] = (
