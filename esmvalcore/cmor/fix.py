@@ -43,6 +43,16 @@ def fix_file(
     operations that are more efficient with other packages (e.g., loading files
     with lots of variables is much faster with Xarray than Iris).
 
+    Warning
+    -------
+    A path should only be returned if it points to the original (unchanged)
+    file (i.e., a fix was not necessary). If a fix is necessary, this function
+    should return a :class:`~iris.cube.Cube` or :class:`~iris.cube.CubeList`,
+    which can for example be created from an :class:`~ncdata.NcData` or
+    :class:`~xarray.Dataset` object using the helper function
+    `Fix.dataset_to_iris()`. Under no circumstances a copy of the input data
+    should be created (this is very inefficient).
+
     Parameters
     ----------
     file:
@@ -65,9 +75,8 @@ def fix_file(
         Variable's data frequency, if available.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
-        ignore warnings during data loading. Only relevant if this function
-        returns cubes instead of a path. Each list element corresponds to one
-        call to :func:`warnings.filterwarnings`.
+        ignore warnings during data loading. Each list element corresponds to
+        one call to :func:`warnings.filterwarnings`.
     **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -76,15 +85,6 @@ def fix_file(
     -------
     str | Path | Cube | CubeList:
         Fixed cube(s) or a path to them.
-
-    .. warning::
-        A path should only be returned if it points to the original (unchanged)
-        file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~iris.cube.Cube` or
-        :class:`~iris.cube.CubeList`, which can for example be created from an
-        :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object using the
-        helper function `Fix.dataset_to_iris()`. Under no circumstances a copy
-        of the input data should be created (this is very inefficient).
 
     """
     # Update extra_facets with variable information given as regular arguments

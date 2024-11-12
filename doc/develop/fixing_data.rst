@@ -127,8 +127,8 @@ Next we must choose the method to use between the ones offered by the
 Fix class:
 
 - ``fix_file``: you need to fix errors that prevent loading the data with Iris
-    or perform operations that are more efficient with other packages (e.g.,
-    loading files with lots of variables is much faster with Xarray than Iris).
+  or perform operations that are more efficient with other packages (e.g.,
+  loading files with lots of variables is much faster with Xarray than Iris).
 
 - ``fix_metadata``: you want to change something in the cube that is not
   the data (e.g., variable or coordinate names, data units).

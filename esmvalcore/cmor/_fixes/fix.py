@@ -100,6 +100,16 @@ class Fix:
         loading files with lots of variables is much faster with Xarray than
         Iris).
 
+        Warning
+        -------
+        A path should only be returned if it points to the original (unchanged)
+        file (i.e., a fix was not necessary). If a fix is necessary, this
+        function should return a :class:`~iris.cube.Cube` or
+        :class:`~iris.cube.CubeList`, which can for example be created from an
+        :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object using the
+        helper function `Fix.dataset_to_iris()`. Under no circumstances a copy
+        of the input data should be created (this is very inefficient).
+
         Parameters
         ----------
         filepath:
@@ -117,16 +127,6 @@ class Fix:
         -------
         str | Path | Cube | CubeList:
             Fixed cube(s) or a path to them.
-
-        .. warning::
-            A path should only be returned if it points to the original
-            (unchanged) file (i.e., a fix was not necessary). If a fix is
-            necessary, this function should return a :class:`~iris.cube.Cube`
-            or :class:`~iris.cube.CubeList`, which can for example be created
-            from an :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object
-            using the helper function `Fix.dataset_to_iris()`. Under no
-            circumstances a copy of the input data should be created (this is
-            very inefficient).
 
         """
         return filepath
