@@ -5,6 +5,7 @@ from pathlib import Path
 
 import ncdata.iris
 import ncdata.iris_xarray
+import numpy as np
 import pytest
 from iris.cube import Cube, CubeList
 
@@ -212,24 +213,36 @@ def test_frequency_not_from_vardef():
 
 @pytest.fixture
 def dummy_cubes():
-    return CubeList([create_realistic_4d_cube()])
+    cube = create_realistic_4d_cube()
+    cube.data = cube.lazy_data()
+    return CubeList([cube])
 
 
-@pytest.fixture
-def dummy_ncdata(dummy_cubes):
-    return ncdata.iris.from_iris(dummy_cubes)
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
 
-
-@pytest.fixture
-def dummy_xrdataset(dummy_cubes):
-    return ncdata.iris_xarray.cubes_to_xarray(dummy_cubes)
-
-
-def test_dataset_to_iris_ncdata(dummy_cubes, dummy_ncdata):
-    cubes = Fix(None).dataset_to_iris(dummy_ncdata, "path/to/file.nc")
+    cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
 
     cube = cubes.extract_cube("air_temperature")
-
+    assert cube.has_lazy_data()
+    np.testing.assert_allclose(cube.data, dummy_cubes[0].data)
+    assert cube.standard_name == dummy_cubes[0].standard_name
+    assert cube.var_name == dummy_cubes[0].var_name
+    assert cube.long_name == dummy_cubes[0].long_name
+    assert cube.units == dummy_cubes[0].units
     assert cube.coord("latitude").units == "degrees_north"
     assert cube.coord("longitude").units == "degrees_east"
     assert cube.attributes["source_file"] == "path/to/file.nc"
+
+
+def test_dataset_to_iris_invalid_type_fail():
+    msg = (
+        r"Expected type ncdata.NcData or xr.Dataset for dataset, got type "
+        r"<class 'int'>"
+    )
+    with pytest.raises(TypeError, match=msg):
+        Fix(None).dataset_to_iris(1, "path/to/file.nc")

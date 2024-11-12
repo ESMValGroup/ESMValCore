@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
 
 # Enable lock sharing between Iris and ncdata
-ncdata.threadlock_sharing.enable_lockshare(iris=True)
+ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
 
 
 class Fix:
