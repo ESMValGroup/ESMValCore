@@ -1,12 +1,14 @@
 """Integration tests for fixes."""
 
 import os
+import warnings
 from pathlib import Path
 
 import ncdata.iris
 import ncdata.iris_xarray
 import numpy as np
 import pytest
+import xarray as xr
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
@@ -214,6 +216,7 @@ def test_frequency_not_from_vardef():
 @pytest.fixture
 def dummy_cubes():
     cube = create_realistic_4d_cube()
+    cube.remove_ancillary_variable(cube.ancillary_variables()[0])
     cube.data = cube.lazy_data()
     return CubeList([cube])
 
@@ -225,9 +228,12 @@ def dummy_cubes():
 def test_dataset_to_iris(conversion_func, dummy_cubes):
     dataset = conversion_func(dummy_cubes)
 
-    cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
 
-    cube = cubes.extract_cube("air_temperature")
+    assert len(cubes) == 1
+    cube = cubes[0]
     assert cube.has_lazy_data()
     np.testing.assert_allclose(cube.data, dummy_cubes[0].data)
     assert cube.standard_name == dummy_cubes[0].standard_name
@@ -237,6 +243,22 @@ def test_dataset_to_iris(conversion_func, dummy_cubes):
     assert cube.coord("latitude").units == "degrees_north"
     assert cube.coord("longitude").units == "degrees_east"
     assert cube.attributes["source_file"] == "path/to/file.nc"
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_ignore_warnings(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
+    if isinstance(dataset, xr.Dataset):
+        dataset.ta.attrs["units"] = "invalid_units"
+    else:
+        dataset.variables["ta"].attributes["units"] = "invalid_units"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
 
 
 def test_dataset_to_iris_invalid_type_fail():
