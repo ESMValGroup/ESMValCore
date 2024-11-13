@@ -12,7 +12,7 @@ from esmvalcore.cmor.table import get_var_info
 
 @pytest.fixture
 def generic_fix():
-    """Generic fix object."""
+    """Create a GenericFix object."""
     vardef = get_var_info("CMIP6", "CFmon", "ta")
     extra_facets = {"short_name": "ta", "project": "CMIP6", "dataset": "MODEL"}
     return GenericFix(vardef, extra_facets=extra_facets)

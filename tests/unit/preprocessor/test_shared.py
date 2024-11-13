@@ -185,7 +185,7 @@ def test_aggregator_accept_weights(aggregator, result):
 
 @preserve_float_dtype
 def _dummy_func(obj, arg, kwarg=2.0):
-    """Dummy function to test `preserve_float_dtype`."""
+    """Compute something to test `preserve_float_dtype`."""
     obj = obj * arg * kwarg
     if isinstance(obj, Cube):
         obj.data = obj.core_data().astype(np.float64)

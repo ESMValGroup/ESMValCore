@@ -210,7 +210,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
 
     # Construct the resultant stock cube, with dummy data.
     shape = (latdata.size, londata.size)
-    dummy = np.empty(shape, dtype=np.dtype("int8"))
+    dummy = np.empty(shape, dtype=np.int32)
     coords_spec = [(lats, 0), (lons, 1)]
     cube = Cube(dummy, dim_coords_and_dims=coords_spec)
 
@@ -589,7 +589,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
             "version 2.11.0, ESMValCore is able to determine the most "
             "suitable regridding scheme based on the input data."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         scheme = "nearest"
 
     if scheme == "linear_extrapolate":
@@ -602,7 +602,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
             "latest/recipe/preprocessor.html#generic-regridding-schemes)."
             "This is an exact replacement."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         scheme = "linear"
         loaded_scheme = Linear(extrapolation_mode="extrapolate")
         logger.debug("Loaded regridding scheme %s", loaded_scheme)

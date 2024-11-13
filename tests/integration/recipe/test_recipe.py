@@ -569,7 +569,6 @@ def test_default_preprocessor_custom_order(
     tmp_path, patched_datafinder, session
 ):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         preprocessors:
           default_custom_order:
@@ -631,7 +630,6 @@ def test_invalid_preprocessor(tmp_path, patched_datafinder, session):
 
 def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         datasets:
           - dataset: HadGEM3-GC31-LL
@@ -1750,7 +1748,7 @@ def test_extract_shape_raises(
 def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
-    for i, product in enumerate(products):
+    for product in products:
         settings = product.settings.get(preprocessor)
         if settings:
             output_products = settings["output_products"]
@@ -1760,7 +1758,7 @@ def _test_output_product_consistency(products, preprocessor, statistics):
                     product_out[identifier, statistic].append(preproc_file)
 
     # Make sure that output products are consistent
-    for (identifier, statistic), value in product_out.items():
+    for (_, statistic), value in product_out.items():
         assert statistic in statistics
         assert len(set(value)) == 1, "Output products are not equal"
 
@@ -1908,7 +1906,7 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
 
     assert len(product_out) == len(statistics)
     assert "OBS" not in product_out
-    for id, prods in product_out:
+    for id, _ in product_out:
         assert id != "OBS"
         assert id == "CMIP5"
     task._initialize_product_provenance()

@@ -233,8 +233,10 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region_mean(self):
-        """Test for extracting a region and performing the area mean of a 2D
-        field."""
+        """Test for extracting a region and performing the area mean.
+
+        Use a 2D field.
+        """
         cube = guess_bounds(self.grid, ["longitude", "latitude"])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -1343,7 +1345,7 @@ def test_update_shapefile_path_abs(session, tmp_path):
 
     # Test with Path and str object
     for shapefile_in in (shapefile, str(shapefile)):
-        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        shapefile_out = _update_shapefile_path(shapefile_in, session=session)
         assert isinstance(shapefile_out, Path)
         assert shapefile_out == shapefile
 

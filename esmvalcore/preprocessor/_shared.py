@@ -95,7 +95,7 @@ def get_iris_aggregator(
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"
-        )
+        ) from exc
 
     return (aggregator, aggregator_kwargs)
 

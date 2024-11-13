@@ -1,8 +1,4 @@
-"""
-Unit tests for the :func:`esmvalcore.preprocessor.regrid._create_cube`
-function.
-
-"""
+"""Unit tests for :func:`esmvalcore.preprocessor.regrid._create_cube`."""
 
 import unittest
 
@@ -16,7 +12,7 @@ from tests.unit.preprocessor._regrid import _make_cube, _make_vcoord
 class Test(tests.Test):
     def setUp(self):
         shape = (3, 2, 1)
-        self.dtype = np.dtype("int8")
+        self.dtype = np.int32
         self.cube = _make_cube(shape, dtype=self.dtype)
 
     def test_invalid_shape__data_mismatch_with_levels(self):
