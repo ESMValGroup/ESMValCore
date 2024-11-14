@@ -107,8 +107,8 @@ class Fix:
         function should return a :class:`~iris.cube.Cube` or
         :class:`~iris.cube.CubeList`, which can for example be created from an
         :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object using the
-        helper function `Fix.dataset_to_iris()`. Under no circumstances a copy
-        of the input data should be created (this is very inefficient).
+        helper function ``Fix.dataset_to_iris()``. Under no circumstances a
+        copy of the input data should be created (this is very inefficient).
 
         Parameters
         ----------
