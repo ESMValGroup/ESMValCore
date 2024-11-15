@@ -151,8 +151,8 @@ BAD_TIMERANGES = [
         "199035345/19923463164526",
         "Invalid value encountered for `timerange`. Valid value must follow "
         "ISO 8601 standard for dates and duration periods, or be set to '*' "
-        "to load available years. Got ['199035345', '19923463164526'] instead.\n"
-        "Unrecognised ISO 8601 date format: '199035345'",
+        "to load available years. Got ['199035345', '19923463164526'] instead."
+        "\nUnrecognised ISO 8601 date format: '199035345'",
     ),
     (
         "P11Y/P42Y",
