@@ -80,4 +80,10 @@ def get_distributed_client():
         if client is not None:
             client.close()
         if cluster is not None:
-            cluster.close()
+            try:
+                cluster.close()
+            except TimeoutError:
+                logger.warning(
+                    "Failed to shut down the cluster at %s",
+                    cluster.scheduler_address,
+                )
