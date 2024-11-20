@@ -479,6 +479,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 paths = {p: structure for p in paths}
             sources: list[DataSource] = []
             for path, structure in paths.items():
+                path = Path(path)
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
