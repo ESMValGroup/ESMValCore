@@ -15,15 +15,15 @@ from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
 from tests import PreprocessorFile
 
 
-def assert_allclose(array_1, array_2):
+def assert_allclose(array_1, array_2, rtol=1e-7):
     """Assert that (masked) array 1 is close to (masked) array 2."""
     if np.ma.is_masked(array_1) or np.ma.is_masked(array_2):
         mask_1 = np.ma.getmaskarray(array_1)
         mask_2 = np.ma.getmaskarray(array_2)
         np.testing.assert_equal(mask_1, mask_2)
-        np.testing.assert_allclose(array_1[~mask_1], array_2[~mask_2])
+        np.testing.assert_allclose(array_1[~mask_1], array_2[~mask_2], rtol)
     else:
-        np.testing.assert_allclose(array_1, array_2)
+        np.testing.assert_allclose(array_1, array_2, rtol)
 
 
 def products_set_to_dict(products):
@@ -473,7 +473,10 @@ def test_distance_metric(
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
     assert not out_cube.has_lazy_data()
-    assert_allclose(out_cube.data, ref_data)
+    # an rtol=1e-6 is needed for numpy >=2.0
+    assert_allclose(
+        out_cube.data, np.array(ref_data, dtype=np.float32), rtol=1e-6
+    )
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -684,7 +687,8 @@ def test_distance_metric_masked_data(
         expected_data = np.ma.masked_invalid(data)
     else:
         expected_data = np.array(data, dtype=np.float32)
-    assert_allclose(out_cube.data, expected_data)
+    # an rtol=1e-6 is needed for numpy >=2.0
+    assert_allclose(out_cube.data, expected_data, rtol=1e-6)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None

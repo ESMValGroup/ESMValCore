@@ -176,8 +176,8 @@ def generate_validator_testcases(valid):
                     },
                     {
                         "CMIP6": {
-                            Path("/a"): "DKRZ",
-                            Path("/b"): "ESGF",
+                            "/a": "DKRZ",
+                            "/b": "ESGF",
                         },
                     },
                 ),

@@ -170,8 +170,9 @@ class UnstructuredLinearRegridder:
         src_points_with_convex_hull = self._add_convex_hull_twice(
             src_points, hull.vertices
         )
-        src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= 360
-        src_points_with_convex_hull[-n_hull:, 1] += 360
+        lon_period = np.array(360, dtype=src_points_with_convex_hull.dtype)
+        src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= lon_period
+        src_points_with_convex_hull[-n_hull:, 1] += lon_period
 
         # Actual weights calculation
         (weights, indices) = self._calculate_weights(
