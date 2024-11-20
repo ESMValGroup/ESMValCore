@@ -175,6 +175,10 @@ class Pr(Fix):
         return cubes
 
 
+class Prc(Pr):
+    """Fix for Prc."""
+
+
 class Prsn(Fix):
     """Fixes for prsn."""
 

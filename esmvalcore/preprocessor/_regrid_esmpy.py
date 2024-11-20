@@ -283,8 +283,9 @@ def get_grid(
         num_peri_dims = 1
     else:
         num_peri_dims = 0
+
     grid = esmpy.Grid(
-        np.array(esmpy_lat.shape),
+        np.vstack(esmpy_lat.shape),
         num_peri_dims=num_peri_dims,
         staggerloc=[esmpy.StaggerLoc.CENTER],
     )

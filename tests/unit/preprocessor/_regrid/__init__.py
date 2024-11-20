@@ -11,7 +11,7 @@ from iris.coords import AuxCoord, CellMethod, DimCoord
 def _make_vcoord(data, dtype=None):
     """Create a synthetic test vertical coordinate."""
     if dtype is None:
-        dtype = np.dtype("int8")
+        dtype = np.int32
 
     if isinstance(data, int):
         data = np.arange(data, dtype=dtype)
@@ -45,7 +45,7 @@ def _make_cube(
 ):
     """Create a 3d synthetic test cube."""
     if dtype is None:
-        dtype = np.dtype("int8")
+        dtype = np.int32
 
     if not isinstance(data, np.ndarray):
         data = np.empty(data, dtype=dtype)
