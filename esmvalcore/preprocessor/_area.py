@@ -866,7 +866,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     for measure in cube.cell_measures():
         # Cell measures that are time-dependent, with 4 dimension and
         # an original shape of (time, depth, lat, lon), need to be
-        # broadcasted to the cube with 5 dimensions and shape
+        # broadcast to the cube with 5 dimensions and shape
         # (time, shape_id, depth, lat, lon)
         if measure.ndim > 3 and result.ndim > 4:
             data = measure.core_data()
