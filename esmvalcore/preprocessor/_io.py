@@ -487,32 +487,37 @@ def write_metadata(products, write_ncl=False):
             metadata[product.filename] = product.attributes
 
             ######################### start of custom code
-            cube_attr_ds = []
-            for c in product.cubes:
-                cube_attrs_ = {}
-                for ckey,cattr in c.attributes.items():
-                    if type(cattr) is str: cube_attrs_[ckey] = cattr
-                cube_attr_ds.append( cube_attrs_ )
-            # product.attributes['cube_attributes'] = cube_attrs
-            # copy unique entries to dataset attributes, if not already there
-            cube_attr_d_keys = list(set( [  k for d in cube_attr_ds for k in list(d.keys()) ] ))
-            for attr_key in cube_attr_d_keys:
-                if product.attributes.get(attr_key): continue # skip if already recorded
+            
+            try:
+                cube_attr_ds = []
+                for c in product.cubes:
+                    cube_attrs_ = {}
+                    for ckey,cattr in c.attributes.items():
+                        if type(cattr) is str: cube_attrs_[ckey] = cattr
+                    cube_attr_ds.append( cube_attrs_ )
+                # product.attributes['cube_attributes'] = cube_attrs
+                # copy unique entries to dataset attributes, if not already there
+                cube_attr_d_keys = list(set( [  k for d in cube_attr_ds for k in list(d.keys()) ] ))
+                for attr_key in cube_attr_d_keys:
+                    if product.attributes.get(attr_key): continue # skip if already recorded
 
-                # get list of attributes
-                attrs = []
-                for d in cube_attr_ds:
-                    if d.get(attr_key) and isinstance( d.get(attr_key), list ):
-                        attrs += d.get(attr_key)
-                    else:
-                        attrs.append( d.get(attr_key) )
+                    # get list of attributes
+                    attrs = []
+                    for d in cube_attr_ds:
+                        if d.get(attr_key) and isinstance( d.get(attr_key), list ):
+                            attrs += d.get(attr_key)
+                        else:
+                            attrs.append( d.get(attr_key) )
 
-                try: # record unique attributes only
-                    unique_attrs = list(set( attrs ))
-                    if (len(unique_attrs)==1):
-                        product.attributes[attr_key] = unique_attrs[0]
-                except Exception as e:
-                    pass
+                    try: # record unique attributes only
+                        unique_attrs = list(set( attrs ))
+                        if (len(unique_attrs)==1):
+                            product.attributes[attr_key] = unique_attrs[0]
+                    except Exception as e:
+                        pass
+            except TypeError:
+                # product.cubes is null
+                pass
 
             ######################### end of custom code
 
