@@ -532,14 +532,10 @@ def apply_mask(
         The mask to apply to array.
     array:
         The array to mask out.
-    dim_map : :class:`list`, :class:`tuple` etc
+    dim_map :
         A mapping of the dimensions of *mask* to their corresponding
-        dimension in *array*. *dim_map* must be the same length as the
-        number of dimensions in *mask*. Each element of *dim_map*
-        corresponds to a dimension of *mask* and its value provides
-        the index in *array* which the dimension of *mask* corresponds
-        to, so the first element of *dim_map* gives the index of *array*
-        that corresponds to the first dimension of *mask* etc.
+        dimension in *array*.
+        See :func:`iris.util.broadcast_to_shape` for additional details.
 
     Returns
     -------
