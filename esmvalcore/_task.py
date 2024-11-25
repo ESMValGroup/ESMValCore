@@ -12,6 +12,7 @@ import sys
 import textwrap
 import threading
 import time
+import importlib
 from copy import deepcopy
 from multiprocessing import Pool
 from pathlib import Path, PosixPath
@@ -395,9 +396,7 @@ class DiagnosticTask(BaseTask):
                 "No local diagnostic script found. Attempting to load the script from the base repository."
             )
             # Check if esmvaltool package is available
-            try:
-                import esmvaltool
-            except ImportError:
+            if importlib.util.find_spec("esmvaltool") is None:
                 raise ImportError(
                     "The 'esmvaltool' package cannot be found. Please ensure it is installed."
                 )
