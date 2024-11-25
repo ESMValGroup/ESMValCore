@@ -13,6 +13,7 @@ import textwrap
 import threading
 import time
 import importlib
+import warnings
 from copy import deepcopy
 from multiprocessing import Pool
 from pathlib import Path, PosixPath
@@ -397,7 +398,7 @@ class DiagnosticTask(BaseTask):
             )
             # Check if esmvaltool package is available
             if importlib.util.find_spec("esmvaltool") is None:
-                raise ImportError(
+                warnings.warn(
                     "The 'esmvaltool' package cannot be found. Please ensure it is installed."
                 )
 
