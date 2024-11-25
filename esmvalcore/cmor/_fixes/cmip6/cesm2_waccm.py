@@ -5,10 +5,11 @@ import numpy as np
 from netCDF4 import Dataset
 
 from ..common import SiconcFixScalarCoord
+from ..fix import Fix
+from ..shared import add_scalar_height_coord
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
-from .cesm2 import Tas as BaseTas
 
 
 class Cl(BaseCl):
@@ -66,14 +67,11 @@ Omon = BaseOmon
 Siconc = SiconcFixScalarCoord
 
 
-Tas = BaseTas
-
-
-class Tasmin(Tas):
-    """Fixes for tasmin."""
+class Pr(Fix):
+    """Fixes for pr."""
 
     def fix_metadata(self, cubes):
-        """Fix time coordinate.
+        """Fix time coordinates.
 
         Parameters
         ----------
@@ -82,8 +80,7 @@ class Tasmin(Tas):
 
         Returns
         -------
-        iris.cube.CubeList
-
+        iris.cube.CubeList, iris.cube.CubeList
         """
         new_list = iris.cube.CubeList()
         for cube in cubes:
@@ -142,5 +139,56 @@ class Tasmin(Tas):
                     )
 
                     new_list.append(tmp_cube)
-
         return new_list
+
+
+class Tas(Pr):
+    """Fixes for tas."""
+
+
+class Tasmin(Pr):
+    """Fixes for tasmin."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList, iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
+
+        return cubes
+
+
+class Tasmax(Pr):
+    """Fixes for tasmax."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList, iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
+
+        return cubes
