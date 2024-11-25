@@ -24,6 +24,7 @@ class Cl(Fix):
         filepath,
         output_dir,
         add_unique_suffix=False,
+        ignore_warnings=None,
     ):
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(

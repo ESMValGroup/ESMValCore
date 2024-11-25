@@ -25,6 +25,7 @@ dependencies:
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
   - nc-time-axis
+  - ncdata
   - nested-lookup
   - netcdf4
   - numpy !=1.24.3
