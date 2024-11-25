@@ -5,10 +5,10 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.coords import DimCoord, AuxCoord
 from iris.cube import Cube, CubeList
 
-import esmvalcore.cmor._fixes.access.access_esm1_5
+import esmvalcore.cmor._fixes.access.access_esm1_5 
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
@@ -27,11 +27,11 @@ time_coord = DimCoord(
 )
 
 time_ocn_coord = DimCoord(
-    [1,2,3,4,5,6,7,8,9,10,11,12],
+    [int(i) for i in range(1,13)],
     standard_name = 'time',
     var_name = 'time',
     long_name = 'time',
-    units = Unit('days since 0000-01-01'),
+    units = Unit('days since 0000-01-01', calendar='noleap'),
     attributes = {
         'calendar_type': 'GREGORIAN',
         'cartesian_axis':  'T'
@@ -39,7 +39,7 @@ time_ocn_coord = DimCoord(
 )
 
 lat_ocn_coord = DimCoord(
-    [0,180],
+    np.linspace(-90,210,300),
     standard_name ='latitude',
     long_name ='tcell latitude',
     var_name ='yt_ocean',
@@ -50,7 +50,7 @@ lat_ocn_coord = DimCoord(
 )
 
 lon_ocn_coord = DimCoord(
-    [0,360],
+    np.linspace(-90,270,360),
     standard_name ='longitude',
     long_name ='tcell longitude',
     var_name ='xt_ocean',
@@ -61,7 +61,7 @@ lon_ocn_coord = DimCoord(
 )
 
 depth_ocn_coord =  DimCoord(
-    [0,1],
+    [0, 1],
     long_name = 'tcell zstar depth',
     var_name = 'st_ocean',
     units = 'meter', 
@@ -73,7 +73,7 @@ depth_ocn_coord =  DimCoord(
 )
 
 lat_ocn_aux_coord = AuxCoord(
-    [-91,91],
+    da.arange(300 * 360, dtype=np.float32).reshape(300, 360),
     standard_name ='latitude',
     long_name ='tracer latitude',
     var_name ='geolat_t',
@@ -83,7 +83,7 @@ lat_ocn_aux_coord = AuxCoord(
 )
 
 lon_ocn_aux_coord = AuxCoord(
-    [-281,361],
+    da.arange(300 * 360, dtype=np.float32).reshape(300, 360),
     standard_name ='longitude',
     long_name ='tracer longitude',
     var_name ='geolon_t',
@@ -541,45 +541,48 @@ def test_tos_fix():
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, 0),
-        (lon_ocn_aux_coord, 1),
+        (lat_ocn_aux_coord, (1, 2)),
+        (lon_ocn_aux_coord, (1, 2)),
     ]
 
     cube_tos= Cube(
-        da.arange(12 * 2 * 2, dtype=np.float32).reshape(12, 2, 2),
+        da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
         var_name='sst',
-        units='degrees K',
+        units=Unit('degrees K'),
         dim_coords_and_dims=coord_dim,
         aux_coords_and_dims=coord_aux,
         attributes={},
     )
 
     cubes_tos=CubeList([cube_tos])
-    fix = get_fix('Amon', 'mon', 'tos')
-    fixed_cubes=fix.fix_metadata(cubes_tos)
+    fix_tos = get_fix('Omon', 'mon', 'tos')
+    fix_allvar = get_fix_allvar('Omon', 'mon', 'tos')
+    fixed_cubes = fix_tos.fix_metadata(cubes_tos)
+    print(fixed_cubes)
+    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube=check_tos_metadata(fixed_cubes)
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
-    assert fixed_cube.shape == (12, 2, 2)
+    assert fixed_cube.shape == (12, 300, 360)
 
 
 def test_so_fix():
     """Test fix 'so'"""
     coord_dim = [
         (time_ocn_coord, 0),
-        (depth_ocn_coord, 1)
+        (depth_ocn_coord, 1),
         (lat_ocn_coord, 2),
         (lon_ocn_coord, 3),
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, 0),
-        (lon_ocn_aux_coord, 1),
+        (lat_ocn_aux_coord, (2, 3)),
+        (lon_ocn_aux_coord, (2, 3)),
     ]
 
     cube_so= Cube(
-        da.arange(12 * 2 * 2 * 2, dtype=np.float32).reshape(12, 2, 2, 2),
+        da.arange(12 * 2 * 300 * 360, dtype=np.float32).reshape(12, 2, 300, 360),
         var_name='salt',
         units='unknown',
         dim_coords_and_dims=coord_dim,
@@ -589,14 +592,17 @@ def test_so_fix():
         },
     )
 
-    cubes_tos=CubeList([cube_so])
-    fix = get_fix('Amon', 'mon', 'so')
-    fixed_cubes=fix.fix_metadata(cubes_tos)
+    cubes_so=CubeList([cube_so])
+    fix_so = get_fix('Omon', 'mon', 'so')
+    fix_allvar = get_fix_allvar('Omon', 'mon', 'so')
+    fixed_cubes = fix_so.fix_metadata(cubes_so)
+    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube=check_so_metadata(fixed_cubes)
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
-    assert fixed_cube.shape == (12, 2, 2, 2)
+    assert fixed_cube.shape == (12, 2, 300, 360)
+
 
 
 
