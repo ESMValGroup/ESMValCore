@@ -43,7 +43,7 @@ lat_ocn_coord = DimCoord(
     standard_name ='latitude',
     long_name ='tcell latitude',
     var_name ='yt_ocean',
-    untis = 'degrees_N',
+    units = 'degrees_N',
     attributes = {
         'cartesian_axis' :'Y',
     }
@@ -54,7 +54,7 @@ lon_ocn_coord = DimCoord(
     standard_name ='longitude',
     long_name ='tcell longitude',
     var_name ='xt_ocean',
-    untis = 'degrees_E',
+    units = 'degrees_E',
     attributes = {
         'cartesian_axis' :'X',
     }
