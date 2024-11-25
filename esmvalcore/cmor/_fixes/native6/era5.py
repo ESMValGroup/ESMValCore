@@ -22,19 +22,22 @@ def get_frequency(cube):
     except iris.exceptions.CoordinateNotFoundError:
         return "fx"
 
-    time.convert_units('days since 1850-1-1 00:00:00.0')
+    time.convert_units("days since 1850-1-1 00:00:00.0")
 
-    if (len(time.points) == 1 and cube.long_name == 'Geopotential'):
-        return 'fx'
+    if len(time.points) == 1 and cube.long_name == "Geopotential":
+        return "fx"
 
     if len(time.points) > 1:
         interval = time.points[1] - time.points[0]
         if interval - 1 / 24 < 1e-4:
-            return 'hourly'
+            return "hourly"
     else:
-        logger.warning("Unable to infer frequency of cube "
-                       f"with length 1 time dimension: {cube},"
-                       "assuming 'monthly' frequency")
+        logger.warning(
+            "Unable to infer frequency of cube "
+            "with length 1 time dimension: %s,"
+            "assuming 'monthly' frequency",
+            str(cube),
+        )
     return "monthly"
 
 
