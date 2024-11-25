@@ -3,6 +3,7 @@
 import abc
 import contextlib
 import datetime
+import importlib
 import logging
 import numbers
 import os
@@ -12,8 +13,6 @@ import sys
 import textwrap
 import threading
 import time
-import importlib
-import warnings
 from copy import deepcopy
 from multiprocessing import Pool
 from pathlib import Path, PosixPath
@@ -393,12 +392,12 @@ class DiagnosticTask(BaseTask):
         script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
-            print(
+            logger.info(
                 "No local diagnostic script found. Attempting to load the script from the base repository."
             )
             # Check if esmvaltool package is available
             if importlib.util.find_spec("esmvaltool") is None:
-                warnings.warn(
+                logger.warning(
                     "The 'esmvaltool' package cannot be found. Please ensure it is installed."
                 )
 
