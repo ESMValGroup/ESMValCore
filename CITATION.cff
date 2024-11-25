@@ -210,11 +210,11 @@ authors:
     given-names: Diego
 
 cff-version: 1.2.0
-date-released: 2024-07-03
+date-released: 2024-29-11
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.11.0"
+version: "v2.11.1"
 ...
