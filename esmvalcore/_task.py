@@ -391,6 +391,7 @@ class DiagnosticTask(BaseTask):
         script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
+            print("No local diagnostic script found. Attempting to load the script from the base repository.")
             # Try diagnostics_root
             script_file = (
                 diagnostics_root / Path(script).expanduser()
