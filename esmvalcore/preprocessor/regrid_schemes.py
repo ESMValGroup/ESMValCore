@@ -1,4 +1,5 @@
 """Regridding schemes."""
+
 from __future__ import annotations
 
 import logging
@@ -12,6 +13,7 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyNearest,
     ESMPyRegridder,
 )
+from esmvalcore.preprocessor._regrid_iris_esmf_regrid import IrisESMFRegrid
 from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinear,
     UnstructuredLinearRegridder,
@@ -20,17 +22,17 @@ from esmvalcore.preprocessor._regrid_unstructured import (
 
 logger = logging.getLogger(__name__)
 
-
 __all__ = [
-    'ESMPyAreaWeighted',
-    'ESMPyLinear',
-    'ESMPyNearest',
-    'ESMPyRegridder',
-    'GenericFuncScheme',
-    'GenericRegridder',
-    'UnstructuredLinear',
-    'UnstructuredLinearRegridder',
-    'UnstructuredNearest',
+    "ESMPyAreaWeighted",
+    "ESMPyLinear",
+    "ESMPyNearest",
+    "ESMPyRegridder",
+    "IrisESMFRegrid",
+    "GenericFuncScheme",
+    "GenericRegridder",
+    "UnstructuredLinear",
+    "UnstructuredLinearRegridder",
+    "UnstructuredNearest",
 ]
 
 
@@ -51,7 +53,6 @@ class GenericRegridder:
         Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
-
     """
 
     def __init__(
@@ -79,7 +80,6 @@ class GenericRegridder:
         -------
         Cube
             Regridded cube.
-
         """
         return self.func(cube, self.tgt_cube, **self.kwargs)
 
@@ -98,7 +98,6 @@ class GenericFuncScheme:
         Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
-
     """
 
     def __init__(self, func: Callable, **kwargs):
@@ -108,8 +107,8 @@ class GenericFuncScheme:
 
     def __repr__(self) -> str:
         """Return string representation of class."""
-        kwargs = ', '.join(f"{k}={v}" for (k, v) in self.kwargs.items())
-        return f'GenericFuncScheme({self.func.__name__}, {kwargs})'
+        kwargs = ", ".join(f"{k}={v}" for (k, v) in self.kwargs.items())
+        return f"GenericFuncScheme({self.func.__name__}, {kwargs})"
 
     def regridder(self, src_cube: Cube, tgt_cube: Cube) -> GenericRegridder:
         """Get regridder.
@@ -125,6 +124,5 @@ class GenericFuncScheme:
         -------
         GenericRegridder
             Regridder instance.
-
         """
         return GenericRegridder(src_cube, tgt_cube, self.func, **self.kwargs)

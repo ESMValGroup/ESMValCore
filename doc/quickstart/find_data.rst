@@ -8,7 +8,7 @@ Overview
 ========
 Data discovery and retrieval is the first step in any evaluation process;
 ESMValCore uses a `semi-automated` data finding mechanism with inputs from both
-the user configuration file and the recipe file: this means that the user will
+the configuration and the recipe file: this means that the user will
 have to provide the tool with a set of parameters related to the data needed
 and once these parameters have been provided, the tool will automatically find
 the right data. We will detail below the data finding and retrieval process and
@@ -105,8 +105,8 @@ Supported native reanalysis/observational datasets
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
 To use these datasets, put the files containing the data in the directory that
-you have configured for the ``native6`` project in your :ref:`user
-configuration file`, in a subdirectory called
+you have :ref:`configured <config_options>` for the ``rootpath`` of the
+``native6`` project, in a subdirectory called
 ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
@@ -183,7 +183,7 @@ The default naming conventions for input directories and files for CESM are
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 More information about CESM naming conventions are given `here
 <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
@@ -262,7 +262,7 @@ The default naming conventions for input directories and files for EMAC are
 * input files: ``{exp}*{channel}{postproc_flag}.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -335,7 +335,7 @@ The default naming conventions for input directories and files for ICON are
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -383,11 +383,10 @@ is always disabled.
 Usually, ESMValCore will need the corresponding ICON grid file of your
 simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
-This grid file can either be specified as absolute or relative (to
-``auxiliary_data_dir`` as defined in the :ref:`user configuration file`) path
-with the facet ``horizontal_grid`` in the recipe or the extra facets (see
-below), or retrieved automatically from the `grid_file_uri` attribute of the
-input files.
+This grid file can either be specified as absolute or relative (to the
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``) path with
+the facet ``horizontal_grid`` in the recipe or the extra facets (see below), or
+retrieved automatically from the `grid_file_uri` attribute of the input files.
 In the latter case, ESMValCore first searches the input directories specified
 for ICON for a grid file with that name, and if that was not successful, tries
 to download the file and cache it.
@@ -398,32 +397,17 @@ ESMValCore can automatically make native ICON data `UGRID
 loading the data.
 The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
-work correctly.
+work correctly and specifically by Iris to interpret the grid as a
+:ref:`mesh <iris:ugrid>`.
 An example is the horizontal regridding of native ICON data to a regular grid.
-While the built-in :ref:`nearest scheme <built-in regridding
-schemes>` can handle unstructured grids not in UGRID format, using more complex
-regridding algorithms (for example provided by the
-:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
-schemes`) requires the input data in UGRID format.
-The following code snippet provides a preprocessor that regrids native ICON
-data to a 1°x1° grid using `ESMF's first-order conservative regridding
-algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
-
-.. code-block:: yaml
-
-   preprocessors:
-     regrid_icon:
-       regrid:
-         target_grid: 1x1
-         scheme:
-           reference: esmf_regrid.schemes:ESMFAreaWeighted
-
+While the :ref:`built-in regridding schemes <default regridding schemes>`
+`linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
+the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
-This is useful for diagnostics that do not support input data in UGRID format
-(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
-if you want to use the built-in :ref:`nearest scheme <built-in
-regridding schemes>` regridding scheme.
+This is useful for diagnostics that act on the native ICON grid and do not
+support input data in UGRID format (yet), like the
+:ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
 (from the variables `pfull` and `phalf`) and/or altitude information (from the
@@ -432,8 +416,8 @@ If neither of these variables are available in the input files, it is possible
 to specify the location of files that include the corresponding `zg` or
 `zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
 recipe or the extra facets.
-The paths to these files can be specified absolute or relative (to
-``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+The paths to these files can be specified absolute or relative (to the
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
 .. hint::
 
@@ -468,10 +452,8 @@ Supported keys for extra facets are:
 Key                 Description                      Default value if not specified
 =================== ================================ ===================================
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
-                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
-                    in the                           grid file (see details above)
-                    :ref:`user configuration file`)
-                    path to the ICON grid file
+                    ``auxiliary_data_dir``)          ``grid_file_uri`` to retrieve ICON
+                    path to the ICON grid file       grid file (see details above)
 ``latitude``        Standard name of the latitude    ``latitude``
                     coordinate in the raw input
                     file
@@ -494,17 +476,13 @@ Key                 Description                      Default value if not specif
                     variable in the raw input        in extra facets or recipe if
                     file                             default DRS is used)
 ``zg_file``         Absolute or relative (to         If possible, use `zg` variable
-                    ``auxiliary_data_dir`` defined   provided by the raw input file
-                    in the
-                    :ref:`user configuration file`)
-                    path to the input file that
-                    contains `zg`
+                    ``auxiliary_data_dir``) path to  provided by the raw input file
+                    the the input file that contains
+                    `zg`
 ``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
-                    ``auxiliary_data_dir`` defined   provided by the raw input file
-                    in the
-                    :ref:`user configuration file`)
-                    path to the input file that
-                    contains `zghalf`
+                    ``auxiliary_data_dir``) path to  provided by the raw input file
+                    the the input file that contains
+                    `zghalf`
 =================== ================================ ===================================
 
 .. hint::
@@ -574,7 +552,7 @@ model output.
 
 .. warning::
 
-  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently, 
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently,
   Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
   ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
@@ -585,7 +563,7 @@ The default naming conventions for input directories and files for ACCESS output
 
 .. hint::
 
-  We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was
   stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
 
 
@@ -594,7 +572,7 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   dataset:
-    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05, 
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05,
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
@@ -612,15 +590,15 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
                      and `oce`                              specified in extra facets or
                                                             recipe if default DRS is used)
 ```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to 
-                     frquency of raw data
+                     `ACCESS-ESM` raw data, it's related to
+                     frequency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
-                     use the cmoriser                                                                       
+                     use the cmoriser
 ==================== ====================================== =================================
 
 .. _data-retrieval:
@@ -645,20 +623,18 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` (use
-local files whenever possible) or ``search_esgf: always`` (always search ESGF
-for latest version of files and only use local data if it is the latest
-version) in the :ref:`user configuration file`, or provide the corresponding
-command line arguments ``--search_esgf=when_missing`` or
-``--search_esgf=always`` when running the recipe.
-The files will be stored in the ``download_dir`` set in
-the :ref:`user configuration file`.
+To enable automatic downloads from ESGF, use the :ref:`configuration option
+<config_options>` ``search_esgf: when_missing`` (use local files
+whenever possible) or ``search_esgf: always`` (always search ESGF for latest
+version of files and only use local data if it is the latest version).
+The files will be stored in the directory specified via the :ref:`configuration
+option <config_options>` ``download_dir``.
 
 Setting the correct root paths
 ------------------------------
 The first step towards providing ESMValCore the correct set of parameters for
-data retrieval is setting the root paths to the data. This is done in the user
-configuration file ``config-user.yml``. The two sections where the user will
+data retrieval is setting the root paths to the data. This is done in the
+configuration. The two sections where the user will
 set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers to
 ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the type
 of directory structure the root paths are structured by. It is important to
@@ -666,10 +642,8 @@ first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
 
-.. _config-user-drs:
-
-Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
----------------------------------------------------------------------
+Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
+---------------------------------------------
 Whereas ESMValCore will by default use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
 type of root paths they need the data from, e.g.:
@@ -712,10 +686,10 @@ The names of the directories trees that can be used under `drs` are defined in
    versions of the same file because the files typically have the same name
    for different versions.
 
-.. _config-user-rootpath:
+.. _config_option_rootpath:
 
-Explaining ``config-user/rootpath:``
-------------------------------------
+Explaining ``rootpath:``
+------------------------
 
 ``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
 
@@ -801,7 +775,7 @@ The data finding feature will use this information to find data for **all** the 
 Recap and example
 =================
 Let us look at a practical example for a recap of the information above:
-suppose you are using a ``config-user.yml`` that has the following entries for
+suppose you are using configuration that has the following entries for
 data finding:
 
 .. code-block:: yaml
@@ -860,7 +834,7 @@ about this since we can point the user to the specific functionality
 `here <https://scitools-iris.readthedocs.io/en/latest/userguide/loading_iris_cubes.html>`_ but we will underline
 that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
 `CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
-page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
+page for CF `standard names <https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_).
 
 Data concatenation from multiple sources
 ========================================

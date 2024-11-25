@@ -1,4 +1,5 @@
 """Auxiliary functions for :mod:`iris`."""
+
 from __future__ import annotations
 
 from typing import Dict, Iterable, List, Literal, Sequence
@@ -8,6 +9,7 @@ import iris
 import iris.cube
 import iris.util
 import numpy as np
+from cf_units import Unit
 from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
@@ -91,8 +93,8 @@ def date2num(date, unit, dtype=np.float64):
     This is a custom version of :meth:`cf_units.Unit.date2num` that
     guarantees the correct dtype for the return value.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     date : :class:`datetime.datetime` or :class:`cftime.datetime`
     unit : :class:`cf_units.Unit`
     dtype : a numpy dtype
@@ -111,7 +113,7 @@ def date2num(date, unit, dtype=np.float64):
 
 def merge_cube_attributes(
     cubes: Sequence[Cube],
-    delimiter: str = ' ',
+    delimiter: str = " ",
 ) -> None:
     """Merge attributes of all given cubes in-place.
 
@@ -142,7 +144,7 @@ def merge_cube_attributes(
     # Step 1: collect all attribute values in a list
     attributes: Dict[str, List[NetCDFAttr]] = {}
     for cube in cubes:
-        for (attr, val) in cube.attributes.items():
+        for attr, val in cube.attributes.items():
             attributes.setdefault(attr, [])
             attributes[attr].append(val)
 
@@ -160,7 +162,7 @@ def merge_cube_attributes(
     # Step 3: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string.
-    for (attr, vals) in attributes.items():
+    for attr, vals in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
         if len(set_of_str) == 1:
             final_attributes[attr] = vals[0]
@@ -175,7 +177,7 @@ def merge_cube_attributes(
 def _rechunk(
     array: da.core.Array,
     complete_dims: list[int],
-    remaining_dims: int | Literal['auto'],
+    remaining_dims: int | Literal["auto"],
 ) -> da.core.Array:
     """Rechunk a given array so that it is not chunked along given dims."""
     new_chunks: list[str | int] = [remaining_dims] * array.ndim
@@ -187,7 +189,7 @@ def _rechunk(
 def _rechunk_dim_metadata(
     cube: Cube,
     complete_dims: Iterable[int],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> None:
     """Rechunk dimensional metadata of a cube (in-place)."""
     # Non-dimensional coords that span complete_dims
@@ -228,7 +230,7 @@ def _rechunk_dim_metadata(
 def rechunk_cube(
     cube: Cube,
     complete_coords: Iterable[Coord | str],
-    remaining_dims: int | Literal['auto'] = 'auto',
+    remaining_dims: int | Literal["auto"] = "auto",
 ) -> Cube:
     """Rechunk cube so that it is not chunked along given dimensions.
 
@@ -292,8 +294,8 @@ def has_regular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
@@ -321,8 +323,8 @@ def has_irregular_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim == 2 and lon.ndim == 2:
@@ -348,8 +350,8 @@ def has_unstructured_grid(cube: Cube) -> bool:
 
     """
     try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
+        lat = cube.coord("latitude")
+        lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
@@ -357,3 +359,121 @@ def has_unstructured_grid(cube: Cube) -> bool:
     if cube.coord_dims(lat) != cube.coord_dims(lon):
         return False
     return True
+
+
+# List containing special cases for unit conversion. Each list item is another
+# list. Each of these sublists defines one special conversion. Each element in
+# the sublists is a tuple (standard_name, units). Note: All units for a single
+# special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
+# mm s-1 for precipitation
+_SPECIAL_UNIT_CONVERSIONS = [
+    [
+        ("precipitation_flux", "kg m-2 s-1"),
+        ("lwe_precipitation_rate", "mm s-1"),
+    ],
+    [
+        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
+        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
+    ],
+]
+
+
+def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
+    """Try special unit conversion (in-place).
+
+    Parameters
+    ----------
+    cube:
+        Input cube (modified in place).
+    units:
+        New units
+
+    Returns
+    -------
+    bool
+        ``True`` if special unit conversion was successful, ``False`` if not.
+
+    """
+    for special_case in _SPECIAL_UNIT_CONVERSIONS:
+        for std_name, special_units in special_case:
+            # Special unit conversion only works if all of the following
+            # criteria are met:
+            # - the cube's standard_name is one of the supported
+            #   standard_names
+            # - the cube's units are convertible to the ones defined for
+            #   that given standard_name
+            # - the desired target units are convertible to the units of
+            #   one of the other standard_names in that special case
+
+            # Step 1: find suitable source name and units
+            if cube.standard_name == std_name and cube.units.is_convertible(
+                special_units
+            ):
+                for target_std_name, target_units in special_case:
+                    if target_units == special_units:
+                        continue
+
+                    # Step 2: find suitable target name and units
+                    if Unit(units).is_convertible(target_units):
+                        cube.standard_name = target_std_name
+
+                        # In order to avoid two calls to cube.convert_units,
+                        # determine the conversion factor between the cube's
+                        # units and the source units first and simply add this
+                        # factor to the target units (remember that the source
+                        # units and the target units should be "physically
+                        # identical").
+                        factor = cube.units.convert(1.0, special_units)
+                        cube.units = f"{factor} {target_units}"
+                        cube.convert_units(units)
+                        return True
+
+    # If no special case has been detected, return False
+    return False
+
+
+def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
+    """Safe unit conversion (change of `standard_name` not allowed; in-place).
+
+    This is a safe version of :func:`esmvalcore.preprocessor.convert_units`
+    that will raise an error if the input cube's
+    :attr:`~iris.cube.Cube.standard_name` has been changed.
+
+    Parameters
+    ----------
+    cube:
+        Input cube (modified in place).
+    units:
+        New units.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Converted cube. Just returned for convenience; input cube is modified
+        in place.
+
+    Raises
+    ------
+    iris.exceptions.UnitConversionError
+        Old units are unknown.
+    ValueError
+        Old units are not convertible to new units or unit conversion required
+        change of `standard_name`.
+
+    """
+    old_units = cube.units
+    old_standard_name = cube.standard_name
+
+    try:
+        cube.convert_units(units)
+    except ValueError:
+        if not _try_special_unit_conversions(cube, units):
+            raise
+
+    if cube.standard_name != old_standard_name:
+        raise ValueError(
+            f"Cannot safely convert units from '{old_units}' to '{units}'; "
+            f"standard_name changed from '{old_standard_name}' to "
+            f"'{cube.standard_name}'"
+        )
+    return cube

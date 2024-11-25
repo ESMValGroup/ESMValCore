@@ -208,11 +208,21 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Cammarano
     given-names: Diego
-  - 
+  -
     affiliation: "ACCESS-NRI, Australia"
     family-names: Yousong
     given-names: Zeng
     orcid: "https://orcid.org/0000-0002-8385-5367"
+  -
+    affiliation: "ECCC, Canada"
+    family-names: Malinina
+    given-names: Elizaveta
+    orcid: "https://orcid.org/0000-0002-4102-2877"
+  -
+    affiliation: "ECCC, Canada"
+    family-names: Garcia Perdomo
+    given-names: Karen
+    orcid: "https://orcid.org/0009-0004-2333-3358"
 
 cff-version: 1.2.0
 date-released: 2024-07-03

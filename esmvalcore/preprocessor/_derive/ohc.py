@@ -1,12 +1,12 @@
 """Derivation of variable `ohc`."""
-import iris
-from iris import Constraint
 
+import iris
 from cf_units import Unit
+from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
 
-RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
+RHO_CP = iris.coords.AuxCoord(4.09169e6, units=Unit("kg m-3 J kg-1 K-1"))
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -16,23 +16,13 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [
-            {
-                'short_name': 'thetao'
-            },
-            {
-                'short_name': 'volcello',
-                'mip': 'fx'
-            },
+            {"short_name": "thetao"},
+            {"short_name": "volcello", "mip": "fx"},
         ]
-        if project == 'CMIP6':
+        if project == "CMIP6":
             required = [
-                {
-                    'short_name': 'thetao'
-                },
-                {
-                    'short_name': 'volcello',
-                    'mip': 'Ofx'
-                },
+                {"short_name": "thetao"},
+                {"short_name": "volcello", "mip": "Ofx"},
             ]
         return required
 
@@ -56,29 +46,35 @@ class DerivedVariable(DerivedVariableBase):
         """
         # 1. Load the thetao and volcello cubes
         cube = cubes.extract_cube(
-            Constraint(cube_func=lambda c: c.var_name == 'thetao'))
+            Constraint(cube_func=lambda c: c.var_name == "thetao")
+        )
         volume = cubes.extract_cube(
-            Constraint(cube_func=lambda c: c.var_name == 'volcello'))
+            Constraint(cube_func=lambda c: c.var_name == "volcello")
+        )
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
-        cube.convert_units('K')
+        cube.convert_units("K")
         try:
-            t_coord_dims = cube.coord_dims('time')
+            t_coord_dims = cube.coord_dims("time")
         except iris.exceptions.CoordinateNotFoundError:
             time_coord_present = False
         else:
             time_coord_present = True
             t_coord_dim = t_coord_dims[0]
-            dim_coords = [(coord, cube.coord_dims(coord)[0])
-                          for coord in cube.coords(
-                              contains_dimension=t_coord_dim, dim_coords=True)]
+            dim_coords = [
+                (coord, cube.coord_dims(coord)[0])
+                for coord in cube.coords(
+                    contains_dimension=t_coord_dim, dim_coords=True
+                )
+            ]
             aux_coords = [
                 (coord, cube.coord_dims(coord))
-                for coord in cube.coords(contains_dimension=t_coord_dim,
-                                         dim_coords=False)
+                for coord in cube.coords(
+                    contains_dimension=t_coord_dim, dim_coords=False
+                )
             ]
-            for coord, dims in dim_coords + aux_coords:
+            for coord, _ in dim_coords + aux_coords:
                 cube.remove_coord(coord)
         new_cube = cube * volume
         new_cube *= RHO_CP
