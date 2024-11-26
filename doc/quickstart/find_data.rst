@@ -698,6 +698,9 @@ Key                  Description                            Default value if not
 =======
 ``freq_attribute``    A special attribute in the filename    No default
 >>>>>>> 31ec2cacd (fix documentation issue)
+=======
+``freq_attribute``   A special attribute in the filename    No default
+>>>>>>> 7c6db4749 (fix doc)
                      `ACCESS-ESM` raw data, it's related to 
                      frquency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
