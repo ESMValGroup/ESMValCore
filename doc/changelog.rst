@@ -3,6 +3,37 @@
 Changelog
 =========
 
+.. _changelog-v2-11-1:
+
+v2.11.1
+-------
+Highlights
+
+This is a bugfix release which enables lazy computations in more preprocessors
+and allows installing the latests version of various dependencies, including
+Iris (`v3.11.0 <https://github.com/SciTools/iris/releases/tag/v3.11.0>`__).
+
+This release includes
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Optimize functions ``mask_landsea()``, ``mask_landseaice()`` and ``calculate_volume()`` for lazy input (:pull:`2515`) by :user:`schlunma`
+
+Installation
+~~~~~~~~~~~~
+
+-  Remove support for Python 3.9 (:pull:`2447`) by :user:`valeriupredoi`
+-  Switch to new iris >= 3.10.0 API (:pull:`2500`) by :user:`schlunma`
+-  Pin dask to avoid 2024.8.0 - problems with masked fill/missing values (:pull:`2504`) by :user:`valeriupredoi`
+-  Fix rounding of Pandas datetimes in ICON CMORizer to allow installing latest Pandas version (:pull:`2529`) by :user:`valeriupredoi`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Fix type hint for new mypy version (:pull:`2497`) by :user:`schlunma`
+-  Reformat datetime strings be in line with new ``isodate==0.7.0`` and actual ISO8601 and pin ``isodate>=0.7.0`` (:pull:`2546`) by :user:`valeriupredoi`
+
 .. _changelog-v2-11-0:
 
 v2.11.0
