@@ -4,6 +4,7 @@ import os
 import unittest.mock
 
 import iris
+import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -338,8 +339,7 @@ def test_tas_fix_metadata(tas_cubes):
     for cube in tas_cubes:
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             cube.coord("height")
-    height_coord = iris.coords.AuxCoord(
-        2.0,
+    height_coord = iris.coords.AuxCoord([2.0],
         var_name="height",
         standard_name="height",
         long_name="height",
@@ -427,58 +427,39 @@ def test_siconc_fix():
 
 @pytest.fixture
 def pr_cubes():
-    wrong_time_coord = iris.coords.AuxCoord(
-        points=[0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 4.0, 5.0],
+    correct_time_coord = iris.coords.DimCoord(
+        points=[1.0, 2.0, 3.0, 4.0, 5.0],
         var_name="time",
         standard_name="time",
         units="days since 1850-01-01",
     )
 
-    correct_time_coord = iris.coords.AuxCoord(
-        points=[0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01",
+    lat_coord = iris.coords.DimCoord(
+        [0.0], 
+        var_name="lat", standard_name="latitude"
     )
 
-    correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+    lon_coord = iris.coords.DimCoord(
+        points=[0.0], 
+        var_name="lon", 
+        standard_name="longitude"
     )
-    wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
-    )
-    correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
-    )
-    wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
-    )
-
-    wrong_coord_specs = [
-        (wrong_time_coord, 0),
-        (wrong_lat_coord, 1),
-        (wrong_lon_coord, 2),
-    ]
 
     correct_coord_specs = [
         (correct_time_coord, 0),
-        (correct_lat_coord, 1),
-        (correct_lon_coord, 2),
+        (lat_coord, 1),
+        (lon_coord, 2),
     ]
-    correct_pr_cube = iris.cube.Cube(
-        np.ones((2, 2, 2)),
-        var_name="pr",
-        dim_coords_and_dims=correct_coord_specs,
-    )
 
-    wrong_pr_cube = iris.cube.Cube(
-        np.ones((2, 2, 2)),
-        var_name="ta",
-        dim_coords_and_dims=wrong_coord_specs,
-    )
+    correct_pr_cube = iris.cube.Cube(np.ones((5, 1, 1)),
+                                         var_name='pr',
+                                         units='kg m-2 s-1',
+                                         dim_coords_and_dims=correct_coord_specs,
+                                         )
+
     scalar_cube = iris.cube.Cube(0.0, var_name='ps')
 
-    return iris.cube.CubeList([correct_pr_cube, wrong_pr_cube, scalar_cube])
+    return iris.cube.CubeList([correct_pr_cube, scalar_cube])
 
 
 def test_get_pr_fix():

@@ -44,7 +44,7 @@ class Pr(Fix):
 
         Returns
         -------
-        iris.cube.CubeList, iris.cube.CubeList
+        iris.cube.CubeList
         """
         new_list = iris.cube.CubeList()
         for cube in cubes:
