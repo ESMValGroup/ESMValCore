@@ -143,7 +143,6 @@ class Tos(AccessFix):
         -------
         iris.cube.CubeList
         """
-
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
@@ -167,7 +166,6 @@ class So(AccessFix):
         -------
         iris.cube.CubeList
         """
-
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
