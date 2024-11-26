@@ -441,7 +441,6 @@ class Tasmin(Pr):
         """
         for cube in cubes:
             add_scalar_height_coord(cube, height=2.0)
-
         return cubes
 
 
@@ -465,5 +464,4 @@ class Tasmax(Pr):
         """
         for cube in cubes:
             add_scalar_height_coord(cube, height=2.0)
-
         return cubes

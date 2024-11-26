@@ -7,6 +7,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Cl,
@@ -17,6 +18,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Pr,
     Siconc,
     Tas,
+    Tasmin,
     Tos,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
@@ -426,14 +428,14 @@ def test_siconc_fix():
 @pytest.fixture
 def pr_cubes():
     wrong_time_coord = iris.coords.AuxCoord(
-        points=[1.0, 2.0, 1.0, 2.0, 3.0],
+        points=[0.0, 1.0, 2.0, 1.0, 2.0, 3.0, 4.0, 5.0],
         var_name="time",
         standard_name="time",
         units="days since 1850-01-01",
     )
 
     correct_time_coord = iris.coords.AuxCoord(
-        points=[1.0, 2.0, 3.0],
+        points=[0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
         var_name="time",
         standard_name="time",
         units="days since 1850-01-01",
@@ -474,33 +476,73 @@ def pr_cubes():
         var_name="ta",
         dim_coords_and_dims=wrong_coord_specs,
     )
+    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
 
-    return iris.cube.CubeList([correct_pr_cube, wrong_pr_cube])
-
-
-def test_get(self):
-    """Test fix get."""
-    self.assertListEqual(
-        Fix.get_fixes("CMIP6", "CESM2", "day", "pr"),
-        [Pr(None), GenericFix(None)],
-    )
+    return iris.cube.CubeList([correct_pr_cube, wrong_pr_cube, scalar_cube])
 
 
-def test_pr_fix_metadata(self):
+def test_get_pr_fix():
+    """Test pr fix"""
+    fix = Fix.get_fixes('CMIP6', "CESM2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]   
+
+
+def test_pr_fix_metadata(pr_cubes):
     """Test metadata fix."""
-    out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
-    out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+    vardef = get_var_info('CMIP6', 'day', 'pr')
+    fix = Pr(vardef)
 
-    time = out_wrong_cube[0].coord("time")
-    assert time == self.time_coord
+    out_cubes = fix.fix_metadata(pr_cubes)
+    assert out_cubes[0].var_name == 'pr'
+    coord = out_cubes[0].coord('time')
+    assert pd.Series(coord.points).is_monotonic_increasing
 
-    time = out_correct_cube[0].coord("time")
-    assert time == self.time_coord
+
+@pytest.fixture
+def tasmin_cubes():
+    correct_lat_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lat',
+                                             standard_name='latitude')
+    wrong_lat_coord = iris.coords.DimCoord([0.0],
+                                           var_name='latitudeCoord',
+                                           standard_name='latitude')
+    correct_lon_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lon',
+                                             standard_name='longitude')
+    wrong_lon_coord = iris.coords.DimCoord([0.0],
+                                           var_name='longitudeCoord',
+                                           standard_name='longitude')
+    correct_cube = iris.cube.Cube([[2.0]],
+                                  var_name='tasmin',
+                                  dim_coords_and_dims=[(correct_lat_coord, 0),
+                                                       (correct_lon_coord, 1)])
+    wrong_cube = iris.cube.Cube([[2.0]],
+                                var_name='ta',
+                                dim_coords_and_dims=[(wrong_lat_coord, 0),
+                                                     (wrong_lon_coord, 1)])
+    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
 
 
-def test_pr_fix_metadata_no_time(self):
-    """Test metadata fix with no time coord."""
-    self.correct_cube[0].remove_coord("time")
-    out_correct_cube = self.fix.fix_metadata(self.correct_cube)
-    with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
-        out_correct_cube[0].coord("time")
+def test_get_tasmin_fix():
+    fix = Fix.get_fixes('CMIP6', "CESM2", "day", "tasmin")
+    assert fix == [Tasmin(None), GenericFix(None)]
+
+
+def test_tasmin_fix_metadata(tasmin_cubes):
+    for cube in tasmin_cubes:
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            cube.coord('height')
+    height_coord = iris.coords.AuxCoord(2.0,
+                                        var_name='height',
+                                        standard_name='height',
+                                        long_name='height',
+                                        units=Unit('m'),
+                                        attributes={'positive': 'up'})
+    vardef = get_var_info('CMIP6', 'day', 'tasmin')
+    fix = Tasmin(vardef)
+
+    out_cubes = fix.fix_metadata(tasmin_cubes)
+    assert out_cubes[0].var_name == 'tasmin'
+    coord = out_cubes[0].coord('height')
+    assert coord == height_coord
