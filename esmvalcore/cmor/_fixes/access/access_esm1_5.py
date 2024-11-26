@@ -1,11 +1,10 @@
 """On-the-fly CMORizer for ACCESS-ESM."""
 import logging
 
+from cf_units import Unit
 from iris.cube import CubeList
 
 from ._base_fix import AccessFix
-
-from cf_units import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +127,9 @@ class Tas(AccessFix):
         if cube.coord('height').points[0] != 2:
             cube.coord('height').points = [2]
 
+
 class Tos(AccessFix):
-    """Fixes for Tos"""
+    """Fixes for Tos."""
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -153,7 +153,7 @@ class Tos(AccessFix):
 
 
 class So(AccessFix):
-    """FIxes for So"""
+    """FIxes for So."""
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -176,16 +176,15 @@ class So(AccessFix):
         self.fix_so_units(cube)
 
         return CubeList([cube])
-    
+
     def fix_depth_metadata(self, cube):
-        """fix depth metadata"""
+        """Fix depth metadata."""
         cube.dim_coords[1].standard_name = 'depth'
         cube.dim_coords[1].long_name = 'ocean depth coordinate'
         cube.dim_coords[1].var_name = 'lev'
-        cube.dim_coords[1].attributes = {'positive':'down'}  
+        cube.dim_coords[1].attributes = {'positive': 'down'}
 
     def fix_so_units(self, cube):
-        """fix units of so"""
+        """Fix units of so."""
         cube.attributes.pop('invalid_units')
-        cube.units=Unit(0.001)     
-    
+        cube.units = Unit(0.001)
