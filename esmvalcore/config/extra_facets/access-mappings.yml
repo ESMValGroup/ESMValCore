@@ -8,7 +8,7 @@ ACCESS-ESM1-5:
 
   '*':
   # atm
-
+   
     tas:
       raw_name: fld_s03i236
       modeling_realm: atm
@@ -66,7 +66,7 @@ ACCESS-ESM1-5:
         - fld_s01i235
         - fld_s01i201
       modeling_realm: atm
-
+    
     clivi:
       raw_name: fld_s30i406
       modeling_realm: atm
@@ -173,4 +173,3 @@ ACCESS-ESM1-5:
       raw_name: salt
       modeling_realm: ocn
     
->>>>>>> 6aff095c6 (add ocean variables)

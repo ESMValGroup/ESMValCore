@@ -695,6 +695,9 @@ Key                  Description                            Default value if not
                      use the cmoriser
 =======
 ``special_attr``    A special attribute in the filename    No default
+=======
+``freq_attribute``    A special attribute in the filename    No default
+>>>>>>> 31ec2cacd (fix documentation issue)
                      `ACCESS-ESM` raw data, it's related to 
                      frquency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
