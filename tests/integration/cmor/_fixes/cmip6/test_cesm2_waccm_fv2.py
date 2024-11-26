@@ -1,5 +1,9 @@
 """Tests for the fixes of CESM2-WACCM-FV2."""
 
+import iris
+import numpy as np
+import pytest
+
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
@@ -9,16 +13,13 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Clw,
     Fgco2,
     Omon,
-    Siconc,
     Pr,
+    Siconc,
     Tas,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-import iris
-import numpy as np
-import pytest
 
 
 def test_get_cl_fix():

@@ -6,9 +6,9 @@ import unittest.mock
 import iris
 import iris.cube
 import numpy as np
+import pandas as pd
 import pytest
 from cf_units import Unit
-import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Cl,
@@ -339,7 +339,8 @@ def test_tas_fix_metadata(tas_cubes):
     for cube in tas_cubes:
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             cube.coord("height")
-    height_coord = iris.coords.AuxCoord([2.0],
+    height_coord = iris.coords.AuxCoord(
+        [2.0],
         var_name="height",
         standard_name="height",
         long_name="height",
@@ -435,14 +436,11 @@ def pr_cubes():
     )
 
     lat_coord = iris.coords.DimCoord(
-        [0.0], 
-        var_name="lat", standard_name="latitude"
+        [0.0], var_name="lat", standard_name="latitude"
     )
 
     lon_coord = iris.coords.DimCoord(
-        points=[0.0], 
-        var_name="lon", 
-        standard_name="longitude"
+        points=[0.0], var_name="lon", standard_name="longitude"
     )
 
     correct_coord_specs = [
@@ -451,79 +449,84 @@ def pr_cubes():
         (lon_coord, 2),
     ]
 
-    correct_pr_cube = iris.cube.Cube(np.ones((5, 1, 1)),
-                                         var_name='pr',
-                                         units='kg m-2 s-1',
-                                         dim_coords_and_dims=correct_coord_specs,
-                                         )
+    correct_pr_cube = iris.cube.Cube(
+        np.ones((5, 1, 1)),
+        var_name="pr",
+        units="kg m-2 s-1",
+        dim_coords_and_dims=correct_coord_specs,
+    )
 
-    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    scalar_cube = iris.cube.Cube(0.0, var_name="ps")
 
     return iris.cube.CubeList([correct_pr_cube, scalar_cube])
 
 
 def test_get_pr_fix():
-    """Test pr fix"""
-    fix = Fix.get_fixes('CMIP6', "CESM2", "day", "pr")
-    assert fix == [Pr(None), GenericFix(None)]   
+    """Test pr fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
 
 
 def test_pr_fix_metadata(pr_cubes):
     """Test metadata fix."""
-    vardef = get_var_info('CMIP6', 'day', 'pr')
+    vardef = get_var_info("CMIP6", "day", "pr")
     fix = Pr(vardef)
 
     out_cubes = fix.fix_metadata(pr_cubes)
-    assert out_cubes[0].var_name == 'pr'
-    coord = out_cubes[0].coord('time')
+    assert out_cubes[0].var_name == "pr"
+    coord = out_cubes[0].coord("time")
     assert pd.Series(coord.points).is_monotonic_increasing
 
 
 @pytest.fixture
 def tasmin_cubes():
-    correct_lat_coord = iris.coords.DimCoord([0.0],
-                                             var_name='lat',
-                                             standard_name='latitude')
-    wrong_lat_coord = iris.coords.DimCoord([0.0],
-                                           var_name='latitudeCoord',
-                                           standard_name='latitude')
-    correct_lon_coord = iris.coords.DimCoord([0.0],
-                                             var_name='lon',
-                                             standard_name='longitude')
-    wrong_lon_coord = iris.coords.DimCoord([0.0],
-                                           var_name='longitudeCoord',
-                                           standard_name='longitude')
-    correct_cube = iris.cube.Cube([[2.0]],
-                                  var_name='tasmin',
-                                  dim_coords_and_dims=[(correct_lat_coord, 0),
-                                                       (correct_lon_coord, 1)])
-    wrong_cube = iris.cube.Cube([[2.0]],
-                                var_name='ta',
-                                dim_coords_and_dims=[(wrong_lat_coord, 0),
-                                                     (wrong_lon_coord, 1)])
-    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    correct_lat_coord = iris.coords.DimCoord(
+        [0.0], var_name="lat", standard_name="latitude"
+    )
+    wrong_lat_coord = iris.coords.DimCoord(
+        [0.0], var_name="latitudeCoord", standard_name="latitude"
+    )
+    correct_lon_coord = iris.coords.DimCoord(
+        [0.0], var_name="lon", standard_name="longitude"
+    )
+    wrong_lon_coord = iris.coords.DimCoord(
+        [0.0], var_name="longitudeCoord", standard_name="longitude"
+    )
+    correct_cube = iris.cube.Cube(
+        [[2.0]],
+        var_name="tasmin",
+        dim_coords_and_dims=[(correct_lat_coord, 0), (correct_lon_coord, 1)],
+    )
+    wrong_cube = iris.cube.Cube(
+        [[2.0]],
+        var_name="ta",
+        dim_coords_and_dims=[(wrong_lat_coord, 0), (wrong_lon_coord, 1)],
+    )
+    scalar_cube = iris.cube.Cube(0.0, var_name="ps")
     return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
 
 
 def test_get_tasmin_fix():
-    fix = Fix.get_fixes('CMIP6', "CESM2", "day", "tasmin")
+    fix = Fix.get_fixes("CMIP6", "CESM2", "day", "tasmin")
     assert fix == [Tasmin(None), GenericFix(None)]
 
 
 def test_tasmin_fix_metadata(tasmin_cubes):
     for cube in tasmin_cubes:
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-            cube.coord('height')
-    height_coord = iris.coords.AuxCoord(2.0,
-                                        var_name='height',
-                                        standard_name='height',
-                                        long_name='height',
-                                        units=Unit('m'),
-                                        attributes={'positive': 'up'})
-    vardef = get_var_info('CMIP6', 'day', 'tasmin')
+            cube.coord("height")
+    height_coord = iris.coords.AuxCoord(
+        2.0,
+        var_name="height",
+        standard_name="height",
+        long_name="height",
+        units=Unit("m"),
+        attributes={"positive": "up"},
+    )
+    vardef = get_var_info("CMIP6", "day", "tasmin")
     fix = Tasmin(vardef)
 
     out_cubes = fix.fix_metadata(tasmin_cubes)
-    assert out_cubes[0].var_name == 'tasmin'
-    coord = out_cubes[0].coord('height')
+    assert out_cubes[0].var_name == "tasmin"
+    coord = out_cubes[0].coord("height")
     assert coord == height_coord

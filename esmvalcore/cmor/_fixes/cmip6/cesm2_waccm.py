@@ -1,19 +1,15 @@
 """Fixes for CESM2-WACCM model."""
 
-import iris
-import numpy as np
 from netCDF4 import Dataset
 
 from ..common import SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
-from .cesm2 import Tas as BaseTas
-from .cesm2 import Tasmin as BaseTasmin
-from .cesm2 import Tasmax as BaseTasmax
 from .cesm2 import Pr as BasePr
+from .cesm2 import Tas as BaseTas
+from .cesm2 import Tasmax as BaseTasmax
+from .cesm2 import Tasmin as BaseTasmin
 
 
 class Cl(BaseCl):
@@ -80,4 +76,4 @@ Tas = BaseTas
 Tasmin = BaseTasmin
 
 
-Tasmax = BaseTasmax 
+Tasmax = BaseTasmax
