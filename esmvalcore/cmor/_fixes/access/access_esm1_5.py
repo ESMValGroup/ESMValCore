@@ -133,7 +133,7 @@ class Tos(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
-
+        
         Parameters
         ----------
         cubes : iris.cube.CubeList
