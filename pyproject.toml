@@ -60,6 +60,7 @@ dependencies = [
     "pybtex",
     "pyyaml",
     "requests",
+    "rich",
     "scipy>=1.6",
     "scitools-iris>=3.10.0",
     "shapely>=2.0.0",
