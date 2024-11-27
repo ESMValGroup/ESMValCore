@@ -18,7 +18,7 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - iris >=3.10.0
+  - iris >=3.11  # 3.11 first to support Numpy 2 and Python 3.13
   - iris-esmf-regrid >=0.11.0
   - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
   - isodate >=0.7.0  # incompatible with very old 0.6.1
@@ -27,7 +27,7 @@ dependencies:
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
+  - numpy !=1.24.3
   - packaging
   - pandas
   - pillow

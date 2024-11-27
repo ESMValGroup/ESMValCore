@@ -632,7 +632,9 @@ def seasonal_statistics(
             cube, "time", name="clim_season", seasons=seasons
         )
     else:
-        old_seasons = sorted(set(cube.coord("clim_season").points))
+        old_seasons = sorted(
+            {str(s) for s in cube.coord("clim_season").points}
+        )
         if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
@@ -1284,6 +1286,10 @@ def timeseries_filter(
     # Apply filter
     (agg, agg_kwargs) = get_iris_aggregator(filter_stats, **operator_kwargs)
     agg_kwargs["weights"] = wgts
+    if cube.has_lazy_data():
+        # Ensure the cube data chunktype is np.MaskedArray so rolling_window
+        # does not ignore a potential mask.
+        cube.data = da.ma.masked_array(cube.core_data())
     cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
 
     return cube
@@ -1597,7 +1603,7 @@ def _transform_to_lst_eager(
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
-    idx = np.ogrid[tuple(slice(0, d) for d in data.shape)]
+    idx = list(np.ogrid[tuple(slice(0, d) for d in data.shape)])
     time_index = broadcast_to_shape(
         time_index, data.shape, (time_dim, lon_dim)
     )
