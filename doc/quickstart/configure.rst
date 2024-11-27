@@ -269,6 +269,36 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
    will be downloaded; otherwise, local data will be used.
 
 
+.. _config-logging:
+
+Logging configuration
+=====================
+
+These options can be specified under the ``"logging"`` section in the
+configuration file.
+
+Example:
+
+.. code:: yaml
+
+  logging:
+    log_progress_interval: 10s
+
+will log progress with Dask computations every 10 seconds instead of showing a
+progress bar. If ``max_parallel_tasks`` is not equal to 1, progress is always
+logged.
+
+Available options:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``log_progress_interval``     | When running computations with Dask,   | :obj:`float`                | 0                                      |
+|                               | log progress every                     |                             |                                        |
+|                               | ``log_progress_interval`` instead of   |                             |                                        |
+|                               | showing a progress bar.                |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
 .. _config-dask:
 
 Dask configuration

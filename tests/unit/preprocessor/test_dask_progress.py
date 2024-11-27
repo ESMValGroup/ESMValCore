@@ -11,13 +11,13 @@ from esmvalcore.preprocessor import _dask_progress
 
 
 @pytest.mark.parametrize("use_distributed", [False, True])
-@pytest.mark.parametrize("ntasks", [1, 2])
+@pytest.mark.parametrize("interval", [0.0, 0.1])
 def test_compute_with_progress(
     capsys,
     caplog,
     monkeypatch,
     use_distributed,
-    ntasks,
+    interval,
 ):
     caplog.set_level(logging.INFO)
     if use_distributed:
@@ -25,14 +25,20 @@ def test_compute_with_progress(
     else:
         client = None
 
-    monkeypatch.setitem(_dask_progress.CFG, "max_parallel_tasks", ntasks)
+    monkeypatch.setitem(_dask_progress.CFG, "max_parallel_tasks", 1)
+    monkeypatch.setitem(
+        _dask_progress.CFG["logging"], "log_progress_interval", interval
+    )
     delayeds = [dask.delayed(operator.add)(1, 1)]
     _dask_progress._compute_with_progress(delayeds, description="test")
-    # Assert that some progress bar has been written to stdout.
-    if ntasks == 1:
+    if interval == 0.0:
+        # Assert that some progress bar has been written to stdout.
         progressbar = capsys.readouterr().out
     else:
+        # Assert that some progress bar has been logged.
         progressbar = caplog.text
+    print(f"{capsys.readouterr()=}")
+    print(f"{caplog.records=}")
     assert "100%" in progressbar
     if client is not None:
         client.shutdown()

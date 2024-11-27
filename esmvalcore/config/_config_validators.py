@@ -327,7 +327,7 @@ _validators = {
     "exit_on_warning": validate_bool,
     "extra_facets_dir": validate_extra_facets_dir,
     "log_level": validate_string,
-    "log_progress_interval": validate_float,
+    "logging": validate_dict,
     "max_datasets": validate_int_positive_or_none,
     "max_parallel_tasks": validate_int_or_none,
     "max_years": validate_int_positive_or_none,

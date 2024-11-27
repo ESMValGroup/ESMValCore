@@ -103,7 +103,7 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
 
     def __init__(
         self,
-        log_interval: str = "1s",
+        log_interval: str | float = "1s",
         description: str = "",
     ) -> None:
         self._desc = f"{description} " if description else description
@@ -139,7 +139,7 @@ class DistributedProgressLogger(
     def __init__(
         self,
         keys,
-        log_interval: str = "1s",
+        log_interval: str | float = "1s",
         description: str = "",
     ) -> None:
         self._desc = f"{description} " if description else description
@@ -150,10 +150,12 @@ class DistributedProgressLogger(
         super().__init__(keys, interval="1s")
 
     def _draw_bar(self, remaining: int, all: int, **kwargs) -> None:
-        if (self.elapsed - self._prev_elapsed) < self._log_interval:
+        frac = (1 - remaining / all) if all else 1.0
+        if (
+            self.elapsed - self._prev_elapsed
+        ) < self._log_interval and not frac == 1.0:
             return
         self._prev_elapsed = self.elapsed
-        frac = (1 - remaining / all) if all else 1.0
         bar = "#" * int(self.width * frac)
         percent = int(100 * frac)
         elapsed = dask.utils.format_time(self.elapsed)
@@ -179,10 +181,15 @@ def _compute_with_progress(
     except ValueError:
         use_distributed = False
 
-    log_progress = (
-        CFG["max_parallel_tasks"] != 1 or CFG["log_progress_interval"] > 0.0
+    log_progress_interval = dask.utils.parse_timedelta(
+        CFG["logging"]["log_progress_interval"],
+        default="s",
     )
+    if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
+        # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
+        log_progress_interval = 1.0
 
+    log_progress = log_progress_interval > 0.0
     total = sum(len(d.dask) for d in delayeds)
     logger.debug("Task %s has a dask graph of size %s", description, total)
 
@@ -192,7 +199,7 @@ def _compute_with_progress(
         if log_progress:
             DistributedProgressLogger(
                 futures,
-                log_interval=CFG["log_progress_interval"],
+                log_interval=log_progress_interval,
                 description=description,
             )
         else:
@@ -202,7 +209,7 @@ def _compute_with_progress(
         if log_progress:
             ctx = ProgressLogger(
                 description=description,
-                log_interval=CFG["log_progress_interval"],
+                log_interval=log_progress_interval,
             )
         else:
             ctx = RichProgressBar()
