@@ -541,7 +541,7 @@ class PreprocessorFile(TrackedFile):
     def cubes(self, value):
         self._cubes = value
 
-    def save(self) -> list[Delayed] | None:
+    def save(self) -> Delayed | None:
         """Save cubes to disk."""
         return preprocess(
             self._cubes,
@@ -550,7 +550,7 @@ class PreprocessorFile(TrackedFile):
             **self.settings["save"],
         )[0]
 
-    def close(self) -> list[Delayed] | None:
+    def close(self) -> Delayed | None:
         """Close the file."""
         result = None
         if self._cubes is not None:
@@ -700,7 +700,7 @@ class PreprocessingTask(BaseTask):
         for product in products:
             product.initialize_provenance(self.activity)
 
-    def _run(self, _):
+    def _run(self, _) -> list[str]:
         """Run the preprocessor."""
         self._initialize_product_provenance()
 
