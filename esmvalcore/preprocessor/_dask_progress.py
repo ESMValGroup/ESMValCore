@@ -74,7 +74,7 @@ class RichDistributedProgressBar(
 ):
     """Progress bar using `rich` for the Dask distributed scheduler."""
 
-    def __init__(self, keys, total):
+    def __init__(self, keys, total: int) -> None:
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
