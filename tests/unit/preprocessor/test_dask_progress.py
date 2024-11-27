@@ -11,7 +11,7 @@ from esmvalcore.preprocessor import _dask_progress
 
 
 @pytest.mark.parametrize("use_distributed", [False, True])
-@pytest.mark.parametrize("interval", [0.0, 0.1])
+@pytest.mark.parametrize("interval", [0.0, 0.2])
 def test_compute_with_progress(
     capsys,
     caplog,
