@@ -9,9 +9,6 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable
 
-import dask
-import dask.diagnostics
-import distributed
 from dask.delayed import Delayed
 from iris.cube import Cube
 
@@ -29,6 +26,7 @@ from ._area import (
 )
 from ._compare_with_refs import bias, distance_metric
 from ._cycles import amplitude
+from ._dask_progress import _compute_with_progress
 from ._derive import derive
 from ._detrend import detrend
 from ._io import (
@@ -550,7 +548,7 @@ class PreprocessorFile(TrackedFile):
             "save",
             input_files=self._input_files,
             **self.settings["save"],
-        )
+        )[0]
 
     def close(self) -> list[Delayed] | None:
         """Close the file."""
@@ -641,24 +639,6 @@ def _apply_multimodel(products, step, debug):
                     logger.debug("with cube %s", cube)
 
     return products
-
-
-def _compute_with_progress(delayeds: Iterable[Delayed]) -> None:
-    """Compute delayeds while displaying a progress bar."""
-    try:
-        distributed.get_client()
-    except ValueError:
-        use_distributed = False
-    else:
-        use_distributed = True
-
-    if use_distributed:
-        futures = dask.persist(delayeds)
-        distributed.progress(futures, notebook=False)
-        dask.compute(futures)
-    else:
-        with dask.diagnostics.ProgressBar():
-            dask.compute(delayeds)
 
 
 class PreprocessingTask(BaseTask):
@@ -757,7 +737,7 @@ class PreprocessingTask(BaseTask):
                 delayeds.append(delayed)
 
         logger.info("Computing and saving data for task %s", self.name)
-        _compute_with_progress(delayeds)
+        _compute_with_progress(delayeds, description=self.name)
         metadata_files = write_metadata(
             self.products, self.write_ncl_interface
         )

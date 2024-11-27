@@ -2,6 +2,7 @@
 check_level: default
 diagnostics: null
 extra_facets_dir: []
+log_progress_interval: 0
 max_datasets: null
 max_years: null
 resume_from: []
