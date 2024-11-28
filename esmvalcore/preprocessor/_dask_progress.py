@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import time
@@ -21,7 +22,7 @@ class RichProgressBar(dask.diagnostics.Callback):
     """Progress bar using `rich` for the Dask default scheduler."""
 
     # Adapted from https://github.com/dask/dask/blob/0f3e5ff6e642e7661b3f855bfd192a6f6fb83b49/dask/diagnostics/progress.py#L32-L153
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
@@ -32,8 +33,11 @@ class RichProgressBar(dask.diagnostics.Callback):
         )
         self.task = self.progress.add_task(description="progress")
         self._dt = 0.1
+        self._state = None
+        self._running = False
+        self._timer = None
 
-    def _start(self, dsk):
+    def _start(self, dsk):  # pylint: disable=method-hidden,unused-argument
         self._state = None
         # Start background thread
         self._running = True
@@ -41,17 +45,17 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._timer.daemon = True
         self._timer.start()
 
-    def _start_state(self, dsk, state):
+    def _start_state(self, dsk, state):  # pylint: disable=method-hidden,unused-argument
         self.progress.start()
         total = sum(
             len(state[k]) for k in ["ready", "waiting", "running", "finished"]
         )
         self.progress.update(self.task, total=total)
 
-    def _pretask(self, key, dsk, state):
+    def _pretask(self, key, dsk, state):  # pylint: disable=method-hidden,unused-argument
         self._state = state
 
-    def _finish(self, dsk, state, errored):
+    def _finish(self, dsk, state, errored):  # pylint: disable=method-hidden,unused-argument
         self._running = False
         self._timer.join()
         self._draw_bar()
@@ -90,7 +94,7 @@ class RichDistributedProgressBar(
         )
         super().__init__(keys)
 
-    def _draw_bar(self, remaining, all, **kwargs):
+    def _draw_bar(self, remaining, all, **kwargs):  # pylint: disable=redefined-builtin
         completed = all - remaining
         self.progress.update(self.task, completed=completed)
 
@@ -111,21 +115,19 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
             log_interval, default="s"
         )
         self._prev_elapsed = 0.0
-        dt = dask.utils.parse_timedelta("1s", default="s")
-        super().__init__(dt=dt)
+        interval = dask.utils.parse_timedelta("1s", default="s")
+        super().__init__(dt=interval)
 
     def _draw_bar(self, frac: float, elapsed: float) -> None:
-        if (
-            elapsed - self._prev_elapsed
-        ) < self._log_interval and not frac == 1.0:
+        if (elapsed - self._prev_elapsed) < self._log_interval and frac != 1.0:
             return
         self._prev_elapsed = elapsed
-        bar = "#" * int(self._width * frac)
+        pbar = "#" * int(self._width * frac)
         percent = int(100 * frac)
         elapsed_fmt = dask.utils.format_time(elapsed)
         desc_width = 30
         msg = (
-            f"{self._desc:<{desc_width}}[{bar:<{self._width}}] | "
+            f"{self._desc:<{desc_width}}[{pbar:<{self._width}}] | "
             f"{percent:3}% Completed | {elapsed_fmt}"
         )
         logger.info(msg)
@@ -149,19 +151,24 @@ class DistributedProgressLogger(
         self._prev_elapsed = 0.0
         super().__init__(keys, interval="1s")
 
-    def _draw_bar(self, remaining: int, all: int, **kwargs) -> None:
+    def _draw_bar(
+        self,
+        remaining: int,
+        all: int,  # pylint: disable=redefined-builtin
+        **kwargs,
+    ) -> None:
         frac = (1 - remaining / all) if all else 1.0
         if (
             self.elapsed - self._prev_elapsed
-        ) < self._log_interval and not frac == 1.0:
+        ) < self._log_interval and frac != 1.0:
             return
         self._prev_elapsed = self.elapsed
-        bar = "#" * int(self.width * frac)
+        pbar = "#" * int(self.width * frac)
         percent = int(100 * frac)
         elapsed = dask.utils.format_time(self.elapsed)
         desc_width = 30
         msg = (
-            f"{self._desc:<{desc_width}}[{bar:<{self.width}}] | "
+            f"{self._desc:<{desc_width}}[{pbar:<{self.width}}] | "
             f"{percent:3}% Completed | {elapsed}"
         )
         logger.info(msg)
@@ -207,7 +214,7 @@ def _compute_with_progress(
         dask.compute(futures)
     else:
         if log_progress:
-            ctx = ProgressLogger(
+            ctx: contextlib.AbstractContextManager = ProgressLogger(
                 description=description,
                 log_interval=log_progress_interval,
             )
