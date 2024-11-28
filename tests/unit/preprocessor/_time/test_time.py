@@ -1528,18 +1528,24 @@ def test_regrid_time_hour_no_divisor_of_24(cube_1d_time, freq):
         regrid_time(cube_1d_time, freq)
 
 
-class TestTimeseriesFilter(tests.Test):
+class TestTimeseriesFilter:
     """Tests for timeseries filter."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
 
-    def test_timeseries_filter_simple(self):
+    @pytest.mark.parametrize("lazy", [True, False])
+    def test_timeseries_filter_simple(self, lazy):
         """Test timeseries_filter func."""
+        if lazy:
+            self.cube.data = self.cube.lazy_data()
         filtered_cube = timeseries_filter(
             self.cube, 7, 14, filter_type="lowpass", filter_stats="sum"
         )
+        if lazy:
+            assert filtered_cube.has_lazy_data()
         expected_data = np.array(
             [
                 2.44824568,
@@ -1569,14 +1575,14 @@ class TestTimeseriesFilter(tests.Test):
         """Test missing time axis."""
         new_cube = self.cube.copy()
         new_cube.remove_coord(new_cube.coord("time"))
-        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             timeseries_filter(
                 new_cube, 7, 14, filter_type="lowpass", filter_stats="sum"
             )
 
     def test_timeseries_filter_implemented(self):
         """Test a not implemented filter."""
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             timeseries_filter(
                 self.cube, 7, 14, filter_type="bypass", filter_stats="sum"
             )
