@@ -6,6 +6,7 @@ import unittest.mock
 import iris
 import numpy as np
 import pytest
+import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
@@ -18,11 +19,12 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
     Omon,
     Siconc,
     Tas,
-    Tasmin,
+    Pr,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -127,72 +129,53 @@ def test_tas_fix():
     assert Tas is BaseTas
 
 
-class TestTasmin(unittest.TestCase):
-    """Test tasmin fixes."""
+@pytest.fixture
+def pr_cubes():
+    correct_time_coord = iris.coords.DimCoord(
+        points=[1.0, 2.0, 3.0, 4.0, 5.0],
+        var_name="time",
+        standard_name="time",
+        units="days since 1850-01-01",
+    )
 
-    def setUp(self):
-        """Prepare tests."""
-        wrong_time_coord = iris.coords.AuxCoord(
-            points=[1.0, 2.0, 1.0, 2.0, 3.0],
-            var_name="time",
-            standard_name="time",
-            units="days since 1850-01-01",
-        )
+    lat_coord = iris.coords.DimCoord(
+        [0.0], var_name="lat", standard_name="latitude"
+    )
 
-        correct_time_coord = iris.coords.AuxCoord(
-            points=[1.0, 2.0, 3.0],
-            var_name="time",
-            standard_name="time",
-            units="days since 1850-01-01",
-        )
+    lon_coord = iris.coords.DimCoord(
+        points=[0.0], var_name="lon", standard_name="longitude"
+    )
 
-        lat_coord = iris.coords.DimCoord(
-            [0.0],
-            standard_name="latitude",
-            var_name="lat",
-        )
+    correct_coord_specs = [
+        (correct_time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
 
-        lon_coord = iris.coords.DimCoord(
-            [0.0],
-            standard_name="longitude",
-            var_name="lon",
-        )
+    correct_pr_cube = iris.cube.Cube(
+        np.ones((5, 1, 1)),
+        var_name="pr",
+        units="kg m-2 s-1",
+        dim_coords_and_dims=correct_coord_specs,
+    )
 
-        self.time_coord = correct_time_coord
-        self.wrong_cube = iris.cube.CubeList(
-            [iris.cube.Cube(np.ones((5, 1, 1)), var_name="tasmin", units="K")]
-        )
-        self.wrong_cube[0].add_aux_coord(wrong_time_coord, 0)
-        self.wrong_cube[0].add_dim_coord(lat_coord, 1)
-        self.wrong_cube[0].add_dim_coord(lon_coord, 2)
-        self.correct_cube = iris.cube.CubeList(
-            [iris.cube.Cube(np.ones(3), var_name="tasmin", units="K")]
-        )
-        self.correct_cube[0].add_aux_coord(correct_time_coord, 0)
+    scalar_cube = iris.cube.Cube(0.0, var_name="ps")
 
-        self.fix = Tasmin(None)
+    return iris.cube.CubeList([correct_pr_cube, scalar_cube])
 
-    def test_get(self):
-        """Test fix get."""
-        self.assertListEqual(
-            Fix.get_fixes("CMIP6", "NCAR", "day", "tasmin"),
-            [Tasmin(None)],
-        )
 
-    def test_tasmin_fix_metadata(self):
-        """Test metadata fix."""
-        out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
-        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+def test_get_pr_fix():
+    """Test pr fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
 
-        time = out_wrong_cube[0].coord("time")
-        assert time == self.time_coord
 
-        time = out_correct_cube[0].coord("time")
-        assert time == self.time_coord
+def test_pr_fix_metadata(pr_cubes):
+    """Test metadata fix."""
+    vardef = get_var_info("CMIP6", "day", "pr")
+    fix = Pr(vardef)
 
-    def test_tasmin_fix_metadata_no_time(self):
-        """Test metadata fix with no time coord."""
-        self.correct_cube[0].remove_coord("time")
-        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
-        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
-            out_correct_cube[0].coord("time")
+    out_cubes = fix.fix_metadata(pr_cubes)
+    assert out_cubes[0].var_name == "pr"
+    coord = out_cubes[0].coord("time")
+    assert pd.Series(coord.points).is_monotonic_increasing

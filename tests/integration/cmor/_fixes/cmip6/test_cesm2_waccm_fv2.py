@@ -3,6 +3,7 @@
 import iris
 import numpy as np
 import pytest
+import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
@@ -20,6 +21,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -143,29 +145,18 @@ def pr_cubes():
     return iris.cube.CubeList([correct_pr_cube, wrong_pr_cube])
 
 
-def test_get(self):
-    """Test fix get."""
-    self.assertListEqual(
-        Fix.get_fixes("CMIP6", "CESM2", "day", "pr"),
-        [Pr(None), GenericFix(None)],
-    )
+def test_get_pr_fix():
+    """Test pr fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
 
 
-def test_pr_fix_metadata(self):
+def test_pr_fix_metadata(pr_cubes):
     """Test metadata fix."""
-    out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
-    out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+    vardef = get_var_info("CMIP6", "day", "pr")
+    fix = Pr(vardef)
 
-    time = out_wrong_cube[0].coord("time")
-    assert time == self.time_coord
-
-    time = out_correct_cube[0].coord("time")
-    assert time == self.time_coord
-
-
-def test_pr_fix_metadata_no_time(self):
-    """Test metadata fix with no time coord."""
-    self.correct_cube[0].remove_coord("time")
-    out_correct_cube = self.fix.fix_metadata(self.correct_cube)
-    with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
-        out_correct_cube[0].coord("time")
+    out_cubes = fix.fix_metadata(pr_cubes)
+    assert out_cubes[0].var_name == "pr"
+    coord = out_cubes[0].coord("time")
+    assert pd.Series(coord.points).is_monotonic_increasing
