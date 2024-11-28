@@ -7,6 +7,7 @@ import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Cl,
@@ -83,6 +84,8 @@ def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "tas")
     assert fix == [Tas(None), GenericFix(None)]
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "day", "tas")
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():
@@ -90,73 +93,12 @@ def test_tas_fix():
     assert Tas is BaseTas
 
 
-@pytest.fixture
-def pr_cubes():
-    wrong_time_coord = iris.coords.AuxCoord(
-        points=[1.0, 2.0, 1.0, 2.0, 3.0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01",
-    )
-
-    correct_time_coord = iris.coords.AuxCoord(
-        points=[1.0, 2.0, 3.0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01",
-    )
-
-    correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
-    )
-    wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
-    )
-    correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
-    )
-    wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
-    )
-
-    wrong_coord_specs = [
-        (wrong_time_coord, 0),
-        (wrong_lat_coord, 1),
-        (wrong_lon_coord, 2),
-    ]
-
-    correct_coord_specs = [
-        (correct_time_coord, 0),
-        (correct_lat_coord, 1),
-        (correct_lon_coord, 2),
-    ]
-    correct_pr_cube = iris.cube.Cube(
-        np.ones((2, 2, 2)),
-        var_name="pr",
-        dim_coords_and_dims=correct_coord_specs,
-    )
-
-    wrong_pr_cube = iris.cube.Cube(
-        np.ones((2, 2, 2)),
-        var_name="ta",
-        dim_coords_and_dims=wrong_coord_specs,
-    )
-
-    return iris.cube.CubeList([correct_pr_cube, wrong_pr_cube])
-
-
 def test_get_pr_fix():
-    """Test pr fix."""
-    fix = Fix.get_fixes("CMIP6", "CESM2", "day", "pr")
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM_FV2", "day", "pr")
     assert fix == [Pr(None), GenericFix(None)]
 
 
-def test_pr_fix_metadata(pr_cubes):
-    """Test metadata fix."""
-    vardef = get_var_info("CMIP6", "day", "pr")
-    fix = Pr(vardef)
-
-    out_cubes = fix.fix_metadata(pr_cubes)
-    assert out_cubes[0].var_name == "pr"
-    coord = out_cubes[0].coord("time")
-    assert pd.Series(coord.points).is_monotonic_increasing
+def test_pr_fix():
+    """Test fix for ``Pr``."""
+    assert Pr is BasePr

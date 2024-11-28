@@ -440,7 +440,7 @@ def pr_cubes():
     )
 
     lon_coord = iris.coords.DimCoord(
-        points=[0.0], var_name="lon", standard_name="longitude"
+        [0.0], var_name="lon", standard_name="longitude"
     )
 
     correct_coord_specs = [
