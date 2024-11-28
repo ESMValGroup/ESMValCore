@@ -515,12 +515,14 @@ def test_tasmin_fix_metadata(tasmin_cubes):
     for cube in tasmin_cubes:
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             cube.coord("height")
-    height_coord = iris.coords.AuxCoord(2.0,
-                                        var_name="height",
-                                        standard_name="height",
-                                        long_name="height",
-                                        units=Unit("m"),
-                                        attributes={"positive": "up"})
+    height_coord = iris.coords.AuxCoord(
+        2.0,
+        var_name="height",
+        standard_name="height",
+        long_name="height",
+        units=Unit("m"),
+        attributes={"positive": "up"},
+    )
     vardef = get_var_info("CMIP6", "day", "tasmin")
     fix = Tasmin(vardef)
 

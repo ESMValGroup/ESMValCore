@@ -6,30 +6,28 @@ import unittest.mock
 import iris
 import numpy as np
 import pytest
-import pandas as pd
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Tasmin as BaseTasmin
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tasmax as BaseTasmax
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tasmin as BaseTasmin
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
     Cl,
     Cli,
     Clw,
     Fgco2,
     Omon,
+    Pr,
     Siconc,
     Tas,
-    Pr,
-    Tasmin,
     Tasmax,
+    Tasmin,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -128,7 +126,7 @@ def test_get_tas_fix():
     fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "Amon", "tas")
     assert fix == [Tas(None), GenericFix(None)]
     fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "day", "tas")
-    assert fix == [Tas(None), GenericFix(None)]   
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():

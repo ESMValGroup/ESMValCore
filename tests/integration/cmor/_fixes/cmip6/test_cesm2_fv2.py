@@ -2,17 +2,17 @@
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_fv2 import (
     Cl,
     Cli,
     Clw,
     Fgco2,
     Omon,
+    Pr,
     Siconc,
     Tas,
-    Pr
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -80,6 +80,7 @@ def test_get_tas_fix():
     assert fix == [Tas(None), GenericFix(None)]
     fix = Fix.get_fixes("CMIP6", "CESM2-FV2", "day", "tas")
     assert fix == [Tas(None), GenericFix(None)]
+
 
 def test_tas_fix():
     """Test fix for ``tas``."""
