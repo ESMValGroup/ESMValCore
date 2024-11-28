@@ -1,7 +1,7 @@
 """Test :mod:`esmvalcore.preprocessor._dask_progress`."""
 
 import logging
-import operator
+import time
 
 import dask
 import distributed
@@ -29,7 +29,11 @@ def test_compute_with_progress(
     monkeypatch.setitem(
         _dask_progress.CFG["logging"], "log_progress_interval", interval
     )
-    delayeds = [dask.delayed(operator.add)(1, 1)]
+
+    def func(delay: float) -> None:
+        time.sleep(delay)
+
+    delayeds = [dask.delayed(func)(0.11)]
     _dask_progress._compute_with_progress(delayeds, description="test")
     if interval == 0.0:
         # Assert that some progress bar has been written to stdout.
@@ -37,8 +41,6 @@ def test_compute_with_progress(
     else:
         # Assert that some progress bar has been logged.
         progressbar = caplog.text
-    print(f"{capsys.readouterr()=}")
-    print(f"{caplog.records=}")
     assert "100%" in progressbar
     if client is not None:
         client.shutdown()

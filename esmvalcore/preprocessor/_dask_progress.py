@@ -188,8 +188,8 @@ def _compute_with_progress(
     if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
         # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
         log_progress_interval = 1.0
-
     log_progress = log_progress_interval > 0.0
+
     total = sum(len(d.dask) for d in delayeds)
     logger.debug("Task %s has a dask graph of size %s", description, total)
 
