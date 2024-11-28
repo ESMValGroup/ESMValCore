@@ -3,6 +3,7 @@
 import abc
 import contextlib
 import datetime
+import importlib
 import logging
 import numbers
 import os
@@ -386,9 +387,24 @@ class DiagnosticTask(BaseTask):
         """Create an executable command from script."""
         diagnostics_root = DIAGNOSTICS.scripts
         script = self.script
-        script_file = (diagnostics_root / Path(script).expanduser()).absolute()
 
+        # Check if local diagnostic path exists
+        script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
+        if not script_file.is_file():
+            logger.info(
+                "No local diagnostic script found. Attempting to load the script from the base repository."
+            )
+            # Check if esmvaltool package is available
+            if importlib.util.find_spec("esmvaltool") is None:
+                logger.warning(
+                    "The 'esmvaltool' package cannot be found. Please ensure it is installed."
+                )
+
+            # Try diagnostics_root
+            script_file = (
+                diagnostics_root / Path(script).expanduser()
+            ).absolute()
         if not script_file.is_file():
             raise DiagnosticError(f"{err_msg}: file does not exist.")
 
