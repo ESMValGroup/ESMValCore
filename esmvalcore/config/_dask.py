@@ -84,6 +84,7 @@ def get_distributed_client():
                 cluster.close()
             except TimeoutError:
                 logger.warning(
-                    "Failed to shut down the cluster at %s",
+                    "Timeout while trying to shut down the cluster at %s, "
+                    "you may want to check it was stopped.",
                     cluster.scheduler_address,
                 )
