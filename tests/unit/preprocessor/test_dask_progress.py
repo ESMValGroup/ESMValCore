@@ -11,7 +11,7 @@ from esmvalcore.preprocessor import _dask_progress
 
 
 @pytest.mark.parametrize("use_distributed", [False, True])
-@pytest.mark.parametrize("interval", [0.0, 0.2])
+@pytest.mark.parametrize("interval", [-1, 0.0, 0.2])
 def test_compute_with_progress(
     capsys,
     caplog,
@@ -41,6 +41,9 @@ def test_compute_with_progress(
     else:
         # Assert that some progress bar has been logged.
         progressbar = caplog.text
-    assert "100%" in progressbar
+    if interval < 0.0:
+        assert not progressbar
+    else:
+        assert "100%" in progressbar
     if client is not None:
         client.shutdown()

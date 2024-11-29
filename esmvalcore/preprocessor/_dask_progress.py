@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime
 import logging
 import threading
 import time
@@ -203,37 +204,45 @@ def _compute_with_progress(
     except ValueError:
         use_distributed = False
 
-    log_progress_interval = dask.utils.parse_timedelta(
-        CFG["logging"]["log_progress_interval"],
-        default="s",
-    )
+    log_progress_interval = CFG["logging"]["log_progress_interval"]
+    if isinstance(log_progress_interval, (str, datetime.timedelta)):
+        log_progress_interval = dask.utils.parse_timedelta(
+            log_progress_interval
+        )
+
     if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
         # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
         log_progress_interval = 10.0
-    log_progress = log_progress_interval > 0.0
 
     total = sum(len(d.dask) for d in delayeds)
     logger.debug("Task %s has a dask graph of size %s", description, total)
 
-    if use_distributed:
+    # There are three possible options, depending on the value of
+    # CFG["log_progress_interval"]:
+    # < 0: no progress reporting
+    # = 0: show progress bar
+    # > 0: log progress at this interval
+    if log_progress_interval < 0.0:
+        dask.compute(delayeds)
+    elif use_distributed:
         futures = dask.persist(delayeds)
         futures = distributed.client.futures_of(futures)
-        if log_progress:
+        if log_progress_interval == 0.0:
+            RichDistributedProgressBar(futures, total=total)
+        else:
             DistributedProgressLogger(
                 futures,
                 log_interval=log_progress_interval,
                 description=description,
             )
-        else:
-            RichDistributedProgressBar(futures, total=total)
         dask.compute(futures)
     else:
-        if log_progress:
-            ctx: contextlib.AbstractContextManager = ProgressLogger(
+        if log_progress_interval == 0.0:
+            ctx: contextlib.AbstractContextManager = RichProgressBar()
+        else:
+            ctx = ProgressLogger(
                 description=description,
                 log_interval=log_progress_interval,
             )
-        else:
-            ctx = RichProgressBar()
         with ctx:
             dask.compute(delayeds)

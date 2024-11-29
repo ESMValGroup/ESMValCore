@@ -129,8 +129,8 @@ More information about this can be found :ref:`here <api_configuration>`.
 
 .. _config_options:
 
-Configuration options
-=====================
+Top level configuration options
+===============================
 
 Note: the following entries use Python syntax.
 For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
@@ -169,6 +169,8 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
 |                               | ``info``, ``warning``, ``error``)      |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``logging``                   | :ref:`config-logging`                  | :obj:`dict`                 |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
 |                               | :ref:`running`                         |                             |                                        |
@@ -274,19 +276,32 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 Logging configuration
 =====================
 
-These options can be specified under the ``"logging"`` section in the
-configuration file.
+Configure what information is logged and how it is presented in the ``logging``
+section.
 
-Example:
+.. note::
+
+   Not all logging configuration is available here yet, see :issue:`2596`.
+
+Configuration file example:
 
 .. code:: yaml
 
-  logging:
-    log_progress_interval: 10s
+   logging:
+     log_progress_interval: 10s
 
-will log progress with Dask computations every 10 seconds instead of showing a
-progress bar. If ``max_parallel_tasks`` is not equal to 1, progress is always
-logged.
+will log progress of Dask computations every 10 seconds instead of showing a
+progress bar.
+
+Command line example:
+
+.. code:: bash
+
+   esmvaltool run --logging='{"log_progress_interval": "1m"}' recipe_example.yml
+
+
+will log progress of Dask computations every minute instead of showing a
+progress bar.
 
 Available options:
 
@@ -298,7 +313,10 @@ Available options:
 |                               | ``log_progress_interval`` instead of   |                             |                                        |
 |                               | showing a progress bar. The value can  |                             |                                        |
 |                               | be specified in the format accepted by |                             |                                        |
-|                               | :func:`dask.utils.parse_timedelta`.    |                             |                                        |
+|                               | :func:`dask.utils.parse_timedelta`. A  |                             |                                        |
+|                               | negative value disables any progress   |                             |                                        |
+|                               | reporting. A progress bar is only      |                             |                                        |
+|                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 .. _config-dask:
