@@ -350,7 +350,8 @@ def test_tas_fix_metadata(tas_cubes):
     vardef = get_var_info("CMIP6", "Amon", "tas")
     fix = Tas(vardef)
     out_cubes = fix.fix_metadata(tas_cubes)
-    assert out_cubes is tas_cubes
+    assert out_cubes[0] is tas_cubes[0]
+    assert out_cubes[1] is tas_cubes[1]
     for cube in out_cubes:
         assert cube.coord("longitude").has_bounds()
         assert cube.coord("latitude").has_bounds()
