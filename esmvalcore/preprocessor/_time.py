@@ -355,11 +355,11 @@ def extract_season(cube: Cube, season: str, full: False) -> Cube:
     season = season.upper()
 
     allmonths = "JFMAMJJASOND" * 2
-    # if season not in allmonths:
-    #     raise ValueError(
-    #         f"Unable to extract Season {season} "
-    #         f"combination of months not possible."
-    #     )
+    if season not in allmonths:
+        raise ValueError(
+            f"Unable to extract Season {season} "
+            f"combination of months not possible."
+        )
     sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season) : sstart + 12]
     seasons = [season, res_season]
