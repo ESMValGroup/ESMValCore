@@ -27,7 +27,9 @@ def test_compute_with_progress(
 
     monkeypatch.setitem(_dask_progress.CFG, "max_parallel_tasks", 1)
     monkeypatch.setitem(
-        _dask_progress.CFG["logging"], "log_progress_interval", interval
+        _dask_progress.CFG["logging"],
+        "log_progress_interval",
+        f"{interval}s" if interval > 0 else interval,
     )
 
     def func(delay: float) -> None:
