@@ -60,48 +60,6 @@ for _coord in (
     )
 
 
-##########################################################################
-# start of custom code ###################################################
-
-def get_date_from_time( time_coord, default=None, year=None, month=None, day=None ):
-    time_coord = cube.coord('time')
-    if not default: default = time_coord.points[0] # first point
-    default_time = time_coord.units.num2date( default )
-
-    if year is None:  year = default_time.year
-    if month is None: month = default_time.month
-    if day is None: day = default_time.day
-
-    return dict( start_year=year, start_month=month, start_day=day )
-
-def extract_fullseason(cube: Cube, season: str) -> Cube:
-    """
-    extract full seasons (DJF, never D,JF)
-    Useful mainly for seasons spanning multiple years
-    Calls extract_time to trim incomplete seasons, then extract_season
-    """
-    season = season.upper()
-
-    allmonths = 'JFMAMJJASOND' * 2
-    if season not in allmonths:
-        raise ValueError(f"Unable to extract Season {season} "
-                         f"combination of months not possible.")
-    sstart = allmonths.index(season)
-    send = sstart + len(season)
-
-    if send>12: # need to first extract time
-        time_coord = cube.coord('time')
-        start_month = sstart+1
-        start_time = get_date_from_time( time_coord, default=time_coord.points[0], month=start_month )
-        end_month = send-12+1
-        end_time = get_date_from_time( time_coord, default=time_coord.points[-1], month=end_month )
-        cube = extract_time( cube, **start_time, **end_time )
-
-    return extract_season( cube, season=season )
-
-# end of custom code ###################################################
-##########################################################################
-
 def extract_time(
     cube: Cube,
     start_year: int | None,
@@ -373,7 +331,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     return _extract_datetime(cube, t_1, t_2)
 
 
-def extract_season(cube: Cube, season: str) -> Cube:
+def extract_season(cube: Cube, season: str, full: False) -> Cube:
     """Slice cube to get only the data belonging to a specific season.
 
     Parameters
@@ -406,6 +364,19 @@ def extract_season(cube: Cube, season: str) -> Cube:
     res_season = allmonths[sstart + len(season) : sstart + 12]
     seasons = [season, res_season]
     coords_to_remove = []
+
+    send = sstart + len(season) # end of season
+    if (send>12) and full: # need to first extract time to trim incomplete seasons
+        time_coord = cube.coord('time')
+        
+        time0 = time_coord.units.num2date( time_coord.points[0] )
+        start_time = dict( start_year=time0.year, start_month=sstart+1, start_day=1 )
+
+        timeF = time_coord.units.num2date( time_coord.points[-1] )
+        end_month_plus_one = (send-12+1) +1
+        end_time_plus_one_day = dict( start_year=timeF.year, start_month=end_month_plus_one, start_day=1 )
+
+        cube = extract_time( cube, **start_time, **end_time_plus_one_day )
 
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
