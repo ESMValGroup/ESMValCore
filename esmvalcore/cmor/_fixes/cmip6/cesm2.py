@@ -238,7 +238,7 @@ class Tas(Prw):
 
                     new_list.append(tmp_cube)
 
-        return cubes, new_list
+        return new_list
 
 
 class Sftlf(Fix):
