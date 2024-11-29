@@ -440,7 +440,6 @@ class ESMValTool:
         recipe = self._get_recipe(recipe)
 
         CFG.update(kwargs)
-        print(CFG["resume_from"])
         CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
 
