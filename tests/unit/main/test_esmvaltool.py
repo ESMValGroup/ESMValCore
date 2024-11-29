@@ -21,12 +21,17 @@ LOGGER = logging.getLogger(__name__)
 @pytest.fixture
 def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
-    session = mocker.MagicMock()
-
     cfg_dict = {"resume_from": []}
-    session.__getitem__.side_effect = cfg_dict.__getitem__
-    session.__setitem__.side_effect = cfg_dict.__setitem__
-    session.update.side_effect = cfg_dict.update
+
+    cfg = mocker.MagicMock()
+    cfg.__getitem__.side_effect = cfg_dict.__getitem__
+    cfg.__setitem__.side_effect = cfg_dict.__setitem__
+    cfg.update.side_effect = cfg_dict.update
+
+    session = mocker.MagicMock()
+    session.__getitem__.side_effect = cfg.__getitem__
+    session.__setitem__.side_effect = cfg.__setitem__
+    session.update.side_effect = cfg.update
 
     output_dir = tmp_path / "esmvaltool_output"
     session.session_dir = output_dir / "recipe_test"
@@ -34,7 +39,6 @@ def cfg(mocker, tmp_path):
     session.preproc_dir = session.session_dir / "preproc_dir"
     session._fixed_file_dir = session.preproc_dir / "fixed_files"
 
-    cfg = mocker.Mock()
     cfg.start_session.return_value = session
 
     return cfg
