@@ -94,7 +94,7 @@ class RichDistributedProgressBar(
             redirect_stderr=False,
         )
         self.progress.start()
-        self.task = self.progress.add_task(
+        self.task_id = self.progress.add_task(
             description="progress",
             total=total,
         )
@@ -102,9 +102,11 @@ class RichDistributedProgressBar(
 
     def _draw_bar(self, remaining, all, **kwargs):  # pylint: disable=redefined-builtin
         completed = all - remaining
-        self.progress.update(self.task, completed=completed)
+        self.progress.update(self.task_id, completed=completed)
 
     def _draw_stop(self, **kwargs):
+        if kwargs.get("status") == "finished":
+            self._draw_bar(remaining=0, all=self.progress.tasks[0].total)
         self.progress.stop()
 
 
@@ -126,6 +128,7 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
         self._prev_elapsed = 0.0
         interval = dask.utils.parse_timedelta("1s", default="s")
         super().__init__(dt=interval)
+        self._file = None
 
     def _draw_bar(self, frac: float, elapsed: float) -> None:
         if (elapsed - self._prev_elapsed) < self._log_interval and frac != 1.0:
@@ -206,7 +209,7 @@ def _compute_with_progress(
     )
     if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
         # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
-        log_progress_interval = 1.0
+        log_progress_interval = 10.0
     log_progress = log_progress_interval > 0.0
 
     total = sum(len(d.dask) for d in delayeds)
