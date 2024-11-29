@@ -21,8 +21,11 @@ logger = logging.getLogger(__name__)
 class RichProgressBar(dask.diagnostics.Callback):
     """Progress bar using `rich` for the Dask default scheduler."""
 
+    # Disable warnings about design choices that have been made in the base class.
+    # pylint: disable=method-hidden,super-init-not-called,too-few-public-methods,unused-argument,useless-suppression
+
     # Adapted from https://github.com/dask/dask/blob/0f3e5ff6e642e7661b3f855bfd192a6f6fb83b49/dask/diagnostics/progress.py#L32-L153
-    def __init__(self):  # pylint: disable=super-init-not-called
+    def __init__(self):
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
@@ -37,7 +40,7 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._running = False
         self._timer = None
 
-    def _start(self, dsk):  # pylint: disable=method-hidden,unused-argument
+    def _start(self, dsk):
         self._state = None
         # Start background thread
         self._running = True
@@ -45,17 +48,17 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._timer.daemon = True
         self._timer.start()
 
-    def _start_state(self, dsk, state):  # pylint: disable=method-hidden,unused-argument
+    def _start_state(self, dsk, state):
         self.progress.start()
         total = sum(
             len(state[k]) for k in ["ready", "waiting", "running", "finished"]
         )
         self.progress.update(self.task, total=total)
 
-    def _pretask(self, key, dsk, state):  # pylint: disable=method-hidden,unused-argument
+    def _pretask(self, key, dsk, state):
         self._state = state
 
-    def _finish(self, dsk, state, errored):  # pylint: disable=method-hidden,unused-argument
+    def _finish(self, dsk, state, errored):
         self._running = False
         self._timer.join()
         self._draw_bar()
@@ -77,6 +80,9 @@ class RichDistributedProgressBar(
     distributed.diagnostics.progressbar.TextProgressBar
 ):
     """Progress bar using `rich` for the Dask distributed scheduler."""
+
+    # Disable warnings about design choices that have been made in the base class.
+    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
     def __init__(self, keys, total: int) -> None:
         self.progress = rich.progress.Progress(
@@ -104,6 +110,9 @@ class RichDistributedProgressBar(
 
 class ProgressLogger(dask.diagnostics.ProgressBar):
     """Progress logger for the Dask default scheduler."""
+
+    # Disable warnings about design choices that have been made in the base class.
+    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
     def __init__(
         self,
@@ -137,6 +146,9 @@ class DistributedProgressLogger(
     distributed.diagnostics.progressbar.TextProgressBar
 ):
     """Progress logger for the Dask distributed scheduler."""
+
+    # Disable warnings about design choices that have been made in the base class.
+    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
     def __init__(
         self,
