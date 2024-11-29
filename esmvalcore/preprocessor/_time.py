@@ -1286,6 +1286,10 @@ def timeseries_filter(
     # Apply filter
     (agg, agg_kwargs) = get_iris_aggregator(filter_stats, **operator_kwargs)
     agg_kwargs["weights"] = wgts
+    if cube.has_lazy_data():
+        # Ensure the cube data chunktype is np.MaskedArray so rolling_window
+        # does not ignore a potential mask.
+        cube.data = da.ma.masked_array(cube.core_data())
     cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
 
     return cube

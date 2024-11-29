@@ -22,6 +22,7 @@ from iris.cube import CubeList
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 from .._task import write_ncl_settings
 
@@ -392,6 +393,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     cubes = _sort_cubes_by_time(cubes)
     _fix_calendars(cubes)
     cubes = _check_time_overlaps(cubes)
+    cubes = [_rechunk_aux_factory_dependencies(cube) for cube in cubes]
     result = _concatenate_cubes(cubes, check_level=check_level)
 
     if len(result) == 1:
