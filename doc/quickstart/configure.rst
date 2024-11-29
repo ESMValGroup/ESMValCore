@@ -293,10 +293,12 @@ Available options:
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
-| ``log_progress_interval``     | When running computations with Dask,   | :obj:`float`                | 0                                      |
+| ``log_progress_interval``     | When running computations with Dask,   | :obj:`str` or :obj:`float`  | 0                                      |
 |                               | log progress every                     |                             |                                        |
 |                               | ``log_progress_interval`` instead of   |                             |                                        |
-|                               | showing a progress bar.                |                             |                                        |
+|                               | showing a progress bar. The value can  |                             |                                        |
+|                               | be specified in the format accepted by |                             |                                        |
+|                               | :func:`dask.utils.parse_timedelta`.    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 .. _config-dask:

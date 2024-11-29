@@ -535,9 +535,7 @@ def save(
             category=UserWarning,
             module="iris",
         )
-        result = iris.save(cubes, **kwargs)
-
-    return result
+        return iris.save(cubes, **kwargs)
 
 
 def _get_debug_filename(filename, step):
