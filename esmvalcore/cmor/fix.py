@@ -161,6 +161,7 @@ def fix_metadata(
         frequency=frequency,
     )
 
+    cubes = CubeList(cubes)
     for fix in fixes:
         cubes = fix.fix_metadata(cubes)
 
