@@ -85,7 +85,7 @@ class RichDistributedProgressBar(
     # Disable warnings about design choices that have been made in the base class.
     # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
-    def __init__(self, keys, total: int) -> None:
+    def __init__(self, keys) -> None:
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
@@ -95,15 +95,12 @@ class RichDistributedProgressBar(
             redirect_stderr=False,
         )
         self.progress.start()
-        self.task_id = self.progress.add_task(
-            description="progress",
-            total=total,
-        )
+        self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
 
     def _draw_bar(self, remaining, all, **kwargs):  # pylint: disable=redefined-builtin
         completed = all - remaining
-        self.progress.update(self.task_id, completed=completed)
+        self.progress.update(self.task_id, completed=completed, total=all)
 
     def _draw_stop(self, **kwargs):
         if kwargs.get("status") == "finished":
@@ -214,9 +211,6 @@ def _compute_with_progress(
         # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
         log_progress_interval = 10.0
 
-    total = sum(len(d.dask) for d in delayeds)
-    logger.debug("Task %s has a dask graph of size %s", description, total)
-
     # There are three possible options, depending on the value of
     # CFG["log_progress_interval"]:
     # < 0: no progress reporting
@@ -228,7 +222,7 @@ def _compute_with_progress(
         futures = dask.persist(delayeds)
         futures = distributed.client.futures_of(futures)
         if log_progress_interval == 0.0:
-            RichDistributedProgressBar(futures, total=total)
+            RichDistributedProgressBar(futures)
         else:
             DistributedProgressLogger(
                 futures,
