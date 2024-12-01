@@ -1,11 +1,15 @@
 """Fixes for CESM2-WACCM model."""
+
 from netCDF4 import Dataset
 
 from ..common import SiconcFixScalarCoord
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
+from .cesm2 import Pr as BasePr
 from .cesm2 import Tas as BaseTas
+from .cesm2 import Tasmax as BaseTasmax
+from .cesm2 import Tasmin as BaseTasmin
 
 
 class Cl(BaseCl):
@@ -41,9 +45,9 @@ class Cl(BaseCl):
         new_path = self._fix_formula_terms(
             filepath, output_dir, add_unique_suffix=add_unique_suffix
         )
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][:, ::-1]
-        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][:, ::-1]
+        dataset = Dataset(new_path, mode="a")
+        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][:, ::-1]
+        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][:, ::-1]
         dataset.close()
         return new_path
 
@@ -63,4 +67,13 @@ Omon = BaseOmon
 Siconc = SiconcFixScalarCoord
 
 
+Pr = BasePr
+
+
 Tas = BaseTas
+
+
+Tasmin = BaseTasmin
+
+
+Tasmax = BaseTasmax

@@ -1,4 +1,5 @@
 """Unit tests for `esmvalcore.preprocessor._shared`."""
+
 import inspect
 import warnings
 
@@ -7,23 +8,26 @@ import iris.analysis
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.aux_factory import HybridPressureFactory
 from iris.coords import AuxCoord
 from iris.cube import Cube
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._shared import (
-    _get_area_weights,
+    _compute_area_weights,
     _group_products,
+    _rechunk_aux_factory_dependencies,
     aggregator_accept_weights,
+    apply_mask,
     get_array_module,
     get_iris_aggregator,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
 )
+from tests import assert_array_equal
 
 
-@pytest.mark.parametrize('operator', ['gmean', 'GmEaN', 'GMEAN'])
+@pytest.mark.parametrize("operator", ["gmean", "GmEaN", "GMEAN"])
 def test_get_iris_aggregator_gmean(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -31,7 +35,7 @@ def test_get_iris_aggregator_gmean(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('operator', ['hmean', 'hMeAn', 'HMEAN'])
+@pytest.mark.parametrize("operator", ["hmean", "hMeAn", "HMEAN"])
 def test_get_iris_aggregator_hmean(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -39,7 +43,7 @@ def test_get_iris_aggregator_hmean(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('operator', ['max', 'mAx', 'MAX'])
+@pytest.mark.parametrize("operator", ["max", "mAx", "MAX"])
 def test_get_iris_aggregator_max(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -47,8 +51,8 @@ def test_get_iris_aggregator_max(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'weights': True}, {'weights': False}])
-@pytest.mark.parametrize('operator', ['mean', 'mEaN', 'MEAN'])
+@pytest.mark.parametrize("kwargs", [{}, {"weights": True}, {"weights": False}])
+@pytest.mark.parametrize("operator", ["mean", "mEaN", "MEAN"])
 def test_get_iris_aggregator_mean(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -56,8 +60,8 @@ def test_get_iris_aggregator_mean(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'weights': True}])
-@pytest.mark.parametrize('operator', ['median', 'mEdIaN', 'MEDIAN'])
+@pytest.mark.parametrize("kwargs", [{}, {"weights": True}])
+@pytest.mark.parametrize("operator", ["median", "mEdIaN", "MEDIAN"])
 def test_get_iris_aggregator_median(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -65,7 +69,7 @@ def test_get_iris_aggregator_median(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('operator', ['min', 'MiN', 'MIN'])
+@pytest.mark.parametrize("operator", ["min", "MiN", "MIN"])
 def test_get_iris_aggregator_min(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -73,7 +77,7 @@ def test_get_iris_aggregator_min(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('operator', ['peak', 'pEaK', 'PEAK'])
+@pytest.mark.parametrize("operator", ["peak", "pEaK", "PEAK"])
 def test_get_iris_aggregator_peak(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -81,8 +85,8 @@ def test_get_iris_aggregator_peak(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('kwargs', [{'percent': 80.0, 'alphap': 0.5}])
-@pytest.mark.parametrize('operator', ['percentile', 'PERCENTILE'])
+@pytest.mark.parametrize("kwargs", [{"percent": 80.0, "alphap": 0.5}])
+@pytest.mark.parametrize("operator", ["percentile", "PERCENTILE"])
 def test_get_iris_aggregator_percentile(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -90,18 +94,8 @@ def test_get_iris_aggregator_percentile(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'alphap': 0.5}])
-@pytest.mark.parametrize('operator', ['p10', 'P10.5'])
-def test_get_iris_aggregator_pxxyy(operator, kwargs):
-    """Test ``get_iris_aggregator``."""
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
-    assert agg == iris.analysis.PERCENTILE
-    assert agg_kwargs == {'percent': float(operator[1:]), **kwargs}
-
-
-@pytest.mark.parametrize('kwargs', [{}, {'weights': True}])
-@pytest.mark.parametrize('operator', ['rms', 'rMs', 'RMS'])
+@pytest.mark.parametrize("kwargs", [{}, {"weights": True}])
+@pytest.mark.parametrize("operator", ["rms", "rMs", "RMS"])
 def test_get_iris_aggregator_rms(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -109,25 +103,18 @@ def test_get_iris_aggregator_rms(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'ddof': 1}])
-@pytest.mark.parametrize('operator', ['std', 'STD', 'std_dev', 'STD_DEV'])
+@pytest.mark.parametrize("kwargs", [{}, {"ddof": 1}])
+@pytest.mark.parametrize("operator", ["std_dev", "STD_DEV"])
 def test_get_iris_aggregator_std(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    if operator.lower() == 'std':
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter(
-                'error', category=ESMValCoreDeprecationWarning
-            )
-            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
+    with warnings.catch_warnings():
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.STD_DEV
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'weights': True}])
-@pytest.mark.parametrize('operator', ['sum', 'SuM', 'SUM'])
+@pytest.mark.parametrize("kwargs", [{}, {"weights": True}])
+@pytest.mark.parametrize("operator", ["sum", "SuM", "SUM"])
 def test_get_iris_aggregator_sum(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -135,7 +122,7 @@ def test_get_iris_aggregator_sum(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('operator', ['variance', 'vArIaNcE', 'VARIANCE'])
+@pytest.mark.parametrize("operator", ["variance", "vArIaNcE", "VARIANCE"])
 def test_get_iris_aggregator_variance(operator):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator)
@@ -143,8 +130,8 @@ def test_get_iris_aggregator_variance(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('kwargs', [{'percent': 10, 'weights': True}])
-@pytest.mark.parametrize('operator', ['wpercentile', 'WPERCENTILE'])
+@pytest.mark.parametrize("kwargs", [{"percent": 10, "weights": True}])
+@pytest.mark.parametrize("operator", ["wpercentile", "WPERCENTILE"])
 def test_get_iris_aggregator_wpercentile(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -152,17 +139,17 @@ def test_get_iris_aggregator_wpercentile(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize('operator', ['invalid', 'iNvAliD', 'INVALID'])
+@pytest.mark.parametrize("operator", ["invalid", "iNvAliD", "INVALID"])
 def test_get_iris_aggregator_invalid_operator_fail(operator):
     """Test ``get_iris_aggregator``."""
     with pytest.raises(ValueError):
         get_iris_aggregator(operator)
 
 
-@pytest.mark.parametrize('operator', ['mean', 'mEaN', 'MEAN'])
+@pytest.mark.parametrize("operator", ["mean", "mEaN", "MEAN"])
 def test_get_iris_aggregator_no_aggregator_fail(operator, monkeypatch):
     """Test ``get_iris_aggregator``."""
-    monkeypatch.setattr(iris.analysis, 'MEAN', 1)
+    monkeypatch.setattr(iris.analysis, "MEAN", 1)
     with pytest.raises(ValueError):
         get_iris_aggregator(operator)
 
@@ -170,17 +157,17 @@ def test_get_iris_aggregator_no_aggregator_fail(operator, monkeypatch):
 def test_get_iris_aggregator_invalid_kwarg():
     """Test ``get_iris_aggregator``."""
     with pytest.raises(ValueError):
-        get_iris_aggregator('max', invalid_kwarg=1)
+        get_iris_aggregator("max", invalid_kwarg=1)
 
 
 def test_get_iris_aggregator_missing_kwarg():
     """Test ``get_iris_aggregator``."""
     with pytest.raises(ValueError):
-        get_iris_aggregator('percentile')
+        get_iris_aggregator("percentile")
 
 
 @pytest.mark.parametrize(
-    'aggregator,result',
+    "aggregator,result",
     [
         (iris.analysis.MEAN, True),
         (iris.analysis.SUM, True),
@@ -198,7 +185,7 @@ def test_aggregator_accept_weights(aggregator, result):
 
 @preserve_float_dtype
 def _dummy_func(obj, arg, kwarg=2.0):
-    """Dummy function to test `preserve_float_dtype`."""
+    """Compute something to test `preserve_float_dtype`."""
     obj = obj * arg * kwarg
     if isinstance(obj, Cube):
         obj.data = obj.core_data().astype(np.float64)
@@ -208,7 +195,7 @@ def _dummy_func(obj, arg, kwarg=2.0):
 
 
 @pytest.mark.parametrize(
-    'data,dtype',
+    "data,dtype",
     [
         (np.array([1.0], dtype=np.float64), np.float64),
         (np.array([1.0], dtype=np.float32), np.float32),
@@ -240,9 +227,9 @@ def test_preserve_float_dtype(data, dtype):
     if isinstance(data, Cube):
         assert result.has_lazy_data() == data.has_lazy_data()
 
-    assert _dummy_func.__name__ == '_dummy_func'
+    assert _dummy_func.__name__ == "_dummy_func"
     signature = inspect.signature(_dummy_func)
-    assert list(signature.parameters) == ['obj', 'arg', 'kwarg']
+    assert list(signature.parameters) == ["obj", "arg", "kwarg"]
 
 
 def test_get_array_module_da():
@@ -261,28 +248,28 @@ def test_get_array_module_mixed():
 
 
 def _create_sample_full_cube():
-    cube = Cube(np.zeros((4, 180, 360)), var_name='co2', units='J')
+    cube = Cube(np.zeros((4, 180, 360)), var_name="co2", units="J")
     cube.add_dim_coord(
         iris.coords.DimCoord(
-            np.array([10., 40., 70., 110.]),
-            standard_name='time',
-            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+            np.array([10.0, 40.0, 70.0, 110.0]),
+            standard_name="time",
+            units=Unit("days since 1950-01-01 00:00:00", calendar="gregorian"),
         ),
         0,
     )
     cube.add_dim_coord(
         iris.coords.DimCoord(
-            np.arange(-90., 90., 1.),
-            standard_name='latitude',
-            units='degrees',
+            np.arange(-90.0, 90.0, 1.0),
+            standard_name="latitude",
+            units="degrees",
         ),
         1,
     )
     cube.add_dim_coord(
         iris.coords.DimCoord(
-            np.arange(0., 360., 1.),
-            standard_name='longitude',
-            units='degrees',
+            np.arange(0.0, 360.0, 1.0),
+            standard_name="longitude",
+            units="degrees",
         ),
         2,
     )
@@ -294,13 +281,13 @@ def _create_sample_full_cube():
     return cube
 
 
-@pytest.mark.parametrize('lazy', [True, False])
-def test_get_area_weights(lazy):
-    """Test _get_area_weights."""
+@pytest.mark.parametrize("lazy", [True, False])
+def test_compute_area_weights(lazy):
+    """Test _compute_area_weights."""
     cube = _create_sample_full_cube()
     if lazy:
-        cube.data = cube.lazy_data()
-    weights = _get_area_weights(cube)
+        cube.data = cube.lazy_data().rechunk((2, 180, 360))
+    weights = _compute_area_weights(cube)
     if lazy:
         assert isinstance(weights, da.Array)
         assert weights.chunks == cube.lazy_data().chunks
@@ -314,22 +301,22 @@ def test_get_area_weights(lazy):
 def test_group_products_string_list():
     products = [
         PreprocessorFile(
-            filename='A_B.nc',
+            filename="A_B.nc",
             attributes={
-                'project': 'A',
-                'dataset': 'B',
+                "project": "A",
+                "dataset": "B",
             },
         ),
         PreprocessorFile(
-            filename='A_C.nc',
+            filename="A_C.nc",
             attributes={
-                'project': 'A',
-                'dataset': 'C',
-            }
+                "project": "A",
+                "dataset": "C",
+            },
         ),
     ]
-    grouped_by_string = _group_products(products, 'project')
-    grouped_by_list = _group_products(products, ['project'])
+    grouped_by_string = _group_products(products, "project")
+    grouped_by_list = _group_products(products, ["project"])
 
     assert grouped_by_list == grouped_by_string
 
@@ -337,13 +324,111 @@ def test_group_products_string_list():
 def test_try_adding_calculated_cell_area():
     """Test ``try_adding_calculated_cell_area``."""
     cube = _create_sample_full_cube()
-    cube.coord('latitude').rename('grid_latitude')
-    cube.coord('longitude').rename('grid_longitude')
-    lat = AuxCoord(np.zeros((180, 360)), standard_name='latitude')
-    lon = AuxCoord(np.zeros((180, 360)), standard_name='longitude')
+    cube.coord("latitude").rename("grid_latitude")
+    cube.coord("longitude").rename("grid_longitude")
+    lat = AuxCoord(np.zeros((180, 360)), standard_name="latitude")
+    lon = AuxCoord(np.zeros((180, 360)), standard_name="longitude")
     cube.add_aux_coord(lat, (1, 2))
     cube.add_aux_coord(lon, (1, 2))
 
     try_adding_calculated_cell_area(cube)
 
-    assert cube.cell_measures('cell_area')
+    assert cube.cell_measures("cell_area")
+
+
+@pytest.mark.parametrize(
+    ["mask", "array", "dim_map", "expected"],
+    [
+        (
+            np.arange(2),
+            da.arange(2),
+            (0,),
+            da.ma.masked_array(np.arange(2), np.arange(2)),
+        ),
+        (
+            da.arange(2),
+            np.arange(2),
+            (0,),
+            da.ma.masked_array(np.arange(2), np.arange(2)),
+        ),
+        (
+            np.ma.masked_array(np.arange(2), mask=[1, 0]),
+            da.arange(2),
+            (0,),
+            da.ma.masked_array(np.ones(2), np.arange(2)),
+        ),
+        (
+            np.ones((2, 5)),
+            da.zeros((2, 3, 5), chunks=(1, 2, 3)),
+            (0, 2),
+            da.ma.masked_array(
+                da.zeros((2, 3, 5), da.ones(2, 3, 5), chunks=(1, 2, 3))
+            ),
+        ),
+        (
+            np.arange(2),
+            np.ones((3, 2)),
+            (1,),
+            np.ma.masked_array(np.ones((3, 2)), mask=[[0, 1], [0, 1], [0, 1]]),
+        ),
+    ],
+)
+def test_apply_mask(mask, array, dim_map, expected):
+    result = apply_mask(mask, array, dim_map)
+    assert isinstance(result, type(expected))
+    if isinstance(expected, da.Array):
+        assert result.chunks == expected.chunks
+    assert_array_equal(result, expected)
+
+
+def test_rechunk_aux_factory_dependencies():
+    delta = iris.coords.AuxCoord(
+        points=np.array([0.0, 1.0, 2.0], dtype=np.float64),
+        bounds=np.array(
+            [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]], dtype=np.float64
+        ),
+        long_name="level_pressure",
+        units="Pa",
+    )
+    sigma = iris.coords.AuxCoord(
+        np.array([1.0, 0.9, 0.8], dtype=np.float64),
+        long_name="sigma",
+        units="1",
+    )
+    surface_air_pressure = iris.coords.AuxCoord(
+        np.arange(4).astype(np.float64).reshape(2, 2),
+        long_name="surface_air_pressure",
+        units="Pa",
+    )
+    factory = HybridPressureFactory(
+        delta=delta,
+        sigma=sigma,
+        surface_air_pressure=surface_air_pressure,
+    )
+
+    cube = iris.cube.Cube(
+        da.asarray(
+            np.arange(3 * 2 * 2).astype(np.float32).reshape(3, 2, 2),
+            chunks=(1, 2, 2),
+        ),
+    )
+    cube.add_aux_coord(delta, 0)
+    cube.add_aux_coord(sigma, 0)
+    cube.add_aux_coord(surface_air_pressure, [1, 2])
+    cube.add_aux_factory(factory)
+
+    result = _rechunk_aux_factory_dependencies(cube, "air_pressure")
+
+    # Check that the 'air_pressure' coordinate of the resulting cube has been
+    # rechunked:
+    assert (
+        (1, 1, 1),
+        (2,),
+        (2,),
+    ) == result.coord("air_pressure").core_points().chunks
+    # Check that the original cube has not been modified:
+    assert (
+        (3,),
+        (2,),
+        (2,),
+    ) == cube.coord("air_pressure").core_points().chunks

@@ -1,4 +1,5 @@
 """Fixes for ACCESS-ESM1-5."""
+
 import iris
 import numpy as np
 
@@ -23,7 +24,7 @@ class Cl(ClFixHybridHeightCoord):
         """
         for cube in cubes:
             try:
-                bcoeff = cube.coord(var_name='b')
+                bcoeff = cube.coord(var_name="b")
                 # values taken from HadGEM2-ES model (CMIP5), which uses the
                 # same atmospheric component as ACCESS-ESM1-5 (HadGAM2, N96L38)
                 bcoeff.points = [
@@ -132,10 +133,12 @@ class Hus(Fix):
         iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('air_pressure').points = \
-            np.round(cube.coord('air_pressure').core_points(), 0)
-        cube.coord('air_pressure').bounds = \
-            np.round(cube.coord('air_pressure').core_bounds(), 0)
+        cube.coord("air_pressure").points = np.round(
+            cube.coord("air_pressure").core_points(), 0
+        )
+        cube.coord("air_pressure").bounds = np.round(
+            cube.coord("air_pressure").core_bounds(), 0
+        )
         return cubes
 
 
@@ -155,8 +158,10 @@ class Zg(Fix):
         iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('air_pressure').points = \
-            np.round(cube.coord('air_pressure').core_points(), 0)
-        cube.coord('air_pressure').bounds = \
-            np.round(cube.coord('air_pressure').core_bounds(), 0)
+        cube.coord("air_pressure").points = np.round(
+            cube.coord("air_pressure").core_points(), 0
+        )
+        cube.coord("air_pressure").bounds = np.round(
+            cube.coord("air_pressure").core_bounds(), 0
+        )
         return cubes
