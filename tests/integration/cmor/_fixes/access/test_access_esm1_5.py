@@ -532,8 +532,6 @@ def test_tos_fix():
     coord_aux = [
         (lat_ocn_aux_coord, (1, 2)),
         (lon_ocn_aux_coord, (1, 2)),
-        (lat_ocn_aux_coord, (1, 2)),
-        (lon_ocn_aux_coord, (1, 2)),
     ]
 
     cube_tos = Cube(
@@ -556,7 +554,6 @@ def test_tos_fix():
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
     assert fixed_cube.shape == (12, 300, 360)
-    assert fixed_cube.shape == (12, 300, 360)
 
 
 def test_so_fix():
@@ -570,8 +567,6 @@ def test_so_fix():
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, (2, 3)),
-        (lon_ocn_aux_coord, (2, 3)),
         (lat_ocn_aux_coord, (2, 3)),
         (lon_ocn_aux_coord, (2, 3)),
     ]
