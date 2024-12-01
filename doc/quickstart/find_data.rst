@@ -599,7 +599,6 @@ Key                  Description                            Default value if not
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
                      use the cmoriser
->>>>>>> main
 ==================== ====================================== =================================
 
 .. _data-retrieval:
