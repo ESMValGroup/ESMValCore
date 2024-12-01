@@ -242,13 +242,13 @@ def check_ocean_dim_coords(cube):
     assert cube.dim_coords[-2].standard_name == None
     assert cube.dim_coords[-2].var_name == 'j'
     assert cube.dim_coords[-2].long_name == 'cell index along second dimension'
-    assert cube.dim_coords[-2].attributes == None
+    assert cube.dim_coords[-2].attributes == {}
 
     assert (cube.dim_coords[-1].points == np.array([int(i) for i in range(360)])).all()
     assert cube.dim_coords[-1].standard_name == None
     assert cube.dim_coords[-1].var_name == 'i'
     assert cube.dim_coords[-1].long_name == 'cell index along first dimension'
-    assert cube.dim_coords[-1].attributes == None
+    assert cube.dim_coords[-1].attributes == {}
 
 
 def check_ocean_aux_coords(cube):
@@ -258,7 +258,7 @@ def check_ocean_aux_coords(cube):
     assert cube.aux_coords[-2].standard_name == 'latitude'
     assert cube.aux_coords[-2].long_name == 'latitude'
     assert cube.aux_coords[-2].var_name == 'latitude'
-    assert cube.aux_coords[-2].attributes == None
+    assert cube.aux_coords[-2].attributes == {}
 
     assert cube.aux_coords[-1].shape == (300, 360)
     assert max(cube.aux_coords[-1].point) < 360
@@ -266,7 +266,7 @@ def check_ocean_aux_coords(cube):
     assert cube.aux_coords[-1].standard_name == 'longitude'
     assert cube.aux_coords[-1].long_name == 'longitude'
     assert cube.aux_coords[-1].var_name == 'longitude'
-    assert cube.aux_coords[-1].attributes == None
+    assert cube.aux_coords[-1].attributes == {}
 
 
 def assert_plev_metadata(cube):
