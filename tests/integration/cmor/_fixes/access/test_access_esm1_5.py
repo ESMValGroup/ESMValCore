@@ -257,7 +257,7 @@ def check_ocean_aux_coords(cube):
     assert cube.aux_coords[-2].dtype == np.dtype('float64')
     assert cube.aux_coords[-2].standard_name == 'latitude'
     assert cube.aux_coords[-2].long_name == 'latitude'
-    assert cube.aux_coords[-2].var_name == 'latitude'
+    assert cube.aux_coords[-2].var_name == 'lat'
     assert cube.aux_coords[-2].attributes == {}
 
     assert cube.aux_coords[-1].shape == (300, 360)
@@ -265,7 +265,7 @@ def check_ocean_aux_coords(cube):
     assert min(cube.aux_coords[-1].point) > 0
     assert cube.aux_coords[-1].standard_name == 'longitude'
     assert cube.aux_coords[-1].long_name == 'longitude'
-    assert cube.aux_coords[-1].var_name == 'longitude'
+    assert cube.aux_coords[-1].var_name == 'lon'
     assert cube.aux_coords[-1].attributes == {}
 
 
