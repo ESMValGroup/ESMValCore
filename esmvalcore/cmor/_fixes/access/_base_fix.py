@@ -53,6 +53,7 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-1].long_name = 'longitude'
         cube.aux_coords[-1].var_name = 'longitude'
         cube.aux_coords[-1].attributes = None
+        cube.aux_coords[-1].units = 'degrees'
 
         temp_points = []
         for i in cube.aux_coords[-2].points:
@@ -62,3 +63,4 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-2].long_name = 'latitude'
         cube.aux_coords[-2].var_name = 'latitude'
         cube.aux_coords[-2].attributes = None
+        cube.aux_coords[-1].units = 'degrees'
