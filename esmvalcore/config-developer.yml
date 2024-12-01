@@ -205,6 +205,6 @@ ACCESS:
     default: 
     - '{sub_dataset}.{freq_attribute}-*.nc'
     - 'ocean_{freq_attribute}.nc-*'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{frequency_attribute}_{short_name}'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{freq_attribute}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

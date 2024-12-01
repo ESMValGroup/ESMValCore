@@ -532,11 +532,14 @@ def test_tos_fix():
     coord_aux = [
         (lat_ocn_aux_coord, (1, 2)),
         (lon_ocn_aux_coord, (1, 2)),
+        (lat_ocn_aux_coord, (1, 2)),
+        (lon_ocn_aux_coord, (1, 2)),
     ]
 
     cube_tos = Cube(
         da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
         var_name='sst',
+        units=Unit('degrees K'),
         units=Unit('degrees K'),
         dim_coords_and_dims=coord_dim,
         aux_coords_and_dims=coord_aux,
@@ -547,12 +550,12 @@ def test_tos_fix():
     fix_tos = get_fix('Omon', 'mon', 'tos')
     fix_allvar = get_fix_allvar('Omon', 'mon', 'tos')
     fixed_cubes = fix_tos.fix_metadata(cubes_tos)
-    print(fixed_cubes)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_tos_metadata(fixed_cubes)
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
+    assert fixed_cube.shape == (12, 300, 360)
     assert fixed_cube.shape == (12, 300, 360)
 
 
@@ -561,11 +564,14 @@ def test_so_fix():
     coord_dim = [
         (time_ocn_coord, 0),
         (depth_ocn_coord, 1),
+        (depth_ocn_coord, 1),
         (lat_ocn_coord, 2),
         (lon_ocn_coord, 3),
     ]
 
     coord_aux = [
+        (lat_ocn_aux_coord, (2, 3)),
+        (lon_ocn_aux_coord, (2, 3)),
         (lat_ocn_aux_coord, (2, 3)),
         (lon_ocn_aux_coord, (2, 3)),
     ]

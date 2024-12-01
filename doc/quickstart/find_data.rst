@@ -592,16 +592,8 @@ Key                  Description                            Default value if not
                      raw input file                         corresponding variable
 ``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
                      and `oce`                              specified in extra facets or
-                                                            recipe if default DRS is used)
-<<<<<<< HEAD
+                                                            recipe if default DRS is used)                                                           
 ``freq_attribute``   A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to 
-                     frquency of raw data
-``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
-                     root, need to specify if you want to
-                     use the cmoriser                                                              
-=======
-```special_attr``    A special attribute in the filename    No default
                      `ACCESS-ESM` raw data, it's related to
                      frequency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default

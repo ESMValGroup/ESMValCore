@@ -125,7 +125,6 @@ class Tas(AccessFix):
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
-<<<<<<< HEAD
         if cube.coord('height').points[0] != 2:
             cube.coord('height').points = [2]
 
@@ -188,7 +187,3 @@ class So(AccessFix):
         """Fix units of so."""
         cube.attributes.pop('invalid_units')
         cube.units = Unit(0.001)
-=======
-        if cube.coord("height").points[0] != 2:
-            cube.coord("height").points = [2]
->>>>>>> main
