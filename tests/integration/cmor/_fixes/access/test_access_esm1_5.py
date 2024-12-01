@@ -5,10 +5,10 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.coords import DimCoord, AuxCoord
 from iris.cube import Cube, CubeList
 
-import esmvalcore.cmor._fixes.access.access_esm1_5
+import esmvalcore.cmor._fixes.access.access_esm1_5 
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
@@ -60,7 +60,7 @@ lon_ocn_coord = DimCoord(
     },
 )
 
-depth_ocn_coord = DimCoord(
+depth_ocn_coord =  DimCoord(
     [0, 1],
     long_name="tcell zstar depth",
     var_name="st_ocean",
@@ -552,11 +552,11 @@ def test_tos_fix(test_data_path):
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, 0),
-        (lon_ocn_aux_coord, 1),
+        (lat_ocn_aux_coord, (1, 2)),
+        (lon_ocn_aux_coord, (1, 2)),
     ]
 
-    cube_tos = Cube(
+    cube_tos= Cube(
         da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
         var_name="sst",
         units=Unit("degrees K"),
@@ -571,11 +571,11 @@ def test_tos_fix(test_data_path):
     fix_allvar = get_fix_allvar("Omon", "mon", "tos")
     fixed_cubes = fix_tos.fix_metadata(cubes_tos, gridpath)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
-    fixed_cube = check_tos_metadata(fixed_cubes)
+    fixed_cube=check_tos_metadata(fixed_cubes)
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
-    assert fixed_cube.shape == (12, 2, 2)
+    assert fixed_cube.shape == (12, 300, 360)
 
 
 def test_so_fix(test_data_path):
@@ -588,8 +588,8 @@ def test_so_fix(test_data_path):
     ]
 
     coord_aux = [
-        (lat_ocn_aux_coord, 0),
-        (lon_ocn_aux_coord, 1),
+        (lat_ocn_aux_coord, (2, 3)),
+        (lon_ocn_aux_coord, (2, 3)),
     ]
 
     cube_so = Cube(
@@ -610,7 +610,7 @@ def test_so_fix(test_data_path):
     fix_allvar = get_fix_allvar("Omon", "mon", "so")
     fixed_cubes = fix_so.fix_metadata(cubes_so, gridpath)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
-    fixed_cube = check_so_metadata(fixed_cubes)
+    fixed_cube=check_so_metadata(fixed_cubes)
 
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)

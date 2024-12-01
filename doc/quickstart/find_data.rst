@@ -693,19 +693,6 @@ Key                  Description                            Default value if not
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
                      use the cmoriser
-=======
-``special_attr``    A special attribute in the filename    No default
-=======
-``freq_attribute``    A special attribute in the filename    No default
->>>>>>> 31ec2cacd (fix documentation issue)
-=======
-``freq_attribute``   A special attribute in the filename    No default
->>>>>>> 7c6db4749 (fix doc)
-                     `ACCESS-ESM` raw data, it's related to 
-                     frquency of raw data
-``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
-                     root, need to specify if you want to
-                     use the cmoriser
 ``regular_expression`` A facet for filter ACCESS-ESM file 
                      before loading.                                                                    
 >>>>>>> e6d7253b6 (add regular express facet)
