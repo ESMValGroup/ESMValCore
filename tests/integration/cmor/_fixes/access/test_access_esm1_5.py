@@ -264,7 +264,6 @@ def check_ocean_dim_coords(cube):
     assert cube.dim_coords[-1].long_name == "cell index along first dimension"
     assert cube.dim_coords[-1].attributes == {}
 
-
 def check_ocean_aux_coords(cube):
     """Check aux_coords of ocean variables."""
     assert cube.aux_coords[-2].shape == (300, 360)
