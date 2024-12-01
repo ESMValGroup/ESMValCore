@@ -538,7 +538,6 @@ def test_tos_fix():
         da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
         var_name='sst',
         units=Unit('degrees K'),
-        units=Unit('degrees K'),
         dim_coords_and_dims=coord_dim,
         aux_coords_and_dims=coord_aux,
         attributes={},
