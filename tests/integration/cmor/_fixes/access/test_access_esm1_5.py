@@ -20,7 +20,10 @@ time_coord = DimCoord(
     standard_name="time",
     var_name="time",
     units=Unit("days since 1851-01-01", calendar="noleap"),
-    attributes={"test": 1, "time_origin": "will_be_removed"},
+    attributes={
+        "test": 1,
+        "time_origin": "will_be_removed"
+    },
 )
 
 time_ocn_coord = DimCoord(
@@ -65,8 +68,9 @@ depth_ocn_coord = DimCoord(
     },
 )
 
-lat_ocn_aux_coord = AuxCoord(da.arange(300 * 360,
-                                       dtype=np.float32).reshape(300, 360),
+lat_ocn_aux_coord = AuxCoord(np.tile(
+    np.concatenate((np.linspace(80.5, 359.5,
+                                280), np.linspace(0.5, 79.5, 80))), (300, 1)),
                              standard_name='latitude',
                              long_name='tracer latitude',
                              var_name='geolat_t',
@@ -74,8 +78,9 @@ lat_ocn_aux_coord = AuxCoord(da.arange(300 * 360,
                                  'valid_range': '[-91. 91]',
                              })
 
-lon_ocn_aux_coord = AuxCoord(da.arange(300 * 360,
-                                       dtype=np.float32).reshape(300, 360),
+lon_ocn_aux_coord = AuxCoord(np.tile(
+    np.concatenate((np.linspace(80.5, 359.5,
+                                280), np.linspace(0.5, 79.5, 80))), (300, 1)),
                              standard_name='longitude',
                              long_name='tracer longitude',
                              var_name='geolon_t',
@@ -238,13 +243,15 @@ def check_heightxm(cube, height_value):
 
 def check_ocean_dim_coords(cube):
     """Check dim_coords of ocean variables."""
-    assert (cube.dim_coords[-2].points == np.array([int(i) for i in range(300)])).all()
+    assert (cube.dim_coords[-2].points == np.array(
+        [int(i) for i in range(300)])).all()
     assert cube.dim_coords[-2].standard_name == None
     assert cube.dim_coords[-2].var_name == 'j'
     assert cube.dim_coords[-2].long_name == 'cell index along second dimension'
     assert cube.dim_coords[-2].attributes == {}
 
-    assert (cube.dim_coords[-1].points == np.array([int(i) for i in range(360)])).all()
+    assert (cube.dim_coords[-1].points == np.array(
+        [int(i) for i in range(360)])).all()
     assert cube.dim_coords[-1].standard_name == None
     assert cube.dim_coords[-1].var_name == 'i'
     assert cube.dim_coords[-1].long_name == 'cell index along first dimension'
@@ -355,12 +362,14 @@ def test_get_tas_fix():
     """Test getting of fix 'tas'."""
     fix = Fix.get_fixes("ACCESS", "ACCESS_ESM1_5", "Amon", "tas")
     assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm1_5.Tas(
-            vardef={}, extra_facets={}, session={}, frequency=""
-        ),
-        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(
-            vardef={}, extra_facets={}, session={}, frequency=""
-        ),
+        esmvalcore.cmor._fixes.access.access_esm1_5.Tas(vardef={},
+                                                        extra_facets={},
+                                                        session={},
+                                                        frequency=""),
+        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(vardef={},
+                                                            extra_facets={},
+                                                            session={},
+                                                            frequency=""),
         GenericFix(None),
     ]
 
@@ -388,7 +397,10 @@ def test_hus_fix():
         standard_name="time",
         var_name="time",
         units=Unit("days since 1851-01-01", calendar="noleap"),
-        attributes={"test": 1, "time_origin": "will_be_removed"},
+        attributes={
+            "test": 1,
+            "time_origin": "will_be_removed"
+        },
     )
     plev_coord_rev = DimCoord(
         [250, 500, 850],
@@ -439,7 +451,10 @@ def test_rsus_fix():
         standard_name="time",
         var_name="time",
         units=Unit("days since 1851-01-01", calendar="noleap"),
-        attributes={"test": 1, "time_origin": "will_be_removed"},
+        attributes={
+            "test": 1,
+            "time_origin": "will_be_removed"
+        },
     )
     lat_coord = DimCoord(
         [0, 10],
