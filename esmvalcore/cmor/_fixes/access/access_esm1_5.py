@@ -125,8 +125,8 @@ class Tas(AccessFix):
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
-        if cube.coord('height').points[0] != 2:
-            cube.coord('height').points = [2]
+        if cube.coord("height").points[0] != 2:
+            cube.coord("height").points = [2]
 
 
 class Tos(AccessFix):
@@ -178,12 +178,12 @@ class So(AccessFix):
 
     def fix_depth_metadata(self, cube):
         """Fix depth metadata."""
-        cube.dim_coords[1].standard_name = 'depth'
-        cube.dim_coords[1].long_name = 'ocean depth coordinate'
-        cube.dim_coords[1].var_name = 'lev'
-        cube.dim_coords[1].attributes = {'positive': 'down'}
+        cube.dim_coords[1].standard_name = "depth"
+        cube.dim_coords[1].long_name = "ocean depth coordinate"
+        cube.dim_coords[1].var_name = "lev"
+        cube.dim_coords[1].attributes = {"positive": "down"}
 
     def fix_so_units(self, cube):
         """Fix units of so."""
-        cube.attributes.pop('invalid_units')
+        cube.attributes.pop("invalid_units")
         cube.units = Unit(0.001)

@@ -20,73 +20,81 @@ time_coord = DimCoord(
     standard_name="time",
     var_name="time",
     units=Unit("days since 1851-01-01", calendar="noleap"),
-    attributes={
-        "test": 1,
-        "time_origin": "will_be_removed"
-    },
+    attributes={"test": 1, "time_origin": "will_be_removed"},
 )
 
 time_ocn_coord = DimCoord(
     [int(i) for i in range(1, 13)],
-    standard_name='time',
-    var_name='time',
-    long_name='time',
-    units=Unit('days since 0000-01-01', calendar='noleap'),
+    standard_name="time",
+    var_name="time",
+    long_name="time",
+    units=Unit("days since 0000-01-01", calendar="noleap"),
+    attributes={"calendar_type": "GREGORIAN", "cartesian_axis": "T"},
+)
+
+lat_ocn_coord = DimCoord(
+    np.linspace(-90, 210, 300),
+    standard_name="latitude",
+    long_name="tcell latitude",
+    var_name="yt_ocean",
+    units="degrees_N",
     attributes={
-        'calendar_type': 'GREGORIAN',
-        'cartesian_axis': 'T'
+        "cartesian_axis": "Y",
     },
 )
 
-lat_ocn_coord = DimCoord(np.linspace(-90, 210, 300),
-                         standard_name='latitude',
-                         long_name='tcell latitude',
-                         var_name='yt_ocean',
-                         units='degrees_N',
-                         attributes={
-                             'cartesian_axis': 'Y',
-                         })
-
-lon_ocn_coord = DimCoord(np.linspace(-90, 270, 360),
-                         standard_name='longitude',
-                         long_name='tcell longitude',
-                         var_name='xt_ocean',
-                         units='degrees_E',
-                         attributes={
-                             'cartesian_axis': 'X',
-                         })
+lon_ocn_coord = DimCoord(
+    np.linspace(-90, 270, 360),
+    standard_name="longitude",
+    long_name="tcell longitude",
+    var_name="xt_ocean",
+    units="degrees_E",
+    attributes={
+        "cartesian_axis": "X",
+    },
+)
 
 depth_ocn_coord = DimCoord(
     [0, 1],
-    long_name='tcell zstar depth',
-    var_name='st_ocean',
-    units='meter',
+    long_name="tcell zstar depth",
+    var_name="st_ocean",
+    units="meter",
     attributes={
-        'cartesian_axis': 'Z',
-        'edges': 'st_edges_ocean',
-        'positive': 'down',
+        "cartesian_axis": "Z",
+        "edges": "st_edges_ocean",
+        "positive": "down",
     },
 )
 
-lat_ocn_aux_coord = AuxCoord(np.tile(
-    np.concatenate((np.linspace(80.5, 359.5,
-                                280), np.linspace(0.5, 79.5, 80))), (300, 1)),
-                             standard_name='latitude',
-                             long_name='tracer latitude',
-                             var_name='geolat_t',
-                             attributes={
-                                 'valid_range': '[-91. 91]',
-                             })
+lat_ocn_aux_coord = AuxCoord(
+    np.tile(
+        np.concatenate(
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80))
+        ),
+        (300, 1),
+    ),
+    standard_name="latitude",
+    long_name="tracer latitude",
+    var_name="geolat_t",
+    attributes={
+        "valid_range": "[-91. 91]",
+    },
+)
 
-lon_ocn_aux_coord = AuxCoord(np.tile(
-    np.concatenate((np.linspace(80.5, 359.5,
-                                280), np.linspace(0.5, 79.5, 80))), (300, 1)),
-                             standard_name='longitude',
-                             long_name='tracer longitude',
-                             var_name='geolon_t',
-                             attributes={
-                                 'valid_range': '[-281. 361]',
-                             })
+lon_ocn_aux_coord = AuxCoord(
+    np.tile(
+        np.concatenate(
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80))
+        ),
+        (300, 1),
+    ),
+    standard_name="longitude",
+    long_name="tracer longitude",
+    var_name="geolon_t",
+    attributes={
+        "valid_range": "[-281. 361]",
+    },
+)
 
 lat_coord = DimCoord(
     [0, 10],
@@ -165,10 +173,10 @@ def check_tos_metadata(cubes):
     """Check tas metadata."""
     assert len(cubes) == 1
     cube = cubes[0]
-    assert cube.var_name == 'tos'
-    assert cube.standard_name == 'sea_surface_temperature'
-    assert cube.long_name == 'Sea Surface Temperature'
-    assert cube.units == 'degC'
+    assert cube.var_name == "tos"
+    assert cube.standard_name == "sea_surface_temperature"
+    assert cube.long_name == "Sea Surface Temperature"
+    assert cube.units == "degC"
     return cube
 
 
@@ -176,9 +184,9 @@ def check_so_metadata(cubes):
     """Check tas metadata."""
     assert len(cubes) == 1
     cube = cubes[0]
-    assert cube.var_name == 'so'
-    assert cube.standard_name == 'sea_water_salinity'
-    assert cube.long_name == 'Sea Water Salinity'
+    assert cube.var_name == "so"
+    assert cube.standard_name == "sea_water_salinity"
+    assert cube.long_name == "Sea Water Salinity"
     assert cube.units == Unit(0.001)
     return cube
 
@@ -243,36 +251,38 @@ def check_heightxm(cube, height_value):
 
 def check_ocean_dim_coords(cube):
     """Check dim_coords of ocean variables."""
-    assert (cube.dim_coords[-2].points == np.array(
-        [int(i) for i in range(300)])).all()
+    assert (
+        cube.dim_coords[-2].points == np.array([int(i) for i in range(300)])
+    ).all()
     assert cube.dim_coords[-2].standard_name is None
-    assert cube.dim_coords[-2].var_name == 'j'
-    assert cube.dim_coords[-2].long_name == 'cell index along second dimension'
+    assert cube.dim_coords[-2].var_name == "j"
+    assert cube.dim_coords[-2].long_name == "cell index along second dimension"
     assert cube.dim_coords[-2].attributes == {}
 
-    assert (cube.dim_coords[-1].points == np.array(
-        [int(i) for i in range(360)])).all()
+    assert (
+        cube.dim_coords[-1].points == np.array([int(i) for i in range(360)])
+    ).all()
     assert cube.dim_coords[-1].standard_name is None
-    assert cube.dim_coords[-1].var_name == 'i'
-    assert cube.dim_coords[-1].long_name == 'cell index along first dimension'
+    assert cube.dim_coords[-1].var_name == "i"
+    assert cube.dim_coords[-1].long_name == "cell index along first dimension"
     assert cube.dim_coords[-1].attributes == {}
 
 
 def check_ocean_aux_coords(cube):
     """Check aux_coords of ocean variables."""
     assert cube.aux_coords[-2].shape == (300, 360)
-    assert cube.aux_coords[-2].dtype == np.dtype('float64')
-    assert cube.aux_coords[-2].standard_name == 'latitude'
-    assert cube.aux_coords[-2].long_name == 'latitude'
-    assert cube.aux_coords[-2].var_name == 'lat'
+    assert cube.aux_coords[-2].dtype == np.dtype("float64")
+    assert cube.aux_coords[-2].standard_name == "latitude"
+    assert cube.aux_coords[-2].long_name == "latitude"
+    assert cube.aux_coords[-2].var_name == "lat"
     assert cube.aux_coords[-2].attributes == {}
 
     assert cube.aux_coords[-1].shape == (300, 360)
     assert (cube.aux_coords[-1].points < 360).all()
     assert (cube.aux_coords[-1].points > 0).all()
-    assert cube.aux_coords[-1].standard_name == 'longitude'
-    assert cube.aux_coords[-1].long_name == 'longitude'
-    assert cube.aux_coords[-1].var_name == 'lon'
+    assert cube.aux_coords[-1].standard_name == "longitude"
+    assert cube.aux_coords[-1].long_name == "longitude"
+    assert cube.aux_coords[-1].var_name == "lon"
     assert cube.aux_coords[-1].attributes == {}
 
 
@@ -362,14 +372,12 @@ def test_get_tas_fix():
     """Test getting of fix 'tas'."""
     fix = Fix.get_fixes("ACCESS", "ACCESS_ESM1_5", "Amon", "tas")
     assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm1_5.Tas(vardef={},
-                                                        extra_facets={},
-                                                        session={},
-                                                        frequency=""),
-        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(vardef={},
-                                                            extra_facets={},
-                                                            session={},
-                                                            frequency=""),
+        esmvalcore.cmor._fixes.access.access_esm1_5.Tas(
+            vardef={}, extra_facets={}, session={}, frequency=""
+        ),
+        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(
+            vardef={}, extra_facets={}, session={}, frequency=""
+        ),
         GenericFix(None),
     ]
 
@@ -397,10 +405,7 @@ def test_hus_fix():
         standard_name="time",
         var_name="time",
         units=Unit("days since 1851-01-01", calendar="noleap"),
-        attributes={
-            "test": 1,
-            "time_origin": "will_be_removed"
-        },
+        attributes={"test": 1, "time_origin": "will_be_removed"},
     )
     plev_coord_rev = DimCoord(
         [250, 500, 850],
@@ -451,10 +456,7 @@ def test_rsus_fix():
         standard_name="time",
         var_name="time",
         units=Unit("days since 1851-01-01", calendar="noleap"),
-        attributes={
-            "test": 1,
-            "time_origin": "will_be_removed"
-        },
+        attributes={"test": 1, "time_origin": "will_be_removed"},
     )
     lat_coord = DimCoord(
         [0, 10],
@@ -551,16 +553,16 @@ def test_tos_fix():
 
     cube_tos = Cube(
         da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
-        var_name='sst',
-        units=Unit('degrees K'),
+        var_name="sst",
+        units=Unit("degrees K"),
         dim_coords_and_dims=coord_dim,
         aux_coords_and_dims=coord_aux,
         attributes={},
     )
 
     cubes_tos = CubeList([cube_tos])
-    fix_tos = get_fix('Omon', 'mon', 'tos')
-    fix_allvar = get_fix_allvar('Omon', 'mon', 'tos')
+    fix_tos = get_fix("Omon", "mon", "tos")
+    fix_allvar = get_fix_allvar("Omon", "mon", "tos")
     fixed_cubes = fix_tos.fix_metadata(cubes_tos)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_tos_metadata(fixed_cubes)
@@ -585,20 +587,21 @@ def test_so_fix():
     ]
 
     cube_so = Cube(
-        da.arange(12 * 2 * 300 * 360,
-                  dtype=np.float32).reshape(12, 2, 300, 360),
-        var_name='salt',
-        units='unknown',
+        da.arange(12 * 2 * 300 * 360, dtype=np.float32).reshape(
+            12, 2, 300, 360
+        ),
+        var_name="salt",
+        units="unknown",
         dim_coords_and_dims=coord_dim,
         aux_coords_and_dims=coord_aux,
         attributes={
-            'invalid_units': 'psu',
+            "invalid_units": "psu",
         },
     )
 
     cubes_so = CubeList([cube_so])
-    fix_so = get_fix('Omon', 'mon', 'so')
-    fix_allvar = get_fix_allvar('Omon', 'mon', 'so')
+    fix_so = get_fix("Omon", "mon", "so")
+    fix_allvar = get_fix_allvar("Omon", "mon", "so")
     fixed_cubes = fix_so.fix_metadata(cubes_so)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_so_metadata(fixed_cubes)

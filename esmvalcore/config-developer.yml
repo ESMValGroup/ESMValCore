@@ -202,7 +202,7 @@ ACCESS:
       - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
       - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/'
   input_file:
-    default: 
+    default:
       - '{sub_dataset}.{freq_attribute}-*.nc'
       - 'ocean_{freq_attribute}.nc-*'
   output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{freq_attribute}_{short_name}'
