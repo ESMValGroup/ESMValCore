@@ -261,7 +261,7 @@ def check_ocean_aux_coords(cube):
     assert cube.aux_coords[-2].attributes == {}
 
     assert cube.aux_coords[-1].shape == (300, 360)
-    assert (cube.aux_coords[-1].points < 360).all()
+    assert cube.aux_coords[-1].points.max() < 360
     assert min(cube.aux_coords[-1].points) > 0
     assert cube.aux_coords[-1].standard_name == 'longitude'
     assert cube.aux_coords[-1].long_name == 'longitude'
