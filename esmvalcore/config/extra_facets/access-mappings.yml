@@ -143,18 +143,10 @@ ACCESS-ESM1-5:
       raw_name: fld_s00i024
       modeling_realm: atm
     
-    ua:
-      raw_name: fld_s30i201
-      modeling_realm: atm
-    
     uas:
       raw_name: fld_s03i209
       modeling_realm: atm
     
-    va:
-      raw_name: fld_s30i202
-      modeling_realm: atm
-
     vas:
       raw_name: fld_s03i210
       modeling_realm: atm
@@ -163,10 +155,6 @@ ACCESS-ESM1-5:
       raw_name: fld_s30i208
       modeling_realm: atm
     
-    zg:
-      raw_name: fld_s30i207
-      modeling_realm: atm
-
     rls:
       raw_name: fld_s02i201
       modeling_realm: atm
