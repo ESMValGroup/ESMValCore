@@ -85,7 +85,7 @@ class Mrsos(Fix):
             iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
 
         return super().fix_metadata(cubes)
-    
+
 
 class Tas(Fix):
     """Fixes for tas."""

@@ -4,10 +4,10 @@ from unittest import mock
 
 import iris
 import numpy as np
-import pytest
 import pandas as pd
+import pytest
 
-from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Mrsos, Siconc, Tos, Tas
+from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Mrsos, Siconc, Tas, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
