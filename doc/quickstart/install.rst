@@ -22,7 +22,7 @@ and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c conda-forge esmvalcore 'python=3.10'
+    conda create --name esmvalcore -c conda-forge esmvalcore
 
 Don't forget to activate the newly created environment after the installation:
 
@@ -103,10 +103,10 @@ For example, the following command would run a recipe
 
 .. code-block:: bash
 
-   docker run -e HOME -v "$HOME":"$HOME" -v /data:/data esmvalgroup/esmvalcore:stable -c ~/config-user.yml ~/recipes/recipe_example.yml
+   docker run -e HOME -v "$HOME":"$HOME" -v /data:/data esmvalgroup/esmvalcore:stable ~/recipes/recipe_example.yml
 
 with the environmental variable ``$HOME`` available inside the container and the data
-in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration file, recipe, and data.
+in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration, recipe, and data.
 
 It might be useful to define a `bash alias
 <https://opensource.com/article/19/7/bash-aliases>`_
@@ -131,7 +131,7 @@ following command
 
 .. code-block:: bash
 
-   singularity run docker://esmvalgroup/esmvalcore:stable -c ~/config-user.yml ~/recipes/recipe_example.yml
+   singularity run docker://esmvalgroup/esmvalcore:stable ~/recipes/recipe_example.yml
 
 Note that the container does not see the data available in the host by default.
 You can make host data available with ``-B /path:/path/in/container``.
@@ -158,7 +158,7 @@ To run the container using the image file ``esmvalcore.sif`` use:
 
 .. code-block:: bash
 
-   singularity run esmvalcore.sif -c ~/config-user.yml ~/recipes/recipe_example.yml
+   singularity run esmvalcore.sif ~/recipes/recipe_example.yml
 
 .. _installation-from-source:
 
@@ -195,13 +195,15 @@ To install from source for development, follow these instructions.
    e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
+-  Install the :ref:`esmvaltool:pre-commit` hooks by running:
+   ``pre-commit install``.
 
 Pre-installed versions on HPC clusters / other servers
 ------------------------------------------------------
 
 
 If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-Levante),
-and other servers (currently Met Office Linux estate), please have a look at 
+and other servers (currently Met Office Linux estate), please have a look at
 :ref:`these instructions <esmvaltool:install_on_hpc>`.
 
 

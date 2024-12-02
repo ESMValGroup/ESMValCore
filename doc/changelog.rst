@@ -3,27 +3,107 @@
 Changelog
 =========
 
+.. _changelog-v2-11-1:
+
+v2.11.1
+-------
+
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release which enables lazy computations in more preprocessors
+and allows installing the latests version of various dependencies, including
+Iris (`v3.11.0 <https://github.com/SciTools/iris/releases/tag/v3.11.0>`__).
+
+This release includes
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Optimize functions ``mask_landsea()``, ``mask_landseaice()`` and ``calculate_volume()`` for lazy input (:pull:`2515`) by :user:`schlunma`
+
+Installation
+~~~~~~~~~~~~
+
+-  Remove support for Python 3.9 (:pull:`2447`) by :user:`valeriupredoi`
+-  Switch to new iris >= 3.10.0 API (:pull:`2500`) by :user:`schlunma`
+-  Pin dask to avoid 2024.8.0 - problems with masked fill/missing values (:pull:`2504`) by :user:`valeriupredoi`
+-  Fix rounding of Pandas datetimes in ICON CMORizer to allow installing latest Pandas version (:pull:`2529`) by :user:`valeriupredoi`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Fix type hint for new mypy version (:pull:`2497`) by :user:`schlunma`
+-  Reformat datetime strings be in line with new ``isodate==0.7.0`` and actual ISO8601 and pin ``isodate>=0.7.0`` (:pull:`2546`) by :user:`valeriupredoi`
+
 .. _changelog-v2-11-0:
 
 v2.11.0
 -------
-Highlights
 
-TODO: add highlights
+Highlights
+~~~~~~~~~~
+
+- Performance improvements have been made to many preprocessors:
+
+  - Preprocessors :func:`esmvalcore.preprocessor.mask_landsea`,
+    :func:`esmvalcore.preprocessor.mask_landseaice`,
+    :func:`esmvalcore.preprocessor.mask_glaciated`,
+    :func:`esmvalcore.preprocessor.extract_levels` are now lazy
+
+- Several new preprocessors have been added:
+
+  - :func:`esmvalcore.preprocessor.local_solar_time`
+  - :func:`esmvalcore.preprocessor.distance_metrics`
+  - :func:`esmvalcore.preprocessor.histogram`
+
+- NEW TREND: First time release manager shout-outs!
+
+  - This is the first ESMValTool release managed by the Met Office! We want to
+    shout this out - and for all future first time release managers to
+    shout-out - to celebrate the growing, thriving ESMValTool community.
 
 This release includes
 
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
-
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
+
+   - The preprocessor function :func:`esmvalcore.preprocessor.extract_region`
+     no longer automatically maps the extracted :class:`iris.cube.Cube` to the
+     0-360 degrees longitude domain. If you need this behaviour, use
+     ``cube.intersection(longitude=(0., 360.))`` in your Python code after
+     extracting the region. There is no possibility to restore the previous
+     behaviour from a recipe.
+
+-  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
+
+   - Since `v3.8.0`_, Iris explicitly distinguishes between local and global
+     netCDF attributes. ESMValCore adopted this behavior with v2.11.0. With
+     this change, attributes are written as local attributes by default, unless
+     they already existed as global attributes or belong to a special list of
+     global attributes (in which case attributes are written as global
+     attributes). See :class:`iris.cube.CubeAttrsDict` for details.
+
+.. _v3.8.0: https://scitools-iris.readthedocs.io/en/stable/whatsnew/3.8.html#v3-8-29-feb-2024
 
 Deprecations
 ~~~~~~~~~~~~
 
 -  Refactor regridding (:pull:`2231`) by :user:`schlunma`
+
+   - This PR deprecated two regridding schemes, which will be removed with
+     ESMValCore v2.13.0:
+
+     - ``unstructured_nearest``: Please use the scheme ``nearest`` instead.
+       This is an exact replacement for data on unstructured grids. ESMValCore
+       is now able to determine the most suitable regridding scheme based on
+       the input data.
+     - ``linear_extrapolate``: Please use a generic scheme with
+       ``reference: iris.analysis:Linear`` and
+       ``extrapolation_mode: extrapolate`` instead.
+
 -  Allow deprecated regridding scheme ``linear_extrapolate`` in recipe checks (:pull:`2324`) by :user:`schlunma`
 -  Allow deprecated regridding scheme ``unstructured_nearest`` in recipe checks (:pull:`2336`) by :user:`schlunma`
 
@@ -33,6 +113,9 @@ Bug fixes
 -  Do not overwrite facets from recipe with CMOR table facets for derived variables (:pull:`2255`) by :user:`bouweandela`
 -  Fix error message in variable definition check (:pull:`2313`) by :user:`enekomartinmartinez`
 -  Unify dtype handling of preprocessors (:pull:`2393`) by :user:`schlunma`
+-  Fix bug in ``_rechunk_aux_factory_dependencies`` (:pull:`2428`) by :user:`ehogan`
+-  Avoid loading entire files into memory when downloading from ESGF (:pull:`2434`) by :user:`bouweandela`
+-  Preserve cube attribute global vs local when concatenating (:pull:`2449`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -55,6 +138,7 @@ Computational performance improvements
 -  Cache regridding weights if possible (:pull:`2344`) by :user:`schlunma`
 -  Implement lazy area weights (:pull:`2354`) by :user:`schlunma`
 -  Avoid large chunks in :func:`esmvalcore.preprocessor.climate_statistics` preprocessor function with `period='full'` (:pull:`2404`) by :user:`bouweandela`
+-  Load data only once for ESMPy regridders (:pull:`2418`) by :user:`bouweandela`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -84,10 +168,11 @@ Fixes for datasets
 Installation
 ~~~~~~~~~~~~
 
--  Updated iris pin to ``iris>=3.6.1`` (:pull:`2286`) by :user:`schlunma`
 -  Pin pandas yet again avoid new ``2.2.1`` as well (:pull:`2353`) by :user:`valeriupredoi`
 -  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 -  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
+-  Pin numpy<2.0.0 to avoid pulling 2.0.0rcX (:pull:`2415`) by :user:`valeriupredoi`
+-  Add support for Python=3.12 (:pull:`2228`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
@@ -132,15 +217,16 @@ Improvements
 -  Handle warnings about invalid units for iris>=3.8 (:pull:`2378`) by :user:`schlunma`
 -  Added note on how to access ``index.html`` on remote server (:pull:`2276`) by :user:`schlunma`
 -  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
--  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 -  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
+-  Add native6, OBS6 and RAWOBS rootpaths to metoffice config-user.yml template, and remove temporary dir (:pull:`2432`) by :user:`alistairsellar`
 
 .. _changelog-v2-10-0:
 
-
 v2.10.0
 -------
+
 Highlights
+~~~~~~~~~~
 
 -  All statistics preprocessors support the same operators and have a common
    :ref:`documentation <stat_preprocs>`. In addition, arbitrary keyword arguments
@@ -296,8 +382,10 @@ Improvements
 
 v2.9.0
 ------
+
 Highlights
 ~~~~~~~~~~
+
 It is now possible to use the
 `Dask distributed scheduler <https://docs.dask.org/en/latest/deploying.html>`__,
 which can
@@ -378,8 +466,10 @@ Preprocessor
 
 v2.8.1
 ------
+
 Highlights
 ~~~~~~~~~~
+
 This release adds support for Python 3.11 and includes several bugfixes.
 
 This release includes:
@@ -425,6 +515,7 @@ Automatic testing
 
 v2.8.0
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -625,6 +716,7 @@ Variable Derivation
 
 v2.7.1
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -653,6 +745,7 @@ Automatic testing
 
 v2.7.0
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -975,7 +1068,7 @@ Highlights
 ~~~~~~~~~~
 
 - ESMValCore now has the ability to automatically download missing data from ESGF. For details, see :ref:`Data Retrieval<data-retrieval>`.
-- ESMValCore now also can resume an earlier run. This is useful to re-use expensive preprocessor results. For details, see :ref:`Running<running>`.
+- ESMValCore now also can resume an earlier run. This is useful to reuse expensive preprocessor results. For details, see :ref:`Running<running>`.
 
 This release includes
 
