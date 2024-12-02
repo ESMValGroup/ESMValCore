@@ -27,9 +27,6 @@ class AccessFix(NativeDatasetFix):
         """Get cube before calculate from multiple variables."""
 <<<<<<< HEAD
         name_list = self.extra_facets.get("raw_name", self.vardef.short_name)
-=======
-        name_list = self.extra_facets.get('raw_name', self.vardef.short_name)
->>>>>>> 5e12dc5ee (test)
 
         data_list = []
         for name in name_list:

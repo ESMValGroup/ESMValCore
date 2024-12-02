@@ -72,24 +72,11 @@ depth_ocn_coord =  DimCoord(
     },
 )
 
-lat_ocn_aux_coord = AuxCoord(
-    np.tile(
-        np.concatenate((np.linspace(80.5, 359.5,
-                                    280), np.linspace(0.5, 79.5, 80))),
-        (300, 1),
-    ),
-    standard_name="latitude",
-    long_name="tracer latitude",
-    var_name="geolat_t",
-    attributes={
-        "valid_range": "[-91. 91]",
-    },
-)
-
 lon_ocn_aux_coord = AuxCoord(
     np.tile(
-        np.concatenate((np.linspace(80.5, 359.5,
-                                    280), np.linspace(0.5, 79.5, 80))),
+        np.concatenate(
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80))
+        ),
         (300, 1),
     ),
     standard_name="longitude",
