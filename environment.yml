@@ -40,6 +40,7 @@ dependencies:
   - python-stratify >=0.3
   - pyyaml
   - requests
+  - rich
   - scipy >=1.6
   - shapely >=2.0.0
   - yamale
