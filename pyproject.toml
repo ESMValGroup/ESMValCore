@@ -61,6 +61,7 @@ dependencies = [
     "pybtex",
     "pyyaml",
     "requests",
+    "rich",
     "scipy>=1.6",
     "scitools-iris>=3.11",  # 3.11 first to support Numpy 2 and Python 3.13
     "shapely>=2.0.0",
