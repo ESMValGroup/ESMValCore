@@ -191,6 +191,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "exit_on_warning": False,
         "extra_facets_dir": [],
         "log_level": "info",
+        "logging": {"log_progress_interval": 0.0},
         "max_datasets": None,
         "max_parallel_tasks": None,
         "max_years": None,

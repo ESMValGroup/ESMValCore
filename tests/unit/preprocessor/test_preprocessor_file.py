@@ -162,4 +162,5 @@ def test_save(mock_preprocess):
         mock.call(
             mock.sentinel.cubes, "save", input_files=mock.sentinel.input_files
         ),
+        mock.call().__getitem__(0),
     ]
