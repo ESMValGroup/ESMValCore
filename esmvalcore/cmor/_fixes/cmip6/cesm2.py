@@ -2,6 +2,7 @@
 
 from shutil import copyfile
 
+import iris
 import numpy as np
 from netCDF4 import Dataset
 
@@ -160,7 +161,7 @@ class Tas(Prw):
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
+        Add height (2m) coordinate and time coordinate.
 
         Fix also done for prw.
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
@@ -172,15 +173,72 @@ class Tas(Prw):
 
         Returns
         -------
-        iris.cube.CubeList
+        iris.cube.CubeList, iris.cube.CubeList
 
         """
         super().fix_metadata(cubes)
         # Specific code for tas
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
+        new_list = iris.cube.CubeList()
+        for cube in cubes:
+            try:
+                old_time = cube.coord("time")
+            except iris.exceptions.CoordinateNotFoundError:
+                new_list.append(cube)
+            else:
+                if old_time.is_monotonic():
+                    new_list.append(cube)
+                else:
+                    time_units = old_time.units
+                    time_data = old_time.points
 
-        return cubes
+                    # erase erroneously copy-pasted points
+                    time_diff = np.diff(time_data)
+                    idx_neg = np.where(time_diff <= 0.0)[0]
+                    while len(idx_neg) > 0:
+                        time_data = np.delete(time_data, idx_neg[0] + 1)
+                        time_diff = np.diff(time_data)
+                        idx_neg = np.where(time_diff <= 0.0)[0]
+
+                    # create the new time coord
+                    new_time = iris.coords.DimCoord(
+                        time_data,
+                        standard_name="time",
+                        var_name="time",
+                        units=time_units,
+                    )
+
+                    # create a new cube with the right shape
+                    dims = (
+                        time_data.shape[0],
+                        cube.coord("latitude").shape[0],
+                        cube.coord("longitude").shape[0],
+                    )
+                    data = cube.data
+                    new_data = np.ma.append(
+                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                    )
+                    new_data = new_data.reshape(dims)
+
+                    tmp_cube = iris.cube.Cube(
+                        new_data,
+                        standard_name=cube.standard_name,
+                        long_name=cube.long_name,
+                        var_name=cube.var_name,
+                        units=cube.units,
+                        attributes=cube.attributes,
+                        cell_methods=cube.cell_methods,
+                        dim_coords_and_dims=[
+                            (new_time, 0),
+                            (cube.coord("latitude"), 1),
+                            (cube.coord("longitude"), 2),
+                        ],
+                    )
+
+                    new_list.append(tmp_cube)
+
+        return new_list
 
 
 class Sftlf(Fix):
@@ -285,4 +343,125 @@ class Omon(Fix):
                 # Fix depth metadata
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
+        return cubes
+
+
+class Pr(Fix):
+    """Fixes for pr."""
+
+    def fix_metadata(self, cubes):
+        """Fix time coordinates.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        new_list = iris.cube.CubeList()
+        for cube in cubes:
+            try:
+                old_time = cube.coord("time")
+            except iris.exceptions.CoordinateNotFoundError:
+                new_list.append(cube)
+            else:
+                if old_time.is_monotonic():
+                    new_list.append(cube)
+                else:
+                    time_units = old_time.units
+                    time_data = old_time.points
+
+                    # erase erroneously copy-pasted points
+                    time_diff = np.diff(time_data)
+                    idx_neg = np.where(time_diff <= 0.0)[0]
+                    while len(idx_neg) > 0:
+                        time_data = np.delete(time_data, idx_neg[0] + 1)
+                        time_diff = np.diff(time_data)
+                        idx_neg = np.where(time_diff <= 0.0)[0]
+
+                    # create the new time coord
+                    new_time = iris.coords.DimCoord(
+                        time_data,
+                        standard_name="time",
+                        var_name="time",
+                        units=time_units,
+                    )
+
+                    # create a new cube with the right shape
+                    dims = (
+                        time_data.shape[0],
+                        cube.coord("latitude").shape[0],
+                        cube.coord("longitude").shape[0],
+                    )
+                    data = cube.data
+                    new_data = np.ma.append(
+                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                    )
+                    new_data = new_data.reshape(dims)
+
+                    tmp_cube = iris.cube.Cube(
+                        new_data,
+                        standard_name=cube.standard_name,
+                        long_name=cube.long_name,
+                        var_name=cube.var_name,
+                        units=cube.units,
+                        attributes=cube.attributes,
+                        cell_methods=cube.cell_methods,
+                        dim_coords_and_dims=[
+                            (new_time, 0),
+                            (cube.coord("latitude"), 1),
+                            (cube.coord("longitude"), 2),
+                        ],
+                    )
+
+                    new_list.append(tmp_cube)
+        return new_list
+
+
+class Tasmin(Pr):
+    """Fixes for tasmin."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
+        return cubes
+
+
+class Tasmax(Pr):
+    """Fixes for tasmax."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
         return cubes

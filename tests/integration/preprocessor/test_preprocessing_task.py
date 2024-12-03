@@ -24,7 +24,7 @@ def test_load_save_task(tmp_path):
         [
             PreprocessorFile(
                 filename=tmp_path / "tas_out.nc",
-                settings={},
+                settings={"save": {"compute": False}},
                 datasets=[dataset],
             ),
         ]

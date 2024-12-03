@@ -392,7 +392,7 @@ class DiagnosticTask(BaseTask):
         script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
-            logger.info(
+            logger.debug(
                 "No local diagnostic script found. Attempting to load the script from the base repository."
             )
             # Check if esmvaltool package is available
