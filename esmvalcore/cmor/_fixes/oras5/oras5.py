@@ -31,8 +31,8 @@ class AllVars(Oras5Fix, AllVars_ICON):
         if self.vardef.has_coord_with_standard_name("time"):
             cube = self._fix_time(cube, cubes)
 
-        if cube.coords(axis="Z"):
-            fix_ocean_depth_coord(cube)
+        # Fix depth
+        self._fix_depth(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -91,7 +91,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
                 if isinstance(coord, iris.coords.DimCoord):
                     dim = cube.coord_dims(coord)
                     coords_add.append((coord, dim))
-            data = cube.core_data().T.flatten()
+            data = da.moveaxis(cube.core_data(), -1, -2).flatten()
             dim_shape = tuple(cube.data.shape[:-2])
             data_shape = tuple(data.shape / np.prod(dim_shape))
             data = da.reshape(data, dim_shape + data_shape)
@@ -131,16 +131,11 @@ class AllVars(Oras5Fix, AllVars_ICON):
             grid_cube = horizontal_grid.extract_cube(Constraint("cell_area"))
             coord = grid_cube.coord(coord_name)
             points = coord.core_points().flatten()
-            bounds = da.moveaxis(da.from_array(coord.core_bounds()), -1, 0)
-            bounds_shape = np.shape(bounds)
-            bounds = bounds.flatten()
-            bounds = da.reshape(
-                bounds,
-                (int(bounds_shape[0]), int(len(bounds) / bounds_shape[0])),
-            )
+            bounds = da.from_array(coord.core_bounds()).flatten()
+            bounds = da.reshape(bounds, (int(len(bounds) / 4), 4))
             coord = iris.coords.AuxCoord(
                 points=(points),
-                bounds=(bounds.T),
+                bounds=(bounds),
                 standard_name=coord_name,
                 units="degrees",
             )
@@ -248,3 +243,12 @@ class AllVars(Oras5Fix, AllVars_ICON):
             cube.remove_coord("longitude")
             for mesh_coord in mesh.to_MeshCoords("face"):
                 cube.add_aux_coord(mesh_coord, mesh_idx)
+
+    def _fix_depth(self, cube):
+        """Fix depth coordinate."""
+        for i in range(len(cube.coords())):
+            if "levels" in cube.coords()[i].name():
+                cube.coords()[i].attributes = {"positive": "down"}
+
+        if cube.coords(axis="Z"):
+            fix_ocean_depth_coord(cube)
