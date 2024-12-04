@@ -331,7 +331,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     return _extract_datetime(cube, t_1, t_2)
 
 
-def extract_season(cube: Cube, season: str) -> Cube:
+def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
     """Slice cube to get only the data belonging to a specific season.
 
     Parameters
@@ -341,6 +341,9 @@ def extract_season(cube: Cube, season: str) -> Cube:
     season:
         Season to extract. Available: DJF, MAM, JJA, SON
         and all sequentially correct combinations: e.g. JJAS
+    full:
+        Only return full seasons e.g. DJF and never JF
+        default: False
 
     Returns
     -------
@@ -364,6 +367,19 @@ def extract_season(cube: Cube, season: str) -> Cube:
     res_season = allmonths[sstart + len(season) : sstart + 12]
     seasons = [season, res_season]
     coords_to_remove = []
+
+    if full: # need to first extract time to trim incomplete seasons
+        time_coord = cube.coord('time')
+        
+        start_year = time_coord.units.num2date( time_coord.points[0] ).year
+        start_time = dict( start_year=start_year, start_month=sstart+1, start_day=1 )
+
+        end_year = time_coord.units.num2date( time_coord.points[-1] ).year
+        end_month = sstart + len(season) + 1 # end of season
+        if end_month>12: end_month -= 12
+        end_time_plus_one_day = dict( end_year=end_year, end_month=end_month +1, end_day=1 )
+
+        cube = extract_time( cube, **start_time, **end_time_plus_one_day )
 
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
