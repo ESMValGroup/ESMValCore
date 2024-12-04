@@ -376,7 +376,8 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
 
         end_year = time_coord.units.num2date( time_coord.points[-1] ).year
         end_month = sstart + len(season) + 1 # end of season
-        if end_month>12: end_month -= 12
+        if end_month>12: 
+            end_month -= 12
         end_time_plus_one_day = dict( end_year=end_year, end_month=end_month +1, end_day=1 )
 
         cube = extract_time( cube, **start_time, **end_time_plus_one_day )
