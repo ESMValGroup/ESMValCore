@@ -2,6 +2,7 @@
 
 import iris
 import iris.cube
+import pytest
 from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
@@ -9,7 +10,8 @@ from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 
-def test_load_save_task(tmp_path):
+@pytest.mark.parametrize("scheduler_lock", [False, True])
+def test_load_save_task(tmp_path, mocker, scheduler_lock):
     """Test that a task that just loads and saves a file."""
     # Prepare a test dataset
     cube = iris.cube.Cube(data=[273.0], var_name="tas", units="K")
@@ -36,6 +38,9 @@ def test_load_save_task(tmp_path):
     activity = provenance.activity("software:esmvalcore")
     task.initialize_provenance(activity)
 
+    if scheduler_lock:
+        task.scheduler_lock = mocker.Mock()
+
     task.run()
 
     assert len(task.products) == 1
@@ -44,6 +49,12 @@ def test_load_save_task(tmp_path):
 
     result.attributes.clear()
     assert result == cube
+
+    if scheduler_lock:
+        assert task.scheduler_lock.acquire.called_once_with()
+        assert task.scheduler_lock.release.called_once_with()
+    else:
+        assert task.scheduler_lock is None
 
 
 def test_load_save_and_other_task(tmp_path, monkeypatch):
