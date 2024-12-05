@@ -51,8 +51,8 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
     assert result == cube
 
     if scheduler_lock:
-        assert task.scheduler_lock.acquire.called_once_with()
-        assert task.scheduler_lock.release.called_once_with()
+        task.scheduler_lock.acquire.assert_called_once_with()
+        task.scheduler_lock.release.assert_called_once_with()
     else:
         assert task.scheduler_lock is None
 
