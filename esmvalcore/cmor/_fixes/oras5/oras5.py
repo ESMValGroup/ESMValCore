@@ -108,7 +108,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
         Parameters
         ----------
         cube: iris.cube.Cube
-            ICON data to which the coordinate from the grid file is added.
+            ORAS5 data to which the coordinate from the grid file is added.
         coord_name: str
             Name of the coordinate to add from the grid file. Must be one of
             ``'latitude'``, ``'longitude'``.

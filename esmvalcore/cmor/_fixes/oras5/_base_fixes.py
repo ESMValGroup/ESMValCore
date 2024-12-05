@@ -93,3 +93,98 @@ class Oras5Fix(IconFix):
         )
 
         return mesh
+    
+    def get_horizontal_grid(self, cube):
+        """Get copy of ORAS5 horizontal grid.
+
+        If given, retrieve grid from `horizontal_grid` facet specified by the
+        user.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Cube for which the ORS5 horizontal grid is retrieved. If the facet
+            `horizontal_grid` is not specified by the user, it raises a 
+            NotImplementedError.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            Copy of ORAS5 horizontal grid.
+
+        Raises
+        ------
+        FileNotFoundError
+            Path specified by `horizontal_grid` facet (absolute or relative to
+            `auxiliary_data_dir`) does not exist.
+        NotImplementedError
+            No `horizontal_grid` facet is defined.
+
+        """
+        if self.extra_facets.get("horizontal_grid") is not None:
+            grid = self._get_grid_from_facet()
+        else:
+            raise NotImplementedError(
+                "Full path to suitable ORAS5 grid must be specified in facet "
+                "'horizontal_grid'"
+            )
+
+        return grid.copy()
+
+    def _get_grid_from_facet(self):
+        """Get horizontal grid from user-defined facet `horizontal_grid`."""
+        grid_path = self._get_path_from_facet(
+            "horizontal_grid", "Horizontal grid file"
+        )
+        grid_name = grid_path.name
+
+        # If already loaded, return the horizontal grid
+        if grid_name in self._horizontal_grids:
+            return self._horizontal_grids[grid_name]
+
+        # Load file
+        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+        logger.debug("Loaded ORAS5 grid file from %s", grid_path)
+        return self._horizontal_grids[grid_name]
+
+    def get_mesh(self, cube):
+        """Get mesh.
+
+        Note
+        ----
+        If possible, this function uses a cached version of the mesh to save
+        time.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Cube for which the mesh is retrieved.
+
+        Returns
+        -------
+        iris.mesh.MeshXY
+            Mesh of the cube.
+
+        Raises
+        ------
+        FileNotFoundError
+            Path specified by `horizontal_grid` facet (absolute or relative to
+            `auxiliary_data_dir`) does not exist.
+        NotImplementedError
+            No `horizontal_grid` facet is defined.
+
+        """
+        # Use `horizontal_grid` facet to determine grid name
+        grid_path = self._get_path_from_facet(
+                "horizontal_grid", "Horizontal grid file"
+            )
+        grid_name = grid_path.name
+
+        # Reuse mesh if possible
+        if grid_name in self._meshes:
+            logger.debug("Reusing ORAS5 mesh for grid %s", grid_name)
+        else:
+            logger.debug("Creating ORAS5 mesh for grid %s", grid_name)
+            self._meshes[grid_name] = self._create_mesh(cube)
+
+        return self._meshes[grid_name]
