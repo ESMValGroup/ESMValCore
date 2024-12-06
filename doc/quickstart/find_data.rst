@@ -107,7 +107,7 @@ The following native reanalysis/observational datasets are supported under the
 To use these datasets, put the files containing the data in the directory that
 you have :ref:`configured <config_options>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming your are
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming you are
 using the ``default`` DRS for ``native6``).
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
@@ -121,7 +121,7 @@ ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
 the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
 For example for monthly data, place the files in the
 ``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming your are using the ``default``
+configured for the ``native6`` project (assuming you are using the ``default``
 DRS for ``native6``).
 
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
@@ -200,7 +200,7 @@ Thus, example dataset entries could look like this:
 
 The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
 <https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
-By default, these data is regridded to a regular 0.25°x0.25° grid as
+By default, these data are regridded to a regular 0.25°x0.25° grid as
 `recommended by the ECMWF
 <https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__
 using bilinear interpolation.
@@ -230,7 +230,7 @@ MSWEP
 
 For example for monthly data, place the files in the
 ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming your are using the ``default``
+configured for the ``native6`` project (assuming you are using the ``default``
 DRS for ``native6``).
 
 .. note::
