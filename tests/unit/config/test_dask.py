@@ -37,7 +37,8 @@ def test_get_distributed_client_external(mocker, tmp_path, warn_unused_args):
     mock_client.close.assert_called()
 
 
-def test_get_distributed_client_slurm(mocker, tmp_path):
+@pytest.mark.parametrize("shutdown_timeout", [False, True])
+def test_get_distributed_client_slurm(mocker, tmp_path, shutdown_timeout):
     cfg = {
         "cluster": {
             "type": "dask_jobqueue.SLURMCluster",
@@ -66,10 +67,12 @@ def test_get_distributed_client_slurm(mocker, tmp_path):
         create_autospec=True,
         return_value=mock_module,
     )
+    mock_cluster = mock_cluster_cls.return_value
+    if shutdown_timeout:
+        mock_cluster.close.side_effect = TimeoutError
     with _dask.get_distributed_client() as client:
         assert client is mock_client
     mock_client.close.assert_called()
-    mock_cluster = mock_cluster_cls.return_value
     _dask.Client.assert_called_with(address=mock_cluster.scheduler_address)
     args = {k: v for k, v in cfg["cluster"].items() if k != "type"}
     mock_cluster_cls.assert_called_with(**args)
