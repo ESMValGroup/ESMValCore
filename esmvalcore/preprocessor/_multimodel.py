@@ -405,6 +405,7 @@ def _combine(cubes):
     # Equalise some metadata that can cause merge to fail (in-place)
     # https://scitools-iris.readthedocs.io/en/stable/userguide/
     #    merge_and_concat.html#common-issues-with-merge-and-concatenate
+    cubes = [cube.copy() for cube in cubes]
     equalise_attributes(cubes)
     _equalise_var_metadata(cubes)
     _equalise_cell_methods(cubes)
