@@ -99,7 +99,7 @@ def _get_start_end_date(
     if hasattr(file, "name"):  # Path, LocalFile, ESGFFile
         stem = Path(file.name).stem
     else:  # str
-        stem = Path(file).stem
+        stem = Path(file).name
 
     start_date = end_date = None
 
@@ -131,8 +131,7 @@ def _get_start_end_date(
 
     # ACCESS native ocean file names eg 'ocean_month.nc-18521231'
     if (start_date is None or end_date is None):
-        file_name = os.path.basename(file)
-        dates = re.findall(datetime_pattern, file_name)
+        dates = re.findall(datetime_pattern, stem)
         if len(dates) == 1:
             start_date = end_date = dates[0][0]
 
