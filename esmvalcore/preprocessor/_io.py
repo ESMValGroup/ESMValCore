@@ -39,6 +39,7 @@ VARIABLE_KEYS = {
     "reference_dataset",
     "alternative_dataset",
 }
+GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
 iris.FUTURE.save_split_attrs = True
 
@@ -142,7 +143,13 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_load_callback)
+            # GRIB files need to be loaded with iris.load, otherwise we will
+            # get separate (lat, lon) slices for each time step, pressure
+            # level, etc.
+            if file.suffix in GRIB_FORMATS:
+                raw_cubes = iris.load(file, callback=_load_callback)
+            else:
+                raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:

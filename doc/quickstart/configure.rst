@@ -974,7 +974,7 @@ infrastructure. The following example illustrates the concept.
 .. _extra-facets-example-1:
 
 .. code-block:: yaml
-   :caption: Extra facet example file `native6-era5.yml`
+   :caption: Extra facet example file `native6-era5-example.yml`
 
    ERA5:
      Amon:

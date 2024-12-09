@@ -4,6 +4,7 @@ import copy
 import logging
 import os
 from functools import total_ordering
+from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -209,9 +210,10 @@ class TrackedFile:
         """Initialize the entity representing the file."""
         if self.attributes is None:
             self.attributes = {}
-            with Dataset(self.filename, "r") as dataset:
-                for attr in dataset.ncattrs():
-                    self.attributes[attr] = dataset.getncattr(attr)
+            if "nc" in Path(self.filename).suffix:
+                with Dataset(self.filename, "r") as dataset:
+                    for attr in dataset.ncattrs():
+                        self.attributes[attr] = dataset.getncattr(attr)
 
         attributes = {
             "attribute:" + str(k).replace(" ", "_"): str(v)
