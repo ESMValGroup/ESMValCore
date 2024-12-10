@@ -507,7 +507,7 @@ def test_pr_fix_metadata(pr_cubes):
 
     out_cubes = fix.fix_metadata(pr_cubes)
     for cube in out_cubes:
-        if cube.var_name == "tas":
+        if cube.var_name == "pr":
             assert cube.coord("time").is_monotonic()
 
 
