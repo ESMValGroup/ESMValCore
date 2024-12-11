@@ -753,6 +753,9 @@ class Dataset:
             "output_dir": fix_dir_prefix,
             "add_unique_suffix": True,
             "session": self.session,
+            "ignore_warnings": get_ignored_warnings(
+                self.facets["project"], "fix_file"
+            ),
             **self.facets,
         }
         settings["load"] = {
