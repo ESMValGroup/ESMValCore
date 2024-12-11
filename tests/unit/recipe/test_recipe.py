@@ -243,7 +243,10 @@ def test_multi_model_filename_full():
 
 def test_update_multiproduct_multi_model_statistics():
     """Test ``_update_multiproduct``."""
-    settings = {"multi_model_statistics": {"statistics": ["mean", "std_dev"]}}
+    settings = {
+        "multi_model_statistics": {"statistics": ["mean", "std_dev"]},
+        "save": {"compute": False},
+    }
     common_attributes = {
         "project": "CMIP6",
         "diagnostic": "d",
@@ -358,6 +361,7 @@ def test_update_multiproduct_multi_model_statistics_percentile():
                 {"operator": "percentile", "percent": 95.0},
             ]
         },
+        "save": {"compute": False},
     }
     common_attributes = {
         "project": "CMIP6",
@@ -468,7 +472,8 @@ def test_update_multiproduct_multi_model_statistics_percentile():
 def test_update_multiproduct_ensemble_statistics():
     """Test ``_update_multiproduct``."""
     settings = {
-        "ensemble_statistics": {"statistics": ["median"], "span": "full"}
+        "ensemble_statistics": {"statistics": ["median"], "span": "full"},
+        "save": {"compute": False},
     }
     common_attributes = {
         "dataset": "CanESM2",
@@ -539,6 +544,7 @@ def test_update_multiproduct_ensemble_statistics_percentile():
             ],
             "span": "full",
         },
+        "save": {"compute": False},
     }
 
     common_attributes = {
@@ -773,7 +779,11 @@ def test_get_default_settings(mocker):
     settings = _recipe._get_default_settings(dataset)
     assert settings == {
         "remove_supplementary_variables": {},
-        "save": {"compress": False, "alias": "sic"},
+        "save": {
+            "compress": False,
+            "alias": "sic",
+            "compute": False,
+        },
     }
 
 
