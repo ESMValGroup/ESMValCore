@@ -23,13 +23,13 @@ from esmvalcore.exceptions import (
 logger = logging.getLogger(__name__)
 
 # TODO: Remove in v2.14.0
-OLD_CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
+CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
 
 
 # TODO: Remove in v2.14.0
 def warn_if_old_dask_config_exists() -> None:
     """Warn user if deprecated dask configuration file exists."""
-    if OLD_CONFIG_FILE.exists():
+    if CONFIG_FILE.exists():
         deprecation_msg = (
             "Usage of Dask configuration file ~/.esmvaltool/config-user.yml "
             "has been deprecated in ESMValCore version 2.12.0 and is "
@@ -81,7 +81,7 @@ def _process_dask_config_options(dask_config: Mapping) -> None:
 def _get_old_dask_config() -> dict:
     """Get dask configuration dict from old dask configuration file."""
     dask_config: dict[str, Any] = {"client": {}, "clusters": {}}
-    config = yaml.safe_load(OLD_CONFIG_FILE.read_text(encoding="utf-8"))
+    config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
 
     # File exists, but is empty -> Use default scheduler
     if config is None:
@@ -98,7 +98,7 @@ def _get_old_dask_config() -> dict:
             logger.warning(
                 "Not using Dask 'cluster' settings from %s because a cluster "
                 "'address' is already provided in 'client'.",
-                OLD_CONFIG_FILE,
+                CONFIG_FILE,
             )
 
         if not cluster_kwargs:
@@ -116,7 +116,7 @@ def _get_old_dask_config() -> dict:
 # TODO: Remove in v2.14.0; used CFG["dask"] instead
 def _get_dask_config() -> dict:
     """Get Dask configuration dictionary."""
-    if OLD_CONFIG_FILE.exists():
+    if CONFIG_FILE.exists():
         dask_config = _get_old_dask_config()
     else:
         dask_config = CFG["dask"]
