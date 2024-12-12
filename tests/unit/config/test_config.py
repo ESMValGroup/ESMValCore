@@ -185,17 +185,6 @@ def test_load_default_config(cfg_default, monkeypatch):
                 "default": {
                     "type": "default",
                 },
-                "compute": {
-                    "type": "dask_jobqueue.SLURMCluster",
-                    "queue": "compute",
-                    "account": "bk1088",
-                    "cores": 64,
-                    "memory": "4GiB",
-                    "processes": 32,
-                    "interface": "ib0",
-                    "local_directory": "/scratch/b/b381141/dask-tmp",
-                    "n_workers": 32,
-                },
                 "debug": {
                     "type": "default",
                     "scheduler": "synchronous",

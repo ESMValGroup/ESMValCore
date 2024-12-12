@@ -183,7 +183,12 @@ def get_distributed_client() -> Generator[None | Client]:
             client.dashboard_link,
         )
     else:
-        logger.info("Using Dask default scheduler")
+        logger.warning(
+            "Using Dask default scheduler, checkout "
+            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
+            "quickstart/configure.html#dask-configuration how to use a "
+            "distributed scheduler"
+        )
 
     try:
         yield client
