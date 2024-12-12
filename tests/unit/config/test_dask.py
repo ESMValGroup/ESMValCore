@@ -17,10 +17,9 @@ def test_get_no_distributed_client():
 # TODO: Remove in v2.14.0
 def test_get_distributed_client_empty_dask_file(mocker, tmp_path):
     # Create mock client configuration.
-    cfg = {}
     cfg_file = tmp_path / "dask.yml"
     with cfg_file.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg, file)
+        file.write("")
     mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
 
     # Create mock distributed.Client
@@ -272,6 +271,15 @@ def test_invalid_dask_config_no_run(monkeypatch, mocker):
 
 
 def test_invalid_dask_config_invalid_clusters(monkeypatch, mocker):
+    monkeypatch.setitem(CFG, "dask", {"run": "test", "clusters": 1})
+
+    msg = "Key 'dask.clusters' needs to be a mapping, got"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with _dask.get_distributed_client():
+            pass
+
+
+def test_invalid_dask_config_missing_run(monkeypatch, mocker):
     monkeypatch.setitem(
         CFG,
         "dask",
