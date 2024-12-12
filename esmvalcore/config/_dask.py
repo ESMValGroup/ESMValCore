@@ -3,76 +3,187 @@
 import contextlib
 import importlib
 import logging
+import warnings
+from collections.abc import Generator, Mapping
 from pathlib import Path
+from pprint import pformat
+from typing import Any
 
+import dask.config
 import yaml
 from distributed import Client
+from distributed.deploy import Cluster
+
+from esmvalcore.config import CFG
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 
 logger = logging.getLogger(__name__)
 
-CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
+# TODO: Remove in v2.14.0
+OLD_CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
 
 
-def check_distributed_config():
-    """Check the Dask distributed configuration."""
-    if not CONFIG_FILE.exists():
-        logger.warning(
-            "Using the Dask basic scheduler. This may lead to slow "
-            "computations and out-of-memory errors. "
-            "Note that the basic scheduler may still be the best choice for "
-            "preprocessor functions that are not lazy. "
-            "In that case, you can safely ignore this warning. "
-            "See https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
-            "quickstart/configure.html#dask-distributed-configuration for "
-            "more information. "
+# TODO: Remove in v2.14.0
+def warn_if_old_dask_config_exists() -> None:
+    """Warn user if deprecated dask configuration file exists."""
+    if OLD_CONFIG_FILE.exists():
+        deprecation_msg = (
+            "Usage of Dask configuration file ~/.esmvaltool/config-user.yml "
+            "has been deprecated in ESMValCore version 2.12.0 and is "
+            "scheduled for removal in version 2.14.0. Please use the "
+            "configuration option `dask` instead. Ignoring all existing "
+            "`dask` configuration options for this run."
+        )
+        warnings.warn(
+            deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
         )
 
 
-@contextlib.contextmanager
-def get_distributed_client():
-    """Get a Dask distributed client."""
-    dask_args = {}
-    if CONFIG_FILE.exists():
-        config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
-        if config is not None:
-            dask_args = config
+def validate_dask_config(dask_config: Mapping) -> None:
+    """Validate dask configuration options."""
+    # Option (1): cluster is specified via address
+    if "address" in dask_config.get("client", {}):
+        return
 
-    client_args = dask_args.get("client") or {}
-    cluster_args = dask_args.get("cluster") or {}
+    # Option (2): cluster is selected via `run` and `clusters` keys
+    for option in ("clusters", "run"):
+        if option not in dask_config:
+            raise InvalidConfigParameter(
+                f"Key `{option}` needs to be defined for `dask` configuration"
+            )
+    clusters = dask_config["clusters"]
+    run = dask_config["run"]
+    if not isinstance(clusters, Mapping):
+        raise InvalidConfigParameter(
+            f"Key `dask.clusters` needs to be a mapping, got `{clusters}`"
+        )
+    if run not in clusters:
+        raise InvalidConfigParameter(
+            f"Key `dask.run` needs to point to an element of `dask.clusters`; "
+            f"got `{run}`, expected one of {list(clusters.keys())}"
+        )
 
-    # Start a cluster, if requested
-    if "address" in client_args:
-        # Use an externally managed cluster.
-        cluster = None
-        if cluster_args:
+
+def _process_dask_config_options(dask_config: Mapping) -> None:
+    """Process dask options via dask.config.set()."""
+    dask_options = dask_config.get("config", {})
+    logger.debug(
+        "Setting additional Dask options via dask.config.set:\n%s",
+        pformat(dask_options),
+    )
+    dask.config.set(dask_options)
+
+
+# TODO: Remove in v2.14.0
+def _get_old_dask_config() -> dict:
+    """Get dask configuration dict from old dask configuration file."""
+    dask_config: dict[str, Any] = {"client": {}, "clusters": {}}
+    config = yaml.safe_load(OLD_CONFIG_FILE.read_text(encoding="utf-8"))
+
+    # File exists, but is empty -> Use default scheduler
+    if config is None:
+        dask_config["client"] = {}
+        dask_config["clusters"] = {"default": {"type": "default"}}
+        dask_config["run"] = "default"
+
+    # Otherwise, use settings from file
+    else:
+        client_kwargs = config.get("client", {})
+        cluster_kwargs = config.get("cluster", {})
+
+        if "address" in client_kwargs and cluster_kwargs:
             logger.warning(
                 "Not using Dask 'cluster' settings from %s because a cluster "
                 "'address' is already provided in 'client'.",
-                CONFIG_FILE,
+                OLD_CONFIG_FILE,
             )
-    elif cluster_args:
-        # Start cluster.
-        cluster_type = cluster_args.pop(
-            "type",
-            "distributed.LocalCluster",
-        )
-        cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
-        cluster_module = importlib.import_module(cluster_module_name)
-        cluster_cls = getattr(cluster_module, cluster_cls_name)
-        cluster = cluster_cls(**cluster_args)
-        client_args["address"] = cluster.scheduler_address
+
+        if not cluster_kwargs:
+            cluster_kwargs = {"type": "default"}
+        if "type" not in cluster_kwargs:
+            cluster_kwargs["type"] = "distributed.LocalCluster"
+
+        dask_config["client"] = client_kwargs
+        dask_config["clusters"] = {"cluster_from_file": cluster_kwargs}
+        dask_config["run"] = "cluster_from_file"
+
+    return dask_config
+
+
+# TODO: Remove in v2.14.0; used CFG["dask"] instead
+def _get_dask_config() -> dict:
+    """Get Dask configuration dictionary."""
+    if OLD_CONFIG_FILE.exists():
+        dask_config = _get_old_dask_config()
     else:
-        # No cluster configured, use Dask basic scheduler, or a LocalCluster
-        # managed through Client.
+        dask_config = CFG["dask"]
+    return dask_config
+
+
+def _setup_cluster(**kwargs) -> None | Cluster:
+    """Set up cluster from keyword arguments."""
+    kwargs = dict(kwargs)
+    cluster_type = kwargs.pop("type", "default")
+
+    # For default cluster, interpret kwargs as keyword arguments for
+    # dask.config.set
+    if cluster_type == "default":
+        logger.debug("Using default Dask cluster with settings %s", kwargs)
+        dask.config.set(kwargs)
+        return None
+
+    # Otherwise, load cluster class and set up cluster instance
+    cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
+    cluster_module = importlib.import_module(cluster_module_name)
+    cluster_cls = getattr(cluster_module, cluster_cls_name)
+    cluster = cluster_cls(**kwargs)
+    logger.debug("Using internal Dask cluster %s", cluster)
+    return cluster
+
+
+@contextlib.contextmanager
+def get_distributed_client() -> Generator[None | Client]:
+    """Get a Dask distributed client."""
+    warn_if_old_dask_config_exists()
+    dask_config = _get_dask_config()
+    validate_dask_config(dask_config)
+    _process_dask_config_options(dask_config)
+
+    client_kwargs = dask_config.get("client", {})
+    client: None | Client
+    cluster: None | Cluster
+
+    # Client address is defined -> Use that one
+    if "address" in client_kwargs:
+        logger.info(
+            "Using external Dask cluster at %s", client_kwargs["address"]
+        )
+        client = Client(**client_kwargs)
         cluster = None
 
-    # Start a client, if requested
-    if dask_args:
-        client = Client(**client_args)
-        logger.info("Dask dashboard: %s", client.dashboard_link)
+    # Otherwise, setup cluster according to the selected entry
+    # Note: we already ensured earlier that the selected entry (via `run`)
+    # actually exists in `clusters`, so we don't have to check that again here
     else:
-        logger.info("Using the Dask basic scheduler.")
-        client = None
+        logger.debug("Selecting Dask cluster '%s'", dask_config["run"])
+        cluster_kwargs = dask_config["clusters"][dask_config["run"]]
+        cluster = _setup_cluster(**cluster_kwargs)
+        if cluster is None:
+            client = None
+        else:
+            client_kwargs["address"] = cluster.scheduler_address
+            client = Client(**client_kwargs)
+
+    if client:
+        logger.info(
+            "Using Dask distributed scheduler (dashboard link: %s)",
+            client.dashboard_link,
+        )
+    else:
+        logger.info("Using Dask default scheduler")
 
     try:
         yield client
