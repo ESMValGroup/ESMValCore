@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.fixture
 def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
-    cfg_dict = {"resume_from": []}
+    cfg_dict = {"resume_from": [], "dask": {}}
 
     cfg = mocker.MagicMock()
     cfg.__getitem__.side_effect = cfg_dict.__getitem__

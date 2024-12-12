@@ -1,4 +1,3 @@
-# Other options not included in config-user.yml
 check_level: default
 diagnostics: null
 extra_facets_dir: []

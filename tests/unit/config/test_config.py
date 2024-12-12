@@ -179,6 +179,37 @@ def test_load_default_config(cfg_default, monkeypatch):
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
         "config_developer_file": default_dev_file,
+        "dask": {
+            "client": {},
+            "clusters": {
+                "default": {
+                    "type": "default",
+                },
+                "compute": {
+                    "type": "dask_jobqueue.SLURMCluster",
+                    "queue": "compute",
+                    "account": "bk1088",
+                    "cores": 64,
+                    "memory": "4GiB",
+                    "processes": 32,
+                    "interface": "ib0",
+                    "local_directory": "/scratch/b/b381141/dask-tmp",
+                    "n_workers": 32,
+                },
+                "debug": {
+                    "type": "default",
+                    "scheduler": "synchronous",
+                },
+                "local": {
+                    "type": "distributed.LocalCluster",
+                    "n_workers": 2,
+                    "threads_per_worker": 2,
+                    "memory_limit": "4GiB",
+                },
+            },
+            "config": {},
+            "run": "default",
+        },
         "diagnostics": None,
         "download_dir": Path.home() / "climate_data",
         "drs": {
