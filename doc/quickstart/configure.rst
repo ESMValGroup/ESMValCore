@@ -140,7 +140,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
 | ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
-|                               | stored [#f1]_.                         |                             |                                        |
+|                               | stored. [#f1]_                         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
 |                               | (``debug``, ``strict``, ``default``    |                             |                                        |
@@ -158,10 +158,10 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | the recipe, see :ref:`running`.        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
-|                               | be stored [#f4]_.                      |                             |                                        |
+|                               | be stored. [#f4]_                      |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``drs``                       | Directory structure for input data     | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
-|                               | [#f2]_.                                |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
+| ``drs``                       | Directory structure for input data.    | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
+|                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic scripts).                   |                             |                                        |
@@ -189,7 +189,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | ``output_file_type``          | Plot file type.                        | :obj:`str`                  | ``png``                                |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic run [#f3]_.                 |                             |                                        |
+|                               | diagnostic run. [#f3]_                 |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
 |                               | the run was successful, see also       |                             |                                        |
@@ -201,7 +201,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | ref:`running`.                         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
-|                               | projects [#f2]_.                       |                             |                                        |
+|                               | projects. [#f2]_                       |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
 |                               | :ref:`running`.                        |                             |                                        |
@@ -212,7 +212,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
 |                               | (``never``, ``when_missing``,          |                             |                                        |
-|                               | ``always``) [#f4]_.                    |                             |                                        |
+|                               | ``always``). [#f4]_                    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
 |                               | :ref:`running`.                        |                             |                                        |
@@ -312,7 +312,7 @@ YAML configuration file via
   dask:
     run: <NAME_OF_CLUSTER>
 
-or alternatively with the command line argument
+or alternatively with in command line via
 
 .. code:: bash
 
@@ -424,9 +424,9 @@ See `Deploying Dask Clusters on High Performance Computers
 
 *Externally managed Dask cluster*
 
-To use an externally managed cluster, specify the ``address`` option for the
-``client`` settings. Such a cluster can e.g. be started using the `Dask
-Jupyterlab extension
+To use an externally managed cluster, specify an ``address`` option for the
+``client`` option.
+Such a cluster can e.g. be started using the `Dask Jupyterlab extension
 <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`__:
 
 .. code:: yaml
@@ -485,11 +485,11 @@ following configuration:
 .. code:: yaml
 
   dask:
+    run: default  # This can be omitted
     clusters:
       default:
         type: default
         num_workers: 4
-    run: default  # This can be omitted
 
 .. _config-dask-defaults:
 
@@ -531,7 +531,7 @@ All available options
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``clusters``                  | Different clusters that can be         | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
 |                               | selected via the ``run`` option. Each  |                             |                                        |
-|                               | cluster can have a ``type``. If        |                             |                                        |
+|                               | cluster must have a ``type``. If       |                             |                                        |
 |                               | ``type: default`` (this is also the    |                             |                                        |
 |                               | default type) is used, all other       |                             |                                        |
 |                               | options are passed to                  |                             |                                        |

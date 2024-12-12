@@ -31,7 +31,7 @@ def warn_if_old_dask_config_exists() -> None:
     """Warn user if deprecated dask configuration file exists."""
     if CONFIG_FILE.exists():
         deprecation_msg = (
-            "Usage of Dask configuration file ~/.esmvaltool/config-user.yml "
+            "Usage of Dask configuration file ~/.esmvaltool/dask.yml "
             "has been deprecated in ESMValCore version 2.12.0 and is "
             "scheduled for removal in version 2.14.0. Please use the "
             "configuration option `dask` instead. Ignoring all existing "
@@ -52,18 +52,24 @@ def validate_dask_config(dask_config: Mapping) -> None:
     for option in ("clusters", "run"):
         if option not in dask_config:
             raise InvalidConfigParameter(
-                f"Key `{option}` needs to be defined for `dask` configuration"
+                f"Key '{option}' needs to be defined for 'dask' configuration"
             )
     clusters = dask_config["clusters"]
     run = dask_config["run"]
     if not isinstance(clusters, Mapping):
         raise InvalidConfigParameter(
-            f"Key `dask.clusters` needs to be a mapping, got `{clusters}`"
+            f"Key 'dask.clusters' needs to be a mapping, got "
+            f"{type(clusters)}"
         )
+    for cluster, cluster_config in clusters.items():
+        if "type" not in cluster_config:
+            raise InvalidConfigParameter(
+                f"Key 'dask.clusters.{cluster}' does not have a 'type'"
+            )
     if run not in clusters:
         raise InvalidConfigParameter(
-            f"Key `dask.run` needs to point to an element of `dask.clusters`; "
-            f"got `{run}`, expected one of {list(clusters.keys())}"
+            f"Key 'dask.run' needs to point to an element of 'dask.clusters'; "
+            f"got '{run}', expected one of {list(clusters.keys())}"
         )
 
 
