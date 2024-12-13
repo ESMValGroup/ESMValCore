@@ -858,11 +858,13 @@ class TaskSet(set):
         with multiprocessing.Manager() as manager:
             # Use a lock to avoid overloading the Dask workers by making only
             # one :class:`esmvalcore.preprocessor.PreprocessingTask` submit its
-            # data save task graph to the scheduler at a time.
+            # data save task graph to the distributed scheduler at a time.
             #
             # See https://github.com/ESMValGroup/ESMValCore/issues/2609 for
             # additional detail.
-            scheduler_lock = manager.Lock()
+            scheduler_lock = (
+                None if scheduler_address is None else manager.Lock()
+            )
 
             with multiprocessing.Pool(processes=max_parallel_tasks) as pool:
                 while scheduled or running:
