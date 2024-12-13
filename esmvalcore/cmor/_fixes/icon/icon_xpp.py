@@ -14,17 +14,19 @@ logger = logging.getLogger(__name__)
 AllVars = IconAllVars
 
 
-# class Clwvi(IconFix):
-#     """Fixes for ``clwvi``."""
+class Clwvi(IconFix):
+    """Fixes for ``clwvi``."""
 
-#     def fix_metadata(self, cubes):
-#         """Fix metadata."""
-#         cube = (
-#             self.get_cube(cubes, var_name='cllvi') +
-#             self.get_cube(cubes, var_name='clivi')
-#         )
-#         cube.var_name = self.vardef.short_name
-#         return CubeList([cube])
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = self.get_cube(cubes, var_name="tqc_dia") + self.get_cube(
+            cubes, var_name="tqi_dia"
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Evspsbl = NegateData
 
 
 Hfls = NegateData
