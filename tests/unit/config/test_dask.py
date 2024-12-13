@@ -29,6 +29,42 @@ def test_get_distributed_client_empty_dask_file(mocker, tmp_path):
 
 
 # TODO: Remove in v2.14.0
+@pytest.mark.parametrize("use_new_dask_config", ["", "1"])
+def test_force_new_dask_config(
+    monkeypatch, mocker, tmp_path, use_new_dask_config
+):
+    # Old config -> default scheduler
+    cfg_file = tmp_path / "dask.yml"
+    with cfg_file.open("w", encoding="utf-8") as file:
+        file.write("")
+    mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
+
+    # New config -> distributed scheduler
+    local_cluster = {
+        "type": "distributed.LocalCluster",
+        "n_workers": 2,
+        "threads_per_worker": 2,
+        "memory_limit": "4GiB",
+    }
+    monkeypatch.setitem(
+        CFG,
+        "dask",
+        {
+            "run": "local",
+            "clusters": {"local": local_cluster},
+        },
+    )
+
+    monkeypatch.setenv("ESMVALTOOL_USE_NEW_DASK_CONFIG", use_new_dask_config)
+
+    with _dask.get_distributed_client() as client:
+        if use_new_dask_config:
+            assert isinstance(client, Client)
+        else:
+            assert client is None
+
+
+# TODO: Remove in v2.14.0
 def test_get_distributed_client_local_cluster_old(mocker, tmp_path):
     # Create mock client configuration.
     cfg = {"cluster": {"n_workers": 2}}

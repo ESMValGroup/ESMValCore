@@ -3,6 +3,7 @@
 import contextlib
 import importlib
 import logging
+import os
 import warnings
 from collections.abc import Generator, Mapping
 from pathlib import Path
@@ -29,7 +30,9 @@ CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
 # TODO: Remove in v2.14.0
 def warn_if_old_dask_config_exists() -> None:
     """Warn user if deprecated dask configuration file exists."""
-    if CONFIG_FILE.exists():
+    if CONFIG_FILE.exists() and not os.environ.get(
+        "ESMVALTOOL_USE_NEW_DASK_CONFIG"
+    ):
         deprecation_msg = (
             "Usage of Dask configuration file ~/.esmvaltool/dask.yml "
             "has been deprecated in ESMValCore version 2.12.0 and is "
@@ -122,7 +125,9 @@ def _get_old_dask_config() -> dict:
 # TODO: Remove in v2.14.0; used CFG["dask"] instead
 def _get_dask_config() -> dict:
     """Get Dask configuration dictionary."""
-    if CONFIG_FILE.exists():
+    if CONFIG_FILE.exists() and not os.environ.get(
+        "ESMVALTOOL_USE_NEW_DASK_CONFIG"
+    ):
         dask_config = _get_old_dask_config()
     else:
         dask_config = CFG["dask"]
