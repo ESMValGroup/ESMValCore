@@ -30,6 +30,7 @@ ICON:
     clwvi: {var_type: atm_2d_ml}
     evspsbl: {var_type: atm_2d_ml}
     hfls: {var_type: atm_2d_ml}
+    hfns: {var_type: atm_2d_ml}
     hfss: {var_type: atm_2d_ml}
     lwcre: {var_type: atm_2d_ml}
     lwp: {raw_name: cllvi, var_type: atm_2d_ml}
@@ -40,12 +41,14 @@ ICON:
     psl: {var_type: atm_2d_ml}
     rlds: {var_type: atm_2d_ml}
     rldscs: {var_type: atm_2d_ml}
+    rlns: {var_type: atm_2d_ml}
     rlus: {var_type: atm_2d_ml}
     rlut: {var_type: atm_2d_ml}
     rlutcs: {var_type: atm_2d_ml}
     rsds: {var_type: atm_2d_ml}
     rsdscs: {var_type: atm_2d_ml}
     rsdt: {var_type: atm_2d_ml}
+    rsns: {var_type: atm_2d_ml}
     rsnt: {var_type: atm_2d_ml}
     rsus: {var_type: atm_2d_ml}
     rsuscs: {var_type: atm_2d_ml}
@@ -92,21 +95,25 @@ ICON-XPP:
     #   raw_name: cell_area
 
     # 2D dynamical/meteorological variables
+    asr: {var_type: atm_2d_ml}
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
     clt: {raw_name: clct, var_type: atm_2d_ml}
-    # clwvi: {var_type: atm_2d_ml}
-    # evspsbl: {var_type: atm_2d_ml}
+    clwvi: {var_type: atm_2d_ml}
+    evspsbl: {raw_name: qhfl_s, raw_units: kg m-2 s-1, var_type: atm_2d_ml}
     hfls: {raw_name: lhfl_s, var_type: atm_2d_ml}
+    hfns: {var_type: atm_2d_ml}
     hfss: {raw_name: shfl_s, var_type: atm_2d_ml}
+    # lwcre: {var_type: atm_2d_ml}
     lwp: {raw_name: tqc_dia, var_type: atm_2d_ml}
+    # netcre: {var_type: atm_2d_ml}
     pr: {raw_name: tot_prec_rate, var_type: atm_2d_ml}
     prw: {raw_name: tqv, var_type: atm_2d_ml}
     ps: {raw_name: pres_sfc, var_type: atm_2d_ml}
     psl: {raw_name: pres_msl, var_type: atm_2d_ml}
     # rlds: {var_type: atm_2d_ml}
     # rldscs: {var_type: atm_2d_ml}
-    # rlus: {var_type: atm_2d_ml}
     rlns: {raw_name: thb_s, var_type: atm_2d_ml}
+    # rlus: {var_type: atm_2d_ml}
     rlut: {raw_name: thb_t, var_type: atm_2d_ml}
     # rlutcs: {var_type: atm_2d_ml}
     # rsds: {var_type: atm_2d_ml}
@@ -114,7 +121,7 @@ ICON-XPP:
     rsdt: {raw_name: sod_t, var_type: atm_2d_ml}
     rsns: {raw_name: sob_s, var_type: atm_2d_ml}
     rsnt: {raw_name: sob_t, var_type: atm_2d_ml}
-    # rsus: {var_type: atm_2d_ml}
+    rsus: {raw_name: sou_s, var_type: atm_2d_ml}
     # rsuscs: {var_type: atm_2d_ml}
     rsut: {raw_name: sou_t, var_type: atm_2d_ml}
     # rsutcs: {var_type: atm_2d_ml}
@@ -124,11 +131,12 @@ ICON-XPP:
     sftlf: {raw_name: fr_land, raw_units: '1', var_type: atm_2d_ml}
     siconc: {raw_name: fr_seaice, var_type: atm_2d_ml}
     siconca: {raw_name: fr_seaice, var_type: atm_2d_ml}
+    # swcre: {var_type: atm_2d_ml}
     tas: {raw_name: t_2m, var_type: atm_2d_ml}
     # tasmax: {var_type: atm_2d_ml}
     # tasmin: {var_type: atm_2d_ml}
-    # tauu: {var_type: atm_2d_ml}
-    # tauv: {var_type: atm_2d_ml}
+    tauu: {raw_name: umfl_s, var_type: atm_2d_ml}
+    tauv: {raw_name: vmfl_s, var_type: atm_2d_ml}
     tos: {raw_name: t_seasfc, var_type: atm_2d_ml}
     ts: {raw_name: t_s, var_type: atm_2d_ml}
     # uas: {var_type: atm_2d_ml}
