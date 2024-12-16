@@ -50,6 +50,9 @@ class Rtmt(IconFix):
         return CubeList([cube])
 
 
+Rtnt = Rtmt
+
+
 class Zg(IconFix):
     """Fixes for ``zg``."""
 
