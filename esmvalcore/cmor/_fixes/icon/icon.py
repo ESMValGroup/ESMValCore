@@ -538,6 +538,12 @@ class Clwvi(IconFix):
         return CubeList([cube])
 
 
+Hfls = NegateData
+
+
+Hfss = NegateData
+
+
 class Rtmt(IconFix):
     """Fixes for ``rtmt``."""
 
@@ -550,12 +556,6 @@ class Rtmt(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
-
-
-Hfls = NegateData
-
-
-Hfss = NegateData
 
 
 Rtnt = Rtmt
