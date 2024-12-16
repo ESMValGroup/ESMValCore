@@ -35,6 +35,8 @@ EMAC:
 
   # 1D/2D dynamical/meteorological variables
   '*':
+    asr:  # ESMValCore-derivation
+      channel: Amon
     awhea:  # non-CMOR variable
       raw_name: [awhea_cav, awhea_ave, awhea]
       channel: Omon
@@ -64,6 +66,13 @@ EMAC:
     hurs:
       raw_name: [rh_2m_cav, rh_2m_ave, rh_2m]
       raw_units: '1'
+      channel: Amon
+    lwcre:  # ESMValCore-derivation
+      channel: Amon
+    lwp:
+      raw_name: [xlvi_cav, xlvi_ave, xlvi]
+      channel: Amon
+    netcre:  # ESMValCore-derivation
       channel: Amon
     od550aer:
       raw_name: [aot_opt_TOT_550_total_cav, aot_opt_TOT_550_total_ave, aot_opt_TOT_550_total]
@@ -123,6 +132,8 @@ EMAC:
       channel: Amon
     rtmt:  # derived from flxttop_*, flxstop_*
       channel: Amon
+    rtnt:  # ESMValCore-derivation
+      channel: Amon
     sfcWind:
       raw_name: [wind10_cav, wind10_ave, wind10]
       channel: Amon
@@ -136,6 +147,8 @@ EMAC:
       channel: Amon
     sithick:
       raw_name: [siced_cav, siced_ave, siced]
+      channel: Amon
+    swcre:  # derived from CMIP variables rsut and rsutcs
       channel: Amon
     tas:
       raw_name: [temp2_cav, temp2_ave, temp2]
