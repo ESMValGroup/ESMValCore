@@ -37,8 +37,13 @@ def warn_if_old_dask_config_exists() -> None:
             "Usage of Dask configuration file ~/.esmvaltool/dask.yml "
             "has been deprecated in ESMValCore version 2.12.0 and is "
             "scheduled for removal in version 2.14.0. Please use the "
-            "configuration option `dask` instead. Ignoring all existing "
-            "`dask` configuration options for this run."
+            "configuration option `dask` instead (see "
+            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
+            "quickstart/configure.html#dask-configuration for details). "
+            "Ignoring all existing `dask` configuration options for this run. "
+            "To enable the new `dask` configuration options, delete or move "
+            "the file ~/.esmvaltool/dask.yml or set the environment variable "
+            "ESMVALTOOL_USE_NEW_DASK_CONFIG=1."
         )
         warnings.warn(
             deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
