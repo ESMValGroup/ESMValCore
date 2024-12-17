@@ -4,6 +4,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.coords import AuxCoord
 
 from esmvalcore.cmor._fixes.cmip6.fio_esm_2_0 import Amon, Omon, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
@@ -170,3 +171,31 @@ def test_amon_fix_metadata(tas_cubes):
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
         assert all(lat.bounds[1:, 0] == lat.bounds[:-1, 1])
         assert all(lon.bounds[1:, 0] == lon.bounds[:-1, 1])
+
+
+@pytest.mark.parametrize("coord_name", ["latitude", "longitude"])
+def test_amon_fix_metadata_wrong_lat_end(tas_cubes, coord_name):
+    vardef = get_var_info("CMIP6", "Amon", "tas")
+    fix = Amon(vardef)
+
+    cube = tas_cubes[0]
+    cube.remove_coord(coord_name)
+    new_coord = AuxCoord(
+        [1.0, 3.0],
+        bounds=[[0.0, 3.0], [3.0, 3.0]],
+        standard_name=coord_name,
+        units="degrees",
+    )
+    if coord_name == "latitude":
+        cube.add_aux_coord(new_coord, 1)
+    else:
+        cube.add_aux_coord(new_coord, 2)
+
+    out_cubes = fix.fix_metadata([cube])
+
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+    assert out_cube.coords(coord_name, dim_coords=True)
+    np.testing.assert_allclose(
+        out_cube.coord(coord_name).bounds, [[0.0, 2.0], [2.0, 4.0]]
+    )
