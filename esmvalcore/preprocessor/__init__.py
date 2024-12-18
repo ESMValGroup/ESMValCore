@@ -736,9 +736,23 @@ class PreprocessingTask(BaseTask):
                 delayed = product.close()
                 delayeds.append(delayed)
 
-        logger.info("Computing and saving data for task %s", self.name)
         delayeds = [d for d in delayeds if d is not None]
-        _compute_with_progress(delayeds, description=self.name)
+
+        if self.scheduler_lock is not None:
+            logger.debug("Acquiring save lock for task %s", self.name)
+            self.scheduler_lock.acquire()
+            logger.debug("Acquired save lock for task %s", self.name)
+        try:
+            logger.info(
+                "Computing and saving data for preprocessing task %s",
+                self.name,
+            )
+            _compute_with_progress(delayeds, description=self.name)
+        finally:
+            if self.scheduler_lock is not None:
+                self.scheduler_lock.release()
+                logger.debug("Released save lock for task %s", self.name)
+
         metadata_files = write_metadata(
             self.products, self.write_ncl_interface
         )

@@ -5,6 +5,7 @@ import contextlib
 import datetime
 import importlib
 import logging
+import multiprocessing
 import numbers
 import os
 import pprint
@@ -14,7 +15,6 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from multiprocessing import Pool
 from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
@@ -260,6 +260,7 @@ class BaseTask:
         self.name = name
         self.activity = None
         self.priority = 0
+        self.scheduler_lock = None
 
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
@@ -854,45 +855,60 @@ class TaskSet(set):
             """Assume a task is done if it not scheduled or running."""
             return not (task in scheduled or task in running)
 
-        with Pool(processes=max_parallel_tasks) as pool:
-            while scheduled or running:
-                # Submit new tasks to pool
-                for task in sorted(scheduled, key=lambda t: t.priority):
-                    if len(running) >= max_parallel_tasks:
-                        break
-                    if all(done(t) for t in task.ancestors):
-                        future = pool.apply_async(
-                            _run_task, [task, scheduler_address]
+        with multiprocessing.Manager() as manager:
+            # Use a lock to avoid overloading the Dask workers by making only
+            # one :class:`esmvalcore.preprocessor.PreprocessingTask` submit its
+            # data save task graph to the distributed scheduler at a time.
+            #
+            # See https://github.com/ESMValGroup/ESMValCore/issues/2609 for
+            # additional detail.
+            scheduler_lock = (
+                None if scheduler_address is None else manager.Lock()
+            )
+
+            with multiprocessing.Pool(processes=max_parallel_tasks) as pool:
+                while scheduled or running:
+                    # Submit new tasks to pool
+                    for task in sorted(scheduled, key=lambda t: t.priority):
+                        if len(running) >= max_parallel_tasks:
+                            break
+                        if all(done(t) for t in task.ancestors):
+                            future = pool.apply_async(
+                                _run_task,
+                                [task, scheduler_address, scheduler_lock],
+                            )
+                            running[task] = future
+                            scheduled.remove(task)
+
+                    # Handle completed tasks
+                    ready = {t for t in running if running[t].ready()}
+                    for task in ready:
+                        _copy_results(task, running[task])
+                        running.pop(task)
+
+                    # Wait if there are still tasks running
+                    if running:
+                        time.sleep(0.1)
+
+                    # Log progress message
+                    if (
+                        len(scheduled) != n_scheduled
+                        or len(running) != n_running
+                    ):
+                        n_scheduled, n_running = len(scheduled), len(running)
+                        n_done = n_tasks - n_scheduled - n_running
+                        logger.info(
+                            "Progress: %s tasks running, %s tasks waiting for "
+                            "ancestors, %s/%s done",
+                            n_running,
+                            n_scheduled,
+                            n_done,
+                            n_tasks,
                         )
-                        running[task] = future
-                        scheduled.remove(task)
 
-                # Handle completed tasks
-                ready = {t for t in running if running[t].ready()}
-                for task in ready:
-                    _copy_results(task, running[task])
-                    running.pop(task)
-
-                # Wait if there are still tasks running
-                if running:
-                    time.sleep(0.1)
-
-                # Log progress message
-                if len(scheduled) != n_scheduled or len(running) != n_running:
-                    n_scheduled, n_running = len(scheduled), len(running)
-                    n_done = n_tasks - n_scheduled - n_running
-                    logger.info(
-                        "Progress: %s tasks running, %s tasks waiting for "
-                        "ancestors, %s/%s done",
-                        n_running,
-                        n_scheduled,
-                        n_done,
-                        n_tasks,
-                    )
-
-            logger.info("Successfully completed all tasks.")
-            pool.close()
-            pool.join()
+                logger.info("Successfully completed all tasks.")
+                pool.close()
+                pool.join()
 
 
 def _copy_results(task, future):
@@ -900,7 +916,7 @@ def _copy_results(task, future):
     task.output_files, task.products = future.get()
 
 
-def _run_task(task, scheduler_address):
+def _run_task(task, scheduler_address, scheduler_lock):
     """Run task and return the result."""
     if scheduler_address is None:
         client = contextlib.nullcontext()
@@ -908,6 +924,7 @@ def _run_task(task, scheduler_address):
         client = Client(scheduler_address)
 
     with client:
+        task.scheduler_lock = scheduler_lock
         output_files = task.run()
 
     return output_files, task.products
