@@ -12,7 +12,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore
-from esmvalcore.preprocessor._io import load
+from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 
 
 def _create_sample_cube():
@@ -54,6 +54,12 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
 
+    def test_load_cube(self):
+        """Test loading an Iris Cube."""
+        cube = _create_sample_cube()
+        cubes = load(cube)
+        assert cubes == CubeList([cube])
+
     def test_load_grib(self):
         """Test loading a grib file."""
         grib_path = Path(
@@ -72,45 +78,11 @@ class TestLoad(unittest.TestCase):
         assert cube.shape == (200, 247)
         assert "source_file" in cube.attributes
 
-    def test_callback_remove_attributes(self):
-        """Test callback remove unwanted attributes."""
-        attributes = ("history", "creation_date", "tracking_id", "comment")
-        for _ in range(2):
-            cube = _create_sample_cube()
-            for attr in attributes:
-                cube.attributes[attr] = attr
-            self._save_cube(cube)
-        for temp_file in self.temp_files:
-            cubes = load(temp_file)
-            cube = cubes[0]
-            self.assertEqual(1, len(cubes))
-            self.assertTrue((cube.data == np.array([1, 2])).all())
-            self.assertTrue(
-                (cube.coord("latitude").points == np.array([1, 2])).all()
-            )
-            for attr in attributes:
-                self.assertTrue(attr not in cube.attributes)
-
-    def test_callback_remove_attributes_from_coords(self):
-        """Test callback remove unwanted attributes from coords."""
-        attributes = ("history",)
-        for _ in range(2):
-            cube = _create_sample_cube()
-            for coord in cube.coords():
-                for attr in attributes:
-                    coord.attributes[attr] = attr
-            self._save_cube(cube)
-        for temp_file in self.temp_files:
-            cubes = load(temp_file)
-            cube = cubes[0]
-            self.assertEqual(1, len(cubes))
-            self.assertTrue((cube.data == np.array([1, 2])).all())
-            self.assertTrue(
-                (cube.coord("latitude").points == np.array([1, 2])).all()
-            )
-            for coord in cube.coords():
-                for attr in attributes:
-                    self.assertTrue(attr not in coord.attributes)
+    def test_load_cubes(self):
+        """Test loading an Iris CubeList."""
+        cube = _create_sample_cube()
+        cubes = load(CubeList([cube]))
+        assert cubes == CubeList([cube])
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""
@@ -125,6 +97,13 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
         self.assertEqual(cube.coord("latitude").units, "degrees_north")
+
+    def test_get_attr_from_field_coord_none(self):
+        """Test ``_get_attr_from_field_coord``."""
+        attr = _get_attr_from_field_coord(
+            unittest.mock.sentinel.ncfield, None, "attr"
+        )
+        assert attr is None
 
     @unittest.mock.patch("iris.load_raw", autospec=True)
     def test_fail_empty_cubes(self, mock_load_raw):
