@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+from iris.util import promote_aux_coord_to_dim_coord
 
 from ..common import OceanFixGrid
 from ..fix import Fix
@@ -64,12 +65,24 @@ class Amon(Fix):
                 if np.any(latitude.bounds[1:, 0] != latitude.bounds[:-1, 1]):
                     latitude.bounds = None
                     latitude.guess_bounds()
+                if np.any(latitude.bounds[:, 0] == latitude.bounds[:, 1]):
+                    latitude.bounds = None
+                    latitude.guess_bounds()
 
             longitude = cube.coord("longitude")
             if longitude.has_bounds():
                 if np.any(longitude.bounds[1:, 0] != longitude.bounds[:-1, 1]):
                     longitude.bounds = None
                     longitude.guess_bounds()
+                if np.any(longitude.bounds[:, 0] == longitude.bounds[:, 1]):
+                    longitude.bounds = None
+                    longitude.guess_bounds()
+
+            if not cube.coords("latitude", dim_coords=True):
+                promote_aux_coord_to_dim_coord(cube, latitude)
+            if not cube.coords("longitude", dim_coords=True):
+                promote_aux_coord_to_dim_coord(cube, longitude)
+
         return cubes
 
 
