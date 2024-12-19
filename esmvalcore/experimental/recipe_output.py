@@ -404,7 +404,7 @@ class OutputFile():
         item_class: Type[OutputFile]
 
         ext = Path(path).suffix
-        if ext in ('.png', ):
+        if ext in ('.png','.svg' ):
             item_class = ImageFile
         elif ext in ('.nc', ):
             item_class = DataFile
