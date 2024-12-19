@@ -67,6 +67,8 @@ class AllVars(EmacFix):
         cube = self.get_cube(cubes)
 
         # Fix time, latitude, and longitude coordinates
+        if self.__dict__['extra_facets'].get('fix_time_bounds', False):
+            cube.coord('time').bounds = None
         self.fix_regular_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
