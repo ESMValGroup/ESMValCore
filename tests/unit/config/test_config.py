@@ -182,7 +182,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "dask": {
             "profiles": {
                 "local_threaded": {
-                    "scheduler": "threaded",
+                    "scheduler": "threads",
                 },
                 "local_distributed": {
                     "cluster": {

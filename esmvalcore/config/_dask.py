@@ -94,7 +94,7 @@ def _get_old_dask_config() -> dict:
     """Get dask configuration dict from old dask configuration file."""
     dask_config: dict[str, Any] = {
         "use": "local_threaded",
-        "profiles": {"local_threaded": {"scheduler": "threaded"}},
+        "profiles": {"local_threaded": {"scheduler": "threads"}},
     }
     config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
 

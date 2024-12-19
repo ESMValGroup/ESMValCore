@@ -521,7 +521,7 @@ By default, the following Dask configuration is used:
     use: local_threaded  # use the `local_threaded` profile defined below
     profiles:
       local_threaded:
-        scheduler: threaded
+        scheduler: threads
       local_distributed:
         cluster:
           type: distributed.LocalCluster
