@@ -327,7 +327,7 @@ Available predefined Dask profiles:
   <https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local>`__
   without any further options.
 - ``debug``: use `synchronous Dask scheduler
-  https://docs.dask.org/en/stable/scheduling.html#single-thread`__ for
+  <https://docs.dask.org/en/stable/scheduling.html#single-thread>`__ for
   debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
 
