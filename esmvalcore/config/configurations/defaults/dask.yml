@@ -1,7 +1,7 @@
 dask:
   client: {}
   clusters:
-    default:
+    threaded:
       type: default
     debug:
       type: default

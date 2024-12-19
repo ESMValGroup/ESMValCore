@@ -503,7 +503,7 @@ By default, the following Dask configuration is used:
   dask:
     client: {}
     clusters:
-      default:
+      threaded:
         type: default
       debug:
         type: default

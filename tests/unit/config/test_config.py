@@ -182,7 +182,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "dask": {
             "client": {},
             "clusters": {
-                "default": {
+                "threaded": {
                     "type": "default",
                 },
                 "debug": {
