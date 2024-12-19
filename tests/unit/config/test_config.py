@@ -180,24 +180,20 @@ def test_load_default_config(cfg_default, monkeypatch):
         "compress_netcdf": False,
         "config_developer_file": default_dev_file,
         "dask": {
-            "client": {},
-            "clusters": {
-                "threaded": {
-                    "type": "default",
+            "profiles": {
+                "local_threaded": {
+                    "scheduler": "threaded",
+                },
+                "local_distributed": {
+                    "cluster": {
+                        "type": "distributed.LocalCluster",
+                    },
                 },
                 "debug": {
-                    "type": "default",
                     "scheduler": "synchronous",
                 },
-                "local": {
-                    "type": "distributed.LocalCluster",
-                    "n_workers": 2,
-                    "threads_per_worker": 2,
-                    "memory_limit": "4GiB",
-                },
             },
-            "config": {},
-            "use": "threaded",
+            "use": "local_threaded",
         },
         "diagnostics": None,
         "download_dir": Path.home() / "climate_data",

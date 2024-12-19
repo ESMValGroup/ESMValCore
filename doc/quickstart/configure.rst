@@ -301,33 +301,35 @@ Therefore it is recommended that you take a moment to configure the
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-Predefined clusters
---------------------
+Predefined Dask profiles
+------------------------
 
-ESMValCore provides a set of predefined clusters, which can be selected in a
-YAML configuration file via
+ESMValCore provides a set of predefined Dask profiles, which can be selected in
+a YAML configuration file via
 
 .. code:: yaml
 
   dask:
-    use: <NAME_OF_CLUSTER>
+    use: <NAME_OF_PROFILE>
 
-or alternatively with in command line via
+or alternatively in the command line via
 
 .. code:: bash
 
-  esmvaltool run --dask='{"use": "<NAME_OF_CLUSTER>"}' recipe_example.yml
+  esmvaltool run --dask='{"use": "<NAME_OF_PROFILE>"}' recipe_example.yml
 
-Available predefined clusters:
+Available predefined Dask profiles:
 
-- ``threaded`` (used by default): default thread-based Dask scheduler.
-- ``debug``: Synchronous Dask scheduler for debugging purposes.
+- ``local_threaded`` (selected by default): use `default thread-based scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#local-threads>`__ without
+  any further options.
+- ``local_distributed``: use `local distributed scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local>`__
+  without any further options.
+- ``debug``: use `synchronous Dask scheduler
+  https://docs.dask.org/en/stable/scheduling.html#single-thread`__ for
+  debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
-  See the `Dask documentation
-  <https://docs.dask.org/en/latest/scheduling.html#single-thread>`__ for more
-  information on this.
-- ``local``: Local Dask distributed scheduler using 2 workers with 2 threads
-  and 4 GiB of memory each.
 
 Custom Dask distributed scheduler configuration
 -----------------------------------------------
@@ -353,9 +355,10 @@ using all available resources:
 
   dask:
     use: local_cluster  # use "local_cluster" defined below
-    clusters:
+    profiles:
       local_cluster:
-        type: distributed.LocalCluster
+        cluster:
+          type: distributed.LocalCluster
 
 This should work well for most personal computers.
 
@@ -374,12 +377,13 @@ with 2 workers with 2 threads/4 GiB of memory each (8 GiB in total):
 
   dask:
     use: local_cluster  # use "local_cluster" defined below
-    clusters:
+    profiles:
       local_cluster:
-        type: distributed.LocalCluster
-        n_workers: 2
-        threads_per_worker: 2
-        memory_limit: 4GiB
+        cluster:
+          type: distributed.LocalCluster
+          n_workers: 2
+          threads_per_worker: 2
+          memory_limit: 4GiB
 
 this should work well for shared computers.
 
@@ -393,17 +397,18 @@ using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`__ package:
 
   dask:
     use: slurm_cluster  # use "slurm_cluster" defined below
-    clusters:
+    profiles:
       slurm_cluster:
-        type: dask_jobqueue.SLURMCluster
-        queue: shared
-        account: bk1088
-        cores: 8
-        memory: 7680MiB
-        processes: 2
-        interface: ib0
-        local_directory: "/scratch/b/b381141/dask-tmp"
-        n_workers: 24
+        cluster:
+          type: dask_jobqueue.SLURMCluster
+          queue: shared
+          account: <YOUR_SLURM_ACCOUNT>
+          cores: 8
+          memory: 7680MiB
+          processes: 2
+          interface: ib0
+          local_directory: "/scratch/b/<YOUR_DKRZ_ACCOUNT>/dask-tmp"
+          n_workers: 24
 
 This will start 24 workers with ``cores / processes = 4`` threads each,
 resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
@@ -424,16 +429,18 @@ See `Deploying Dask Clusters on High Performance Computers
 
 *Externally managed Dask cluster*
 
-To use an externally managed cluster, specify an ``address`` option for the
-``client`` option.
+To use an externally managed cluster, specify an ``scheduler_address`` for the
+selected profile.
 Such a cluster can e.g. be started using the `Dask Jupyterlab extension
 <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`__:
 
 .. code:: yaml
 
   dask:
-    client:
-      address: '127.0.0.1:8786'
+    use: external  # Use the `external` profile defined below
+    profiles:
+      external:
+        scheduler_address: "tcp://127.0.0.1:43605"
 
 See `here <https://jobqueue.dask.org/en/latest/interactive.html>`__
 for an example of how to configure this on a remote system.
@@ -485,10 +492,9 @@ use the following configuration:
 .. code:: yaml
 
   dask:
-    use: threaded  # This can be omitted
-    clusters:
-      threaded:
-        type: default
+    use: local_threaded  # This can be omitted
+    profiles:
+      local_threaded:
         num_workers: 4
 
 To switch to a process-based scheduler, use:
@@ -496,10 +502,9 @@ To switch to a process-based scheduler, use:
 .. code:: yaml
 
   dask:
-    use: process_cluster
-    clusters:
-      process_cluster:
-        type: default
+    use: local_processes
+    profiles:
+      local_processes:
         num_workers: 4
         scheduler: processes
 
@@ -513,20 +518,15 @@ By default, the following Dask configuration is used:
 .. code:: yaml
 
   dask:
-    client: {}
-    clusters:
-      threaded:
-        type: default
+    use: local_threaded  # use the `local_threaded` profile defined below
+    profiles:
+      local_threaded:
+        scheduler: threaded
+      local_distributed:
+        cluster:
+          type: distributed.LocalCluster
       debug:
-        type: default
         scheduler: synchronous
-      local:
-        type: distributed.LocalCluster
-        n_workers: 2
-        threads_per_worker: 2
-        memory_limit: 4GiB
-    config: {}
-    use: threaded  # Start the `threaded` cluster defined above
 
 All available options
 ---------------------
@@ -534,33 +534,43 @@ All available options
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
-| ``client``                    | Keyword arguments for                  | :obj:`dict`                 | ``{}``                                 |
-|                               | :class:`distributed.Client`. If these  |                             |                                        |
-|                               | include an ``address``, connect to an  |                             |                                        |
-|                               | external cluster with that address (in |                             |                                        |
-|                               | this case, the ``use`` option is       |                             |                                        |
-|                               | ignored).                              |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``clusters``                  | Different clusters that can be         | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
+| ``profiles``                  | Different Dask profiles that can be    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
 |                               | selected via the ``use`` option. Each  |                             |                                        |
-|                               | cluster must have a ``type``. If       |                             |                                        |
-|                               | ``type: default`` (this is also the    |                             |                                        |
-|                               | default type) is used, all other       |                             |                                        |
-|                               | options are passed to                  |                             |                                        |
-|                               | :func:`dask.config.set` (these will    |                             |                                        |
-|                               | take precedence over those given by    |                             |                                        |
-|                               | the ``config`` option). All other      |                             |                                        |
-|                               | types will be interpreted as classes   |                             |                                        |
-|                               | that will be imported and instantiated |                             |                                        |
-|                               | with the remaining options.            |                             |                                        |
+|                               | profile has a name (:obj:`dict` keys)  |                             |                                        |
+|                               | and corresponding options (:obj:`dict` |                             |                                        |
+|                               | values). See                           |                             |                                        |
+|                               | :ref:`config-dask-profiles` for        |                             |                                        |
+|                               | details.                               |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``config``                    | Keyword arguments for                  | :obj:`dict`                 | ``{}``                                 |
+| ``use``                       | Dask profile that is used; must be     | :obj:`str`                  | ``local_threaded``                     |
+|                               | defined in the option ``profiles``.    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-dask-profiles:
+
+Options for Dask profiles
+-------------------------
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``cluster``                   | Keyword arguments to initialize a Dask | :obj:`dict`                 | If omitted, use externally managed     |
+|                               | distributed cluster. Needs the option  |                             | cluster if ``scheduler_address`` is    |
+|                               | ``type``, which specifies the class of |                             | given or a :ref:`Dask default          |
+|                               | the cluster. The remaining options are |                             | scheduler                              |
+|                               | passed as keyword arguments to         |                             | <config-dask-default-scheduler>`       |
+|                               | initialize that class. Cannot be used  |                             | otherwise.                             |
+|                               | in combination with                    |                             |                                        |
+|                               | ``scheduler_address``.                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``scheduler_address``         | Scheduler address of an externally     | :obj:`str`                  | If omitted, use a Dask distributed     |
+|                               | managed cluster. Will be passed to     |                             | cluster if ``cluster`` is given or a   |
+|                               | :class:`distributed.Client`. Cannot be |                             | :ref:`Dask default scheduler           |
+|                               | used in combination with ``cluster``.  |                             | <config-dask-default-scheduler>`       |
+|                               |                                        |                             | otherwise.                             |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| All other options             | Passed as keyword arguments to         | Any                         | No defaults.                           |
 |                               | :func:`dask.config.set`.               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``use``                       | Cluster that is used; must be defined  | :obj:`str`                  | ``threaded``                            |
-|                               | in the option ``clusters``. If an      |                             |                                        |
-|                               | ``address`` is given in the option     |                             |                                        |
-|                               | ``client``, ``use`` is ignored.        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 

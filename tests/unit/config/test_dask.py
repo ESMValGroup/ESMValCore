@@ -51,7 +51,7 @@ def test_force_new_dask_config(
         "dask",
         {
             "use": "local",
-            "clusters": {"local": local_cluster},
+            "profiles": {"local": {"cluster": local_cluster}},
         },
     )
 
@@ -80,8 +80,18 @@ def test_get_distributed_client_local_cluster_old(mocker, tmp_path):
 
 
 def test_get_distributed_client_external(monkeypatch, mocker):
-    client_kwargs = {"address": "tcp://127.0.0.1:42021"}
-    monkeypatch.setitem(CFG, "dask", {"client": client_kwargs})
+    monkeypatch.setitem(
+        CFG,
+        "dask",
+        {
+            "use": "external",
+            "profiles": {
+                "external": {
+                    "scheduler_address": "tcp://127.0.0.1:42021",
+                },
+            },
+        },
+    )
 
     # Create mock distributed.Client
     mock_client = mocker.Mock()
@@ -91,7 +101,7 @@ def test_get_distributed_client_external(monkeypatch, mocker):
 
     with _dask.get_distributed_client() as client:
         assert client is mock_client
-    _dask.Client.assert_called_with(**client_kwargs)
+    _dask.Client.assert_called_with("tcp://127.0.0.1:42021")
     mock_client.close.assert_called()
 
 
@@ -106,6 +116,7 @@ def test_get_distributed_client_external_old(
     cfg = {
         "client": {
             "address": "tcp://127.0.0.1:42021",
+            "other_client_options": 1,
         },
     }
     if warn_unused_args:
@@ -124,7 +135,10 @@ def test_get_distributed_client_external_old(
     with pytest.warns(ESMValCoreDeprecationWarning):
         with _dask.get_distributed_client() as client:
             assert client is mock_client
-    _dask.Client.assert_called_with(**cfg["client"])
+    _dask.Client.assert_called_with(
+        "tcp://127.0.0.1:42021",
+        other_client_options=1,  #
+    )
     mock_client.close.assert_called()
 
 
@@ -141,7 +155,7 @@ def test_get_distributed_client_slurm(monkeypatch, mocker, shutdown_timeout):
         "dask",
         {
             "use": "slurm_cluster",
-            "clusters": {"slurm_cluster": slurm_cluster},
+            "profiles": {"slurm_cluster": {"cluster": slurm_cluster}},
         },
     )
 
@@ -166,7 +180,7 @@ def test_get_distributed_client_slurm(monkeypatch, mocker, shutdown_timeout):
     with _dask.get_distributed_client() as client:
         assert client is mock_client
     mock_client.close.assert_called()
-    _dask.Client.assert_called_with(address=mock_cluster.scheduler_address)
+    _dask.Client.assert_called_with(mock_cluster.scheduler_address)
     args = {k: v for k, v in slurm_cluster.items() if k != "type"}
     mock_cluster_cls.assert_called_with(**args)
     mock_cluster.close.assert_called()
@@ -184,12 +198,19 @@ def test_get_distributed_client_local(monkeypatch, mocker):
         "dask",
         {
             "use": "local",
-            "clusters": {"local": local_cluster},
+            "profiles": {
+                "local": {
+                    "cluster": local_cluster,
+                    "num_workers": 42,
+                },
+            },
         },
     )
+    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
 
     with _dask.get_distributed_client() as client:
         assert isinstance(client, Client)
+    assert mocker.call({"num_workers": 42}) in mock_dask_set.mock_calls
 
 
 # TODO: Remove in v2.14.0
@@ -230,24 +251,20 @@ def test_get_distributed_client_slurm_old(mocker, tmp_path, shutdown_timeout):
         with _dask.get_distributed_client() as client:
             assert client is mock_client
     mock_client.close.assert_called()
-    _dask.Client.assert_called_with(address=mock_cluster.scheduler_address)
+    _dask.Client.assert_called_with(mock_cluster.scheduler_address)
     args = {k: v for k, v in cfg["cluster"].items() if k != "type"}
     mock_cluster_cls.assert_called_with(**args)
     mock_cluster.close.assert_called()
 
 
 def test_custom_default_scheduler(monkeypatch, mocker):
-    default_cluster = {
-        "type": "default",
-        "num_workers": 42,
-        "scheduler": "processes",
-    }
+    default_scheduler = {"num_workers": 42, "scheduler": "processes"}
     monkeypatch.setitem(
         CFG,
         "dask",
         {
-            "use": "process_cluster",
-            "clusters": {"process_cluster": default_cluster},
+            "use": "process_scheduler",
+            "profiles": {"process_scheduler": default_scheduler},
         },
     )
     mock_dask_set = mocker.patch("dask.config.set", autospec=True)
@@ -255,50 +272,22 @@ def test_custom_default_scheduler(monkeypatch, mocker):
     with _dask.get_distributed_client() as client:
         assert client is None
 
-    mock_calls = [
-        mocker.call({}),
-        mocker.call({"num_workers": 42, "scheduler": "processes"}),
-    ]
-    assert mock_dask_set.mock_calls == mock_calls
-
-
-def test_custom_dask_config(monkeypatch, mocker):
-    default_cluster = {
-        "type": "default",
-        "num_workers": 42,
-    }
-    monkeypatch.setitem(
-        CFG,
-        "dask",
-        {
-            "use": "custom_cluster",
-            "config": {"num_workers": 41, "scheduler": "processes"},
-            "clusters": {"custom_cluster": default_cluster},
-        },
+    mock_dask_set.assert_called_once_with(
+        {"num_workers": 42, "scheduler": "processes"}
     )
-    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
-
-    with _dask.get_distributed_client() as client:
-        assert client is None
-
-    mock_calls = [
-        mocker.call({"num_workers": 41, "scheduler": "processes"}),
-        mocker.call({"num_workers": 42}),
-    ]
-    assert mock_dask_set.mock_calls == mock_calls
 
 
-def test_invalid_dask_config_no_clusters(monkeypatch, mocker):
+def test_invalid_dask_config_no_profiles(monkeypatch):
     monkeypatch.setitem(CFG, "dask", {})
 
-    msg = "Key 'clusters' needs to be defined for 'dask' configuration"
+    msg = "Key 'profiles' needs to be defined for 'dask' configuration"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass
 
 
-def test_invalid_dask_config_no_use(monkeypatch, mocker):
-    monkeypatch.setitem(CFG, "dask", {"clusters": {}})
+def test_invalid_dask_config_no_use(monkeypatch):
+    monkeypatch.setitem(CFG, "dask", {"profiles": {}})
 
     msg = "Key 'use' needs to be defined for 'dask' configuration"
     with pytest.raises(InvalidConfigParameter, match=msg):
@@ -306,46 +295,82 @@ def test_invalid_dask_config_no_use(monkeypatch, mocker):
             pass
 
 
-def test_invalid_dask_config_invalid_clusters(monkeypatch, mocker):
-    monkeypatch.setitem(CFG, "dask", {"use": "test", "clusters": 1})
+def test_invalid_dask_config_invalid_profiles(monkeypatch):
+    monkeypatch.setitem(CFG, "dask", {"use": "test", "profiles": 1})
 
-    msg = "Key 'dask.clusters' needs to be a mapping, got"
+    msg = "Key 'dask.profiles' needs to be a mapping, got"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass
 
 
-def test_invalid_dask_config_missing_use(monkeypatch, mocker):
+def test_invalid_dask_config_profile_with_cluster_and_address(monkeypatch):
     monkeypatch.setitem(
         CFG,
         "dask",
         {
             "use": "test",
-            "clusters": {
-                "test": {},
+            "profiles": {
+                "test": {"cluster": {}, "scheduler_address": "8786"},
             },
         },
     )
 
-    msg = "Key 'dask.clusters.test' does not have a 'type'"
+    msg = "Key 'dask.profiles.test' uses 'cluster' and 'scheduler_address'"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass
 
 
-def test_invalid_dask_config_invalid_use(monkeypatch, mocker):
+def test_invalid_dask_config_profile_invalid_cluster(monkeypatch):
     monkeypatch.setitem(
         CFG,
         "dask",
         {
-            "use": "not_in_clusters",
-            "clusters": {
-                "test": {"type": "default"},
+            "use": "test",
+            "profiles": {
+                "test": {"cluster": 1},
             },
         },
     )
 
-    msg = "Key 'dask.use' needs to point to an element of 'dask.clusters'"
+    msg = "Key 'dask.profiles.test.cluster' needs to be a mapping"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with _dask.get_distributed_client():
+            pass
+
+
+def test_invalid_dask_config_cluster_no_type(monkeypatch):
+    monkeypatch.setitem(
+        CFG,
+        "dask",
+        {
+            "use": "test",
+            "profiles": {
+                "test": {"cluster": {}},
+            },
+        },
+    )
+
+    msg = "Key 'dask.profiles.test.cluster' does not have a 'type'"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with _dask.get_distributed_client():
+            pass
+
+
+def test_invalid_dask_config_invalid_use(monkeypatch):
+    monkeypatch.setitem(
+        CFG,
+        "dask",
+        {
+            "use": "not_in_profiles",
+            "profiles": {
+                "test": {},
+            },
+        },
+    )
+
+    msg = "Key 'dask.use' needs to point to an element of 'dask.profiles'"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass

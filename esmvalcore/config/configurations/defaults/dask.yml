@@ -1,15 +1,10 @@
 dask:
-  client: {}
-  clusters:
-    threaded:
-      type: default
+  use: local_threaded  # use the `local_threaded` profile defined below
+  profiles:
+    local_threaded:
+      scheduler: threaded
+    local_distributed:
+      cluster:
+        type: distributed.LocalCluster
     debug:
-      type: default
       scheduler: synchronous
-    local:
-      type: distributed.LocalCluster
-      n_workers: 2
-      threads_per_worker: 2
-      memory_limit: 4GiB
-  config: {}
-  use: threaded  # Start the `threaded` cluster defined above

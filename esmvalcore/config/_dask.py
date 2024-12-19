@@ -6,8 +6,8 @@ import logging
 import os
 import warnings
 from collections.abc import Generator, Mapping
+from copy import deepcopy
 from pathlib import Path
-from pprint import pformat
 from typing import Any
 
 import dask.config
@@ -52,82 +52,92 @@ def warn_if_old_dask_config_exists() -> None:
 
 def validate_dask_config(dask_config: Mapping) -> None:
     """Validate dask configuration options."""
-    # Option (1): cluster is specified via address
-    if "address" in dask_config.get("client", {}):
-        return
-
-    # Option (2): cluster is selected via `use` and `clusters` keys
-    for option in ("clusters", "use"):
+    for option in ("profiles", "use"):
         if option not in dask_config:
             raise InvalidConfigParameter(
                 f"Key '{option}' needs to be defined for 'dask' configuration"
             )
-    clusters = dask_config["clusters"]
+    profiles = dask_config["profiles"]
     use = dask_config["use"]
-    if not isinstance(clusters, Mapping):
+    if not isinstance(profiles, Mapping):
         raise InvalidConfigParameter(
-            f"Key 'dask.clusters' needs to be a mapping, got "
-            f"{type(clusters)}"
+            f"Key 'dask.profiles' needs to be a mapping, got "
+            f"{type(profiles)}"
         )
-    for cluster, cluster_config in clusters.items():
-        if "type" not in cluster_config:
+    for profile, profile_cfg in profiles.items():
+        if "cluster" in profile_cfg and "scheduler_address" in profile_cfg:
             raise InvalidConfigParameter(
-                f"Key 'dask.clusters.{cluster}' does not have a 'type'"
+                f"Key 'dask.profiles.{profile}' uses 'cluster' and "
+                f"'scheduler_address', can only have one of those"
             )
-    if use not in clusters:
+        if "cluster" in profile_cfg:
+            cluster = profile_cfg["cluster"]
+            if not isinstance(cluster, Mapping):
+                raise InvalidConfigParameter(
+                    f"Key 'dask.profiles.{profile}.cluster' needs to be a "
+                    f"mapping, got {type(cluster)}"
+                )
+            if "type" not in cluster:
+                raise InvalidConfigParameter(
+                    f"Key 'dask.profiles.{profile}.cluster' does not have a "
+                    f"'type'"
+                )
+    if use not in profiles:
         raise InvalidConfigParameter(
-            f"Key 'dask.use' needs to point to an element of 'dask.clusters'; "
-            f"got '{use}', expected one of {list(clusters.keys())}"
+            f"Key 'dask.use' needs to point to an element of 'dask.profiles'; "
+            f"got '{use}', expected one of {list(profiles.keys())}"
         )
-
-
-def _process_dask_config_options(dask_config: Mapping) -> None:
-    """Process dask options via dask.config.set()."""
-    dask_options = dask_config.get("config", {})
-    logger.debug(
-        "Setting additional Dask options via dask.config.set:\n%s",
-        pformat(dask_options),
-    )
-    dask.config.set(dask_options)
 
 
 # TODO: Remove in v2.14.0
 def _get_old_dask_config() -> dict:
     """Get dask configuration dict from old dask configuration file."""
-    dask_config: dict[str, Any] = {"client": {}, "clusters": {}}
+    dask_config: dict[str, Any] = {
+        "use": "local_threaded",
+        "profiles": {"local_threaded": {"scheduler": "threaded"}},
+    }
     config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
 
-    # File exists, but is empty -> Use threaded scheduler
-    if config is None:
-        dask_config["client"] = {}
-        dask_config["clusters"] = {"threaded": {"type": "default"}}
-        dask_config["use"] = "threaded"
-
-    # Otherwise, use settings from file
-    else:
+    # Use settings from file if this is not empty
+    if config is not None:
         client_kwargs = config.get("client", {})
         cluster_kwargs = config.get("cluster", {})
 
-        if "address" in client_kwargs and cluster_kwargs:
-            logger.warning(
-                "Not using Dask 'cluster' settings from %s because a cluster "
-                "'address' is already provided in 'client'.",
-                CONFIG_FILE,
-            )
+        # Externally managed cluster
+        if "address" in client_kwargs:
+            if cluster_kwargs:
+                logger.warning(
+                    "Not using Dask 'cluster' settings from %s because a "
+                    "cluster 'address' is already provided in 'client'.",
+                    CONFIG_FILE,
+                )
+            dask_config = {
+                "use": "external",
+                "profiles": {
+                    "external": {
+                        "scheduler_address": client_kwargs.pop("address"),
+                    },
+                },
+            }
 
-        if not cluster_kwargs:
-            cluster_kwargs = {"type": "default"}
-        if "type" not in cluster_kwargs:
-            cluster_kwargs["type"] = "distributed.LocalCluster"
+        # Dask distributed cluster
+        elif cluster_kwargs:
+            cluster_kwargs.setdefault("type", "distributed.LocalCluster")
+            dask_config = {
+                "use": "cluster_from_file",
+                "profiles": {
+                    "cluster_from_file": {
+                        "cluster": cluster_kwargs,
+                    },
+                },
+            }
 
         dask_config["client"] = client_kwargs
-        dask_config["clusters"] = {"cluster_from_file": cluster_kwargs}
-        dask_config["use"] = "cluster_from_file"
 
     return dask_config
 
 
-# TODO: Remove in v2.14.0; used CFG["dask"] instead
+# TODO: Remove in v2.14.0; used deepcopy(CFG["dask"]) instead
 def _get_dask_config() -> dict:
     """Get Dask configuration dictionary."""
     if CONFIG_FILE.exists() and not os.environ.get(
@@ -135,29 +145,8 @@ def _get_dask_config() -> dict:
     ):
         dask_config = _get_old_dask_config()
     else:
-        dask_config = CFG["dask"]
+        dask_config = deepcopy(CFG["dask"])
     return dask_config
-
-
-def _setup_cluster(**kwargs) -> None | Cluster:
-    """Set up cluster from keyword arguments."""
-    kwargs = dict(kwargs)
-    cluster_type = kwargs.pop("type", "default")
-
-    # For default clusters, interpret kwargs as keyword arguments for
-    # dask.config.set
-    if cluster_type == "default":
-        logger.debug("Using Dask default cluster with settings %s", kwargs)
-        dask.config.set(kwargs)
-        return None
-
-    # Otherwise, load cluster class and set up cluster instance
-    cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
-    cluster_module = importlib.import_module(cluster_module_name)
-    cluster_cls = getattr(cluster_module, cluster_cls_name)
-    cluster = cluster_cls(**kwargs)
-    logger.debug("Using internal Dask cluster %s", cluster)
-    return cluster
 
 
 @contextlib.contextmanager
@@ -166,32 +155,45 @@ def get_distributed_client() -> Generator[None | Client]:
     warn_if_old_dask_config_exists()
     dask_config = _get_dask_config()
     validate_dask_config(dask_config)
-    _process_dask_config_options(dask_config)
 
+    # TODO: Remove in v2.14.0
     client_kwargs = dask_config.get("client", {})
-    client: None | Client
+
     cluster: None | Cluster
+    client: None | Client
 
-    # Client address is defined -> Use that one
-    if "address" in client_kwargs:
-        logger.info(
-            "Using external Dask cluster at %s", client_kwargs["address"]
-        )
-        client = Client(**client_kwargs)
+    # Set up cluster and client according to the selected profile
+    # Note: we already ensured earlier that the selected profile (via `use`)
+    # actually exists in `profiles`, so we don't have to check that again here
+    logger.debug("Using Dask profile '%s'", dask_config["use"])
+    profile = dask_config["profiles"][dask_config["use"]]
+
+    # Externally managed cluster
+    if "scheduler_address" in profile:
+        scheduler_address = profile.pop("scheduler_address")
         cluster = None
+        client = Client(scheduler_address, **client_kwargs)
+        logger.info("Using external Dask cluster at %s", scheduler_address)
 
-    # Otherwise, setup cluster according to the selected entry
-    # Note: we already ensured earlier that the selected entry (via `use`)
-    # actually exists in `clusters`, so we don't have to check that again here
+    # Dask distributed cluster
+    elif "cluster" in profile:
+        cluster_kwargs = profile.pop("cluster")
+        cluster_type = cluster_kwargs.pop("type")
+        cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
+        cluster_module = importlib.import_module(cluster_module_name)
+        cluster_cls = getattr(cluster_module, cluster_cls_name)
+        cluster = cluster_cls(**cluster_kwargs)
+        client = Client(cluster.scheduler_address, **client_kwargs)
+        logger.debug("Using Dask cluster %s", cluster)
+
+    # Dask default cluster
     else:
-        logger.debug("Selecting Dask cluster '%s'", dask_config["use"])
-        cluster_kwargs = dask_config["clusters"][dask_config["use"]]
-        cluster = _setup_cluster(**cluster_kwargs)
-        if cluster is None:
-            client = None
-        else:
-            client_kwargs["address"] = cluster.scheduler_address
-            client = Client(**client_kwargs)
+        cluster = None
+        client = None
+
+    # Other Dask options
+    logger.debug("Using additional Dask settings %s", profile)
+    dask.config.set(profile)
 
     if client:
         logger.info(
