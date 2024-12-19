@@ -35,6 +35,129 @@ logger = logging.getLogger(__name__)
 
 BiasType = Literal['absolute', 'relative']
 
+def ttest_pvalue(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    reference: Optional[Cube] = None,
+    coord: StatCoord = 'time',
+    keep_reference_dataset: bool = False,
+) -> set[PreprocessorFile] | CubeList:
+    """Calculate p-value of Student t statistic relative to a reference dataset.
+
+    The reference dataset needs to be broadcastable to all input `products`.
+    This supports `iris' rich broadcasting abilities
+    <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
+    :func:`esmvalcore.preprocessor.regrid` and/or
+    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+
+    Notes
+    -----
+    The reference dataset can be specified with the `reference` argument. If
+    `reference` is ``None``, exactly one input dataset in the `products` set
+    needs to have the facet ``reference_for_bias: true`` defined in the recipe.
+    Please do **not** specify the option `reference` when using this
+    preprocessor function in a recipe.
+
+    Parameters
+    ----------
+    products:
+        Input datasets/cubes for which the bias is calculated relative to a
+        reference dataset/cube.
+    reference:
+        Cube which is used as reference for the bias calculation. If ``None``,
+        `products` needs to be a :obj:`set` of
+        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
+        dataset in `products` needs the facet ``reference_for_bias: true``. Do
+        not specify this argument in a recipe.
+    coord:
+        Coordinate to preform statistic over. Default: time
+    keep_reference_dataset:
+        If ``True``, keep the reference dataset in the output. If ``False``,
+        drop the reference dataset. Ignored if `reference` is given.
+
+    Returns
+    -------
+    set[PreprocessorFile] | CubeList
+        Output datasets/cubes. Will be a :obj:`set` of
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
+        `products` is also one, a :class:`~iris.cube.CubeList` otherwise.
+
+    Raises
+    ------
+    ValueError
+        Not exactly one input datasets contains the facet ``reference_for_bias:
+        true`` if ``reference=None``; ``reference=None`` and the input products
+        are given as iterable of :class:`~iris.cube.Cube` objects
+
+    """
+    ref_product = None
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
+
+    # Get reference cube if not explicitly given
+    if reference is None:
+        if all_cubes_given:
+            raise ValueError(
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `reference`"
+            )
+        (reference, ref_product) = _get_ref(products, 'reference_for_bias')
+    else:
+        ref_product = None
+
+    # If input is an Iterable of Cube objects, calculate bias for each element
+    if all_cubes_given:
+        cubes = [_calculate_ttest_pvalue(c, reference, coord) for c in products]
+        return CubeList(cubes)
+
+    # Otherwise, iterate over all input products, calculate statistic and adapt
+    # metadata and provenance information accordingly
+    output_products = set()
+    for product in products:
+        if product == ref_product:
+            continue
+        cube = concatenate(product.cubes)
+
+        # Calculate bias
+        cube = _calculate_ttest_pvalue(cube, reference, coord)
+
+        # Adapt metadata and provenance information
+        product.attributes['units'] = '1'
+        if ref_product is not None:
+            product.wasderivedfrom(ref_product)
+
+        product.cubes = CubeList([cube])
+        output_products.add(product)
+
+    # Add reference dataset to output if desired
+    if keep_reference_dataset and ref_product is not None:
+        output_products.add(ref_product)
+
+    return output_products
+
+def _calculate_ttest_pvalue(cube: Cube, reference: Cube, coord: StatCoord) -> Cube:
+    """Calculate Student T statistic p-value for a single cube relative to a reference cube."""
+    from scipy.stats import ttest_rel
+
+    if isinstance(coord,str):
+        coord = cube.coord(coord)
+    # get axis dimension of the coordinate
+    axis = [ i for i,c in enumerate(cube.coords()) if c==coord][0]
+
+    tstat, pvalue = ttest_rel(cube.data, reference.data, axis=axis )
+
+    # collapse over first coord, to get cube of correct dimension
+    cube = cube.collapsed( cube.coords()[0], iris.analysis.MAX ) # MAX or whatever
+    cube.data = pvalue
+    
+    cube.metadata = CubeMetadata(
+                            standard_name=None, 
+                            long_name='p-value' if cube.long_name is None else f'p-value of { cube.long_name } relative to { reference.long_name }', 
+                            var_name='p-value' if cube.var_name is None else f'p-value_{ cube.var_name }', 
+                            units='1', 
+                            attributes=None, 
+                            cell_methods=None,
+                            )
+    return cube
 
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
