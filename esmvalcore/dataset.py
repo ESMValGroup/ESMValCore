@@ -796,7 +796,7 @@ class Dataset:
             The datasets.
         """
         datasets = [self]
-        for key in 'ensemble', 'sub_experiment':
+        for key in 'ensemble', 'sub_experiment', 'runid':
             if key in self.facets:
                 datasets = [
                     ds.copy(**{key: value}) for ds in datasets
