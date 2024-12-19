@@ -32,12 +32,12 @@ def cfg(mocker, tmp_path):
     cfg = mocker.MagicMock()
     cfg.__getitem__.side_effect = cfg_dict.__getitem__
     cfg.__setitem__.side_effect = cfg_dict.__setitem__
-    cfg.update.side_effect = cfg_dict.update
+    cfg.nested_update.side_effect = cfg_dict.update
 
     session = mocker.MagicMock()
     session.__getitem__.side_effect = cfg.__getitem__
     session.__setitem__.side_effect = cfg.__setitem__
-    session.update.side_effect = cfg.update
+    session.nested_update.side_effect = cfg.nested_update
 
     output_dir = tmp_path / "esmvaltool_output"
     session.session_dir = output_dir / "recipe_test"
