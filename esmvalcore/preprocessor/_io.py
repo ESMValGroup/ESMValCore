@@ -41,8 +41,6 @@ VARIABLE_KEYS = {
 }
 GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
-iris.FUTURE.save_split_attrs = True
-
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
     if coord_name is not None:

@@ -10,6 +10,7 @@ from functools import lru_cache
 from importlib.resources import files as importlib_files
 from pathlib import Path
 
+import iris
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
@@ -21,6 +22,17 @@ logger = logging.getLogger(__name__)
 TASKSEP = os.sep
 
 CFG = {}
+
+
+# Set iris.FUTURE flags
+for attr, value in {
+    "save_split_attrs": True,
+    "date_microseconds": True,
+}.items():
+    try:
+        setattr(iris.FUTURE, attr, value)
+    except AttributeError:
+        pass
 
 
 def _deep_update(dictionary, update):
