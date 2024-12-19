@@ -12,4 +12,4 @@ dask:
       threads_per_worker: 2
       memory_limit: 4GiB
   config: {}
-  run: default  # Start the `default` cluster defined above
+  use: threaded  # Start the `threaded` cluster defined above

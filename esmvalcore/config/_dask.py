@@ -56,14 +56,14 @@ def validate_dask_config(dask_config: Mapping) -> None:
     if "address" in dask_config.get("client", {}):
         return
 
-    # Option (2): cluster is selected via `run` and `clusters` keys
-    for option in ("clusters", "run"):
+    # Option (2): cluster is selected via `use` and `clusters` keys
+    for option in ("clusters", "use"):
         if option not in dask_config:
             raise InvalidConfigParameter(
                 f"Key '{option}' needs to be defined for 'dask' configuration"
             )
     clusters = dask_config["clusters"]
-    run = dask_config["run"]
+    use = dask_config["use"]
     if not isinstance(clusters, Mapping):
         raise InvalidConfigParameter(
             f"Key 'dask.clusters' needs to be a mapping, got "
@@ -74,10 +74,10 @@ def validate_dask_config(dask_config: Mapping) -> None:
             raise InvalidConfigParameter(
                 f"Key 'dask.clusters.{cluster}' does not have a 'type'"
             )
-    if run not in clusters:
+    if use not in clusters:
         raise InvalidConfigParameter(
-            f"Key 'dask.run' needs to point to an element of 'dask.clusters'; "
-            f"got '{run}', expected one of {list(clusters.keys())}"
+            f"Key 'dask.use' needs to point to an element of 'dask.clusters'; "
+            f"got '{use}', expected one of {list(clusters.keys())}"
         )
 
 
@@ -97,11 +97,11 @@ def _get_old_dask_config() -> dict:
     dask_config: dict[str, Any] = {"client": {}, "clusters": {}}
     config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
 
-    # File exists, but is empty -> Use default scheduler
+    # File exists, but is empty -> Use threaded scheduler
     if config is None:
         dask_config["client"] = {}
-        dask_config["clusters"] = {"default": {"type": "default"}}
-        dask_config["run"] = "default"
+        dask_config["clusters"] = {"threaded": {"type": "default"}}
+        dask_config["use"] = "threaded"
 
     # Otherwise, use settings from file
     else:
@@ -122,7 +122,7 @@ def _get_old_dask_config() -> dict:
 
         dask_config["client"] = client_kwargs
         dask_config["clusters"] = {"cluster_from_file": cluster_kwargs}
-        dask_config["run"] = "cluster_from_file"
+        dask_config["use"] = "cluster_from_file"
 
     return dask_config
 
@@ -144,10 +144,10 @@ def _setup_cluster(**kwargs) -> None | Cluster:
     kwargs = dict(kwargs)
     cluster_type = kwargs.pop("type", "default")
 
-    # For default cluster, interpret kwargs as keyword arguments for
+    # For default clusters, interpret kwargs as keyword arguments for
     # dask.config.set
     if cluster_type == "default":
-        logger.debug("Using default Dask cluster with settings %s", kwargs)
+        logger.debug("Using Dask default cluster with settings %s", kwargs)
         dask.config.set(kwargs)
         return None
 
@@ -181,11 +181,11 @@ def get_distributed_client() -> Generator[None | Client]:
         cluster = None
 
     # Otherwise, setup cluster according to the selected entry
-    # Note: we already ensured earlier that the selected entry (via `run`)
+    # Note: we already ensured earlier that the selected entry (via `use`)
     # actually exists in `clusters`, so we don't have to check that again here
     else:
-        logger.debug("Selecting Dask cluster '%s'", dask_config["run"])
-        cluster_kwargs = dask_config["clusters"][dask_config["run"]]
+        logger.debug("Selecting Dask cluster '%s'", dask_config["use"])
+        cluster_kwargs = dask_config["clusters"][dask_config["use"]]
         cluster = _setup_cluster(**cluster_kwargs)
         if cluster is None:
             client = None

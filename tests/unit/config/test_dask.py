@@ -50,7 +50,7 @@ def test_force_new_dask_config(
         CFG,
         "dask",
         {
-            "run": "local",
+            "use": "local",
             "clusters": {"local": local_cluster},
         },
     )
@@ -140,7 +140,7 @@ def test_get_distributed_client_slurm(monkeypatch, mocker, shutdown_timeout):
         CFG,
         "dask",
         {
-            "run": "slurm_cluster",
+            "use": "slurm_cluster",
             "clusters": {"slurm_cluster": slurm_cluster},
         },
     )
@@ -183,7 +183,7 @@ def test_get_distributed_client_local(monkeypatch, mocker):
         CFG,
         "dask",
         {
-            "run": "local",
+            "use": "local",
             "clusters": {"local": local_cluster},
         },
     )
@@ -246,8 +246,8 @@ def test_custom_default_scheduler(monkeypatch, mocker):
         CFG,
         "dask",
         {
-            "run": "default",
-            "clusters": {"default": default_cluster},
+            "use": "process_cluster",
+            "clusters": {"process_cluster": default_cluster},
         },
     )
     mock_dask_set = mocker.patch("dask.config.set", autospec=True)
@@ -271,9 +271,9 @@ def test_custom_dask_config(monkeypatch, mocker):
         CFG,
         "dask",
         {
-            "run": "default",
+            "use": "custom_cluster",
             "config": {"num_workers": 41, "scheduler": "processes"},
-            "clusters": {"default": default_cluster},
+            "clusters": {"custom_cluster": default_cluster},
         },
     )
     mock_dask_set = mocker.patch("dask.config.set", autospec=True)
@@ -297,17 +297,17 @@ def test_invalid_dask_config_no_clusters(monkeypatch, mocker):
             pass
 
 
-def test_invalid_dask_config_no_run(monkeypatch, mocker):
+def test_invalid_dask_config_no_use(monkeypatch, mocker):
     monkeypatch.setitem(CFG, "dask", {"clusters": {}})
 
-    msg = "Key 'run' needs to be defined for 'dask' configuration"
+    msg = "Key 'use' needs to be defined for 'dask' configuration"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass
 
 
 def test_invalid_dask_config_invalid_clusters(monkeypatch, mocker):
-    monkeypatch.setitem(CFG, "dask", {"run": "test", "clusters": 1})
+    monkeypatch.setitem(CFG, "dask", {"use": "test", "clusters": 1})
 
     msg = "Key 'dask.clusters' needs to be a mapping, got"
     with pytest.raises(InvalidConfigParameter, match=msg):
@@ -315,12 +315,12 @@ def test_invalid_dask_config_invalid_clusters(monkeypatch, mocker):
             pass
 
 
-def test_invalid_dask_config_missing_run(monkeypatch, mocker):
+def test_invalid_dask_config_missing_use(monkeypatch, mocker):
     monkeypatch.setitem(
         CFG,
         "dask",
         {
-            "run": "test",
+            "use": "test",
             "clusters": {
                 "test": {},
             },
@@ -333,19 +333,19 @@ def test_invalid_dask_config_missing_run(monkeypatch, mocker):
             pass
 
 
-def test_invalid_dask_config_invalid_run(monkeypatch, mocker):
+def test_invalid_dask_config_invalid_use(monkeypatch, mocker):
     monkeypatch.setitem(
         CFG,
         "dask",
         {
-            "run": "not_in_clusters",
+            "use": "not_in_clusters",
             "clusters": {
                 "test": {"type": "default"},
             },
         },
     )
 
-    msg = "Key 'dask.run' needs to point to an element of 'dask.clusters'"
+    msg = "Key 'dask.use' needs to point to an element of 'dask.clusters'"
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client():
             pass

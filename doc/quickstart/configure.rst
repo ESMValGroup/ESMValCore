@@ -310,17 +310,17 @@ YAML configuration file via
 .. code:: yaml
 
   dask:
-    run: <NAME_OF_CLUSTER>
+    use: <NAME_OF_CLUSTER>
 
 or alternatively with in command line via
 
 .. code:: bash
 
-  esmvaltool run --dask='{"run": "<NAME_OF_CLUSTER>"}' recipe_example.yml
+  esmvaltool run --dask='{"use": "<NAME_OF_CLUSTER>"}' recipe_example.yml
 
 Available predefined clusters:
 
-- ``default`` (used by default): default Dask scheduler.
+- ``threaded`` (used by default): default thread-based Dask scheduler.
 - ``debug``: Synchronous Dask scheduler for debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
   See the `Dask documentation
@@ -352,7 +352,7 @@ using all available resources:
 .. code:: yaml
 
   dask:
-    run: local_cluster  # use "local_cluster" defined below
+    use: local_cluster  # use "local_cluster" defined below
     clusters:
       local_cluster:
         type: distributed.LocalCluster
@@ -373,7 +373,7 @@ with 2 workers with 2 threads/4 GiB of memory each (8 GiB in total):
 .. code:: yaml
 
   dask:
-    run: local_cluster  # use "local_cluster" defined below
+    use: local_cluster  # use "local_cluster" defined below
     clusters:
       local_cluster:
         type: distributed.LocalCluster
@@ -392,7 +392,7 @@ using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`__ package:
 .. code:: yaml
 
   dask:
-    run: slurm_cluster  # use "slurm_cluster" defined below
+    use: slurm_cluster  # use "slurm_cluster" defined below
     clusters:
       slurm_cluster:
         type: dask_jobqueue.SLURMCluster
@@ -472,24 +472,36 @@ are lazy yet (see :issue:`674` for the current status).
 
 To avoid running out of memory, it is important to set the number of workers
 (threads) used by Dask to run its computations to a reasonable number.
-By default the number of CPU cores in the machine will be used, but this may be
-too many on shared machines or laptops with a large number of CPU cores
+By default, the number of CPU cores in the machine will be used, but this may
+be too many on shared machines or laptops with a large number of CPU cores
 compared to the amount of memory they have available.
 
 Typically, Dask requires about 2 GiB of RAM per worker, but this may be more
 depending on the computation.
 
-To set the number of workers used by the Dask default scheduler, use the
-following configuration:
+To set the number of workers used by the (thread-based) Dask default scheduler,
+use the following configuration:
 
 .. code:: yaml
 
   dask:
-    run: default  # This can be omitted
+    use: threaded  # This can be omitted
     clusters:
-      default:
+      threaded:
         type: default
         num_workers: 4
+
+To switch to a process-based scheduler, use:
+
+.. code:: yaml
+
+  dask:
+    use: process_cluster
+    clusters:
+      process_cluster:
+        type: default
+        num_workers: 4
+        scheduler: processes
 
 .. _config-dask-defaults:
 
@@ -514,7 +526,7 @@ By default, the following Dask configuration is used:
         threads_per_worker: 2
         memory_limit: 4GiB
     config: {}
-    run: default  # Start the `default` cluster defined above
+    use: threaded  # Start the `threaded` cluster defined above
 
 All available options
 ---------------------
@@ -526,11 +538,11 @@ All available options
 |                               | :class:`distributed.Client`. If these  |                             |                                        |
 |                               | include an ``address``, connect to an  |                             |                                        |
 |                               | external cluster with that address (in |                             |                                        |
-|                               | this case, the ``run`` option is       |                             |                                        |
+|                               | this case, the ``use`` option is       |                             |                                        |
 |                               | ignored).                              |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``clusters``                  | Different clusters that can be         | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
-|                               | selected via the ``run`` option. Each  |                             |                                        |
+|                               | selected via the ``use`` option. Each  |                             |                                        |
 |                               | cluster must have a ``type``. If       |                             |                                        |
 |                               | ``type: default`` (this is also the    |                             |                                        |
 |                               | default type) is used, all other       |                             |                                        |
@@ -545,10 +557,10 @@ All available options
 | ``config``                    | Keyword arguments for                  | :obj:`dict`                 | ``{}``                                 |
 |                               | :func:`dask.config.set`.               |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``run``                       | Cluster that is used; must be defined  | :obj:`str`                  | ``default``                            |
+| ``use``                       | Cluster that is used; must be defined  | :obj:`str`                  | ``threaded``                            |
 |                               | in the option ``clusters``. If an      |                             |                                        |
 |                               | ``address`` is given in the option     |                             |                                        |
-|                               | ``client``, ``run`` is ignored.        |                             |                                        |
+|                               | ``client``, ``use`` is ignored.        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 

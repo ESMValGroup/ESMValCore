@@ -197,7 +197,7 @@ def test_load_default_config(cfg_default, monkeypatch):
                 },
             },
             "config": {},
-            "run": "default",
+            "use": "threaded",
         },
         "diagnostics": None,
         "download_dir": Path.home() / "climate_data",

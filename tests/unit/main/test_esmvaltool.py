@@ -23,8 +23,8 @@ def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
     cfg_dict = {
         "dask": {
-            "clusters": {"default": {"type": "default"}},
-            "run": "default",
+            "clusters": {"threaded": {"type": "default"}},
+            "use": "threaded",
         },
         "resume_from": [],
     }
