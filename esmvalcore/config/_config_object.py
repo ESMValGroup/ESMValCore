@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 import warnings
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -464,9 +464,29 @@ class Config(ValidatedConfig):
 
         """
         new_config_dict = self._get_config_dict_from_dirs(dirs)
-        merged_config_dict = dask.config.merge(self, new_config_dict)
-        self.update(merged_config_dict)
+        self.nested_update(new_config_dict)
 
+    def nested_update(self, new_options: Mapping) -> None:
+        """Nested update of configuration object with another mapping.
+
+        Merge the existing configuration object with a new mapping using
+        :func:`dask.config.merge`  (new values are preferred over old values).
+        Nested objects are properly considered; see :func:`dask.config.update`
+        for details.
+
+        Parameters
+        ----------
+        new_options:
+            New configuration options.
+
+        Raises
+        ------
+        esmvalcore.exceptions.InvalidConfigParameter
+            Invalid configuration option given.
+
+        """
+        merged_config_dict = dask.config.merge(self, new_options)
+        self.update(merged_config_dict)
         self.check_missing()
 
 

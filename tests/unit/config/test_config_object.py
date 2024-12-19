@@ -588,3 +588,19 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
         assert cfg["output_file_type"] == output_file_type
     assert cfg["rootpath"] == rootpath
     assert cfg["search_esgf"] == "when_missing"
+
+
+def test_nested_update():
+    """Test `Config.update_from_dirs`."""
+    cfg = Config()
+    assert not cfg
+
+    cfg["drs"] = {"X": "x", "Z": "z"}
+    cfg["search_esgf"] = "when_missing"
+
+    cfg.nested_update({"drs": {"Y": "y", "X": "xx"}, "max_years": 1})
+
+    assert len(cfg) == 3
+    assert cfg["drs"] == {"Y": "y", "X": "xx", "Z": "z"}
+    assert cfg["search_esgf"] == "when_missing"
+    assert cfg["max_years"] == 1
