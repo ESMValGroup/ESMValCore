@@ -22,7 +22,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from ._compare_with_refs import bias, distance_metric
+from ._compare_with_refs import bias, distance_metric, ttest_pvalue
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
@@ -606,6 +606,11 @@ def _apply_multimodel(products, step, debug):
 
     logger.debug("Applying %s to\n%s", step,
                  '\n'.join(str(p) for p in products - exclude))
+
+    if len(products-exclude)<1: 
+        logger.debug("No datasets to preprocess, return having done nothing")
+        return products 
+
     result = preprocess(products - exclude, step, **settings)
     products = set(result) | exclude
 
