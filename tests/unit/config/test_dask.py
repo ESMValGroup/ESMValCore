@@ -338,14 +338,19 @@ def test_invalid_dask_config_invalid_profiles(monkeypatch):
             pass
 
 
-def test_invalid_dask_config_profile_with_cluster_and_address(monkeypatch):
+@pytest.mark.parametrize(
+    "address_name", ["scheduler_address", "scheduler-address"]
+)
+def test_invalid_dask_config_profile_with_cluster_and_address(
+    monkeypatch, address_name
+):
     monkeypatch.setitem(
         CFG,
         "dask",
         {
             "use": "test",
             "profiles": {
-                "test": {"cluster": {}, "scheduler_address": "8786"},
+                "test": {"cluster": {}, address_name: "8786"},
             },
         },
     )

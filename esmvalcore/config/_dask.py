@@ -65,7 +65,13 @@ def validate_dask_config(dask_config: Mapping) -> None:
             f"{type(profiles)}"
         )
     for profile, profile_cfg in profiles.items():
-        if "cluster" in profile_cfg and "scheduler_address" in profile_cfg:
+        has_scheduler_address = any(
+            [
+                "scheduler_address" in profile_cfg,
+                "scheduler-address" in profile_cfg,
+            ]
+        )
+        if "cluster" in profile_cfg and has_scheduler_address:
             raise InvalidConfigParameter(
                 f"Key 'dask.profiles.{profile}' uses 'cluster' and "
                 f"'scheduler_address', can only have one of those"
