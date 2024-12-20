@@ -196,6 +196,7 @@ __all__ = [
     # Comparison with reference datasets
     'bias',
     'distance_metric',
+    'ttest_pvalue',
     # Setting constant value based on threshold
     'set_above_threshold', # CUSTOM
     'set_below_threshold', # CUSTOM
@@ -238,6 +239,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index(
 MULTI_MODEL_FUNCTIONS = {
     'bias',
     'distance_metric',
+    'ttest_pvalue',
     'ensemble_statistics',
     'multi_model_statistics',
     'mask_multimodel',

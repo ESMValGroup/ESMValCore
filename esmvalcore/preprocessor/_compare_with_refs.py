@@ -17,7 +17,7 @@ from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
 from esmvalcore.iris_helpers import rechunk_cube
-from esmvalcore.preprocessor._io import concatenate
+from esmvalcore.preprocessor._io import concatenate, save
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
@@ -39,7 +39,7 @@ def ttest_pvalue(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Optional[Cube] = None,
     coord: StatCoord = 'time',
-    keep_reference_dataset: bool = False,
+    return_output_datasets: bool = False,
 ) -> set[PreprocessorFile] | CubeList:
     """Calculate p-value of Student t statistic relative to a reference dataset.
 
@@ -61,19 +61,18 @@ def ttest_pvalue(
     Parameters
     ----------
     products:
-        Input datasets/cubes for which the bias is calculated relative to a
+        Input datasets/cubes for which the metric is calculated relative to a
         reference dataset/cube.
     reference:
-        Cube which is used as reference for the bias calculation. If ``None``,
+        Cube which is used as reference for the metric calculation. If ``None``,
         `products` needs to be a :obj:`set` of
         `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
-        dataset in `products` needs the facet ``reference_for_bias: true``. Do
+        dataset in `products` needs the facet ``control: true``. Do
         not specify this argument in a recipe.
     coord:
         Coordinate to preform statistic over. Default: time
-    keep_reference_dataset:
-        If ``True``, keep the reference dataset in the output. If ``False``,
-        drop the reference dataset. Ignored if `reference` is given.
+    return_output_datasets:
+        If ``False``, save the otuput datasets, do not return. 
 
     Returns
     -------
@@ -90,63 +89,87 @@ def ttest_pvalue(
         are given as iterable of :class:`~iris.cube.Cube` objects
 
     """
-    ref_product = None
-    all_cubes_given = all(isinstance(p, Cube) for p in products)
+    
+    from copy import deepcopy
 
-    # Get reference cube if not explicitly given
-    if reference is None:
-        if all_cubes_given:
-            raise ValueError(
-                "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`"
-            )
-        (reference, ref_product) = _get_ref(products, 'reference_for_bias')
-    else:
-        ref_product = None
+    ref_products = []
+    ref_tags = ['control','control_OBS']
+    for ref_tag in ref_tags:
+        for product in products:
+            if product.attributes.get(ref_tag, False) and (product not in ref_products):
+                ref_products.append(product)
 
-    # If input is an Iterable of Cube objects, calculate bias for each element
-    if all_cubes_given:
-        cubes = [_calculate_ttest_pvalue(c, reference, coord) for c in products]
-        return CubeList(cubes)
+    output_products = []
+    for ref_product in ref_products:
+        # Extract reference cube
+        # Note: For technical reasons, product objects contain the member
+        # ``cubes``, which is a list of cubes. However, this is expected to be a
+        # list with exactly one element due to the call of concatenate earlier in
+        # the preprocessing chain of ESMValTool. To make sure that this
+        # preprocessor can also be used outside the ESMValTool preprocessing chain,
+        # an additional concatenate call is added here.
+        reference = concatenate(ref_product.cubes)
 
-    # Otherwise, iterate over all input products, calculate statistic and adapt
-    # metadata and provenance information accordingly
-    output_products = set()
-    for product in products:
-        if product == ref_product:
-            continue
-        cube = concatenate(product.cubes)
+        print( '>', ref_product.filename.name )
 
-        # Calculate bias
-        cube = _calculate_ttest_pvalue(cube, reference, coord)
+        # Otherwise, iterate over all input products, calculate statistic and adapt
+        # metadata and provenance information accordingly
+        for product in products:
+            if product == ref_product: continue
+            if product.attributes.get('control_OBS', False): continue
 
-        # Adapt metadata and provenance information
-        product.attributes['units'] = '1'
-        if ref_product is not None:
-            product.wasderivedfrom(ref_product)
+            out_product = deepcopy( product )
+            cube = concatenate(out_product.cubes)
 
-        product.cubes = CubeList([cube])
-        output_products.add(product)
+            # Calculate metric
+            cube = _calculate_ttest_pvalue(cube, reference, coord)
+            out_product.cubes = CubeList([cube])
 
-    # Add reference dataset to output if desired
-    if keep_reference_dataset and ref_product is not None:
-        output_products.add(ref_product)
+            # Adapt metadata and provenance information
+            out_product.attributes['units'] = '1'
+            if ref_product is not None:
+                out_product.wasderivedfrom(ref_product)
 
-    return output_products
+            out_product.new_filename = product.filename.parent / f"pvalue_{ product.filename.stem }_wrt_{ ref_product.filename.name }"
+
+            output_products.append(out_product)
+
+    if return_output_datasets:
+        if len(ref_products)>1:
+            raise Exception(f'Invalid number of reference datasets for this operation. Need 1, got { len(ref_produces) }')
+        return set( output_products )
+
+    # otherwise write to disc only
+    for out_product in output_products:
+        save( out_product.cubes, out_product.new_filename  )
+
+    return products
 
 def _calculate_ttest_pvalue(cube: Cube, reference: Cube, coord: StatCoord) -> Cube:
     """Calculate Student T statistic p-value for a single cube relative to a reference cube."""
     from scipy.stats import ttest_rel
 
-    if isinstance(coord,str):
+    valid_coords = [c.name() for c in cube.coords()]
+
+    if isinstance(coord,str) and (coord == 'spatial'):
+        from iris.analysis.cartography import _get_lon_lat_coords
+        coord = _get_lon_lat_coords( cube )
+    elif isinstance(coord,str) and (coord in valid_coords):
         coord = cube.coord(coord)
+    elif isinstance(coord,str):
+        raise ValueError(f"Coordinate '{coord}' is invalid. Valid: {', '.join(valid_coords) }")
+    elif coord.name not in valid_coords:
+        raise ValueError(f'Coordinate "{coord}" is invalid.')
+    
     # get axis dimension of the coordinate
-    axis = [ i for i,c in enumerate(cube.coords()) if c==coord][0]
+    if not isinstance(coord,list): coord = [coord]
+    axis = [ i for i,c in enumerate(cube.coords()) if c in coord ]
+    
+    tstat, pvalue = ttest_rel(cube.core_data(), reference.core_data(), axis=axis )
 
-    tstat, pvalue = ttest_rel(cube.data, reference.data, axis=axis )
-
+    # DUMMY operatation
     # collapse over first coord, to get cube of correct dimension
-    cube = cube.collapsed( cube.coords()[0], iris.analysis.MAX ) # MAX or whatever
+    cube = cube.collapsed( coord, iris.analysis.MAX ) # MAX or whatever
     cube.data = pvalue
     
     cube.metadata = CubeMetadata(
@@ -154,7 +177,7 @@ def _calculate_ttest_pvalue(cube: Cube, reference: Cube, coord: StatCoord) -> Cu
                             long_name='p-value' if cube.long_name is None else f'p-value of { cube.long_name } relative to { reference.long_name }', 
                             var_name='p-value' if cube.var_name is None else f'p-value_{ cube.var_name }', 
                             units='1', 
-                            attributes=None, 
+                            attributes={'is_statistic':'True'},
                             cell_methods=None,
                             )
     return cube
