@@ -19,6 +19,7 @@ from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
 
+import dask
 import psutil
 import yaml
 from distributed import Client
@@ -835,6 +836,43 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
+    def _get_dask_config(self, max_parallel_tasks: int) -> dict:
+        """Configure the threaded Dask scheduler.
+
+        Configure the threaded Dask scheduler to use a reasonable number
+        of threads when the user has not done so. We will run multiple
+        processes, each of which will start its own scheduler with
+        `num_workers` threads. To avoid too much parallelism, we would like to
+        create n_threads = n_cpu_cores / n_processes.
+        """
+        from esmvalcore.preprocessor import PreprocessingTask
+
+        if (
+            dask.config.get("scheduler", "threads") != "threads"
+            or dask.config.get("num_workers", None) is not None
+        ):
+            # No need to do anything when not using the threaded scheduler
+            # or when the user has configured "num_workers".
+            return {}
+
+        n_available_cpu_cores = len(os.sched_getaffinity(0))
+        n_preproc_tasks = sum(
+            isinstance(t, PreprocessingTask) for t in self.flatten()
+        )
+        n_default_dask_schedulers = min(
+            max(1, n_preproc_tasks), max_parallel_tasks
+        )
+        n_workers = max(
+            1, round(n_available_cpu_cores / n_default_dask_schedulers)
+        )
+        logger.info(
+            "Using the default Dask scheduler with %s worker threads per "
+            "process. See https://docs.esmvaltool.org/projects/ESMValCore/en/"
+            "latest/quickstart/configure.html#f5 for more information.",
+            n_workers,
+        )
+        return {"num_workers": n_workers}
+
     def _run_parallel(self, scheduler_address, max_parallel_tasks):
         """Run tasks in parallel."""
         scheduled = self.flatten()
@@ -844,17 +882,22 @@ class TaskSet(set):
         n_running = 0
 
         if max_parallel_tasks is None:
-            max_parallel_tasks = os.cpu_count()
+            max_parallel_tasks = len(os.sched_getaffinity(0))
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
         logger.info(
             "Running %s tasks using %s processes", n_tasks, max_parallel_tasks
         )
 
+        dask_config = self._get_dask_config(max_parallel_tasks)
+
         def done(task):
             """Assume a task is done if it not scheduled or running."""
             return not (task in scheduled or task in running)
 
-        with Pool(processes=max_parallel_tasks) as pool:
+        with (
+            dask.config.set(dask_config),
+            Pool(processes=max_parallel_tasks) as pool,
+        ):
             while scheduled or running:
                 # Submit new tasks to pool
                 for task in sorted(scheduled, key=lambda t: t.priority):
