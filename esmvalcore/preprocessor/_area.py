@@ -7,6 +7,7 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -354,7 +355,16 @@ def area_statistics(
         agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
     )
 
-    result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
+    with warnings.catch_warnings():
+        # Silence various warnings about collapsing multi-dimensional and/or
+        # non contiguous coordinates as this should be fine when the cell areas
+        # are provided and will fail when they needed but not provided.
+        warnings.filterwarnings(
+            "ignore",
+            category=iris.warnings.IrisVagueMetadataWarning,
+            module="iris",
+        )
+        result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
