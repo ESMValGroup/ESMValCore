@@ -474,7 +474,7 @@ speed with which the data can be read from and/or written to disk.
 .. _config-dask-threaded-scheduler:
 
 Custom Dask threaded scheduler configuration
--------------------------------------------
+--------------------------------------------
 
 The Dask threaded scheduler can be a good choice for recipes using a small
 amount of data or when running a recipe where not all preprocessor functions
