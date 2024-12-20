@@ -396,10 +396,7 @@ class ESMValTool:
 
         """
         from .config import CFG
-        from .config._dask import (
-            validate_dask_config,
-            warn_if_old_dask_config_exists,
-        )
+        from .config._dask import warn_if_old_dask_config_exists
         from .exceptions import InvalidConfigParameter
 
         cli_config_dir = kwargs.pop("config_dir", None)
@@ -443,8 +440,6 @@ class ESMValTool:
         CFG.nested_update(kwargs)
         CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
-
-        validate_dask_config(CFG["dask"])
 
         self._run(recipe, session, cli_config_dir)
 

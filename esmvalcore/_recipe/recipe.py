@@ -18,6 +18,7 @@ from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -786,6 +787,8 @@ class Recipe:
 
     def __init__(self, raw_recipe, session, recipe_file: Path):
         """Parse a recipe file into an object."""
+        validate_dask_config(session["dask"])
+
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
         USED_DATASETS.clear()
