@@ -21,17 +21,23 @@ LOGGER = logging.getLogger(__name__)
 @pytest.fixture
 def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
-    cfg_dict = {"resume_from": []}
+    cfg_dict = {
+        "dask": {
+            "profiles": {"local_threaded": {"scheduler": "threads"}},
+            "use": "local_threaded",
+        },
+        "resume_from": [],
+    }
 
     cfg = mocker.MagicMock()
     cfg.__getitem__.side_effect = cfg_dict.__getitem__
     cfg.__setitem__.side_effect = cfg_dict.__setitem__
-    cfg.update.side_effect = cfg_dict.update
+    cfg.nested_update.side_effect = cfg_dict.update
 
     session = mocker.MagicMock()
     session.__getitem__.side_effect = cfg.__getitem__
     session.__setitem__.side_effect = cfg.__setitem__
-    session.update.side_effect = cfg.update
+    session.nested_update.side_effect = cfg.nested_update
 
     output_dir = tmp_path / "esmvaltool_output"
     session.session_dir = output_dir / "recipe_test"
