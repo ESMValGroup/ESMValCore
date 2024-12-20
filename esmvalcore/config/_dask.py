@@ -159,54 +159,49 @@ def get_distributed_client() -> Generator[None | Client]:
     # TODO: Remove in v2.14.0
     client_kwargs = dask_config.get("client", {})
 
-    cluster: None | Cluster
-    client: None | Client
-
     # Set up cluster and client according to the selected profile
     # Note: we already ensured earlier that the selected profile (via `use`)
     # actually exists in `profiles`, so we don't have to check that again here
     logger.debug("Using Dask profile '%s'", dask_config["use"])
     profile = dask_config["profiles"][dask_config["use"]]
+    cluster_kwargs = profile.pop("cluster", None)
 
-    # Externally managed cluster
-    if "scheduler_address" in profile:
-        scheduler_address = profile.pop("scheduler_address")
+    logger.debug("Using additional Dask settings %s", profile)
+    dask.config.set(profile)
+
+    cluster: None | Cluster
+    client: None | Client
+
+    # Threaded scheduler
+    if cluster_kwargs is None:
         cluster = None
-        client = Client(scheduler_address, **client_kwargs)
-        logger.info("Using external Dask cluster at %s", scheduler_address)
 
-    # Dask distributed cluster
-    elif "cluster" in profile:
-        cluster_kwargs = profile.pop("cluster")
+    # Distributed scheduler
+    else:
         cluster_type = cluster_kwargs.pop("type")
         cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
         cluster_module = importlib.import_module(cluster_module_name)
         cluster_cls = getattr(cluster_module, cluster_cls_name)
         cluster = cluster_cls(**cluster_kwargs)
-        client = Client(cluster.scheduler_address, **client_kwargs)
+        dask.config.set({"scheduler_address": cluster.scheduler_address})
         logger.debug("Using Dask cluster %s", cluster)
 
-    # Dask default cluster
-    else:
-        cluster = None
+    if dask.config.get("scheduler_address", None) is None:
         client = None
-
-    # Other Dask options
-    logger.debug("Using additional Dask settings %s", profile)
-    dask.config.set(profile)
-
-    if client:
-        logger.info(
-            "Using Dask distributed scheduler (dashboard link: %s)",
-            client.dashboard_link,
-        )
-    else:
         logger.info(
             "Using Dask default scheduler. The distributed scheduler is "
             "recommended, please read https://docs.esmvaltool.org/projects/"
             "ESMValCore/en/latest/quickstart/"
             "configure.html#dask-configuration how to use a distributed "
             "scheduler."
+        )
+    else:
+        client = Client(**client_kwargs)
+        logger.info(
+            "Using Dask distributed scheduler (address: %s, dashboard link: "
+            "%s)",
+            dask.config.get("scheduler_address"),
+            client.dashboard_link,
         )
 
     try:

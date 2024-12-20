@@ -1,12 +1,21 @@
 import pytest
 import yaml
-from distributed import Client
 
 from esmvalcore.config import CFG, _dask
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+
+@pytest.fixture
+def mock_dask_config_set(mocker):
+    dask_config_dict = {}
+    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
+    mock_dask_set.side_effect = dask_config_dict.update
+    mock_dask_get = mocker.patch("dask.config.get", autospec=True)
+    mock_dask_get.side_effect = dask_config_dict.get
+    return mock_dask_set
 
 
 def test_get_no_distributed_client():
@@ -40,110 +49,6 @@ def test_force_new_dask_config(
     mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
 
     # New config -> distributed scheduler
-    local_cluster = {
-        "type": "distributed.LocalCluster",
-        "n_workers": 2,
-        "threads_per_worker": 2,
-        "memory_limit": "4GiB",
-    }
-    monkeypatch.setitem(
-        CFG,
-        "dask",
-        {
-            "use": "local",
-            "profiles": {"local": {"cluster": local_cluster}},
-        },
-    )
-
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_DASK_CONFIG", use_new_dask_config)
-
-    with _dask.get_distributed_client() as client:
-        if use_new_dask_config:
-            assert isinstance(client, Client)
-        else:
-            assert client is None
-
-
-# TODO: Remove in v2.14.0
-def test_get_distributed_client_local_cluster_old(mocker, tmp_path):
-    # Create mock client configuration.
-    cfg = {"cluster": {"n_workers": 2}}
-    cfg_file = tmp_path / "dask.yml"
-    with cfg_file.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg, file)
-    mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
-
-    # Create mock distributed.Client
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        with _dask.get_distributed_client() as client:
-            assert isinstance(client, Client)
-
-
-def test_get_distributed_client_external(monkeypatch, mocker):
-    monkeypatch.setitem(
-        CFG,
-        "dask",
-        {
-            "use": "external",
-            "profiles": {
-                "external": {
-                    "scheduler_address": "tcp://127.0.0.1:42021",
-                },
-            },
-        },
-    )
-
-    # Create mock distributed.Client
-    mock_client = mocker.Mock()
-    mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
-    )
-
-    with _dask.get_distributed_client() as client:
-        assert client is mock_client
-    _dask.Client.assert_called_with("tcp://127.0.0.1:42021")
-    mock_client.close.assert_called()
-
-
-# TODO: Remove in v2.14.0
-@pytest.mark.parametrize("warn_unused_args", [False, True])
-def test_get_distributed_client_external_old(
-    mocker,
-    tmp_path,
-    warn_unused_args,
-):
-    # Create mock client configuration.
-    cfg = {
-        "client": {
-            "address": "tcp://127.0.0.1:42021",
-            "other_client_options": 1,
-        },
-    }
-    if warn_unused_args:
-        cfg["cluster"] = {"n_workers": 2}
-    cfg_file = tmp_path / "dask.yml"
-    with cfg_file.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg, file)
-    mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
-
-    # Create mock distributed.Client
-    mock_client = mocker.Mock()
-    mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
-    )
-
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        with _dask.get_distributed_client() as client:
-            assert client is mock_client
-    _dask.Client.assert_called_with(
-        "tcp://127.0.0.1:42021",
-        other_client_options=1,  #
-    )
-    mock_client.close.assert_called()
-
-
-@pytest.mark.parametrize("shutdown_timeout", [False, True])
-def test_get_distributed_client_slurm(monkeypatch, mocker, shutdown_timeout):
     slurm_cluster = {
         "type": "dask_jobqueue.SLURMCluster",
         "queue": "interactive",
@@ -174,48 +79,174 @@ def test_get_distributed_client_slurm(monkeypatch, mocker, shutdown_timeout):
         create_autospec=True,
         return_value=mock_module,
     )
-    mock_cluster = mock_cluster_cls.return_value
-    if shutdown_timeout:
-        mock_cluster.close.side_effect = TimeoutError
+
+    monkeypatch.setenv("ESMVALTOOL_USE_NEW_DASK_CONFIG", use_new_dask_config)
+
+    with _dask.get_distributed_client() as client:
+        if use_new_dask_config:
+            assert client is not None
+        else:
+            assert client is None
+
+
+# TODO: Remove in v2.14.0
+def test_get_old_dask_config(mocker, tmp_path):
+    # Create mock client configuration.
+    cfg = {"cluster": {"n_workers": 2}}
+    cfg_file = tmp_path / "dask.yml"
+    with cfg_file.open("w", encoding="utf-8") as file:
+        yaml.safe_dump(cfg, file)
+    mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
+
+    dask_cfg = _dask._get_old_dask_config()
+
+    expected_cfg = {
+        "use": "cluster_from_file",
+        "profiles": {
+            "cluster_from_file": {
+                "cluster": {
+                    "n_workers": 2,
+                    "type": "distributed.LocalCluster",
+                },
+            },
+        },
+        "client": {},
+    }
+    assert dask_cfg == expected_cfg
+
+
+def test_get_distributed_client_external(
+    monkeypatch, mocker, mock_dask_config_set
+):
+    monkeypatch.setitem(
+        CFG,
+        "dask",
+        {
+            "use": "external",
+            "profiles": {
+                "external": {
+                    "scheduler_address": "tcp://127.0.0.1:42021",
+                },
+            },
+        },
+    )
+
+    # Create mock distributed.Client
+    mock_client = mocker.Mock()
+    mocker.patch.object(
+        _dask, "Client", create_autospec=True, return_value=mock_client
+    )
+
     with _dask.get_distributed_client() as client:
         assert client is mock_client
-    mock_client.close.assert_called()
-    _dask.Client.assert_called_with(mock_cluster.scheduler_address)
-    args = {k: v for k, v in slurm_cluster.items() if k != "type"}
-    mock_cluster_cls.assert_called_with(**args)
-    mock_cluster.close.assert_called()
+    _dask.Client.assert_called_once_with()
+    mock_client.close.assert_called_once_with()
+    assert (
+        mocker.call({"scheduler_address": "tcp://127.0.0.1:42021"})
+        in mock_dask_config_set.mock_calls
+    )
 
 
-def test_get_distributed_client_local(monkeypatch, mocker):
-    local_cluster = {
-        "type": "distributed.LocalCluster",
-        "n_workers": 2,
-        "threads_per_worker": 2,
-        "memory_limit": "4GiB",
+# TODO: Remove in v2.14.0
+@pytest.mark.parametrize("warn_unused_args", [False, True])
+def test_get_distributed_client_external_old(
+    mocker,
+    tmp_path,
+    mock_dask_config_set,
+    warn_unused_args,
+):
+    # Create mock client configuration.
+    cfg = {
+        "client": {
+            "address": "tcp://127.0.0.1:42021",
+            "other_client_options": 1,
+        },
+    }
+    if warn_unused_args:
+        cfg["cluster"] = {"n_workers": 2}
+    cfg_file = tmp_path / "dask.yml"
+    with cfg_file.open("w", encoding="utf-8") as file:
+        yaml.safe_dump(cfg, file)
+    mocker.patch.object(_dask, "CONFIG_FILE", cfg_file)
+
+    # Create mock distributed.Client
+    mock_client = mocker.Mock()
+    mocker.patch.object(
+        _dask, "Client", create_autospec=True, return_value=mock_client
+    )
+
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        with _dask.get_distributed_client() as client:
+            assert client is mock_client
+    _dask.Client.assert_called_once_with(other_client_options=1)
+    mock_client.close.assert_called_once_with()
+    assert (
+        mocker.call({"scheduler_address": "tcp://127.0.0.1:42021"})
+        in mock_dask_config_set.mock_calls
+    )
+
+
+@pytest.mark.parametrize("shutdown_timeout", [False, True])
+def test_get_distributed_client_slurm(
+    monkeypatch, mocker, mock_dask_config_set, shutdown_timeout
+):
+    slurm_cluster = {
+        "type": "dask_jobqueue.SLURMCluster",
+        "queue": "interactive",
+        "cores": "8",
+        "memory": "16GiB",
     }
     monkeypatch.setitem(
         CFG,
         "dask",
         {
-            "use": "local",
+            "use": "slurm_cluster",
             "profiles": {
-                "local": {
-                    "cluster": local_cluster,
+                "slurm_cluster": {
+                    "cluster": slurm_cluster,
                     "num_workers": 42,
                 },
             },
         },
     )
-    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
 
+    # Create mock distributed.Client
+    mock_client = mocker.Mock()
+    mocker.patch.object(
+        _dask, "Client", create_autospec=True, return_value=mock_client
+    )
+
+    mock_module = mocker.Mock()
+    mock_cluster_cls = mocker.Mock()
+    mock_module.SLURMCluster = mock_cluster_cls
+    mocker.patch.object(
+        _dask.importlib,
+        "import_module",
+        create_autospec=True,
+        return_value=mock_module,
+    )
+    mock_cluster = mock_cluster_cls.return_value
+    if shutdown_timeout:
+        mock_cluster.close.side_effect = TimeoutError
     with _dask.get_distributed_client() as client:
-        assert isinstance(client, Client)
-    assert mocker.call({"num_workers": 42}) in mock_dask_set.mock_calls
+        assert client is mock_client
+    mock_client.close.assert_called_once_with()
+    _dask.Client.assert_called_once_with()
+    args = {k: v for k, v in slurm_cluster.items() if k != "type"}
+    mock_cluster_cls.assert_called_once_with(**args)
+    mock_cluster.close.assert_called()
+    assert mocker.call({"num_workers": 42}) in mock_dask_config_set.mock_calls
+    assert (
+        mocker.call({"scheduler_address": mock_cluster.scheduler_address})
+        in mock_dask_config_set.mock_calls
+    )
 
 
 # TODO: Remove in v2.14.0
 @pytest.mark.parametrize("shutdown_timeout", [False, True])
-def test_get_distributed_client_slurm_old(mocker, tmp_path, shutdown_timeout):
+def test_get_distributed_client_slurm_old(
+    mocker, tmp_path, mock_dask_config_set, shutdown_timeout
+):
     cfg = {
         "cluster": {
             "type": "dask_jobqueue.SLURMCluster",
@@ -250,14 +281,18 @@ def test_get_distributed_client_slurm_old(mocker, tmp_path, shutdown_timeout):
     with pytest.warns(ESMValCoreDeprecationWarning):
         with _dask.get_distributed_client() as client:
             assert client is mock_client
-    mock_client.close.assert_called()
-    _dask.Client.assert_called_with(mock_cluster.scheduler_address)
+    mock_client.close.assert_called_once_with()
+    _dask.Client.assert_called_once_with()
     args = {k: v for k, v in cfg["cluster"].items() if k != "type"}
-    mock_cluster_cls.assert_called_with(**args)
+    mock_cluster_cls.assert_called_once_with(**args)
     mock_cluster.close.assert_called()
+    assert (
+        mocker.call({"scheduler_address": mock_cluster.scheduler_address})
+        in mock_dask_config_set.mock_calls
+    )
 
 
-def test_custom_default_scheduler(monkeypatch, mocker):
+def test_custom_default_scheduler(monkeypatch, mock_dask_config_set):
     default_scheduler = {"num_workers": 42, "scheduler": "processes"}
     monkeypatch.setitem(
         CFG,
@@ -267,12 +302,11 @@ def test_custom_default_scheduler(monkeypatch, mocker):
             "profiles": {"process_scheduler": default_scheduler},
         },
     )
-    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
 
     with _dask.get_distributed_client() as client:
         assert client is None
 
-    mock_dask_set.assert_called_once_with(
+    mock_dask_config_set.assert_called_once_with(
         {"num_workers": 42, "scheduler": "processes"}
     )
 
