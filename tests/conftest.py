@@ -5,14 +5,22 @@ import pytest
 
 import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
+from esmvalcore.config._config_object import _get_global_config
 
 
 @pytest.fixture
-def cfg_default(mocker):
+def cfg_default():
     """Create a configuration object with default values."""
-    cfg = deepcopy(CFG)
+    cfg = _get_global_config()
     cfg.load_from_dirs([])
     return cfg
+
+
+@pytest.fixture(autouse=True)
+def ignore_existing_user_config(monkeypatch, cfg_default):
+    """Ignore user's configuration when running tests."""
+    for key, value in cfg_default.items():
+        monkeypatch.setitem(CFG, key, deepcopy(value))
 
 
 @pytest.fixture
