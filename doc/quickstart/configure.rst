@@ -497,17 +497,6 @@ following configuration:
       local_threaded:
         num_workers: 4
 
-To switch to a process-based scheduler, use:
-
-.. code:: yaml
-
-  dask:
-    use: local_processes
-    profiles:
-      local_processes:
-        num_workers: 4
-        scheduler: processes
-
 .. _config-dask-defaults:
 
 Default options
