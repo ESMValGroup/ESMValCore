@@ -457,7 +457,7 @@ def extract_transect(
     transect along 28 West.
 
     Also, `'extract_transect(cube, longitude=-28, latitude=[-50, 50])'` will
-    produce a transect along 28 West  between 50 south and 50 North.
+    produce a transect along 28 West between 50 south and 50 North.
 
     This function is not yet implemented for irregular arrays - instead
     try the extract_trajectory function, but note that it is currently
