@@ -304,8 +304,11 @@ collectively called a 'Dask cluster'.
 Dask profiles
 -------------
 
-Because some recipes require more computational resources than others, ESMValCore provides the option to define "Dask profiles". These profiles can be used to update the `Dask user configuration <https://docs.dask.org/en/stable/configuration.html>`__ per recipe run. The Dask profile can be selected in
-a YAML configuration file via
+Because some recipes require more computational resources than others,
+ESMValCore provides the option to define "Dask profiles".
+These profiles can be used to update the `Dask user configuration
+<https://docs.dask.org/en/stable/configuration.html>`__ per recipe run.
+The Dask profile can be selected in a YAML configuration file via
 
 .. code:: yaml
 
@@ -792,7 +795,7 @@ The resulting directory path would look something like this:
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
-Please, bear in mind that ``input_dirs`` can also be a list for those  cases in
+Please, bear in mind that ``input_dirs`` can also be a list for those cases in
 which may be needed:
 
 .. code-block:: yaml
