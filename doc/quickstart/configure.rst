@@ -301,8 +301,8 @@ Therefore it is recommended that you take a moment to configure the
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-Predefined Dask profiles
-------------------------
+Dask profiles
+-------------
 
 ESMValCore provides a set of predefined Dask profiles, which can be selected in
 a YAML configuration file via
@@ -331,8 +331,8 @@ Available predefined Dask profiles:
   debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
 
-Custom Dask distributed scheduler configuration
------------------------------------------------
+Dask distributed scheduler configuration
+----------------------------------------
 
 Here, some examples are provided on how to use a custom Dask distributed
 scheduler.
