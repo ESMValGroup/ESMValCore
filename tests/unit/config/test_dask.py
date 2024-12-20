@@ -42,7 +42,7 @@ def test_get_distributed_client_empty_dask_file(mocker, tmp_path):
 def test_force_new_dask_config(
     monkeypatch, mocker, tmp_path, use_new_dask_config
 ):
-    # Old config -> default scheduler
+    # Old config -> threaded scheduler
     cfg_file = tmp_path / "dask.yml"
     with cfg_file.open("w", encoding="utf-8") as file:
         file.write("")

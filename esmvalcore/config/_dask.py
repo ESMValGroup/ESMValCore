@@ -195,7 +195,7 @@ def get_distributed_client() -> Generator[None | Client]:
     if dask.config.get("scheduler_address", None) is None:
         client = None
         logger.info(
-            "Using Dask default scheduler. The distributed scheduler is "
+            "Using Dask threaded scheduler. The distributed scheduler is "
             "recommended, please read https://docs.esmvaltool.org/projects/"
             "ESMValCore/en/latest/quickstart/"
             "configure.html#dask-configuration how to use a distributed "

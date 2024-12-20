@@ -292,9 +292,9 @@ Dask arrays consist of many small
 parallel.
 In order to figure out what needs to be computed when, Dask makes use of a
 '`scheduler <https://docs.dask.org/en/stable/scheduling.html>`__'.
-The default scheduler in Dask is rather basic, so it can only run on a single
-computer and it may not always find the optimal task scheduling solution,
-resulting in excessive memory use when using e.g. the
+The default (thread-based) scheduler in Dask is rather basic, so it can only
+run on a single computer and it may not always find the optimal task scheduling
+solution, resulting in excessive memory use when using e.g. the
 :func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
 Therefore it is recommended that you take a moment to configure the
 `Dask distributed <https://distributed.dask.org>`__ scheduler.
@@ -320,7 +320,7 @@ or alternatively in the command line via
 
 Available predefined Dask profiles:
 
-- ``local_threaded`` (selected by default): use `default thread-based scheduler
+- ``local_threaded`` (selected by default): use `threaded scheduler
   <https://docs.dask.org/en/stable/scheduling.html#local-threads>`__ without
   any further options.
 - ``local_distributed``: use `local distributed scheduler
@@ -342,8 +342,8 @@ Extensive documentation on setting up Dask Clusters is available `here
 .. note::
 
   If not all preprocessor functions support lazy data, computational
-  performance may be best with the :ref:`default scheduler
-  <config-dask-default-scheduler>`.
+  performance may be best with the :ref:`threaded scheduler
+  <config-dask-threaded-scheduler>`.
   See :issue:`674` for progress on making all preprocessor functions lazy.
 
 *Personal computer*
@@ -468,12 +468,12 @@ Therefore, it may be beneficial to use fewer threads per worker if the
 computation is very simple and the runtime is determined by the
 speed with which the data can be read from and/or written to disk.
 
-.. _config-dask-default-scheduler:
+.. _config-dask-threaded-scheduler:
 
-Custom Dask default scheduler configuration
+Custom Dask threaded scheduler configuration
 -------------------------------------------
 
-The Dask default scheduler can be a good choice for recipes using a small
+The Dask threaded scheduler can be a good choice for recipes using a small
 amount of data or when running a recipe where not all preprocessor functions
 are lazy yet (see :issue:`674` for the current status).
 
@@ -486,8 +486,8 @@ compared to the amount of memory they have available.
 Typically, Dask requires about 2 GiB of RAM per worker, but this may be more
 depending on the computation.
 
-To set the number of workers used by the (thread-based) Dask default scheduler,
-use the following configuration:
+To set the number of workers used by the Dask threaded scheduler, use the
+following configuration:
 
 .. code:: yaml
 
@@ -556,17 +556,17 @@ Options for Dask profiles
 +===============================+========================================+=============================+========================================+
 | ``cluster``                   | Keyword arguments to initialize a Dask | :obj:`dict`                 | If omitted, use externally managed     |
 |                               | distributed cluster. Needs the option  |                             | cluster if ``scheduler_address`` is    |
-|                               | ``type``, which specifies the class of |                             | given or a :ref:`Dask default          |
+|                               | ``type``, which specifies the class of |                             | given or a :ref:`Dask threaded         |
 |                               | the cluster. The remaining options are |                             | scheduler                              |
-|                               | passed as keyword arguments to         |                             | <config-dask-default-scheduler>`       |
+|                               | passed as keyword arguments to         |                             | <config-dask-threaded-scheduler>`      |
 |                               | initialize that class. Cannot be used  |                             | otherwise.                             |
 |                               | in combination with                    |                             |                                        |
 |                               | ``scheduler_address``.                 |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``scheduler_address``         | Scheduler address of an externally     | :obj:`str`                  | If omitted, use a Dask distributed     |
 |                               | managed cluster. Will be passed to     |                             | cluster if ``cluster`` is given or a   |
-|                               | :class:`distributed.Client`. Cannot be |                             | :ref:`Dask default scheduler           |
-|                               | used in combination with ``cluster``.  |                             | <config-dask-default-scheduler>`       |
+|                               | :class:`distributed.Client`. Cannot be |                             | :ref:`Dask threaded scheduler          |
+|                               | used in combination with ``cluster``.  |                             | <config-dask-threaded-scheduler>`      |
 |                               |                                        |                             | otherwise.                             |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | All other options             | Passed as keyword arguments to         | Any                         | No defaults.                           |
