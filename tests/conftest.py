@@ -16,7 +16,7 @@ def cfg_default():
     return cfg
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
     for key, value in cfg_default.items():
