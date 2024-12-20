@@ -40,7 +40,7 @@ def test_get_distributed_client_empty_dask_file(mocker, tmp_path):
 # TODO: Remove in v2.14.0
 @pytest.mark.parametrize("use_new_dask_config", ["", "1"])
 def test_force_new_dask_config(
-    monkeypatch, mocker, tmp_path, use_new_dask_config
+    monkeypatch, mocker, tmp_path, mock_dask_config_set, use_new_dask_config
 ):
     # Old config -> threaded scheduler
     cfg_file = tmp_path / "dask.yml"
