@@ -368,20 +368,6 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
     seasons = [season, res_season]
     coords_to_remove = []
 
-    if full: # need to first extract time to trim incomplete seasons
-        time_coord = cube.coord('time')
-        
-        start_year = time_coord.units.num2date( time_coord.points[0] ).year
-        start_time = dict( start_year=start_year, start_month=sstart+1, start_day=1 )
-
-        end_year = time_coord.units.num2date( time_coord.points[-1] ).year
-        end_month = sstart + len(season) + 1 # end of season
-        if end_month>12: 
-            end_month -= 12
-        end_time_plus_one_day = dict( end_year=end_year, end_month=end_month +1, end_day=1 )
-
-        cube = extract_time( cube, **start_time, **end_time_plus_one_day )
-
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
             cube, "time", name="clim_season", seasons=seasons
@@ -395,6 +381,26 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
         coords_to_remove.append("season_year")
 
     result = cube.extract(iris.Constraint(clim_season=season))
+
+    if full: # remove incomplete seasons
+        iris.coord_categorisation.add_month_number(result, "time", name="month_number")
+
+        send = sstart + len(season)-1  # end of season
+        if send>=12: send -= 12
+
+        # add coordinate which flags whether months are part of a full season
+        full_season = np.full_like( result.coord('month_number').points, 1 )
+        first_month = np.where(result.coord('month_number').points == sstart+1 )[0][0]
+        last_month  = np.where(result.coord('month_number').points == send+1 )[0][-1]
+        full_season[ :first_month ] = 0
+        full_season[ last_month+1: ] = 0
+
+        full_season_coord = iris.coords.AuxCoord(full_season, long_name="full_season")
+        result.add_aux_coord(full_season_coord, data_dims=result.coord_dims('time'))
+        coords_to_remove.append("season_year")
+        
+        result = result.extract(iris.Constraint(full_season=1))
+
     for coord in coords_to_remove:
         cube.remove_coord(coord)
     if result is None:

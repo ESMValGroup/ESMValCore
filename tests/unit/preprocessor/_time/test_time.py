@@ -632,6 +632,18 @@ class TestExtractSeason(tests.Test):
             self.cube.coord("season_year")
 
 
+    def test_get_djf_full(self):
+        """Test function for winter."""
+        sliced = extract_season(self.cube, "DJF", full=True)
+        iris.coord_categorisation.add_month_number(sliced, "time")
+        assert_array_equal(
+            np.array([12, 1, 2]), sliced.coord("month_number").points
+        )
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord("clim_season")
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord("season_year")
+
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
 
