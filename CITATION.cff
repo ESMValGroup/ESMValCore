@@ -223,6 +223,11 @@ authors:
     family-names: Garcia Perdomo
     given-names: Karen
     orcid: "https://orcid.org/0009-0004-2333-3358"
+  -
+    affiliation: "ECCC, Canada"
+    family-names: Webb
+    given-names: Kristi
+    orcid: "https://orcid.org/0000-0002-8610-0672"
 
 cff-version: 1.2.0
 date-released: 2024-11-26
