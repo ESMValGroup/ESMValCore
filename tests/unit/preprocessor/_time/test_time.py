@@ -634,6 +634,7 @@ class TestExtractSeason(tests.Test):
 
     def test_get_djf_full(self):
         """Test function for winter."""
+
         sliced = extract_season(self.cube, "DJF", full=True)
         iris.coord_categorisation.add_month_number(sliced, "time")
         assert_array_equal(

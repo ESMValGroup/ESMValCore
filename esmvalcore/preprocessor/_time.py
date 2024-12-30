@@ -402,9 +402,11 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
         result.add_aux_coord(
             full_season_coord, data_dims=result.coord_dims('time')
         )
-        coords_to_remove.append("season_year")
         
         result = result.extract(iris.Constraint(full_season=1))
+
+        for coord in ['full_season','month_number']:
+            result.remove_coord(coord)
 
     for coord in coords_to_remove:
         cube.remove_coord(coord)
