@@ -383,10 +383,13 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
     result = cube.extract(iris.Constraint(clim_season=season))
 
     if full: # remove incomplete seasons
-        iris.coord_categorisation.add_month_number(result, "time", name="month_number")
+        iris.coord_categorisation.add_month_number(
+            result, "time", name="month_number"
+        )
 
         send = sstart + len(season)-1  # end of season
-        if send>=12: send -= 12
+        if send>=12: 
+            send -= 12
 
         # add coordinate which flags whether months are part of a full season
         full_season = np.full_like( result.coord('month_number').points, 1 )
@@ -396,7 +399,9 @@ def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
         full_season[ last_month+1: ] = 0
 
         full_season_coord = iris.coords.AuxCoord(full_season, long_name="full_season")
-        result.add_aux_coord(full_season_coord, data_dims=result.coord_dims('time'))
+        result.add_aux_coord(
+            full_season_coord, data_dims=result.coord_dims('time')
+        )
         coords_to_remove.append("season_year")
         
         result = result.extract(iris.Constraint(full_season=1))
