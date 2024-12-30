@@ -1359,9 +1359,12 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 
 Extract only the times that occur within a specific season.
 
-This function only has one argument: ``season``. This is the named season to
+This function has one required argument: ``season``. This is the named season to
 extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
 combinations, e.g. JJAS.
+
+The argument ``full`` specifies whether only full seasons are returned, i.e. DJF 
+but not JF. Default is False.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
