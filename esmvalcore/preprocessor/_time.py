@@ -348,7 +348,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     return _extract_datetime(cube, t_1, t_2)
 
 
-def extract_season(cube: Cube, season: str) -> Cube:
+def extract_season(cube: Cube, season: str, full: bool = False) -> Cube:
     """Slice cube to get only the data belonging to a specific season.
 
     Parameters
@@ -358,6 +358,9 @@ def extract_season(cube: Cube, season: str) -> Cube:
     season:
         Season to extract. Available: DJF, MAM, JJA, SON
         and all sequentially correct combinations: e.g. JJAS
+    full:
+        Only return full seasons e.g. DJF and never JF
+        default: False
 
     Returns
     -------
@@ -368,38 +371,65 @@ def extract_season(cube: Cube, season: str) -> Cube:
     ------
     ValueError
         Requested season is not present in the cube.
-
     """
     season = season.upper()
 
-    allmonths = 'JFMAMJJASOND' * 2
+    allmonths = "JFMAMJJASOND" * 2
     if season not in allmonths:
-        raise ValueError(f"Unable to extract Season {season} "
-                         f"combination of months not possible.")
+        raise ValueError(
+            f"Unable to extract Season {season} "
+            f"combination of months not possible."
+        )
     sstart = allmonths.index(season)
-    res_season = allmonths[sstart + len(season):sstart + 12]
+    res_season = allmonths[sstart + len(season) : sstart + 12]
     seasons = [season, res_season]
     coords_to_remove = []
 
-    if not cube.coords('clim_season'):
-        iris.coord_categorisation.add_season(cube,
-                                             'time',
-                                             name='clim_season',
-                                             seasons=seasons)
-        coords_to_remove.append('clim_season')
+    if not cube.coords("clim_season"):
+        iris.coord_categorisation.add_season(
+            cube, "time", name="clim_season", seasons=seasons
+        )
+        coords_to_remove.append("clim_season")
 
-    if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(cube,
-                                                  'time',
-                                                  name='season_year',
-                                                  seasons=seasons)
-        coords_to_remove.append('season_year')
+    if not cube.coords("season_year"):
+        iris.coord_categorisation.add_season_year(
+            cube, "time", name="season_year", seasons=seasons
+        )
+        coords_to_remove.append("season_year")
 
     result = cube.extract(iris.Constraint(clim_season=season))
+
+    if full:  # remove incomplete seasons
+        iris.coord_categorisation.add_month_number(
+            result, "time", name="month_number"
+        )
+
+        # end of season
+        send = sstart + len(season) - 1
+        if send>=12:
+            send -= 12
+
+        # add coordinate which flags whether months are part of a full season
+        full_season = np.full_like(result.coord('month_number').points, 1)
+        first_month = np.where(result.coord('month_number').points == sstart+1)[0][0]
+        last_month = np.where(result.coord('month_number').points == send+1)[0][-1]
+        full_season[:first_month] = 0
+        full_season[last_month+1:] = 0
+
+        full_season_coord = iris.coords.AuxCoord(full_season, long_name="full_season")
+        result.add_aux_coord(
+            full_season_coord, data_dims=result.coord_dims('time')
+        )
+
+        result = result.extract(iris.Constraint(full_season=1))
+
+        for coord in ['full_season', 'month_number']:
+            result.remove_coord(coord)
+
     for coord in coords_to_remove:
         cube.remove_coord(coord)
     if result is None:
-        raise ValueError(f'Season {season!r} not present in cube {cube}')
+        raise ValueError(f"Season {season!r} not present in cube {cube}")
     return result
 
 
