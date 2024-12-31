@@ -886,3 +886,229 @@ def ensemble_statistics(
         keep_input_datasets=False,
         ignore_scalar_coords=ignore_scalar_coords,
     )
+
+######################################
+
+def _coords_are_aligned(cubes, coord):
+    """Return `True` if coords are aligned."""
+    first_time_array = cubes[0].coord(coord).points
+
+    for cube in cubes[1:]:
+        other_time_array = cube.coord(coord).points
+        if not np.array_equal(first_time_array, other_time_array):
+            return False
+
+    return True
+
+
+def _map_to_new_points(cube, new_points, coord):
+    """Map cube onto new cube with specified points.
+
+    Missing data inside original bounds is filled with nearest neighbour
+    Missing data outside original bounds is masked.
+    """
+    coord = cube.coord(coord)
+
+    # Try if the required coord points can be obtained by slicing the cube.
+    coord_slice = np.isin(coord.points, new_points)
+    if np.any(coord_slice) and np.array_equal(coord.points[coord_slice],
+                                             new_points):
+        coord_idx, = cube.coord_dims(coord)
+        indices = tuple(coord_slice if i == coord_idx else slice(None)
+                        for i in range(cube.ndim))
+        return cube[indices]
+
+    sample_points = [(coord, new_points)]
+    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
+
+    # Make sure that all integer coord coordinates ('year', 'month',
+    # 'day_of_year', etc.) are converted to floats, otherwise the
+    # nearest-neighbor interpolation will fail with a "cannot convert float NaN
+    # to integer". In addition, remove their bounds (this would be done by iris
+    # anyway).
+    int_coord_coords = []
+    for coord in cube.coords(dimensions=cube.coord_dims(coord),
+                             dim_coords=False):
+        if np.issubdtype(coord.points.dtype, np.integer):
+            int_coord_coords.append(coord.name())
+            coord.points = coord.points.astype(float)
+            coord.bounds = None
+
+    # Do the actual interpolation
+    try:
+        new_cube = cube.interpolate(sample_points, scheme)
+    except Exception as excinfo:
+        additional_info = ""
+        if cube.coords(coord, dimensions=()):
+            additional_info = (
+                " Note: this alignment does not work for scalar time "
+                "coordinates. To ignore all scalar coordinates in the input "
+                "data, use the preprocessor option "
+                "`ignore_scalar_coords=True`."
+            )
+        raise ValueError(
+            f"Tried to align cubes in multi-model statistics, but failed for "
+            f"cube {cube}\n and time points {new_points}.{additional_info}"
+        ) from excinfo
+
+    # Change the dtype of int_coord_coords to their original values
+    for coord_name in int_coord_coords:
+        coord = new_cube.coord(coord_name,
+                               dimensions=new_cube.coord_dims(coord),
+                               dim_coords=False)
+        coord.points = coord.points.astype(int)
+
+    return new_cube
+
+def _guess_coord_bounds(cube, coord):
+    """Guess coord bounds if possible."""
+    cube.coord(coord).bounds = None
+    if cube.coord(coord).shape == (1,):
+        logger.debug(
+            "Encountered scalar coord coordinate: "
+            "cannot determine its bounds"
+        )
+    else:
+        cube.coord(coord).guess_bounds()    
+
+def _align_coord(cubes, span, coord):
+    """Expand or subset cubes so they share a common coordinate dimension."""
+
+    if coord == 'time':
+        _unify_time_coordinates(cubes)
+
+    if _coords_are_aligned(cubes, coord=coord):
+        return cubes
+
+    all_coord_arrays = [cube.coord(coord).points for cube in cubes]
+
+    if span == 'overlap':
+        new_coord_points = reduce(np.intersect1d, all_coord_arrays)
+    elif span == 'full':
+        new_coord_points = reduce(np.union1d, all_coord_arrays)
+    else:
+        raise ValueError(f"Invalid argument for span: {span!r}"
+                         "Must be one of 'overlap', 'full'.")
+
+    if coord == 'time':
+        new_cubes = [_map_to_new_time(cube, new_coord_points) for cube in cubes]
+    else:
+        new_cubes = [_map_to_new_points(cube, new_coord_points, coord) for cube in cubes]
+
+    for cube in new_cubes:
+        # Make sure bounds exist and are consistent
+        _guess_coord_bounds(cube, coord=coord)
+
+    return new_cubes
+
+def align_coordinates(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    span: str,
+    coord: str,
+    output_products=None,
+) -> dict | set:
+    """align time coordinates
+
+    This function computes multi-model statistics on a list of ``products``,
+    which can be instances of :py:class:`~iris.cube.Cube` or
+    :py:class:`~esmvalcore.preprocessor.PreprocessorFile`.
+    The latter is used internally by ESMValCore to store
+    workflow and provenance information, and this option should typically be
+    ignored.
+
+    Cubes must have consistent shapes apart from a potential time dimension.
+    There are two options to combine time coordinates of different lengths, see
+    the ``span`` argument.
+
+    This function can handle cubes with differing metadata:
+
+    - Cubes with identical :meth:`~iris.coords.Coord.name` and
+      :attr:`~iris.coords.Coord.units` will get identical values for
+      :attr:`~iris.coords.Coord.standard_name`,
+      :attr:`~iris.coords.Coord.long_name`, and
+      :attr:`~iris.coords.Coord.var_name` (which will be arbitrarily set to the
+      first encountered value if different cubes have different values for
+      them).
+    - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
+      see :func:`iris.util.equalise_attributes`.
+    - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
+      prior to combining cubes.
+    - :meth:`~iris.cube.Cube.cell_measures`: All cell measures are deleted
+      prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.ancillary_variables`: All ancillary variables
+      are deleted prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.coords`: Exactly identical coordinates are
+      preserved. For coordinates with equal :meth:`~iris.coords.Coord.name` and
+      :attr:`~iris.coords.Coord.units`, names are equalized,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. For all other
+      coordinates, :attr:`~iris.coords.Coord.long_name` is removed,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. Scalar
+      coordinates can be removed if desired by the option
+      ``ignore_scalar_coords=True``. Please note that some special scalar
+      coordinates which are expected to differ across cubes (ancillary
+      coordinates for derived coordinates like `p0` and `ptop`) are always
+      removed.
+
+    Parameters
+    ----------
+    products:
+        Cubes (or products) over which the statistics will be computed.
+    span:
+        Overlap or full; if overlap, statitstics are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data. This option is ignored if input cubes do not have time
+        dimensions.
+    output_products: dict
+        For internal use only. A dict with statistics names as keys and
+        preprocessorfiles as values. If products are passed as input, the
+        statistics cubes will be assigned to these output products.
+
+    Returns
+    -------
+    dict | set
+        A :obj:`dict` of cubes or :obj:`set` of `output_products` depending on
+        the type of `products`.
+
+    Raises
+    ------
+    ValueError
+        If span is neither overlap nor full, or if input type is neither cubes
+        nor products.
+    """
+
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
+    if all_cubes_given:
+        cubes = products
+    else:
+        cubes = [cube for product in products for cube in product.cubes]
+    
+    # If all cubes contain a time coordinate, align them. If no cube contains a
+    # time coordinate, do nothing. Else, raise an exception.
+    coords = [cube.coords(coord) for cube in cubes]
+    if all(coords):
+        cubes = _align_coord(cubes, span=span, coord=coord)
+    elif not any(coords):
+        pass
+    else:
+        raise ValueError(
+            "Multi-model statistics failed to merge input cubes into a single "
+            "array: some cubes have a 'time' dimension, some do not have a "
+            "'time' dimension."
+        )
+
+    if all_cubes_given:
+        return cubes
+
+    i = 0
+    output_products = []
+    for product in products:
+        ncubes = len(product.cubes)
+        product.cubes = cubes[i:i+ncubes+1]
+        i += ncubes
+        output_products.append( product )
+
+    return set(output_products)    

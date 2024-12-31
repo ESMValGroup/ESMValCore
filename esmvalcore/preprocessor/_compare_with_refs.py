@@ -110,8 +110,6 @@ def ttest_pvalue(
         # an additional concatenate call is added here.
         reference = concatenate(ref_product.cubes)
 
-        print( '>', ref_product.filename.name )
-
         # Otherwise, iterate over all input products, calculate statistic and adapt
         # metadata and provenance information accordingly
         for product in products:
@@ -188,6 +186,8 @@ def bias(
     bias_type: BiasType = 'absolute',
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
+    align_time_coordinates: bool = False,
+    span: str = 'overlap',
 ) -> set[PreprocessorFile] | CubeList:
     """Calculate biases relative to a reference dataset.
 
@@ -263,6 +263,11 @@ def bias(
         (reference, ref_product) = _get_ref(products, 'reference_for_bias')
     else:
         ref_product = None
+
+    if align_time_coordinates:
+        from _multimodel import _align_time_coord
+        cubes = _align_time_coord(cubes, span)
+
 
     # Mask reference cube appropriately for relative biases
     if bias_type == 'relative':

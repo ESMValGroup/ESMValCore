@@ -46,7 +46,7 @@ from ._mask import (
     mask_outside_range,
     mask_invalid, unmask, # CUSTOM
 )
-from ._multimodel import ensemble_statistics, multi_model_statistics
+from ._multimodel import ensemble_statistics, multi_model_statistics, align_coordinates
 from ._other import clip, histogram
 from ._regrid import (
     extract_coordinate_points,
@@ -193,6 +193,7 @@ __all__ = [
     'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
+    'align_coordinates', # CUSTOM
     # Comparison with reference datasets
     'bias',
     'distance_metric',
@@ -244,6 +245,7 @@ MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
     'mask_multimodel',
     'mask_fillvalues',
+    'align_coordinates', #CUSTOM
 }
 
 
