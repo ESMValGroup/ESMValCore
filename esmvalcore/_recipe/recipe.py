@@ -386,13 +386,13 @@ def _get_tag(step, identifier, statistic):
     statistic = statistic.replace('.', '-')
 
     if step == 'ensemble_statistics':
-        tag = 'Ensemble' + statistic.title()
+        tag = 'Ensemble-' + statistic.title()
     elif step == 'multi_obs_statistics':
-        tag = 'MultiOBS' + statistic.title()
+        tag = 'MultiOBS-' + statistic.title()
     elif identifier == '':
-        tag = 'MultiModel' + statistic.title()
+        tag = 'MultiModel-' + statistic.title()
     else:
-        tag = identifier + statistic.title()
+        tag = identifier +'-'+ statistic.title()
 
     return tag
 
