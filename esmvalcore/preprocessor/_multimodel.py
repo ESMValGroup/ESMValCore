@@ -686,7 +686,6 @@ def multi_model_statistics(
     groupby: Optional[tuple] = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
-    exclude_false: bool = False,
 ) -> dict | set:
     """Compute multi-model statistics.
 
@@ -780,7 +779,6 @@ def multi_model_statistics(
         datasets will remain unchanged). If False, scalar coordinates will
         remain in the input datasets, which might lead to merge conflicts in
         case the input datasets have different scalar coordinates.
-    exclude_false: 
 
     Returns
     -------
@@ -804,7 +802,7 @@ def multi_model_statistics(
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
         statistics_products = set()
-        for group, input_prods in _group_products(products, by_key=groupby, exclude_false=exclude_false):
+        for group, input_prods in _group_products(products, by_key=groupby):
             sub_output_products = output_products[group]
 
             # Compute statistics on a single group
@@ -1135,5 +1133,4 @@ def multi_obs_statistics(
         groupby=obs_tag,
         keep_input_datasets=False,
         ignore_scalar_coords=ignore_scalar_coords,
-        exclude_false=True,
     )
