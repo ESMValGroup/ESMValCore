@@ -431,8 +431,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     }  # pass to ancestors
 
     output_products = set()
-    for identifier, products in _group_products(products, by_key=grouping, 
-                                                exclude_false=step in 'multi_obs_statistics'):
+    for identifier, products in _group_products(products, by_key=grouping):
         common_attributes = _get_common_attributes(products, settings)
 
         statistics = settings.get('statistics', [])

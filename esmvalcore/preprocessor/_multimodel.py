@@ -1131,6 +1131,6 @@ def multi_obs_statistics(
         statistics=statistics,
         output_products=output_products,
         groupby=obs_tag,
-        keep_input_datasets=False,
+        keep_input_datasets=keep_input_datasets,
         ignore_scalar_coords=ignore_scalar_coords,
     )
