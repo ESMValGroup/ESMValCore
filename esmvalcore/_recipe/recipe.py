@@ -387,6 +387,8 @@ def _get_tag(step, identifier, statistic):
 
     if step == 'ensemble_statistics':
         tag = 'Ensemble' + statistic.title()
+    elif step == 'multi_obs_statistics':
+        tag = 'MultiOBS' + statistic.title()
     elif identifier == '':
         tag = 'MultiModel' + statistic.title()
     else:
@@ -415,6 +417,9 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     if step == 'ensemble_statistics':
         check.ensemble_statistics_preproc(settings)
         grouping = ['project', 'dataset', 'exp', 'sub_experiment']
+    elif step == 'multi_obs_statistics':
+        check.multimodel_statistics_preproc(settings)
+        grouping = settings.get('obs_tag', 'control_OBS')
     else:
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get('groupby', None)
@@ -426,7 +431,8 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     }  # pass to ancestors
 
     output_products = set()
-    for identifier, products in _group_products(products, by_key=grouping):
+    for identifier, products in _group_products(products, by_key=grouping, 
+                                                exclude_false=step in 'multi_obs_statistics'):
         common_attributes = _get_common_attributes(products, settings)
 
         statistics = settings.get('statistics', [])
@@ -438,6 +444,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
                                             statistic_attributes[step])
+
             filename = _get_multiproduct_filename(statistic_attributes,
                                                   preproc_dir)
             statistic_product = PreprocessorFile(
@@ -615,7 +622,21 @@ def _configure_multi_product_preprocessor(
     else:
         multimodel_products = set()
 
-    for product in multimodel_products | ensemble_products:
+    multi_obs_step = 'multi_obs_statistics'
+    if multi_obs_step in profile:
+        multiobs_products, multiobs_settings = _update_multiproduct(
+            ensemble_products, order, preproc_dir, multi_obs_step)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=multi_obs_step,
+            downstream_settings=multiobs_settings,
+        )
+    else:
+        multiobs_products = set()
+
+    for product in multimodel_products | ensemble_products | multiobs_products:
         product.check()
         _set_start_end_year(product)
 

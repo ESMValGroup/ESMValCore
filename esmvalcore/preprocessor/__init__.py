@@ -46,7 +46,7 @@ from ._mask import (
     mask_outside_range,
     mask_invalid, unmask, # CUSTOM
 )
-from ._multimodel import ensemble_statistics, multi_model_statistics, align_coordinates
+from ._multimodel import ensemble_statistics, multi_model_statistics, align_coordinates, multi_obs_statistics
 from ._other import clip, histogram
 from ._regrid import (
     extract_coordinate_points,
@@ -194,6 +194,7 @@ __all__ = [
     # Multi model statistics
     'multi_model_statistics',
     'align_coordinates', # CUSTOM
+    'multi_obs_statistics', # CUSTOM
     # Comparison with reference datasets
     'bias',
     'distance_metric',
@@ -246,6 +247,7 @@ MULTI_MODEL_FUNCTIONS = {
     'mask_multimodel',
     'mask_fillvalues',
     'align_coordinates', #CUSTOM
+    'multi_obs_statistics', #CUSTOM
 }
 
 
@@ -323,6 +325,7 @@ def _check_multi_model_settings(products):
     """Check that multi dataset settings are identical for all products."""
     multi_model_steps = (step for step in MULTI_MODEL_FUNCTIONS
                          if any(step in p.settings for p in products))
+
     for step in multi_model_steps:
         reference = None
         for product in products:
@@ -350,7 +353,6 @@ def _get_multi_model_settings(products, step):
         else:
             exclude.add(product)
     return settings, exclude
-
 
 def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
@@ -599,7 +601,7 @@ class PreprocessorFile(TrackedFile):
             if attribute:
                 if isinstance(attribute, (list, tuple)):
                     attribute = '-'.join(attribute)
-                identifier.append(attribute)
+                identifier.append( str(attribute) )
 
         return '_'.join(identifier)
 
@@ -651,6 +653,7 @@ class PreprocessingTask(BaseTask):
         self._initialize_products(self.products)
         self._initialize_multimodel_provenance()
         self._initialize_ensemble_provenance()
+        self._initialize_multiobs_provenance()
 
     def _initialize_multiproduct_provenance(self, step):
         input_products = self._get_input_products(step)
@@ -674,6 +677,11 @@ class PreprocessingTask(BaseTask):
     def _initialize_ensemble_provenance(self):
         """Initialize provenance for ensemble statistics."""
         step = 'ensemble_statistics'
+        self._initialize_multiproduct_provenance(step)    
+
+    def _initialize_multiobs_provenance(self):
+        """Initialize provenance for multi-model statistics."""
+        step = 'multi_obs_statistics'
         self._initialize_multiproduct_provenance(step)
 
     def _get_input_products(self, step):

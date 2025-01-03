@@ -270,7 +270,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
     return wrapper
 
 
-def _groupby(iterable, keyfunc):
+def _groupby(iterable, keyfunc, exclude_false=False):
     """Group iterable by key function.
 
     The items are grouped by the value that is returned by the `keyfunc`
@@ -291,17 +291,18 @@ def _groupby(iterable, keyfunc):
     grouped = defaultdict(set)
     for item in iterable:
         key = keyfunc(item)
+        if not key and exclude_false: continue 
         grouped[key].add(item)
 
     return grouped
 
 
-def _group_products(products, by_key):
+def _group_products(products, by_key, exclude_false=False):
     """Group products by the given list of attributes."""
     def grouper(product):
         return product.group(by_key)
 
-    grouped = _groupby(products, keyfunc=grouper)
+    grouped = _groupby(products, keyfunc=grouper, exclude_false=exclude_false)
     return grouped.items()
 
 
