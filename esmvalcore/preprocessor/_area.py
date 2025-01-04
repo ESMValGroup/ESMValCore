@@ -44,6 +44,52 @@ logger = logging.getLogger(__name__)
 SHAPE_ID_KEYS: tuple[str, ...] = ('name', 'NAME', 'Name', 'id', 'ID')
 
 
+def extract_latitude(
+    cube: Cube,
+    start_latitude: float,
+    end_latitude: float,
+) -> Cube:
+    """Extract a latitude from a cube.
+
+    Parameters
+    ----------
+    cube:
+        Input data cube.
+    start_latitude:
+        Southern Boundary latitude.
+    end_latitude:
+        Northern Boundary Latitude.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Smaller cube.
+
+    """
+    # first examine if any cell_measures are present
+    cell_measures = cube.cell_measures()
+    ancil_vars = cube.ancillary_variables()
+
+    if abs(start_latitude) > 90.:
+        raise ValueError(f"Invalid start_latitude: {start_latitude}")
+    if abs(end_latitude) > 90.:
+        raise ValueError(f"Invalid end_latitude: {end_latitude}")
+
+    cube_coords = [c.name() for c in cube.coords() ]
+
+    if 'latitude' in cube_coords:
+        constraint = iris.Constraint( latitude=lambda cell: start_latitude < cell < end_latitude )
+    elif 'grid_latitude' in cube_coords:
+        constraint = iris.Constraint( grid_latitude=lambda cell: start_latitude < cell < end_latitude )
+    else:
+        raise Exception(f'Failed to identify latitude coordinate. Valid coordinates: { cube_coords } ')
+    region_subset = cube.extract( constraint )
+
+    return region_subset
+
+
+############################################
+
 def extract_region(
     cube: Cube,
     start_longitude: float,

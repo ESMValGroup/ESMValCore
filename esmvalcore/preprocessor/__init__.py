@@ -21,6 +21,7 @@ from ._area import (
     extract_shape,
     meridional_statistics,
     zonal_statistics,
+    extract_latitude, # CUSTOM
 )
 from ._compare_with_refs import bias, distance_metric, ttest_pvalue
 from ._cycles import amplitude
@@ -157,6 +158,7 @@ __all__ = [
     'rolling_window_statistics',
     # Region selection
     'extract_region',
+    'extract_latitude', # CUSTOM
     'extract_shape',
     'extract_volume',
     'extract_trajectory',
