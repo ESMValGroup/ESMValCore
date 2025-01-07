@@ -2806,3 +2806,19 @@ def test_fix_invalid_units():
     assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, 1.0)
+
+def test_fix_time_bounds():
+    """Test fix"""
+    # Create cube with time coordinate with incorrect time bounds
+    time_coord = DimCoord(
+        [0.0, 1.0],
+        var_name="time",
+        long_name="time",
+        units=Unit("day since 1950-01-01 00:00:00", calendar="gregorian"),
+    )
+    cube = Cube([1.0, 2.0], dim_coords_and_dims=[(time_coord, 0)])
+
+    fix = get_allvars_fix("Amon", "ta")
+    fix.fix_regular_time(cube)
+
+    assert cube.coord('time').has_bounds()
