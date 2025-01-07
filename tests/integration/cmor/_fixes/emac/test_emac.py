@@ -2812,7 +2812,7 @@ def test_fix_invalid_units():
 
 
 def test_fix_time_bounds(cubes_2d):
-    """Test fix"""
+    """Test fix."""
     cubes_2d[0].var_name = "tsurf"
     cubes_2d[0].units = "K"
     cubes_2d[0].coord("time").bounds = [0.0, 0.5]
