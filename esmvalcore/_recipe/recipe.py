@@ -388,7 +388,7 @@ def _get_tag(step, identifier, statistic):
     if step == 'ensemble_statistics':
         tag = 'Ensemble' + statistic.title()
     elif step == 'multi_obs_statistics':
-        tag = 'MultiOBS' + statistic.title()
+        tag = 'MultiObs' + statistic.title()
     elif identifier == '':
         tag = 'MultiModel' + statistic.title()
     else:
