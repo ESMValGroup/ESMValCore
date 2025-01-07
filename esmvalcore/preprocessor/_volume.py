@@ -482,13 +482,6 @@ def extract_transect(
     # ###
     coord_dim2 = False
     second_coord_range: None | list = None
-    lats = cube.coord('latitude')
-    lons = cube.coord('longitude')
-
-    if lats.ndim == 2:
-        raise ValueError(
-            'extract_transect: Not implemented for irregular arrays!' +
-            '\nTry regridding the data first.')
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
@@ -498,8 +491,21 @@ def extract_transect(
         raise ValueError(
             "extract_transect: Can't reduce lat and lon at the same time")
 
-    for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],
-                                        [latitude, longitude], [lats, lons]):
+    valid_coords = [ c.name() for c in cube.coords() ]
+    for dim_name, dim_cut in zip(['latitude', 'longitude'],
+                                        [latitude, longitude]):
+   
+        if dim_name not in valid_coords: continue
+        coord = cube.coord(dim_name)
+
+        if coord.ndim == 2:
+            raise ValueError(
+                'extract_transect: Not implemented for irregular arrays!' +
+                '\nTry regridding the data first.')
+
+        if isinstance(dim_cut,int):
+            dim_cut = float( dim_cut )
+
         # ####
         # Look for the first coordinate.
         if isinstance(dim_cut, float):
