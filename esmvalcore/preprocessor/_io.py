@@ -1,89 +1,45 @@
 """Functions for loading and saving cubes."""
+
 from __future__ import annotations
 
 import copy
 import logging
 import os
-import shutil
-import warnings
+from collections.abc import Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import Optional
+from typing import NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
+import cftime
 import iris
 import iris.aux_factory
 import iris.exceptions
+import numpy as np
 import yaml
 from cf_units import suppress_errors
+from dask.delayed import Delayed
 from iris.cube import CubeList
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 from .._task import write_ncl_settings
-from ._time import extract_time
 
 logger = logging.getLogger(__name__)
 
-GLOBAL_FILL_VALUE = 1e+20
+GLOBAL_FILL_VALUE = 1e20
 
 DATASET_KEYS = {
-    'mip',
+    "mip",
 }
 VARIABLE_KEYS = {
-    'reference_dataset',
-    'alternative_dataset',
+    "reference_dataset",
+    "alternative_dataset",
 }
-
-
-def _fix_aux_factories(cube):
-    """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
-
-    Necessary because of bug in :mod:`iris` (see issue #2478).
-    """
-    coord_names = [coord.name() for coord in cube.coords()]
-
-    # Hybrid sigma pressure coordinate
-    # TODO possibly add support for other hybrid coordinates
-    if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridPressureFactory(
-            delta=cube.coord(var_name='ap'),
-            sigma=cube.coord(var_name='b'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridPressureFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Hybrid sigma height coordinate
-    if 'atmosphere_hybrid_height_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridHeightFactory(
-            delta=cube.coord(var_name='lev'),
-            sigma=cube.coord(var_name='b'),
-            orography=cube.coord(var_name='orog'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Atmosphere sigma coordinate
-    if 'atmosphere_sigma_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.AtmosphereSigmaFactory(
-            pressure_at_top=cube.coord(var_name='ptop'),
-            sigma=cube.coord(var_name='lev'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory,
-                          iris.aux_factory.AtmosphereSigmaFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
+GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -99,18 +55,17 @@ def _load_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
     _delete_attributes(
-        raw_cube,
-        ('creation_date', 'tracking_id', 'history', 'comment')
+        raw_cube, ("creation_date", "tracking_id", "history", "comment")
     )
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
-        if coord.standard_name in ['longitude', 'latitude']:
-            units = _get_attr_from_field_coord(field, coord.var_name, 'units')
+        if coord.standard_name in ["longitude", "latitude"]:
+            units = _get_attr_from_field_coord(field, coord.var_name, "units")
             if units is not None:
                 coord.units = units
         # CMOR sometimes adds a history to the coordinates.
-        _delete_attributes(coord, ('history', ))
+        _delete_attributes(coord, ("history",))
 
 
 def _delete_attributes(iris_object, atts):
@@ -143,7 +98,6 @@ def load(
     ------
     ValueError
         Cubes are empty.
-
     """
     file = Path(file)
     logger.debug("Loading:\n%s", file)
@@ -156,49 +110,198 @@ def load(
     ignore_warnings = list(ignore_warnings)
 
     # Default warnings ignored for every dataset
-    ignore_warnings.append({
-        'message': "Missing CF-netCDF measure variable .*",
-        'category': UserWarning,
-        'module': 'iris',
-    })
-    ignore_warnings.append({
-        'message': "Ignoring netCDF variable '.*' invalid units '.*'",
-        'category': UserWarning,
-        'module': 'iris',
-    })
+    ignore_warnings.append(
+        {
+            "message": "Missing CF-netCDF measure variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        }
+    )
+    ignore_warnings.append(
+        {
+            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
+            "category": UserWarning,
+            "module": "iris",
+        }
+    )  # iris < 3.8
+    ignore_warnings.append(
+        {
+            "message": "Ignoring invalid units .* on netCDF variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        }
+    )  # iris >= 3.8
 
     # Filter warnings
     with catch_warnings():
         for warning_kwargs in ignore_warnings:
-            warning_kwargs.setdefault('action', 'ignore')
+            warning_kwargs.setdefault("action", "ignore")
             filterwarnings(**warning_kwargs)
         # Suppress UDUNITS-2 error messages that cannot be ignored with
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_load_callback)
+            # GRIB files need to be loaded with iris.load, otherwise we will
+            # get separate (lat, lon) slices for each time step, pressure
+            # level, etc.
+            if file.suffix in GRIB_FORMATS:
+                raw_cubes = iris.load(file, callback=_load_callback)
+            else:
+                raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
-        raise ValueError(f'Can not load cubes from {file}')
+        raise ValueError(f"Can not load cubes from {file}")
 
     for cube in raw_cubes:
-        cube.attributes['source_file'] = str(file)
+        cube.attributes["source_file"] = str(file)
 
     return raw_cubes
 
 
-def _by_two_concatenation(cubes):
-    """Perform a by-2 concatenation to avoid gaps."""
-    concatenated = iris.cube.CubeList(cubes).concatenate()
-    if len(concatenated) == 1:
-        return concatenated[0]
+def _concatenate_cubes(cubes, check_level):
+    """Concatenate cubes according to the check_level."""
+    kwargs = {
+        "check_aux_coords": True,
+        "check_cell_measures": True,
+        "check_ancils": True,
+        "check_derived_coords": True,
+    }
 
-    concatenated = _concatenate_overlapping_cubes(concatenated)
-    if len(concatenated) == 2:
-        _get_concatenation_error(concatenated)
-    else:
-        return concatenated[0]
+    if check_level > CheckLevels.DEFAULT:
+        kwargs = dict.fromkeys(kwargs, False)
+        logger.debug(
+            "Concatenation will be performed without checking "
+            "auxiliary coordinates, cell measures, ancillaries "
+            "and derived coordinates present in the cubes.",
+        )
+
+    concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
+
+    return concatenated
+
+
+class _TimesHelper:
+    def __init__(self, time):
+        self.times = time.core_points()
+        self.units = str(time.units)
+
+    def __getattr__(self, name):
+        return getattr(self.times, name)
+
+    def __len__(self):
+        return len(self.times)
+
+    def __getitem__(self, key):
+        return self.times[key]
+
+
+def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
+    """Handle time overlaps.
+
+    Parameters
+    ----------
+    cubes : iris.cube.CubeList
+        A list of cubes belonging to a single timeseries,
+        ordered by starting point with possible overlaps.
+
+    Returns
+    -------
+    iris.cube.CubeList
+        A list of cubes belonging to a single timeseries,
+        ordered by starting point with no overlaps.
+    """
+    if len(cubes) < 2:
+        return cubes
+
+    class _TrackedCube(NamedTuple):
+        cube: iris.cube.Cube
+        times: iris.coords.DimCoord
+        start: float
+        end: float
+
+        @classmethod
+        def from_cube(cls, cube):
+            """Construct tracked cube."""
+            times = cube.coord("time")
+            start, end = times.core_points()[[0, -1]]
+            return cls(cube, times, start, end)
+
+    new_cubes = iris.cube.CubeList()
+    current_cube = _TrackedCube.from_cube(cubes[0])
+    for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
+        if new_cube.start > current_cube.end:
+            # no overlap, use current cube and start again from new cube
+            logger.debug("Using %s", current_cube.cube)
+            new_cubes.append(current_cube.cube)
+            current_cube = new_cube
+            continue
+        # overlap
+        if current_cube.end > new_cube.end:
+            # current cube ends after new one, just forget new cube
+            logger.debug(
+                "Discarding %s because the time range "
+                "is already covered by %s",
+                new_cube.cube,
+                current_cube.cube,
+            )
+            continue
+        if new_cube.start == current_cube.start:
+            # new cube completely covers current one
+            # forget current cube
+            current_cube = new_cube
+            logger.debug(
+                "Discarding %s because the time range is covered by %s",
+                current_cube.cube,
+                new_cube.cube,
+            )
+            continue
+        # new cube ends after current one,
+        # use all of new cube, and shorten current cube to
+        # eliminate overlap with new cube
+        cut_index = (
+            cftime.time2index(
+                new_cube.start,
+                _TimesHelper(current_cube.times),
+                current_cube.times.units.calendar,
+                select="before",
+            )
+            + 1
+        )
+        logger.debug(
+            "Using %s shortened to %s due to overlap",
+            current_cube.cube,
+            current_cube.times.cell(cut_index).point,
+        )
+        new_cubes.append(current_cube.cube[:cut_index])
+        current_cube = new_cube
+
+    logger.debug("Using %s", current_cube.cube)
+    new_cubes.append(current_cube.cube)
+
+    return new_cubes
+
+
+def _fix_calendars(cubes):
+    """Check and homogenise calendars, if possible."""
+    calendars = [cube.coord("time").units.calendar for cube in cubes]
+    unique_calendars = np.unique(calendars)
+
+    calendar_ocurrences = np.array(
+        [calendars.count(calendar) for calendar in unique_calendars]
+    )
+    calendar_index = int(
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max())
+    )
+
+    for cube in cubes:
+        time_coord = cube.coord("time")
+        old_calendar = time_coord.units.calendar
+        if old_calendar != unique_calendars[calendar_index]:
+            new_unit = time_coord.units.change_calendar(
+                unique_calendars[calendar_index]
+            )
+            time_coord.units = new_unit
 
 
 def _get_concatenation_error(cubes):
@@ -208,61 +311,126 @@ def _get_concatenation_error(cubes):
         iris.cube.CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
-    logger.error('Can not concatenate cubes into a single one: %s', msg)
-    logger.error('Resulting cubes:')
+    logger.error("Can not concatenate cubes into a single one: %s", msg)
+    logger.error("Resulting cubes:")
     for cube in cubes:
         logger.error(cube)
         time = cube.coord("time")
-        logger.error('From %s to %s', time.cell(0), time.cell(-1))
+        logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    raise ValueError(f'Can not concatenate cubes: {msg}')
+    raise ValueError(f"Can not concatenate cubes: {msg}")
 
 
-def concatenate(cubes):
-    """Concatenate all cubes after fixing metadata."""
+def _sort_cubes_by_time(cubes):
+    """Sort CubeList by time coordinate."""
+    try:
+        cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
+    except iris.exceptions.CoordinateNotFoundError as exc:
+        msg = "One or more cubes {} are missing".format(
+            cubes
+        ) + " time coordinate: {}".format(str(exc))
+        raise ValueError(msg) from exc
+    except TypeError as error:
+        msg = (
+            "Cubes cannot be sorted "
+            f"due to differing time units: {str(error)}"
+        )
+        raise TypeError(msg) from error
+    return cubes
+
+
+def _concatenate_cubes_by_experiment(
+    cubes: list[iris.cube.Cube],
+) -> list[iris.cube.Cube]:
+    """Concatenate cubes by experiment.
+
+    This ensures overlapping (branching) experiments are handled correctly.
+    """
+    # get the possible facet names in CMIP3, 5, 6 for exp
+    # currently these are 'experiment', 'experiment_id'
+    exp_facet_names = {
+        project["exp"] for project in FACETS.values() if "exp" in project
+    }
+
+    def get_exp(cube: iris.cube.Cube) -> str:
+        for key in exp_facet_names:
+            if key in cube.attributes:
+                return cube.attributes[key]
+        return ""
+
+    experiments = {get_exp(cube) for cube in cubes}
+    if len(experiments) > 1:
+        # first do experiment-wise concatenation, then time-based
+        cubes = [
+            concatenate([cube for cube in cubes if get_exp(cube) == exp])
+            for exp in experiments
+        ]
+
+    return cubes
+
+
+def concatenate(cubes, check_level=CheckLevels.DEFAULT):
+    """Concatenate all cubes after fixing metadata.
+
+    Parameters
+    ----------
+    cubes: iterable of iris.cube.Cube
+        Data cubes to be concatenated
+    check_level: CheckLevels
+        Level of strictness of the checks in the concatenation.
+
+    Returns
+    -------
+    cube: iris.cube.Cube
+        Resulting concatenated cube.
+
+    Raises
+    ------
+    ValueError
+        Concatenation was not possible.
+    """
     if not cubes:
         return cubes
     if len(cubes) == 1:
         return cubes[0]
 
+    cubes = _concatenate_cubes_by_experiment(cubes)
+
     merge_cube_attributes(cubes)
+    cubes = _sort_cubes_by_time(cubes)
+    _fix_calendars(cubes)
+    cubes = _check_time_overlaps(cubes)
+    cubes = [_rechunk_aux_factory_dependencies(cube) for cube in cubes]
+    result = _concatenate_cubes(cubes, check_level=check_level)
 
-    if len(cubes) > 1:
-        # order cubes by first time point
-        try:
-            cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
-        except iris.exceptions.CoordinateNotFoundError as exc:
-            msg = "One or more cubes {} are missing".format(cubes) + \
-                  " time coordinate: {}".format(str(exc))
-            raise ValueError(msg)
-
-        # iteratively concatenate starting with first cube
-        result = cubes[0]
-        for cube in cubes[1:]:
-            result = _by_two_concatenation([result, cube])
-
-    _fix_aux_factories(result)
+    if len(result) == 1:
+        result = result[0]
+    else:
+        _get_concatenation_error(result)
 
     return result
 
 
-def save(cubes,
-         filename,
-         optimize_access='',
-         compress=False,
-         alias='',
-         **kwargs):
+def save(
+    cubes: Sequence[iris.cube.Cube],
+    filename: Path | str,
+    optimize_access: str = "",
+    compress: bool = False,
+    alias: str = "",
+    compute: bool = True,
+    **kwargs,
+) -> Delayed | None:
     """Save iris cubes to file.
 
     Parameters
     ----------
-    cubes: iterable of iris.cube.Cube
+    cubes:
         Data cubes to be saved
 
-    filename: str
+    filename:
         Name of target file
 
-    optimize_access: str
+    optimize_access:
         Set internal NetCDF chunking to favour a reading scheme
 
         Values can be map or timeseries, which improve performance when
@@ -271,16 +439,30 @@ def save(cubes,
         case the better performance will be avhieved by loading all the values
         in that coordinate at a time
 
-    compress: bool, optional
+    compress:
         Use NetCDF internal compression.
 
-    alias: str, optional
+    alias:
         Var name to use when saving instead of the one in the cube.
+
+    compute : bool, default=True
+        Default is ``True``, meaning complete the file immediately, and return ``None``.
+
+        When ``False``, create the output file but don't write any lazy array content to
+        its variables, such as lazy cube data or aux-coord points and bounds.
+        Instead return a :class:`dask.delayed.Delayed` which, when computed, will
+        stream all the lazy content via :meth:`dask.store`, to complete the file.
+        Several such data saves can be performed in parallel, by passing a list of them
+        into a :func:`dask.compute` call.
+
+    **kwargs:
+        See :func:`iris.fileformats.netcdf.saver.save` for additional
+        keyword arguments.
 
     Returns
     -------
-    str
-        filename
+    :class:`dask.delayed.Delayed` or :obj:`None`
+        A delayed object that can be used to save the data in the cube.
 
     Raises
     ------
@@ -290,52 +472,75 @@ def save(cubes,
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
 
+    if Path(filename).suffix.lower() == ".nc":
+        kwargs["compute"] = compute
+
     # Rename some arguments
-    kwargs['target'] = filename
-    kwargs['zlib'] = compress
+    kwargs["target"] = filename
+    kwargs["zlib"] = compress
 
     dirname = os.path.dirname(filename)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    if (os.path.exists(filename)
-            and all(cube.has_lazy_data() for cube in cubes)):
+    if os.path.exists(filename) and all(
+        cube.has_lazy_data() for cube in cubes
+    ):
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
-            "The cube is probably unchanged.", cubes, filename)
-        return filename
+            "The cube is probably unchanged.",
+            cubes,
+            filename,
+        )
+        return None
 
     for cube in cubes:
-        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
-                     "lazy" if cube.has_lazy_data() else "realized", filename)
+        logger.debug(
+            "Saving cube:\n%s\nwith %s data to %s",
+            cube,
+            "lazy" if cube.has_lazy_data() else "realized",
+            filename,
+        )
     if optimize_access:
         cube = cubes[0]
-        if optimize_access == 'map':
+        if optimize_access == "map":
             dims = set(
-                cube.coord_dims('latitude') + cube.coord_dims('longitude'))
-        elif optimize_access == 'timeseries':
-            dims = set(cube.coord_dims('time'))
+                cube.coord_dims("latitude") + cube.coord_dims("longitude")
+            )
+        elif optimize_access == "timeseries":
+            dims = set(cube.coord_dims("time"))
         else:
-            dims = tuple()
-            for coord_dims in (cube.coord_dims(dimension)
-                               for dimension in optimize_access.split(' ')):
-                dims += coord_dims
-            dims = set(dims)
+            dims = {
+                dim
+                for coord_name in optimize_access.split(" ")
+                for dim in cube.coord_dims(coord_name)
+            }
 
-        kwargs['chunksizes'] = tuple(
+        kwargs["chunksizes"] = tuple(
             length if index in dims else 1
-            for index, length in enumerate(cube.shape))
+            for index, length in enumerate(cube.shape)
+        )
 
-    kwargs['fill_value'] = GLOBAL_FILL_VALUE
+    kwargs["fill_value"] = GLOBAL_FILL_VALUE
     if alias:
-
         for cube in cubes:
-            logger.debug('Changing var_name from %s to %s', cube.var_name,
-                         alias)
+            logger.debug(
+                "Changing var_name from %s to %s", cube.var_name, alias
+            )
             cube.var_name = alias
-    iris.save(cubes, **kwargs)
 
-    return filename
+    # Ignore some warnings when saving
+    with catch_warnings():
+        filterwarnings(
+            "ignore",
+            message=(
+                ".* is being added as CF data variable attribute, but .* "
+                "should only be a CF global attribute"
+            ),
+            category=UserWarning,
+            module="iris",
+        )
+        return iris.save(cubes, **kwargs)
 
 
 def _get_debug_filename(filename, step):
@@ -345,50 +550,8 @@ def _get_debug_filename(filename, step):
         num = int(sorted(os.listdir(dirname)).pop()[:2]) + 1
     else:
         num = 0
-    filename = os.path.join(dirname, '{:02}_{}.nc'.format(num, step))
+    filename = os.path.join(dirname, "{:02}_{}.nc".format(num, step))
     return filename
-
-
-def cleanup(files, remove=None):
-    """Clean up after running the preprocessor.
-
-    Warning
-    -------
-    .. deprecated:: 2.8.0
-        This function is no longer used and has been deprecated since
-        ESMValCore version 2.8.0. It is scheduled for removal in version
-        2.10.0.
-
-    Parameters
-    ----------
-    files: list of Path
-        Preprocessor output files (will not be removed if not in `removed`).
-    remove: list of Path or None, optional (default: None)
-        Files or directories to remove.
-
-    Returns
-    -------
-    list of Path
-        Preprocessor output files.
-
-    """
-    deprecation_msg = (
-        "The preprocessor function `cleanup` has been deprecated in "
-        "ESMValCore version 2.8.0 and is scheduled for removal in version "
-        "2.10.0."
-    )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-
-    if remove is None:
-        remove = []
-
-    for path in remove:
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        elif os.path.isfile(path):
-            os.remove(path)
-
-    return files
 
 
 def _sort_products(products):
@@ -396,8 +559,8 @@ def _sort_products(products):
     return sorted(
         products,
         key=lambda p: (
-            p.attributes.get('recipe_dataset_index', 1e6),
-            p.attributes.get('dataset', ''),
+            p.attributes.get("recipe_dataset_index", 1e6),
+            p.attributes.get("dataset", ""),
         ),
     )
 
@@ -405,21 +568,22 @@ def _sort_products(products):
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
-    for output_dir, prods in groupby(products,
-                                     lambda p: os.path.dirname(p.filename)):
+    for output_dir, prods in groupby(
+        products, lambda p: os.path.dirname(p.filename)
+    ):
         sorted_products = _sort_products(prods)
         metadata = {}
         for product in sorted_products:
-            if isinstance(product.attributes.get('exp'), (list, tuple)):
+            if isinstance(product.attributes.get("exp"), (list, tuple)):
                 product.attributes = dict(product.attributes)
-                product.attributes['exp'] = '-'.join(product.attributes['exp'])
-            if 'original_short_name' in product.attributes:
-                del product.attributes['original_short_name']
+                product.attributes["exp"] = "-".join(product.attributes["exp"])
+            if "original_short_name" in product.attributes:
+                del product.attributes["original_short_name"]
             metadata[product.filename] = product.attributes
 
-        output_filename = os.path.join(output_dir, 'metadata.yml')
+        output_filename = os.path.join(output_dir, "metadata.yml")
         output_files.append(output_filename)
-        with open(output_filename, 'w') as file:
+        with open(output_filename, "w", encoding="utf-8") as file:
             yaml.safe_dump(metadata, file)
         if write_ncl:
             output_files.append(_write_ncl_metadata(output_dir, metadata))
@@ -431,123 +595,31 @@ def _write_ncl_metadata(output_dir, metadata):
     """Write NCL metadata files to output_dir."""
     variables = [copy.deepcopy(v) for v in metadata.values()]
 
-    info = {'input_file_info': variables}
+    info = {"input_file_info": variables}
 
     # Split input_file_info into dataset and variable properties
     # dataset keys and keys with non-identical values will be stored
     # in dataset_info, the rest in variable_info
     variable_info = {}
-    info['variable_info'] = [variable_info]
-    info['dataset_info'] = []
+    info["variable_info"] = [variable_info]
+    info["dataset_info"] = []
     for variable in variables:
         dataset_info = {}
-        info['dataset_info'].append(dataset_info)
+        info["dataset_info"].append(dataset_info)
         for key in variable:
-            dataset_specific = any(variable[key] != var.get(key, object())
-                                   for var in variables)
-            if ((dataset_specific or key in DATASET_KEYS)
-                    and key not in VARIABLE_KEYS):
+            dataset_specific = any(
+                variable[key] != var.get(key, object()) for var in variables
+            )
+            if (
+                dataset_specific or key in DATASET_KEYS
+            ) and key not in VARIABLE_KEYS:
                 dataset_info[key] = variable[key]
             else:
                 variable_info[key] = variable[key]
 
-    filename = os.path.join(output_dir,
-                            variable_info['short_name'] + '_info.ncl')
+    filename = os.path.join(
+        output_dir, variable_info["short_name"] + "_info.ncl"
+    )
     write_ncl_settings(info, filename)
 
     return filename
-
-
-def _concatenate_overlapping_cubes(cubes):
-    """Concatenate time-overlapping cubes (two cubes only)."""
-    # we arrange [cube1, cube2] so that cube1.start <= cube2.start
-    if cubes[0].coord('time').points[0] <= cubes[1].coord('time').points[0]:
-        cubes = [cubes[0], cubes[1]]
-        logger.debug(
-            "Will attempt to concatenate cubes %s "
-            "and %s in this order", cubes[0], cubes[1])
-    else:
-        cubes = [cubes[1], cubes[0]]
-        logger.debug(
-            "Will attempt to concatenate cubes %s "
-            "and %s in this order", cubes[1], cubes[0])
-
-    # get time end points
-    time_1 = cubes[0].coord('time')
-    time_2 = cubes[1].coord('time')
-    if time_1.units != time_2.units:
-        raise ValueError(
-            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
-            f"time units {time_1.units}, calendar {time_1.units.calendar} "
-            f"and {time_2.units}, calendar {time_2.units.calendar} differ")
-    data_start_1 = time_1.cell(0).point
-    data_start_2 = time_2.cell(0).point
-    data_end_1 = time_1.cell(-1).point
-    data_end_2 = time_2.cell(-1).point
-
-    # case 1: both cubes start at the same time -> return longer cube
-    if data_start_1 == data_start_2:
-        if data_end_1 <= data_end_2:
-            logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before %s", cubes[0], cubes[1])
-            logger.debug("Cube %s contains all needed data so using it fully",
-                         cubes[1])
-            cubes = [cubes[1]]
-        else:
-            logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before %s", cubes[1], cubes[0])
-            logger.debug("Cube %s contains all needed data so using it fully",
-                         cubes[0])
-            cubes = [cubes[0]]
-
-    # case 2: cube1 starts before cube2
-    else:
-        # find time overlap, if any
-        start_overlap = next((time_1.units.num2date(t)
-                              for t in time_1.points if t in time_2.points),
-                             None)
-        # case 2.0: no overlap (new iris implementation does allow
-        # concatenation of cubes with no overlap)
-        if not start_overlap:
-            logger.debug(
-                "Unable to concatenate non-overlapping cubes\n%s\nand\n%s"
-                "separated in time.", cubes[0], cubes[1])
-        # case 2.1: cube1 ends after cube2 -> return cube1
-        elif data_end_1 > data_end_2:
-            cubes = [cubes[0]]
-            logger.debug("Using only data from %s", cubes[0])
-        # case 2.2: cube1 ends before cube2 -> use full cube2 and shorten cube1
-        else:
-            logger.debug(
-                "Extracting time slice between %s and %s from cube %s to use "
-                "it for concatenation with cube %s", "-".join([
-                    str(data_start_1.year),
-                    str(data_start_1.month),
-                    str(data_start_1.day)
-                ]), "-".join([
-                    str(start_overlap.year),
-                    str(start_overlap.month),
-                    str(start_overlap.day)
-                ]), cubes[0], cubes[1])
-            c1_delta = extract_time(cubes[0], data_start_1.year,
-                                    data_start_1.month, data_start_1.day,
-                                    start_overlap.year, start_overlap.month,
-                                    start_overlap.day)
-            # convert c1_delta scalar cube to vector cube, if needed
-            if c1_delta.shape == ():
-                c1_delta = iris.util.new_axis(c1_delta, scalar_coord="time")
-            cubes = iris.cube.CubeList([c1_delta, cubes[1]])
-            logger.debug("Attempting concatenatenation of %s with %s",
-                         c1_delta, cubes[1])
-            try:
-                cubes = [iris.cube.CubeList(cubes).concatenate_cube()]
-            except iris.exceptions.ConcatenateError as ex:
-                logger.error('Can not concatenate cubes: %s', ex)
-                logger.error('Cubes:')
-                for cube in cubes:
-                    logger.error(cube)
-                raise ex
-
-    return cubes

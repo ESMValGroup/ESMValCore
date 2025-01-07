@@ -7,8 +7,8 @@ Input data
 Overview
 ========
 Data discovery and retrieval is the first step in any evaluation process;
-ESMValTool uses a `semi-automated` data finding mechanism with inputs from both
-the user configuration file and the recipe file: this means that the user will
+ESMValCore uses a `semi-automated` data finding mechanism with inputs from both
+the configuration and the recipe file: this means that the user will
 have to provide the tool with a set of parameters related to the data needed
 and once these parameters have been provided, the tool will automatically find
 the right data. We will detail below the data finding and retrieval process and
@@ -31,7 +31,7 @@ standard for naming files and structured paths; the `DRS
 <https://www.ecmwf.int/sites/default/files/elibrary/2014/13713-data-reference-syntax-governing-standards-within-climate-research-data-archived-esgf.pdf>`_
 ensures that files and paths to them are named according to a
 standardized convention. Examples of this convention, also used by
-ESMValTool for file discovery and data retrieval, include:
+ESMValCore for file discovery and data retrieval, include:
 
 * CMIP6 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{grid}_{start-date}-{end-date}.nc``
 * CMIP5 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{start-date}-{end-date}.nc``
@@ -44,7 +44,7 @@ ESGF data nodes, these paths differ slightly, for example:
   {variable_short_name}/{grid}``;
 * CMIP6 path for ETHZ: ``ROOT-ETHZ/{experiment}/{mip}/{variable_short_name}/{dataset_name}/{ensemble}/{grid}``
 
-From the ESMValTool user perspective the number of data input parameters is
+From the ESMValCore user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
 
@@ -105,31 +105,119 @@ Supported native reanalysis/observational datasets
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
 To use these datasets, put the files containing the data in the directory that
-you have configured for the ``native6`` project in your :ref:`user
-configuration file`, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+you have :ref:`configured <config_options>` for the ``rootpath`` of the
+``native6`` project, in a subdirectory called
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming you are
+using the ``default`` DRS for ``native6``).
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of native reanalysis/observational datasets currently
-supported.
 
-.. _read_native_era5:
+.. _read_native_era5_nc:
 
-ERA5
-^^^^
+ERA5 (in netCDF format downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
+the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
+For example for monthly data, place the files in the
+``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming you are using the ``default``
+DRS for ``native6``).
+
+- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
+  ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
+  ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``,
+  ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
 - Tier: 3
 
-.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page 
+.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page
   (https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview):
-  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive. 
+  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive.
   Therefore, negative values indicate evaporation and positive values indicate condensation."
-  
+
   In the CMOR table, these fluxes are defined as positive, if they go from the surface into the atmosphere:
-  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion 
+  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion
   of both liquid and solid phases to vapor (from underlying surface and vegetation)."
   Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be compatible with the CMOR standard used e.g. by the CMIP models.
+
+.. _read_native_era5_grib:
+
+ERA5 (in GRIB format available on DKRZ's Levante or downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ERA5 data in monthly, daily, and hourly resolution is `available on Levante
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
+in its native GRIB format.
+
+.. note::
+  ERA5 data in its native GRIB format can also be downloaded from the
+  `Copernicus Climate Data Store (CDS)
+  <https://cds.climate.copernicus.eu/datasets>`__.
+  For example, hourly data on pressure levels is available `here
+  <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=download>`__.
+  Reading self-downloaded ERA5 data in GRIB format is experimental and likely
+  requires additional setup from the user like setting up the proper directory
+  structure for the input files and/or creating a custom :ref:`DRS
+  <config_option_drs>`.
+
+To read these data with ESMValCore, use the :ref:`rootpath
+<config_option_rootpath>` ``/pool/data/ERA5`` with :ref:`DRS
+<config_option_drs>` ``DKRZ-ERA5-GRIB`` in your configuration, for example:
+
+.. code-block:: yaml
+
+  rootpath:
+    ...
+    native6:
+      /pool/data/ERA5: DKRZ-ERA5-GRIB
+    ...
+
+The `naming conventions
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
+for input directories and files for native ERA5 data in GRIB format on Levante
+are
+
+* input directories: ``{family}/{level}/{type}/{tres}/{grib_id}``
+* input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
+
+All of these facets have reasonable defaults preconfigured in the corresponding
+:ref:`extra facets<extra_facets>` file, which is available here:
+:download:`native6-era5.yml
+</../esmvalcore/config/extra_facets/native6-era5.yml>`.
+If necessary, these facets can be overwritten in the recipe.
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: cl, mip: Amon, tres: 1H, frequency: 1hr}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: ta, mip: Amon, type: fc, typeid: '12'}
+
+The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
+<https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
+By default, these data are regridded to a regular 0.25°x0.25° grid as
+`recommended by the ECMWF
+<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__
+using bilinear interpolation.
+
+To disable this, you can use the facet ``automatic_regrid: false`` in the
+recipe:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, automatic_regrid: false}
+
+- Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
+  ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,
+  ``snd``, ``snowmxrat27``, ``ta``, ``tas``, ``tdps``, ``toz``, ``ts``, ``ua``,
+  ``uas``, ``va``, ``vas``, ``wap``, ``zg``.
 
 .. _read_native_mswep:
 
@@ -140,7 +228,10 @@ MSWEP
 - Supported frequencies: ``mon``, ``day``, ``3hr``.
 - Tier: 3
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``native6`` project location.
+For example for monthly data, place the files in the
+``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming you are using the ``default``
+DRS for ``native6``).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -163,7 +254,7 @@ dedicated projects instead of the project ``native6``.
 CESM
 ^^^^
 
-ESMValTool is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
+ESMValCore is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
 output.
 
 .. warning::
@@ -183,7 +274,7 @@ The default naming conventions for input directories and files for CESM are
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 More information about CESM naming conventions are given `here
 <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
@@ -252,7 +343,7 @@ Key                  Description                            Default value if not
 EMAC
 ^^^^
 
-ESMValTool is able to read native `EMAC
+ESMValCore is able to read native `EMAC
 <https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
 model output.
 
@@ -262,7 +353,7 @@ The default naming conventions for input directories and files for EMAC are
 * input files: ``{exp}*{channel}{postproc_flag}.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -274,7 +365,7 @@ Thus, example dataset entries could look like this:
     - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: ta, raw_name: tm1_p39_cav, start_year: 2000, end_year: 2014}
 
 Please note the duplication of the name ``EMAC`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValTool's data finding and
+``dataset``, which is necessary to comply with ESMValCore's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``channel`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
@@ -285,7 +376,7 @@ facets<extra_facets>`.
 By default, the file :download:`emac-mappings.yml
 </../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
 purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
@@ -326,7 +417,7 @@ Key                  Description                            Default value if not
 ICON
 ^^^^
 
-ESMValTool is able to read native `ICON
+ESMValCore is able to read native `ICON
 <https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
 
 The default naming conventions for input directories and files for ICON are
@@ -335,7 +426,7 @@ The default naming conventions for input directories and files for ICON are
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -349,7 +440,7 @@ Thus, example dataset entries could look like this:
        end_year: 2014}
 
 Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValTool's data finding and
+``dataset``, which is necessary to comply with ESMValCore's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
@@ -383,12 +474,13 @@ is always disabled.
 Usually, ESMValCore will need the corresponding ICON grid file of your
 simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
-This grid file can either be specified as absolute or relative (to
-``auxiliary_data_dir`` as defined in the :ref:`user configuration file`) path
-with the facet ``horizontal_grid`` in the recipe or the extra facets (see
-below), or retrieved automatically from the `grid_file_uri` attribute of the
-input files.
-In the latter case, the file is downloaded once and then cached.
+This grid file can either be specified as absolute or relative (to the
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``) path with
+the facet ``horizontal_grid`` in the recipe or the extra facets (see below), or
+retrieved automatically from the `grid_file_uri` attribute of the input files.
+In the latter case, ESMValCore first searches the input directories specified
+for ICON for a grid file with that name, and if that was not successful, tries
+to download the file and cache it.
 The cached file is valid for 7 days.
 
 ESMValCore can automatically make native ICON data `UGRID
@@ -396,32 +488,17 @@ ESMValCore can automatically make native ICON data `UGRID
 loading the data.
 The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
-work correctly.
+work correctly and specifically by Iris to interpret the grid as a
+:ref:`mesh <iris:ugrid>`.
 An example is the horizontal regridding of native ICON data to a regular grid.
-While the built-in :ref:`unstructured_nearest scheme <built-in regridding
-schemes>` can handle unstructured grids not in UGRID format, using more complex
-regridding algorithms (for example provided by the
-:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
-schemes`) requires the input data in UGRID format.
-The following code snippet provides a preprocessor that regrids native ICON
-data to a 1°x1° grid using `ESMF's first-order conservative regridding
-algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
-
-.. code-block:: yaml
-
-   preprocessors:
-     regrid_icon:
-       regrid:
-         target_grid: 1x1
-         scheme:
-           reference: esmf_regrid.schemes:ESMFAreaWeighted
-
+While the :ref:`built-in regridding schemes <default regridding schemes>`
+`linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
+the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
-This is useful for diagnostics that do not support input data in UGRID format
-(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
-if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
-regridding schemes>` regridding scheme.
+This is useful for diagnostics that act on the native ICON grid and do not
+support input data in UGRID format (yet), like the
+:ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
 (from the variables `pfull` and `phalf`) and/or altitude information (from the
@@ -430,8 +507,8 @@ If neither of these variables are available in the input files, it is possible
 to specify the location of files that include the corresponding `zg` or
 `zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
 recipe or the extra facets.
-The paths to these files can be specified absolute or relative (to
-``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+The paths to these files can be specified absolute or relative (to the
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
 .. hint::
 
@@ -458,7 +535,7 @@ facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
 </../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
 purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
@@ -466,10 +543,8 @@ Supported keys for extra facets are:
 Key                 Description                      Default value if not specified
 =================== ================================ ===================================
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
-                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
-                    in the                           grid file
-                    :ref:`user configuration file`)
-                    path to the ICON grid file
+                    ``auxiliary_data_dir``)          ``grid_file_uri`` to retrieve ICON
+                    path to the ICON grid file       grid file (see details above)
 ``latitude``        Standard name of the latitude    ``latitude``
                     coordinate in the raw input
                     file
@@ -492,17 +567,13 @@ Key                 Description                      Default value if not specif
                     variable in the raw input        in extra facets or recipe if
                     file                             default DRS is used)
 ``zg_file``         Absolute or relative (to         If possible, use `zg` variable
-                    ``auxiliary_data_dir`` defined   provided by the raw input file
-                    in the
-                    :ref:`user configuration file`)
-                    path to the input file that
-                    contains `zg`
+                    ``auxiliary_data_dir``) path to  provided by the raw input file
+                    the the input file that contains
+                    `zg`
 ``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
-                    ``auxiliary_data_dir`` defined   provided by the raw input file
-                    in the
-                    :ref:`user configuration file`)
-                    path to the input file that
-                    contains `zghalf`
+                    ``auxiliary_data_dir``) path to  provided by the raw input file
+                    the the input file that contains
+                    `zghalf`
 =================== ================================ ===================================
 
 .. hint::
@@ -562,12 +633,70 @@ explained in :ref:`extra_facets`, and which content is :download:`available here
 </../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
 
+.. _read_access-esm:
+
+ACCESS-ESM
+^^^^^^^^^^
+
+ESMValTool can read native `ACCESS-ESM <https://research.csiro.au/access/about/esm1-5/>`__
+model output.
+
+.. warning::
+
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently,
+  Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
+  ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
+
+The default naming conventions for input directories and files for ACCESS output are
+
+* input directories: ``{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF``
+* input files: ``{sub_dataset}.{special_attr}-*.nc``
+
+.. hint::
+
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was
+  stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
+
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  dataset:
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05,
+      exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
+
+
+Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`access-mappings.yml
+</../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
+                     and `oce`                              specified in extra facets or
+                                                            recipe if default DRS is used)
+```special_attr``    A special attribute in the filename    No default
+                     `ACCESS-ESM` raw data, it's related to
+                     frequency of raw data
+``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
+                     root, need to specify if you want to
+                     use the cmoriser
+==================== ====================================== =================================
 
 .. _data-retrieval:
 
 Data retrieval
 ==============
-Data retrieval in ESMValTool has two main aspects from the user's point of
+Data retrieval in ESMValCore has two main aspects from the user's point of
 view:
 
 * data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
@@ -575,7 +704,7 @@ view:
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
-ESMValTool will look for and find the available data requested by the user.
+ESMValCore will look for and find the available data requested by the user.
 If the files are not found locally, the tool can search the ESGF_ and download
 the missing files, provided that they are available.
 
@@ -585,20 +714,18 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` (use
-local files whenever possible) or ``search_esgf: always`` (always search ESGF
-for latest version of files and only use local data if it is the latest
-version) in the :ref:`user configuration file`, or provide the corresponding
-command line arguments ``--search_esgf=when_missing`` or
-``--search_esgf=always`` when running the recipe.
-The files will be stored in the ``download_dir`` set in
-the :ref:`user configuration file`.
+To enable automatic downloads from ESGF, use the :ref:`configuration option
+<config_options>` ``search_esgf: when_missing`` (use local files
+whenever possible) or ``search_esgf: always`` (always search ESGF for latest
+version of files and only use local data if it is the latest version).
+The files will be stored in the directory specified via the :ref:`configuration
+option <config_options>` ``download_dir``.
 
 Setting the correct root paths
 ------------------------------
-The first step towards providing ESMValTool the correct set of parameters for
-data retrieval is setting the root paths to the data. This is done in the user
-configuration file ``config-user.yml``. The two sections where the user will
+The first step towards providing ESMValCore the correct set of parameters for
+data retrieval is setting the root paths to the data. This is done in the
+configuration. The two sections where the user will
 set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers to
 ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the type
 of directory structure the root paths are structured by. It is important to
@@ -606,24 +733,11 @@ first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
 
-Synda
------
+.. _config_option_drs:
 
-If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
-it maintains the directory structure as on ESGF. To find data downloaded by
-synda, use the ``SYNDA`` ``drs`` parameter.
-
-.. code-block:: yaml
-
- drs:
-   CMIP6: SYNDA
-   CMIP5: SYNDA
-
-.. _config-user-drs:
-
-Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
----------------------------------------------------------------------
-Whereas ESMValTool will **always** use the CMOR standard for file naming (please
+Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
+---------------------------------------------
+Whereas ESMValCore will by default use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
 type of root paths they need the data from, e.g.:
 
@@ -653,40 +767,57 @@ is another way to retrieve data from a ``ROOT`` directory that has no DRS-like
 structure; ``default`` indicates that the data lies in a directory that
 contains all the files without any structure.
 
+The names of the directories trees that can be used under `drs` are defined in
+:ref:`config-developer`.
+
 .. note::
-   When using ``CMIP6: default`` or ``CMIP5: default`` it is important to
-   remember that all the needed files must be in the same top-level directory
-   set by ``default`` (see below how to set ``default``).
+   When using ``CMIP6: default`` or ``CMIP5: default``, all the needed files
+   must be in the same top-level directory specified under ``rootpath``.
+   However, it is not recommended to use this, as it makes it impossible for
+   the tool to read the facets from the directory tree.
+   Moreover, this way of organizing data makes it impossible to store multiple
+   versions of the same file because the files typically have the same name
+   for different versions.
 
-.. _config-user-rootpath:
+.. _config_option_rootpath:
 
-Explaining ``config-user/rootpath:``
-------------------------------------
+Explaining ``rootpath:``
+------------------------
 
 ``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
 
 * ``CMIP`` e.g. ``CMIP5`` or ``CMIP6``: this is the `root` path(s) to where the
-  CMIP files are stored; it can be a single path or a list of paths; it can
+  CMIP files are stored; it can be a single path, a list of paths, or a mapping
+  with paths as keys and `drs` names as values; it can
   point to an ESGF node or it can point to a user private repository. Example
-  for a CMIP5 root path pointing to the ESGF node on CEDA-Jasmin (formerly
+  for a CMIP5 root path pointing to the ESGF node mounted on CEDA-Jasmin (formerly
   known as BADC):
 
   .. code-block:: yaml
 
-    CMIP5: /badc/cmip5/data/cmip5/output1
+    rootpath:
+      CMIP5: /badc/cmip5/data/cmip5/output1
 
   Example for a CMIP6 root path pointing to the ESGF node on CEDA-Jasmin:
 
   .. code-block:: yaml
 
-    CMIP6: /badc/cmip6/data/CMIP6/CMIP
+    rootpath:
+      CMIP6: /badc/cmip6/data/CMIP6
 
   Example for a mix of CMIP6 root path pointing to the ESGF node on CEDA-Jasmin
   and a user-specific data repository for extra data:
 
   .. code-block:: yaml
 
-    CMIP6: [/badc/cmip6/data/CMIP6/CMIP, /home/users/johndoe/cmip_data]
+    rootpath:
+      CMIP6:
+        /badc/cmip6/data/CMIP6: BADC
+        ~/climate_data: ESGF
+
+  Note that this notation combines the ``rootpath`` and ``drs`` settings, so it
+  is not necessary to specify the directory structure in under ``drs`` in this
+  case.
 
 * ``OBS``: this is the `root` path(s) to where the observational datasets are
   stored; again, this could be a single path or a list of paths, just like for
@@ -695,7 +826,8 @@ Explaining ``config-user/rootpath:``
 
   .. code-block:: yaml
 
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+    rootpath:
+      OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 * ``default``: this is the `root` path(s) where the tool will look for data
   from projects that do not have their own rootpath set.
@@ -703,9 +835,22 @@ Explaining ``config-user/rootpath:``
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
   files are stored; this is used by ``esmvaltool data format``.
 
+Synda
+-----
+
+If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
+it maintains the directory structure as on ESGF. To find data downloaded by
+synda, use the ``SYNDA`` ``drs`` parameter.
+
+.. code-block:: yaml
+
+ drs:
+   CMIP6: SYNDA
+   CMIP5: SYNDA
+
 Dataset definitions in ``recipe``
 ---------------------------------
-Once the correct paths have been established, ESMValTool collects the
+Once the correct paths have been established, ESMValCore collects the
 information on the specific datasets that are needed for the analysis. This
 information, together with the CMOR convention for naming files (see CMOR-DRS_)
 will allow the tool to search and find the right files. The specific
@@ -723,7 +868,7 @@ The data finding feature will use this information to find data for **all** the 
 Recap and example
 =================
 Let us look at a practical example for a recap of the information above:
-suppose you are using a ``config-user.yml`` that has the following entries for
+suppose you are using configuration that has the following entries for
 data finding:
 
 .. code-block:: yaml
@@ -782,7 +927,7 @@ about this since we can point the user to the specific functionality
 `here <https://scitools-iris.readthedocs.io/en/latest/userguide/loading_iris_cubes.html>`_ but we will underline
 that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
 `CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
-page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
+page for CF `standard names <https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_).
 
 Data concatenation from multiple sources
 ========================================

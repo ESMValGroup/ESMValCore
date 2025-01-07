@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # ESMValTool documentation build configuration file, created by
-# sphinx-quickstart on Tue Jun  2 11:34:13 2015.
+# sphinx-quickstart on Tue Jun 2 11:34:13 2015.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -60,6 +60,7 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -80,11 +81,16 @@ autodoc_default_options = {
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
 
+# See https://github.com/sphinx-doc/sphinx/issues/12589
+suppress_warnings = [
+    'autosummary.import_cycle',
+]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
@@ -152,8 +158,25 @@ html_theme = 'pydata_sphinx_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
-
+#
+# Avoid the following warning issued by pydata_sphinx_theme:
+#
+# "WARNING: The default value for `navigation_with_keys` will change to `False`
+# in the next release. If you wish to preserve the old behavior for your site,
+# set `navigation_with_keys=True` in the `html_theme_options` dict in your
+# `conf.py` file.Be aware that `navigation_with_keys = True` has negative
+# accessibility implications:
+# https://github.com/pydata/pydata-sphinx-theme/issues/1492"
+# Short synopsis of said issue: as of now, left/right keys take one
+# to the previous/next page instead of scrolling horizontally; this
+# should be fixed upstream, then we can set again navigation with keys True
+html_theme_options = {
+    "navigation_with_keys": False,
+    "logo": {
+        "image_light": "figures/ESMValTool-logo-2.png",
+        "image_dark": "figures/ESMValTool-logo-2-dark.png",
+    },
+}
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
 
@@ -176,7 +199,7 @@ html_logo = 'figures/ESMValTool-logo-2.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path: list = []
+html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -420,22 +443,53 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
     'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
     (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
+              None),
     'dask': ('https://docs.dask.org/en/stable/', None),
     'distributed': ('https://distributed.dask.org/en/stable/', None),
-    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
-    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
-                         None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
+    'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
-    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+}
+
+# -- Extlinks extension -------------------------------------------------------
+# See https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
+
+extlinks = {
+    "discussion": (
+        "https://github.com/ESMValGroup/ESMValCore/discussions/%s",
+        "Discussion #%s",
+    ),
+    "issue": (
+        "https://github.com/ESMValGroup/ESMValCore/issues/%s",
+        "Issue #%s",
+    ),
+    "pull": (
+        "https://github.com/ESMValGroup/ESMValCore/pull/%s",
+        "Pull request #%s",
+    ),
+    "release": (
+        "https://github.com/ESMValGroup/ESMValCore/releases/tag/%s",
+        "ESMValCore %s",
+    ),
+    "team": (
+        "https://github.com/orgs/ESMValGroup/teams/%s",
+        "@ESMValGroup/%s",
+    ),
+    "user": (
+        "https://github.com/%s",
+        "@%s",
+    ),
 }
 
 # -- Custom Document processing ----------------------------------------------

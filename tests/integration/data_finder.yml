@@ -453,6 +453,84 @@ get_input_filelist:
     found_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 
+  - drs: NCI
+    variable:
+      <<: *variable
+      timerange: '1980/2002'
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+
+  - drs: NCI
+    variable:
+      <<: *variable
+      timerange: '2000/2005'
+      version: v20110329
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+
+  - drs: NCI
+    variable:
+      <<: *variable
+      ensemble: '*'
+      timerange: '2000/2005'
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/*/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/*/*/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_**.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+
+  - drs: NCI
+    variable:
+      <<: *variable
+      timerange: '1980/2002'
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmo1/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    available_symlinks:
+      - link_name: MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest
+        target: v20120928
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+
   # Test other projects
 
   - drs: DKRZ
@@ -515,6 +593,38 @@ get_input_filelist:
     found_files:
       - historical/atmos/mon/ta/HADGEM1/r1i1p1/ta_HADGEM1_195001-199912.nc
       - historical/atmos/mon/ta/HADGEM1/r1i1p1/ta_HADGEM1_200001-200112.nc
+
+  - drs: NCI
+    variable:
+      variable_group: test
+      short_name: ta
+      original_short_name: ta
+      dataset: HadGEM3-GC31-LL
+      activity: CMIP
+      project: CMIP6
+      institute: [MOHC, NERC]
+      frequency: mon
+      modeling_realm: [atmos]
+      mip: Amon
+      exp: historical
+      grid: gn
+      ensemble: r1i1p1f1
+      timerange: '1999/2000'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/tas/gn/v20200101/tas_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_190001-194912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_190001-194912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_195001-199912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_200001-201412.nc
+    dirs:
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
+    file_patterns:
+      - ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
+    found_files:
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_195001-199912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_200001-201412.nc
 
   - drs: default
     variable:
@@ -1153,3 +1263,86 @@ get_input_filelist:
     found_files:
       - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
       - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc
+
+  # CORDEX
+
+  - drs: ESGF
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+
+  - drs: BADC
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: REMO2009
+      rcm_version: v1
+      driver: MPI-M-MPI-ESM-LR
+      institute: MPI-CSC
+      domain: EUR-11
+      exp: rcp26
+      ensemble: r1i1p1
+      timerange: '2008/2010'
+      version: 'v20160525'
+    available_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_201101-202012.nc
+    dirs:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525
+    file_patterns:
+      - tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon*.nc
+    found_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+
+  - drs: DKRZ
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc

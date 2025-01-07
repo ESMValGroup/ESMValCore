@@ -1,21 +1,26 @@
 """Fix base classes for ICON on-the-fly CMORizer."""
 
+from __future__ import annotations
+
 import logging
 import os
+import shutil
 import warnings
 from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 import iris
 import numpy as np
 import requests
-from filelock import FileLock
 from iris import NameConstraint
-from iris.experimental.ugrid import Connectivity, Mesh
+from iris.cube import Cube, CubeList
+from iris.mesh import Connectivity, MeshXY
 
-from ..native_datasets import NativeDatasetFix
+from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from esmvalcore.local import _get_data_sources
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +28,10 @@ logger = logging.getLogger(__name__)
 class IconFix(NativeDatasetFix):
     """Base class for all ICON fixes."""
 
-    CACHE_DIR = Path.home() / '.esmvaltool' / 'cache'
+    CACHE_DIR = Path.home() / ".esmvaltool" / "cache"
     CACHE_VALIDITY = 7 * 24 * 60 * 60  # [s]; = 1 week
     TIMEOUT = 5 * 60  # [s]; = 5 min
-    GRID_FILE_ATTR = 'grid_file_uri'
+    GRID_FILE_ATTR = "grid_file_uri"
 
     def __init__(self, *args, **kwargs):
         """Initialize ICON fix."""
@@ -34,24 +39,24 @@ class IconFix(NativeDatasetFix):
         self._horizontal_grids = {}
         self._meshes = {}
 
-    def _create_mesh(self, cube):
+    def _create_mesh(self, cube: Cube) -> MeshXY:
         """Create mesh from horizontal grid file.
 
         Note
         ----
-        This functions creates a new :class:`iris.experimental.ugrid.Mesh` from
-        the ``clat`` (already present in the cube), ``clon`` (already present
-        in the cube), ``vertex_index``, ``vertex_of_cell``, ``vlat``, and
-        ``vlon`` variables of the horizontal grid file.
+        This functions creates a new :class:`iris.mesh.MeshXY` from the
+        ``clat`` (already present in the cube), ``clon`` (already present in
+        the cube), ``vertex_index``, ``vertex_of_cell``, ``vlat``, and ``vlon``
+        variables of the horizontal grid file.
 
-        We do not use :func:`iris.experimental.ugrid.Mesh.from_coords` with the
-        existing latitude and longitude coordinates here because this would
-        produce lots of duplicated entries for the node coordinates. The reason
-        for this is that the node coordinates are constructed from the bounds;
-        since each node is contained 6 times in the bounds array (each node is
-        shared by 6 neighboring cells) the number of nodes is 6 times higher
-        with :func:`iris.experimental.ugrid.Mesh.from_coords` compared to using
-        the information already present in the horizontal grid file.
+        We do not use :func:`iris.mesh.MeshXY.from_coords` with the existing
+        latitude and longitude coordinates here because this would produce lots
+        of duplicated entries for the node coordinates. The reason for this is
+        that the node coordinates are constructed from the bounds; since each
+        node is contained 6 times in the bounds array (each node is shared by 6
+        neighboring cells) the number of nodes is 6 times higher with
+        :func:`iris.mesh.MeshXY.from_coords` compared to using the information
+        already present in the horizontal grid file.
 
         """
         horizontal_grid = self.get_horizontal_grid(cube)
@@ -61,7 +66,8 @@ class IconFix(NativeDatasetFix):
         # 'vertex_of_cell'; since UGRID expects a different dimension ordering
         # we transpose the cube here)
         vertex_of_cell = horizontal_grid.extract_cube(
-            NameConstraint(var_name='vertex_of_cell'))
+            NameConstraint(var_name="vertex_of_cell")
+        )
         vertex_of_cell.transpose()
 
         # Extract start index used to name nodes from the the horizontal grid
@@ -70,8 +76,8 @@ class IconFix(NativeDatasetFix):
 
         # Extract face coordinates from cube (in ICON jargon called 'cell
         # latitude' and 'cell longitude')
-        face_lat = cube.coord('latitude')
-        face_lon = cube.coord('longitude')
+        face_lat = cube.coord("latitude")
+        face_lon = cube.coord("longitude")
 
         # Extract node coordinates from horizontal grid
         (node_lat, node_lon) = self._get_node_coords(horizontal_grid)
@@ -83,11 +89,11 @@ class IconFix(NativeDatasetFix):
 
         # Latitude: there might be slight numerical differences (-> check that
         # the differences are very small before fixing it)
-        close_kwargs = {'rtol': 1e-3, 'atol': 1e-5}
+        close_kwargs = {"rtol": 1e-3, "atol": 1e-5}
         if not np.allclose(
-                face_lat.bounds,
-                node_lat.points[conn_node_inds],
-                **close_kwargs,
+            face_lat.bounds,
+            node_lat.points[conn_node_inds],
+            **close_kwargs,  # type: ignore
         ):
             logger.warning(
                 "Latitude bounds of the face coordinate ('clat_vertices' in "
@@ -104,7 +110,7 @@ class IconFix(NativeDatasetFix):
         # differ by 360°, which is also okay.
         face_lon_bounds_to_check = face_lon.bounds % 360
         node_lon_conn_to_check = node_lon.points[conn_node_inds] % 360
-        idx_notclose = ~np.isclose(
+        idx_notclose = ~np.isclose(  # type: ignore
             face_lon_bounds_to_check,
             node_lon_conn_to_check,
             **close_kwargs,
@@ -123,15 +129,15 @@ class IconFix(NativeDatasetFix):
         # Create mesh
         connectivity = Connectivity(
             indices=vertex_of_cell.data,
-            cf_role='face_node_connectivity',
+            cf_role="face_node_connectivity",
             start_index=start_index,
             location_axis=0,
         )
-        mesh = Mesh(
+        mesh = MeshXY(
             topology_dimension=2,
-            node_coords_and_axes=[(node_lat, 'y'), (node_lon, 'x')],
+            node_coords_and_axes=[(node_lat, "y"), (node_lon, "x")],
             connectivities=[connectivity],
-            face_coords_and_axes=[(face_lat, 'y'), (face_lon, 'x')],
+            face_coords_and_axes=[(face_lat, "y"), (face_lon, "x")],
         )
 
         return mesh
@@ -142,7 +148,8 @@ class IconFix(NativeDatasetFix):
             raise ValueError(
                 f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
                 f"necessary to download the ICON horizontal grid file:\n"
-                f"{cube}")
+                f"{cube}"
+            )
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name
@@ -158,21 +165,22 @@ class IconFix(NativeDatasetFix):
 
         """
         dual_area_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='dual_area'))
-        node_lat = dual_area_cube.coord(var_name='vlat')
-        node_lon = dual_area_cube.coord(var_name='vlon')
+            NameConstraint(var_name="dual_area")
+        )
+        node_lat = dual_area_cube.coord(var_name="vlat")
+        node_lon = dual_area_cube.coord(var_name="vlon")
 
         # Fix metadata
         node_lat.bounds = None
         node_lon.bounds = None
-        node_lat.var_name = 'nlat'
-        node_lon.var_name = 'nlon'
-        node_lat.standard_name = 'latitude'
-        node_lon.standard_name = 'longitude'
-        node_lat.long_name = 'node latitude'
-        node_lon.long_name = 'node longitude'
-        node_lat.convert_units('degrees_north')
-        node_lon.convert_units('degrees_east')
+        node_lat.var_name = "nlat"
+        node_lon.var_name = "nlon"
+        node_lat.standard_name = "latitude"
+        node_lon.standard_name = "longitude"
+        node_lat.long_name = "node latitude"
+        node_lon.long_name = "node longitude"
+        node_lat.convert_units("degrees_north")
+        node_lon.convert_units("degrees_east")
 
         # Convert longitude to [0, 360]
         self._set_range_in_0_360(node_lon)
@@ -182,10 +190,10 @@ class IconFix(NativeDatasetFix):
     def _get_path_from_facet(self, facet, description=None):
         """Try to get path from facet."""
         if description is None:
-            description = 'File'
+            description = "File"
         path = Path(os.path.expandvars(self.extra_facets[facet])).expanduser()
         if not path.is_file():
-            new_path = self.session['auxiliary_data_dir'] / path
+            new_path = self.session["auxiliary_data_dir"] / path
             if not new_path.is_file():
                 raise FileNotFoundError(
                     f"{description} '{path}' given by facet '{facet}' does "
@@ -213,9 +221,8 @@ class IconFix(NativeDatasetFix):
 
         Note
         ----
-        Files can be specified as absolute or relative (to
-        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
-        file`) paths.
+        Files can be specified as absolute or relative (to the configuration
+        option ``auxiliary_data_dir``) paths.
 
         Parameters
         ----------
@@ -235,11 +242,11 @@ class IconFix(NativeDatasetFix):
 
         """
         facets_to_consider = [
-            'zg_file',
-            'zghalf_file',
+            "zg_file",
+            "zghalf_file",
         ]
         for facet in facets_to_consider:
-            if facet not in self.extra_facets:
+            if self.extra_facets.get(facet) is None:
                 continue
             path_to_add = self._get_path_from_facet(facet)
             logger.debug("Adding cubes from %s", path_to_add)
@@ -251,7 +258,7 @@ class IconFix(NativeDatasetFix):
     def _get_grid_from_facet(self):
         """Get horizontal grid from user-defined facet `horizontal_grid`."""
         grid_path = self._get_path_from_facet(
-            'horizontal_grid', 'Horizontal grid file'
+            "horizontal_grid", "Horizontal grid file"
         )
         grid_name = grid_path.name
 
@@ -264,7 +271,13 @@ class IconFix(NativeDatasetFix):
         logger.debug("Loaded ICON grid file from %s", grid_path)
         return self._horizontal_grids[grid_name]
 
-    def _get_grid_from_cube_attr(self, cube):
+    @staticmethod
+    def _tmp_local_file(local_file: Path) -> Path:
+        """Return the path to a temporary local file for downloading to."""
+        with NamedTemporaryFile(prefix=f"{local_file}.") as file:
+            return Path(file.name)
+
+    def _get_grid_from_cube_attr(self, cube: Cube) -> Cube:
         """Get horizontal grid from `grid_file_uri` attribute of cube."""
         (grid_url, grid_name) = self._get_grid_url(cube)
 
@@ -272,48 +285,92 @@ class IconFix(NativeDatasetFix):
         if grid_name in self._horizontal_grids:
             return self._horizontal_grids[grid_name]
 
-        # Check if grid file has recently been downloaded and load it if
-        # possible
-        # Note: we use a lock here to prevent multiple processes from
-        # downloading the file simultaneously and to ensure that other
-        # processes wait until the download has finished
-        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
-        with lock:
-            grid_path = self.CACHE_DIR / grid_name
-            if grid_path.exists():
-                mtime = grid_path.stat().st_mtime
-                now = datetime.now().timestamp()
-                age = now - mtime
-                if age < self.CACHE_VALIDITY:
-                    logger.debug("Using cached ICON grid file '%s'", grid_path)
-                    self._horizontal_grids[grid_name] = self._load_cubes(
-                        grid_path
-                    )
-                    return self._horizontal_grids[grid_name]
-                logger.debug("Existing cached ICON grid file '%s' is outdated",
-                             grid_path)
+        # First, check if the grid file is available in the ICON rootpath
+        grid = self._get_grid_from_rootpath(grid_name)
 
-            # Download file if necessary
+        # Second, if that didn't work, try to download grid (or use cached
+        # version of it if possible)
+        if grid is None:
+            grid = self._get_downloaded_grid(grid_url, grid_name)
+
+        # Cache grid for later use
+        self._horizontal_grids[grid_name] = grid
+
+        return grid
+
+    def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
+        """Try to get grid from the ICON rootpath."""
+        glob_patterns: list[Path] = []
+        for data_source in _get_data_sources("ICON"):
+            glob_patterns.extend(
+                data_source.get_glob_patterns(**self.extra_facets)
+            )
+        possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
+        for grid_path in possible_grid_paths:
+            if grid_path.is_file():
+                logger.debug("Using ICON grid file '%s'", grid_path)
+                cubes = self._load_cubes(grid_path)
+                return cubes
+        return None
+
+    def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
+        """Get downloaded horizontal grid.
+
+        Check if grid file has recently been downloaded. If not, download grid
+        file here.
+
+        Note
+        ----
+        In order to make this function thread-safe, the downloaded grid file is
+        first saved to a temporary location, then copied to the actual location
+        later.
+
+        """
+        grid_path = self.CACHE_DIR / grid_name
+
+        # Check cache
+        valid_cache = False
+        if grid_path.exists():
+            mtime = grid_path.stat().st_mtime
+            now = datetime.now().timestamp()
+            age = now - mtime
+            if age < self.CACHE_VALIDITY:
+                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                valid_cache = True
+            else:
+                logger.debug(
+                    "Existing cached ICON grid file '%s' is outdated",
+                    grid_path,
+                )
+
+        # File is not present in cache or too old -> download it
+        if not valid_cache:
+            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            tmp_path = self._tmp_local_file(grid_path)
             logger.debug(
                 "Attempting to download ICON grid file from '%s' to '%s'",
                 grid_url,
-                grid_path,
+                tmp_path,
             )
-            with requests.get(grid_url, stream=True,
-                              timeout=self.TIMEOUT) as response:
-                response.raise_for_status()
-                with open(grid_path, 'wb') as file:
-                    copyfileobj(response.raw, file)
-            logger.info(
-                "Successfully downloaded ICON grid file from '%s' to '%s'",
+            with requests.get(
                 grid_url,
+                stream=True,
+                timeout=self.TIMEOUT,
+            ) as response:
+                response.raise_for_status()
+                with tmp_path.open("wb") as file:
+                    copyfileobj(response.raw, file)
+            shutil.move(tmp_path, grid_path)
+            logger.info(
+                "Successfully downloaded ICON grid file from '%s' to '%s' "
+                "and moved it to '%s'",
+                grid_url,
+                tmp_path,
                 grid_path,
             )
 
-            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-
-        return self._horizontal_grids[grid_name]
+        cubes = self._load_cubes(grid_path)
+        return cubes
 
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid.
@@ -352,7 +409,7 @@ class IconFix(NativeDatasetFix):
             file.
 
         """
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get("horizontal_grid") is not None:
             grid = self._get_grid_from_facet()
         else:
             grid = self._get_grid_from_cube_attr(cube)
@@ -377,8 +434,8 @@ class IconFix(NativeDatasetFix):
 
         Returns
         -------
-        iris.experimental.ugrid.Mesh
-            Mesh.
+        iris.mesh.MeshXY
+            Mesh of the cube.
 
         Raises
         ------
@@ -393,15 +450,15 @@ class IconFix(NativeDatasetFix):
         """
         # If specified by the user, use `horizontal_grid` facet to determine
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get("horizontal_grid") is not None:
             grid_path = self._get_path_from_facet(
-                'horizontal_grid', 'Horizontal grid file'
+                "horizontal_grid", "Horizontal grid file"
             )
             grid_name = grid_path.name
         else:
             (_, grid_name) = self._get_grid_url(cube)
 
-        # Re-use mesh if possible
+        # Reuse mesh if possible
         if grid_name in self._meshes:
             logger.debug("Reusing ICON mesh for grid %s", grid_name)
         else:
@@ -423,33 +480,49 @@ class IconFix(NativeDatasetFix):
 
         """
         vertex_index = horizontal_grid.extract_cube(
-            NameConstraint(var_name='vertex_index'))
+            NameConstraint(var_name="vertex_index")
+        )
         return np.int32(np.min(vertex_index.data))
 
     @staticmethod
-    def _load_cubes(path):
+    def _load_cubes(path: Path | str) -> CubeList:
         """Load cubes and ignore certain warnings."""
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                'ignore',
+                "ignore",
                 message="Ignoring netCDF variable .* invalid units .*",
                 category=UserWarning,
-                module='iris',
-            )
+                module="iris",
+            )  # iris < 3.8
             warnings.filterwarnings(
-                'ignore',
-                message="Failed to create 'height' dimension coordinate: The "
-                        "'height' DimCoord bounds array must be strictly "
-                        "monotonic.",
+                "ignore",
+                message="Ignoring invalid units .* on netCDF variable .*",
                 category=UserWarning,
-                module='iris',
+                module="iris",
+            )  # iris >= 3.8
+            warnings.filterwarnings(
+                "ignore",
+                message="Failed to create 'height' dimension coordinate: The "
+                "'height' DimCoord bounds array must be strictly "
+                "monotonic.",
+                category=UserWarning,
+                module="iris",
             )
-            cubes = iris.load(str(path))
+            cubes = iris.load(path)
         return cubes
 
     @staticmethod
     def _set_range_in_0_360(lon_coord):
         """Convert longitude coordinate to [0, 360]."""
-        lon_coord.points = (lon_coord.points + 360.0) % 360.0
-        if lon_coord.bounds is not None:
-            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
+        lon_coord.points = (lon_coord.core_points() + 360.0) % 360.0
+        if lon_coord.has_bounds():
+            lon_coord.bounds = (lon_coord.core_bounds() + 360.0) % 360.0
+
+
+class NegateData(IconFix):
+    """Base fix to negate data."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = -cube.core_data()
+        return cube

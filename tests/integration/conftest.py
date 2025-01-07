@@ -5,25 +5,12 @@ import iris
 import pytest
 
 import esmvalcore.local
-from esmvalcore.config import CFG
-from esmvalcore.config._config_object import CFG_DEFAULT
 from esmvalcore.local import (
     LocalFile,
     _replace_tags,
     _select_drs,
     _select_files,
 )
-
-
-@pytest.fixture
-def session(tmp_path: Path, monkeypatch):
-    CFG.clear()
-    CFG.update(CFG_DEFAULT)
-    monkeypatch.setitem(CFG, 'rootpath', {'default': str(tmp_path)})
-
-    session = CFG.start_session('recipe_test')
-    session['output_dir'] = tmp_path / 'esmvaltool_output'
-    return session
 
 
 def create_test_file(filename, tracking_id=None):
@@ -33,87 +20,141 @@ def create_test_file(filename, tracking_id=None):
 
     attributes = {}
     if tracking_id is not None:
-        attributes['tracking_id'] = tracking_id
-    cube = iris.cube.Cube([], attributes=attributes)
+        attributes["tracking_id"] = tracking_id
+    cube = iris.cube.Cube([])
+    cube.attributes.globals = attributes
 
     iris.save(cube, filename)
 
 
 def _get_files(root_path, facets, tracking_id):
-    file_template = _select_drs('input_file', facets['project'])
-    file_globs = _replace_tags(file_template, facets)
-    filename = Path(file_globs[0]).name
-    filename = str(root_path / 'input' / filename)
-    filenames = []
-    if filename.endswith('[_.]*nc'):
-        # Restore when we support filenames with no dates
-        # filenames.append(filename.replace('[_.]*nc', '.nc'))
-        filename = filename.replace('[_.]*nc', '_*.nc')
-    if filename.endswith('*.nc'):
-        filename = filename[:-len('*.nc')] + '_'
-        if facets['frequency'] == 'fx':
-            intervals = ['']
-        else:
-            intervals = [
-                '1990_1999',
-                '2000_2009',
-                '2010_2019',
-            ]
-        for interval in intervals:
-            filenames.append(filename + interval + '.nc')
+    """Return dummy files.
+
+    Wildcards are only supported for `dataset` and `institute`; in this case
+    return files for the two "models" AAA and BBB.
+
+    """
+    if facets["dataset"] == "*":
+        all_facets = [
+            {**facets, "dataset": "AAA", "institute": "A"},
+            {**facets, "dataset": "BBB", "institute": "B"},
+        ]
     else:
-        filenames.append(filename)
+        all_facets = [facets]
 
-    if 'timerange' in facets:
-        filenames = _select_files(filenames, facets['timerange'])
-
-    for filename in filenames:
-        create_test_file(filename, next(tracking_id))
+    # Globs without expanded facets
+    dir_template = _select_drs("input_dir", facets["project"], "default")
+    file_template = _select_drs("input_file", facets["project"], "default")
+    dir_globs = _replace_tags(dir_template, facets)
+    file_globs = _replace_tags(file_template, facets)
+    globs = sorted(
+        root_path / "input" / d / f for d in dir_globs for f in file_globs
+    )
 
     files = []
-    for filename in filenames:
-        file = LocalFile(filename)
-        file.facets = facets
-        files.append(file)
+    for expanded_facets in all_facets:
+        filenames = []
+        dir_template = _select_drs(
+            "input_dir", expanded_facets["project"], "default"
+        )
+        file_template = _select_drs(
+            "input_file", expanded_facets["project"], "default"
+        )
+        dir_globs = _replace_tags(dir_template, expanded_facets)
+        file_globs = _replace_tags(file_template, expanded_facets)
+        filename = str(
+            root_path / "input" / dir_globs[0] / Path(file_globs[0]).name
+        )
 
-    return files, file_globs
+        if filename.endswith("[_.]*nc"):
+            # Restore when we support filenames with no dates
+            # filenames.append(filename.replace('[_.]*nc', '.nc'))
+            filename = filename.replace("[_.]*nc", "_*.nc")
+
+        if filename.endswith("*.nc"):
+            filename = filename[: -len("*.nc")] + "_"
+            if facets["frequency"] == "fx":
+                intervals = [""]
+            else:
+                intervals = [
+                    "1990_1999",
+                    "2000_2009",
+                    "2010_2019",
+                ]
+            for interval in intervals:
+                filenames.append(filename + interval + ".nc")
+        else:
+            filenames.append(filename)
+
+        if "timerange" in facets:
+            filenames = _select_files(filenames, facets["timerange"])
+
+        for filename in filenames:
+            create_test_file(filename, next(tracking_id))
+
+        for filename in filenames:
+            file = LocalFile(filename)
+            file.facets = expanded_facets
+            files.append(file)
+
+    return files, globs
+
+
+def _tracking_ids(i=0):
+    while True:
+        yield i
+        i += 1
+
+
+def _get_find_files_func(path: Path, suffix: str = ".nc"):
+    tracking_id = _tracking_ids()
+
+    def find_files(*, debug: bool = False, **facets):
+        files, file_globs = _get_files(path, facets, tracking_id)
+        files = [f.with_suffix(suffix) for f in files]
+        file_globs = [g.with_suffix(suffix) for g in file_globs]
+        if debug:
+            return files, file_globs
+        return files
+
+    return find_files
 
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
+    find_files = _get_find_files_func(tmp_path)
+    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
 
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
 
-    tracking_id = tracking_ids()
-
-    def find_files(*, debug: bool = False, **facets):
-        files, file_globs = _get_files(tmp_path, facets, tracking_id)
-        if debug:
-            return files, file_globs
-        return files
-
-    monkeypatch.setattr(esmvalcore.local, 'find_files', find_files)
+@pytest.fixture
+def patched_datafinder_grib(tmp_path, monkeypatch):
+    find_files = _get_find_files_func(tmp_path, suffix=".grib")
+    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
 
 
 @pytest.fixture
 def patched_failing_datafinder(tmp_path, monkeypatch):
+    """Failing data finder.
 
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
+    Do not return files for:
+    - fx files
+    - Variable rsutcs for model AAA
 
-    tracking_id = tracking_ids()
+    Otherwise, return files just like `patched_datafinder`.
+
+    """
+    tracking_id = _tracking_ids()
 
     def find_files(*, debug: bool = False, **facets):
         files, file_globs = _get_files(tmp_path, facets, tracking_id)
-        if 'fx' == facets['frequency']:
+        if "fx" == facets["frequency"]:
             files = []
+        returned_files = []
+        for file in files:
+            if not ("AAA" in file.name and "rsutcs" in file.name):
+                returned_files.append(file)
         if debug:
-            return files, file_globs
-        return files
+            return returned_files, file_globs
+        return returned_files
 
-    monkeypatch.setattr(esmvalcore.local, 'find_files', find_files)
+    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)

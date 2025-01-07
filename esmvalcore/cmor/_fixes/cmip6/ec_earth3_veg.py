@@ -1,4 +1,5 @@
 """Fixes for EC-Earth3-Veg model."""
+
 import cf_units
 import numpy as np
 
@@ -22,7 +23,7 @@ class Siconca(Fix):
         -------
         iris.cube.Cube
         """
-        cube.data = cube.core_data() * 100.
+        cube.data = cube.core_data() * 100.0
         return cube
 
 
@@ -36,10 +37,11 @@ class CalendarFix(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            if cube.coords('time'):
-                time_coord = cube.coord('time')
-                time_coord.units = cf_units.Unit(time_coord.units.origin,
-                                                 'proleptic_gregorian')
+            if cube.coords("time"):
+                time_coord = cube.coord("time")
+                time_coord.units = cf_units.Unit(
+                    time_coord.units.origin, "proleptic_gregorian"
+                )
         return cubes
 
 
@@ -71,8 +73,8 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            latitude = cube.coord('latitude')
-            latitude.points = np.round(latitude.points, 8)
-            latitude.bounds = np.round(latitude.bounds, 8)
+            latitude = cube.coord("latitude")
+            latitude.points = np.round(latitude.core_points(), 8)
+            latitude.bounds = np.round(latitude.core_bounds(), 8)
 
         return cubes

@@ -12,19 +12,21 @@ from esmvalcore.cmor.fix import Fix
 
 class TestTro3(unittest.TestCase):
     """Test tro3 fixes."""
+
     def setUp(self):
         """Prepare tests."""
-        self.cube = Cube([1.0], var_name='tro3', units='J')
+        self.cube = Cube([1.0], var_name="tro3", units="J")
         self.fix = Tro3(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC-ESM-CHEM', 'Amon', 'tro3'),
-            [Tro3(None), GenericFix(None)])
+            Fix.get_fixes("CMIP5", "MIROC-ESM-CHEM", "Amon", "tro3"),
+            [Tro3(None), GenericFix(None)],
+        )
 
     def test_fix_data(self):
         """Test data fix."""
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 1000)
-        self.assertEqual(cube.units, Unit('J'))
+        self.assertEqual(cube.units, Unit("J"))

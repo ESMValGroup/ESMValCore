@@ -10,13 +10,13 @@ import os
 def _write_if_changed(fname, contents):
     """Write/update file only if changed."""
     try:
-        with open(fname, "r") as stream:
+        with open(fname, "r", encoding="utf-8") as stream:
             old_contents = stream.read()
     except IOError:
         old_contents = ""
 
     if old_contents != contents:
-        with open(fname, "w") as stream:
+        with open(fname, "w", encoding="utf-8") as stream:
             stream.write(contents)
 
 
@@ -38,7 +38,7 @@ def generate_sidebar(conf, conf_api):
     def _endl():
         lines.append("")
 
-    def _write(project, desc, link, mapping=conf['intersphinx_mapping']):
+    def _write(project, desc, link, mapping=conf["intersphinx_mapping"]):
         if project != conf_api:
             if do_gen:
                 args = desc, mapping[project][0], link
