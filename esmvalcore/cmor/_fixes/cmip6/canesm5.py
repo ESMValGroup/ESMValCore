@@ -1,8 +1,30 @@
 """Fixes for CanESM5 model."""
 import dask.array as da
+from iris.cube import CubeList
 
 from ..fix import Fix
 
+class Vt100(Fix):
+    """Fixes for vt100."""
+
+    def fix_metadata(self, cubes):
+        """Convert units from W/m2 to K m/s.
+
+        Parameters
+        ----------
+        cube : iris.cube.CubeListCubeList
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        if not isinstance(cubes,CubeList):
+            cubes = [cubes]
+        for cube in cubes:
+            if cube.units == "W m-2":
+                cube.units = "K m s-1"
+        return cubes
 
 class Co2(Fix):
     """Fixes for co2."""
