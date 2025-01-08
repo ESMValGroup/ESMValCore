@@ -1363,7 +1363,7 @@ This function has one required argument: ``season``. This is the named season to
 extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
 combinations, e.g. JJAS.
 
-The argument ``full`` specifies whether only full seasons are returned, i.e. DJF 
+The argument ``full`` specifies whether only full seasons are returned, i.e. DJF
 but not JF. Default is False.
 
 Note that this function does not change the time resolution. If your original
