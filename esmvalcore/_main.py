@@ -84,7 +84,6 @@ def process_recipe(recipe_file: Path, session):
     import shutil
 
     from esmvalcore._recipe.recipe import read_recipe_file
-    from esmvalcore.config._dask import check_distributed_config
 
     if not recipe_file.is_file():
         import errno
@@ -120,8 +119,6 @@ def process_recipe(recipe_file: Path, session):
         "If you experience memory problems, try reducing "
         "'max_parallel_tasks' in your configuration."
     )
-
-    check_distributed_config()
 
     if session["compress_netcdf"]:
         logger.warning(
@@ -399,6 +396,7 @@ class ESMValTool:
 
         """
         from .config import CFG
+        from .config._dask import warn_if_old_dask_config_exists
         from .exceptions import InvalidConfigParameter
 
         cli_config_dir = kwargs.pop("config_dir", None)
@@ -439,9 +437,9 @@ class ESMValTool:
 
         recipe = self._get_recipe(recipe)
 
+        CFG.nested_update(kwargs)
+        CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
-        session.update(kwargs)
-        session["resume_from"] = parse_resume(session["resume_from"], recipe)
 
         self._run(recipe, session, cli_config_dir)
 
@@ -454,6 +452,8 @@ class ESMValTool:
         else:
             if cli_config_dir is not None:
                 CFG.update_from_dirs([cli_config_dir])
+
+        warn_if_old_dask_config_exists()
 
     @staticmethod
     def _create_session_dir(session):

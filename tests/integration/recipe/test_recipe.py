@@ -110,6 +110,7 @@ def _get_default_settings_for_chl(save_filename):
         "save": {
             "compress": False,
             "filename": save_filename,
+            "compute": False,
         },
     }
     return defaults
@@ -693,6 +694,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         "save": {
             "compress": False,
             "filename": product.filename,
+            "compute": False,
         },
     }
     assert product.settings == defaults
@@ -3390,3 +3392,116 @@ def test_invalid_interpolate(tmp_path, patched_datafinder, session):
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert exc.value.failed_tasks[0].message == msg
+
+
+def test_automatic_regrid_era5_nc(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "0.25x0.25",
+        "scheme": "linear",
+    }
+
+
+def test_automatic_no_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3, automatic_regrid: false}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_already_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        preprocessors:
+          test_automatic_regrid_era5:
+            regrid:
+              target_grid: 1x1
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test_automatic_regrid_era5
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "1x1",
+        "scheme": "nearest",
+    }
