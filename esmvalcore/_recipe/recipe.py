@@ -230,6 +230,13 @@ def _exclude_dataset(settings, facets, step):
         settings.pop(step)
         logger.debug("Excluded dataset '%s' from preprocessor step '%s'",
                      facets['dataset'], step)
+    
+    # exclude datasets if missing a grouping attribute
+    if 'groupby' in settings.get(step,{}):
+        if not any([ facets.get(k) for k in settings[step].get('groupby') ]):
+            settings.pop(step)
+            logger.debug("Excluded dataset '%s' from preprocessor step '%s' because of missing groupby attributes",
+                        facets['dataset'], step)
 
 
 def _update_weighting_settings(settings, facets):
