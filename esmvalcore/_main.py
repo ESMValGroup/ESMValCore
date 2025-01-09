@@ -284,7 +284,23 @@ class Recipes():
         logger.info('=' * len(msg))
         print(installed_recipe.read_text(encoding='utf-8'))
 
+def _delete_directory_except(directory, exclude_file):
+    """
+    Deletes all contents of a directory except for a specified file.
 
+    Args:
+        directory (str): Path to the directory to delete contents from.
+        exclude_file (str): File name to exclude from deletion.
+    """
+    import shutil
+    for root, dirs, files in os.walk(directory, topdown=False):
+        for name in files:
+            file_path = os.path.join(root, name)
+            # Skip the exclude file
+            if os.path.basename(file_path) == exclude_file:
+                continue
+            os.remove(file_path)
+                
 class ESMValTool():
     """A community tool for routine evaluation of Earth system models.
 
@@ -490,7 +506,8 @@ class ESMValTool():
                 "`remove_preproc_dir` to `false` in your user configuration "
                 "file"
             )
-            shutil.rmtree(session.preproc_dir)
+            # shutil.rmtree(session.preproc_dir)
+            _delete_directory_except( session.preproc_dir, "metadata.yml")
 
     @staticmethod
     def _get_recipe(recipe) -> Path:
