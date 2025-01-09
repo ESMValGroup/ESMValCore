@@ -158,7 +158,7 @@ These include in particular:
   branch. If a strong objection is raised the backward-incompatible
   change should not be merged until the objection is resolved.
 - 🛠 Information required for the “*backward-incompatible changes*”
-  section in the PR  that introduces the *backward-incompatible change*
+  section in the PR that introduces the *backward-incompatible change*
   available.
 
 .. _scientific_relevance:
