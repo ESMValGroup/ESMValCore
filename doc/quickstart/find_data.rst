@@ -380,20 +380,23 @@ For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
-==================== ====================================== =================================
-Key                  Description                            Default value if not specified
-==================== ====================================== =================================
-``channel``          Channel in which the desired variable  No default (needs to be specified
-                     is stored                              in extra facets or recipe if
-                                                            default DRS is used)
-``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
-``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable
-``raw_units``        Units of the variable in the raw       If specified, the value given by
-                     input file                             the ``units`` attribute in the
-                                                            raw input file; otherwise
-                                                            ``unknown``
-==================== ====================================== =================================
+===================== ====================================== =================================
+Key                   Description                            Default value if not specified
+===================== ====================================== =================================
+``channel``           Channel in which the desired variable  No default (needs to be specified
+                      is stored                              in extra facets or recipe if
+                                                             default DRS is used)
+``postproc_flag``     Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``          Variable name of the variable in the   CMOR variable name of the
+                      raw input file                         corresponding variable
+``raw_units``         Units of the variable in the raw       If specified, the value given by
+                      input file                             the ``units`` attribute in the
+                                                             raw input file; otherwise
+                                                             ``unknown``
+``reset_time_bounds`` Boolean if time_bounds are deleted,    False
+                      and automatically recalculated by      
+                      iris                                   
+===================== ====================================== =================================
 
 .. note::
 
