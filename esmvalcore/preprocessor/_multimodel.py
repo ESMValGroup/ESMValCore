@@ -805,6 +805,10 @@ def multi_model_statistics(
         for group, input_prods in _group_products(products, by_key=groupby):
             sub_output_products = output_products[group]
 
+            if len(input_prods)<2: 
+                logger.warning('Cannot preform multi-model statistics with fewer than two datasets')
+                continue
+
             # Compute statistics on a single group
             group_statistics = _multiproduct_statistics(
                 products=input_prods,
