@@ -291,6 +291,7 @@ def _groupby(iterable, keyfunc):
     grouped = defaultdict(set)
     for item in iterable:
         key = keyfunc(item)
+        # if not key: continue # skip items without grouping label
         grouped[key].add(item)
 
     return grouped
@@ -299,7 +300,13 @@ def _groupby(iterable, keyfunc):
 def _group_products(products, by_key):
     """Group products by the given list of attributes."""
     def grouper(product):
-        return product.group(by_key)
+        group = product.group(by_key)
+        # if boolean group, labelled by by_key
+        if group.lower() in ['t','true']: 
+            group = ''.join([ k.title() for k in by_key ])+'True'
+        elif group.lower() in ['f','false']: 
+            group = ''.join([ k.title() for k in by_key ])+'False'
+        return group
 
     grouped = _groupby(products, keyfunc=grouper)
     return grouped.items()
