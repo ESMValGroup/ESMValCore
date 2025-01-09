@@ -394,8 +394,8 @@ Key                   Description                            Default value if no
                                                              raw input file; otherwise
                                                              ``unknown``
 ``reset_time_bounds`` Boolean if time_bounds are deleted,    False
-                      and automatically recalculated by      
-                      iris                                   
+                      and automatically recalculated by
+                      iris
 ===================== ====================================== =================================
 
 .. note::
