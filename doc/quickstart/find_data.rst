@@ -393,7 +393,7 @@ Key                   Description                            Default value if no
                       input file                             the ``units`` attribute in the
                                                              raw input file; otherwise
                                                              ``unknown``
-``reset_time_bounds`` Boolean if time_bounds are deleted,    False
+``reset_time_bounds`` Boolean if time bounds are deleted,    ``False``
                       and automatically recalculated by
                       iris
 ===================== ====================================== =================================
