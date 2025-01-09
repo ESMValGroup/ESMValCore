@@ -16,6 +16,7 @@ import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
+import stratify
 
 from ._shared import (
     get_iris_aggregator,
@@ -603,3 +604,115 @@ def extract_trajectory(
     points = [("latitude", latitudes), ("longitude", longitudes)]
     interpolated_cube = interpolate(cube, points)  # Very slow!
     return interpolated_cube
+
+
+def _get_first_unmasked_data(array, axis):
+    """Get first unmasked value of an array along an axis."""
+    mask = da.ma.getmaskarray(array)
+    numerical_mask = da.where(mask, -1.0, 1.0)
+    indices_first_positive = da.argmax(numerical_mask, axis=axis)
+    indices = da.meshgrid(
+        *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
+        indexing="ij",
+    )
+    indices = list(indices)
+    indices.insert(axis, indices_first_positive)
+    first_unmasked_data = np.array(array)[tuple(indices)]
+    return first_unmasked_data
+
+
+@register_supplementaries(
+        variables=['ps'],
+        required='require_at_least_one'
+)
+def extract_surface_from_atm(
+    cube: Cube,
+    var: str
+) -> Cube:
+    """Extract data from the lowest unmasked height level.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    var:
+        Variable to extract at the surface.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Collapsed cube.
+    """
+    # Declare required variables
+    #   - 3D atmo variable to extract at the surface
+    #   - surface_air_pressure (ps)
+    ps_cube = None
+    try:
+        ps_cube = cube.ancillary_variable("surface_air_pressure")
+    except iris.exceptions.AncillaryVariableNotFoundError:
+        logger.debug(
+            "Ancillary variable surface air pressure not found in cube. "
+            "Check file availability."
+        )
+    if ps_cube:
+        var_cube = cube.extract(
+            iris.Constraint(name=var)
+        )
+
+        # Fill masked data if necessary (interpolation fails with masked data)
+        (z_axis,) = var_cube.coord_dims(
+            var_cube.coord(axis="Z", dim_coords=True)
+        )
+        mask = da.ma.getmaskarray(var_cube.core_data())
+        if mask.any():
+            first_unmasked_data = _get_first_unmasked_data(
+                var_cube.core_data(), axis=z_axis
+            )
+            dim_map = [dim for dim in range(var_cube.ndim) if dim != z_axis]
+            first_unmasked_data = iris.util.broadcast_to_shape(
+                first_unmasked_data, var_cube.shape, dim_map
+            )
+            var_cube.data = da.where(
+                mask, first_unmasked_data, var_cube.core_data()
+            )
+
+        # Interpolation (not supported for dask arrays)
+        air_pressure_coord = var_cube.coord("air_pressure")
+        original_levels = iris.util.broadcast_to_shape(
+            air_pressure_coord.points,
+            var_cube.shape,
+            var_cube.coord_dims(air_pressure_coord),
+        )
+        target_levels = np.expand_dims(ps_cube.data, axis=z_axis)
+        sfc_data = stratify.interpolate(
+            target_levels,
+            original_levels,
+            var_cube.data,
+            axis=z_axis,
+            interpolation="linear",
+            extrapolation="linear",
+        )
+        sfc_data = np.squeeze(sfc_data, axis=z_axis)
+
+        # Construct surface var cube
+        indices = [slice(None)] * var_cube.ndim
+        indices[z_axis] = 0
+        var_cube = var_cube[tuple(indices)]
+        var_cube.data = sfc_data
+        if var_cube.coords("air_pressure"):
+            var_cube.remove_coord("air_pressure")
+        ps_coord = iris.coords.AuxCoord(
+            ps_cube.data,
+            var_name="plev",
+            standard_name="air_pressure",
+            long_name="pressure",
+            units=ps_cube.units,
+        )
+        var_cube.add_aux_coord(ps_coord, np.arange(var_cube.ndim))
+        var_cube.var_name = var + 's'
+        logger.debug("Extracting surface using surface air pressure.")
+
+    else:
+        raise ValueError("Surface air pressure could not be found. Stopping.")
+
+    return var_cube

@@ -90,6 +90,7 @@ from ._volume import (
     extract_transect,
     extract_volume,
     volume_statistics,
+    extract_surface_from_atm,
 )
 from ._weighting import weighting_landsea_fraction
 
@@ -122,6 +123,8 @@ __all__ = [
     "resample_time",
     # Level extraction
     "extract_levels",
+    # Extract surface
+    "extract_surface_from_atm",
     # Weighting
     "weighting_landsea_fraction",
     # Mask landsea (fx or Natural Earth)
