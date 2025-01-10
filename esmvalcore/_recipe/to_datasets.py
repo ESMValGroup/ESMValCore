@@ -541,20 +541,34 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         input_dataset.augment_facets()
         _fix_cmip5_fx_ensemble(input_dataset)
         
-        try:
-            if input_dataset.files:
-                datasets.append(input_dataset)
-            elif input_facets.get('optional'):
-                logger.info(
-                "Skipping: no data found for %s which is marked as "
-                "'optional'", input_dataset)
+        # try:
+        #     if input_dataset.files:
+        #         datasets.append(input_dataset)
+        #     elif input_facets.get('optional'):
+        #         logger.info(
+        #         "Skipping: no data found for %s which is marked as "
+        #         "'optional'", input_dataset)
+        # except:
+        #     if input_facets.get('optional'):
+        #         logger.info(
+        #         "Skipping: no data found for %s which is marked as "
+        #         "'optional'", input_dataset)
+        #     else:
+        #         raise 
+
+        # fix for cordex???
+        try: input_dataset.files
         except:
-            if input_facets.get('optional'):
-                logger.info(
+            if input_facets.get('optional'): pass
+            else: raise
+
+        if input_facets.get('optional') and not input_dataset.files:
+            logger.info(
                 "Skipping: no data found for %s which is marked as "
                 "'optional'", input_dataset)
-            else:
-                raise 
+        else:
+            datasets.append(input_dataset)
+
 
     # Check timeranges of available input data.
     timeranges = set()
