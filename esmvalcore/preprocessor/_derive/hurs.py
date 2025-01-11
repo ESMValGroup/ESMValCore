@@ -47,7 +47,7 @@ class DerivedVariable(DerivedVariableBase):
         hurs_cube.units = cf_units.Unit("%")
 
         hurs_cube.data = da.ma.where(
-            hurs_cube.core_data() > 100.0, hurs_cube.core_data(), 100.0
+            hurs_cube.core_data() > 100.0, 100.0, hurs_cube.core_data()
         )
 
         return hurs_cube
