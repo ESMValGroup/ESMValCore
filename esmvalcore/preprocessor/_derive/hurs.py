@@ -37,9 +37,11 @@ class DerivedVariable(DerivedVariableBase):
         cubes_difference = tas_cube - tdps_cube
         cubes_product = tas_cube * tdps_cube
 
-        log_humidity_cube = iris.analysis.maths.divide(
-            -ENTALPY_OF_VAPORIZATION * cubes_difference,
-            GAS_CONSTANT_WV * cubes_product,
+        log_humidity_cube = (
+            -ENTALPY_OF_VAPORIZATION
+            * cubes_difference
+            / GAS_CONSTANT_WV
+            * cubes_product
         )
 
         hurs_cube = 100 * iris.analysis.maths.exp(log_humidity_cube)
