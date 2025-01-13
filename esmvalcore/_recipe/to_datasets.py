@@ -423,8 +423,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
 
     if any(_isglob(f) for f in dataset.facets.values()):
         logger.debug(
-            "Expanding dataset globs for dataset %s, "
-            "this may take a while..",
+            "Expanding dataset globs for dataset %s, this may take a while..",
             dataset.summary(shorten=True),
         )
 
@@ -562,8 +561,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         _fix_cmip5_fx_ensemble(input_dataset)
         if input_facets.get("optional") and not input_dataset.files:
             logger.info(
-                "Skipping: no data found for %s which is marked as "
-                "'optional'",
+                "Skipping: no data found for %s which is marked as 'optional'",
                 input_dataset,
             )
         else:

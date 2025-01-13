@@ -61,8 +61,7 @@ def validate_dask_config(dask_config: Mapping) -> None:
     use = dask_config["use"]
     if not isinstance(profiles, Mapping):
         raise InvalidConfigParameter(
-            f"Key 'dask.profiles' needs to be a mapping, got "
-            f"{type(profiles)}"
+            f"Key 'dask.profiles' needs to be a mapping, got {type(profiles)}"
         )
     for profile, profile_cfg in profiles.items():
         has_scheduler_address = any(

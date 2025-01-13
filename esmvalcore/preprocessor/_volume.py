@@ -360,8 +360,7 @@ def axis_statistics(
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError(
-            "axis_statistics not implemented for multidimensional "
-            "coordinates."
+            "axis_statistics not implemented for multidimensional coordinates."
         )
 
     # For weighted operations, create a dummy weights coordinate using the
