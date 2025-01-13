@@ -27,14 +27,14 @@ def cubes():
     coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
 
     tdps_cube = Cube(
-        [[[280.88]], [[285.15]], [[293.15]], [[293.25]]],
+        [[[279.17]], [[282.73]], [[288.15]], [[288.25]]],
         dim_coords_and_dims=coord_specs,
         standard_name="dew_point_temperature",
         var_name="tdps",
         units="K",
     )
     tas_cube = Cube(
-        [[[293.15]], [[293.15]], [[293.15]], [[293.15]]],
+        [[[288.15]], [[288.15]], [[288.15]], [[288.15]]],
         dim_coords_and_dims=coord_specs,
         standard_name="air_temperature",
         var_name="tas",
@@ -60,7 +60,7 @@ def test_hurs_calculate(cubes):
     assert out_cube.coords("longitude")
     np.testing.assert_allclose(
         out_cube.data,
-        [[[44.5944]], [[59.5328]], [[100.0]], [[100.0]]],
+        [[[54.6093]], [[69.7301]], [[100.0]], [[100.0]]],
         rtol=0.00005,
     )
     np.testing.assert_allclose(
