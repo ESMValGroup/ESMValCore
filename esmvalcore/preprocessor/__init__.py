@@ -54,6 +54,7 @@ from ._regrid import (
     extract_levels,
     extract_location,
     extract_point,
+    interpolate_coord, # CUSTOM
     regrid,
 )
 from ._rolling_window import rolling_window_statistics
@@ -146,6 +147,7 @@ __all__ = [
     'extract_coordinate_points',
     'extract_point',
     'extract_location',
+    'interpolate_coord', #CUSTOM
     # Masking missing values
     'mask_multimodel',
     'mask_fillvalues',

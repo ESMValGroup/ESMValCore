@@ -113,6 +113,64 @@ VERTICAL_SCHEMES = (
 )
 
 
+##################################
+
+def interpolate_coord(cube, coord, points, scheme):
+    """
+    Extracts points from a cube coordinate, according
+    to the interpolation scheme `scheme`.
+
+    Multiple points can also be extracted, by supplying an array of
+    latitude and/or longitude coordinates. The resulting point cube
+    will match the respective latitude and longitude coordinate to
+    those of the input coordinates. If the input coordinate is a
+    scalar, the dimension will be missing in the output cube (that is,
+    it will be a scalar).
+
+    If the point to be extracted has at least one of the coordinate point
+    values outside the interval of the cube's same coordinate values, then
+    no extrapolation will be performed, and the resulting extracted cube
+    will have fully masked data.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    coord : str, name of the coordinate
+
+    points : float, or array of float
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
+
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is None or unrecognized.
+
+    """
+    msg = f"Unknown interpolation scheme, got {scheme!r}."
+    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not scheme:
+        raise ValueError(msg)
+
+    point = [(coord, points)]
+    cube = cube.interpolate(point, scheme=scheme)
+    return cube
+
+
+#################################
+
+
 def parse_cell_spec(spec):
     """Parse an MxN cell specification string.
 
