@@ -1,4 +1,4 @@
-"""Tests for EC-Earth3."""
+"""Tests for EC-Earth3-AerChem model."""
 
 import iris
 import pytest
