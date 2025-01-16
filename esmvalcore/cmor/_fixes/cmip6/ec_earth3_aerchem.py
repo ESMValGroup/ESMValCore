@@ -14,7 +14,7 @@ class Oh(Fix):
         https://github.com/ESMValGroup/ESMValCore/issues/2613
         Cube has two coordinates called air_pressure: an AuxCoord ps
         and a DerivedCoord that is 4D and derived using formula terms,
-        we are setting the former's standard_name to None.
+        we are setting the former's standard_name to "surface_air_pressure".
 
         Parameters
         ----------
