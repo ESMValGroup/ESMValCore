@@ -104,6 +104,6 @@ class Oh(Fix):
         for cube in cubes:
             for coord in cube.coords():
                 if coord.var_name == "ps":
-                    coord.standard_name = None
+                    coord.standard_name = "surface_air_pressure|
 
         return cubes
