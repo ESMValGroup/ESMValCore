@@ -27,7 +27,7 @@ def oh_cubes():
 
 def test_get_oh_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "EC-Earth3", "AERmonZ", "oh")
+    fix = Fix.get_fixes("CMIP6", "EC-Earth3-AerChem", "AERmonZ", "oh")
     assert Oh(None) in fix
 
 
@@ -38,4 +38,4 @@ def test_oh_fix_metadata(oh_cubes):
     fixed_cubes = fix.fix_metadata(oh_cubes)
     for coord in fixed_cubes[0].coords():
         if coord.var_name == "ps":
-            assert coord.standard_name is None
+            assert coord.standard_name == "surface_air_pressure"
