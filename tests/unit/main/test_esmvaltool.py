@@ -254,9 +254,7 @@ def test_header(
         "Reading configuration files from:\nconfig_dir (SOURCE)"
     )
     assert caplog.messages[7] == (
-        "Writing program log files to:\n"
-        "path_to_log_file1\n"
-        "path_to_log_file2"
+        "Writing program log files to:\npath_to_log_file1\npath_to_log_file2"
     )
 
 

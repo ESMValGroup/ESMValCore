@@ -227,10 +227,8 @@ def test_real_search_many():
             "tas_Amon_EC-EARTH_historical_r1i1p1_199001-199912.nc",
         ],
         [
-            "tas_Amon_AWI-ESM-1-1-LR_historical_"
-            "r1i1p1f1_gn_200001-200012.nc",
-            "tas_Amon_AWI-ESM-1-1-LR_historical_"
-            "r1i1p1f1_gn_200101-200112.nc",
+            "tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_200001-200012.nc",
+            "tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_200101-200112.nc",
         ],
         [
             "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",

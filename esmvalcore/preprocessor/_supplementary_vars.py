@@ -63,8 +63,7 @@ def add_cell_measure(cube, cell_measure_cube, measure):
     """
     if measure not in ["area", "volume"]:
         raise ValueError(
-            f"measure name must be 'area' or 'volume', "
-            f"got {measure} instead"
+            f"measure name must be 'area' or 'volume', got {measure} instead"
         )
     measure = iris.coords.CellMeasure(
         cell_measure_cube.core_data(),
