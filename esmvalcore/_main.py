@@ -1,30 +1,25 @@
-"""ESMValTool - Earth System Model Evaluation Tool.
+"""Earth System Model Evaluation Tool
 
-http://www.esmvaltool.org
+A community tool for the evaluation of Earth system models.
 
-CORE DEVELOPMENT TEAM AND CONTACTS:
-  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
-  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
-  Bouwe Andela (Netherlands eScience Center, The Netherlands - b.andela@esciencecenter.nl)
-  Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (Netherlands eScience Center, The Netherlands - n.drost@esciencecenter.nl)
-  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
-  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
-  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
-  Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
-  Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
-  Saskia Loosveldt-Tomas (BSC, Spain - saskia.loosveldt@bsc.es)
-  Ruth Lorenz (ETH Zurich, Switzerland - ruth.lorenz@env.ethz.ch)
-  Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
-  Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-  Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
-  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
-  Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
-  Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
+https://esmvaltool.org
 
-For further help, please read the documentation at
-http://docs.esmvaltool.org. Have fun!
+The Earth System Model Evaluation Tool (ESMValTool) is a community
+diagnostics and performance metrics tool for the evaluation of Earth
+System Models (ESMs) that allows for routine comparison of single or
+multiple models, either against predecessor versions or against
+observations.
+
+Tutorial: https://tutorial.esmvaltool.org
+Documentation: https://docs.esmvaltool.org
+Contact: esmvaltool-dev@listserv.dfn.de
+
+If you find this software useful for your research, please cite it using
+https://doi.org/10.5281/zenodo.3387139 for ESMValCore or
+https://doi.org/10.5281/zenodo.3401363 for ESMValTool or
+any of the reference papers listed at https://esmvaltool.org/references/.
+
+Have fun!
 """
 
 # pylint: disable=import-outside-toplevel
@@ -335,19 +330,7 @@ class Recipes:
 
 
 class ESMValTool:
-    """A community tool for routine evaluation of Earth system models.
-
-    The Earth System Model Evaluation Tool (ESMValTool) is a community
-    diagnostics and performance metrics tool for the evaluation of Earth
-    System Models (ESMs) that allows for routine comparison of single or
-    multiple models, either against predecessor versions or against
-    observations.
-
-    Documentation is available at https://docs.esmvaltool.org.
-
-    To report issues or ask for improvements, please visit
-    https://github.com/ESMValGroup/ESMValTool.
-    """
+    __doc__ = __doc__
 
     def __init__(self):
         self.config = Config()
