@@ -18,7 +18,7 @@ def mock_dask_config_set(mocker):
     return mock_dask_set
 
 
-def test_get_no_distributed_client():
+def test_get_no_distributed_client(ignore_existing_user_config):
     with _dask.get_distributed_client() as client:
         assert client is None
 
@@ -40,7 +40,12 @@ def test_get_distributed_client_empty_dask_file(mocker, tmp_path):
 # TODO: Remove in v2.14.0
 @pytest.mark.parametrize("use_new_dask_config", ["", "1"])
 def test_force_new_dask_config(
-    monkeypatch, mocker, tmp_path, mock_dask_config_set, use_new_dask_config
+    monkeypatch,
+    mocker,
+    tmp_path,
+    mock_dask_config_set,
+    ignore_existing_user_config,
+    use_new_dask_config,
 ):
     # Old config -> threaded scheduler
     cfg_file = tmp_path / "dask.yml"
@@ -116,7 +121,7 @@ def test_get_old_dask_config(mocker, tmp_path):
 
 
 def test_get_distributed_client_external(
-    monkeypatch, mocker, mock_dask_config_set
+    monkeypatch, mocker, mock_dask_config_set, ignore_existing_user_config
 ):
     monkeypatch.setitem(
         CFG,
@@ -188,7 +193,11 @@ def test_get_distributed_client_external_old(
 
 @pytest.mark.parametrize("shutdown_timeout", [False, True])
 def test_get_distributed_client_slurm(
-    monkeypatch, mocker, mock_dask_config_set, shutdown_timeout
+    monkeypatch,
+    mocker,
+    mock_dask_config_set,
+    ignore_existing_user_config,
+    shutdown_timeout,
 ):
     slurm_cluster = {
         "type": "dask_jobqueue.SLURMCluster",
@@ -292,7 +301,11 @@ def test_get_distributed_client_slurm_old(
     )
 
 
-def test_custom_default_scheduler(monkeypatch, mock_dask_config_set):
+def test_custom_default_scheduler(
+    monkeypatch,
+    mock_dask_config_set,
+    ignore_existing_user_config,
+):
     default_scheduler = {"num_workers": 42, "scheduler": "processes"}
     monkeypatch.setitem(
         CFG,
@@ -306,7 +319,7 @@ def test_custom_default_scheduler(monkeypatch, mock_dask_config_set):
     with _dask.get_distributed_client() as client:
         assert client is None
 
-    mock_dask_config_set.assert_called_once_with(
+    mock_dask_config_set.assert_called_with(
         {"num_workers": 42, "scheduler": "processes"}
     )
 

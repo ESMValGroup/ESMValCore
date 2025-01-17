@@ -254,8 +254,7 @@ def mask_glaciated(cube, mask_out: str = "glaciated"):
             ],
         )
         logger.debug(
-            "Applying glaciated areas mask from Natural Earth"
-            " shapefile: \n%s",
+            "Applying glaciated areas mask from Natural Earth shapefile: \n%s",
             shapefiles[mask_out],
         )
     else:
