@@ -178,7 +178,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see also :ref:`task_priority`.         |                             |                                        |
+|                               | see :ref:`task_priority`. [#f5]_       |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
 |                               | :ref:`running`.                        |                             |                                        |
@@ -272,7 +272,15 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
    found on ESGF is newer than the local data (if any) or the user specifies a
    version of the data that is available only from the ESGF, then that data
    will be downloaded; otherwise, local data will be used.
-
+.. [#f5] When using ``max_parallel_tasks`` with a value larger than 1 with the
+   Dask threaded scheduler, every task will start ``num_workers`` threads.
+   To avoid running out of memory or slowing down computations due to competition
+   for resources, it is recommended to set ``num_workers`` such that
+   ``max_parallel_tasks * num_workers`` approximately equals the number of CPU cores.
+   The number of available CPU cores can be found by running
+   ``python -c 'import os; print(len(os.sched_getaffinity(0)))'``.
+   See :ref:`config-dask-threaded-scheduler` for information on how to configure
+   ``num_workers``.
 
 .. _config-dask:
 
