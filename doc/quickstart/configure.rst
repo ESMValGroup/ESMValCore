@@ -178,7 +178,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see :ref:`task_priority` and [#f5]_    |                             |                                        |
+|                               | see :ref:`task_priority`. [#f5]_       |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
 |                               | :ref:`running`.                        |                             |                                        |
