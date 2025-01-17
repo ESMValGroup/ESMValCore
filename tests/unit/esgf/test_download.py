@@ -359,12 +359,10 @@ def test_merge_datasets():
     )
 
     dataset0 = (
-        "cmip5.output1.FIO.FIO-ESM.historical."
-        "mon.atmos.Amon.r1i1p1.v20121010"
+        "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010"
     )
     dataset1 = (
-        "cmip5.output1.FIO.fio-esm.historical."
-        "mon.atmos.Amon.r1i1p1.v20121010"
+        "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.v20121010"
     )
 
     cmip5_template = (

@@ -150,6 +150,6 @@ Here is an example metadata.yml file:
 As you can see, this is effectively a dictionary with several items including
 data paths, metadata and other information.
 
-There are  several tools available in python which are built to read and parse
+There are several tools available in python which are built to read and parse
 these files. The tools are available in the shared directory in the diagnostics
 directory.

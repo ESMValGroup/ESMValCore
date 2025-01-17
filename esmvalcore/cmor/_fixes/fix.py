@@ -27,7 +27,7 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import has_unstructured_grid
+from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -455,7 +455,7 @@ class GenericFix(Fix):
             if str(cube.units) != units:
                 old_units = cube.units
                 try:
-                    cube.convert_units(units)
+                    safe_convert_units(cube, units)
                 except (ValueError, UnitConversionError):
                     self._warning_msg(
                         cube,
@@ -845,6 +845,8 @@ class GenericFix(Fix):
         """Fix time bounds."""
         times = {"time", "time1", "time2", "time3"}
         key = times.intersection(self.vardef.coordinates)
+        if not key:  # cube has time, but CMOR variable does not
+            return
         cmor = self.vardef.coordinates[" ".join(key)]
         if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
             cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)

@@ -129,8 +129,8 @@ More information about this can be found :ref:`here <api_configuration>`.
 
 .. _config_options:
 
-Configuration options
-=====================
+Top level configuration options
+===============================
 
 Note: the following entries use Python syntax.
 For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
@@ -140,77 +140,82 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
 | ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
-|                               | stored [#f1]_                          |                             |                                        |
+|                               | stored. [#f1]_                         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
 |                               | (``debug``, ``strict``, ``default``    |                             |                                        |
 |                               | ``relaxed``, ``ignore``), see          |                             |                                        |
-|                               | :ref:`cmor_check_strictness`           |                             |                                        |
+|                               | :ref:`cmor_check_strictness`.          |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``compress_netcdf``           | Use netCDF compression                 | :obj:`bool`                 | ``False``                              |
+| ``compress_netcdf``           | Use netCDF compression.                | :obj:`bool`                 | ``False``                              |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``config_developer_file``     | Path to custom                         | :obj:`str`                  | ``None`` (default file)                |
-|                               | :ref:`config-developer`                |                             |                                        |
+|                               | :ref:`config-developer`.               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``dask``                      | :ref:`config-dask`.                    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``diagnostics``               | Only run the selected diagnostics from | :obj:`list` or :obj:`str`   | ``None`` (all diagnostics)             |
-|                               | the recipe, see :ref:`running`         |                             |                                        |
+|                               | the recipe, see :ref:`running`.        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
-|                               | be stored [#f4]_                       |                             |                                        |
+|                               | be stored. [#f4]_                      |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``drs``                       | Directory structure for input data     | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
+| ``drs``                       | Directory structure for input data.    | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
 |                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic scripts)                    |                             |                                        |
+|                               | diagnostic scripts).                   |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`   | ``[]``                                 |
-|                               | :ref:`extra_facets`                    |                             |                                        |
+|                               | :ref:`extra_facets`.                   |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
-|                               | ``info``, ``warning``, ``error``)      |                             |                                        |
+|                               | ``info``, ``warning``, ``error``).     |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``logging``                   | :ref:`config-logging`.                 | :obj:`dict`                 | See :ref:`config-logging`              |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
-|                               | :ref:`running`                         |                             |                                        |
+|                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see also :ref:`task_priority`          |                             |                                        |
+|                               | see also :ref:`task_priority`.         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
-|                               | :ref:`running`                         |                             |                                        |
+|                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``output_dir``                | Directory where all output will be     | :obj:`str`                  | ``~/esmvaltool_output``                |
-|                               | written, see :ref:`outputdata`         |                             |                                        |
+|                               | written, see :ref:`outputdata`.        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``output_file_type``          | Plot file type                         | :obj:`str`                  | ``png``                                |
+| ``output_file_type``          | Plot file type.                        | :obj:`str`                  | ``png``                                |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic run [#f3]_                  |                             |                                        |
+|                               | diagnostic run. [#f3]_                 |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
 |                               | the run was successful, see also       |                             |                                        |
-|                               | :ref:`preprocessed_datasets`           |                             |                                        |
+|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``resume_from``               | Resume previous run(s) by using        | :obj:`list` of :obj:`str`   | ``[]``                                 |
 |                               | preprocessor output files from these   |                             |                                        |
-|                               | output directories, see :ref:`running` |                             |                                        |
+|                               | output directories, see                |                             |                                        |
+|                               | ref:`running`.                         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
-|                               | projects [#f2]_                        |                             |                                        |
+|                               | projects. [#f2]_                       |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
-|                               | :ref:`running`                         |                             |                                        |
+|                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``save_intermediary_cubes``   | Save intermediary cubes from the       | :obj:`bool`                 | ``False``                              |
 |                               | preprocessor, see also                 |                             |                                        |
-|                               | :ref:`preprocessed_datasets`           |                             |                                        |
+|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
 |                               | (``never``, ``when_missing``,          |                             |                                        |
-|                               | ``always``) [#f4]_                     |                             |                                        |
+|                               | ``always``). [#f4]_                    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
-|                               | :ref:`running`                         |                             |                                        |
+|                               | :ref:`running`.                        |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 .. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
@@ -274,104 +279,139 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 Dask configuration
 ==================
 
+Configure Dask in the  ``dask`` section.
+
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
 :ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
 :ref:`Iris <iris:iris_docs>` library to work with the data.
 In Iris, data can be either :ref:`real or lazy <iris:real_and_lazy_data>`.
-Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`_.
+Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`__.
 Dask arrays consist of many small
-`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`_
+`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`__
 (called chunks) and if possible, computations are run on those small arrays in
 parallel.
 In order to figure out what needs to be computed when, Dask makes use of a
-'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`_'.
-The default scheduler in Dask is rather basic, so it can only run on a single
-computer and it may not always find the optimal task scheduling solution,
-resulting in excessive memory use when using e.g. the
+'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`__'.
+The default (thread-based) scheduler in Dask is rather basic, so it can only
+run on a single computer and it may not always find the optimal task scheduling
+solution, resulting in excessive memory use when using e.g. the
 :func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
 Therefore it is recommended that you take a moment to configure the
-`Dask distributed <https://distributed.dask.org>`_ scheduler.
+`Dask distributed <https://distributed.dask.org>`__ scheduler.
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-Dask distributed configuration
-------------------------------
+Dask profiles
+-------------
 
-In ESMValCore, the Dask Distributed cluster can configured by creating a file called
-``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
-In this file, under the ``client`` keyword, the arguments to
-:obj:`distributed.Client` can be provided.
-Under the ``cluster`` keyword, the type of cluster (e.g.
-:obj:`distributed.LocalCluster`), as well as any arguments required to start
-the cluster can be provided.
-Extensive documentation on setting up Dask Clusters is available
-`here <https://docs.dask.org/en/latest/deploying.html>`__.
+Because some recipes require more computational resources than others,
+ESMValCore provides the option to define "Dask profiles".
+These profiles can be used to update the `Dask user configuration
+<https://docs.dask.org/en/stable/configuration.html>`__ per recipe run.
+The Dask profile can be selected in a YAML configuration file via
 
-.. warning::
+.. code:: yaml
 
-  The format of the ``~/.esmvaltool/dask.yml`` configuration file is not yet
-  fixed and may change in the next release of ESMValCore.
+  dask:
+    use: <NAME_OF_PROFILE>
+
+or alternatively in the command line via
+
+.. code:: bash
+
+  esmvaltool run --dask='{"use": "<NAME_OF_PROFILE>"}' recipe_example.yml
+
+Available predefined Dask profiles:
+
+- ``local_threaded`` (selected by default): use `threaded scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#local-threads>`__ without
+  any further options.
+- ``local_distributed``: use `local distributed scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local>`__
+  without any further options.
+- ``debug``: use `synchronous Dask scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#single-thread>`__ for
+  debugging purposes.
+  Best used with ``max_parallel_tasks: 1``.
+
+Dask distributed scheduler configuration
+----------------------------------------
+
+Here, some examples are provided on how to use a custom Dask distributed
+scheduler.
+Extensive documentation on setting up Dask Clusters is available `here
+<https://docs.dask.org/en/latest/deploying.html>`__.
 
 .. note::
 
   If not all preprocessor functions support lazy data, computational
-  performance may be best with the :ref:`default scheduler <config-dask-default-scheduler>`.
+  performance may be best with the :ref:`threaded scheduler
+  <config-dask-threaded-scheduler>`.
   See :issue:`674` for progress on making all preprocessor functions lazy.
-
-**Example configurations**
 
 *Personal computer*
 
-Create a Dask distributed cluster on the computer running ESMValCore using
-all available resources:
+Create a :class:`distributed.LocalCluster` on the computer running ESMValCore
+using all available resources:
 
 .. code:: yaml
 
-  cluster:
-    type: distributed.LocalCluster
+  dask:
+    use: local_cluster  # use "local_cluster" defined below
+    profiles:
+      local_cluster:
+        cluster:
+          type: distributed.LocalCluster
 
-this should work well for most personal computers.
+This should work well for most personal computers.
 
 .. note::
 
-   Note that, if running this configuration on a shared node of an HPC cluster,
-   Dask will try and use as many resources it can find available, and this may
-   lead to overcrowding the node by a single user (you)!
+   If running this configuration on a shared node of an HPC cluster, Dask will
+   try and use as many resources it can find available, and this may lead to
+   overcrowding the node by a single user (you)!
 
 *Shared computer*
 
-Create a Dask distributed cluster on the computer running ESMValCore, with
-2 workers with 4 threads/4 GiB of memory each (8 GiB in total):
+Create a :class:`distributed.LocalCluster` on the computer running ESMValCore,
+with 2 workers with 2 threads/4 GiB of memory each (8 GiB in total):
 
 .. code:: yaml
 
-  cluster:
-    type: distributed.LocalCluster
-    n_workers: 2
-    threads_per_worker: 4
-    memory_limit: 4 GiB
+  dask:
+    use: local_cluster  # use "local_cluster" defined below
+    profiles:
+      local_cluster:
+        cluster:
+          type: distributed.LocalCluster
+          n_workers: 2
+          threads_per_worker: 2
+          memory_limit: 4GiB
 
 this should work well for shared computers.
 
 *Computer cluster*
 
-Create a Dask distributed cluster on the
-`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
-supercomputer using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`_
-package:
+Create a Dask distributed cluster on the `Levante
+<https://docs.dkrz.de/doc/levante/running-jobs/index.html>`__ supercomputer
+using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`__ package:
 
 .. code:: yaml
 
-  cluster:
-    type: dask_jobqueue.SLURMCluster
-    queue: shared
-    account: bk1088
-    cores: 8
-    memory: 7680MiB
-    processes: 2
-    interface: ib0
-    local_directory: "/scratch/b/b381141/dask-tmp"
-    n_workers: 24
+  dask:
+    use: slurm_cluster  # use "slurm_cluster" defined below
+    profiles:
+      slurm_cluster:
+        cluster:
+          type: dask_jobqueue.SLURMCluster
+          queue: shared
+          account: <YOUR_SLURM_ACCOUNT>
+          cores: 8
+          memory: 7680MiB
+          processes: 2
+          interface: ib0
+          local_directory: "/scratch/b/<YOUR_DKRZ_ACCOUNT>/dask-tmp"
+          n_workers: 24
 
 This will start 24 workers with ``cores / processes = 4`` threads each,
 resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
@@ -379,34 +419,38 @@ will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
 workers.
 This example will use the fast infiniband network connection (called ``ib0``
 on Levante) for communication between workers running on different nodes.
-It is
-`important to set the right location for temporary storage <https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__,
-in this case the ``/scratch`` space is used.
+It is `important to set the right location for temporary storage
+<https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__, in this
+case the ``/scratch`` space is used.
 It is also possible to use environmental variables to configure the temporary
 storage location, if you cluster provides these.
 
 A configuration like this should work well for larger computations where it is
 advantageous to use multiple nodes in a compute cluster.
-See
-`Deploying Dask Clusters on High Performance Computers <https://docs.dask.org/en/latest/deploying-hpc.html>`_
-for more information.
+See `Deploying Dask Clusters on High Performance Computers
+<https://docs.dask.org/en/latest/deploying-hpc.html>`__ for more information.
 
 *Externally managed Dask cluster*
 
-Use an externally managed cluster, e.g. a cluster that you started using the
-`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
+To use an externally managed cluster, specify an ``scheduler_address`` for the
+selected profile.
+Such a cluster can e.g. be started using the `Dask Jupyterlab extension
+<https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`__:
 
 .. code:: yaml
 
-  client:
-    address: '127.0.0.1:8786'
+  dask:
+    use: external  # Use the `external` profile defined below
+    profiles:
+      external:
+        scheduler_address: "tcp://127.0.0.1:43605"
 
-See `here <https://jobqueue.dask.org/en/latest/interactive.html>`_
+See `here <https://jobqueue.dask.org/en/latest/interactive.html>`__
 for an example of how to configure this on a remote system.
 
 For debugging purposes, it can be useful to start the cluster outside of
 ESMValCore because then
-`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`_ remains
+`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`__ remains
 available after ESMValCore has finished running.
 
 **Advice on choosing performant configurations**
@@ -427,60 +471,148 @@ Therefore, it may be beneficial to use fewer threads per worker if the
 computation is very simple and the runtime is determined by the
 speed with which the data can be read from and/or written to disk.
 
-.. _config-dask-default-scheduler:
+.. _config-dask-threaded-scheduler:
 
-Dask default scheduler configuration
-------------------------------------
+Custom Dask threaded scheduler configuration
+--------------------------------------------
 
-The Dask default scheduler can be a good choice for recipes using a small
+The Dask threaded scheduler can be a good choice for recipes using a small
 amount of data or when running a recipe where not all preprocessor functions
-are lazy yet (see :issue:`674` for the current status). To use the the Dask
-default scheduler, comment out or remove all content of ``~/.esmvaltool/dask.yml``.
+are lazy yet (see :issue:`674` for the current status).
 
 To avoid running out of memory, it is important to set the number of workers
-(threads) used by Dask to run its computations to a reasonable number. By
-default the number of CPU cores in the machine will be used, but this may be
-too many on shared machines or laptops with a large number of CPU cores
+(threads) used by Dask to run its computations to a reasonable number.
+By default, the number of CPU cores in the machine will be used, but this may
+be too many on shared machines or laptops with a large number of CPU cores
 compared to the amount of memory they have available.
 
-Typically, Dask requires about 2GB of RAM per worker, but this may be more
+Typically, Dask requires about 2 GiB of RAM per worker, but this may be more
 depending on the computation.
 
-To set the number of workers used by the Dask default scheduler, create a file
-called ``~/.config/dask/dask.yml`` and add the following
-content:
+To set the number of workers used by the Dask threaded scheduler, use the
+following configuration:
 
 .. code:: yaml
 
-  scheduler: threads
-  num_workers: 4  # this example sets the number of workers to 4
+  dask:
+    use: local_threaded  # This can be omitted
+    profiles:
+      local_threaded:
+        num_workers: 4
 
+.. _config-dask-defaults:
 
-Note that the file name is arbitrary, only the directory it is in matters, as
-explained in more detail
-`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
-See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#configuration>`__
-for more information.
+Default options
+---------------
 
-Configuring Dask for debugging
-------------------------------
-
-For debugging purposes, it can be useful to disable all parallelism, as this
-will often result in more clear error messages. This can be achieved by
-setting ``max_parallel_tasks: 1`` in the configuration,
-commenting out or removing all content of ``~/.esmvaltool/dask.yml``, and
-creating a file called ``~/.config/dask/dask.yml`` with the following
-content:
+By default, the following Dask configuration is used:
 
 .. code:: yaml
 
-  scheduler: synchronous
+  dask:
+    use: local_threaded  # use the `local_threaded` profile defined below
+    profiles:
+      local_threaded:
+        scheduler: threads
+      local_distributed:
+        cluster:
+          type: distributed.LocalCluster
+      debug:
+        scheduler: synchronous
 
-Note that the file name is arbitrary, only the directory it is in matters, as
-explained in more detail
-`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
-See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#single-thread>`__
-for more information.
+All available options
+---------------------
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``profiles``                  | Different Dask profiles that can be    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
+|                               | selected via the ``use`` option. Each  |                             |                                        |
+|                               | profile has a name (:obj:`dict` keys)  |                             |                                        |
+|                               | and corresponding options (:obj:`dict` |                             |                                        |
+|                               | values). See                           |                             |                                        |
+|                               | :ref:`config-dask-profiles` for        |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``use``                       | Dask profile that is used; must be     | :obj:`str`                  | ``local_threaded``                     |
+|                               | defined in the option ``profiles``.    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-dask-profiles:
+
+Options for Dask profiles
+-------------------------
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``cluster``                   | Keyword arguments to initialize a Dask | :obj:`dict`                 | If omitted, use externally managed     |
+|                               | distributed cluster. Needs the option  |                             | cluster if ``scheduler_address`` is    |
+|                               | ``type``, which specifies the class of |                             | given or a :ref:`Dask threaded         |
+|                               | the cluster. The remaining options are |                             | scheduler                              |
+|                               | passed as keyword arguments to         |                             | <config-dask-threaded-scheduler>`      |
+|                               | initialize that class. Cannot be used  |                             | otherwise.                             |
+|                               | in combination with                    |                             |                                        |
+|                               | ``scheduler_address``.                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``scheduler_address``         | Scheduler address of an externally     | :obj:`str`                  | If omitted, use a Dask distributed     |
+|                               | managed cluster. Will be passed to     |                             | cluster if ``cluster`` is given or a   |
+|                               | :class:`distributed.Client`. Cannot be |                             | :ref:`Dask threaded scheduler          |
+|                               | used in combination with ``cluster``.  |                             | <config-dask-threaded-scheduler>`      |
+|                               |                                        |                             | otherwise.                             |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| All other options             | Passed as keyword arguments to         | Any                         | No defaults.                           |
+|                               | :func:`dask.config.set`.               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-logging:
+
+Logging configuration
+=====================
+
+Configure what information is logged and how it is presented in the ``logging``
+section.
+
+.. note::
+
+   Not all logging configuration is available here yet, see :issue:`2596`.
+
+Configuration file example:
+
+.. code:: yaml
+
+   logging:
+     log_progress_interval: 10s
+
+will log progress of Dask computations every 10 seconds instead of showing a
+progress bar.
+
+Command line example:
+
+.. code:: bash
+
+   esmvaltool run --logging='{"log_progress_interval": "1m"}' recipe_example.yml
+
+
+will log progress of Dask computations every minute instead of showing a
+progress bar.
+
+Available options:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``log_progress_interval``     | When running computations with Dask,   | :obj:`str` or :obj:`float`  | 0                                      |
+|                               | log progress every                     |                             |                                        |
+|                               | ``log_progress_interval`` instead of   |                             |                                        |
+|                               | showing a progress bar. The value can  |                             |                                        |
+|                               | be specified in the format accepted by |                             |                                        |
+|                               | :func:`dask.utils.parse_timedelta`. A  |                             |                                        |
+|                               | negative value disables any progress   |                             |                                        |
+|                               | reporting. A progress bar is only      |                             |                                        |
+|                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 .. _config-esgf:
 
@@ -663,7 +795,7 @@ The resulting directory path would look something like this:
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
-Please, bear in mind that ``input_dirs`` can also be a list for those  cases in
+Please, bear in mind that ``input_dirs`` can also be a list for those cases in
 which may be needed:
 
 .. code-block:: yaml
@@ -924,7 +1056,7 @@ infrastructure. The following example illustrates the concept.
 .. _extra-facets-example-1:
 
 .. code-block:: yaml
-   :caption: Extra facet example file `native6-era5.yml`
+   :caption: Extra facet example file `native6-era5-example.yml`
 
    ERA5:
      Amon:

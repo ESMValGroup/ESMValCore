@@ -283,8 +283,9 @@ def get_grid(
         num_peri_dims = 1
     else:
         num_peri_dims = 0
+
     grid = esmpy.Grid(
-        np.array(esmpy_lat.shape),
+        np.vstack(esmpy_lat.shape),
         num_peri_dims=num_peri_dims,
         staggerloc=[esmpy.StaggerLoc.CENTER],
     )
@@ -314,8 +315,7 @@ def is_lon_circular(lon):
             seam = lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)]
         else:
             raise NotImplementedError(
-                "AuxCoord longitude is higher "
-                "dimensional than 2d. Giving up."
+                "AuxCoord longitude is higher dimensional than 2d. Giving up."
             )
         circular = np.all(abs(seam) % 360.0 < 1.0e-3)
     else:

@@ -7,6 +7,7 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -21,6 +22,8 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.preprocessor._shared import (
+    apply_mask,
+    get_dims_along_axes,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
@@ -188,8 +191,8 @@ def _extract_irregular_region(
     cube = cube[..., i_slice, j_slice]
     selection = selection[i_slice, j_slice]
     # Mask remaining coordinates outside region
-    mask = da.broadcast_to(~selection, cube.shape)
-    cube.data = da.ma.masked_where(mask, cube.core_data())
+    horizontal_dims = get_dims_along_axes(cube, ["X", "Y"])
+    cube.data = apply_mask(~selection, cube.core_data(), horizontal_dims)
     return cube
 
 
@@ -352,7 +355,16 @@ def area_statistics(
         agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
     )
 
-    result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
+    with warnings.catch_warnings():
+        # Silence various warnings about collapsing multi-dimensional and/or
+        # non contiguous coordinates as this should be fine when the cell areas
+        # are provided and will fail when they needed but not provided.
+        warnings.filterwarnings(
+            "ignore",
+            category=iris.warnings.IrisVagueMetadataWarning,
+            module="iris",
+        )
+        result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
@@ -857,31 +869,45 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         _cube.add_aux_coord(
             AuxCoord(id_, units="no_unit", long_name="shape_id")
         )
-        mask = da.broadcast_to(mask, _cube.shape)
-        _cube.data = da.ma.masked_where(~mask, _cube.core_data())
+        horizontal_dims = get_dims_along_axes(cube, axes=["X", "Y"])
+        _cube.data = apply_mask(~mask, _cube.core_data(), horizontal_dims)
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
-    if cube.cell_measures():
-        for measure in cube.cell_measures():
-            # Cell measures that are time-dependent, with 4 dimension and
-            # an original shape of (time, depth, lat, lon), need to be
-            # broadcasted to the cube with 5 dimensions and shape
-            # (time, shape_id, depth, lat, lon)
-            if measure.ndim > 3 and result.ndim > 4:
-                data = measure.core_data()
-                data = da.expand_dims(data, axis=(1,))
-                data = da.broadcast_to(data, result.shape)
-                measure = iris.coords.CellMeasure(
+    for measure in cube.cell_measures():
+        # Cell measures that are time-dependent, with 4 dimension and
+        # an original shape of (time, depth, lat, lon), need to be
+        # broadcast to the cube with 5 dimensions and shape
+        # (time, shape_id, depth, lat, lon)
+        if measure.ndim > 3 and result.ndim > 4:
+            data = measure.core_data()
+            if result.has_lazy_data():
+                # Make the cell measure lazy if the result is lazy.
+                cube_chunks = cube.lazy_data().chunks
+                chunk_dims = cube.cell_measure_dims(measure)
+                data = da.asarray(
                     data,
-                    standard_name=measure.standard_name,
-                    long_name=measure.long_name,
-                    units=measure.units,
-                    measure=measure.measure,
-                    var_name=measure.var_name,
-                    attributes=measure.attributes,
+                    chunks=tuple(cube_chunks[i] for i in chunk_dims),
                 )
-            add_cell_measure(result, measure, measure.measure)
-    if cube.ancillary_variables():
-        for ancillary_variable in cube.ancillary_variables():
-            add_ancillary_variable(result, ancillary_variable)
+                chunks = result.lazy_data().chunks
+            else:
+                chunks = None
+            dim_map = get_dims_along_axes(result, ["T", "Z", "Y", "X"])
+            data = iris.util.broadcast_to_shape(
+                data,
+                result.shape,
+                dim_map=dim_map,
+                chunks=chunks,
+            )
+            measure = iris.coords.CellMeasure(
+                data,
+                standard_name=measure.standard_name,
+                long_name=measure.long_name,
+                units=measure.units,
+                measure=measure.measure,
+                var_name=measure.var_name,
+                attributes=measure.attributes,
+            )
+        add_cell_measure(result, measure, measure.measure)
+    for ancillary_variable in cube.ancillary_variables():
+        add_ancillary_variable(result, ancillary_variable)
     return result

@@ -855,7 +855,7 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d):
+def test_tas_no_mesh(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     fix.extra_facets["ugrid"] = False
@@ -891,7 +891,7 @@ def test_tas_dim_height2m_already_present(cubes_2d):
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
 
 
-def test_tas_no_mesh(cubes_2d):
+def test_tas_dim_height2m_already_present(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
 
@@ -931,6 +931,28 @@ def test_tas_no_shift_time(cubes_2d):
     np.testing.assert_allclose(time.points, [54786.0])
     assert time.bounds is None
     assert time.attributes == {}
+
+
+def test_fix_does_not_change_cached_grid(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix("Amon", "tas")
+    assert not fix._horizontal_grids
+    assert not fix._meshes
+
+    # Remove latitude and longitude from tas cube to trigger automatic addition
+    # of them
+    cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    cube.remove_coord("latitude")
+    cube.remove_coord("longitude")
+
+    # Make sure horizontal grid is cached
+    fix.get_horizontal_grid(cube)
+    assert "icon_grid.nc" in fix._horizontal_grids
+    original_grid = fix._horizontal_grids["icon_grid.nc"].copy()
+
+    # Make sure that fix does not alter existing grid
+    fix.fix_metadata(cubes_2d)
+    assert fix._horizontal_grids["icon_grid.nc"] == original_grid
 
 
 # Test uas (for height10m coordinate)
@@ -1288,8 +1310,7 @@ def test_get_horizontal_grid_from_attr_cached_in_dict(
     assert "cached_grid_url.nc" in fix._horizontal_grids
     assert "grid_from_facet.nc" in fix._horizontal_grids  # has not been used
     assert fix._horizontal_grids["cached_grid_url.nc"] == grid
-    assert grid == grid_cube
-    assert grid is not grid_cube
+    assert grid is grid_cube
     assert mock_requests.mock_calls == []
     mock_get_grid_from_facet.assert_not_called()
 
@@ -1415,8 +1436,7 @@ def test_get_horizontal_grid_from_facet_cached_in_dict(
     assert "cached_grid_url.nc" in fix._horizontal_grids  # has not been used
     assert "grid.nc" in fix._horizontal_grids
     assert fix._horizontal_grids["grid.nc"] == grid
-    assert grid == grid_cube
-    assert grid is not grid_cube
+    assert grid is grid_cube
     mock_get_grid_from_cube_attr.assert_not_called()
 
 
