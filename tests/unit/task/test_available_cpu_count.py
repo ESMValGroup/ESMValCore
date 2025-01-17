@@ -4,7 +4,12 @@ from esmvalcore import _task
 
 
 def test_available_cpu_count_linux(mocker):
-    mocker.patch.object(_task.os, "sched_getaffinity", return_value={0, 1})
+    mocker.patch.object(
+        _task.os,
+        "sched_getaffinity",
+        create=True,
+        return_value={0, 1},
+    )
     result = _task.available_cpu_count()
     assert result == 2
     _task.os.sched_getaffinity.assert_called_once_with(0)
