@@ -38,8 +38,7 @@ def ncl_version():
     ncl = which("ncl")
     if not ncl:
         raise RecipeError(
-            "Recipe contains NCL scripts, but cannot find "
-            "an NCL installation."
+            "Recipe contains NCL scripts, but cannot find an NCL installation."
         )
     try:
         cmd = [ncl, "-V"]
