@@ -103,13 +103,13 @@ def _move_datasets_up(recipe: Recipe) -> Recipe:
 
 
 def _to_frozen(item):
-    """Return a frozen and sorted copy of nested dicts and lists."""
+    """Return a frozen copy of nested dicts and lists."""
     if isinstance(item, str):
         return item
     if isinstance(item, Mapping):
-        return tuple(sorted((k, _to_frozen(v)) for k, v in item.items()))
+        return frozenset((k, _to_frozen(v)) for k, v in item.items())
     if isinstance(item, Iterable):
-        return tuple(sorted(_to_frozen(elem) for elem in item))
+        return frozenset(_to_frozen(elem) for elem in item)
     return item
 
 
