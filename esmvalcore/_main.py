@@ -20,7 +20,7 @@ https://doi.org/10.5281/zenodo.3401363 for ESMValTool or
 any of the reference papers listed at https://esmvaltool.org/references/.
 
 Have fun!
-"""
+"""  # noqa: D400
 
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
@@ -330,6 +330,8 @@ class Recipes:
 
 
 class ESMValTool:
+    # This is the `esmvaltool` command. The line below shows the documentation
+    # at the top of this module when users run e.g. `esmvaltool -- --help`.
     __doc__ = __doc__
 
     def __init__(self):
