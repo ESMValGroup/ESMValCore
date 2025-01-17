@@ -847,27 +847,33 @@ class TaskSet(set):
         """
         from esmvalcore.preprocessor import PreprocessingTask
 
-        if (
-            dask.config.get("scheduler", "threads") != "threads"
-            or dask.config.get("num_workers", None) is not None
+        if dask.config.get("scheduler", "threads") not in (
+            "threads",
+            "threading",
         ):
             # No need to do anything when not using the threaded scheduler
-            # or when the user has configured "num_workers".
+            # https://github.com/dask/dask/blob/3504bcc89f7a937b2d48306a17b8eeff57b1e5ae/dask/base.py#L1027-L1050
+            return {}
+        if dask.config.get("num_workers", None) is not None:
+            # No need to do anything when the user has configured "num_workers".
             return {}
 
-        n_available_cpu_cores = len(os.sched_getaffinity(0))
         n_preproc_tasks = sum(
             isinstance(t, PreprocessingTask) for t in self.flatten()
         )
-        n_default_dask_schedulers = min(
-            max(1, n_preproc_tasks), max_parallel_tasks
-        )
+        if n_preproc_tasks == 0:
+            # No need to do anything when we are not running PreprocessingTasks.
+            return {}
+
+        n_available_cpu_cores = len(os.sched_getaffinity(0))
+        n_threaded_dask_schedulers = min(n_preproc_tasks, max_parallel_tasks)
         n_workers = max(
-            1, round(n_available_cpu_cores / n_default_dask_schedulers)
+            1, round(n_available_cpu_cores / n_threaded_dask_schedulers)
         )
         logger.info(
-            "Using the default Dask scheduler with %s worker threads per "
-            "process. See https://docs.esmvaltool.org/projects/ESMValCore/en/"
+            "Using the threaded Dask scheduler with %s worker threads per "
+            "preprocessing task. "
+            "See https://docs.esmvaltool.org/projects/ESMValCore/en/"
             "latest/quickstart/configure.html#f5 for more information.",
             n_workers,
         )
