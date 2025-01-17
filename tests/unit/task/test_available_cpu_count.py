@@ -20,7 +20,8 @@ def test_available_cpu_count_linux(mocker):
 )
 def test_available_cpu_count_osx(mocker, cpu_count, expected):
     mocker.patch.object(_task, "os")
-    del _task.os.sched_getaffinity
+    if hasattr(_task.os, "sched_getaffinity"):
+        del _task.os.sched_getaffinity
     _task.os.cpu_count.return_value = cpu_count
     result = _task.available_cpu_count()
     assert result == expected
