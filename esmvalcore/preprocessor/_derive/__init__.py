@@ -22,11 +22,12 @@ def _get_all_derived_variables():
         python classes (values).
     """
     derivers = {}
-    for path in Path(__file__).parent.glob('[a-z]*.py'):
+    for path in Path(__file__).parent.glob("[a-z]*.py"):
         short_name = path.stem
         module = importlib.import_module(
-            f'esmvalcore.preprocessor._derive.{short_name}')
-        derivers[short_name] = getattr(module, 'DerivedVariable')
+            f"esmvalcore.preprocessor._derive.{short_name}"
+        )
+        derivers[short_name] = module.DerivedVariable
     return derivers
 
 
@@ -55,7 +56,8 @@ def get_required(short_name, project):
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         raise NotImplementedError(
             f"Cannot derive variable '{short_name}', no derivation script "
-            f"available")
+            f"available"
+        )
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
     variables = deepcopy(DerivedVariable().required(project))
     return variables
@@ -93,9 +95,11 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     try:
         cube = DerivedVariable().calculate(cubes)
     except Exception as exc:
-        msg = (f"Derivation of variable '{short_name}' failed. If you used "
-               f"the option '--skip_nonexistent' for running your recipe, "
-               f"this might be caused by missing input data for derivation")
+        msg = (
+            f"Derivation of variable '{short_name}' failed. If you used "
+            f"the option '--skip_nonexistent' for running your recipe, "
+            f"this might be caused by missing input data for derivation"
+        )
         raise ValueError(msg) from exc
 
     # Set standard attributes
@@ -103,8 +107,8 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     cube.standard_name = standard_name if standard_name else None
     cube.long_name = long_name
     for temp in cubes:
-        if 'source_file' in temp.attributes:
-            cube.attributes['source_file'] = temp.attributes['source_file']
+        if "source_file" in temp.attributes:
+            cube.attributes["source_file"] = temp.attributes["source_file"]
 
     # Check/convert units
     if cube.units is None or cube.units == units:
@@ -113,7 +117,11 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
         logger.warning(
             "Units of cube after executing derivation script of '%s' are "
             "'%s', automatically setting them to '%s'. This might lead to "
-            "incorrect data", short_name, cube.units, units)
+            "incorrect data",
+            short_name,
+            cube.units,
+            units,
+        )
         cube.units = units
     else:
         try:
