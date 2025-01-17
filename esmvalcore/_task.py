@@ -845,6 +845,7 @@ class TaskSet(set):
         `num_workers` threads. To avoid too much parallelism, we would like to
         create n_threads = n_cpu_cores / n_processes.
         """
+        # pylint: disable=import-outside-toplevel
         from esmvalcore.preprocessor import PreprocessingTask
 
         if dask.config.get("scheduler", "threads") not in (

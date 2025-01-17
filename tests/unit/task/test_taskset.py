@@ -46,3 +46,12 @@ def test_taskset_get_dask_config(
         assert config == {}
     else:
         assert config == {"num_workers": expected_workers}
+
+
+def test_taskset_get_dask_config_noop(mocker) -> None:
+    tasks = _task.TaskSet()
+
+    with dask.config.set({"num_workers": 4, "scheduler": "threads"}):
+        config = tasks._get_dask_config(max_parallel_tasks=2)
+
+    assert config == {}
