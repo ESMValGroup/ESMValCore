@@ -5,9 +5,10 @@ from __future__ import annotations
 import itertools
 import logging
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Dict
 
 from nested_lookup import nested_delete
 
@@ -102,11 +103,13 @@ def _move_datasets_up(recipe: Recipe) -> Recipe:
 
 
 def _to_frozen(item):
-    """Return a frozen and sorted copy of nested dicts and lists."""
-    if isinstance(item, list):
-        return tuple(sorted(_to_frozen(elem) for elem in item))
-    if isinstance(item, dict):
-        return tuple(sorted((k, _to_frozen(v)) for k, v in item.items()))
+    """Return a frozen copy of nested dicts and lists."""
+    if isinstance(item, str):
+        return item
+    if isinstance(item, Mapping):
+        return frozenset((k, _to_frozen(v)) for k, v in item.items())
+    if isinstance(item, Iterable):
+        return frozenset(_to_frozen(elem) for elem in item)
     return item
 
 
