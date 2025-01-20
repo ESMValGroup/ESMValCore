@@ -407,7 +407,10 @@ def axis_statistics(
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
     weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
-    if not cube.has_lazy_data():
+    if cube.has_lazy_data():
+        coord_chunks = tuple(cube.lazy_data().chunks[d] for d in coord_dims)
+        weights = weights.rechunk(coord_chunks)
+    else:
         weights = weights.compute()
     weights_coord = AuxCoord(
         weights,
