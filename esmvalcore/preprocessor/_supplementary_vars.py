@@ -48,7 +48,7 @@ def add_cell_measure(
     cell_measure_cube: Cube,
     measure: Literal["area", "volume"],
 ) -> None:
-    """Add a cube as a cell_measure in the cube containing the data.
+    """Add cell measure to cube (in-place).
 
     Note
     ----
@@ -102,7 +102,7 @@ def add_cell_measure(
 
 
 def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
-    """Add cube as an ancillary variable in the cube containing the data.
+    """Add ancillary variable to cube (in-place).
 
     Note
     ----
@@ -145,7 +145,7 @@ def add_supplementary_variables(
     cube: Cube,
     supplementary_cubes: Iterable[Cube],
 ) -> Cube:
-    """Add ancillary variables and/or cell measures.
+    """Add ancillary variables and/or cell measures to cube (in-place).
 
     Parameters
     ----------
@@ -174,10 +174,9 @@ def add_supplementary_variables(
 
 
 def remove_supplementary_variables(cube: Cube) -> Cube:
-    """Remove supplementary variables.
+    """Remove supplementary variables from cube (in-place).
 
-    Strip cell measures or ancillary variables from the cube containing the
-    data.
+    Strip cell measures or ancillary variables from the cube.
 
     Parameters
     ----------
