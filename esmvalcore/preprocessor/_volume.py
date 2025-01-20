@@ -104,7 +104,7 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube: Cube) -> da.core.Array:
+def calculate_volume(cube: Cube) -> da.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
@@ -119,12 +119,12 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         input cube.
 
     Returns
     -------
-    dask.array.core.Array
+    dask.array.Array
         Grid volumes.
 
     """
@@ -158,7 +158,9 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
     if cube.has_lazy_data():
-        thickness = da.array(thickness)
+        thickness = da.array(thickness).rechunk(
+            tuple(cube.lazy_data().chunks[d] for d in z_dim)
+        )
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures("cell_area"))
@@ -182,6 +184,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
         thickness, cube.shape, z_dim, chunks=chunks
     )
     grid_volume = area_arr * thickness_arr
+    if cube.has_lazy_data():
+        grid_volume = grid_volume.rechunk(chunks)
 
     return grid_volume
 

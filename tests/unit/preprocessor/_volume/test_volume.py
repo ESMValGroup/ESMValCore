@@ -369,7 +369,6 @@ class Test(tests.Test):
         """Test to extract the top two layers of a 3 layer depth column."""
         result = extract_volume(self.grid_3d, 0.0, 10.0)
         expected = np.ones((2, 2, 2))
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_volume_intervals(self):
