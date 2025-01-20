@@ -104,7 +104,7 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube: Cube) -> da.Array:
+def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
@@ -124,8 +124,8 @@ def calculate_volume(cube: Cube) -> da.Array:
 
     Returns
     -------
-    dask.array.Array
-        Grid volumes.
+    np.ndarray | dask.array.Array
+        Grid volume.
 
     """
     # Load depth field and figure out which dim is which
