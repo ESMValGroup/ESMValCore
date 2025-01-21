@@ -160,7 +160,7 @@ def update_weights_kwargs(
     """
     kwargs = dict(kwargs)
     if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
-        raise ValueError(f"Aggregator {operator} does not support weights")
+        raise ValueError(f"Aggregator '{operator}' does not support weights")
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
         if cube is not None and callback is not None:
