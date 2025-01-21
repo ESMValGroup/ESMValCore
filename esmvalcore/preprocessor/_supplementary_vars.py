@@ -5,7 +5,6 @@ from typing import Iterable
 
 import iris.coords
 import iris.cube
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
