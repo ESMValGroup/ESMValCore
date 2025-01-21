@@ -493,7 +493,7 @@ class Test(tests.Test):
         self.assertFalse(self.grid_4d.cell_measures("ocean_volume"))
         self.assertFalse(result.cell_measures("ocean_volume"))
 
-    def test_calculate_volume_lazy(self):
+    def test_calculate_volume_lazy_cube(self):
         """Test that calculate_volume returns a lazy volume.
 
         The volume chunks should match those of the input cube for
@@ -501,6 +501,31 @@ class Test(tests.Test):
         """
         chunks = self.grid_4d_lazy.core_data().chunks
         volume = calculate_volume(self.grid_4d_lazy)
+        assert self.grid_4d_lazy.has_lazy_data()
+        assert isinstance(volume, da.Array)
+        assert volume.chunks == chunks
+
+    def test_calculate_volume_all_lazy(self):
+        """Test that calculate_volume returns a lazy volume.
+
+        The volume chunks should match those of the input cube for
+        computational efficiency.
+        """
+        # Only aux coords can have lazy bounds
+        z_coord = self.grid_4d_lazy.coord("zcoord")
+        z_aux_coord = iris.coords.AuxCoord(
+            z_coord.lazy_points(),
+            bounds=z_coord.lazy_bounds(),
+            long_name="zcoord",
+            units="m",
+            attributes={"positive": "up"},
+        )
+        self.grid_4d_lazy.remove_coord("zcoord")
+        self.grid_4d_lazy.add_aux_coord(z_aux_coord, 1)
+        chunks = self.grid_4d_lazy.core_data().chunks
+
+        volume = calculate_volume(self.grid_4d_lazy)
+
         assert self.grid_4d_lazy.has_lazy_data()
         assert isinstance(volume, da.Array)
         assert volume.chunks == chunks

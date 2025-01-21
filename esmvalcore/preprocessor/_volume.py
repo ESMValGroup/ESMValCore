@@ -158,11 +158,11 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
     if cube.has_lazy_data():
-        chunks = tuple(cube.lazy_data().chunks[d] for d in z_dim)
+        z_chunks = tuple(cube.lazy_data().chunks[d] for d in z_dim)
         if isinstance(thickness, da.Array):
-            thickness = thickness.rechunk(chunks)
+            thickness = thickness.rechunk(z_chunks)
         else:
-            thickness = da.asarray(thickness, chunks=chunks)
+            thickness = da.asarray(thickness, chunks=z_chunks)
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures("cell_area"))
