@@ -785,6 +785,16 @@ class DiagnosticTask(BaseTask):
         return string
 
 
+def available_cpu_count() -> int:
+    """Return the number of available CPU cores."""
+    if hasattr(os, "sched_getaffinity"):
+        # Not available on OSX.
+        return len(os.sched_getaffinity(0))
+    if count := os.cpu_count():
+        return count
+    return 1
+
+
 class TaskSet(set):
     """Container for tasks."""
 
@@ -867,7 +877,7 @@ class TaskSet(set):
             # No need to do anything when we are not running PreprocessingTasks.
             return {}
 
-        n_available_cpu_cores = len(os.sched_getaffinity(0))
+        n_available_cpu_cores = available_cpu_count()
         n_threaded_dask_schedulers = min(n_preproc_tasks, max_parallel_tasks)
         n_workers = max(
             1, round(n_available_cpu_cores / n_threaded_dask_schedulers)
@@ -890,7 +900,7 @@ class TaskSet(set):
         n_running = 0
 
         if max_parallel_tasks is None:
-            max_parallel_tasks = len(os.sched_getaffinity(0))
+            max_parallel_tasks = available_cpu_count()
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
         logger.info(
             "Running %s tasks using %s processes", n_tasks, max_parallel_tasks
