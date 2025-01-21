@@ -788,6 +788,7 @@ class DiagnosticTask(BaseTask):
 def available_cpu_count() -> int:
     """Return the number of available CPU cores."""
     if hasattr(os, "sched_getaffinity"):
+        # Not available on OSX.
         return len(os.sched_getaffinity(0))
     if count := os.cpu_count():
         return count
