@@ -163,7 +163,6 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
             thickness = thickness.rechunk(chunks)
         else:
             thickness = da.asarray(thickness, chunks=chunks)
-        )
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures("cell_area"))
