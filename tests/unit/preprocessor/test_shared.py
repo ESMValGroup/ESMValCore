@@ -60,13 +60,12 @@ def test_get_iris_aggregator_mean(operator, kwargs):
     assert agg_kwargs == kwargs
 
 
-@pytest.mark.parametrize("kwargs", [{}, {"weights": True}])
 @pytest.mark.parametrize("operator", ["median", "mEdIaN", "MEDIAN"])
-def test_get_iris_aggregator_median(operator, kwargs):
+def test_get_iris_aggregator_median(operator):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator)
     assert agg == iris.analysis.MEDIAN
-    assert agg_kwargs == kwargs
+    assert agg_kwargs == {}
 
 
 @pytest.mark.parametrize("operator", ["min", "MiN", "MIN"])
@@ -164,6 +163,14 @@ def test_get_iris_aggregator_missing_kwarg():
     """Test ``get_iris_aggregator``."""
     with pytest.raises(ValueError):
         get_iris_aggregator("percentile")
+
+
+def test_get_iris_aggregator_no_weights_allowed():
+    """Test ``get_iris_aggregator``."""
+    operator = "median"
+    kwargs = {"weights": True}
+    with pytest.raises(ValueError):
+        get_iris_aggregator(operator, **kwargs)
 
 
 @pytest.mark.parametrize(

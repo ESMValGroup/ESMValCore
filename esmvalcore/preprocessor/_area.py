@@ -352,7 +352,12 @@ def area_statistics(
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
-        agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
+        operator,
+        agg,
+        agg_kwargs,
+        "cell_area",
+        cube,
+        try_adding_calculated_cell_area,
     )
 
     with warnings.catch_warnings():

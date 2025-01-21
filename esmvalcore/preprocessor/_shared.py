@@ -88,7 +88,7 @@ def get_iris_aggregator(
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
     test_kwargs = update_weights_kwargs(
-        aggregator, aggregator_kwargs, np.array([1.0])
+        operator, aggregator, aggregator_kwargs, np.array([1.0])
     )
     try:
         cube.collapsed("x", aggregator, **test_kwargs)
@@ -122,6 +122,7 @@ def aggregator_accept_weights(aggregator: iris.analysis.Aggregator) -> bool:
 
 
 def update_weights_kwargs(
+    operator: str,
     aggregator: iris.analysis.Aggregator,
     kwargs: dict,
     weights: Any,
@@ -133,6 +134,8 @@ def update_weights_kwargs(
 
     Parameters
     ----------
+    operator:
+        Named operator.
     aggregator:
         Iris aggregator.
     kwargs:
@@ -156,6 +159,8 @@ def update_weights_kwargs(
 
     """
     kwargs = dict(kwargs)
+    if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
+        raise ValueError(f"Aggregator {operator} does not support weights")
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
         if cube is not None and callback is not None:
