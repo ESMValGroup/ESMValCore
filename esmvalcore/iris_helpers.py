@@ -39,7 +39,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Raises
     ------
-    CoordinateMultiDimError
+    iris.exceptions.CoordinateMultiDimError
         ``dim_coord`` is not 1D.
 
     """

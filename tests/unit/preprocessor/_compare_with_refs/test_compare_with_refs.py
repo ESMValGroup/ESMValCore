@@ -875,9 +875,8 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
     ref_cube = regular_cubes[0].copy()
     msg = (
         r"Cube .* needs a `longitude` coordinate to calculate cell area "
-        r"weights for weighted distance metric over coordinates \['time', "
-        r"'latitude'\] \(alternatively, a `cell_area` can be given to the "
-        r"cube as supplementary variable\)"
+        r"weights \(alternatively, a `cell_area` can be given to the cube as "
+        r"supplementary variable\)"
     )
     if error:
         context = pytest.raises(CoordinateNotFoundError, match=msg)

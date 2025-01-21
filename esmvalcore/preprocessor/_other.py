@@ -13,6 +13,7 @@ import iris.analysis
 import numpy as np
 from iris.coords import Coord, DimCoord
 from iris.cube import Cube
+from iris.exceptions import CoordinateMultiDimError
 
 from esmvalcore.iris_helpers import rechunk_cube
 from esmvalcore.preprocessor._shared import (
@@ -55,6 +56,88 @@ def clip(cube, minimum=None, maximum=None):
         if maximum < minimum:
             raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = da.clip(cube.core_data(), minimum, maximum)
+    return cube
+
+
+@preserve_float_dtype
+def cumsum(
+    cube: Cube,
+    coord: Coord | str,
+    weights: np.ndarray | da.Array | bool | None = None,
+    method: Literal["sequential", "blelloch"] = "sequential",
+) -> Cube:
+    """Calculate cumulative sum of the elements along a given coordinate.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    coord:
+        Coordinate over which the cumulative sum is calculated. Must be 1D.
+    weights:
+        Weights for the calculation of the cumulative sum. Each element in the
+        data is multiplied by the corresponding weight before summing. Can be
+        an array of the same shape as the input data, ``False`` or ``None`` (no
+        weighting), or ``True``. The latter is only allowed if
+        ``coord="time"``. Here, the lengths of time intervals will be used as
+        weights, which are automatically calculated from the input data.
+    method:
+        Method used to perform the cumulative sum. Only relevant if the cube
+        has `lazy data
+        <https://scitools-iris.readthedocs.io/en/stable/userguide/
+        real_and_lazy_data.html>`__. See :func:`dask.array.cumsum` for details.
+
+    Returns
+    -------
+    Cube
+        Cube of cumulative sum. Has same dimensions and coordinates of the
+        input cube.
+
+    Raises
+    ------
+    ValueError
+        ``weights=True`` and ``coord!="time"``.
+    iris.exceptions.CoordinateMultiDimError
+        ``coord`` is not 1D.
+    iris.exceptions.CoordinateNotFoundError
+        ``coord`` is not found in ``cube``.
+
+    """
+    cube = cube.copy()
+
+    # Only 1D coordinates are supported
+    coord = cube.coord(coord)
+    if coord.ndim > 1:
+        raise CoordinateMultiDimError(coord)
+
+    # Weighting, make sure to adapt cube units in this case
+    if weights is True and coord.name() != "time":
+        raise ValueError("weights=True is only allowed if coord='time'")
+    if weights is True:
+        cube.data = cube.core_data() * get_weights(cube, [coord])
+        cube.units = cube.units * coord.units
+    elif isinstance(weights, (np.ndarray, da.Array)):
+        cube.data = cube.core_data() * weights
+        cube.units = cube.units * coord.units
+
+    axes = get_all_coord_dims(cube, [coord])
+
+    # For scalar coordinates, cumsum is a no-op (this aligns with
+    # numpy's/dask's behavior)
+    if axes:
+        if cube.has_lazy_data():
+            cube.data = da.cumsum(
+                cube.core_data(), axis=axes[0], method=method
+            )
+        else:
+            cube.data = np.cumsum(cube.core_data(), axis=axes[0])
+
+    # Adapt cube metadata
+    if cube.var_name is not None:
+        cube.var_name = f"cumulative_{cube.var_name}"
+    if cube.long_name is not None:
+        cube.long_name = f"Cumulative {cube.long_name}"
+
     return cube
 
 
@@ -133,8 +216,10 @@ def histogram(
         Invalid `normalization` or `bin_range` given or `bin_range` is ``None``
         and data is fully masked.
     iris.exceptions.CoordinateNotFoundError
-        `longitude` is not found in cube if `weights=True`, `latitude` is in
-        `coords`, and no `cell_area` is given as
+        A given coordinate of ``coords`` is not found in ``cube``.
+    iris.exceptions.CoordinateNotFoundError
+        `longitude` is not found in cube if ``weights=True``, `latitude` is in
+        ``coords``, and no `cell_area` is given as
         :ref:`supplementary_variables`.
 
     """

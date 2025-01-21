@@ -301,6 +301,7 @@ def get_weights(
     """Calculate suitable weights for given coordinates."""
     npx = get_array_module(cube.core_data())
     weights = npx.ones_like(cube.core_data())
+    coords = [c.name() if hasattr(c, "name") else c for c in coords]
 
     # Time weights: lengths of time interval
     if "time" in coords:
@@ -319,9 +320,8 @@ def get_weights(
         ):
             raise CoordinateNotFoundError(
                 f"Cube {cube.summary(shorten=True)} needs a `longitude` "
-                f"coordinate to calculate cell area weights for weighted "
-                f"distance metric over coordinates {coords} (alternatively, "
-                f"a `cell_area` can be given to the cube as supplementary "
+                f"coordinate to calculate cell area weights (alternatively, a "
+                f"`cell_area` can be given to the cube as supplementary "
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)

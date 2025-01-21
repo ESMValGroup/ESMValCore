@@ -17,9 +17,10 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube
+from iris.exceptions import CoordinateMultiDimError
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor._other import clip, histogram
+from esmvalcore.preprocessor._other import clip, cumsum, histogram
 from tests.unit.preprocessor._compare_with_refs.test_compare_with_refs import (
     get_3d_cube,
 )
@@ -440,6 +441,165 @@ def test_histogram_invalid_normalization(cube):
     )
     with pytest.raises(ValueError, match=msg):
         histogram(cube, normalization="invalid")
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_time(cube, lazy):
+    """Test `cumsum`."""
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "time")
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name == "cumulative_tas"
+    assert result.long_name is None
+    assert result.units == "K"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    expected_data = np.ma.masked_invalid(
+        [[[0.0, 4.0], [np.nan, 6.0]], [[1.0, 9.0], [np.nan, 13.0]]],
+    )
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_time_weighted(cube, lazy):
+    """Test `cumsum`."""
+    cube.var_name = None
+    cube.long_name = "Air Temperature"
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "time", weights=True)
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name is None
+    assert result.long_name == "Cumulative Air Temperature"
+    assert result.units == "K.d"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    expected_data = np.ma.masked_invalid(
+        [[[0.0, 24.0], [np.nan, 36.0]], [[2.0, 34.0], [np.nan, 50.0]]],
+    )
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+
+
+@pytest.mark.parametrize("weights", [False, None])
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_latitude(cube, lazy, weights):
+    """Test `cumsum`."""
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "latitude", weights=weights)
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name == "cumulative_tas"
+    assert result.long_name is None
+    assert result.units == "K"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    expected_data = np.ma.masked_invalid(
+        [[[0.0, 4.0], [np.nan, 10.0]], [[1.0, 5.0], [np.nan, 12.0]]],
+    )
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_latitude_weighted(cube, lazy):
+    """Test `cumsum`."""
+    cube.var_name = None
+    cube.long_name = "Air Temperature"
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "latitude", weights=cube.core_data())
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name is None
+    assert result.long_name == "Cumulative Air Temperature"
+    assert result.units == "K.degrees_north"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    expected_data = np.ma.masked_invalid(
+        [[[0.0, 16.0], [np.nan, 52.0]], [[1.0, 25.0], [np.nan, 74.0]]],
+    )
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_scalar_longitude(cube, lazy):
+    """Test `cumsum`."""
+    cube = cube.collapsed("longitude", iris.analysis.SUM)
+    print(cube.data)
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "longitude")
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name == "cumulative_tas"
+    assert result.long_name is None
+    assert result.units == "K"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    np.testing.assert_allclose(result.data, [[4.0, 6.0], [6.0, 7.0]])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_cumsum_scalar_longitude_weighted(cube, lazy):
+    """Test `cumsum`."""
+    cube = cube.collapsed("longitude", iris.analysis.SUM)
+    print(cube.data)
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = cumsum(cube, "longitude", weights=cube.core_data())
+
+    assert result is not cube
+    assert result.standard_name == "air_temperature"
+    assert result.var_name == "cumulative_tas"
+    assert result.long_name is None
+    assert result.units == "K.degrees_east"
+    assert result.shape == cube.shape
+    assert result.dtype == cube.dtype
+    assert result.has_lazy_data() is lazy
+    np.testing.assert_allclose(result.data, [[16.0, 36.0], [36.0, 49.0]])
+
+
+def test_cumsum_invalid_coordinate(cube):
+    """Test `cumsum`."""
+    aux_coord = AuxCoord(np.ones((2, 2)), var_name="aux_2d")
+    cube.add_aux_coord(aux_coord, (0, 1))
+    msg = r"Multi-dimensional coordinate not supported: 'aux_2d'"
+
+    with pytest.raises(CoordinateMultiDimError, match=msg):
+        cumsum(cube, coord="aux_2d")
+
+    with pytest.raises(CoordinateMultiDimError, match=msg):
+        cumsum(cube, coord=aux_coord)
+
+
+def test_cumsum_invalid_weighting(cube):
+    """Test `cumsum`."""
+    msg = r"weights=True is only allowed if coord='time'"
+    with pytest.raises(ValueError, match=msg):
+        cumsum(cube, coord="longitude", weights=True)
 
 
 if __name__ == "__main__":

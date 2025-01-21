@@ -645,3 +645,17 @@ def regridding_schemes(settings: dict):
                 f"/recipe/preprocessor.html#generic-regridding-schemes for "
                 f"details."
             ) from exc
+
+
+def cumsum_preproc(settings: dict) -> None:
+    """Check options of cumsum preprocessor."""
+    step = "cumsum"
+    if step not in settings:
+        return
+    coord = settings[step].get("coord", "time")
+    weights = settings[step].get("weights", None)
+    if weights is True and coord != "time":
+        raise RecipeError(
+            f"Invalid options for {step}: `weights=True` is only supported "
+            f"for `coord='time'`"
+        )
