@@ -108,11 +108,12 @@ def cumulative_sum(
     if coord.ndim > 1:
         raise CoordinateMultiDimError(coord)
 
-    # Weighting, make sure to adapt cube units in this case
+    # Weighting, make sure to adapt cube standard name and units in this case
     if weights is True:
         weights = get_coord_weights(cube, coord, broadcast=True)
     if isinstance(weights, (np.ndarray, da.Array)):
         cube.data = cube.core_data() * weights
+        cube.standard_name = None
         cube.units = cube.units * coord.units
 
     axes = get_all_coord_dims(cube, [coord])

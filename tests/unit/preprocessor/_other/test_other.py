@@ -477,7 +477,7 @@ def test_cumulative_sum_time_weighted(cube, lazy):
     result = cumulative_sum(cube, "time", weights=True)
 
     assert result is not cube
-    assert result.standard_name == "air_temperature"
+    assert result.standard_name is None
     assert result.var_name is None
     assert result.long_name == "Cumulative Air Temperature"
     assert result.units == "K.d"
@@ -526,7 +526,7 @@ def test_cumulative_sum_latitude_weighted(cube, lazy):
     result = cumulative_sum(cube, "latitude", weights=cube.core_data())
 
     assert result is not cube
-    assert result.standard_name == "air_temperature"
+    assert result.standard_name is None
     assert result.var_name is None
     assert result.long_name == "Cumulative Air Temperature"
     assert result.units == "K.degrees_north"
@@ -570,7 +570,7 @@ def test_cumulative_sum_scalar_longitude_weighted(cube, lazy):
     result = cumulative_sum(cube, "longitude", weights=True)
 
     assert result is not cube
-    assert result.standard_name == "air_temperature"
+    assert result.standard_name is None
     assert result.var_name == "cumulative_tas"
     assert result.long_name is None
     assert result.units == "K.degrees_east"
