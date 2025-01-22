@@ -20,7 +20,7 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor._other import clip, cumsum, histogram
+from esmvalcore.preprocessor._other import clip, cumulative_sum, histogram
 from tests.unit.preprocessor._compare_with_refs.test_compare_with_refs import (
     get_3d_cube,
 )
@@ -444,12 +444,12 @@ def test_histogram_invalid_normalization(cube):
 
 
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_time(cube, lazy):
-    """Test `cumsum`."""
+def test_cumulative_sum_time(cube, lazy):
+    """Test `cumulative_sum`."""
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "time")
+    result = cumulative_sum(cube, "time")
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -467,14 +467,14 @@ def test_cumsum_time(cube, lazy):
 
 
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_time_weighted(cube, lazy):
-    """Test `cumsum`."""
+def test_cumulative_sum_time_weighted(cube, lazy):
+    """Test `cumulative_sum`."""
     cube.var_name = None
     cube.long_name = "Air Temperature"
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "time", weights=True)
+    result = cumulative_sum(cube, "time", weights=True)
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -493,12 +493,12 @@ def test_cumsum_time_weighted(cube, lazy):
 
 @pytest.mark.parametrize("weights", [False, None])
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_latitude(cube, lazy, weights):
-    """Test `cumsum`."""
+def test_cumulative_sum_latitude(cube, lazy, weights):
+    """Test `cumulative_sum`."""
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "latitude", weights=weights)
+    result = cumulative_sum(cube, "latitude", weights=weights)
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -516,14 +516,14 @@ def test_cumsum_latitude(cube, lazy, weights):
 
 
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_latitude_weighted(cube, lazy):
-    """Test `cumsum`."""
+def test_cumulative_sum_latitude_weighted(cube, lazy):
+    """Test `cumulative_sum`."""
     cube.var_name = None
     cube.long_name = "Air Temperature"
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "latitude", weights=cube.core_data())
+    result = cumulative_sum(cube, "latitude", weights=cube.core_data())
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -541,13 +541,13 @@ def test_cumsum_latitude_weighted(cube, lazy):
 
 
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_scalar_longitude(cube, lazy):
-    """Test `cumsum`."""
+def test_cumulative_sum_scalar_longitude(cube, lazy):
+    """Test `cumulative_sum`."""
     cube = cube.collapsed("longitude", iris.analysis.SUM)
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "longitude")
+    result = cumulative_sum(cube, "longitude")
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -561,13 +561,13 @@ def test_cumsum_scalar_longitude(cube, lazy):
 
 
 @pytest.mark.parametrize("lazy", [True, False])
-def test_cumsum_scalar_longitude_weighted(cube, lazy):
-    """Test `cumsum`."""
+def test_cumulative_sum_scalar_longitude_weighted(cube, lazy):
+    """Test `cumulative_sum`."""
     cube = cube.collapsed("longitude", iris.analysis.SUM)
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "longitude", weights=True)
+    result = cumulative_sum(cube, "longitude", weights=True)
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -580,17 +580,17 @@ def test_cumsum_scalar_longitude_weighted(cube, lazy):
     np.testing.assert_allclose(result.data, [[40.0, 60.0], [60.0, 70.0]])
 
 
-def test_cumsum_invalid_coordinate(cube):
-    """Test `cumsum`."""
+def test_cumulative_sum_invalid_coordinate(cube):
+    """Test `cumulative_sum`."""
     aux_coord = AuxCoord(np.ones((2, 2)), var_name="aux_2d")
     cube.add_aux_coord(aux_coord, (0, 1))
     msg = r"Multi-dimensional coordinate not supported: 'aux_2d'"
 
     with pytest.raises(CoordinateMultiDimError, match=msg):
-        cumsum(cube, coord="aux_2d")
+        cumulative_sum(cube, coord="aux_2d")
 
     with pytest.raises(CoordinateMultiDimError, match=msg):
-        cumsum(cube, coord=aux_coord)
+        cumulative_sum(cube, coord=aux_coord)
 
 
 if __name__ == "__main__":

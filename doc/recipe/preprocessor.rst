@@ -2870,14 +2870,15 @@ Other
 
 Miscellaneous functions that do not belong to any of the other categories.
 
-.. _cumsum:
+.. _cumulative_sum:
 
-``cumsum``
-----------
+``cumulative_sum``
+------------------
 
 This function calculates cumulative sums along a given coordinate.
 
-The ``cumsum`` preprocessor supports the following arguments in the recipe:
+The ``cumulative_sum`` preprocessor supports the following arguments in the
+recipe:
 
 * ``coord`` (:obj:`str`): Coordinate over which the cumulative sum is
   calculated.
@@ -2902,12 +2903,12 @@ Example:
 .. code-block:: yaml
 
     preprocessors:
-      preproc_cumsum:
-        cumsum:
+      preproc_cumulative_sum:
+        cumulative_sum:
           coord: time
           weights: true
 
-See also :func:`esmvalcore.preprocessor.cumsum`.
+See also :func:`esmvalcore.preprocessor.cumulative_sum`.
 
 ``clip``
 --------

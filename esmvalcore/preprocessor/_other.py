@@ -61,7 +61,7 @@ def clip(cube, minimum=None, maximum=None):
 
 
 @preserve_float_dtype
-def cumsum(
+def cumulative_sum(
     cube: Cube,
     coord: Coord | str,
     weights: np.ndarray | da.Array | bool | None = None,
@@ -117,7 +117,7 @@ def cumsum(
 
     axes = get_all_coord_dims(cube, [coord])
 
-    # For scalar coordinates, cumsum is a no-op (this aligns with
+    # For scalar coordinates, cumulative_sum is a no-op (this aligns with
     # numpy's/dask's behavior)
     if axes:
         if cube.has_lazy_data():

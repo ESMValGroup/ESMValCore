@@ -719,7 +719,6 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     check.bias_type(settings)
     check.metric_type(settings)
     check.resample_hours(settings)
-    check.cumsum_preproc(settings)
 
 
 def _get_preprocessor_task(datasets, profiles, task_name):

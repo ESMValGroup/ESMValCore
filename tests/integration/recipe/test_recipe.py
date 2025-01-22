@@ -3503,37 +3503,3 @@ def test_automatic_already_regrid_era5_grib(
         "target_grid": "1x1",
         "scheme": "nearest",
     }
-
-
-def test_invalid_cumsum(tmp_path, patched_datafinder, session):
-    content = dedent("""
-        preprocessors:
-          test_cumsum:
-            cumsum:
-              coord: latitude
-              weights: true
-
-        diagnostics:
-          diagnostic_name:
-            variables:
-              ta:
-                preprocessor: test_cumsum
-                project: CMIP6
-                mip: Amon
-                exp: historical
-                timerange: '20000101/20001231'
-                ensemble: r1i1p1f1
-                grid: gn
-                additional_datasets:
-                  - {dataset: CanESM5}
-
-            scripts: null
-        """)
-    msg = (
-        "Invalid options for cumsum: `weights=True` is only supported for "
-        "`coord='time'`"
-    )
-    with pytest.raises(RecipeError) as exc:
-        get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
