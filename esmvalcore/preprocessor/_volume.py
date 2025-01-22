@@ -622,8 +622,8 @@ def _get_first_unmasked_data(array, axis):
 
 
 @register_supplementaries(
-        variables=['ps'],
-        required='require_at_least_one'
+    variables=['ps'],
+    required='require_at_least_one'
 )
 def extract_surface_from_atm(
     cube: Cube,

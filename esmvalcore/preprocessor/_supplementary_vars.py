@@ -107,8 +107,8 @@ def add_ancillary_variable(cube, ancillary_cube):
     )
     data_dims = [None] * ancillary_cube.ndim
     for coord in ancillary_cube.coords():
-        for ancillary_dim, cube_dim in zip(
-            ancillary_cube.coord_dims(coord), cube.coord_dims(coord)):
+        for ancillary_dim, cube_dim in zip(ancillary_cube.coord_dims(coord),
+                                           cube.coord_dims(coord)):
             data_dims[ancillary_dim] = cube_dim
     if None in data_dims:
         none_dims = ", ".join(
