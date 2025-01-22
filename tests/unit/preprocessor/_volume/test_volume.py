@@ -196,8 +196,7 @@ class Test(tests.Test):
         """Test _add_axis_stats_weights_coord."""
         assert not self.grid_4d.coords("_axis_statistics_weights_")
         coord = self.grid_4d.coord("zcoord")
-        coord_dims = self.grid_4d.coord_dims("zcoord")
-        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
+        _add_axis_stats_weights_coord(self.grid_4d, coord)
         weights_coord = self.grid_4d.coord("_axis_statistics_weights_")
         assert not weights_coord.has_lazy_points()
         assert weights_coord.units == "m"
@@ -207,13 +206,12 @@ class Test(tests.Test):
         """Test _add_axis_stats_weights_coord."""
         assert not self.grid_4d_lazy.coords("_axis_statistics_weights_")
         coord = self.grid_4d_lazy.coord("zcoord")
-        coord_dims = self.grid_4d_lazy.coord_dims("zcoord")
-        _add_axis_stats_weights_coord(self.grid_4d_lazy, coord, coord_dims)
+        _add_axis_stats_weights_coord(self.grid_4d_lazy, coord)
         weights_coord = self.grid_4d_lazy.coord("_axis_statistics_weights_")
         assert weights_coord.has_lazy_points()
         assert (
             weights_coord.lazy_points().chunks[0]
-            == self.grid_4d_lazy.lazy_data().chunks[coord_dims[0]]
+            == self.grid_4d_lazy.lazy_data().chunks[1]
         )
         assert weights_coord.units == "m"
         np.testing.assert_allclose(weights_coord.points, [2.5, 22.5, 225.0])

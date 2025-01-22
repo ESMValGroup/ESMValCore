@@ -305,12 +305,7 @@ def get_weights(
 
     # Time weights: lengths of time interval
     if "time" in coords:
-        weights = weights * broadcast_to_shape(
-            npx.array(get_time_weights(cube)),
-            cube.shape,
-            cube.coord_dims("time"),
-            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
-        )
+        weights = weights * get_coord_weights(cube, "time", broadcast=True)
 
     # Latitude weights: cell areas
     if "latitude" in coords:
@@ -341,43 +336,74 @@ def get_weights(
     return weights
 
 
-def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
-    """Compute the weighting of the time axis.
+def get_coord_weights(
+    cube: Cube,
+    coord: str | Coord,
+    broadcast: bool = False,
+) -> np.ndarray | da.core.Array:
+    """Compute weighting for an arbitrary coordinate.
+
+    Weights are calculated as the difference between the upper and lower
+    bounds.
 
     Parameters
     ----------
     cube:
         Input cube.
+    coord:
+        Coordinate which is used to calculate the weights. Must have bounds
+        array with 2 bounds per point.
+    broadcast:
+        If ``False``, weights have the shape of ``coord``. If ``True``,
+        broadcast weights to shape of cube.
 
     Returns
     -------
     np.ndarray or da.Array
-        Array of time weights for averaging. Returns a
-        :class:`dask.array.Array` if the input cube has lazy data; a
-        :class:`numpy.ndarray` otherwise.
+        Array of axis weights. Returns a :class:`dask.array.Array` if the input
+        cube has lazy data; a :class:`numpy.ndarray` otherwise.
 
     """
-    time = cube.coord("time")
-    coord_dims = cube.coord_dims("time")
+    coord = cube.coord(coord)
+    coord_dims = cube.coord_dims(coord)
 
-    # Multidimensional time coordinates are not supported: In this case,
-    # weights cannot be simply calculated as difference between the bounds
-    if len(coord_dims) > 1:
+    # Coordinate needs bounds of size 2
+    if coord.core_bounds() is None:
         raise ValueError(
-            f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
+            f"Cannot calculate weights for coordinate '{coord.name()}' "
+            f"without bounds"
+        )
+    if coord.core_bounds().shape[-1] != 2:
+        raise ValueError(
+            f"Cannot calculate weights for coordinate '{coord.name()}' "
+            f"with {coord.core_bounds().shape[-1]} bounds per point, expected "
+            f"2 bounds per point"
         )
 
-    # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
-    if cube.has_lazy_data():
-        # Align the weight chunks with the data chunks to avoid excessively
-        # large chunks as a result of broadcasting.
-        time_chunks = cube.lazy_data().chunks[coord_dims[0]]
-        time_weights = time_weights.rechunk(time_chunks)
-    else:
-        time_weights = time_weights.compute()
-    return time_weights
+    # Calculate weights of same shape as coordinate and make sure to use
+    # identical chunks as parent cube for non-scalar lazy data
+    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
+    if cube.has_lazy_data() and coord_dims:
+        coord_chunks = tuple(cube.lazy_data().chunks[d] for d in coord_dims)
+        weights = weights.rechunk(coord_chunks)
+    if not cube.has_lazy_data():
+        weights = weights.compute()
+
+    # Broadcast to cube shape if desired; scalar arrays needs special treatment
+    # since iris.broadcast_to_shape cannot handle this
+    if broadcast:
+        chunks = cube.lazy_data().chunks if cube.has_lazy_data() else None
+        if coord_dims:
+            weights = broadcast_to_shape(
+                weights, cube.shape, coord_dims, chunks=chunks
+            )
+        else:
+            if cube.has_lazy_data():
+                weights = da.broadcast_to(weights, cube.shape, chunks=chunks)
+            else:
+                weights = np.broadcast_to(weights, cube.shape)
+
+    return weights
 
 
 def try_adding_calculated_cell_area(cube: Cube) -> None:

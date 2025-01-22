@@ -544,7 +544,6 @@ def test_cumsum_latitude_weighted(cube, lazy):
 def test_cumsum_scalar_longitude(cube, lazy):
     """Test `cumsum`."""
     cube = cube.collapsed("longitude", iris.analysis.SUM)
-    print(cube.data)
     if lazy:
         cube.data = cube.lazy_data()
 
@@ -565,11 +564,10 @@ def test_cumsum_scalar_longitude(cube, lazy):
 def test_cumsum_scalar_longitude_weighted(cube, lazy):
     """Test `cumsum`."""
     cube = cube.collapsed("longitude", iris.analysis.SUM)
-    print(cube.data)
     if lazy:
         cube.data = cube.lazy_data()
 
-    result = cumsum(cube, "longitude", weights=cube.core_data())
+    result = cumsum(cube, "longitude", weights=True)
 
     assert result is not cube
     assert result.standard_name == "air_temperature"
@@ -579,7 +577,7 @@ def test_cumsum_scalar_longitude_weighted(cube, lazy):
     assert result.shape == cube.shape
     assert result.dtype == cube.dtype
     assert result.has_lazy_data() is lazy
-    np.testing.assert_allclose(result.data, [[16.0, 36.0], [36.0, 49.0]])
+    np.testing.assert_allclose(result.data, [[40.0, 60.0], [60.0, 70.0]])
 
 
 def test_cumsum_invalid_coordinate(cube):
@@ -593,13 +591,6 @@ def test_cumsum_invalid_coordinate(cube):
 
     with pytest.raises(CoordinateMultiDimError, match=msg):
         cumsum(cube, coord=aux_coord)
-
-
-def test_cumsum_invalid_weighting(cube):
-    """Test `cumsum`."""
-    msg = r"weights=True is only allowed if coord='time'"
-    with pytest.raises(ValueError, match=msg):
-        cumsum(cube, coord="longitude", weights=True)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
     get_all_coords,
     get_array_module,
+    get_coord_weights,
     get_weights,
     preserve_float_dtype,
 )
@@ -78,9 +79,8 @@ def cumsum(
         Weights for the calculation of the cumulative sum. Each element in the
         data is multiplied by the corresponding weight before summing. Can be
         an array of the same shape as the input data, ``False`` or ``None`` (no
-        weighting), or ``True``. The latter is only allowed if
-        ``coord="time"``. Here, the lengths of time intervals will be used as
-        weights, which are automatically calculated from the input data.
+        weighting), or ``True`` (calculate the weights from the coordinate
+        bounds; only works if each coordinate point has exactly 2 bounds).
     method:
         Method used to perform the cumulative sum. Only relevant if the cube
         has `lazy data
@@ -95,8 +95,6 @@ def cumsum(
 
     Raises
     ------
-    ValueError
-        ``weights=True`` and ``coord!="time"``.
     iris.exceptions.CoordinateMultiDimError
         ``coord`` is not 1D.
     iris.exceptions.CoordinateNotFoundError
@@ -111,12 +109,9 @@ def cumsum(
         raise CoordinateMultiDimError(coord)
 
     # Weighting, make sure to adapt cube units in this case
-    if weights is True and coord.name() != "time":
-        raise ValueError("weights=True is only allowed if coord='time'")
     if weights is True:
-        cube.data = cube.core_data() * get_weights(cube, [coord])
-        cube.units = cube.units * coord.units
-    elif isinstance(weights, (np.ndarray, da.Array)):
+        weights = get_coord_weights(cube, coord, broadcast=True)
+    if isinstance(weights, (np.ndarray, da.Array)):
         cube.data = cube.core_data() * weights
         cube.units = cube.units * coord.units
 

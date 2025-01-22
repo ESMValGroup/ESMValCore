@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.aux_factory import HybridPressureFactory
-from iris.coords import AuxCoord
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 
 from esmvalcore.preprocessor import PreprocessorFile
@@ -20,11 +20,17 @@ from esmvalcore.preprocessor._shared import (
     aggregator_accept_weights,
     apply_mask,
     get_array_module,
+    get_coord_weights,
     get_iris_aggregator,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
 )
 from tests import assert_array_equal
+from tests.unit.preprocessor._time.test_time import (
+    _make_cube,
+    get_1d_time,
+    get_lon_coord,
+)
 
 
 @pytest.mark.parametrize("operator", ["gmean", "GmEaN", "GMEAN"])
@@ -250,7 +256,7 @@ def test_get_array_module_mixed():
 def _create_sample_full_cube():
     cube = Cube(np.zeros((4, 180, 360)), var_name="co2", units="J")
     cube.add_dim_coord(
-        iris.coords.DimCoord(
+        DimCoord(
             np.array([10.0, 40.0, 70.0, 110.0]),
             standard_name="time",
             units=Unit("days since 1950-01-01 00:00:00", calendar="gregorian"),
@@ -258,7 +264,7 @@ def _create_sample_full_cube():
         0,
     )
     cube.add_dim_coord(
-        iris.coords.DimCoord(
+        DimCoord(
             np.arange(-90.0, 90.0, 1.0),
             standard_name="latitude",
             units="degrees",
@@ -266,7 +272,7 @@ def _create_sample_full_cube():
         1,
     )
     cube.add_dim_coord(
-        iris.coords.DimCoord(
+        DimCoord(
             np.arange(0.0, 360.0, 1.0),
             standard_name="longitude",
             units="degrees",
@@ -382,7 +388,7 @@ def test_apply_mask(mask, array, dim_map, expected):
 
 
 def test_rechunk_aux_factory_dependencies():
-    delta = iris.coords.AuxCoord(
+    delta = AuxCoord(
         points=np.array([0.0, 1.0, 2.0], dtype=np.float64),
         bounds=np.array(
             [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]], dtype=np.float64
@@ -390,12 +396,12 @@ def test_rechunk_aux_factory_dependencies():
         long_name="level_pressure",
         units="Pa",
     )
-    sigma = iris.coords.AuxCoord(
+    sigma = AuxCoord(
         np.array([1.0, 0.9, 0.8], dtype=np.float64),
         long_name="sigma",
         units="1",
     )
-    surface_air_pressure = iris.coords.AuxCoord(
+    surface_air_pressure = AuxCoord(
         np.arange(4).astype(np.float64).reshape(2, 2),
         long_name="surface_air_pressure",
         units="Pa",
@@ -406,7 +412,7 @@ def test_rechunk_aux_factory_dependencies():
         surface_air_pressure=surface_air_pressure,
     )
 
-    cube = iris.cube.Cube(
+    cube = Cube(
         da.asarray(
             np.arange(3 * 2 * 2).astype(np.float32).reshape(3, 2, 2),
             chunks=(1, 2, 2),
@@ -432,3 +438,244 @@ def test_rechunk_aux_factory_dependencies():
         (2,),
         (2,),
     ) == cube.coord("air_pressure").core_points().chunks
+
+
+def get_0d_time():
+    """Get 0D time coordinate."""
+    time = AuxCoord(
+        15.0,
+        bounds=[0.0, 30.0],
+        standard_name="time",
+        units="days since 1850-01-01 00:00:00",
+    )
+    return time
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_time(lazy):
+    """Test ``get_coord_weights`` for complex cube."""
+    cube = _make_cube()
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (2,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == ((1, 1),)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_time_broadcast(lazy):
+    """Test ``get_coord_weights`` for complex cube."""
+    cube = _make_cube()
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
+    weights = get_coord_weights(cube, "time", broadcast=True)
+    assert weights.shape == (2, 1, 1, 3)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == ((1, 1), (1,), (1,), (3,))
+    else:
+        assert isinstance(weights, np.ndarray)
+    expected_data = [[[[15.0, 15.0, 15.0]]], [[[30.0, 30.0, 30.0]]]]
+    np.testing.assert_allclose(weights, expected_data)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_plev(lazy):
+    """Test ``get_coord_weights`` for complex cube."""
+    cube = _make_cube()
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
+    weights = get_coord_weights(cube, "air_pressure")
+    assert weights.shape == (1,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == ((1,),)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [2.5])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_lat(lazy):
+    """Test ``get_coord_weights`` for complex cube."""
+    cube = _make_cube()
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
+    weights = get_coord_weights(cube, "latitude")
+    assert weights.shape == (1,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == ((1,),)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [1.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_lon(lazy):
+    """Test ``get_coord_weights`` for complex cube."""
+    cube = _make_cube()
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
+    weights = get_coord_weights(cube, "longitude")
+    assert weights.shape == (3,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == ((3,),)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [1.0, 1.0, 1.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_0d_time(lazy):
+    """Test ``get_coord_weights`` for 0D time coordinate."""
+    time = get_0d_time()
+    cube = Cube(0.0, var_name="x", units="K", aux_coords_and_dims=[(time, ())])
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (1,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_0d_time_1d_lon(lazy):
+    """Test ``get_coord_weights`` for 0D time and 1D longitude coordinate."""
+    time = get_0d_time()
+    lons = get_lon_coord()
+    cube = Cube(
+        [0.0, 0.0, 0.0],
+        var_name="x",
+        units="K",
+        aux_coords_and_dims=[(time, ())],
+        dim_coords_and_dims=[(lons, 0)],
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (1,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_0d_time_1d_lon_broadcast(lazy):
+    """Test ``get_coord_weights`` for 0D time and 1D longitude coordinate."""
+    time = get_0d_time()
+    lons = get_lon_coord()
+    cube = Cube(
+        [0.0, 0.0, 0.0],
+        var_name="x",
+        units="K",
+        aux_coords_and_dims=[(time, ())],
+        dim_coords_and_dims=[(lons, 0)],
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time", broadcast=True)
+    assert weights.shape == (3,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [30.0, 30.0, 30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_1d_time(lazy):
+    """Test ``get_coord_weights`` for 1D time coordinate."""
+    time = get_1d_time()
+    cube = Cube(
+        [0.0, 1.0], var_name="x", units="K", dim_coords_and_dims=[(time, 0)]
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (2,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_1d_time_1d_lon(lazy):
+    """Test ``get_coord_weights`` for 1D time and 1D longitude coordinate."""
+    time = get_1d_time()
+    lons = get_lon_coord()
+    cube = Cube(
+        [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+        var_name="x",
+        units="K",
+        dim_coords_and_dims=[(time, 0), (lons, 1)],
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (2,)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_get_coord_weights_2d_time(lazy):
+    """Test ``get_coord_weights`` for 2D time coordinate."""
+    time = AuxCoord(
+        [[20.0, 45.0]],
+        standard_name="time",
+        bounds=[[[15.0, 30.0], [30.0, 60.0]]],
+        units=Unit("days since 1950-01-01", calendar="gregorian"),
+    )
+    cube = Cube(
+        [[0.0, 1.0]],
+        var_name="x",
+        units="K",
+        aux_coords_and_dims=[(time, (0, 1))],
+    )
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = get_coord_weights(cube, "time")
+    assert weights.shape == (1, 2)
+    if lazy:
+        assert isinstance(weights, da.Array)
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(weights, [[15.0, 30.0]])
+
+
+def test_get_coord_weights_no_bounds_fail():
+    """Test ``get_coord_weights``."""
+    cube = _make_cube()
+    cube.coord("time").bounds = None
+    msg = r"Cannot calculate weights for coordinate 'time' without bounds"
+    with pytest.raises(ValueError, match=msg):
+        get_coord_weights(cube, "time")
+
+
+def test_get_coord_weights_triangular_bound_fail():
+    """Test ``get_coord_weights``."""
+    cube = _make_cube()
+    cube.coord("latitude").bounds = [[1.0, 2.0, 3.0]]
+    msg = (
+        r"Cannot calculate weights for coordinate 'latitude' with 3 bounds "
+        r"per point, expected 2 bounds per point"
+    )
+    with pytest.raises(ValueError, match=msg):
+        get_coord_weights(cube, "latitude")
