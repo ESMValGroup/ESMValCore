@@ -1195,8 +1195,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,
         )
         self.write_html_summary()
@@ -1233,8 +1232,7 @@ class Recipe:
         with filename.open("w", encoding="utf-8") as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,
         )
         return filename

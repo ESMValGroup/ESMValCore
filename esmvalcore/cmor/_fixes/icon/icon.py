@@ -123,7 +123,7 @@ class AllVars(IconFix):
         grid_cube = horizontal_grid.extract_cube(
             NameConstraint(var_name="cell_area")
         )
-        coord = grid_cube.coord(coord_name_in_grid)
+        coord = grid_cube.coord(coord_name_in_grid).copy()
 
         # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)

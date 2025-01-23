@@ -23,24 +23,35 @@ def test_to_frozen():
                 "d",
                 "c",
             ],
+            "bb": "dc",
         },
     }
 
     result = _to_frozen(data)
-    expected = (
-        (
-            "a",
+    expected = frozenset(
+        {
             (
-                (
-                    "b",
-                    (
-                        "c",
-                        "d",
-                    ),
+                "a",
+                frozenset(
+                    {
+                        (
+                            "b",
+                            frozenset(
+                                {
+                                    "c",
+                                    "d",
+                                }
+                            ),
+                        ),
+                        (
+                            "bb",
+                            "dc",
+                        ),
+                    }
                 ),
             ),
-        ),
-        ("abc", "x"),
+            ("abc", "x"),
+        }
     )
 
     assert result == expected

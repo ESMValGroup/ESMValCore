@@ -104,7 +104,7 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube: Cube) -> da.core.Array:
+def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
@@ -119,13 +119,13 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         input cube.
 
     Returns
     -------
-    dask.array.core.Array
-        Grid volumes.
+    np.ndarray | dask.array.Array
+        Grid volume.
 
     """
     # Load depth field and figure out which dim is which
@@ -158,7 +158,11 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
     if cube.has_lazy_data():
-        thickness = da.array(thickness)
+        z_chunks = tuple(cube.lazy_data().chunks[d] for d in z_dim)
+        if isinstance(thickness, da.Array):
+            thickness = thickness.rechunk(z_chunks)
+        else:
+            thickness = da.asarray(thickness, chunks=z_chunks)
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures("cell_area"))
@@ -182,6 +186,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
         thickness, cube.shape, z_dim, chunks=chunks
     )
     grid_volume = area_arr * thickness_arr
+    if cube.has_lazy_data():
+        grid_volume = grid_volume.rechunk(chunks)
 
     return grid_volume
 
@@ -360,8 +366,7 @@ def axis_statistics(
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError(
-            "axis_statistics not implemented for multidimensional "
-            "coordinates."
+            "axis_statistics not implemented for multidimensional coordinates."
         )
 
     # For weighted operations, create a dummy weights coordinate using the
@@ -404,7 +409,10 @@ def axis_statistics(
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
     weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
-    if not cube.has_lazy_data():
+    if cube.has_lazy_data():
+        coord_chunks = tuple(cube.lazy_data().chunks[d] for d in coord_dims)
+        weights = weights.rechunk(coord_chunks)
+    else:
         weights = weights.compute()
     weights_coord = AuxCoord(
         weights,

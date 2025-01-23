@@ -785,8 +785,7 @@ def test_recipe_iso_timerange(
     pr_product = pr_task.products.pop()
 
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert pr_product.filename.name == filename
 
@@ -831,8 +830,7 @@ def test_recipe_iso_timerange_as_dataset(
     assert len(task.products) == 1
     product = task.products.pop()
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert product.filename.name == filename
 
