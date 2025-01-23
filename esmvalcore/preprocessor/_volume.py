@@ -627,16 +627,13 @@ def _get_first_unmasked_data(array, axis):
 )
 def extract_surface_from_atm(
     cube: Cube,
-    var: str
 ) -> Cube:
-    """Extract data from the lowest unmasked height level.
+    """Extract surface from 3D atmospheric variable based on surface pressure.
 
     Parameters
     ----------
     cube:
         Input cube.
-    var:
-        Variable to extract at the surface.
 
     Returns
     -------
@@ -655,39 +652,35 @@ def extract_surface_from_atm(
             "Check file availability."
         )
     if ps_cube:
-        var_cube = cube.extract(
-            iris.Constraint(name=var)
-        )
-
         # Fill masked data if necessary (interpolation fails with masked data)
-        (z_axis,) = var_cube.coord_dims(
-            var_cube.coord(axis="Z", dim_coords=True)
+        (z_axis,) = cube.coord_dims(
+            cube.coord(axis="Z", dim_coords=True)
         )
-        mask = da.ma.getmaskarray(var_cube.core_data())
+        mask = da.ma.getmaskarray(cube.core_data())
         if mask.any():
             first_unmasked_data = _get_first_unmasked_data(
-                var_cube.core_data(), axis=z_axis
+                cube.core_data(), axis=z_axis
             )
-            dim_map = [dim for dim in range(var_cube.ndim) if dim != z_axis]
+            dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
             first_unmasked_data = iris.util.broadcast_to_shape(
-                first_unmasked_data, var_cube.shape, dim_map
+                first_unmasked_data, cube.shape, dim_map
             )
-            var_cube.data = da.where(
-                mask, first_unmasked_data, var_cube.core_data()
+            cube.data = da.where(
+                mask, first_unmasked_data, cube.core_data()
             )
 
         # Interpolation (not supported for dask arrays)
-        air_pressure_coord = var_cube.coord("air_pressure")
+        air_pressure_coord = cube.coord("air_pressure")
         original_levels = iris.util.broadcast_to_shape(
             air_pressure_coord.points,
-            var_cube.shape,
-            var_cube.coord_dims(air_pressure_coord),
+            cube.shape,
+            cube.coord_dims(air_pressure_coord),
         )
         target_levels = np.expand_dims(ps_cube.data, axis=z_axis)
         sfc_data = stratify.interpolate(
             target_levels,
             original_levels,
-            var_cube.data,
+            cube.data,
             axis=z_axis,
             interpolation="linear",
             extrapolation="linear",
@@ -695,9 +688,9 @@ def extract_surface_from_atm(
         sfc_data = np.squeeze(sfc_data, axis=z_axis)
 
         # Construct surface var cube
-        indices = [slice(None)] * var_cube.ndim
+        indices = [slice(None)] * cube.ndim
         indices[z_axis] = 0
-        var_cube = var_cube[tuple(indices)]
+        var_cube = cube[tuple(indices)]
         var_cube.data = sfc_data
         if var_cube.coords("air_pressure"):
             var_cube.remove_coord("air_pressure")
@@ -709,7 +702,7 @@ def extract_surface_from_atm(
             units=ps_cube.units,
         )
         var_cube.add_aux_coord(ps_coord, np.arange(var_cube.ndim))
-        var_cube.var_name = var + 's'
+        var_cube.var_name = cube.var_name + 's'
         logger.debug("Extracting surface using surface air pressure.")
 
     else:
