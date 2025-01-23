@@ -74,7 +74,8 @@ def cumulative_sum(
     cube:
         Input cube.
     coord:
-        Coordinate over which the cumulative sum is calculated. Must be 1D.
+        Coordinate over which the cumulative sum is calculated. Must be 0D or
+        1D.
     weights:
         Weights for the calculation of the cumulative sum. Each element in the
         data is multiplied by the corresponding weight before summing. Can be
@@ -96,14 +97,14 @@ def cumulative_sum(
     Raises
     ------
     iris.exceptions.CoordinateMultiDimError
-        ``coord`` is not 1D.
+        ``coord`` is not 0D or 1D.
     iris.exceptions.CoordinateNotFoundError
         ``coord`` is not found in ``cube``.
 
     """
     cube = cube.copy()
 
-    # Only 1D coordinates are supported
+    # Only 0D and 1D coordinates are supported
     coord = cube.coord(coord)
     if coord.ndim > 1:
         raise CoordinateMultiDimError(coord)
@@ -118,7 +119,7 @@ def cumulative_sum(
 
     axes = get_all_coord_dims(cube, [coord])
 
-    # For scalar coordinates, cumulative_sum is a no-op (this aligns with
+    # For 0D coordinates, cumulative_sum is a no-op (this aligns with
     # numpy's/dask's behavior)
     if axes:
         if cube.has_lazy_data():

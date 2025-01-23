@@ -2882,16 +2882,14 @@ recipe:
 
 * ``coord`` (:obj:`str`): Coordinate over which the cumulative sum is
   calculated.
-  Must be 1D.
+  Must be 0D or 1D.
 * ``weights`` (array-like, :obj:`bool`, or ``None``, default: ``None``):
   Weights for the calculation of the cumulative sum.
   Each element in the data is multiplied by the corresponding weight before
   summing.
   Can be an array of the same shape as the input data, ``False`` or ``None``
-  (no weighting), or ``True``.
-  The latter is only allowed if ``coord="time"``.
-  Here, the lengths of time intervals will be used as weights, which are
-  automatically calculated from the input data.
+  (no weighting), or ``True`` (calculate the weights from the coordinate
+  bounds; only works if each coordinate point has exactly 2 bounds).
 * ``method`` (:obj:`str`, default: ``"sequential"``): Method used to perform
   the cumulative sum.
   Only relevant if the cube has `lazy data
