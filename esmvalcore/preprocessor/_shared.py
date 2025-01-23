@@ -368,7 +368,7 @@ def get_coord_weights(
     coord_dims = cube.coord_dims(coord)
 
     # Coordinate needs bounds of size 2
-    if coord.core_bounds() is None:
+    if not coord.has_bounds():
         raise ValueError(
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"without bounds"
