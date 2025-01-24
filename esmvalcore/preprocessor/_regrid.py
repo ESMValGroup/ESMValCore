@@ -115,7 +115,7 @@ VERTICAL_SCHEMES = (
 
 ##################################
 
-def interpolate_coord(cube, coord, points, scheme):
+def interpolate_coord(cube, coord, points=None, step=None, scheme='linear'):
     """
     Extracts points from a cube coordinate, according
     to the interpolation scheme `scheme`.
@@ -163,6 +163,9 @@ def interpolate_coord(cube, coord, points, scheme):
     if not scheme:
         raise ValueError(msg)
 
+    if step and not points:
+        min, max = cube.coord(coord).points.min(), cube.coord(coord).points.max()
+        points = np.arange( min, max+1e-10, step )
     point = [(coord, points)]
     cube = cube.interpolate(point, scheme=scheme)
     return cube
