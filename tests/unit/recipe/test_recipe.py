@@ -330,15 +330,15 @@ def test_update_multiproduct_multi_model_statistics():
         for attr in common_attributes:
             assert attr in product.attributes
             assert product.attributes[attr] == common_attributes[attr]
-            assert "alias" in product.attributes
-            assert "dataset" in product.attributes
-            assert "multi_model_statistics" in product.attributes
-            assert "timerange" in product.attributes
-            assert product.attributes["timerange"] == "2002/2004"
-            assert "start_year" in product.attributes
-            assert product.attributes["start_year"] == 2002
-            assert "end_year" in product.attributes
-            assert product.attributes["end_year"] == 2004
+        assert "alias" in product.attributes
+        assert "dataset" in product.attributes
+        assert "multi_model_statistics" in product.attributes
+        assert "timerange" in product.attributes
+        assert product.attributes["timerange"] == "2002/2004"
+        assert "start_year" in product.attributes
+        assert product.attributes["start_year"] == 2002
+        assert "end_year" in product.attributes
+        assert product.attributes["end_year"] == 2004
         if "MultiModelStd_Dev" in str(product.filename):
             assert product.attributes["alias"] == "MultiModelStd_Dev"
             assert product.attributes["dataset"] == "MultiModelStd_Dev"
@@ -412,15 +412,15 @@ def test_update_multiproduct_no_timerange():
     for attr in common_attributes:
         assert attr in product.attributes
         assert product.attributes[attr] == common_attributes[attr]
-        assert "alias" in product.attributes
-        assert "dataset" in product.attributes
-        assert "multi_model_statistics" in product.attributes
-        assert "timerange" not in product.attributes
-        assert "start_year" not in product.attributes
-        assert "end_year" not in product.attributes
-        assert product.attributes["alias"] == "MultiModelMean"
-        assert product.attributes["dataset"] == "MultiModelMean"
-        assert product.attributes["multi_model_statistics"] == "MultiModelMean"
+    assert "alias" in product.attributes
+    assert "dataset" in product.attributes
+    assert "multi_model_statistics" in product.attributes
+    assert "timerange" not in product.attributes
+    assert "start_year" not in product.attributes
+    assert "end_year" not in product.attributes
+    assert product.attributes["alias"] == "MultiModelMean"
+    assert product.attributes["dataset"] == "MultiModelMean"
+    assert product.attributes["multi_model_statistics"] == "MultiModelMean"
 
     assert len(settings) == 1
     output_products = settings["output_products"]
@@ -513,15 +513,15 @@ def test_update_multiproduct_multi_model_statistics_percentile():
         for attr in common_attributes:
             assert attr in product.attributes
             assert product.attributes[attr] == common_attributes[attr]
-            assert "alias" in product.attributes
-            assert "dataset" in product.attributes
-            assert "multi_model_statistics" in product.attributes
-            assert "timerange" in product.attributes
-            assert product.attributes["timerange"] == "2002/2004"
-            assert "start_year" in product.attributes
-            assert product.attributes["start_year"] == 2002
-            assert "end_year" in product.attributes
-            assert product.attributes["end_year"] == 2004
+        assert "alias" in product.attributes
+        assert "dataset" in product.attributes
+        assert "multi_model_statistics" in product.attributes
+        assert "timerange" in product.attributes
+        assert product.attributes["timerange"] == "2002/2004"
+        assert "start_year" in product.attributes
+        assert product.attributes["start_year"] == 2002
+        assert "end_year" in product.attributes
+        assert product.attributes["end_year"] == 2004
         if "MultiModelPercentile5-0" in str(product.filename):
             assert product.attributes["alias"] == "MultiModelPercentile5-0"
             assert product.attributes["dataset"] == "MultiModelPercentile5-0"
@@ -592,16 +592,16 @@ def test_update_multiproduct_ensemble_statistics():
     for attr in common_attributes:
         assert attr in product.attributes
         assert product.attributes[attr] == common_attributes[attr]
-        assert "alias" in product.attributes
-        assert product.attributes["alias"] == "EnsembleMedian"
-        assert "dataset" in product.attributes
-        assert product.attributes["dataset"] == "CanESM2"
-        assert "ensemble_statistics" in product.attributes
-        assert product.attributes["ensemble_statistics"] == "EnsembleMedian"
-        assert "start_year" in product.attributes
-        assert product.attributes["start_year"] == 2000
-        assert "end_year" in product.attributes
-        assert product.attributes["end_year"] == 2000
+    assert "alias" in product.attributes
+    assert product.attributes["alias"] == "EnsembleMedian"
+    assert "dataset" in product.attributes
+    assert product.attributes["dataset"] == "CanESM2"
+    assert "ensemble_statistics" in product.attributes
+    assert product.attributes["ensemble_statistics"] == "EnsembleMedian"
+    assert "start_year" in product.attributes
+    assert product.attributes["start_year"] == 2000
+    assert "end_year" in product.attributes
+    assert product.attributes["end_year"] == 2000
 
     assert len(settings) == 1
     output_products = settings["output_products"]
@@ -664,18 +664,16 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     for attr in common_attributes:
         assert attr in product.attributes
         assert product.attributes[attr] == common_attributes[attr]
-        assert "alias" in product.attributes
-        assert product.attributes["alias"] == "EnsemblePercentile5"
-        assert "dataset" in product.attributes
-        assert product.attributes["dataset"] == "CanESM2"
-        assert "ensemble_statistics" in product.attributes
-        assert product.attributes["ensemble_statistics"] == (
-            "EnsemblePercentile5"
-        )
-        assert "start_year" in product.attributes
-        assert product.attributes["start_year"] == 2000
-        assert "end_year" in product.attributes
-        assert product.attributes["end_year"] == 2000
+    assert "alias" in product.attributes
+    assert product.attributes["alias"] == "EnsemblePercentile5"
+    assert "dataset" in product.attributes
+    assert product.attributes["dataset"] == "CanESM2"
+    assert "ensemble_statistics" in product.attributes
+    assert product.attributes["ensemble_statistics"] == ("EnsemblePercentile5")
+    assert "start_year" in product.attributes
+    assert product.attributes["start_year"] == 2000
+    assert "end_year" in product.attributes
+    assert product.attributes["end_year"] == 2000
 
     assert len(settings) == 1
     output_products = settings["output_products"]
