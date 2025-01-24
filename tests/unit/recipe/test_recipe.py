@@ -241,6 +241,19 @@ def test_multi_model_filename_full():
     assert attributes["end_year"] == 1992
 
 
+@pytest.mark.parametrize("span", ["full", "overlap"])
+def test_multi_model_filename_no_timerange(span):
+    """Test timerange in multi-model filename is correct."""
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, "A", {}),
+        PreprocessorFile(cube, "B", {}),
+    ]
+    settings = {"span": span}
+    attributes = _recipe._get_common_attributes(products, settings)
+    assert "timerange" not in attributes
+
+
 def test_update_multiproduct_multi_model_statistics():
     """Test ``_update_multiproduct``."""
     settings = {
@@ -350,6 +363,72 @@ def test_update_multiproduct_multi_model_statistics():
     assert "std_dev" in stats
     assert "MultiModelMean" in str(stats["mean"].filename)
     assert "MultiModelStd_Dev" in str(stats["std_dev"].filename)
+
+
+def test_update_multiproduct_no_timerange():
+    """Test ``_update_multiproduct``."""
+    settings = {
+        "multi_model_statistics": {"statistics": ["mean"]},
+        "save": {"compute": False},
+    }
+    common_attributes = {
+        "project": "CMIP6",
+        "diagnostic": "d",
+        "variable_group": "var",
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(
+            cube,
+            "A",
+            attributes={
+                "dataset": "a",
+                **common_attributes,
+            },
+            settings=settings,
+        ),
+        PreprocessorFile(
+            cube,
+            "B",
+            attributes={
+                "dataset": "b",
+                **common_attributes,
+            },
+            settings=settings,
+        ),
+    ]
+    order = ("load", "multi_model_statistics", "save")
+    preproc_dir = "/preproc"
+    step = "multi_model_statistics"
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step
+    )
+
+    assert len(output) == 1
+    product = list(output)[0]
+
+    assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
+
+    for attr in common_attributes:
+        assert attr in product.attributes
+        assert product.attributes[attr] == common_attributes[attr]
+        assert "alias" in product.attributes
+        assert "dataset" in product.attributes
+        assert "multi_model_statistics" in product.attributes
+        assert "timerange" not in product.attributes
+        assert "start_year" not in product.attributes
+        assert "end_year" not in product.attributes
+        assert product.attributes["alias"] == "MultiModelMean"
+        assert product.attributes["dataset"] == "MultiModelMean"
+        assert product.attributes["multi_model_statistics"] == "MultiModelMean"
+
+    assert len(settings) == 1
+    output_products = settings["output_products"]
+    assert len(output_products) == 1
+    stats = output_products[""]
+    assert len(stats) == 1
+    assert "mean" in stats
+    assert "MultiModelMean" in str(stats["mean"].filename)
 
 
 def test_update_multiproduct_multi_model_statistics_percentile():
