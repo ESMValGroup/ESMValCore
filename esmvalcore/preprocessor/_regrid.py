@@ -322,8 +322,7 @@ def _spec_to_latlonvals(
 
     if step_longitude == 0:
         raise ValueError(
-            "Longitude step cannot be 0, "
-            f"got step_longitude={step_longitude}."
+            f"Longitude step cannot be 0, got step_longitude={step_longitude}."
         )
 
     if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):

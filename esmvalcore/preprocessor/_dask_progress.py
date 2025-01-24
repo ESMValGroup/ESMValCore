@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class RichProgressBar(dask.diagnostics.Callback):
-    """Progress bar using `rich` for the Dask default scheduler."""
+    """Progress bar using `rich` for the Dask threaded scheduler."""
 
     # Disable warnings about design choices that have been made in the base class.
     # pylint: disable=method-hidden,super-init-not-called,too-few-public-methods,unused-argument,useless-suppression
@@ -109,7 +109,7 @@ class RichDistributedProgressBar(
 
 
 class ProgressLogger(dask.diagnostics.ProgressBar):
-    """Progress logger for the Dask default scheduler."""
+    """Progress logger for the Dask threaded scheduler."""
 
     # Disable warnings about design choices that have been made in the base class.
     # pylint: disable=too-few-public-methods,unused-argument,useless-suppression

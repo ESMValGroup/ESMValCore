@@ -39,7 +39,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Raises
     ------
-    CoordinateMultiDimError
+    iris.exceptions.CoordinateMultiDimError
         ``dim_coord`` is not 1D.
 
     """
@@ -247,14 +247,14 @@ def rechunk_cube(
     cube:
         Input cube.
     complete_coords:
-        (Names of) coordinates along which the output cubes should not be
+        (Names of) coordinates along which the output cube should not be
         chunked.
     remaining_dims:
         Chunksize of the remaining dimensions.
 
     Returns
     -------
-    Cube
+    iris.cube.Cube
         Rechunked cube. This will always be a copy of the input cube.
 
     """

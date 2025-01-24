@@ -107,18 +107,27 @@ The following native reanalysis/observational datasets are supported under the
 To use these datasets, put the files containing the data in the directory that
 you have :ref:`configured <config_options>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming you are
+using the ``default`` DRS for ``native6``).
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of native reanalysis/observational datasets currently
-supported.
 
-.. _read_native_era5:
+.. _read_native_era5_nc:
 
-ERA5
-^^^^
+ERA5 (in netCDF format downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
+the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
+For example for monthly data, place the files in the
+``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming you are using the ``default``
+DRS for ``native6``).
+
+- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
+  ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
+  ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``,
+  ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
 - Tier: 3
 
 .. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page
@@ -131,6 +140,85 @@ ERA5
   of both liquid and solid phases to vapor (from underlying surface and vegetation)."
   Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be compatible with the CMOR standard used e.g. by the CMIP models.
 
+.. _read_native_era5_grib:
+
+ERA5 (in GRIB format available on DKRZ's Levante or downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ERA5 data in monthly, daily, and hourly resolution is `available on Levante
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
+in its native GRIB format.
+
+.. note::
+  ERA5 data in its native GRIB format can also be downloaded from the
+  `Copernicus Climate Data Store (CDS)
+  <https://cds.climate.copernicus.eu/datasets>`__.
+  For example, hourly data on pressure levels is available `here
+  <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=download>`__.
+  Reading self-downloaded ERA5 data in GRIB format is experimental and likely
+  requires additional setup from the user like setting up the proper directory
+  structure for the input files and/or creating a custom :ref:`DRS
+  <config_option_drs>`.
+
+To read these data with ESMValCore, use the :ref:`rootpath
+<config_option_rootpath>` ``/pool/data/ERA5`` with :ref:`DRS
+<config_option_drs>` ``DKRZ-ERA5-GRIB`` in your configuration, for example:
+
+.. code-block:: yaml
+
+  rootpath:
+    ...
+    native6:
+      /pool/data/ERA5: DKRZ-ERA5-GRIB
+    ...
+
+The `naming conventions
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
+for input directories and files for native ERA5 data in GRIB format on Levante
+are
+
+* input directories: ``{family}/{level}/{type}/{tres}/{grib_id}``
+* input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
+
+All of these facets have reasonable defaults preconfigured in the corresponding
+:ref:`extra facets<extra_facets>` file, which is available here:
+:download:`native6-era5.yml
+</../esmvalcore/config/extra_facets/native6-era5.yml>`.
+If necessary, these facets can be overwritten in the recipe.
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: cl, mip: Amon, tres: 1H, frequency: 1hr}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: ta, mip: Amon, type: fc, typeid: '12'}
+
+The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
+<https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
+By default, these data are regridded to a regular 0.25°x0.25° grid as
+`recommended by the ECMWF
+<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__
+using bilinear interpolation.
+
+To disable this, you can use the facet ``automatic_regrid: false`` in the
+recipe:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, automatic_regrid: false}
+
+- Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
+  ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,
+  ``snd``, ``snowmxrat27``, ``ta``, ``tas``, ``tdps``, ``toz``, ``ts``, ``ua``,
+  ``uas``, ``va``, ``vas``, ``wap``, ``zg``.
+
 .. _read_native_mswep:
 
 MSWEP
@@ -140,7 +228,10 @@ MSWEP
 - Supported frequencies: ``mon``, ``day``, ``3hr``.
 - Tier: 3
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``native6`` project location.
+For example for monthly data, place the files in the
+``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming you are using the ``default``
+DRS for ``native6``).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -289,20 +380,23 @@ For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
-==================== ====================================== =================================
-Key                  Description                            Default value if not specified
-==================== ====================================== =================================
-``channel``          Channel in which the desired variable  No default (needs to be specified
-                     is stored                              in extra facets or recipe if
-                                                            default DRS is used)
-``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
-``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable
-``raw_units``        Units of the variable in the raw       If specified, the value given by
-                     input file                             the ``units`` attribute in the
-                                                            raw input file; otherwise
-                                                            ``unknown``
-==================== ====================================== =================================
+===================== ====================================== =================================
+Key                   Description                            Default value if not specified
+===================== ====================================== =================================
+``channel``           Channel in which the desired variable  No default (needs to be specified
+                      is stored                              in extra facets or recipe if
+                                                             default DRS is used)
+``postproc_flag``     Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``          Variable name of the variable in the   CMOR variable name of the
+                      raw input file                         corresponding variable
+``raw_units``         Units of the variable in the raw       If specified, the value given by
+                      input file                             the ``units`` attribute in the
+                                                             raw input file; otherwise
+                                                             ``unknown``
+``reset_time_bounds`` Boolean if time bounds are deleted,    ``False``
+                      and automatically recalculated by
+                      iris
+===================== ====================================== =================================
 
 .. note::
 
@@ -641,6 +735,8 @@ of directory structure the root paths are structured by. It is important to
 first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
+
+.. _config_option_drs:
 
 Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
 ---------------------------------------------

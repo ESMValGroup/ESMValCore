@@ -34,8 +34,8 @@ from numpy.typing import DTypeLike
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
+    get_coord_weights,
     get_iris_aggregator,
-    get_time_weights,
     preserve_float_dtype,
     update_weights_kwargs,
 )
@@ -867,7 +867,7 @@ def climate_statistics(
 def _add_time_weights_coord(cube):
     """Add time weight coordinate to cube (in-place)."""
     time_weights_coord = AuxCoord(
-        get_time_weights(cube),
+        get_coord_weights(cube, "time"),
         long_name="_time_weights_",
         units=cube.coord("time").units,
     )
