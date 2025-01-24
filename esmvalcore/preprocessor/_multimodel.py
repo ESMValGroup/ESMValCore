@@ -807,6 +807,7 @@ def multi_model_statistics(
 
             if len(input_prods)<2: 
                 logger.warning('Cannot preform multi-model statistics with fewer than two datasets')
+                statistics_products |= input_prods
                 continue
 
             # Compute statistics on a single group
