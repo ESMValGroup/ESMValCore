@@ -9,6 +9,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable
 
+from dask.delayed import Delayed
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -25,6 +26,7 @@ from ._area import (
 )
 from ._compare_with_refs import bias, distance_metric
 from ._cycles import amplitude
+from ._dask_progress import _compute_with_progress
 from ._derive import derive
 from ._detrend import detrend
 from ._io import (
@@ -428,6 +430,9 @@ def preprocess(
                 )
             )
 
+    if step == "save":
+        return result
+
     items = []
     for item in result:
         if isinstance(item, (PreprocessorFile, Cube, str, Path)):
@@ -536,22 +541,24 @@ class PreprocessorFile(TrackedFile):
     def cubes(self, value):
         self._cubes = value
 
-    def save(self):
+    def save(self) -> Delayed | None:
         """Save cubes to disk."""
-        preprocess(
+        return preprocess(
             self._cubes,
             "save",
             input_files=self._input_files,
             **self.settings["save"],
-        )
+        )[0]
 
-    def close(self):
+    def close(self) -> Delayed | None:
         """Close the file."""
+        result = None
         if self._cubes is not None:
             self._update_attributes()
-            self.save()
+            result = self.save()
             self._cubes = None
             self.save_provenance()
+        return result
 
     def _update_attributes(self):
         """Update product attributes from cube metadata."""
@@ -693,7 +700,7 @@ class PreprocessingTask(BaseTask):
         for product in products:
             product.initialize_provenance(self.activity)
 
-    def _run(self, _):
+    def _run(self, _) -> list[str]:
         """Run the preprocessor."""
         self._initialize_product_provenance()
 
@@ -703,6 +710,7 @@ class PreprocessingTask(BaseTask):
         blocks = get_step_blocks(steps, self.order)
 
         saved = set()
+        delayeds = []
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
@@ -718,13 +726,32 @@ class PreprocessingTask(BaseTask):
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
                         product.cubes  # noqa: B018 pylint: disable=pointless-statement
-                        product.close()
+                        delayed = product.close()
+                        delayeds.append(delayed)
                         saved.add(product.filename)
 
         for product in self.products:
             if product.filename not in saved:
                 product.cubes  # noqa: B018 pylint: disable=pointless-statement
-                product.close()
+                delayed = product.close()
+                delayeds.append(delayed)
+
+        delayeds = [d for d in delayeds if d is not None]
+
+        if self.scheduler_lock is not None:
+            logger.debug("Acquiring save lock for task %s", self.name)
+            self.scheduler_lock.acquire()
+            logger.debug("Acquired save lock for task %s", self.name)
+        try:
+            logger.info(
+                "Computing and saving data for preprocessing task %s",
+                self.name,
+            )
+            _compute_with_progress(delayeds, description=self.name)
+        finally:
+            if self.scheduler_lock is not None:
+                self.scheduler_lock.release()
+                logger.debug("Released save lock for task %s", self.name)
 
         metadata_files = write_metadata(
             self.products, self.write_ncl_interface

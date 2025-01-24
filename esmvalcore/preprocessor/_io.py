@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import logging
 import os
+from collections.abc import Sequence
 from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -17,6 +18,7 @@ import iris.exceptions
 import numpy as np
 import yaml
 from cf_units import suppress_errors
+from dask.delayed import Delayed
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
@@ -37,8 +39,7 @@ VARIABLE_KEYS = {
     "reference_dataset",
     "alternative_dataset",
 }
-
-iris.FUTURE.save_split_attrs = True
+GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -140,7 +141,13 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=_load_callback)
+            # GRIB files need to be loaded with iris.load, otherwise we will
+            # get separate (lat, lon) slices for each time step, pressure
+            # level, etc.
+            if file.suffix in GRIB_FORMATS:
+                raw_cubes = iris.load(file, callback=_load_callback)
+            else:
+                raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
@@ -325,8 +332,7 @@ def _sort_cubes_by_time(cubes):
         raise ValueError(msg) from exc
     except TypeError as error:
         msg = (
-            "Cubes cannot be sorted "
-            f"due to differing time units: {str(error)}"
+            f"Cubes cannot be sorted due to differing time units: {str(error)}"
         )
         raise TypeError(msg) from error
     return cubes
@@ -405,19 +411,25 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
 
 
 def save(
-    cubes, filename, optimize_access="", compress=False, alias="", **kwargs
-):
+    cubes: Sequence[iris.cube.Cube],
+    filename: Path | str,
+    optimize_access: str = "",
+    compress: bool = False,
+    alias: str = "",
+    compute: bool = True,
+    **kwargs,
+) -> Delayed | None:
     """Save iris cubes to file.
 
     Parameters
     ----------
-    cubes: iterable of iris.cube.Cube
+    cubes:
         Data cubes to be saved
 
-    filename: str
+    filename:
         Name of target file
 
-    optimize_access: str
+    optimize_access:
         Set internal NetCDF chunking to favour a reading scheme
 
         Values can be map or timeseries, which improve performance when
@@ -426,16 +438,30 @@ def save(
         case the better performance will be avhieved by loading all the values
         in that coordinate at a time
 
-    compress: bool, optional
+    compress:
         Use NetCDF internal compression.
 
-    alias: str, optional
+    alias:
         Var name to use when saving instead of the one in the cube.
+
+    compute : bool, default=True
+        Default is ``True``, meaning complete the file immediately, and return ``None``.
+
+        When ``False``, create the output file but don't write any lazy array content to
+        its variables, such as lazy cube data or aux-coord points and bounds.
+        Instead return a :class:`dask.delayed.Delayed` which, when computed, will
+        stream all the lazy content via :meth:`dask.store`, to complete the file.
+        Several such data saves can be performed in parallel, by passing a list of them
+        into a :func:`dask.compute` call.
+
+    **kwargs:
+        See :func:`iris.fileformats.netcdf.saver.save` for additional
+        keyword arguments.
 
     Returns
     -------
-    str
-        filename
+    :class:`dask.delayed.Delayed` or :obj:`None`
+        A delayed object that can be used to save the data in the cube.
 
     Raises
     ------
@@ -444,6 +470,9 @@ def save(
     """
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
+
+    if Path(filename).suffix.lower() == ".nc":
+        kwargs["compute"] = compute
 
     # Rename some arguments
     kwargs["target"] = filename
@@ -462,7 +491,7 @@ def save(
             cubes,
             filename,
         )
-        return filename
+        return None
 
     for cube in cubes:
         logger.debug(
@@ -480,13 +509,11 @@ def save(
         elif optimize_access == "timeseries":
             dims = set(cube.coord_dims("time"))
         else:
-            dims = tuple()
-            for coord_dims in (
-                cube.coord_dims(dimension)
-                for dimension in optimize_access.split(" ")
-            ):
-                dims += coord_dims
-            dims = set(dims)
+            dims = {
+                dim
+                for coord_name in optimize_access.split(" ")
+                for dim in cube.coord_dims(coord_name)
+            }
 
         kwargs["chunksizes"] = tuple(
             length if index in dims else 1
@@ -512,9 +539,7 @@ def save(
             category=UserWarning,
             module="iris",
         )
-        iris.save(cubes, **kwargs)
-
-    return filename
+        return iris.save(cubes, **kwargs)
 
 
 def _get_debug_filename(filename, step):

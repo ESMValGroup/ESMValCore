@@ -205,13 +205,16 @@ class Test(tests.Test):
 
     def test_add_axis_stats_weights_coord_lazy(self):
         """Test _add_axis_stats_weights_coord."""
-        self.grid_4d.data = self.grid_4d.lazy_data()
-        assert not self.grid_4d.coords("_axis_statistics_weights_")
-        coord = self.grid_4d.coord("zcoord")
-        coord_dims = self.grid_4d.coord_dims("zcoord")
-        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
-        weights_coord = self.grid_4d.coord("_axis_statistics_weights_")
+        assert not self.grid_4d_lazy.coords("_axis_statistics_weights_")
+        coord = self.grid_4d_lazy.coord("zcoord")
+        coord_dims = self.grid_4d_lazy.coord_dims("zcoord")
+        _add_axis_stats_weights_coord(self.grid_4d_lazy, coord, coord_dims)
+        weights_coord = self.grid_4d_lazy.coord("_axis_statistics_weights_")
         assert weights_coord.has_lazy_points()
+        assert (
+            weights_coord.lazy_points().chunks[0]
+            == self.grid_4d_lazy.lazy_data().chunks[coord_dims[0]]
+        )
         assert weights_coord.units == "m"
         np.testing.assert_allclose(weights_coord.points, [2.5, 22.5, 225.0])
 
@@ -369,7 +372,6 @@ class Test(tests.Test):
         """Test to extract the top two layers of a 3 layer depth column."""
         result = extract_volume(self.grid_3d, 0.0, 10.0)
         expected = np.ones((2, 2, 2))
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_volume_intervals(self):
@@ -491,7 +493,7 @@ class Test(tests.Test):
         self.assertFalse(self.grid_4d.cell_measures("ocean_volume"))
         self.assertFalse(result.cell_measures("ocean_volume"))
 
-    def test_calculate_volume_lazy(self):
+    def test_calculate_volume_lazy_cube(self):
         """Test that calculate_volume returns a lazy volume.
 
         The volume chunks should match those of the input cube for
@@ -499,6 +501,31 @@ class Test(tests.Test):
         """
         chunks = self.grid_4d_lazy.core_data().chunks
         volume = calculate_volume(self.grid_4d_lazy)
+        assert self.grid_4d_lazy.has_lazy_data()
+        assert isinstance(volume, da.Array)
+        assert volume.chunks == chunks
+
+    def test_calculate_volume_all_lazy(self):
+        """Test that calculate_volume returns a lazy volume.
+
+        The volume chunks should match those of the input cube for
+        computational efficiency.
+        """
+        # Only aux coords can have lazy bounds
+        z_coord = self.grid_4d_lazy.coord("zcoord")
+        z_aux_coord = iris.coords.AuxCoord(
+            z_coord.lazy_points(),
+            bounds=z_coord.lazy_bounds(),
+            long_name="zcoord",
+            units="m",
+            attributes={"positive": "up"},
+        )
+        self.grid_4d_lazy.remove_coord("zcoord")
+        self.grid_4d_lazy.add_aux_coord(z_aux_coord, 1)
+        chunks = self.grid_4d_lazy.core_data().chunks
+
+        volume = calculate_volume(self.grid_4d_lazy)
+
         assert self.grid_4d_lazy.has_lazy_data()
         assert isinstance(volume, da.Array)
         assert volume.chunks == chunks
