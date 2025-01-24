@@ -49,7 +49,7 @@ from ._mask import (
     mask_outside_range,
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
-from ._other import clip, histogram
+from ._other import clip, cumulative_sum, histogram
 from ._regrid import (
     extract_coordinate_points,
     extract_levels,
@@ -146,7 +146,8 @@ __all__ = [
     # Other
     "clip",
     "rolling_window_statistics",
-    # Region selection
+    "cumulative_sum",
+    # Region operations
     "extract_region",
     "extract_shape",
     "extract_volume",
