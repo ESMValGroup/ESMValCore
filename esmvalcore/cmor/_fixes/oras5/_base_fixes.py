@@ -93,7 +93,7 @@ class Oras5Fix(IconFix):
         )
 
         return mesh
-    
+
     def get_horizontal_grid(self, cube):
         """Get copy of ORAS5 horizontal grid.
 
@@ -104,7 +104,7 @@ class Oras5Fix(IconFix):
         ----------
         cube: iris.cube.Cube
             Cube for which the ORS5 horizontal grid is retrieved. If the facet
-            `horizontal_grid` is not specified by the user, it raises a 
+            `horizontal_grid` is not specified by the user, it raises a
             NotImplementedError.
 
         Returns
@@ -176,8 +176,8 @@ class Oras5Fix(IconFix):
         """
         # Use `horizontal_grid` facet to determine grid name
         grid_path = self._get_path_from_facet(
-                "horizontal_grid", "Horizontal grid file"
-            )
+            "horizontal_grid", "Horizontal grid file"
+        )
         grid_name = grid_path.name
 
         # Reuse mesh if possible

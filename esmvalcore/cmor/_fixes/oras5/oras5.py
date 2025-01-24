@@ -85,17 +85,16 @@ class AllVars(Oras5Fix, AllVars_ICON):
             return cube
 
         # Data is made unstructured (flattened)
-        else:
-            coords_add = []
-            for coord in cube.coords():
-                if isinstance(coord, iris.coords.DimCoord):
-                    dim = cube.coord_dims(coord)
-                    coords_add.append((coord, dim))
-            data = da.moveaxis(cube.core_data(), -1, -2).flatten()
-            dim_shape = tuple(cube.data.shape[:-2])
-            data_shape = tuple(data.shape / np.prod(dim_shape))
-            data = da.reshape(data, dim_shape + data_shape)
-            return iris.cube.Cube(data, dim_coords_and_dims=coords_add)
+        coords_add = []
+        for coord in cube.coords():
+            if isinstance(coord, iris.coords.DimCoord):
+                dim = cube.coord_dims(coord)
+                coords_add.append((coord, dim))
+        data = da.moveaxis(cube.core_data(), -1, -2).flatten()
+        dim_shape = tuple(cube.data.shape[:-2])
+        data_shape = tuple(data.shape / np.prod(dim_shape))
+        data = da.reshape(data, dim_shape + data_shape)
+        return iris.cube.Cube(data, dim_coords_and_dims=coords_add)
 
     def _add_coord_from_grid_file(self, cube, coord_name):
         """Add coordinate from grid file to cube.
