@@ -32,11 +32,14 @@ from iris.util import broadcast_to_shape
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
-from esmvalcore.iris_helpers import date2num, rechunk_cube
+from esmvalcore.iris_helpers import (
+    date2num,
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
     get_coord_weights,
     get_iris_aggregator,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
     update_weights_kwargs,
 )

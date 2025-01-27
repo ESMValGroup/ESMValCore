@@ -21,9 +21,9 @@ from iris.analysis import Aggregator
 from iris.cube import Cube
 from iris.util import rolling_window
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     apply_mask,
-    ignore_iris_vague_metadata_warnings,
 )
 
 from ._supplementary_vars import register_supplementaries

@@ -3,7 +3,7 @@
 import iris
 import numpy as np
 
-from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ._baseclass import DerivedVariableBase
 

@@ -17,11 +17,11 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,

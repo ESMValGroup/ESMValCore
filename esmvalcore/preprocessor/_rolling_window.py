@@ -4,9 +4,10 @@ import logging
 
 from iris.cube import Cube
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 from ._shared import (
     get_iris_aggregator,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 

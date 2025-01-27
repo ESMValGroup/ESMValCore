@@ -21,31 +21,13 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
-from esmvalcore.iris_helpers import has_regular_grid
+from esmvalcore.iris_helpers import (
+    has_regular_grid,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
-
-
-def ignore_iris_vague_metadata_warnings(func: Callable) -> Callable:
-    """Ignore specific warnings.
-
-    This can be used as a decorator.
-
-    """
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=iris.warnings.IrisVagueMetadataWarning,
-                module="iris",
-            )
-            result = func(*args, **kwargs)
-        return result
-
-    return wrapper
 
 
 def guess_bounds(cube, coords):

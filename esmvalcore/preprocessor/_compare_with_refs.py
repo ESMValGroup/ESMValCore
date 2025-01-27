@@ -17,7 +17,10 @@ from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._io import concatenate
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
@@ -25,7 +28,6 @@ from esmvalcore.preprocessor._shared import (
     get_all_coords,
     get_array_module,
     get_weights,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 

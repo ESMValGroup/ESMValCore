@@ -15,14 +15,16 @@ from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
     get_all_coords,
     get_array_module,
     get_coord_weights,
     get_weights,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 

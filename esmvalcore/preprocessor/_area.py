@@ -20,12 +20,12 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     apply_mask,
     get_dims_along_axes,
     get_iris_aggregator,
     get_normalized_cube,
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,

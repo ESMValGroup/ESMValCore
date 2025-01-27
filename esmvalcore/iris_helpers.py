@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Literal, Sequence
+import warnings
+from collections.abc import Callable
+from functools import wraps
+from typing import Any, Dict, Iterable, List, Literal, Sequence
 
 import dask.array as da
 import iris
@@ -13,8 +16,30 @@ from cf_units import Unit
 from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.warnings import IrisVagueMetadataWarning
 
 from esmvalcore.typing import NetCDFAttr
+
+
+def ignore_iris_vague_metadata_warnings(func: Callable) -> Callable:
+    """Ignore specific warnings.
+
+    This can be used as a decorator.
+
+    """
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=IrisVagueMetadataWarning,
+                module="iris",
+            )
+            result = func(*args, **kwargs)
+        return result
+
+    return wrapper
 
 
 def add_leading_dim_to_cube(cube, dim_coord):

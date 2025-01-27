@@ -24,7 +24,7 @@ from iris.cube import CubeList
 from netCDF4 import Dataset
 from scipy import constants
 
-from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData

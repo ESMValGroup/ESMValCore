@@ -8,7 +8,7 @@ import numpy as np
 from iris import NameConstraint
 from scipy import constants
 
-from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 logger = logging.getLogger(__name__)
 

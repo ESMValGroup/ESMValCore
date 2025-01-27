@@ -7,8 +7,8 @@ import iris
 import numpy as np
 from cf_units import Unit
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
-    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 
