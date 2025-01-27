@@ -36,7 +36,6 @@ from esmvalcore.preprocessor._time import (
     extract_month,
     extract_season,
     extract_time,
-    get_time_weights,
     hourly_statistics,
     monthly_statistics,
     regrid_time,
@@ -1905,34 +1904,12 @@ def test_anomalies_hourly(period):
     assert result.coord("time") == cube.coord("time")
 
 
-def get_0d_time():
-    """Get 0D time coordinate."""
-    time = iris.coords.AuxCoord(
-        15.0,
-        bounds=[0.0, 30.0],
-        standard_name="time",
-        units="days since 1850-01-01 00:00:00",
-    )
-    return time
-
-
 def get_1d_time():
     """Get 1D time coordinate."""
     time = iris.coords.DimCoord(
         [20.0, 45.0],
         standard_name="time",
         bounds=[[15.0, 30.0], [30.0, 60.0]],
-        units=Unit("days since 1950-01-01", calendar="gregorian"),
-    )
-    return time
-
-
-def get_2d_time():
-    """Get 2D time coordinate."""
-    time = iris.coords.AuxCoord(
-        [[20.0, 45.0]],
-        standard_name="time",
-        bounds=[[[15.0, 30.0], [30.0, 60.0]]],
         units=Unit("days since 1950-01-01", calendar="gregorian"),
     )
     return time
@@ -1980,92 +1957,6 @@ def _make_cube():
         units="kg m-2 s-1",
     )
     return cube1
-
-
-def test_get_time_weights():
-    """Test ``get_time_weights`` for complex cube."""
-    cube = _make_cube()
-    weights = get_time_weights(cube)
-    assert isinstance(weights, np.ndarray)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_lazy():
-    """Test ``get_time_weights`` for complex cube with lazy data."""
-    cube = _make_cube()
-    cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
-    weights = get_time_weights(cube)
-    assert isinstance(weights, da.Array)
-    assert weights.shape == (2,)
-    assert weights.chunks == ((1, 1),)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_0d_time():
-    """Test ``get_time_weights`` for 0D time coordinate."""
-    time = get_0d_time()
-    cube = iris.cube.Cube(
-        0.0, var_name="x", units="K", aux_coords_and_dims=[(time, ())]
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (1,)
-    np.testing.assert_allclose(weights, [30.0])
-
-
-def test_get_time_weights_0d_time_1d_lon():
-    """Test ``get_time_weights`` for 0D time and 1D longitude coordinate."""
-    time = get_0d_time()
-    lons = get_lon_coord()
-    cube = iris.cube.Cube(
-        [0.0, 0.0, 0.0],
-        var_name="x",
-        units="K",
-        aux_coords_and_dims=[(time, ())],
-        dim_coords_and_dims=[(lons, 0)],
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (1,)
-    np.testing.assert_allclose(weights, [30.0])
-
-
-def test_get_time_weights_1d_time():
-    """Test ``get_time_weights`` for 1D time coordinate."""
-    time = get_1d_time()
-    cube = iris.cube.Cube(
-        [0.0, 1.0], var_name="x", units="K", dim_coords_and_dims=[(time, 0)]
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_1d_time_1d_lon():
-    """Test ``get_time_weights`` for 1D time and 1D longitude coordinate."""
-    time = get_1d_time()
-    lons = get_lon_coord()
-    cube = iris.cube.Cube(
-        [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
-        var_name="x",
-        units="K",
-        dim_coords_and_dims=[(time, 0), (lons, 1)],
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_2d_time():
-    """Test ``get_time_weights`` for 1D time coordinate."""
-    time = get_2d_time()
-    cube = iris.cube.Cube(
-        [[0.0, 1.0]],
-        var_name="x",
-        units="K",
-        aux_coords_and_dims=[(time, (0, 1))],
-    )
-    with pytest.raises(ValueError):
-        get_time_weights(cube)
 
 
 def test_climate_statistics_0d_time_1d_lon():

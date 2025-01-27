@@ -17,14 +17,17 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
-from ._shared import (
+from esmvalcore.preprocessor._shared import (
+    get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,
 )
-from ._supplementary_vars import register_supplementaries
+from esmvalcore.preprocessor._supplementary_vars import (
+    register_supplementaries,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -379,7 +382,6 @@ def axis_statistics(
         cube,
         _add_axis_stats_weights_coord,
         coord=coord,
-        coord_dims=coord_dims,
     )
 
     with warnings.catch_warnings():
@@ -406,19 +408,15 @@ def axis_statistics(
     return result
 
 
-def _add_axis_stats_weights_coord(cube, coord, coord_dims):
+def _add_axis_stats_weights_coord(cube, coord):
     """Add weights for axis_statistics to cube (in-place)."""
-    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
-    if cube.has_lazy_data():
-        coord_chunks = tuple(cube.lazy_data().chunks[d] for d in coord_dims)
-        weights = weights.rechunk(coord_chunks)
-    else:
-        weights = weights.compute()
+    weights = get_coord_weights(cube, coord)
     weights_coord = AuxCoord(
         weights,
         long_name="_axis_statistics_weights_",
         units=coord.units,
     )
+    coord_dims = cube.coord_dims(coord)
     cube.add_aux_coord(weights_coord, coord_dims)
 
 
