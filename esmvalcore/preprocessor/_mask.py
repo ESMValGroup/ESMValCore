@@ -21,7 +21,10 @@ from iris.analysis import Aggregator
 from iris.cube import Cube
 from iris.util import rolling_window
 
-from esmvalcore.preprocessor._shared import apply_mask
+from esmvalcore.preprocessor._shared import (
+    apply_mask,
+    ignore_iris_vague_metadata_warnings,
+)
 
 from ._supplementary_vars import register_supplementaries
 
@@ -688,6 +691,7 @@ def mask_fillvalues(
     return products
 
 
+@ignore_iris_vague_metadata_warnings
 def _get_fillvalues_mask(
     cube: iris.cube.Cube,
     threshold_fraction: float,

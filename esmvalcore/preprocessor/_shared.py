@@ -27,6 +27,27 @@ from esmvalcore.typing import DataType
 logger = logging.getLogger(__name__)
 
 
+def ignore_iris_vague_metadata_warnings(func: Callable) -> Callable:
+    """Ignore specific warnings.
+
+    This can be used as a decorator.
+
+    """
+
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=iris.warnings.IrisVagueMetadataWarning,
+                module="iris",
+            )
+            result = func(*args, **kwargs)
+        return result
+
+    return wrapper
+
+
 def guess_bounds(cube, coords):
     """Guess bounds of a cube, or not."""
     # check for bounds just in case
@@ -36,6 +57,7 @@ def guess_bounds(cube, coords):
     return cube
 
 
+@ignore_iris_vague_metadata_warnings
 def get_iris_aggregator(
     operator: str,
     **operator_kwargs,

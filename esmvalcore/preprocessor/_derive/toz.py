@@ -7,6 +7,7 @@ import iris
 from scipy import constants
 
 from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
 
 from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
@@ -78,6 +79,7 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
+    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute total column ozone.
 

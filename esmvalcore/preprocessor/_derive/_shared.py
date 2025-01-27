@@ -8,9 +8,12 @@ import numpy as np
 from iris import NameConstraint
 from scipy import constants
 
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+
 logger = logging.getLogger(__name__)
 
 
+@ignore_iris_vague_metadata_warnings
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     """Calculate cloud area fraction for different parameters."""
     clisccp_cube = cubes.extract_cube(NameConstraint(var_name="clisccp"))
@@ -31,6 +34,7 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     return new_cube
 
 
+@ignore_iris_vague_metadata_warnings
 def column_average(cube, hus_cube, zg_cube, ps_cube):
     """Calculate column-averaged mole fractions.
 

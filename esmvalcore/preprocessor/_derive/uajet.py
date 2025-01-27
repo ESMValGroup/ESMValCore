@@ -4,6 +4,8 @@ import cf_units
 import iris
 import numpy as np
 
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 
 # Constants (Southern hemisphere at 850 hPa)
@@ -21,6 +23,7 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
+    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute latitude of maximum meridional wind speed."""
         # Load cube, extract correct region and perform zonal mean

@@ -3,6 +3,8 @@
 import iris
 import numpy as np
 
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 
 
@@ -27,6 +29,7 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
+    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute Atlantic meriodinal overturning circulation.
 

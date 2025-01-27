@@ -22,6 +22,7 @@ from esmvalcore.preprocessor._shared import (
     get_array_module,
     get_coord_weights,
     get_weights,
+    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 
@@ -447,6 +448,7 @@ def _calculate_histogram_eager(
     return hist
 
 
+@ignore_iris_vague_metadata_warnings
 def _get_histogram_cube(
     cube: Cube,
     data: np.ndarray | da.Array,

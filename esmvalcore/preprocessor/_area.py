@@ -7,7 +7,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -26,6 +25,7 @@ from esmvalcore.preprocessor._shared import (
     get_dims_along_axes,
     get_iris_aggregator,
     get_normalized_cube,
+    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,
@@ -197,6 +197,7 @@ def _extract_irregular_region(
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def zonal_statistics(
     cube: Cube,
     operator: str,
@@ -247,6 +248,7 @@ def zonal_statistics(
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def meridional_statistics(
     cube: Cube,
     operator: str,
@@ -300,6 +302,7 @@ def meridional_statistics(
     required="prefer_at_least_one",
 )
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def area_statistics(
     cube: Cube,
     operator: str,
@@ -355,16 +358,7 @@ def area_statistics(
         agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
     )
 
-    with warnings.catch_warnings():
-        # Silence various warnings about collapsing multi-dimensional and/or
-        # non contiguous coordinates as this should be fine when the cell areas
-        # are provided and will fail when they needed but not provided.
-        warnings.filterwarnings(
-            "ignore",
-            category=iris.warnings.IrisVagueMetadataWarning,
-            module="iris",
-        )
-        result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
+    result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 

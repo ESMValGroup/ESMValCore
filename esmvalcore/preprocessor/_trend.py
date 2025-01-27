@@ -7,7 +7,10 @@ import iris
 import numpy as np
 from cf_units import Unit
 
-from esmvalcore.preprocessor._shared import preserve_float_dtype
+from esmvalcore.preprocessor._shared import (
+    ignore_iris_vague_metadata_warnings,
+    preserve_float_dtype,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +85,7 @@ def _set_trend_units(cube, coord):
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def linear_trend(cube, coordinate="time"):
     """Calculate linear trend of data along a given coordinate.
 
@@ -135,6 +139,7 @@ def linear_trend(cube, coordinate="time"):
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def linear_trend_stderr(cube, coordinate="time"):
     """Calculate standard error of linear trend along a given coordinate.
 

@@ -3,6 +3,8 @@
 import dask.array as da
 import iris
 
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
@@ -18,6 +20,7 @@ class DerivedVariable(DerivedVariableBase):
         return Toz.required(project)
 
     @staticmethod
+    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute tropospheric column ozone.
 

@@ -25,6 +25,7 @@ from esmvalcore.preprocessor._shared import (
     get_all_coords,
     get_array_module,
     get_weights,
+    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
 )
 
@@ -387,6 +388,7 @@ def distance_metric(
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def _calculate_metric(
     cube: Cube,
     reference: Cube,

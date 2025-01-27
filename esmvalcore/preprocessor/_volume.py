@@ -21,6 +21,7 @@ from esmvalcore.preprocessor._shared import (
     get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
+    ignore_iris_vague_metadata_warnings,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,
@@ -223,6 +224,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     required="prefer_at_least_one",
 )
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def volume_statistics(
     cube: Cube,
     operator: str,
@@ -312,6 +314,7 @@ def volume_statistics(
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def axis_statistics(
     cube: Cube,
     axis: str,

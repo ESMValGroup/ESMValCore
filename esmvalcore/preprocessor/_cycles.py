@@ -5,9 +5,12 @@ import logging
 import iris
 import iris.coord_categorisation
 
+from esmvalcore.preprocessor._shared import ignore_iris_vague_metadata_warnings
+
 logger = logging.getLogger(__name__)
 
 
+@ignore_iris_vague_metadata_warnings
 def amplitude(cube, coords):
     """Calculate amplitude of cycles by aggregating over coordinates.
 
