@@ -5,7 +5,6 @@ import warnings
 
 import dask.array as da
 import iris.analysis
-import iris.warnings
 import numpy as np
 import pytest
 from cf_units import Unit
