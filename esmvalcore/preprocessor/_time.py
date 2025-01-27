@@ -1216,6 +1216,7 @@ def low_pass_weights(window, cutoff):
 
 
 @preserve_float_dtype
+@ignore_iris_vague_metadata_warnings
 def timeseries_filter(
     cube: Cube,
     window: int,

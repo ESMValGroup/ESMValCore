@@ -342,6 +342,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     return cube
 
 
+@ignore_iris_vague_metadata_warnings
 def count_spells(
     data: np.ndarray | da.Array,
     threshold: float | None,
