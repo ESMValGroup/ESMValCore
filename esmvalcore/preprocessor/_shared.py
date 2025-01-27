@@ -6,6 +6,7 @@ Utility functions that can be used for multiple preprocessor steps
 
 from __future__ import annotations
 
+import inspect
 import logging
 import warnings
 from collections import defaultdict
@@ -20,6 +21,7 @@ from iris.coords import CellMeasure, Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
+from numpy.typing import DTypeLike
 
 from esmvalcore.iris_helpers import has_regular_grid
 from esmvalcore.typing import DataType
@@ -221,6 +223,25 @@ def get_normalized_cube(
     return normalized_cube
 
 
+def _get_dtype_of_first_arg(
+    func: Callable,
+    *args: Any,
+    **kwargs: Any,
+) -> DTypeLike:
+    """Get dtype of first argument given to a function."""
+    # If positional arguments are given, use the first one
+    if args:
+        return args[0].dtype
+
+    # Otherwise, use the keyword argument given by the name of the first
+    # function argument
+    # Note: this function is called AFTER func(*args, **kwargs) is run, so we
+    # can be sure that the required arguments are there
+    signature = inspect.signature(func)
+    first_arg_name = list(signature.parameters.values())[0].name
+    return kwargs[first_arg_name].dtype
+
+
 def preserve_float_dtype(func: Callable) -> Callable:
     """Preserve object's float dtype (all other dtypes are allowed to change).
 
@@ -230,11 +251,17 @@ def preserve_float_dtype(func: Callable) -> Callable:
     to give output with any type.
 
     """
+    signature = inspect.signature(func)
+    if not signature.parameters:
+        raise TypeError(
+            f"Cannot preserve float dtype during function '{func.__name__}, "
+            f"function takes no arguments"
+        )
 
     @wraps(func)
-    def wrapper(data: DataType, *args: Any, **kwargs: Any) -> DataType:
-        dtype = data.dtype
-        result = func(data, *args, **kwargs)
+    def wrapper(*args: Any, **kwargs: Any) -> DataType:
+        result = func(*args, **kwargs)
+        dtype = _get_dtype_of_first_arg(func, *args, **kwargs)
         if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
             if isinstance(result, Cube):
                 result.data = result.core_data().astype(dtype)
