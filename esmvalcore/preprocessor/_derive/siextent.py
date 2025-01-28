@@ -45,7 +45,6 @@ class DerivedVariable(DerivedVariableBase):
         -------
             Cube containing sea ice extent.
         """
-        print(cubes)
         try:
             sic = cubes.extract_cube(Constraint(name="sic"))
         except iris.exceptions.ConstraintMismatchError:
