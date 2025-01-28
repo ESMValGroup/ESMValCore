@@ -25,7 +25,7 @@ def ignore_iris_vague_metadata_warnings(func: Callable) -> Callable:
     """Ignore specific warnings.
 
     This can be used as a decorator.
-
+see https://scitools-iris.readthedocs.io/en/stable/generated/api/iris.warnings.html#iris.warnings.IrisVagueMetadataWarning
     """
 
     @wraps(func)
