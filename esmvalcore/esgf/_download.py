@@ -558,8 +558,7 @@ def download(files, dest_folder, n_jobs=4):
     ]
     if not files:
         logger.debug(
-            "All required data is available locally,"
-            " not downloading anything."
+            "All required data is available locally, not downloading anything."
         )
         return
 
