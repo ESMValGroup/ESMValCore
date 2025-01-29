@@ -21,7 +21,6 @@ from iris.coords import CellMeasure, Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
-from numpy.typing import DTypeLike
 
 from esmvalcore.iris_helpers import has_regular_grid
 from esmvalcore.typing import DataType
@@ -223,23 +222,19 @@ def get_normalized_cube(
     return normalized_cube
 
 
-def _get_dtype_of_first_arg(
-    func: Callable,
-    *args: Any,
-    **kwargs: Any,
-) -> DTypeLike:
-    """Get dtype of first argument given to a function."""
+def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:
+    """Get first argument given to a function."""
     # If positional arguments are given, use the first one
     if args:
-        return args[0].dtype
+        return args[0]
 
     # Otherwise, use the keyword argument given by the name of the first
     # function argument
-    # Note: this function is called AFTER func(*args, **kwargs) is run, so we
-    # can be sure that the required arguments are there
+    # Note: this function should be called AFTER func(*args, **kwargs) is run,
+    # so that we can be sure that the required arguments are there
     signature = inspect.signature(func)
     first_arg_name = list(signature.parameters.values())[0].name
-    return kwargs[first_arg_name].dtype
+    return kwargs[first_arg_name]
 
 
 def preserve_float_dtype(func: Callable) -> Callable:
@@ -254,19 +249,31 @@ def preserve_float_dtype(func: Callable) -> Callable:
     signature = inspect.signature(func)
     if not signature.parameters:
         raise TypeError(
-            f"Cannot preserve float dtype during function '{func.__name__}, "
+            f"Cannot preserve float dtype during function '{func.__name__}', "
             f"function takes no arguments"
         )
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> DataType:
         result = func(*args, **kwargs)
-        dtype = _get_dtype_of_first_arg(func, *args, **kwargs)
-        if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
-            if isinstance(result, Cube):
-                result.data = result.core_data().astype(dtype)
-            else:
-                result = result.astype(dtype)
+        first_arg = _get_first_arg(func, *args, **kwargs)
+
+        if hasattr(first_arg, "dtype") and hasattr(result, "dtype"):
+            dtype = first_arg.dtype
+            if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
+                if isinstance(result, Cube):
+                    result.data = result.core_data().astype(dtype)
+                else:
+                    result = result.astype(dtype)
+        else:
+            raise TypeError(
+                f"Cannot preserve float dtype during function "
+                f"'{func.__name__}', the function's first argument of type "
+                f"{type(first_arg)} and/or the function's return value of "
+                f"type {type(result)} do not have the necessary attribute "
+                f"'dtype'"
+            )
+
         return result
 
     return wrapper

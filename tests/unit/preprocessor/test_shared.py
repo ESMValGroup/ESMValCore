@@ -258,20 +258,56 @@ def test_preserve_float_dtype_kwargs_only(data, dtype):
 
 def test_preserve_float_dtype_invalid_args():
     """Test `preserve_float_dtype`."""
-    with pytest.raises(TypeError):
+    msg = r"missing 2 required positional arguments: 'obj' and 'arg'"
+    with pytest.raises(TypeError, match=msg):
         _dummy_func()
 
 
 def test_preserve_float_dtype_invalid_kwarg():
     """Test `preserve_float_dtype`."""
-    with pytest.raises(TypeError):
+    msg = r"got an unexpected keyword argument 'data'"
+    with pytest.raises(TypeError, match=msg):
         _dummy_func(np.array(1), 2.0, data=3.0)
 
 
 def test_preserve_float_dtype_invalid_func():
     """Test `preserve_float_dtype`."""
-    with pytest.raises(TypeError):
+    msg = (
+        r"Cannot preserve float dtype during function '<lambda>', function "
+        r"takes no arguments"
+    )
+    with pytest.raises(TypeError, match=msg):
         preserve_float_dtype(lambda: None)
+
+
+def test_preserve_float_dtype_first_arg_no_dtype():
+    """Test `preserve_float_dtype`."""
+
+    @preserve_float_dtype
+    def func(obj):
+        return obj * np.array(1)
+
+    msg = (
+        r"Cannot preserve float dtype during function 'func', the function's "
+        r"first argument of type"
+    )
+    with pytest.raises(TypeError, match=msg):
+        func(1.0)
+
+
+def test_preserve_float_dtype_return_value_no_dtype():
+    """Test `preserve_float_dtype`."""
+
+    @preserve_float_dtype
+    def func(_):
+        return 1
+
+    msg = (
+        r"Cannot preserve float dtype during function 'func', the function's "
+        r"first argument of type"
+    )
+    with pytest.raises(TypeError, match=msg):
+        func(np.array(1.0))
 
 
 def test_get_array_module_da():
