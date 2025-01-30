@@ -6,6 +6,7 @@ Utility functions that can be used for multiple preprocessor steps
 
 from __future__ import annotations
 
+import inspect
 import logging
 import warnings
 from collections import defaultdict
@@ -225,6 +226,21 @@ def get_normalized_cube(
     return normalized_cube
 
 
+def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:
+    """Get first argument given to a function."""
+    # If positional arguments are given, use the first one
+    if args:
+        return args[0]
+
+    # Otherwise, use the keyword argument given by the name of the first
+    # function argument
+    # Note: this function should be called AFTER func(*args, **kwargs) is run,
+    # so that we can be sure that the required arguments are there
+    signature = inspect.signature(func)
+    first_arg_name = list(signature.parameters.values())[0].name
+    return kwargs[first_arg_name]
+
+
 def preserve_float_dtype(func: Callable) -> Callable:
     """Preserve object's float dtype (all other dtypes are allowed to change).
 
@@ -234,16 +250,34 @@ def preserve_float_dtype(func: Callable) -> Callable:
     to give output with any type.
 
     """
+    signature = inspect.signature(func)
+    if not signature.parameters:
+        raise TypeError(
+            f"Cannot preserve float dtype during function '{func.__name__}', "
+            f"function takes no arguments"
+        )
 
     @wraps(func)
-    def wrapper(data: DataType, *args: Any, **kwargs: Any) -> DataType:
-        dtype = data.dtype
-        result = func(data, *args, **kwargs)
-        if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
-            if isinstance(result, Cube):
-                result.data = result.core_data().astype(dtype)
-            else:
-                result = result.astype(dtype)
+    def wrapper(*args: Any, **kwargs: Any) -> DataType:
+        result = func(*args, **kwargs)
+        first_arg = _get_first_arg(func, *args, **kwargs)
+
+        if hasattr(first_arg, "dtype") and hasattr(result, "dtype"):
+            dtype = first_arg.dtype
+            if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
+                if isinstance(result, Cube):
+                    result.data = result.core_data().astype(dtype)
+                else:
+                    result = result.astype(dtype)
+        else:
+            raise TypeError(
+                f"Cannot preserve float dtype during function "
+                f"'{func.__name__}', the function's first argument of type "
+                f"{type(first_arg)} and/or the function's return value of "
+                f"type {type(result)} do not have the necessary attribute "
+                f"'dtype'"
+            )
+
         return result
 
     return wrapper
