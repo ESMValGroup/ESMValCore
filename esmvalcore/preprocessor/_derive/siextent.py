@@ -19,7 +19,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variable needed for derivation."""
-        # 'sic' only is sufficient as there is already an entry 
+        # 'sic' only is sufficient as there is already an entry
         # in the mapping table esmvalcore/cmor/variable_alt_names.yml
         required = [
             {"short_name": "sic"},
