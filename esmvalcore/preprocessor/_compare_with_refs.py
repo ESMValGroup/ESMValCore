@@ -17,7 +17,10 @@ from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._io import concatenate
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
@@ -431,7 +434,8 @@ def _calculate_metric(
 
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
-    res_cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        res_cube = cube.collapsed(coords, iris.analysis.MAX)
     res_cube.data = res_data
     res_cube.metadata = res_metadata
     res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]
@@ -452,7 +456,11 @@ def _calculate_rmse(
     weights = get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - reference.core_data()) ** 2
     npx = get_array_module(squared_error)
-    rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
+    mse = npx.ma.average(squared_error, axis=axis, weights=weights)
+    if isinstance(mse, da.Array):
+        rmse = da.reductions.safe_sqrt(mse)
+    else:
+        rmse = np.ma.sqrt(mse)
 
     # Metadata
     metadata = CubeMetadata(
