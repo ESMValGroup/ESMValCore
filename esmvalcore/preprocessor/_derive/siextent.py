@@ -59,9 +59,9 @@ class DerivedVariable(DerivedVariableBase):
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)
         siextent = sic.copy(siextent_data)
-        siextent.units = "1"  # unit is 1 as this is just a mask
-                              # that has to be used with preprocessor
-                              # area_statistics(operator='sum') to
-                              # obtain the sea ice extent (m2)
+        # unit is 1 as this is just a mask that has to be used with
+        # preprocessor area_statistics(operator='sum') to obtain the
+        # sea ice extent (m2)
+        siextent.units = "1"
 
         return siextent
