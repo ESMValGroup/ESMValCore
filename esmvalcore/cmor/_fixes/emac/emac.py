@@ -233,7 +233,7 @@ class Prodlnox(EmacFix):
         )
         dt_cube = self.get_cube(cubes, var_name="dt")
 
-        with warnings.catch_warnings(), ignore_iris_vague_metadata_warnings:
+        with warnings.catch_warnings(), ignore_iris_vague_metadata_warnings():
             warnings.filterwarnings(
                 "ignore",
                 message="Collapsing spatial coordinate 'latitude' without "
