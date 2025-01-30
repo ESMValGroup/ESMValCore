@@ -8,6 +8,8 @@ import numpy as np
 from iris import NameConstraint
 from scipy import constants
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,12 +23,13 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
         for coord in new_cube.coords()
         if len(coord.points) > 1
     ]
-    if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
-        new_cube = new_cube.collapsed(
-            "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
-        )
-    if "air_pressure" in coord_names:
-        new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
+    with ignore_iris_vague_metadata_warnings():
+        if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
+            new_cube = new_cube.collapsed(
+                "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
+            )
+        if "air_pressure" in coord_names:
+            new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
 
     return new_cube
 
@@ -108,11 +111,12 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
     cube.data = cube.core_data() * n_dry.core_data()
 
     # Column-average
-    cube = cube.collapsed("air_pressure", iris.analysis.SUM)
-    cube.data = (
-        cube.core_data()
-        / n_dry.collapsed("air_pressure", iris.analysis.SUM).core_data()
-    )
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed("air_pressure", iris.analysis.SUM)
+        cube.data = (
+            cube.core_data()
+            / n_dry.collapsed("air_pressure", iris.analysis.SUM).core_data()
+        )
     return cube
 
 

@@ -22,7 +22,10 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
-from esmvalcore.iris_helpers import has_regular_grid
+from esmvalcore.iris_helpers import (
+    has_regular_grid,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
@@ -92,7 +95,8 @@ def get_iris_aggregator(
         aggregator, aggregator_kwargs, np.array([1.0])
     )
     try:
-        cube.collapsed("x", aggregator, **test_kwargs)
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"
