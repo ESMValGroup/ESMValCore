@@ -107,7 +107,7 @@ ICON-XPP:
     lwp: {raw_name: tqc_dia, var_type: atm_2d_ml}
     netcre: {var_type: atm_2d_ml}
     pr: {raw_name: tot_prec_rate, var_type: atm_2d_ml}
-    prw: {raw_name: tqv, var_type: atm_2d_ml}
+    prw: {raw_name: tqv_dia, var_type: atm_2d_ml}
     ps: {raw_name: pres_sfc, var_type: atm_2d_ml}
     psl: {raw_name: pres_msl, var_type: atm_2d_ml}
     # rlds: {var_type: atm_2d_ml}
