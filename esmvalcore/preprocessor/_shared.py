@@ -40,7 +40,6 @@ def guess_bounds(cube, coords):
     return cube
 
 
-@ignore_iris_vague_metadata_warnings
 def get_iris_aggregator(
     operator: str,
     **operator_kwargs,
@@ -96,7 +95,8 @@ def get_iris_aggregator(
         aggregator, aggregator_kwargs, np.array([1.0])
     )
     try:
-        cube.collapsed("x", aggregator, **test_kwargs)
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"

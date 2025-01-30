@@ -7,7 +7,6 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
@@ -224,7 +223,6 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     required="prefer_at_least_one",
 )
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def volume_statistics(
     cube: Cube,
     operator: str,
@@ -302,7 +300,8 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
@@ -314,7 +313,6 @@ def volume_statistics(
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def axis_statistics(
     cube: Cube,
     axis: str,
@@ -387,16 +385,7 @@ def axis_statistics(
         coord=coord,
     )
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                "Cannot check if coordinate is contiguous: Invalid "
-                "operation for '_axis_statistics_weights_'"
-            ),
-            category=UserWarning,
-            module="iris",
-        )
+    with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
     if normalize is not None:

@@ -390,7 +390,6 @@ def distance_metric(
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def _calculate_metric(
     cube: Cube,
     reference: Cube,
@@ -435,7 +434,8 @@ def _calculate_metric(
 
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
-    res_cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        res_cube = cube.collapsed(coords, iris.analysis.MAX)
     res_cube.data = res_data
     res_cube.metadata = res_metadata
     res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]

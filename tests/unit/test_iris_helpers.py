@@ -635,14 +635,9 @@ def test_safe_convert_units(
 
 def test_ignore_iris_vague_metadata_warnings():
     """Test ``ignore_iris_vague_metadata_warnings``."""
-
-    @ignore_iris_vague_metadata_warnings
-    def func():
-        # Collapse non-contiguous coord to check if warning has been raised
-        x_coord = DimCoord([0, 3], bounds=[[-1, 1], [2, 4]], var_name="x")
-        cube = Cube([1, 1], dim_coords_and_dims=[(x_coord, 0)])
-        return cube.collapsed("x", iris.analysis.MEAN)
-
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        func()
+        x_coord = DimCoord([0, 3], bounds=[[-1, 1], [2, 4]], var_name="x")
+        cube = Cube([1, 1], dim_coords_and_dims=[(x_coord, 0)])
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", iris.analysis.MEAN)

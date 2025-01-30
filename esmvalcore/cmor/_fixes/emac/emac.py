@@ -223,7 +223,6 @@ class Clwvi(EmacFix):
 class Prodlnox(EmacFix):
     """Fixes for ``prodlnox``."""
 
-    @ignore_iris_vague_metadata_warnings
     def fix_metadata(self, cubes):
         """Fix metadata."""
         noxcg_cube = self.get_cube(
@@ -234,7 +233,7 @@ class Prodlnox(EmacFix):
         )
         dt_cube = self.get_cube(cubes, var_name="dt")
 
-        with warnings.catch_warnings():
+        with warnings.catch_warnings(), ignore_iris_vague_metadata_warnings:
             warnings.filterwarnings(
                 "ignore",
                 message="Collapsing spatial coordinate 'latitude' without "
@@ -268,13 +267,13 @@ Hfss = NegateData
 class Od550aer(EmacFix):
     """Fixes for ``od550aer``."""
 
-    @ignore_iris_vague_metadata_warnings
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cubes = super().fix_metadata(cubes)
         cube = self.get_cube(cubes)
         z_coord = cube.coord(axis="Z")
-        cube = cube.collapsed(z_coord, iris.analysis.SUM)
+        with ignore_iris_vague_metadata_warnings():
+            cube = cube.collapsed(z_coord, iris.analysis.SUM)
         return CubeList([cube])
 
 

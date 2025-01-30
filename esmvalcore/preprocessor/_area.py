@@ -197,7 +197,6 @@ def _extract_irregular_region(
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def zonal_statistics(
     cube: Cube,
     operator: str,
@@ -241,14 +240,14 @@ def zonal_statistics(
             "Zonal statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.collapsed("longitude", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed("longitude", agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
     return result
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def meridional_statistics(
     cube: Cube,
     operator: str,
@@ -291,7 +290,8 @@ def meridional_statistics(
             "Meridional statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.collapsed("latitude", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed("latitude", agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
     return result
@@ -302,7 +302,6 @@ def meridional_statistics(
     required="prefer_at_least_one",
 )
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def area_statistics(
     cube: Cube,
     operator: str,
@@ -358,7 +357,8 @@ def area_statistics(
         agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
     )
 
-    result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 

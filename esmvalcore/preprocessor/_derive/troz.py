@@ -20,7 +20,6 @@ class DerivedVariable(DerivedVariableBase):
         return Toz.required(project)
 
     @staticmethod
-    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute tropospheric column ozone.
 
@@ -48,7 +47,8 @@ class DerivedVariable(DerivedVariableBase):
         # have correct shapes
         if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            with ignore_iris_vague_metadata_warnings():
+                ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
             ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 

@@ -507,7 +507,6 @@ def _compute_eager(
     return result_cube
 
 
-@ignore_iris_vague_metadata_warnings
 def _compute(
     cube: iris.cube.Cube,
     *,
@@ -516,7 +515,8 @@ def _compute(
 ):
     """Compute statistic."""
     # This will always return a masked array
-    result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
 
     # Remove concatenation dimension added by _combine
     result_cube.remove_coord(CONCAT_DIM)

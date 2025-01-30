@@ -85,7 +85,6 @@ def _set_trend_units(cube, coord):
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def linear_trend(cube, coordinate="time"):
     """Calculate linear trend of data along a given coordinate.
 
@@ -130,7 +129,8 @@ def linear_trend(cube, coordinate="time"):
     aggregator = iris.analysis.Aggregator(
         "trend", call_func, lazy_func=lazy_func, x_data=coord.points
     )
-    cube = cube.collapsed(coord, aggregator)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)
@@ -139,7 +139,6 @@ def linear_trend(cube, coordinate="time"):
 
 
 @preserve_float_dtype
-@ignore_iris_vague_metadata_warnings
 def linear_trend_stderr(cube, coordinate="time"):
     """Calculate standard error of linear trend along a given coordinate.
 
@@ -189,7 +188,8 @@ def linear_trend_stderr(cube, coordinate="time"):
     aggregator = iris.analysis.Aggregator(
         "trend_stderr", call_func, lazy_func=lazy_func, x_data=coord.points
     )
-    cube = cube.collapsed(coord, aggregator)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)

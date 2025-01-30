@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
-from functools import wraps
-from typing import Any, Dict, Iterable, List, Literal, Sequence
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Dict, Iterable, List, Literal, Sequence
 
 import dask.array as da
 import iris
@@ -21,26 +21,21 @@ from iris.warnings import IrisVagueMetadataWarning
 from esmvalcore.typing import NetCDFAttr
 
 
-def ignore_iris_vague_metadata_warnings(func: Callable) -> Callable:
+@contextmanager
+def ignore_iris_vague_metadata_warnings() -> Generator[None]:
     """Ignore specific warnings.
 
-    This can be used as a decorator. See also
+    This can be used as a context manager. See also
     https://scitools-iris.readthedocs.io/en/stable/generated/api/iris.warnings.html#iris.warnings.IrisVagueMetadataWarning.
 
     """
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=IrisVagueMetadataWarning,
-                module="iris",
-            )
-            result = func(*args, **kwargs)
-        return result
-
-    return wrapper
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=IrisVagueMetadataWarning,
+            module="iris",
+        )
+        yield
 
 
 def add_leading_dim_to_cube(cube, dim_coord):

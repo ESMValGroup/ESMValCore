@@ -29,7 +29,6 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
-    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute Atlantic meriodinal overturning circulation.
 
@@ -89,9 +88,7 @@ class DerivedVariable(DerivedVariableBase):
         cube = cube.extract(constraint=rapid_constraint)
 
         # 4: find the maximum in the water column along the time axis.
-        cube = cube.collapsed(
-            ["depth", "region"],
-            iris.analysis.MAX,
-        )
+        with ignore_iris_vague_metadata_warnings():
+            cube = cube.collapsed(["depth", "region"], iris.analysis.MAX)
 
         return cube

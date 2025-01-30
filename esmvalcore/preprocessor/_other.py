@@ -450,7 +450,6 @@ def _calculate_histogram_eager(
     return hist
 
 
-@ignore_iris_vague_metadata_warnings
 def _get_histogram_cube(
     cube: Cube,
     data: np.ndarray | da.Array,
@@ -474,7 +473,8 @@ def _get_histogram_cube(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     cell_methods = cube.cell_methods
-    cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coords, iris.analysis.MAX)
 
     # Get histogram cube
     long_name_suffix = (

@@ -23,7 +23,6 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
-    @ignore_iris_vague_metadata_warnings
     def calculate(cubes):
         """Compute latitude of maximum meridional wind speed."""
         # Load cube, extract correct region and perform zonal mean
@@ -34,7 +33,8 @@ class DerivedVariable(DerivedVariableBase):
         ua_cube = ua_cube.extract(
             iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1])
         )
-        ua_cube = ua_cube.collapsed("longitude", iris.analysis.MEAN)
+        with ignore_iris_vague_metadata_warnings():
+            ua_cube = ua_cube.collapsed("longitude", iris.analysis.MEAN)
 
         # Calculate maximum jet position
         uajet_vals = []
