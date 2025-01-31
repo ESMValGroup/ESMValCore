@@ -1172,7 +1172,7 @@ Improvements
 -  Speed up provenance recording (:pull:`1327`) by :user:`bouweandela`
 -  Improve results web page (:pull:`1332`) by :user:`bouweandela`
 -  Move institutes from config-developer.yml to default extra facets config and add wildcard support for extra facets (:pull:`1259`) by :user:`bouweandela`
--  Add support for re-using preprocessor output from previous runs (:pull:`1321`) by :user:`bouweandela`
+-  Add support for reusing preprocessor output from previous runs (:pull:`1321`) by :user:`bouweandela`
 -  Log fewer messages to screen and hide stack trace for known recipe errors (:pull:`1296`) by :user:`bouweandela`
 -  Log ESMValCore and ESMValTool versions when running (:pull:`1263`) by :user:`jvegreg`
 -  Add "grid" as a tag to the output file template for CMIP6 (:pull:`1356`) by :user:`zklaus`

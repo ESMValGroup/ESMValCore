@@ -330,7 +330,7 @@ class BaseTask:
 
 
 class ResumeTask(BaseTask):
-    """Task for re-using preprocessor output files from a previous run."""
+    """Task for reusing preprocessor output files from a previous run."""
 
     def __init__(self, prev_preproc_dir, preproc_dir, name):
         """Create a resume task."""
