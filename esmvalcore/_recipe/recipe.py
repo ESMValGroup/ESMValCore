@@ -1083,7 +1083,7 @@ class Recipe:
                 )
                 if prev_preproc_dir.exists():
                     logger.info(
-                        "Re-using preprocessed files from %s for %s",
+                        "Reusing preprocessed files from %s for %s",
                         prev_preproc_dir,
                         task_name,
                     )

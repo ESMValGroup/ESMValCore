@@ -325,7 +325,7 @@ def cube_with_rich_metadata():
     psur = AuxCoord([[0]], var_name="ps", units="Pa")
     sigma_factory = AtmosphereSigmaFactory(ptop, sigma, psur)
     cell_area = CellMeasure([[1]], var_name="area", units="m2", measure="area")
-    anc = AncillaryVariable([0], var_name="anc")
+    ancillary = AncillaryVariable([0], var_name="ancillary")
     cube = Cube(
         np.ones((1, 1, 1, 1), dtype=np.float32),
         standard_name=None,
@@ -337,7 +337,7 @@ def cube_with_rich_metadata():
         dim_coords_and_dims=[(time, 0), (sigma, 1), (lat, 2), (lon, 3)],
         aux_coords_and_dims=[(ptop, ()), (psur, (2, 3))],
         aux_factories=[sigma_factory],
-        ancillary_variables_and_dims=[(anc, 1)],
+        ancillary_variables_and_dims=[(ancillary, 1)],
         cell_measures_and_dims=[(cell_area, (2, 3))],
     )
     return cube
