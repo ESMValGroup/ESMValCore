@@ -28,12 +28,12 @@ repos:
     hooks:
       - id: yamllint
   - repo: https://github.com/codespell-project/codespell
-    rev: 'v2.4.0'
+    rev: 'v2.4.1'
     hooks:
       - id: codespell
         additional_dependencies: [tomli]  # required for Python 3.10
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.9.3"
+    rev: "v0.9.4"
     hooks:
       - id: ruff
         args: [--fix]
