@@ -200,27 +200,27 @@ def _dummy_func(obj, arg, kwarg=2.0):
     return obj
 
 
-@pytest.mark.parametrize(
-    "data,dtype",
-    [
-        (np.array([1.0], dtype=np.float64), np.float64),
-        (np.array([1.0], dtype=np.float32), np.float32),
-        (np.array([1], dtype=np.int64), np.float64),
-        (np.array([1], dtype=np.int32), np.float64),
-        (da.array([1.0], dtype=np.float64), np.float64),
-        (da.array([1.0], dtype=np.float32), np.float32),
-        (da.array([1], dtype=np.int64), np.float64),
-        (da.array([1], dtype=np.int32), np.float64),
-        (Cube(np.array([1.0], dtype=np.float64)), np.float64),
-        (Cube(np.array([1.0], dtype=np.float32)), np.float32),
-        (Cube(np.array([1], dtype=np.int64)), np.float64),
-        (Cube(np.array([1], dtype=np.int32)), np.float64),
-        (Cube(da.array([1.0], dtype=np.float64)), np.float64),
-        (Cube(da.array([1.0], dtype=np.float32)), np.float32),
-        (Cube(da.array([1], dtype=np.int64)), np.float64),
-        (Cube(da.array([1], dtype=np.int32)), np.float64),
-    ],
-)
+TEST_PRESERVE_FLOAT_TYPE = [
+    (np.array([1.0], dtype=np.float64), np.float64),
+    (np.array([1.0], dtype=np.float32), np.float32),
+    (np.array([1], dtype=np.int64), np.float64),
+    (np.array([1], dtype=np.int32), np.float64),
+    (da.array([1.0], dtype=np.float64), np.float64),
+    (da.array([1.0], dtype=np.float32), np.float32),
+    (da.array([1], dtype=np.int64), np.float64),
+    (da.array([1], dtype=np.int32), np.float64),
+    (Cube(np.array([1.0], dtype=np.float64)), np.float64),
+    (Cube(np.array([1.0], dtype=np.float32)), np.float32),
+    (Cube(np.array([1], dtype=np.int64)), np.float64),
+    (Cube(np.array([1], dtype=np.int32)), np.float64),
+    (Cube(da.array([1.0], dtype=np.float64)), np.float64),
+    (Cube(da.array([1.0], dtype=np.float32)), np.float32),
+    (Cube(da.array([1], dtype=np.int64)), np.float64),
+    (Cube(da.array([1], dtype=np.int32)), np.float64),
+]
+
+
+@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
 def test_preserve_float_dtype(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
@@ -236,6 +236,78 @@ def test_preserve_float_dtype(data, dtype):
     assert _dummy_func.__name__ == "_dummy_func"
     signature = inspect.signature(_dummy_func)
     assert list(signature.parameters) == ["obj", "arg", "kwarg"]
+
+
+@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
+def test_preserve_float_dtype_kwargs_only(data, dtype):
+    """Test `preserve_float_dtype`."""
+    input_data = data.copy()
+
+    result = _dummy_func(arg=2.0, obj=input_data, kwarg=2.0)
+
+    assert input_data.dtype == data.dtype
+    assert result.dtype == dtype
+    assert isinstance(result, type(data))
+    if isinstance(data, Cube):
+        assert result.has_lazy_data() == data.has_lazy_data()
+
+    assert _dummy_func.__name__ == "_dummy_func"
+    signature = inspect.signature(_dummy_func)
+    assert list(signature.parameters) == ["obj", "arg", "kwarg"]
+
+
+def test_preserve_float_dtype_invalid_args():
+    """Test `preserve_float_dtype`."""
+    msg = r"missing 2 required positional arguments: 'obj' and 'arg'"
+    with pytest.raises(TypeError, match=msg):
+        _dummy_func()
+
+
+def test_preserve_float_dtype_invalid_kwarg():
+    """Test `preserve_float_dtype`."""
+    msg = r"got an unexpected keyword argument 'data'"
+    with pytest.raises(TypeError, match=msg):
+        _dummy_func(np.array(1), 2.0, data=3.0)
+
+
+def test_preserve_float_dtype_invalid_func():
+    """Test `preserve_float_dtype`."""
+    msg = (
+        r"Cannot preserve float dtype during function '<lambda>', function "
+        r"takes no arguments"
+    )
+    with pytest.raises(TypeError, match=msg):
+        preserve_float_dtype(lambda: None)
+
+
+def test_preserve_float_dtype_first_arg_no_dtype():
+    """Test `preserve_float_dtype`."""
+
+    @preserve_float_dtype
+    def func(obj):
+        return obj * np.array(1)
+
+    msg = (
+        r"Cannot preserve float dtype during function 'func', the function's "
+        r"first argument of type"
+    )
+    with pytest.raises(TypeError, match=msg):
+        func(1.0)
+
+
+def test_preserve_float_dtype_return_value_no_dtype():
+    """Test `preserve_float_dtype`."""
+
+    @preserve_float_dtype
+    def func(_):
+        return 1
+
+    msg = (
+        r"Cannot preserve float dtype during function 'func', the function's "
+        r"first argument of type"
+    )
+    with pytest.raises(TypeError, match=msg):
+        func(np.array(1.0))
 
 
 def test_get_array_module_da():

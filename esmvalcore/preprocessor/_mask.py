@@ -21,7 +21,10 @@ from iris.analysis import Aggregator
 from iris.cube import Cube
 from iris.util import rolling_window
 
-from esmvalcore.preprocessor._shared import apply_mask
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._shared import (
+    apply_mask,
+)
 
 from ._supplementary_vars import register_supplementaries
 
@@ -396,12 +399,13 @@ def count_spells(
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-    hit_windows = rolling_window(
-        data_hits,
-        window=spell_length,
-        step=spell_length,
-        axis=axis,
-    )
+    with ignore_iris_vague_metadata_warnings():
+        hit_windows = rolling_window(
+            data_hits,
+            window=spell_length,
+            step=spell_length,
+            axis=axis,
+        )
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = array_module.all(hit_windows, axis=axis + 1)
     # Count points fulfilling the condition (along the time axis).
@@ -726,12 +730,13 @@ def _get_fillvalues_mask(
     )
 
     # Calculate the statistic.
-    counts_windowed_cube = cube.collapsed(
-        "time",
-        spell_count,
-        threshold=min_value,
-        spell_length=time_window,
-    )
+    with ignore_iris_vague_metadata_warnings():
+        counts_windowed_cube = cube.collapsed(
+            "time",
+            spell_count,
+            threshold=min_value,
+            spell_length=time_window,
+        )
 
     # Create mask
     mask = counts_windowed_cube.core_data() < counts_threshold

@@ -11,7 +11,6 @@ grouped execution by passing a groupby keyword.
 from __future__ import annotations
 
 import logging
-import warnings
 from collections.abc import Iterable
 from datetime import datetime
 from functools import reduce
@@ -26,7 +25,10 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import MergeError
 from iris.util import equalise_attributes, new_axis
 
-from esmvalcore.iris_helpers import date2num
+from esmvalcore.iris_helpers import (
+    date2num,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.preprocessor._shared import (
     _group_products,
     get_iris_aggregator,
@@ -512,26 +514,8 @@ def _compute(
     **kwargs,
 ):
     """Compute statistic."""
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                "Collapsing a non-contiguous coordinate. "
-                f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
-            ),
-            category=UserWarning,
-            module="iris",
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                f"Cannot check if coordinate is contiguous: Invalid "
-                f"operation for '{CONCAT_DIM}'"
-            ),
-            category=UserWarning,
-            module="iris",
-        )
-        # This will always return a masked array
+    # This will always return a masked array
+    with ignore_iris_vague_metadata_warnings():
         result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
 
     # Remove concatenation dimension added by _combine
