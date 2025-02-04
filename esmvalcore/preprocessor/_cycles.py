@@ -5,6 +5,8 @@ import logging
 import iris
 import iris.coord_categorisation
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,8 +71,9 @@ def amplitude(cube, coords):
             )
 
     # Calculate amplitude
-    max_cube = cube.aggregated_by(coords, iris.analysis.MAX)
-    min_cube = cube.aggregated_by(coords, iris.analysis.MIN)
+    with ignore_iris_vague_metadata_warnings():
+        max_cube = cube.aggregated_by(coords, iris.analysis.MAX)
+        min_cube = cube.aggregated_by(coords, iris.analysis.MIN)
     amplitude_cube = max_cube - min_cube
     amplitude_cube.metadata = cube.metadata
 

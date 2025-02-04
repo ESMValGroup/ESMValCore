@@ -7,7 +7,10 @@ import iris
 import numpy as np
 from cf_units import Unit
 
-from esmvalcore.preprocessor._shared import preserve_float_dtype
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._shared import (
+    preserve_float_dtype,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +129,8 @@ def linear_trend(cube, coordinate="time"):
     aggregator = iris.analysis.Aggregator(
         "trend", call_func, lazy_func=lazy_func, x_data=coord.points
     )
-    cube = cube.collapsed(coord, aggregator)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)
@@ -184,7 +188,8 @@ def linear_trend_stderr(cube, coordinate="time"):
     aggregator = iris.analysis.Aggregator(
         "trend_stderr", call_func, lazy_func=lazy_func, x_data=coord.points
     )
-    cube = cube.collapsed(coord, aggregator)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)
