@@ -19,6 +19,7 @@ jobs:
   create-verify-lock-file:
     name: Create and verify conda lock file for latest Python
     runs-on: 'ubuntu-latest'
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,9 +28,8 @@ jobs:
         with:
           auto-update-conda: true
           activate-environment: esmvaltool-fromlock
-          python-version: "3.12"
+          python-version: "3.12"  # switch to 3.13 when mamba>2 available
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - name: Update and show conda config
         run: |
@@ -40,7 +40,9 @@ jobs:
           conda config --show
           # setup-miniconda@v3 installs an old conda and mamba
           # forcing a modern mamba updates both mamba and conda
-          conda install -c conda-forge "mamba>=1.4.8"
+          # unpin mamba after conda-lock=3 release
+          # see github.com/ESMValGroup/ESMValTool/issues/3782
+          conda install -c conda-forge "mamba>=1.4.8,<2"
           conda --version
           mamba --version
       - name: Gather Python info
@@ -71,8 +73,6 @@ jobs:
         run: |
           esmvaltool --help
           esmvaltool version
-      - name: Run flake8
-        run: flake8
       - name: Run pytests
         run: pytest -n 2 -m "not installation"
       # Automated PR
