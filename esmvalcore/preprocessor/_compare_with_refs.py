@@ -335,25 +335,9 @@ def distance_metric(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-        reference_products = []
-        for product in products:
-            if product.attributes.get("reference_for_metric", False):
-                reference_products.append(product)
-        if len(reference_products) != 1:
-            raise ValueError(
-                f"Expected exactly 1 dataset with 'reference_for_metric: "
-                f"true', found {len(reference_products):d}"
-            )
-        reference_product = reference_products[0]
-
-        # Extract reference cube
-        # Note: For technical reasons, product objects contain the member
-        # ``cubes``, which is a list of cubes. However, this is expected to be
-        # a list with exactly one element due to the call of concatenate
-        # earlier in the preprocessing chain of ESMValTool. To make sure that
-        # this preprocessor can also be used outside the ESMValTool
-        # preprocessing chain, an additional concatenate call is added here.
-        reference = concatenate(reference_product.cubes)
+        reference, reference_product = _get_ref(
+            products, "reference_for_metric"
+        )
 
     # If input is an Iterable of Cube objects, calculate distance metric for
     # each element
