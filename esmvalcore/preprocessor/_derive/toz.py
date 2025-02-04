@@ -1,12 +1,11 @@
 """Derivation of variable ``toz``."""
 
-import warnings
-
 import cf_units
 import iris
 from scipy import constants
 
 from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
@@ -104,7 +103,8 @@ class DerivedVariable(DerivedVariableBase):
         # have correct shapes
         if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            with ignore_iris_vague_metadata_warnings():
+                ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
             ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 
@@ -117,12 +117,7 @@ class DerivedVariable(DerivedVariableBase):
         # widths
         p_layer_widths = pressure_level_widths(o3_cube, ps_cube, top_limit=0.0)
         toz_cube = o3_cube * p_layer_widths / STANDARD_GRAVITY * MW_O3 / MW_AIR
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=UserWarning,
-                message="Collapsing a non-contiguous coordinate",
-            )
+        with ignore_iris_vague_metadata_warnings():
             toz_cube = toz_cube.collapsed("air_pressure", iris.analysis.SUM)
         toz_cube.units = (
             o3_cube.units

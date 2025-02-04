@@ -695,8 +695,8 @@ the absolute path to the diagnostic:
 This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
-Re-using parameters from one ``script`` to another
---------------------------------------------------
+Reusing parameters from one ``script`` to another
+-------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
 for use with other diagnostics. Here is an example:
 
