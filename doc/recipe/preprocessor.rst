@@ -311,7 +311,7 @@ Preprocessor                                                          Variable s
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 :ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
-:ref:`extract_surface_from_atm<extract_surface_from_atm>` [#f3]_      ``ps``                         surface_air_pressure
+:ref:`extract_surface_from_atm<volume_statistics>` [#f3]_             ``ps``                         surface_air_pressure
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -2101,7 +2101,7 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 
 ``zonal_statistics``
 --------------------
-
+preprocessor.rst:315: WARNING: u
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate.
 
@@ -2391,7 +2391,7 @@ See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
 
 ``extract_surface_from_atm``
-----------------------
+----------------------------
 
 This function extract data at the surface for an atmospheric variable.
 
