@@ -501,6 +501,16 @@ def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
     if not products:
         return
 
+    # It is fine to have multiple references when preprocessors are used that
+    # combine datasets
+    multi_dataset_preprocs = (
+        "multi_model_statistics",
+        "ensemble_statistics",
+    )
+    for preproc in multi_dataset_preprocs:
+        if any(preproc in p.settings for p in products):
+            return
+
     # Check that exactly one dataset contains the specified facet
     reference_products = []
     for product in products:
