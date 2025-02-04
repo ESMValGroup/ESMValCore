@@ -1,4 +1,4 @@
-SOURCE: CMIP5
+SOURCE: CMIP6
 !============
 variable_entry:    tnn
 !============
@@ -7,8 +7,8 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:
-units:             K
-cell_methods:      time: mean
+units:             degree_Celsius
+cell_methods:      time: minimum
 cell_measures:     area: areacella
 long_name:         Annual/monthly minimum value of daily minimum temperature
 comment:           ETCCDI (Extreme climate change index) annual/monthly minimum value of daily minimum temperature
