@@ -2604,8 +2604,8 @@ In the example above, ERA-Interim is used as reference dataset for the bias
 calculation.
 
 It is also possible to use the output from the :ref:`multi-model statistics` or
-:ref:`ensemble statistics` as reference dataset.
-In this case, make sure to use ``reference_for_bias: true```for each dataset
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_bias: true`` for each dataset
 that will be used to create the reference dataset and use the option
 ``keep_input_datasets: false`` for the multi-dataset preprocessor.
 For example:
@@ -2699,8 +2699,8 @@ In the example above, ERA-Interim is used as reference dataset for the distance
 metric calculation.
 
 It is also possible to use the output from the :ref:`multi-model statistics` or
-:ref:`ensemble statistics` as reference dataset.
-In this case, make sure to use ``reference_for_metric: true```for each dataset
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_metric: true`` for each dataset
 that will be used to create the reference dataset and use the option
 ``keep_input_datasets: false`` for the multi-dataset preprocessor.
 For example:
