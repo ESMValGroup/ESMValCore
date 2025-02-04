@@ -38,6 +38,23 @@ CMIP6:
     SYNDA: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
     NCI: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
+  catalogs:
+     NCI:
+      files: 
+        - /g/data/fs38/catalog/v2/esm/catalog.json
+        - /g/data/oi10/catalog/v2/esm/catalog.json
+      facets:
+        # mapping from recipe facets to intake-esm catalog facets
+        # TODO: Fix these when Gadi is back up
+        activity: activity_id
+        dataset: source_id
+        ensemble: member_id
+        exp: experiment_id
+        grid: grid_label
+        institute: institution_id
+        mip: table_id
+        short_name: variable_id
+        version: version
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}'
   cmor_type: 'CMIP6'
 
@@ -56,6 +73,23 @@ CMIP5:
     SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
     SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
+  catalogs:
+     NCI:
+      files: 
+        - /g/data/al33/catalog/v2/esm/catalog.json
+        - /g/data/rr3/catalog/v2/esm/catalog.json
+      facets:
+        # mapping from recipe facets to intake-esm catalog facets
+        # TODO: Fix these when Gadi is back up
+        activity: activity_id
+        dataset: source_id
+        ensemble: member_id
+        exp: experiment_id
+        grid: grid_label
+        institute: institution_id
+        mip: table_id
+        short_name: variable_id
+        version: version
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
 CMIP3:
@@ -156,6 +190,22 @@ CORDEX:
     ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}'
     SYNDA: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}'
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc'
+  catalogs:
+     NCI:
+      files: 
+        - /g/data/oi10/catalog/v2/esm/catalog.json
+      facets:
+        # mapping from recipe facets to intake-esm catalog facets
+        # TODO: Fix these when Gadi is back up
+        activity: activity_id
+        dataset: source_id
+        ensemble: member_id
+        exp: experiment_id
+        grid: grid_label
+        institute: institution_id
+        mip: table_id
+        short_name: variable_id
+        version: version
   output_file: '{project}_{institute}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
   cmor_path: 'cordex'
