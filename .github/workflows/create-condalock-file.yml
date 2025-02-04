@@ -19,6 +19,7 @@ jobs:
   create-verify-lock-file:
     name: Create and verify conda lock file for latest Python
     runs-on: 'ubuntu-latest'
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     steps:
       - uses: actions/checkout@v4
         with:
