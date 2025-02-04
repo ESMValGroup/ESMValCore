@@ -689,8 +689,9 @@ def extract_surface_from_atm(
 
         # Construct surface var cube
         indices = [slice(None)] * cube.ndim
-        indices[z_axis] = 0
+        indices[z_axis] = slice(0, 1)
         var_cube = cube[tuple(indices)]
+        var_cube = iris.util.squeeze(var_cube)
         var_cube.data = sfc_data
         if var_cube.coords("air_pressure"):
             var_cube.remove_coord("air_pressure")
