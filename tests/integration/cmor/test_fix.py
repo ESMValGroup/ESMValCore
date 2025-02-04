@@ -526,7 +526,7 @@ class TestGenericFix:
         assert self.mock_warning.call_count == 9
 
     def test_fix_metadata_cfmon_ta_no_alternative(self, mocker):
-        """Test ``fix_metadata`` with  no alternative coordinate."""
+        """Test ``fix_metadata`` with no alternative coordinate."""
         short_name = "ta"
         project = "CMIP6"
         dataset = "__MODEL_WITH_NO_EXPLICIT_FIX__"

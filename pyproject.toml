@@ -170,7 +170,7 @@ enable_error_code = [
 
 [tool.codespell]
 skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml,tests/sample_data/iris-sample-data/LICENSE"
-ignore-words-list = "vas,hist,oce"
+ignore-words-list = "emac,hist,oce,vas"
 
 [tool.ruff]
 line-length = 79

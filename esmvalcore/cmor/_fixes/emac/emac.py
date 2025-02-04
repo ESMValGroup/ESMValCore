@@ -12,6 +12,7 @@ variable) as single argument.
 """
 
 import logging
+import warnings
 from shutil import copyfile
 
 import dask.array as da
@@ -22,6 +23,8 @@ from iris.aux_factory import HybridPressureFactory
 from iris.cube import CubeList
 from netCDF4 import Dataset
 from scipy import constants
+
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData
@@ -73,6 +76,10 @@ class AllVars(EmacFix):
         cube = self.get_cube(cubes)
 
         # Fix time, latitude, and longitude coordinates
+        if cube.coords("time") and self.extra_facets.get(
+            "reset_time_bounds", False
+        ):
+            cube.coord("time").bounds = None
         self.fix_regular_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
@@ -232,14 +239,22 @@ class Prodlnox(EmacFix):
         )
         dt_cube = self.get_cube(cubes, var_name="dt")
 
-        cube = (
-            noxcg_cube.collapsed(
-                ["longitude", "latitude"], iris.analysis.SUM, weights=None
+        with warnings.catch_warnings(), ignore_iris_vague_metadata_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Collapsing spatial coordinate 'latitude' without "
+                "weighting",
+                category=UserWarning,
+                module="iris",
             )
-            + noxic_cube.collapsed(
-                ["longitude", "latitude"], iris.analysis.SUM, weights=None
-            )
-        ) / dt_cube
+            cube = (
+                noxcg_cube.collapsed(
+                    ["longitude", "latitude"], iris.analysis.SUM, weights=None
+                )
+                + noxic_cube.collapsed(
+                    ["longitude", "latitude"], iris.analysis.SUM, weights=None
+                )
+            ) / dt_cube
         cube.units = "kg s-1"
         cube.var_name = self.vardef.short_name
 
@@ -263,7 +278,8 @@ class Od550aer(EmacFix):
         cubes = super().fix_metadata(cubes)
         cube = self.get_cube(cubes)
         z_coord = cube.coord(axis="Z")
-        cube = cube.collapsed(z_coord, iris.analysis.SUM)
+        with ignore_iris_vague_metadata_warnings():
+            cube = cube.collapsed(z_coord, iris.analysis.SUM)
         return CubeList([cube])
 
 

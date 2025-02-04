@@ -2872,8 +2872,46 @@ Other
 
 Miscellaneous functions that do not belong to any of the other categories.
 
-Clip
-----
+.. _cumulative_sum:
+
+``cumulative_sum``
+------------------
+
+This function calculates cumulative sums along a given coordinate.
+
+The ``cumulative_sum`` preprocessor supports the following arguments in the
+recipe:
+
+* ``coord`` (:obj:`str`): Coordinate over which the cumulative sum is
+  calculated.
+  Must be 0D or 1D.
+* ``weights`` (array-like, :obj:`bool`, or ``None``, default: ``None``):
+  Weights for the calculation of the cumulative sum.
+  Each element in the data is multiplied by the corresponding weight before
+  summing.
+  Can be an array of the same shape as the input data, ``False`` or ``None``
+  (no weighting), or ``True`` (calculate the weights from the coordinate
+  bounds; only works if each coordinate point has exactly 2 bounds).
+* ``method`` (:obj:`str`, default: ``"sequential"``): Method used to perform
+  the cumulative sum.
+  Only relevant if the cube has `lazy data
+  <https://scitools-iris.readthedocs.io/en/stable/userguide/real_and_lazy_data.html>`__.
+  See :func:`dask.array.cumsum` for details.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_cumulative_sum:
+        cumulative_sum:
+          coord: time
+          weights: true
+
+See also :func:`esmvalcore.preprocessor.cumulative_sum`.
+
+``clip``
+--------
 
 This function clips data values to a certain minimum, maximum or range. The function takes two
 arguments:
@@ -2894,7 +2932,7 @@ The example below shows how to set all values below zero to zero.
 .. _histogram:
 
 ``histogram``
--------------------
+-------------
 
 This function calculates histograms.
 

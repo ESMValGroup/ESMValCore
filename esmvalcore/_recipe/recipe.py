@@ -18,6 +18,7 @@ from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -786,6 +787,8 @@ class Recipe:
 
     def __init__(self, raw_recipe, session, recipe_file: Path):
         """Parse a recipe file into an object."""
+        validate_dask_config(session["dask"])
+
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
         USED_DATASETS.clear()
@@ -1080,7 +1083,7 @@ class Recipe:
                 )
                 if prev_preproc_dir.exists():
                     logger.info(
-                        "Re-using preprocessed files from %s for %s",
+                        "Reusing preprocessed files from %s for %s",
                         prev_preproc_dir,
                         task_name,
                     )
@@ -1192,8 +1195,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,
         )
         self.write_html_summary()
@@ -1230,8 +1232,7 @@ class Recipe:
         with filename.open("w", encoding="utf-8") as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,
         )
         return filename

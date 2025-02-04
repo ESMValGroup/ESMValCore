@@ -32,10 +32,14 @@ from iris.util import broadcast_to_shape
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
-from esmvalcore.iris_helpers import date2num, rechunk_cube
+from esmvalcore.iris_helpers import (
+    date2num,
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
+    get_coord_weights,
     get_iris_aggregator,
-    get_time_weights,
     preserve_float_dtype,
     update_weights_kwargs,
 )
@@ -498,9 +502,10 @@ def hourly_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(
-        ["hour_group", "day_of_year", "year"], agg, **agg_kwargs
-    )
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["hour_group", "day_of_year", "year"], agg, **agg_kwargs
+        )
 
     result.remove_coord("hour_group")
     result.remove_coord("day_of_year")
@@ -542,7 +547,8 @@ def daily_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(["day_of_year", "year"], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(["day_of_year", "year"], agg, **agg_kwargs)
 
     result.remove_coord("day_of_year")
     result.remove_coord("year")
@@ -582,7 +588,10 @@ def monthly_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(["month_number", "year"], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["month_number", "year"], agg, **agg_kwargs
+        )
     _aggregate_time_fx(result, cube)
     return result
 
@@ -647,9 +656,10 @@ def seasonal_statistics(
         )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(
-        ["clim_season", "season_year"], agg, **agg_kwargs
-    )
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["clim_season", "season_year"], agg, **agg_kwargs
+        )
 
     # CMOR Units are days so we are safe to operate on days
     # Ranging on [29, 31] days makes this calendar-independent
@@ -721,7 +731,8 @@ def annual_statistics(
 
     if not cube.coords("year"):
         iris.coord_categorisation.add_year(cube, "time")
-    result = cube.aggregated_by("year", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by("year", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
     return result
 
@@ -770,7 +781,8 @@ def decadal_statistics(
         iris.coord_categorisation.add_categorised_coord(
             cube, "decade", "time", get_decade
         )
-    result = cube.aggregated_by("decade", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by("decade", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
     return result
 
@@ -836,7 +848,8 @@ def climate_statistics(
                 category=UserWarning,
                 module="iris",
             )
-            clim_cube = cube.collapsed("time", agg, **agg_kwargs)
+            with ignore_iris_vague_metadata_warnings():
+                clim_cube = cube.collapsed("time", agg, **agg_kwargs)
 
         # Make sure input and output cubes do not have auxiliary coordinate
         if cube.coords("_time_weights_"):
@@ -848,7 +861,8 @@ def climate_statistics(
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-        clim_cube = cube.aggregated_by(clim_coord, agg, **agg_kwargs)
+        with ignore_iris_vague_metadata_warnings():
+            clim_cube = cube.aggregated_by(clim_coord, agg, **agg_kwargs)
         clim_cube.remove_coord("time")
         _aggregate_time_fx(clim_cube, cube)
         if clim_cube.coord(clim_coord.name()).is_monotonic():
@@ -867,7 +881,7 @@ def climate_statistics(
 def _add_time_weights_coord(cube):
     """Add time weight coordinate to cube (in-place)."""
     time_weights_coord = AuxCoord(
-        get_time_weights(cube),
+        get_coord_weights(cube, "time"),
         long_name="_time_weights_",
         units=cube.coord("time").units,
     )
@@ -1290,7 +1304,8 @@ def timeseries_filter(
         # Ensure the cube data chunktype is np.MaskedArray so rolling_window
         # does not ignore a potential mask.
         cube.data = da.ma.masked_array(cube.core_data())
-    cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
 
     return cube
 

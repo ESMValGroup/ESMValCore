@@ -44,8 +44,6 @@ VARIABLE_KEYS = {
 }
 GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
-iris.FUTURE.save_split_attrs = True
-
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
     """Get attribute from netCDF field coordinate."""
@@ -306,8 +304,7 @@ def _sort_cubes_by_time(cubes):
         raise ValueError(msg) from exc
     except TypeError as error:
         msg = (
-            "Cubes cannot be sorted "
-            f"due to differing time units: {str(error)}"
+            f"Cubes cannot be sorted due to differing time units: {str(error)}"
         )
         raise TypeError(msg) from error
     return cubes
