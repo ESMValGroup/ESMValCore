@@ -19,7 +19,7 @@ def clear_catalog_cache():
     _CACHE.clear()
 
 
-def load_catalog(project, drs):
+def load_catalog(project, drs) -> tuple[intake_esm.core.esm_datastore, dict]:
     """Load an intake-esm catalog and associated facet mapping."""
     catalog_info = get_project_config(project).get("catalogs", {})
     site = drs.get(project, "default")
@@ -80,5 +80,11 @@ class IntakeDataSource(DataSource):
     Class to handle loading data using Intake-esm.
     """
 
-    def __init__():
+    def __init__(self, file, **facets):
         pass
+
+    def get_glob_patterns(self, **facets):
+        return super().get_glob_patterns(**facets)
+
+    def find_files(self, **facets):
+        return super().find_files(**facets)
