@@ -836,7 +836,12 @@ def climate_statistics(
     if period in ("full",):
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
-            agg, agg_kwargs, "_time_weights_", cube, _add_time_weights_coord
+            operator,
+            agg,
+            agg_kwargs,
+            "_time_weights_",
+            cube,
+            _add_time_weights_coord,
         )
         with warnings.catch_warnings():
             warnings.filterwarnings(
