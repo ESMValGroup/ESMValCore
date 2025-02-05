@@ -2,7 +2,8 @@ SOURCE: CMIP6
 !============
 variable_entry:    rx5day
 !============
-modeling_realm:    atmos
+modeling_realm:    ground
+frequency: yr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
