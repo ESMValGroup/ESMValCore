@@ -16,7 +16,6 @@ import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
-import stratify
 
 from ._shared import (
     get_iris_aggregator,
@@ -669,40 +668,17 @@ def extract_surface_from_atm(
                 mask, first_unmasked_data, cube.core_data()
             )
 
-        # Interpolation (not supported for dask arrays)
-        air_pressure_coord = cube.coord("air_pressure")
-        original_levels = iris.util.broadcast_to_shape(
-            air_pressure_coord.points,
-            cube.shape,
-            cube.coord_dims(air_pressure_coord),
+        # Interpolation
+        target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
+        from ._regrid import extract_levels
+        var_cube = extract_levels(
+            cube,
+            levels=target_levels,
+            scheme="linear_extrapolate",
+            coordinate="air_pressure",
+            rtol=1e-7,
+            atol=None
         )
-        target_levels = np.expand_dims(ps_cube.data, axis=z_axis)
-        sfc_data = stratify.interpolate(
-            target_levels,
-            original_levels,
-            cube.data,
-            axis=z_axis,
-            interpolation="linear",
-            extrapolation="linear",
-        )
-        sfc_data = np.squeeze(sfc_data, axis=z_axis)
-
-        # Construct surface var cube
-        indices = [slice(None)] * cube.ndim
-        indices[z_axis] = slice(0, 1)
-        var_cube = cube[tuple(indices)]
-        var_cube = iris.util.squeeze(var_cube)
-        var_cube.data = sfc_data
-        if var_cube.coords("air_pressure"):
-            var_cube.remove_coord("air_pressure")
-        ps_coord = iris.coords.AuxCoord(
-            ps_cube.data,
-            var_name="plev",
-            standard_name="air_pressure",
-            long_name="pressure",
-            units=ps_cube.units,
-        )
-        var_cube.add_aux_coord(ps_coord, np.arange(var_cube.ndim))
         var_cube.var_name = cube.var_name + 's'
         logger.debug("Extracting surface using surface air pressure.")
 
