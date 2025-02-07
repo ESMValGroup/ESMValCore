@@ -116,8 +116,9 @@ def add_ancillary_variable(cube, ancillary_cube):
     elif isinstance(ancillary_cube, iris.cube.Cube):
         data_dims = [None] * ancillary_cube.ndim
         for coord in ancillary_cube.coords():
-            for ancillary_dim, cube_dim in zip(ancillary_cube.coord_dims(coord),
-                                            cube.coord_dims(coord)):
+            for ancillary_dim, cube_dim in zip(
+                ancillary_cube.coord_dims(coord), cube.coord_dims(coord)
+            ):
                 data_dims[ancillary_dim] = cube_dim
         if None in data_dims:
             none_dims = ", ".join(
@@ -130,10 +131,10 @@ def add_ancillary_variable(cube, ancillary_cube):
             raise ValueError(msg)
         cube.add_ancillary_variable(ancillary_var, data_dims)
         logger.debug(
-        "Added %s as ancillary variable in cube of %s.",
-        ancillary_cube.var_name,
-        cube.var_name,
-    )
+            "Added %s as ancillary variable in cube of %s.",
+            ancillary_cube.var_name,
+            cube.var_name,
+        )
     else:
         msg = (
                 f"Failed to add {ancillary_cube} to {cube} as ancillary var."
