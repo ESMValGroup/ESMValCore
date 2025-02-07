@@ -1003,7 +1003,7 @@ def _create_cube(src_cube, data, src_levels, levels):
     z_coord = src_cube.coord(axis="z", dim_coords=True)
     (z_dim,) = src_cube.coord_dims(z_coord)
 
-    if data.shape[z_dim] != levels.size:
+    if (len(levels.shape) == 1) and (data.shape[z_dim] != levels.size):
         emsg = (
             "Mismatch between data and levels for data dimension {!r}, "
             "got data shape {!r} with levels shape {!r}."
@@ -1051,7 +1051,10 @@ def _create_cube(src_cube, data, src_levels, levels):
         result.add_dim_coord(coord, z_dim)
     except ValueError:
         coord = iris.coords.AuxCoord(levels, **kwargs)
-        result.add_aux_coord(coord, z_dim)
+        result.add_aux_coord(
+            coord,
+            z_dim if len(levels.shape) == 1 else np.arange(len(coord.shape))
+        )
 
     # Collapse the z-dimension for the scalar case.
     if levels.size == 1:
@@ -1271,8 +1274,8 @@ def extract_levels(
         result = cube
         # Set the levels to the requested values
         src_levels.points = levels
-    elif len(src_levels.shape) == 1 and set(levels).issubset(
-        set(src_levels.points)
+    elif len(src_levels.shape) == 1 and (set(levels).issubset(
+        set(src_levels.points)) if len(levels.shape) == 1 else False
     ):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
@@ -1294,6 +1297,14 @@ def extract_levels(
             interpolation,
             extrapolation,
         )
+        # Remove remaining interpolated dimension of size 1 if needed.
+        if any(dim == 1 for dim in result.shape):
+            indices = [slice(None)] * result.ndim
+            z_coord = cube.coord(axis="z", dim_coords=True)
+            (z_dim,) = cube.coord_dims(z_coord)
+            indices[z_dim] = slice(0, 1)
+            result = result[tuple(indices)]
+            result = iris.util.squeeze(result)
         _preserve_fx_vars(cube, result)
 
     return result
