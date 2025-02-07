@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    rx5day
+!============
+modeling_realm:    ground
+frequency: yr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             mm
+cell_methods:      time: sum within days time: maximum over days 
+cell_measures:     area: areacella
+long_name:         Annual/monthly maximum 5-day precipitation
+comment:           ETCCDI (Extreme climate change index) annual/monthly maximum 5-day precipitation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!

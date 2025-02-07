@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    txx
+!============
+modeling_realm:    ground
+frequency: yr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             degrees_C
+cell_methods:      time: maximum
+cell_measures:     area: areacella
+long_name:         Annual/monthly maximum value of daily maximum temperature
+comment:           ETCCDI (Extreme climate change index) annual/monthly maximum value of daily maximum temperature
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!
