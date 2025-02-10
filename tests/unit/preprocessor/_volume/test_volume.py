@@ -19,6 +19,7 @@ from esmvalcore.preprocessor._volume import (
     extract_transect,
     extract_volume,
     volume_statistics,
+    extract_surface_from_atm
 )
 
 
@@ -34,6 +35,10 @@ class Test(tests.Test):
         mask3 = np.full((4, 3, 2, 2), False)
         mask3[0, 0, 0, 0] = True
         data3 = np.ma.array(data3, mask=mask3)
+        data4 = np.broadcast_to(
+            [[[[0]], [[2]], [[4]]]],
+            (4, 3, 2, 2)
+        )
 
         time = iris.coords.DimCoord(
             [15, 45],
@@ -125,6 +130,13 @@ class Test(tests.Test):
             coord_system=coord_sys,
         )
 
+        ps_coord = iris.coords.DimCoord(
+            [0.5, 5.0, 50.0],
+            bounds=[[0.0, 2.5], [2.5, 25.0], [25.0, 250.0]],
+            standard_name="air_pressure",
+            units='Pa'
+        )
+
         coords_spec3 = [(zcoord, 0), (lats2, 1), (lons2, 2)]
         self.grid_3d = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
 
@@ -186,11 +198,32 @@ class Test(tests.Test):
             units="kg m-3",
         )
 
+        coords_spec_ps = [(time2, 0), (ps_coord, 1), (lats2, 2), (lons2, 3)]
+        self.grid_4d_ps = iris.cube.Cube(
+            data4,
+            dim_coords_and_dims=coords_spec_ps,
+            units="kg m-3",
+            var_name="var"
+        )
+        ps_ancillary = iris.coords.AncillaryVariable(
+            np.broadcast_to([[[0.25]], [[0.5]], [[5.0]], [[27.5]]], (4, 2, 2)),
+            standard_name="surface_air_pressure",
+            units='Pa',
+            var_name='ps'
+        )
+        self.grid_4d_ps.add_ancillary_variable(
+            ps_ancillary,
+            [0, 2, 3]
+        )
+
         # allow iris to figure out the axis='z' coordinate
         iris.util.guess_coord_axis(self.grid_3d.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_2.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_z.coord("zcoord"))
+        iris.util.guess_coord_axis(
+            self.grid_4d_ps.coord("air_pressure")
+        )
 
     def test_add_axis_stats_weights_coord(self):
         """Test _add_axis_stats_weights_coord."""
@@ -750,6 +783,18 @@ class Test(tests.Test):
         result = extract_trajectory(self.grid_3d, [1.5, 2.5], [2.0, 2.0], 2)
         expected = np.ones((3, 2))
         self.assert_array_equal(result.data, expected)
+
+    def test_extract_surface_from_atm(self):
+        """Test to extract surface from a (4, 3, 2, 2) cube."""
+        result = extract_surface_from_atm(self.grid_4d_ps)
+        expected = np.ma.array(
+            np.broadcast_to(
+                [[[0.]], [[0.]], [[2.]], [[3.]]],
+                (4, 2, 2)
+            )
+        )
+        self.assert_array_equal(result.data, expected)
+        assert result.var_name == "vars"
 
 
 if __name__ == "__main__":
