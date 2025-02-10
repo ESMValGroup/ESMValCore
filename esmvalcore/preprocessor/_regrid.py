@@ -1137,7 +1137,22 @@ def _preserve_fx_vars(cube, result):
                     result.var_name,
                 )
             else:
-                add_ancillary_variable(result, ancillary_var)
+                # Create cube and add coordinates to ancillary variable
+                ancillary_coords = []
+                for i, coord in enumerate(cube.coords()):
+                    coord_idx = len(ancillary_coords)
+                    ancillary_coords.append(
+                        (coord.copy(),  coord_idx)
+                    ) if i in ancillary_dims else None
+                ancillary_cube = iris.cube.Cube(
+                    ancillary_var.core_data(),
+                    standard_name=ancillary_var.standard_name,
+                    units=ancillary_var.units,
+                    var_name=ancillary_var.var_name,
+                    attributes=ancillary_var.attributes,
+                    dim_coords_and_dims=ancillary_coords
+                )
+                add_ancillary_variable(result, ancillary_cube)
 
 
 def parse_vertical_scheme(scheme):
@@ -1297,14 +1312,6 @@ def extract_levels(
             interpolation,
             extrapolation,
         )
-        # Remove remaining interpolated dimension of size 1 if needed.
-        if any(dim == 1 for dim in result.shape):
-            indices = [slice(None)] * result.ndim
-            z_coord = cube.coord(axis="z", dim_coords=True)
-            (z_dim,) = cube.coord_dims(z_coord)
-            indices[z_dim] = slice(0, 1)
-            result = result[tuple(indices)]
-            result = iris.util.squeeze(result)
         _preserve_fx_vars(cube, result)
 
     return result

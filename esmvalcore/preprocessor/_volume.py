@@ -17,6 +17,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
+from ._regrid import extract_levels
 from ._shared import (
     get_iris_aggregator,
     get_normalized_cube,
@@ -670,7 +671,6 @@ def extract_surface_from_atm(
 
         # Interpolation
         target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
-        from ._regrid import extract_levels
         var_cube = extract_levels(
             cube,
             levels=target_levels,
@@ -680,6 +680,9 @@ def extract_surface_from_atm(
             atol=None
         )
         var_cube.var_name = cube.var_name + 's'
+        # Remove remaining interpolated dimension of size 1 if needed.
+        if any(dim == 1 for dim in var_cube.shape):
+            var_cube = iris.util.squeeze(var_cube)
         logger.debug("Extracting surface using surface air pressure.")
 
     else:

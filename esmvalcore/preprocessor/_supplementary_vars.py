@@ -137,10 +137,10 @@ def add_ancillary_variable(cube, ancillary_cube):
         )
     else:
         msg = (
-                f"Failed to add {ancillary_cube} to {cube} as ancillary var."
-                f"ancillary_cube should be either an iris.cube.Cube or an "
-                f"iris.coords.AncillaryVariable object."
-            )
+            f"Failed to add {ancillary_cube} to {cube} as ancillary var."
+            "ancillary_cube should be either an iris.cube.Cube or an "
+            "iris.coords.AncillaryVariable object."
+        )
         raise ValueError(msg)
 
 
