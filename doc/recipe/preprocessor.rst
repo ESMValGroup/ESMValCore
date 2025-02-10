@@ -2604,6 +2604,35 @@ For this, exactly one input dataset needs to be declared as
 
 In the example above, ERA-Interim is used as reference dataset for the bias
 calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_bias: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_bias: true}
+    - {dataset: CESM2,   group: ref, reference_for_bias: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_bias:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      bias:
+        bias_type: relative
+
+Here, the bias of MIROC6 is calculated relative to the multi-model mean from
+the models CanESM5 and CESM2.
+
 The reference dataset needs to be broadcastable to all other datasets.
 This supports `iris' rich broadcasting abilities
 <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
@@ -2670,6 +2699,35 @@ For this, exactly one input dataset needs to be declared as
 
 In the example above, ERA-Interim is used as reference dataset for the distance
 metric calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_metric: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_metric: true}
+    - {dataset: CESM2,   group: ref, reference_for_metric: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_distance_metric:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      distance_metric:
+        metric: emd
+
+Here, the EMD metric of MIROC6 is calculated relative to the the multi-model
+mean from the models CanESM5 and CESM2.
+
 All datasets need to have the same shape and coordinates.
 To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
 :func:`esmvalcore.preprocessor.regrid_time` might be helpful.

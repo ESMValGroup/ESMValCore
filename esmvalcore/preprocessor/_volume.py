@@ -293,6 +293,7 @@ def volume_statistics(
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "ocean_volume",
@@ -377,6 +378,7 @@ def axis_statistics(
     # bounds of the original coordinate (this handles units properly, e.g., for
     # sums)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "_axis_statistics_weights_",
