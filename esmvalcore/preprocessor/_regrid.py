@@ -1140,10 +1140,9 @@ def _preserve_fx_vars(cube, result):
                 # Create cube and add coordinates to ancillary variable
                 ancillary_coords = []
                 for i, coord in enumerate(cube.coords()):
-                    coord_idx = len(ancillary_coords)
-                    ancillary_coords.append(
-                        (coord.copy(),  coord_idx)
-                    ) if i in ancillary_dims else None
+                    if i in ancillary_dims:
+                        coord_idx = len(ancillary_coords)
+                        ancillary_coords.append((coord.copy(), coord_idx))
                 ancillary_cube = iris.cube.Cube(
                     ancillary_var.core_data(),
                     standard_name=ancillary_var.standard_name,
