@@ -332,8 +332,7 @@ def _sort_cubes_by_time(cubes):
         raise ValueError(msg) from exc
     except TypeError as error:
         msg = (
-            "Cubes cannot be sorted "
-            f"due to differing time units: {str(error)}"
+            f"Cubes cannot be sorted due to differing time units: {str(error)}"
         )
         raise TypeError(msg) from error
     return cubes

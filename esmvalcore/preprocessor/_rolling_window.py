@@ -4,7 +4,12 @@ import logging
 
 from iris.cube import Cube
 
-from ._shared import get_iris_aggregator, preserve_float_dtype
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
+from ._shared import (
+    get_iris_aggregator,
+    preserve_float_dtype,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ def rolling_window_statistics(
 
     """
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
 
     return cube

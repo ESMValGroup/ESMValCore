@@ -4,6 +4,7 @@ Integration tests for the
 :func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 
+import dask.array as da
 import iris
 import iris.fileformats
 import numpy as np
@@ -112,20 +113,37 @@ class Test:
             ],
         )
 
+    @pytest.mark.parametrize("lazy", [True, False])
     @pytest.mark.parametrize("var_name", ["areacella", "areacello"])
-    def test_add_cell_measure_area(self, var_name):
+    def test_add_cell_measure_area(self, var_name, lazy):
         """Test add area fx variables as cell measures."""
+        if lazy:
+            self.fx_area.data = self.fx_area.lazy_data()
+            self.new_cube_data = da.array(self.new_cube_data).rechunk((1, 2))
         self.fx_area.var_name = var_name
         self.fx_area.standard_name = "cell_area"
         self.fx_area.units = "m2"
         cube = iris.cube.Cube(
             self.new_cube_data, dim_coords_and_dims=self.coords_spec
         )
-        cube = add_supplementary_variables(cube, [self.fx_area])
-        assert cube.cell_measure(self.fx_area.standard_name) is not None
 
-    def test_add_cell_measure_volume(self):
+        cube = add_supplementary_variables(cube, [self.fx_area])
+
+        assert cube.has_lazy_data() is lazy
+        assert cube.cell_measures(self.fx_area.standard_name)
+        cell_measure = cube.cell_measure(self.fx_area.standard_name)
+        assert cell_measure.has_lazy_data() is lazy
+        if lazy:
+            assert cell_measure.lazy_data().chunks == cube.lazy_data().chunks
+
+    @pytest.mark.parametrize("lazy", [True, False])
+    def test_add_cell_measure_volume(self, lazy):
         """Test add volume as cell measure."""
+        if lazy:
+            self.fx_volume.data = self.fx_volume.lazy_data()
+            self.new_cube_3D_data = da.array(self.new_cube_3D_data).rechunk(
+                (1, 2, 3)
+            )
         self.fx_volume.var_name = "volcello"
         self.fx_volume.standard_name = "ocean_volume"
         self.fx_volume.units = "m3"
@@ -137,8 +155,15 @@ class Test:
                 (self.lons, 2),
             ],
         )
+
         cube = add_supplementary_variables(cube, [self.fx_volume])
-        assert cube.cell_measure(self.fx_volume.standard_name) is not None
+
+        assert cube.has_lazy_data() is lazy
+        assert cube.cell_measures(self.fx_volume.standard_name)
+        cell_measure = cube.cell_measure(self.fx_volume.standard_name)
+        assert cell_measure.has_lazy_data() is lazy
+        if lazy:
+            assert cell_measure.lazy_data().chunks == cube.lazy_data().chunks
 
     def test_no_cell_measure(self):
         """Test no cell measure is added."""
@@ -153,16 +178,27 @@ class Test:
         cube = add_supplementary_variables(cube, [])
         assert cube.cell_measures() == []
 
-    def test_add_supplementary_vars(self):
-        """Test invalid variable is not added as cell measure."""
+    @pytest.mark.parametrize("lazy", [True, False])
+    def test_add_ancillary_vars(self, lazy):
+        """Test adding ancillary variables."""
+        if lazy:
+            self.fx_area.data = self.fx_area.lazy_data()
+            self.new_cube_data = da.array(self.new_cube_data).rechunk((1, 2))
         self.fx_area.var_name = "sftlf"
         self.fx_area.standard_name = "land_area_fraction"
         self.fx_area.units = "%"
         cube = iris.cube.Cube(
             self.new_cube_data, dim_coords_and_dims=self.coords_spec
         )
+
         cube = add_supplementary_variables(cube, [self.fx_area])
-        assert cube.ancillary_variable(self.fx_area.standard_name) is not None
+
+        assert cube.has_lazy_data() is lazy
+        assert cube.ancillary_variables(self.fx_area.standard_name)
+        anc_var = cube.ancillary_variable(self.fx_area.standard_name)
+        assert anc_var.has_lazy_data() is lazy
+        if lazy:
+            assert anc_var.lazy_data().chunks == cube.lazy_data().chunks
 
     def test_wrong_shape(self, monkeypatch):
         """Test variable is not added if it's not broadcastable to cube."""

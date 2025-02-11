@@ -367,12 +367,14 @@ def _get_common_attributes(products, settings):
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure that attribute timerange is always available. This depends on the
-    # "span" setting: if "span=overlap", the intersection of all periods is
-    # used; if "span=full", the union is used. The default value for "span" is
-    # "overlap".
+    # Ensure that attribute timerange is always available if at least one of
+    # the input datasets defines it. This depends on the "span" setting: if
+    # "span=overlap", the intersection of all periods is used; if "span=full",
+    # the union is used. The default value for "span" is "overlap".
     span = settings.get("span", "overlap")
     for product in products:
+        if "timerange" not in product.attributes:
+            continue
         timerange = product.attributes["timerange"]
         start, end = _parse_period(timerange)
         if "timerange" not in attributes:
@@ -397,10 +399,12 @@ def _get_common_attributes(products, settings):
 
             attributes["timerange"] = _dates_to_timerange(start_date, end_date)
 
-    # Ensure that attributes start_year and end_year are always available
-    start_year, end_year = _parse_period(attributes["timerange"])
-    attributes["start_year"] = int(str(start_year[0:4]))
-    attributes["end_year"] = int(str(end_year[0:4]))
+    # Ensure that attributes start_year and end_year are always available if at
+    # least one of the input datasets defines it
+    if "timerange" in attributes:
+        start_year, end_year = _parse_period(attributes["timerange"])
+        attributes["start_year"] = int(str(start_year[0:4]))
+        attributes["end_year"] = int(str(end_year[0:4]))
 
     return attributes
 
@@ -1083,7 +1087,7 @@ class Recipe:
                 )
                 if prev_preproc_dir.exists():
                     logger.info(
-                        "Re-using preprocessed files from %s for %s",
+                        "Reusing preprocessed files from %s for %s",
                         prev_preproc_dir,
                         task_name,
                     )
@@ -1195,8 +1199,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,
         )
         self.write_html_summary()
@@ -1233,8 +1236,7 @@ class Recipe:
         with filename.open("w", encoding="utf-8") as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,
         )
         return filename

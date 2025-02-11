@@ -3,6 +3,8 @@
 import dask.array as da
 import iris
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
@@ -45,7 +47,8 @@ class DerivedVariable(DerivedVariableBase):
         # have correct shapes
         if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            with ignore_iris_vague_metadata_warnings():
+                ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
             ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 

@@ -67,7 +67,7 @@ class IconFix(NativeDatasetFix):
         # we transpose the cube here)
         vertex_of_cell = horizontal_grid.extract_cube(
             NameConstraint(var_name="vertex_of_cell")
-        )
+        ).copy()
         vertex_of_cell.transpose()
 
         # Extract start index used to name nodes from the the horizontal grid
@@ -167,8 +167,8 @@ class IconFix(NativeDatasetFix):
         dual_area_cube = horizontal_grid.extract_cube(
             NameConstraint(var_name="dual_area")
         )
-        node_lat = dual_area_cube.coord(var_name="vlat")
-        node_lon = dual_area_cube.coord(var_name="vlon")
+        node_lat = dual_area_cube.coord(var_name="vlat").copy()
+        node_lon = dual_area_cube.coord(var_name="vlon").copy()
 
         # Fix metadata
         node_lat.bounds = None
@@ -373,7 +373,7 @@ class IconFix(NativeDatasetFix):
         return cubes
 
     def get_horizontal_grid(self, cube):
-        """Get copy of ICON horizontal grid.
+        """Get ICON horizontal grid.
 
         If given, retrieve grid from `horizontal_grid` facet specified by the
         user. Otherwise, try to download the file from the location given by
@@ -396,7 +396,7 @@ class IconFix(NativeDatasetFix):
         Returns
         -------
         iris.cube.CubeList
-            Copy of ICON horizontal grid.
+            ICON horizontal grid.
 
         Raises
         ------
@@ -414,7 +414,7 @@ class IconFix(NativeDatasetFix):
         else:
             grid = self._get_grid_from_cube_attr(cube)
 
-        return grid.copy()
+        return grid
 
     def get_mesh(self, cube):
         """Get mesh.
