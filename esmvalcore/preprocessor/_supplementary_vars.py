@@ -131,7 +131,7 @@ def add_ancillary_variable(cube, ancillary_cube):
                     data_dims[ancillary_dim] = cube_dim
             except iris.exceptions.CoordinateNotFoundError:
                 logger.debug(
-                    f"{coord} from ancillary cube not found in cube coords."
+                    "%s from ancillary cube not found in cube coords.", coord
                 )
         if None in data_dims:
             none_dims = ", ".join(
