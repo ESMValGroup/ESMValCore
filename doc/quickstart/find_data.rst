@@ -451,7 +451,7 @@ Thus, example dataset entries could look like this:
 
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
-recipe:
+recipe, for example:
 
 .. code-block:: yaml
 
