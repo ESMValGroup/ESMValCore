@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import AuxCoord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.icon.icon_xpp
@@ -90,73 +90,6 @@ def cubes_regular_grid():
         dim_coords_and_dims=[(time_coord, 0), (lat_coord, 1), (lon_coord, 2)],
     )
     return CubeList([cube])
-
-
-@pytest.fixture
-def cubes_2d_lat_lon_grid():
-    """Cube with 2D latitude and longitude."""
-    time_coord = DimCoord(
-        [0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01",
-    )
-    lat_coord = AuxCoord(
-        [[0.0, 0.0], [1.0, 1.0]],
-        var_name="lat",
-        standard_name="latitude",
-        long_name="latitude",
-        units="degrees_north",
-    )
-    lon_coord = AuxCoord(
-        [[0.0, 1.0], [0.0, 1.0]],
-        var_name="lon",
-        standard_name="longitude",
-        long_name="longitude",
-        units="degrees_east",
-    )
-    cube = Cube(
-        [[[0.0, 1.0], [2.0, 3.0]]],
-        var_name="t_2m",
-        units="K",
-        dim_coords_and_dims=[(time_coord, 0)],
-        aux_coords_and_dims=[(lat_coord, (1, 2)), (lon_coord, (1, 2))],
-    )
-    return CubeList([cube])
-
-
-@pytest.fixture
-def simple_unstructured_cube():
-    """Create a cube with an unstructured grid."""
-    time_coord = DimCoord(
-        [0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01",
-    )
-    height_coord = DimCoord([0, 1, 2], var_name="height")
-    lat_coord = AuxCoord(
-        [0.0, 1.0],
-        var_name="lat",
-        standard_name="latitude",
-        long_name="latitude",
-        units="degrees_north",
-    )
-    lon_coord = AuxCoord(
-        [0.0, 1.0],
-        var_name="lon",
-        standard_name="longitude",
-        long_name="longitude",
-        units="degrees_east",
-    )
-    cube = Cube(
-        [[[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]]],
-        var_name="temp",
-        units="K",
-        dim_coords_and_dims=[(time_coord, 0), (height_coord, 1)],
-        aux_coords_and_dims=[(lat_coord, 2), (lon_coord, 2)],
-    )
-    return cube
 
 
 def _get_fix(mip, short_name, fix_name, session=None):
