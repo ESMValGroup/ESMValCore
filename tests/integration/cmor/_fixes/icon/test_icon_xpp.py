@@ -30,12 +30,6 @@ from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
-TEST_GRID_FILE_URI = (
-    "https://github.com/ESMValGroup/ESMValCore/raw/main/tests/integration/"
-    "cmor/_fixes/test_data/icon_grid.nc"
-)
-TEST_GRID_FILE_NAME = "icon_grid.nc"
-
 
 @pytest.fixture(autouse=True)
 def tmp_cache_dir(monkeypatch, tmp_path):
