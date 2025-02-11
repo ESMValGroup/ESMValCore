@@ -84,16 +84,6 @@ ICON:
 ICON-XPP:
 
   '*':
-    # Cell measures
-    # areacella:
-    #   latitude: grid_latitude
-    #   longitude: grid_longitude
-    #   raw_name: cell_area
-    # areacello:
-    #   latitude: grid_latitude
-    #   longitude: grid_longitude
-    #   raw_name: cell_area
-
     # 2D dynamical/meteorological variables
     asr: {var_type: atm_2d_ml}
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
@@ -110,14 +100,9 @@ ICON-XPP:
     prw: {raw_name: tqv_dia, var_type: atm_2d_ml}
     ps: {raw_name: pres_sfc, var_type: atm_2d_ml}
     psl: {raw_name: pres_msl, var_type: atm_2d_ml}
-    # rlds: {var_type: atm_2d_ml}
-    # rldscs: {var_type: atm_2d_ml}
     rlns: {raw_name: thb_s, var_type: atm_2d_ml}
-    # rlus: {var_type: atm_2d_ml}
     rlut: {raw_name: thb_t, var_type: atm_2d_ml}
     rlutcs: {raw_name: lwflx_up_clr, var_type: atm_rad_ml}
-    # rsds: {var_type: atm_2d_ml}
-    # rsdscs: {var_type: atm_2d_ml}
     rsdt: {raw_name: sod_t, var_type: atm_2d_ml}
     rsns: {raw_name: sob_s, var_type: atm_2d_ml}
     rsnt: {raw_name: sob_t, var_type: atm_2d_ml}
@@ -133,14 +118,10 @@ ICON-XPP:
     siconca: {raw_name: fr_seaice, var_type: atm_2d_ml}
     swcre: {var_type: atm_2d_ml}
     tas: {raw_name: t_2m, var_type: atm_2d_ml}
-    # tasmax: {var_type: atm_2d_ml}
-    # tasmin: {var_type: atm_2d_ml}
     tauu: {raw_name: umfl_s, var_type: atm_2d_ml}
     tauv: {raw_name: vmfl_s, var_type: atm_2d_ml}
     tos: {raw_name: t_seasfc, var_type: atm_2d_ml}
     ts: {raw_name: t_s, var_type: atm_2d_ml}
-    # uas: {var_type: atm_2d_ml}
-    # vas: {var_type: atm_2d_ml}
 
     # 3D dynamical/meteorological variables
     cl: {raw_name: clc, var_type: atm_3d_ml}
