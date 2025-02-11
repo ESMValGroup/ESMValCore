@@ -98,13 +98,21 @@ def add_ancillary_variable(cube, ancillary_cube):
     iris.cube.Cube
         Cube with added ancillary variables
     """
-    ancillary_var = iris.coords.AncillaryVariable(
-        ancillary_cube.core_data(),
-        standard_name=ancillary_cube.standard_name,
-        units=ancillary_cube.units,
-        var_name=ancillary_cube.var_name,
-        attributes=ancillary_cube.attributes,
-    )
+    try:
+        ancillary_var = iris.coords.AncillaryVariable(
+            ancillary_cube.core_data(),
+            standard_name=ancillary_cube.standard_name,
+            units=ancillary_cube.units,
+            var_name=ancillary_cube.var_name,
+            attributes=ancillary_cube.attributes,
+        )
+    except AttributeError as err:
+        msg = (
+            f"Failed to add {ancillary_cube} to {cube} as ancillary var."
+            "ancillary_cube should be either an iris.cube.Cube or an "
+            "iris.coords.AncillaryVariable object."
+        )
+        raise ValueError(msg) from err
     if isinstance(ancillary_cube, iris.coords.AncillaryVariable):
         start_dim = cube.ndim - len(ancillary_var.shape)
         cube.add_ancillary_variable(ancillary_var, range(start_dim, cube.ndim))
@@ -116,10 +124,15 @@ def add_ancillary_variable(cube, ancillary_cube):
     elif isinstance(ancillary_cube, iris.cube.Cube):
         data_dims = [None] * ancillary_cube.ndim
         for coord in ancillary_cube.coords():
-            for ancillary_dim, cube_dim in zip(
-                ancillary_cube.coord_dims(coord), cube.coord_dims(coord)
-            ):
-                data_dims[ancillary_dim] = cube_dim
+            try:
+                for ancillary_dim, cube_dim in zip(
+                    ancillary_cube.coord_dims(coord), cube.coord_dims(coord)
+                ):
+                    data_dims[ancillary_dim] = cube_dim
+            except iris.exceptions.CoordinateNotFoundError:
+                logger.debug(
+                    f"{coord} from ancillary cube not found in cube coords."
+                )
         if None in data_dims:
             none_dims = ", ".join(
                 str(i) for i, d in enumerate(data_dims) if d is None)
@@ -135,13 +148,6 @@ def add_ancillary_variable(cube, ancillary_cube):
             ancillary_cube.var_name,
             cube.var_name,
         )
-    else:
-        msg = (
-            f"Failed to add {ancillary_cube} to {cube} as ancillary var."
-            "ancillary_cube should be either an iris.cube.Cube or an "
-            "iris.coords.AncillaryVariable object."
-        )
-        raise ValueError(msg)
 
 
 def add_supplementary_variables(
