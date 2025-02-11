@@ -7,7 +7,6 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
@@ -17,6 +16,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     get_coord_weights,
     get_iris_aggregator,
@@ -293,6 +293,7 @@ def volume_statistics(
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "ocean_volume",
@@ -300,7 +301,8 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
@@ -376,6 +378,7 @@ def axis_statistics(
     # bounds of the original coordinate (this handles units properly, e.g., for
     # sums)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "_axis_statistics_weights_",
@@ -384,16 +387,7 @@ def axis_statistics(
         coord=coord,
     )
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                "Cannot check if coordinate is contiguous: Invalid "
-                "operation for '_axis_statistics_weights_'"
-            ),
-            category=UserWarning,
-            module="iris",
-        )
+    with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
     if normalize is not None:

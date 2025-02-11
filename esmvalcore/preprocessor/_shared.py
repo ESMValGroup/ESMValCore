@@ -6,6 +6,7 @@ Utility functions that can be used for multiple preprocessor steps
 
 from __future__ import annotations
 
+import inspect
 import logging
 import warnings
 from collections import defaultdict
@@ -21,7 +22,10 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
-from esmvalcore.iris_helpers import has_regular_grid
+from esmvalcore.iris_helpers import (
+    has_regular_grid,
+    ignore_iris_vague_metadata_warnings,
+)
 from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
@@ -88,10 +92,11 @@ def get_iris_aggregator(
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
     test_kwargs = update_weights_kwargs(
-        aggregator, aggregator_kwargs, np.array([1.0])
+        operator, aggregator, aggregator_kwargs, np.array([1.0])
     )
     try:
-        cube.collapsed("x", aggregator, **test_kwargs)
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"
@@ -122,6 +127,7 @@ def aggregator_accept_weights(aggregator: iris.analysis.Aggregator) -> bool:
 
 
 def update_weights_kwargs(
+    operator: str,
     aggregator: iris.analysis.Aggregator,
     kwargs: dict,
     weights: Any,
@@ -133,6 +139,8 @@ def update_weights_kwargs(
 
     Parameters
     ----------
+    operator:
+        Named operator.
     aggregator:
         Iris aggregator.
     kwargs:
@@ -156,6 +164,10 @@ def update_weights_kwargs(
 
     """
     kwargs = dict(kwargs)
+    if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
+        raise ValueError(
+            f"Aggregator '{operator}' does not support 'weights' option"
+        )
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
         if cube is not None and callback is not None:
@@ -221,6 +233,21 @@ def get_normalized_cube(
     return normalized_cube
 
 
+def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:
+    """Get first argument given to a function."""
+    # If positional arguments are given, use the first one
+    if args:
+        return args[0]
+
+    # Otherwise, use the keyword argument given by the name of the first
+    # function argument
+    # Note: this function should be called AFTER func(*args, **kwargs) is run,
+    # so that we can be sure that the required arguments are there
+    signature = inspect.signature(func)
+    first_arg_name = list(signature.parameters.values())[0].name
+    return kwargs[first_arg_name]
+
+
 def preserve_float_dtype(func: Callable) -> Callable:
     """Preserve object's float dtype (all other dtypes are allowed to change).
 
@@ -230,16 +257,34 @@ def preserve_float_dtype(func: Callable) -> Callable:
     to give output with any type.
 
     """
+    signature = inspect.signature(func)
+    if not signature.parameters:
+        raise TypeError(
+            f"Cannot preserve float dtype during function '{func.__name__}', "
+            f"function takes no arguments"
+        )
 
     @wraps(func)
-    def wrapper(data: DataType, *args: Any, **kwargs: Any) -> DataType:
-        dtype = data.dtype
-        result = func(data, *args, **kwargs)
-        if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
-            if isinstance(result, Cube):
-                result.data = result.core_data().astype(dtype)
-            else:
-                result = result.astype(dtype)
+    def wrapper(*args: Any, **kwargs: Any) -> DataType:
+        result = func(*args, **kwargs)
+        first_arg = _get_first_arg(func, *args, **kwargs)
+
+        if hasattr(first_arg, "dtype") and hasattr(result, "dtype"):
+            dtype = first_arg.dtype
+            if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
+                if isinstance(result, Cube):
+                    result.data = result.core_data().astype(dtype)
+                else:
+                    result = result.astype(dtype)
+        else:
+            raise TypeError(
+                f"Cannot preserve float dtype during function "
+                f"'{func.__name__}', the function's first argument of type "
+                f"{type(first_arg)} and/or the function's return value of "
+                f"type {type(result)} do not have the necessary attribute "
+                f"'dtype'"
+            )
+
         return result
 
     return wrapper

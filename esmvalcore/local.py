@@ -546,14 +546,18 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     # Remove duplicate segments:
     filename_segments = list(dict.fromkeys(filename_segments))
 
-    # Add period and extension
-    filename_segments.append(f"{attributes['timerange'].replace('/', '-')}.nc")
+    # Add time period if possible
+    if "timerange" in attributes:
+        filename_segments.append(
+            f"{attributes['timerange'].replace('/', '-')}"
+        )
 
+    filename = f"{'_'.join(filename_segments)}.nc"
     outfile = Path(
         preproc_dir,
         attributes["diagnostic"],
         attributes["variable_group"],
-        "_".join(filename_segments),
+        filename,
     )
 
     return outfile

@@ -214,7 +214,7 @@ def _get_single_base_task():
 def test_base_task_names():
     task = _get_single_base_task()
     assert task.name == "task0"
-    ancestor_names = [anc.name for anc in task.ancestors]
+    ancestor_names = [ancestor.name for ancestor in task.ancestors]
     assert ancestor_names == ["task0-ancestor0", "task0-ancestor1"]
 
 
@@ -251,7 +251,7 @@ def test_py_diagnostic_task_constructor(tmp_path):
     diag_script = tmp_path / "diag_cow.py"
     task = _get_single_diagnostic_task(tmp_path, diag_script)
     assert task.name == "task0"
-    ancestor_names = [anc.name for anc in task.ancestors]
+    ancestor_names = [ancestor.name for ancestor in task.ancestors]
     assert ancestor_names == ["task0-ancestor0", "task0-ancestor1"]
     assert task.script == diag_script
     assert task.settings == {

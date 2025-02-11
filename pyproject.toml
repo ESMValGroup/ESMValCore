@@ -35,7 +35,7 @@ dynamic = [
 dependencies = [
     "cartopy",
     "cf-units",
-    "dask[array,distributed]!=2024.8.0",  # ESMValCore/issues/2503
+    "dask[array,distributed]>=2025",  # ESMValCore/issues/2503
     "dask-jobqueue",
     "esgf-pyclient>=0.3.1",
     "esmf-regrid>=0.11.0",
@@ -169,7 +169,7 @@ enable_error_code = [
 
 [tool.codespell]
 skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml,tests/sample_data/iris-sample-data/LICENSE"
-ignore-words-list = "vas,hist,oce"
+ignore-words-list = "emac,hist,oce,vas"
 
 [tool.ruff]
 line-length = 79

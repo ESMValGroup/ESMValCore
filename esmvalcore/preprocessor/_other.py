@@ -15,7 +15,10 @@ from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
     get_all_coords,
@@ -470,7 +473,8 @@ def _get_histogram_cube(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     cell_methods = cube.cell_methods
-    cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coords, iris.analysis.MAX)
 
     # Get histogram cube
     long_name_suffix = (
