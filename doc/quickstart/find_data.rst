@@ -420,16 +420,24 @@ Key                   Description                            Default value if no
 ICON
 ^^^^
 
-ESMValCore is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
+ESMValCore is able to read native `ICON <https://www.icon-model.org/>`__ model
+output.
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``{exp}`` or ``{exp}/outdata``
+* input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 :ref:`configuration option <config_options>` ``drs: default``).
+
+Currently, two different versions of ICON are supported:
+
+1. ICON-A, which is based on ECHAM physics (deprecated): select via ``dataset:
+   ICON``.
+2. ICON-XPP, which is based on NWP physics (preferred; model code can be
+   downloaded from `DKRZ's GitLab <https://gitlab.dkrz.de/icon/icon-model>`__):
+   select via ``dataset: ICON-XPP``.
 
 Thus, example dataset entries could look like this:
 
@@ -437,17 +445,20 @@ Thus, example dataset entries could look like this:
 
   datasets:
     - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
-       mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, exp: historical, mip: Amon,
-       short_name: ta, var_type: atm_dyn_3d_ml, start_year: 2000,
-       end_year: 2014}
+       mip: Amon, short_name: tas, timerange: 20010101/20020101}
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, timerange: 20010101/20020101}
 
-Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValCore's data finding and
-CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
-recipe.
+recipe:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, var_type: atm_dyn_3d_ml, timerange: 20010101/20020101}
+
 This is necessary if your ICON output is structured in one variable per file.
 For example, if your output is stored in files called
 ``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
@@ -504,8 +515,8 @@ support input data in UGRID format (yet), like the
 :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
-(from the variables `pfull` and `phalf`) and/or altitude information (from the
-variables `zg` and `zghalf`) to the preprocessed output files.
+(from the variables `pres`, or `pfull` and `phalf`) and/or altitude information
+(from the variables `zg` and `zghalf`) to the preprocessed output files.
 If neither of these variables are available in the input files, it is possible
 to specify the location of files that include the corresponding `zg` or
 `zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
