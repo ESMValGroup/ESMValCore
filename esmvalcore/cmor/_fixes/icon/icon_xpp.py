@@ -5,13 +5,12 @@ import logging
 from iris.cube import CubeList
 from scipy import constants
 
-from ._base_fixes import IconFix, NegateData
-from .icon import AllVars as IconAllVars
+from ._base_fixes import AllVarsBase, IconFix, NegateData
 
 logger = logging.getLogger(__name__)
 
 
-AllVars = IconAllVars
+AllVars = AllVarsBase
 
 
 class Clwvi(IconFix):
