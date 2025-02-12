@@ -16,17 +16,17 @@ TODO: add highlights
 This release includes
 
 Backwards incompatible changes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
 
 Deprecations
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 -  Make Dask configurable in our configuration (:pull:`2616`) by :user:`schlunma`
 
 Bug fixes
-~~~~~~~~
+~~~~~~~~~
 
 -  Update `CFG` with configuration options given via command line (:pull:`2595`) by :user:`schlunma`
 -  Avoid a crash when there is a timeout when shutting down the Dask cluster (:pull:`2580`) by :user:`bouweandela`
@@ -35,18 +35,18 @@ Bug fixes
 -  Do not change function argument names when decorator `preserve_float_dtype` is used (:pull:`2645`) by :user:`schlunma`
 
 CMOR standard
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 -  Added more variables to EMAC extra facets (:pull:`2617`) by :user:`schlunma`
 -  Adding custom tables for ETCCDI indices (:pull:`2442`) by :user:`malininae`
 
 Configuration
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 -  Revise the `user-config.yml` to support updated MO user config requirements (:pull:`2658`) by :user:`ehogan`
 
 Computational performance improvements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Only save data from one preprocessing task at a time with the Distributed scheduler (:pull:`2610`) by :user:`bouweandela`
 -  Use better defaults when using ``max_parallel_tasks`` with an unconfigured threaded scheduler (:pull:`2626`) by :user:`bouweandela`
@@ -54,12 +54,12 @@ Computational performance improvements
 -  Make sure that supplementary variables and weights have same chunks as parent cube (:pull:`2637`) by :user:`schlunma`
 
 Documentation
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 -  Update the `esmvaltool` command welcome message (:pull:`2635`) by :user:`bouweandela`
 
 Fixes for datasets
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 -  Missing 2m height coordinate and monotonicity for tasmin in CESM2 and CESM2-WACCM  (:pull:`2574`) by :user:`Karen-A-Garcia`
 -  Monotonicity fixes for Fgoals (:pull:`2603`) by :user:`Karen-A-Garcia`
@@ -70,19 +70,19 @@ Fixes for datasets
 -  Fix `oh` for model: EC-Earth3-AerChem mip: AERMonZ (:pull:`2634`) by :user:`valeriupredoi`
 
 Installation
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 -  Support Python 3.13 (:pull:`2566`) by :user:`valeriupredoi`
 -  Pin dask (:pull:`2654`) by :user:`sloosvel`
 
 Iris
-~~~
+~~~~
 
 -  Set iris.FUTURE flags in one place (:pull:`2622`) by :user:`bouweandela`
 -  Silence Iris warnings in ``area_statistics`` preprocessor function (:pull:`2625`) by :user:`bouweandela`
 
 Preprocessor
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 -  Adding hurs (relative humidity) derivation script (:pull:`2397`) by :user:`malininae`
 -  Added cumulative sum preprocessor (:pull:`2642`) by :user:`schlunma`
@@ -92,19 +92,19 @@ Preprocessor
 -  Allow using output from `multi_model_statistics` or `ensemble_statistics` as reference for `bias` or `distance_metric` (:pull:`2652`) by :user:`schlunma`
 
 Observational and re-analysis dataset support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Add support for native ERA5 data in GRIB format (:pull:`2178`) by :user:`schlunma`
 
 Automatic testing
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 -  Switch back to Python 3.12 for conda lock file creation due to mamba<2 pin (:pull:`2606`) by :user:`valeriupredoi`
 -  Always ignore user's configuration when running Dask tests (:pull:`2624`) by :user:`schlunma`
 -  Restrict runs of cron Github Actions on forks (:pull:`2649`) by :user:`valeriupredoi`
 
 Improvements
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 -  Fix 2593 Change log INFO to DEBUG (:pull:`2600`) by :user:`rbeucher`
 
