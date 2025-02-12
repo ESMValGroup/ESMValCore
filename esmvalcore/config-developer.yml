@@ -39,10 +39,10 @@ CMIP6:
     NCI: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   catalogs:
-     NCI:
-      files: 
-        - /g/data/fs38/catalog/v2/esm/catalog.json
-        - /g/data/oi10/catalog/v2/esm/catalog.json
+    NCI:
+      file: 
+        /g/data/fs38/catalog/v2/esm/catalog.json
+        # - /g/data/oi10/catalog/v2/esm/catalog.json
       facets:
         # mapping from recipe facets to intake-esm catalog facets
         # TODO: Fix these when Gadi is back up

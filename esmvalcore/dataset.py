@@ -35,7 +35,6 @@ from esmvalcore.local import (
 from esmvalcore.preprocessor import preprocess
 from esmvalcore.typing import Facets, FacetValue
 
-from .intake import IntakeDataSource
 
 __all__ = [
     "Dataset",
@@ -158,43 +157,6 @@ class Dataset:
 
         return datasets_from_recipe(recipe, session)
 
-    def _from_catalog(
-        self,
-    )
-        """Load dataset from an intake-esm catalog.
-
-        Raises
-        ------
-        InputFilesNotFound
-            When no files were found.
-
-        Returns
-        -------
-        iris.cube.Cube
-            An :mod:`iris` cube with the data corresponding the the dataset.
-        """
-        input_files = list(self.files)
-        for supplementary_dataset in self.supplementaries:
-            input_files.extend(supplementary_dataset.files)
-        esgf.download(input_files, self.session["download_dir"])
-
-        cube = self._load()
-        supplementary_cubes = []
-        for supplementary_dataset in self.supplementaries:
-            supplementary_cube = supplementary_dataset._load()
-            supplementary_cubes.append(supplementary_cube)
-
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
-        cubes = preprocess(
-            [cube],
-            "add_supplementary_variables",
-            input_files=input_files,
-            output_file=output_file,
-            debug=self.session["save_intermediary_cubes"],
-            supplementary_cubes=supplementary_cubes,
-        )
-
-        return cubes[0]
 
     def _file_to_dataset(
         self,
