@@ -225,11 +225,11 @@ authors:
     orcid: "https://orcid.org/0009-0004-2333-3358"
 
 cff-version: 1.2.0
-date-released: 2024-11-26
+date-released: 2025-02-12
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.11.1"
+version: "v2.12.0rc1"
 ...
