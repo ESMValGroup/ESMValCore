@@ -18,6 +18,10 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  Make derivation of total column ozone (`toz`) more flexible and add derivation of stratospheric and tropospheric column ozone (:pull:`2509`) by :user:`schlunma`
+-  Merge configuration object from multiple files (instead of one single file) (:pull:`2448`) by :user:`schlunma`
+-  Remove deprecated CMOR fix/check code (:pull:`2552`) by :user:`schlunma`
+-  Remove deprecated statistical operators (:pull:`2553`) by :user:`schlunma`
 -  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
 
 Deprecations
@@ -28,6 +32,7 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
+-  Concatenate by experiment before concatenating all input files (:pull:`2343`) by :user:`dhohn`
 -  Update `CFG` with configuration options given via command line (:pull:`2595`) by :user:`schlunma`
 -  Avoid a crash when there is a timeout when shutting down the Dask cluster (:pull:`2580`) by :user:`bouweandela`
 -  More reliable datasets to recipe conversion (:pull:`2472`) by :user:`bouweandela`
@@ -37,17 +42,23 @@ Bug fixes
 CMOR standard
 ~~~~~~~~~~~~~
 
+-  New custom variable for tos uncertainty (:pull:`2470`) by :user:`LisaBock`
+-  Add `prc` fix for native6 ERA5 CMORization (:pull:`2550`) by :user:`malininae`
 -  Added more variables to EMAC extra facets (:pull:`2617`) by :user:`schlunma`
 -  Adding custom tables for ETCCDI indices (:pull:`2442`) by :user:`malininae`
 
 Configuration
 ~~~~~~~~~~~~~
 
+-  Add public `Config.update_from_dirs()` method (:pull:`2538`) by :user:`schlunma`
+-  Do not use `Path` objects as configuration dictionary keys to avoid errors in `dask.config.merge` (:pull:`2578`) by :user:`schlunma`
 -  Revise the `user-config.yml` to support updated MO user config requirements (:pull:`2658`) by :user:`ehogan`
 
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  Add an iris-esmf-regrid based regridding scheme (:pull:`2457`) by :user:`bouweandela`
+-  Miscellaneous lazy preprocessor improvements (:pull:`2520`) by :user:`bouweandela`
 -  Only save data from one preprocessing task at a time with the Distributed scheduler (:pull:`2610`) by :user:`bouweandela`
 -  Use better defaults when using ``max_parallel_tasks`` with an unconfigured threaded scheduler (:pull:`2626`) by :user:`bouweandela`
 -  Fix OSX compatibility (:pull:`2636`) by :user:`bouweandela`
@@ -56,11 +67,22 @@ Computational performance improvements
 Documentation
 ~~~~~~~~~~~~~
 
+-  Ignore autosummary warning in documentation build (:pull:`2480`) by :user:`bouweandela`
+-  Fix documentation build and broken link (:pull:`2519`) by :user:`bouweandela`
+-  Dark mode compatible logo (:pull:`2532`) by :user:`lukruh`
+-  Add a pre-commit badge to README (:pull:`2534`) by :user:`valeriupredoi`
+-  Retire Mambaforge (:pull:`2556`) by :user:`valeriupredoi`
+-  Readthedocs configuration: temporary revert to miniconda before miniforge3 becomes available (remove Mambaforge) (:pull:`2562`) by :user:`valeriupredoi`
+-  Remove Docker build badge in README (:pull:`2565`) by :user:`valeriupredoi`
+-  Optimize documentation about Earth mover distance in distance_metric preprocessor (:pull:`2423`) by :user:`schlunma`
 -  Update the `esmvaltool` command welcome message (:pull:`2635`) by :user:`bouweandela`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
 
+-  Extra facets added for EMAC to map o3, tro3 and aps (:pull:`2501`) by :user:`FranziskaWinterstein`
+-  Fix for CMIP6 AWI-ESM-1-1-LR parent time units (:pull:`2507`) by :user:`brittaGrusdt`
+-  Use our own unit conversion function in our fixes (:pull:`2560`) by :user:`schlunma`
 -  Missing 2m height coordinate and monotonicity for tasmin in CESM2 and CESM2-WACCM  (:pull:`2574`) by :user:`Karen-A-Garcia`
 -  Monotonicity fixes for Fgoals (:pull:`2603`) by :user:`Karen-A-Garcia`
 -  Expand Amon fix of FIO-ESM-2-0 (CMIP6) (:pull:`2619`) by :user:`schlunma`
@@ -72,6 +94,9 @@ Fixes for datasets
 Installation
 ~~~~~~~~~~~~
 
+-  Free esmpy of ` >=8.6.0` pin and pin `iris-grib >=0.20.0` (:pull:`2542`) by :user:`valeriupredoi`
+-  Use pyproject.toml instead of setup.py/setup.cfg (:pull:`2540`) by :user:`bouweandela`
+-  Use `miniforge3` for our docker builds instead of `mambaforge` (:pull:`2558`) by :user:`valeriupredoi`
 -  Support Python 3.13 (:pull:`2566`) by :user:`valeriupredoi`
 -  Pin dask (:pull:`2654`) by :user:`sloosvel`
 
@@ -84,6 +109,8 @@ Iris
 Preprocessor
 ~~~~~~~~~~~~
 
+-  Merge input cubes only once when computing lazy multimodel statistics (:pull:`2518`) by :user:`bouweandela`
+-  Make `start_year`, `end_year` in `extract_time` optional to obtain time blocks in each year (:pull:`2490`) by :user:`malininae`
 -  Adding hurs (relative humidity) derivation script (:pull:`2397`) by :user:`malininae`
 -  Added cumulative sum preprocessor (:pull:`2642`) by :user:`schlunma`
 -  Unified ignoring of `iris.warnings.IrisVagueMetadataWarning` in preprocessors (:pull:`2646`) by :user:`schlunma`
@@ -99,14 +126,37 @@ Observational and re-analysis dataset support
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
+-  Run a nightly test with the development version of dependencies (:pull:`2478`) by :user:`bouweandela`
+-  Use ruff formatter and pre-commit (:pull:`2524`) by :user:`bouweandela`
+-  Fix tests if deprecated `~/.esmvaltool/config-user.yml` file is available (:pull:`2543`) by :user:`schlunma`
+-  Disable upstream tests on commits (:pull:`2548`) by :user:`bouweandela`
+-  Disable collecting test coverage by default (:pull:`2456`) by :user:`bouweandela`
+-  Enable ruff flake8-bugbear rule (:pull:`2536`) by :user:`bouweandela`
+-  Pin mamba in conda lock creation github action (:pull:`2561`) by :user:`valeriupredoi`
+-  [Numpy2] Support for `numpy==2.0.0` (and pin `iris >=3.11`) (:pull:`2395`) by :user:`valeriupredoi`
 -  Switch back to Python 3.12 for conda lock file creation due to mamba<2 pin (:pull:`2606`) by :user:`valeriupredoi`
 -  Always ignore user's configuration when running Dask tests (:pull:`2624`) by :user:`schlunma`
 -  Restrict runs of cron Github Actions on forks (:pull:`2649`) by :user:`valeriupredoi`
 
+Variable Derivation
+~~~~~~~~~~~~~~~~~~
+
+-  Introduction of the variable prodlnox for EMAC (:pull:`2499`) by :user:`FranziskaWinterstein`
+
 Improvements
 ~~~~~~~~~~~~
 
+-  On-the-fly cmoriser for ACCESS native data (:pull:`2430`) by :user:`rhaegar325`
+-  Fix CFF file (:pull:`2476`) by :user:`rbeucher`
+-  Write settings.yml parameters in original order (:pull:`2352`) by :user:`enekomartinmartinez`
+-  Fix `access-mapping.yml` extra_facets title (:pull:`2485`) by :user:`rhaegar325`
+-  Remove ability to log on to ESGF (:pull:`2508`) by :user:`bouweandela`
+-  Disable automatic fixes by pre-commit.ci (:pull:`2527`) by :user:`bouweandela`
+-  Ignore reformatting when viewing git blame (:pull:`2539`) by :user:`bouweandela`
+-  Enable ruff pydocstyle linter rule (:pull:`2547`) by :user:`bouweandela`
+-  Allows relative paths for diagnostic scripts. (:pull:`2329`) by :user:`rbeucher`
 -  Fix 2593 Change log INFO to DEBUG (:pull:`2600`) by :user:`rbeucher`
+
 
 .. _changelog-v2-11-1:
 
