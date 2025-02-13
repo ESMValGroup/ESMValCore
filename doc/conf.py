@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # ESMValTool documentation build configuration file, created by
-# sphinx-quickstart on Tue Jun  2 11:34:13 2015.
+# sphinx-quickstart on Tue Jun 2 11:34:13 2015.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.

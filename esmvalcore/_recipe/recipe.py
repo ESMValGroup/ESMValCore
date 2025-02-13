@@ -18,6 +18,7 @@ from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -37,6 +38,7 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
+from esmvalcore.preprocessor._io import GRIB_FORMATS
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -220,11 +222,42 @@ def _get_default_settings(dataset):
     settings["remove_supplementary_variables"] = {}
 
     # Configure saving cubes to file
-    settings["save"] = {"compress": session["compress_netcdf"]}
+    settings["save"] = {
+        "compress": session["compress_netcdf"],
+        "compute": False,
+    }
     if facets["short_name"] != facets["original_short_name"]:
         settings["save"]["alias"] = facets["short_name"]
 
     return settings
+
+
+def _add_dataset_specific_settings(dataset: Dataset, settings: dict) -> None:
+    """Add dataset-specific settings."""
+    project = dataset.facets["project"]
+    dataset_name = dataset.facets["dataset"]
+    file_suffixes = [Path(file.name).suffix for file in dataset.files]
+
+    # Automatic regridding for native ERA5 data in GRIB format if regridding
+    # step is not already present (can be disabled with facet
+    # automatic_regrid=False)
+    if all(
+        [
+            project == "native6",
+            dataset_name == "ERA5",
+            any(grib_format in file_suffixes for grib_format in GRIB_FORMATS),
+            "regrid" not in settings,
+            dataset.facets.get("automatic_regrid", True),
+        ]
+    ):
+        # Settings recommended by ECMWF
+        # (https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation)
+        settings["regrid"] = {"target_grid": "0.25x0.25", "scheme": "linear"}
+        logger.debug(
+            "Automatically regrid native6 ERA5 data in GRIB format with the "
+            "settings %s",
+            settings["regrid"],
+        )
 
 
 def _exclude_dataset(settings, facets, step):
@@ -334,12 +367,14 @@ def _get_common_attributes(products, settings):
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure that attribute timerange is always available. This depends on the
-    # "span" setting: if "span=overlap", the intersection of all periods is
-    # used; if "span=full", the union is used. The default value for "span" is
-    # "overlap".
+    # Ensure that attribute timerange is always available if at least one of
+    # the input datasets defines it. This depends on the "span" setting: if
+    # "span=overlap", the intersection of all periods is used; if "span=full",
+    # the union is used. The default value for "span" is "overlap".
     span = settings.get("span", "overlap")
     for product in products:
+        if "timerange" not in product.attributes:
+            continue
         timerange = product.attributes["timerange"]
         start, end = _parse_period(timerange)
         if "timerange" not in attributes:
@@ -364,10 +399,12 @@ def _get_common_attributes(products, settings):
 
             attributes["timerange"] = _dates_to_timerange(start_date, end_date)
 
-    # Ensure that attributes start_year and end_year are always available
-    start_year, end_year = _parse_period(attributes["timerange"])
-    attributes["start_year"] = int(str(start_year[0:4]))
-    attributes["end_year"] = int(str(end_year[0:4]))
+    # Ensure that attributes start_year and end_year are always available if at
+    # least one of the input datasets defines it
+    if "timerange" in attributes:
+        start_year, end_year = _parse_period(attributes["timerange"])
+        attributes["start_year"] = int(str(start_year[0:4]))
+        attributes["end_year"] = int(str(end_year[0:4]))
 
     return attributes
 
@@ -381,6 +418,8 @@ def _get_downstream_settings(step, order, products):
         if key in remaining_steps:
             if all(p.settings.get(key, object()) == value for p in products):
                 settings[key] = value
+    # Set the compute argument to the save step.
+    settings["save"] = {"compute": some_product.settings["save"]["compute"]}
     return settings
 
 
@@ -541,6 +580,7 @@ def _get_preprocessor_products(
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
+        _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
         input_datasets = _get_input_datasets(dataset)
         missing = _check_input_files(input_datasets)
@@ -751,6 +791,8 @@ class Recipe:
 
     def __init__(self, raw_recipe, session, recipe_file: Path):
         """Parse a recipe file into an object."""
+        validate_dask_config(session["dask"])
+
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
         USED_DATASETS.clear()
@@ -1045,7 +1087,7 @@ class Recipe:
                 )
                 if prev_preproc_dir.exists():
                     logger.info(
-                        "Re-using preprocessed files from %s for %s",
+                        "Reusing preprocessed files from %s for %s",
                         prev_preproc_dir,
                         task_name,
                     )
@@ -1157,8 +1199,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,
         )
         self.write_html_summary()
@@ -1195,8 +1236,7 @@ class Recipe:
         with filename.open("w", encoding="utf-8") as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
         logger.info(
-            "Wrote recipe with version numbers and wildcards "
-            "to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,
         )
         return filename

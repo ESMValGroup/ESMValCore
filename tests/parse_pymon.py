@@ -72,7 +72,7 @@ def _parse_pymon_database():
     # Be sure to close the connection
     con.close()
 
-    # Throw a sys exit so test fails if we have >4GB  tests
+    # Throw a sys exit so test fails if we have >4GB tests
     if big_mem_tests:
         print("Some tests exceed 4GB of RES memory, look into them!")
         print(big_mem_tests)

@@ -1,6 +1,7 @@
 """Tests for the fixes of CESM2-WACCM-FV2."""
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
@@ -9,6 +10,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Clw,
     Fgco2,
     Omon,
+    Pr,
     Siconc,
     Tas,
 )
@@ -76,8 +78,21 @@ def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "tas")
     assert fix == [Tas(None), GenericFix(None)]
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "day", "tas")
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():
     """Test fix for ``tas``."""
     assert Tas is BaseTas
+
+
+def test_get_pr_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM_FV2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
+
+
+def test_pr_fix():
+    """Test fix for ``Pr``."""
+    assert Pr is BasePr

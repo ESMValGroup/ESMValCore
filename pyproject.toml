@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Topic :: Scientific/Engineering :: GIS",
@@ -34,7 +35,7 @@ dynamic = [
 dependencies = [
     "cartopy",
     "cf-units",
-    "dask[array,distributed]!=2024.8.0",  # ESMValCore/issues/2503
+    "dask[array,distributed]>=2025",  # ESMValCore/issues/2503
     "dask-jobqueue",
     "esgf-pyclient>=0.3.1",
     "esmf-regrid>=0.11.0",
@@ -60,6 +61,7 @@ dependencies = [
     "pybtex",
     "pyyaml",
     "requests",
+    "rich",
     "scipy>=1.6",
     "scitools-iris>=3.11",  # 3.11 first to support Numpy 2 and Python 3.13
     "shapely>=2.0.0",
@@ -166,8 +168,8 @@ enable_error_code = [
 # Configure linters
 
 [tool.codespell]
-skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml"
-ignore-words-list = "vas,hist,oce"
+skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml,tests/sample_data/iris-sample-data/LICENSE"
+ignore-words-list = "emac,hist,oce,vas"
 
 [tool.ruff]
 line-length = 79

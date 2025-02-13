@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import warnings
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import Dict, Iterable, List, Literal, Sequence
 
 import dask.array as da
@@ -13,8 +16,26 @@ from cf_units import Unit
 from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.warnings import IrisVagueMetadataWarning
 
 from esmvalcore.typing import NetCDFAttr
+
+
+@contextmanager
+def ignore_iris_vague_metadata_warnings() -> Generator[None]:
+    """Ignore specific warnings.
+
+    This can be used as a context manager. See also
+    https://scitools-iris.readthedocs.io/en/stable/generated/api/iris.warnings.html#iris.warnings.IrisVagueMetadataWarning.
+
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=IrisVagueMetadataWarning,
+            module="iris",
+        )
+        yield
 
 
 def add_leading_dim_to_cube(cube, dim_coord):
@@ -39,7 +60,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Raises
     ------
-    CoordinateMultiDimError
+    iris.exceptions.CoordinateMultiDimError
         ``dim_coord`` is not 1D.
 
     """
@@ -247,14 +268,14 @@ def rechunk_cube(
     cube:
         Input cube.
     complete_coords:
-        (Names of) coordinates along which the output cubes should not be
+        (Names of) coordinates along which the output cube should not be
         chunked.
     remaining_dims:
         Chunksize of the remaining dimensions.
 
     Returns
     -------
-    Cube
+    iris.cube.Cube
         Rechunked cube. This will always be a copy of the input cube.
 
     """

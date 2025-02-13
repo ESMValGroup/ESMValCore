@@ -13,12 +13,17 @@ import iris.analysis
 import numpy as np
 from iris.coords import Coord, DimCoord
 from iris.cube import Cube
+from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
     get_all_coords,
     get_array_module,
+    get_coord_weights,
     get_weights,
     preserve_float_dtype,
 )
@@ -55,6 +60,84 @@ def clip(cube, minimum=None, maximum=None):
         if maximum < minimum:
             raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = da.clip(cube.core_data(), minimum, maximum)
+    return cube
+
+
+@preserve_float_dtype
+def cumulative_sum(
+    cube: Cube,
+    coord: Coord | str,
+    weights: np.ndarray | da.Array | bool | None = None,
+    method: Literal["sequential", "blelloch"] = "sequential",
+) -> Cube:
+    """Calculate cumulative sum of the elements along a given coordinate.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    coord:
+        Coordinate over which the cumulative sum is calculated. Must be 0D or
+        1D.
+    weights:
+        Weights for the calculation of the cumulative sum. Each element in the
+        data is multiplied by the corresponding weight before summing. Can be
+        an array of the same shape as the input data, ``False`` or ``None`` (no
+        weighting), or ``True`` (calculate the weights from the coordinate
+        bounds; only works if each coordinate point has exactly 2 bounds).
+    method:
+        Method used to perform the cumulative sum. Only relevant if the cube
+        has `lazy data
+        <https://scitools-iris.readthedocs.io/en/stable/userguide/
+        real_and_lazy_data.html>`__. See :func:`dask.array.cumsum` for details.
+
+    Returns
+    -------
+    Cube
+        Cube of cumulative sum. Has same dimensions and coordinates of the
+        input cube.
+
+    Raises
+    ------
+    iris.exceptions.CoordinateMultiDimError
+        ``coord`` is not 0D or 1D.
+    iris.exceptions.CoordinateNotFoundError
+        ``coord`` is not found in ``cube``.
+
+    """
+    cube = cube.copy()
+
+    # Only 0D and 1D coordinates are supported
+    coord = cube.coord(coord)
+    if coord.ndim > 1:
+        raise CoordinateMultiDimError(coord)
+
+    # Weighting, make sure to adapt cube standard name and units in this case
+    if weights is True:
+        weights = get_coord_weights(cube, coord, broadcast=True)
+    if isinstance(weights, (np.ndarray, da.Array)):
+        cube.data = cube.core_data() * weights
+        cube.standard_name = None
+        cube.units = cube.units * coord.units
+
+    axes = get_all_coord_dims(cube, [coord])
+
+    # For 0D coordinates, cumulative_sum is a no-op (this aligns with
+    # numpy's/dask's behavior)
+    if axes:
+        if cube.has_lazy_data():
+            cube.data = da.cumsum(
+                cube.core_data(), axis=axes[0], method=method
+            )
+        else:
+            cube.data = np.cumsum(cube.core_data(), axis=axes[0])
+
+    # Adapt cube metadata
+    if cube.var_name is not None:
+        cube.var_name = f"cumulative_{cube.var_name}"
+    if cube.long_name is not None:
+        cube.long_name = f"Cumulative {cube.long_name}"
+
     return cube
 
 
@@ -133,8 +216,10 @@ def histogram(
         Invalid `normalization` or `bin_range` given or `bin_range` is ``None``
         and data is fully masked.
     iris.exceptions.CoordinateNotFoundError
-        `longitude` is not found in cube if `weights=True`, `latitude` is in
-        `coords`, and no `cell_area` is given as
+        A given coordinate of ``coords`` is not found in ``cube``.
+    iris.exceptions.CoordinateNotFoundError
+        `longitude` is not found in cube if ``weights=True``, `latitude` is in
+        ``coords``, and no `cell_area` is given as
         :ref:`supplementary_variables`.
 
     """
@@ -388,7 +473,8 @@ def _get_histogram_cube(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     cell_methods = cube.cell_methods
-    cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coords, iris.analysis.MAX)
 
     # Get histogram cube
     long_name_suffix = (

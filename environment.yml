@@ -8,7 +8,7 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - dask !=2024.8.0  # github.com/ESMValGroup/ESMValCore/issues/2503
+  - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
@@ -40,6 +40,7 @@ dependencies:
   - python-stratify >=0.3
   - pyyaml
   - requests
+  - rich
   - scipy >=1.6
   - shapely >=2.0.0
   - yamale
