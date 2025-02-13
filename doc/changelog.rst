@@ -139,7 +139,7 @@ Automatic testing
 -  Restrict runs of cron Github Actions on forks (:pull:`2649`) by :user:`valeriupredoi`
 
 Variable Derivation
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 -  Introduction of the variable prodlnox for EMAC (:pull:`2499`) by :user:`FranziskaWinterstein`
 
