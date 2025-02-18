@@ -146,6 +146,7 @@ def ttest_pvalue(
 def _calculate_ttest_pvalue(cube: Cube, reference: Cube, coord: StatCoord) -> Cube:
     """Calculate Student T statistic p-value for a single cube relative to a reference cube."""
     from scipy.stats import ttest_rel
+    from ._multimodel import _align_time_coord
 
     valid_coords = [c.name() for c in cube.coords()]
 
@@ -162,6 +163,9 @@ def _calculate_ttest_pvalue(cube: Cube, reference: Cube, coord: StatCoord) -> Cu
     # get axis dimension of the coordinate
     if not isinstance(coord,list): coord = [coord]
     axis = [ i for i,c in enumerate(cube.coords()) if c in coord ]
+
+    # align time coordinates
+    [cube, reference] = _align_time_coord([cube, reference], span='full')
     
     tstat, pvalue = ttest_rel(cube.core_data(), reference.core_data(), axis=axis )
 
