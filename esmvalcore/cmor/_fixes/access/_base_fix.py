@@ -3,6 +3,8 @@
 import logging
 
 import numpy as np
+
+from cf_units import Unit
 from iris.cube import CubeList
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
@@ -35,12 +37,14 @@ class AccessFix(NativeDatasetFix):
         cube.dim_coords[-2].var_name = "j"
         cube.dim_coords[-2].long_name = "cell index along second dimension"
         cube.dim_coords[-2].attributes = None
+        cube.dim_coords[-2].units = Unit(1)
 
         cube.dim_coords[-1].points = np.array([int(i) for i in range(360)])
         cube.dim_coords[-1].standard_name = None
         cube.dim_coords[-1].var_name = "i"
         cube.dim_coords[-1].long_name = "cell index along first dimension"
         cube.dim_coords[-1].attributes = None
+        cube.dim_coords[-1].units = Unit(1)
 
     def fix_ocean_aux_coords(self, cube):
         """Fix aux coords of ocean variables."""
