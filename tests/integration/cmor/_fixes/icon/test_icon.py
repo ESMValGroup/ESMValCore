@@ -15,7 +15,7 @@ from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
-from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
+from esmvalcore.cmor._fixes.icon._base_fixes import AllVarsBase, IconFix
 from esmvalcore.cmor._fixes.icon.icon import (
     AllVars,
     Clwvi,
@@ -554,6 +554,14 @@ def check_typesi(cube):
     assert typesi.units.is_no_unit()
     np.testing.assert_array_equal(typesi.points, ["sea_ice"])
     assert typesi.bounds is None
+
+
+# Test fix for all variables
+
+
+def test_allvars_fix():
+    """Test fix for all variables."""
+    assert AllVars is AllVarsBase
 
 
 # Test areacella and areacello (for extra_facets, and grid_latitude and
