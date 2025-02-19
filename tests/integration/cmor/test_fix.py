@@ -734,18 +734,42 @@ class TestGenericFix:
         assert self.mock_debug.call_count == 3
         assert self.mock_warning.call_count == 7
 
-    def test_fix_metadata_amon_tas_invalid_time_attrs(self):
+    @pytest.mark.parametrize("problem", ["none", "bad_units", "bad_values"])
+    def test_fix_metadata_amon_tas_invalid_time_attrs(self, problem):
         """Test ``fix_metadata`` with invalid time attributes."""
         short_name = "tas"
         project = "CMIP6"
         dataset = "__MODEL_WITH_NO_EXPLICIT_FIX__"
         mip = "Amon"
 
-        self.cubes_2d_latlon[0].attributes = {
-            "parent_time_units": "this is certainly not a unit",
-            "branch_time_in_parent": "BRANCH TIME IN PARENT",
-            "branch_time_in_child": "BRANCH TIME IN CHILD",
-        }
+        attributes = {}
+        expected_attributes = {}
+        if problem == "bad_units":
+            attributes["parent_time_units"] = "this is certainly not a unit"
+        else:
+            attributes["parent_time_units"] = "days since 1000-01-01 00:00:0.0"
+
+        if problem == "bad_values":
+            attributes["branch_time_in_child"] = 1e9
+            attributes["branch_time_in_parent"] = 1e9
+        else:
+            attributes["branch_time_in_child"] = 0.0
+            attributes["branch_time_in_parent"] = 91676.0
+
+        if problem == "none":
+            expected_attributes = {
+                "parent_time_units": "days since 1850-1-1 00:00:00",
+                "branch_time_in_child": 365,
+                "branch_time_in_parent": -218574,
+            }
+        else:
+            expected_attributes = attributes.copy()
+        if problem == "bad_values":
+            expected_attributes["parent_time_units"] = (
+                "days since 1850-1-1 00:00:00"
+            )
+
+        self.cubes_2d_latlon[0].attributes = attributes
 
         fixed_cubes = fix_metadata(
             self.cubes_2d_latlon,
@@ -762,11 +786,7 @@ class TestGenericFix:
         self.assert_lat_metadata(fixed_cube)
         self.assert_lon_metadata(fixed_cube)
 
-        assert fixed_cube.attributes == {
-            "parent_time_units": "this is certainly not a unit",
-            "branch_time_in_parent": "BRANCH TIME IN PARENT",
-            "branch_time_in_child": "BRANCH TIME IN CHILD",
-        }
+        assert fixed_cube.attributes == expected_attributes
 
         cmor_check_metadata(fixed_cube, project, mip, short_name)
 
