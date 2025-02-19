@@ -8,7 +8,6 @@ variables to be sure that all known errors are fixed.
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -137,7 +136,7 @@ def fix_metadata(
     Returns
     -------
     iris.cube.CubeList
-        Fixed cubes.
+        A list containing a single fixed cube.
 
     """
     # Update extra_facets with variable information given as regular arguments
@@ -161,27 +160,14 @@ def fix_metadata(
         session=session,
         frequency=frequency,
     )
-    fixed_cubes = CubeList()
 
-    # Group cubes by input file and apply all fixes to each group element
-    # (i.e., each file) individually
-    by_file = defaultdict(list)
-    for cube in cubes:
-        by_file[cube.attributes.get("source_file", "")].append(cube)
+    cubes = CubeList(cubes)
+    for fix in fixes:
+        cubes = fix.fix_metadata(cubes)
 
-    for cube_list in by_file.values():
-        cube_list = CubeList(cube_list)
-        for fix in fixes:
-            cube_list = fix.fix_metadata(cube_list)
-
-        # The final fix is always GenericFix, whose fix_metadata method always
-        # returns a single cube
-        cube = cube_list[0]
-
-        cube.attributes.pop("source_file", None)
-        fixed_cubes.append(cube)
-
-    return fixed_cubes
+    # The final fix is always GenericFix, whose fix_metadata method always
+    # returns a single cube
+    return CubeList(cubes[:1])
 
 
 def fix_data(
