@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 import warnings
+from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import iris
@@ -11,7 +12,6 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
-import esmvalcore
 from esmvalcore.preprocessor._io import load
 
 
@@ -56,12 +56,11 @@ class TestLoad(unittest.TestCase):
 
     def test_load_grib(self):
         """Test loading a grib file."""
-        grib_path = Path(
-            Path(esmvalcore.__file__).parents[1],
-            "tests",
-            "sample_data",
-            "iris-sample-data",
-            "polar_stereo.grib2",
+        grib_path = (
+            Path(importlib_files("tests"))
+            / "sample_data"
+            / "iris-sample-data"
+            / "polar_stereo.grib2"
         )
         cubes = load(grib_path)
 
