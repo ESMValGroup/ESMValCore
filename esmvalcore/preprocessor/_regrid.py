@@ -860,12 +860,17 @@ def regrid(
     # -> Return source cube with target coordinates
     if _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ["latitude", "longitude"]:
-            cube.coord(coord).points = target_grid_cube.coord(
-                coord
-            ).core_points()
-            cube.coord(coord).bounds = target_grid_cube.coord(
-                coord
-            ).core_bounds()
+            if cube.coords(coord, dim_coords=True):
+                is_dim_coord = True
+            else:
+                is_dim_coord = False
+            coord_dims = cube.coord_dims(coord)
+            cube.remove_coord(coord)
+            target_coord = target_grid_cube.coord(coord).copy()
+            if is_dim_coord:
+                cube.add_dim_coord(target_coord, coord_dims)
+            else:
+                cube.add_aux_coord(target_coord, coord_dims)
         return cube
 
     # Load scheme and reuse existing regridder if possible
