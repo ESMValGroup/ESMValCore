@@ -1,5 +1,6 @@
 """Fix base classes for ACCESS-ESM on-the-fly CMORizer."""
 
+import iris
 import logging
 import warnings
 from pathlib import Path
@@ -8,8 +9,8 @@ import iris
 import numpy as np
 from cf_units import Unit
 from iris.cube import CubeList
-
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class AccessFix(NativeDatasetFix):
 
     def get_cubes_from_multivar(self, cubes):
         """Get cube before calculate from multiple variables."""
+        name_list = self.extra_facets.get("raw_name", self.vardef.short_name)
         name_list = self.extra_facets.get("raw_name", self.vardef.short_name)
 
         data_list = []
@@ -53,6 +55,7 @@ class AccessFix(NativeDatasetFix):
             "ocean_grid_path", gridpath
         )
         temp_points = []
+>>>>>>> 8761d831d (fix ocean grid)
         for i in cube.aux_coords[-1].points:
             temp_points.append([j + 360 for j in i if j < 0]+[j for j in i if j >= 0])
         cube.aux_coords[-1].points = np.array(temp_points)
