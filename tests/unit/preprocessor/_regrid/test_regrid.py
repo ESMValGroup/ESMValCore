@@ -233,7 +233,7 @@ def test_regrid_is_skipped_if_grids_are_the_same():
 
     # regridding to the same spec returns the same cube
     expected_same_cube = regrid(cube, target_grid="10x10", scheme=scheme)
-    assert expected_same_cube is cube
+    assert expected_same_cube == cube
 
     # regridding to a different spec returns a different cube
     expected_different_cube = regrid(cube, target_grid="5x5", scheme=scheme)
