@@ -10,6 +10,7 @@ import os
 import re
 import ssl
 import warnings
+from collections.abc import Iterable
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -745,6 +746,7 @@ def regrid(
     lat_offset: bool = True,
     lon_offset: bool = True,
     cache_weights: bool = False,
+    use_src_coords: Iterable[str] = ("latitude", "longitude"),
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -800,6 +802,9 @@ def regrid(
         support weights caching. More details on this are given in the section
         on :ref:`caching_regridding_weights`. To clear the cache, use
         :func:`esmvalcore.preprocessor.regrid.cache_clear`.
+    use_src_coords:
+        If there are multiple horizontal coordinates available in the source
+        cube, only use horizontal coordinates with these standard names.
 
     Returns
     -------
@@ -848,6 +853,16 @@ def regrid(
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
     """
+    # Remove unwanted coordinates from the source cube.
+    cube = cube.copy()
+    use_src_coords = set(use_src_coords)
+    for axis in ("X", "Y"):
+        coords = cube.coords(axis=axis)
+        if len(coords) > 1:
+            for coord in coords:
+                if coord.standard_name not in use_src_coords:
+                    cube.remove_coord(coord)
+
     # Load target grid and select appropriate scheme
     target_grid_cube = _get_target_grid_cube(
         cube,
@@ -858,20 +873,21 @@ def regrid(
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
-    if _horizontal_grid_is_close(cube, target_grid_cube):
-        for coord in ["latitude", "longitude"]:
-            if cube.coords(coord, dim_coords=True):
-                is_dim_coord = True
-            else:
-                is_dim_coord = False
-            coord_dims = cube.coord_dims(coord)
-            cube.remove_coord(coord)
-            target_coord = target_grid_cube.coord(coord).copy()
-            if is_dim_coord:
-                cube.add_dim_coord(target_coord, coord_dims)
-            else:
-                cube.add_aux_coord(target_coord, coord_dims)
-        return cube
+    if cube.coords("latitude") and cube.coords("longitude"):
+        if _horizontal_grid_is_close(cube, target_grid_cube):
+            for coord in ["latitude", "longitude"]:
+                if cube.coords(coord, dim_coords=True):
+                    is_dim_coord = True
+                else:
+                    is_dim_coord = False
+                coord_dims = cube.coord_dims(coord)
+                cube.remove_coord(coord)
+                target_coord = target_grid_cube.coord(coord).copy()
+                if is_dim_coord:
+                    cube.add_dim_coord(target_coord, coord_dims)
+                else:
+                    cube.add_aux_coord(target_coord, coord_dims)
+            return cube
 
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):

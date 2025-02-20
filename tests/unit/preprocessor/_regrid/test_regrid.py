@@ -226,17 +226,26 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
-def test_regrid_is_skipped_if_grids_are_the_same_dim_coord():
+def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+    )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+
     expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
-    assert expected_same_cube is cube
+
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
     assert cube.coords("latitude", dim_coords=True)
     assert cube.coords("longitude", dim_coords=True)
 
 
-def test_regrid_is_skipped_if_grids_are_the_same_aux_coord():
+def test_regrid_is_skipped_if_grids_are_the_same_aux_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+    )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     lat = cube.coord("latitude")
     lon = cube.coord("longitude")
@@ -244,8 +253,11 @@ def test_regrid_is_skipped_if_grids_are_the_same_aux_coord():
     cube.remove_coord(lon)
     cube.add_aux_coord(lat, 0)
     cube.add_aux_coord(lon, 1)
+
     expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
-    assert expected_same_cube is cube
+
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
     assert cube.coords("latitude", dim_coords=False)
     assert cube.coords("longitude", dim_coords=False)
 
@@ -253,7 +265,9 @@ def test_regrid_is_skipped_if_grids_are_the_same_aux_coord():
 def test_regrid_is_not_skipped_if_grids_are_different():
     """Test that regridding is not skipped if the grids are different."""
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+
     expected_different_cube = regrid(cube, target_grid="5x5", scheme="linear")
+
     assert expected_different_cube is not cube
 
 
