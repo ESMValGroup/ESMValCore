@@ -887,6 +887,24 @@ The arguments are defined below:
   Otherwise, it cuts off at the previous value.
 * ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
+Regridding input data with multiple horizontal coordinates
+----------------------------------------------------------
+
+When there are multiple horizontal coordinates available in the input data, the
+standard names of the coordinates to use need to be specified. By default, these
+are ``[latitude, longitude]``. To use a the coordinates from a
+`rotated pole grid <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#grid-mappings-and-projections>`__,
+one would specify:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 1x1
+          scheme: linear
+          use_src_coords: [grid_latitude, grid_longitude]
+
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
