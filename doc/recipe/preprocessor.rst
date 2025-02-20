@@ -892,7 +892,7 @@ Regridding input data with multiple horizontal coordinates
 
 When there are multiple horizontal coordinates available in the input data, the
 standard names of the coordinates to use need to be specified. By default, these
-are ``[latitude, longitude]``. To use a the coordinates from a
+are ``[latitude, longitude]``. To use the coordinates from a
 `rotated pole grid <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#grid-mappings-and-projections>`__,
 one would specify:
 
