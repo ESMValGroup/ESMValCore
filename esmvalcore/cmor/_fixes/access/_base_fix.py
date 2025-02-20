@@ -1,13 +1,14 @@
 """Fix base classes for ACCESS-ESM on-the-fly CMORizer."""
 
+import iris
 import logging
-
 import numpy as np
+import warnings
 
 from cf_units import Unit
 from iris.cube import CubeList
-
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ class AccessFix(NativeDatasetFix):
 
     def fix_ocean_aux_coords(self, cube):
         """Fix aux coords of ocean variables."""
+        lat_bounds, lon_bounds = self.load_ocean_grid_data('ocean_grid_path')
         temp_points = []
         for i in cube.aux_coords[-1].points:
             temp_points.append(
@@ -59,6 +61,9 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-1].var_name = "longitude"
         cube.aux_coords[-1].attributes = None
         cube.aux_coords[-1].units = "degrees"
+        cube.aux_coords[-1].bounds = lon_bounds
+
+        self.load_ocean_grid_data('ocean_grid_path')
 
         temp_points = []
         for i in cube.aux_coords[-2].points:
@@ -69,3 +74,65 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-2].var_name = "latitude"
         cube.aux_coords[-2].attributes = None
         cube.aux_coords[-2].units = "degrees"
+        cube.aux_coords[-2].bounds = lat_bounds
+    
+    def _get_path_from_facet(self, facet):
+        """Try to get path from facet."""
+        path = Path(self.extra_facets[facet])
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"'{path}' given by facet '{facet}' does "
+                f"not exist"
+            )
+        return path
+
+    def load_ocean_grid_data(self, facet):
+        """load supplementary grid data for ACCESS ocean variable."""
+        print('self.extra_facets:',self.extra_facets.get(facet))
+
+        path_to_grid_data = self._get_path_from_facet(facet)
+        cubes = self._load_cubes(path_to_grid_data)
+
+        y_vert_T = [cube for cube in cubes if cube.var_name == 'y_vert_T'][0]
+        # np.transpose(y_vert_T.data, (2, 0, 1))
+        print('shape:',y_vert_T.data.shape)
+        lat_bounds = np.transpose(y_vert_T.data, (1, 2, 0))
+        print('shape:',lat_bounds.shape)
+        x_vert_T = [cube for cube in cubes if cube.var_name == 'x_vert_T'][0]
+        # np.transpose(y_vert_T.data, (2, 0, 1))
+        print('shape:',x_vert_T.data.shape)
+        lon_bounds = np.transpose(x_vert_T.data, (1, 2, 0))
+        print('shape:',lon_bounds.shape)
+
+        return lat_bounds, lon_bounds
+
+    @staticmethod
+    def _load_cubes(path: Path | str) -> CubeList:
+        """Load cubes and ignore certain warnings."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Ignoring netCDF variable .* invalid units .*",
+                category=UserWarning,
+                module="iris",
+            )  # iris < 3.8
+            warnings.filterwarnings(
+                "ignore",
+                message="Ignoring invalid units .* on netCDF variable .*",
+                category=UserWarning,
+                module="iris",
+            )  # iris >= 3.8
+            warnings.filterwarnings(
+                "ignore",
+                message="Gracefully filling .* dimension coordinate.*",
+                category=UserWarning,
+                module="iris",
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Failed to create .*dimension coordinate.*",
+                category=UserWarning,
+                module="iris",
+            )
+            cubes = iris.load(path)
+        return cubes

@@ -129,13 +129,6 @@ def _get_start_end_date(
         datetime_pattern, date_range_pattern, stem, "datetime"
     )
 
-    # ACCESS native ocean file names eg 'ocean_month.nc-18521231'
-    if start_date is None or end_date is None:
-        stem = Path(file).name
-        dates = re.findall(datetime_pattern, stem)
-        if len(dates) == 1:
-            start_date = end_date = dates[0][0]
-
     # As final resort, try to get the dates from the file contents
     if (
         (start_date is None or end_date is None)
