@@ -876,10 +876,7 @@ def regrid(
     if cube.coords("latitude") and cube.coords("longitude"):
         if _horizontal_grid_is_close(cube, target_grid_cube):
             for coord in ["latitude", "longitude"]:
-                if cube.coords(coord, dim_coords=True):
-                    is_dim_coord = True
-                else:
-                    is_dim_coord = False
+                is_dim_coord = cube.coords(coord, dim_coords=True)
                 coord_dims = cube.coord_dims(coord)
                 cube.remove_coord(coord)
                 target_coord = target_grid_cube.coord(coord).copy()
