@@ -11,7 +11,9 @@ v2.12.0
 
 Highlights
 
-TODO: add highlights
+Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
+extract time blocks in each year by making parameters ``start_year`` and
+``end_year`` optional.
 
 This release includes
 
@@ -38,6 +40,7 @@ Bug fixes
 -  More reliable datasets to recipe conversion (:pull:`2472`) by :user:`bouweandela`
 -  Avoid mutating the input cubes when building the combined cube in preprocessor function ``multi_model_statistics`` (:pull:`2564`) by :user:`bouweandela`
 -  Do not change function argument names when decorator `preserve_float_dtype` is used (:pull:`2645`) by :user:`schlunma`
+-  Always write target coordinates to source cube after regridding (:pull:`2673`) by :user:`schlunma`
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -76,6 +79,7 @@ Documentation
 -  Remove Docker build badge in README (:pull:`2565`) by :user:`valeriupredoi`
 -  Optimize documentation about Earth mover distance in distance_metric preprocessor (:pull:`2423`) by :user:`schlunma`
 -  Update the `esmvaltool` command welcome message (:pull:`2635`) by :user:`bouweandela`
+-  Pin sphinx to < 8.2 (:pull:`2671`) by :user:`bouweandela`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -90,6 +94,8 @@ Fixes for datasets
 -  Correct incorrect time bounds in EMAC data (:pull:`2621`) by :user:`FranziskaWinterstein`
 -  Do not copy ICON horizontal grid every time it is used (:pull:`2633`) by :user:`schlunma`
 -  Fix `oh` for model: EC-Earth3-AerChem mip: AERMonZ (:pull:`2634`) by :user:`valeriupredoi`
+-  Update CMIP5 EC-EARTH pr fix (:pull:`2666`) by :user:`bouweandela`
+-  Add a fix for differing index coord long names in NorESM2-MM and EC-Earth3-Veg-LR (:pull:`2667`) by :user:`bouweandela`
 
 Installation
 ~~~~~~~~~~~~
@@ -117,6 +123,7 @@ Preprocessor
 -  Raise error if weights are used with unweighted aggregator (:pull:`2640`) by :user:`schlunma`
 -  Allow using multi model statistics preprocessor on datasets without `timerange` (:pull:`2644`) by :user:`schlunma`
 -  Allow using output from `multi_model_statistics` or `ensemble_statistics` as reference for `bias` or `distance_metric` (:pull:`2652`) by :user:`schlunma`
+-  Add option to ignore horizontal coordinates if there are multiple when regridding (:pull:`2672`) by :user:`bouweandela`
 
 Observational and re-analysis dataset support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +144,8 @@ Automatic testing
 -  Switch back to Python 3.12 for conda lock file creation due to mamba<2 pin (:pull:`2606`) by :user:`valeriupredoi`
 -  Always ignore user's configuration when running Dask tests (:pull:`2624`) by :user:`schlunma`
 -  Restrict runs of cron Github Actions on forks (:pull:`2649`) by :user:`valeriupredoi`
+-  Fix test that loads realistic GRIB file (:pull:`2665`) by :user:`schlunma`
+-  Fix failing test with Dask 2025.2: ours issue not theirs (:pull:`2663`) by :user:`valeriupredoi`
 
 Variable Derivation
 ~~~~~~~~~~~~~~~~~~~
