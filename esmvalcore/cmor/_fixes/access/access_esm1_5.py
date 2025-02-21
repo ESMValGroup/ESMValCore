@@ -132,7 +132,7 @@ class Tas(AccessFix):
 class Tos(AccessFix):
     """Fixes for Tos."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes, gridpath = None):
         """Fix metadata.
 
         Parameters
@@ -147,7 +147,7 @@ class Tos(AccessFix):
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
-        self.fix_ocean_aux_coords(cube)
+        self.fix_ocean_aux_coords(cube, gridpath)
 
         return CubeList([cube])
 
@@ -155,7 +155,7 @@ class Tos(AccessFix):
 class So(AccessFix):
     """FIxes for So."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes, gridpath = None):
         """Fix metadata.
 
         Parameters
@@ -170,7 +170,7 @@ class So(AccessFix):
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
-        self.fix_ocean_aux_coords(cube)
+        self.fix_ocean_aux_coords(cube, gridpath)
         self.fix_depth_metadata(cube)
         self.fix_so_units(cube)
 

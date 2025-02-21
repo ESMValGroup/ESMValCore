@@ -47,9 +47,9 @@ class AccessFix(NativeDatasetFix):
         cube.dim_coords[-1].attributes = None
         cube.dim_coords[-1].units = Unit(1)
 
-    def fix_ocean_aux_coords(self, cube):
+    def fix_ocean_aux_coords(self, cube, gridpath):
         """Fix aux coords of ocean variables."""
-        lat_bounds, lon_bounds = self.load_ocean_grid_data('ocean_grid_path')
+        lat_bounds, lon_bounds = self.load_ocean_grid_data('ocean_grid_path', gridpath)
         temp_points = []
         for i in cube.aux_coords[-1].points:
             temp_points.append(
@@ -86,23 +86,18 @@ class AccessFix(NativeDatasetFix):
             )
         return path
 
-    def load_ocean_grid_data(self, facet):
+    def load_ocean_grid_data(self, facet, gridpath):
         """load supplementary grid data for ACCESS ocean variable."""
-        print('self.extra_facets:',self.extra_facets.get(facet))
-
-        path_to_grid_data = self._get_path_from_facet(facet)
+        if gridpath is not None:
+            path_to_grid_data = Path(gridpath)
+        else:
+            path_to_grid_data = self._get_path_from_facet(facet)
         cubes = self._load_cubes(path_to_grid_data)
 
         y_vert_T = [cube for cube in cubes if cube.var_name == 'y_vert_T'][0]
-        # np.transpose(y_vert_T.data, (2, 0, 1))
-        print('shape:',y_vert_T.data.shape)
         lat_bounds = np.transpose(y_vert_T.data, (1, 2, 0))
-        print('shape:',lat_bounds.shape)
         x_vert_T = [cube for cube in cubes if cube.var_name == 'x_vert_T'][0]
-        # np.transpose(y_vert_T.data, (2, 0, 1))
-        print('shape:',x_vert_T.data.shape)
         lon_bounds = np.transpose(x_vert_T.data, (1, 2, 0))
-        print('shape:',lon_bounds.shape)
 
         return lat_bounds, lon_bounds
 
