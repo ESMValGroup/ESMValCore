@@ -538,7 +538,7 @@ def test_rlus_fix():
     np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
 
 
-def test_tos_fix():
+def test_tos_fix(test_data_path):
     """Test fix 'tos'."""
     coord_dim = [
         (time_ocn_coord, 0),
@@ -572,7 +572,7 @@ def test_tos_fix():
     assert fixed_cube.shape == (12, 300, 360)
 
 
-def test_so_fix():
+def test_so_fix(test_data_path):
     """Test fix 'so'."""
     coord_dim = [
         (time_ocn_coord, 0),
