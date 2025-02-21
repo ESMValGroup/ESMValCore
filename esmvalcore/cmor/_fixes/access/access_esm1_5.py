@@ -132,7 +132,7 @@ class Tas(AccessFix):
 class Tos(AccessFix):
     """Fixes for Tos."""
 
-    def fix_metadata(self, cubes, gridpath = None):
+    def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
 
         Parameters
@@ -155,7 +155,7 @@ class Tos(AccessFix):
 class So(AccessFix):
     """FIxes for So."""
 
-    def fix_metadata(self, cubes, gridpath = None):
+    def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
 
         Parameters
