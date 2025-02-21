@@ -56,8 +56,8 @@ class AccessFix(NativeDatasetFix):
         for i in cube.aux_coords[-1].points:
             temp_points.append(
                 [j + 360 for j in i if j < 0]
-                +[j for j in i if j >= 0]
-                )
+                + [j for j in i if j >= 0]
+            )
         cube.aux_coords[-1].points = np.array(temp_points)
         cube.aux_coords[-1].standard_name = "longitude"
         cube.aux_coords[-1].long_name = "longitude"

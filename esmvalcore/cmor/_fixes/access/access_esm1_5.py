@@ -15,7 +15,6 @@ class AllVars(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -58,7 +57,6 @@ class Rlus(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -84,7 +82,6 @@ class Rsus(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -106,7 +103,6 @@ class Tas(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -134,7 +130,6 @@ class Tos(AccessFix):
 
     def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -157,7 +152,6 @@ class So(AccessFix):
 
     def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
