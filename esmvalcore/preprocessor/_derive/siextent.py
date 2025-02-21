@@ -19,7 +19,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variable needed for derivation."""
-        # 'sic' only is sufficient as there is already an entry
+        # 'sic' is sufficient as there is already an entry
         # in the mapping table esmvalcore/cmor/variable_alt_names.yml
         required = [
             {"short_name": "sic"},
@@ -50,11 +50,14 @@ class DerivedVariable(DerivedVariableBase):
         except iris.exceptions.ConstraintMismatchError:
             try:
                 sic = cubes.extract_cube(Constraint(name="siconc"))
-            except iris.exceptions.ConstraintMismatchError as exc:
-                raise RecipeError(
-                    "Derivation of siextent failed due to missing variables "
-                    "sic and siconc."
-                ) from exc
+            except:
+                try:
+                    sic = cubes.extract_cube(Constraint(name="siconca"))
+                except iris.exceptions.ConstraintMismatchError as exc:
+                    raise RecipeError(
+                        "Derivation of siextent failed due to missing variables "
+                        "sic and siconc/siconca."
+                    ) from exc
 
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)
