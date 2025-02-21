@@ -57,8 +57,8 @@ class AccessFix(NativeDatasetFix):
         temp_points = []
 >>>>>>> 8761d831d (fix ocean grid)
         for i in cube.aux_coords[-1].points:
-            temp_points.append([j + 360 for j in i if j < 0] +
-                               [j for j in i if j >= 0])
+            temp_points.append([j + 360 for j in i if j < 0] 
+                                +[j for j in i if j >= 0])
         cube.aux_coords[-1].points = np.array(temp_points)
         cube.aux_coords[-1].standard_name = 'longitude'
         cube.aux_coords[-1].long_name = 'longitude'
@@ -94,10 +94,10 @@ class AccessFix(NativeDatasetFix):
             path_to_grid_data = self._get_path_from_facet(facet)
         cubes = self._load_cubes(path_to_grid_data)
 
-        y_vert_T = [cube for cube in cubes if cube.var_name == 'y_vert_T'][0]
-        lat_bounds = np.transpose(y_vert_T.data, (1, 2, 0))
-        x_vert_T = [cube for cube in cubes if cube.var_name == 'x_vert_T'][0]
-        lon_bounds = np.transpose(x_vert_T.data, (1, 2, 0))
+        y_vert_t = [cube for cube in cubes if cube.var_name == 'y_vert_T'][0]
+        lat_bounds = np.transpose(y_vert_t.data, (1, 2, 0))
+        x_vert_t = [cube for cube in cubes if cube.var_name == 'x_vert_T'][0]
+        lon_bounds = np.transpose(x_vert_t.data, (1, 2, 0))
 
         return lat_bounds, lon_bounds
 
