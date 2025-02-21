@@ -145,7 +145,6 @@ class Tos(AccessFix):
         iris.cube.CubeList
         """
         cube = self.get_cube(cubes)
-
         self.fix_ocean_dim_coords(cube)
         self.fix_ocean_aux_coords(cube, gridpath)
 
