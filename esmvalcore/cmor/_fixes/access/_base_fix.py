@@ -1,14 +1,15 @@
 """Fix base classes for ACCESS-ESM on-the-fly CMORizer."""
 
-import iris
 import logging
-import numpy as np
 import warnings
+from pathlib import Path
 
+import iris
+import numpy as np
 from cf_units import Unit
 from iris.cube import CubeList
+
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +50,12 @@ class AccessFix(NativeDatasetFix):
 
     def fix_ocean_aux_coords(self, cube, gridpath):
         """Fix aux coords of ocean variables."""
-        lat_bounds, lon_bounds = self.load_ocean_grid_data('ocean_grid_path', gridpath)
+        lat_bounds, lon_bounds = self.load_ocean_grid_data(
+            'ocean_grid_path', gridpath)
         temp_points = []
         for i in cube.aux_coords[-1].points:
-            temp_points.append(
-                [j + 360 for j in i if j < 0] + [j for j in i if j >= 0]
-            )
+            temp_points.append([j + 360 for j in i if j < 0] +
+                               [j for j in i if j >= 0])
         cube.aux_coords[-1].points = np.array(temp_points)
         cube.aux_coords[-1].standard_name = "longitude"
         cube.aux_coords[-1].long_name = "longitude"
@@ -62,8 +63,6 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-1].attributes = None
         cube.aux_coords[-1].units = "degrees"
         cube.aux_coords[-1].bounds = lon_bounds
-
-        self.load_ocean_grid_data('ocean_grid_path')
 
         temp_points = []
         for i in cube.aux_coords[-2].points:
@@ -75,19 +74,17 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-2].attributes = None
         cube.aux_coords[-2].units = "degrees"
         cube.aux_coords[-2].bounds = lat_bounds
-    
+
     def _get_path_from_facet(self, facet):
         """Try to get path from facet."""
         path = Path(self.extra_facets[facet])
         if not path.is_file():
-            raise FileNotFoundError(
-                f"'{path}' given by facet '{facet}' does "
-                f"not exist"
-            )
+            raise FileNotFoundError(f"'{path}' given by facet '{facet}' does "
+                                    f"not exist")
         return path
 
     def load_ocean_grid_data(self, facet, gridpath):
-        """load supplementary grid data for ACCESS ocean variable."""
+        """Load supplementary grid data for ACCESS ocean variable."""
         if gridpath is not None:
             path_to_grid_data = Path(gridpath)
         else:
