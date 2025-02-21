@@ -21,9 +21,14 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variable needed for derivation."""
         # 'sic' is sufficient as there is already an entry
         # in the mapping table esmvalcore/cmor/variable_alt_names.yml
-        required = [
-            {"short_name": "sic"},
-        ]
+        if project == "CMIP5":
+            required = [{"short_name": "sic"}]
+        elif project == "CMIP6":
+            required = [
+                {"short_name": "sic", "optional": True},
+                {"short_name": "siconca", "optional": True},
+            ]
+
         return required
 
     @staticmethod
@@ -50,7 +55,7 @@ class DerivedVariable(DerivedVariableBase):
         except iris.exceptions.ConstraintMismatchError:
             try:
                 sic = cubes.extract_cube(Constraint(name="siconc"))
-            except:
+            except iris.exceptions.ConstraintMismatchError:
                 try:
                     sic = cubes.extract_cube(Constraint(name="siconca"))
                 except iris.exceptions.ConstraintMismatchError as exc:
