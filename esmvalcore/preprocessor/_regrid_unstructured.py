@@ -344,7 +344,7 @@ class UnstructuredLinearRegridder:
         src_points: np.ndarray,
         tgt_points: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Calculate regridding weights using Delaunay triagulation.
+        """Calculate regridding weights using Delaunay triangulation.
 
         Partly taken from https://stackoverflow.com/a/20930910.
 
