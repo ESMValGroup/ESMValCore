@@ -560,10 +560,11 @@ def test_tos_fix(test_data_path):
         attributes={},
     )
 
+    gridpath = f'{test_data_path}/access_ocean_grid.nc'
     cubes_tos = CubeList([cube_tos])
     fix_tos = get_fix("Omon", "mon", "tos")
     fix_allvar = get_fix_allvar("Omon", "mon", "tos")
-    fixed_cubes = fix_tos.fix_metadata(cubes_tos, test_data_path)
+    fixed_cubes = fix_tos.fix_metadata(cubes_tos, gridpath)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_tos_metadata(fixed_cubes)
 
@@ -599,10 +600,11 @@ def test_so_fix(test_data_path):
         },
     )
 
+    gridpath = f'{test_data_path}/access_ocean_grid.nc'
     cubes_so = CubeList([cube_so])
     fix_so = get_fix("Omon", "mon", "so")
     fix_allvar = get_fix_allvar("Omon", "mon", "so")
-    fixed_cubes = fix_so.fix_metadata(cubes_so,test_data_path)
+    fixed_cubes = fix_so.fix_metadata(cubes_so,gridpath)
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_so_metadata(fixed_cubes)
 
