@@ -55,7 +55,6 @@ class AccessFix(NativeDatasetFix):
             "ocean_grid_path", gridpath
         )
         temp_points = []
->>>>>>> 8761d831d (fix ocean grid)
         for i in cube.aux_coords[-1].points:
             temp_points.append([j + 360 for j in i if j < 0] 
                                 +[j for j in i if j >= 0])
