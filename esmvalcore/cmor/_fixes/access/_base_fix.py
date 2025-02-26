@@ -35,7 +35,7 @@ class AccessFix(NativeDatasetFix):
         return CubeList(data_list)
     
     def fix_ocean_dim_coords(self, cube):
-        """Fix dim coords of ocean variables"""
+        """Fix dim coords of ocean variables."""
         cube.dim_coords[-2].points = np.array([int(i) for i in range(300)])
         cube.dim_coords[-2].standard_name = None
         cube.dim_coords[-2].var_name = 'j'
