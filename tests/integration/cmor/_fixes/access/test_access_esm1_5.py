@@ -581,7 +581,7 @@ def test_so_fix(test_data_path):
     """Test fix 'so'."""
     coord_dim = [
         (time_ocn_coord, 0),
-        (depth_ocn_coord, 1)
+        (depth_ocn_coord, 1),
         (lat_ocn_coord, 2),
         (lon_ocn_coord, 3),
     ]
