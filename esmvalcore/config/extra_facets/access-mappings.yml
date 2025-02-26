@@ -167,7 +167,7 @@ ACCESS-ESM1-5:
 
     tos:
       raw_name: sst
-      modeling_realm: ocn
+      modeling_realm: ocn 
 
     so:
       raw_name: salt
