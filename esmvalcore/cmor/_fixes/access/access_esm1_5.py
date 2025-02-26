@@ -7,8 +7,6 @@ from iris.cube import CubeList
 
 from ._base_fix import AccessFix
 
-from cf_units import Unit
-
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +15,7 @@ class AllVars(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -59,6 +58,7 @@ class Rlus(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -84,6 +84,7 @@ class Rsus(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -105,6 +106,7 @@ class Tas(AccessFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -126,11 +128,13 @@ class Tas(AccessFix):
         if cube.coord("height").points[0] != 2:
             cube.coord("height").points = [2]
 
+
 class Tos(AccessFix):
     """Fixes for Tos."""
 
     def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -153,6 +157,7 @@ class So(AccessFix):
 
     def fix_metadata(self, cubes, gridpath=None):
         """Fix metadata.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
