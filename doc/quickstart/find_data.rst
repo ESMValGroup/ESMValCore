@@ -693,9 +693,6 @@ Key                  Description                            Default value if not
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
                      use the cmoriser
-``regular_expression`` A facet for filter ACCESS-ESM file 
-                     before loading.                                                                    
->>>>>>> e6d7253b6 (add regular express facet)
 ==================== ====================================== =================================
 
 .. _data-retrieval:
