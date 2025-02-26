@@ -48,11 +48,9 @@ class AccessFix(NativeDatasetFix):
         cube.dim_coords[-1].attributes = None
         cube.dim_coords[-1].units = Unit(1)
 
-    def fix_ocean_aux_coords(self, cube, gridpath):
+    def fix_ocean_aux_coords(self, cube):
         """Fix aux coords of ocean variables."""
-        lat_bounds, lon_bounds = self.load_ocean_grid_data(
-            "ocean_grid_path", gridpath
-        )
+        lat_bounds, lon_bounds = self.load_ocean_grid_data("ocean_grid_path")
         temp_points = []
         for i in cube.aux_coords[-1].points:
             temp_points.append(
@@ -86,12 +84,9 @@ class AccessFix(NativeDatasetFix):
             )
         return path
 
-    def load_ocean_grid_data(self, facet, gridpath):
+    def load_ocean_grid_data(self, facet):
         """Load supplementary grid data for ACCESS ocean variable."""
-        if gridpath is not None:
-            path_to_grid_data = Path(gridpath)
-        else:
-            path_to_grid_data = self._get_path_from_facet(facet)
+        path_to_grid_data = self._get_path_from_facet(facet)
         cubes = self._load_cubes(path_to_grid_data)
 
         y_vert_t = [cube for cube in cubes if cube.var_name == "y_vert_T"][0]

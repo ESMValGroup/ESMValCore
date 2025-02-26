@@ -147,7 +147,7 @@ class Tos(AccessFix):
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
-        self.fix_ocean_aux_coords(cube, gridpath)
+        self.fix_ocean_aux_coords(cube)
 
         return CubeList([cube])
 
@@ -170,7 +170,7 @@ class So(AccessFix):
         cube = self.get_cube(cubes)
 
         self.fix_ocean_dim_coords(cube)
-        self.fix_ocean_aux_coords(cube, gridpath)
+        self.fix_ocean_aux_coords(cube)
         self.fix_depth_metadata(cube)
         self.fix_so_units(cube)
 
