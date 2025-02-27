@@ -35,8 +35,18 @@ Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Make derivation of total column ozone (`toz`) more flexible and add derivation of stratospheric and tropospheric column ozone (:pull:`2509`) by :user:`schlunma`
+   - The units of `toz` have been changed from ``DU`` to ``m`` to be consistent with the CMIP6 CMOR table.
+     To restore the old behaviour, preprocessor :func:`esmvalcore.preprocessor.convert_units` can be used
+     to set the units back to ``DU``.
 -  Remove deprecated CMOR fix/check code (:pull:`2552`) by :user:`schlunma`
+   - CMOR fixes and checks have been clearly separated in v2.10.0, and the old code has now been removed.
+     Use functions :func:`esmvalcore.preprocessors.fix_metadata`, :func:`esmvalcore.preprocessors.fix_data`,
+     or :func:`esmvalcore.dataset.Dataset.load` to fix data.
+     Use functions :func:`esmvalcore.preprocessor.cmor_check_metadata`, :func:`esmvalcore.preprocessor.cmor_check_data`,
+     or :func:`esmvalcore.preprocessor.cmor_check` to check data.
 -  Remove deprecated statistical operators (:pull:`2553`) by :user:`schlunma`
+   - Old statistical operators that have been deprecated in v2.10.0 have now been removed.
+     Please refer to :ref:`stat_preprocs` for a detailed description on how to use the operators.
 -  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
    - The signature of the preprocessor function :func:`~esmvalcore.preprocessor.save`
      has changed. The function now accepts a ``compute`` argument that can be :obj:`True`,
@@ -48,7 +58,19 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Merge configuration object from multiple files (instead of one single file) (:pull:`2448`) by :user:`schlunma`
+   - The single configuration file ``config-user.yml`` has been deprecated in favour of configuration directories.
+     By default, the directory ``~/.config/esmvaltool`` will be considered.
+     To switch to the new format run:
+
+       .. code-block:: bash
+
+          mkdir -p ~/.config/esmvaltool && mv ~/.esmvaltool/config-user.yml ~/.config/esmvaltool
+
+     You can also specify the location of the configuration directory with the ``--config_dir`` flag.
+     Please refer to :ref:`config` for a detailed description on how to configure the tool.
 -  Make Dask configurable in our configuration (:pull:`2616`) by :user:`schlunma`
+   - The old Dask configuration file that needed to be located at ``~/.esmvaltool/dask.yml`` is now deprecated.
+     Please refer to :ref:`config-dask` for a detailed description on how to configure Dask.
 
 Bug fixes
 ~~~~~~~~~
