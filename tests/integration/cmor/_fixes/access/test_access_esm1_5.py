@@ -611,7 +611,7 @@ def test_so_fix(test_data_path):
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_so_metadata(fixed_cubes)
 
-    fix_so.extra_facets[facet] = "/"
+    fix_so.extra_facets[facet] = test_data_path
     test_filepath = fix_so.extra_facets[facet]
     msg = f"'{test_filepath}' by facet '{facet}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
