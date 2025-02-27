@@ -1,5 +1,7 @@
 """Tests for the ACCESS-ESM on-the-fly CMORizer."""
 
+from pathlib import Path
+
 import dask.array as da
 import iris
 import numpy as np
@@ -611,11 +613,18 @@ def test_so_fix(test_data_path):
     fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_so_metadata(fixed_cubes)
 
-    fix_so.extra_facets[facet] = test_data_path
-    test_filepath = fix_so.extra_facets[facet]
-    msg = f"'{test_filepath}' by facet '{facet}' does not exist"
-    with pytest.raises(FileNotFoundError, match=msg):
-        fix_so._get_path_from_facet(facet)
     check_ocean_dim_coords(fixed_cube)
     check_ocean_aux_coords(fixed_cube)
     assert fixed_cube.shape == (12, 2, 300, 360)
+
+
+def test_get_path_from_facet_false(test_data_path):
+    """Test get_path_from_facet."""
+    facet = "ocean_grid_path"
+    fix = get_fix("Omon", "mon", "so")
+    fix.extra_facets[facet] = test_data_path
+    test_filepath = Path(fix.extra_facets[facet])
+    msg = f"'{test_filepath}' by facet '{facet}' does not exist"
+
+    with pytest.raises(FileNotFoundError, match=msg):
+        fix._get_path_from_facet(facet)
