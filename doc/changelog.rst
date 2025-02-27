@@ -10,6 +10,7 @@ v2.12.0
 -------
 
 Highlights
+~~~~~~~~~~
 
 Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
 extract time blocks in each year by making parameters ``start_year`` and
