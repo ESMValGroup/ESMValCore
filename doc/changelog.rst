@@ -15,7 +15,7 @@ Highlights
 -  Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
    extract time blocks in each year by making parameters ``start_year`` and
    ``end_year`` optional.
--  A new way of configuring the tool has been developed.
+-  A new way of :ref:`configuring the tool <config>` has been developed.
 -  Performance improvements:
 
     -  An iris-esmf-regrid scheme has been added to
@@ -38,6 +38,11 @@ Backwards incompatible changes
 -  Remove deprecated CMOR fix/check code (:pull:`2552`) by :user:`schlunma`
 -  Remove deprecated statistical operators (:pull:`2553`) by :user:`schlunma`
 -  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
+   - The signature of the preprocessor function :func:`~esmvalcore.preprocessor.save`
+     has changed. The function now accepts a ``compute`` argument that can be :obj:`True`,
+     in which case the return value will be :obj:`None` or :obj:`False`, in which case
+     the return value will be a :class:`~dask.delayed.Delayed` object that can be used
+     to compute and save the data of the cube.
 
 Deprecations
 ~~~~~~~~~~~~
