@@ -624,7 +624,7 @@ def test_get_path_from_facet_false(test_data_path):
     fix = get_fix("Omon", "mon", "so")
     fix.extra_facets[facet] = test_data_path
     test_filepath = Path(fix.extra_facets[facet])
-    msg = f"'{test_filepath}' by facet '{facet}' does not exist"
+    msg = f"'{test_filepath}' given by facet '{facet}' does not exist"
 
     with pytest.raises(FileNotFoundError, match=msg):
         fix._get_path_from_facet(facet)
