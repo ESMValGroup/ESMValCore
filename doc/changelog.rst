@@ -35,7 +35,6 @@ Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Make derivation of total column ozone (`toz`) more flexible and add derivation of stratospheric and tropospheric column ozone (:pull:`2509`) by :user:`schlunma`
--  Merge configuration object from multiple files (instead of one single file) (:pull:`2448`) by :user:`schlunma`
 -  Remove deprecated CMOR fix/check code (:pull:`2552`) by :user:`schlunma`
 -  Remove deprecated statistical operators (:pull:`2553`) by :user:`schlunma`
 -  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
@@ -43,6 +42,7 @@ Backwards incompatible changes
 Deprecations
 ~~~~~~~~~~~~
 
+-  Merge configuration object from multiple files (instead of one single file) (:pull:`2448`) by :user:`schlunma`
 -  Make Dask configurable in our configuration (:pull:`2616`) by :user:`schlunma`
 
 Bug fixes
