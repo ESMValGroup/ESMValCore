@@ -12,9 +12,22 @@ v2.12.0
 Highlights
 ~~~~~~~~~~
 
-Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
-extract time blocks in each year by making parameters ``start_year`` and
-``end_year`` optional.
+-  Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
+   extract time blocks in each year by making parameters ``start_year`` and
+   ``end_year`` optional.
+-  A new way of configuring the tool has been developed.
+-  Performance improvements:
+
+    -  An iris-esmf-regrid scheme has been added to
+       preprocessor :func:`esmvalcore.preprocessor.regrid`, which improves
+       the regridding of 2D grids and adds the capability to regrid UGRID meshes
+       out of the box.
+    -  Data is now saved from one preprocessing task at the time when using the
+       distributed scheduler, in order to avoid running out of memory.
+    -  A better default ``num_workers`` has been set when using more than one
+       ``max_parallel_tasks`` with an unconfigured threaded scheduler.
+
+-  An on-the-fly cmorizer for ACCESS native data is now available.
 
 This release includes
 
