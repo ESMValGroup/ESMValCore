@@ -62,7 +62,7 @@ def test_siextent_calculation_sic(cubes_sic):
     """Test function ``calculate`` when sic is available."""
     derived_var = siextent.DerivedVariable()
     out_cube = derived_var.calculate(cubes_sic)
-    assert out_cube.units == cf_units.Unit("m2")
+    assert out_cube.units == cf_units.Unit("1")
     out_data = out_cube.data
     expected = np.ma.ones_like(cubes_sic[0].data)
     expected.mask = True
@@ -75,7 +75,7 @@ def test_siextent_calculation_siconca(cubes_siconca):
     """Test function ``calculate`` when siconca is available."""
     derived_var = siextent.DerivedVariable()
     out_cube = derived_var.calculate(cubes_siconca)
-    assert out_cube.units == cf_units.Unit("m2")
+    assert out_cube.units == cf_units.Unit("1")
     out_data = out_cube.data
     expected = np.ma.ones_like(cubes_siconca[0].data)
     expected.mask = True
@@ -88,7 +88,7 @@ def test_siextent_calculation(cubes):
     """Test function ``calculate`` when sic and siconca are available."""
     derived_var = siextent.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    assert out_cube.units == cf_units.Unit("m2")
+    assert out_cube.units == cf_units.Unit("1")
     out_data = out_cube.data
     expected = np.ma.ones_like(cubes[0].data)
     expected.mask = True
