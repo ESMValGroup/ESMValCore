@@ -562,6 +562,7 @@ def check_typesi(cube):
 def test_allvars_fix():
     """Test fix for all variables."""
     assert AllVars is AllVarsBase
+    assert AllVars.DEFAULT_PFULL_VAR_NAME == "pfull"
 
 
 # Test areacella and areacello (for extra_facets, and grid_latitude and

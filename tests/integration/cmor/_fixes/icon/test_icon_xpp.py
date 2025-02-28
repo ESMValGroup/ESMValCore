@@ -469,7 +469,11 @@ def check_typesi(cube):
 
 def test_allvars_fix():
     """Test fix for all variables."""
-    assert AllVars is AllVarsBase
+    assert issubclass(AllVars, AllVarsBase)
+    assert AllVars.fix_file is AllVarsBase.fix_file
+    assert AllVars.fix_metadata is AllVarsBase.fix_metadata
+    assert AllVars.fix_data is AllVarsBase.fix_data
+    assert AllVars.DEFAULT_PFULL_VAR_NAME == "pres"
 
 
 # Test ch4Clim (for time dimension time2)

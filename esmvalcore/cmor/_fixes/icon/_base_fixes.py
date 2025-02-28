@@ -531,6 +531,8 @@ class IconFix(NativeDatasetFix):
 class AllVarsBase(IconFix):
     """Fixes necessary for all ICON variables."""
 
+    DEFAULT_PFULL_VAR_NAME = "pfull"
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cubes = self.add_additional_cubes(cubes)
@@ -689,7 +691,9 @@ class AllVarsBase(IconFix):
         # If possible, extract reversed air_pressure coordinate from list of
         # cubes and add it to cube
         # Note: pfull/phalf have dimensions (time, height, spatial_dim)
-        pfull_var = self.extra_facets.get("pfull_var", "pfull")
+        pfull_var = self.extra_facets.get(
+            "pfull_var", self.DEFAULT_PFULL_VAR_NAME
+        )
         phalf_var = self.extra_facets.get("phalf_var", "phalf")
         if cubes.extract(NameConstraint(var_name=pfull_var)):
             if cubes.extract(NameConstraint(var_name=phalf_var)):

@@ -10,7 +10,10 @@ from ._base_fixes import AllVarsBase, IconFix, NegateData
 logger = logging.getLogger(__name__)
 
 
-AllVars = AllVarsBase
+class AllVars(AllVarsBase):
+    """Fixes necessary for all ICON-XPP variables."""
+
+    DEFAULT_PFULL_VAR_NAME = "pres"
 
 
 class Clwvi(IconFix):

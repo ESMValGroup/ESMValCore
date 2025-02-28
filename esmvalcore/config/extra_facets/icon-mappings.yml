@@ -78,10 +78,6 @@ ICON:
 ICON-XPP:
 
   '*':
-    # Facets for all variables
-    '*':
-      pfull_var: pres
-
     # 2D dynamical/meteorological variables
     asr: {var_type: atm_2d_ml}
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
