@@ -78,14 +78,14 @@ def cubes_regular_grid():
     )
     lat_coord = DimCoord(
         [0.0, 1.0],
-        var_name="lat",
+        var_name="clat",
         standard_name="latitude",
         long_name="latitude",
         units="degrees_north",
     )
     lon_coord = DimCoord(
         [-1.0, 1.0],
-        var_name="lon",
+        var_name="clon",
         standard_name="longitude",
         long_name="longitude",
         units="degrees_east",
@@ -110,14 +110,14 @@ def cubes_2d_lat_lon_grid():
     )
     lat_coord = AuxCoord(
         [[0.0, 0.0], [1.0, 1.0]],
-        var_name="lat",
+        var_name="clat",
         standard_name="latitude",
         long_name="latitude",
         units="degrees_north",
     )
     lon_coord = AuxCoord(
         [[0.0, 1.0], [0.0, 1.0]],
-        var_name="lon",
+        var_name="clon",
         standard_name="longitude",
         long_name="longitude",
         units="degrees_east",
@@ -144,14 +144,14 @@ def simple_unstructured_cube():
     height_coord = DimCoord([0, 1, 2], var_name="height")
     lat_coord = AuxCoord(
         [0.0, 1.0],
-        var_name="lat",
+        var_name="clat",
         standard_name="latitude",
         long_name="latitude",
         units="degrees_north",
     )
     lon_coord = AuxCoord(
         [0.0, 1.0],
-        var_name="lon",
+        var_name="clon",
         standard_name="longitude",
         long_name="longitude",
         units="degrees_east",
@@ -1223,7 +1223,7 @@ def test_add_latitude_fail(cubes_2d):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix("Amon", "tas")
 
-    msg = "Failed to add missing latitude coordinate to cube"
+    msg = "Failed to add missing latitude coordinate 'clat' to cube"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes)
 
@@ -1238,18 +1238,9 @@ def test_add_longitude_fail(cubes_2d):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix("Amon", "tas")
 
-    msg = "Failed to add missing longitude coordinate to cube"
+    msg = "Failed to add missing longitude coordinate 'clon' to cube"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes)
-
-
-def test_add_coord_from_grid_file_fail_invalid_coord():
-    """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
-
-    msg = r"coord_name must be one of .* got 'invalid_coord_name'"
-    with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(mock.sentinel.cube, "invalid_coord_name")
 
 
 def test_add_coord_from_grid_file_fail_no_url():
@@ -1261,7 +1252,7 @@ def test_add_coord_from_grid_file_fail_no_url():
         "download the ICON horizontal grid file"
     )
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(Cube(0), "latitude")
+        fix._add_coord_from_grid_file(Cube(0), "clat")
 
 
 def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
@@ -1274,11 +1265,11 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
     fix = get_allvars_fix("Amon", "tas")
 
     msg = (
-        "Cannot determine coordinate dimension for coordinate 'latitude', "
+        "Cannot determine coordinate dimension for coordinate 'clat', "
         "cube does not contain a single unnamed dimension"
     )
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(tas_cube, "latitude")
+        fix._add_coord_from_grid_file(tas_cube, "clat")
 
 
 def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
@@ -1290,11 +1281,11 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
     fix = get_allvars_fix("Amon", "tas")
 
     msg = (
-        "Cannot determine coordinate dimension for coordinate 'latitude', "
+        "Cannot determine coordinate dimension for coordinate 'clat', "
         "cube does not contain a single unnamed dimension"
     )
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(tas_cube, "latitude")
+        fix._add_coord_from_grid_file(tas_cube, "clat")
 
 
 # Test get_horizontal_grid
@@ -1621,7 +1612,7 @@ def test_only_latitude(monkeypatch):
 
     # Create cube with only a single dimension
     lat_coord = DimCoord(
-        [0.0, 10.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 10.0], var_name="clat", standard_name="latitude", units="degrees"
     )
     cubes = CubeList(
         [
@@ -1672,7 +1663,7 @@ def test_only_longitude(monkeypatch):
     # Create cube with only a single dimension
     lon_coord = DimCoord(
         [0.0, 180.0],
-        var_name="lon",
+        var_name="clon",
         standard_name="longitude",
         units="degrees",
     )

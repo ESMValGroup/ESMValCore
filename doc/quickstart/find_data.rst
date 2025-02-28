@@ -515,12 +515,14 @@ support input data in UGRID format (yet), like the
 :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
-(from the variables `pres`, or `pfull` and `phalf`) and/or altitude information
-(from the variables `zg` and `zghalf`) to the preprocessed output files.
+and/or altitude information to the preprocessed output files.
+If the names of these variables differ from the default values, the facets
+``pfull_var``, ``phalf_var``, ``zg_var``, and ``zghalf_var`` can be specified
+in the recipe or extra facets.
 If neither of these variables are available in the input files, it is possible
-to specify the location of files that include the corresponding `zg` or
-`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
-recipe or the extra facets.
+to specify the location of files that include the corresponding altitude
+information with the facets ``zg_file`` and/or ``zghalf_file`` in the recipe or
+the extra facets.
 The paths to these files can be specified absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
@@ -559,12 +561,18 @@ Key                 Description                      Default value if not specif
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
                     ``auxiliary_data_dir``)          ``grid_file_uri`` to retrieve ICON
                     path to the ICON grid file       grid file (see details above)
-``latitude``        Standard name of the latitude    ``latitude``
+``lat_var``         Variable name of the latitude    ``clat``
                     coordinate in the raw input
+                    file/grid file
+``lon_var``         Variable name of the longitude   ``clon``
+                    coordinate in the raw input
+                    file/grid file
+``pfull_var``       Variable name of the pressure at ``pfull`` (ICON); ``pres``
+                    full levels in the raw input     (ICON-XPP)
                     file
-``longitude``       Standard name of the             ``longitude``
-                    longitude coordinate in the
-                    raw input file
+``phalf_var``       Variable name of the pressure at ``phalf``
+                    half levels in the raw input
+                    file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
@@ -580,14 +588,22 @@ Key                 Description                      Default value if not specif
 ``var_type``        Variable type of the             No default (needs to be specified
                     variable in the raw input        in extra facets or recipe if
                     file                             default DRS is used)
-``zg_file``         Absolute or relative (to         If possible, use `zg` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zg`
-``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zghalf`
+``zg_file``         Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at full levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at full
+                    levels
+``zg_var``          Variable name of the geometric    ``zg``
+                    height at full levels in the raw
+                    input file
+``zghalf_file``     Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at half levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at half
+                    levels
+``zghalf_var``      Variable name of the geometric   ``zghalf``
+                    height at half levels in the raw
+                    input file
 =================== ================================ ===================================
 
 .. hint::

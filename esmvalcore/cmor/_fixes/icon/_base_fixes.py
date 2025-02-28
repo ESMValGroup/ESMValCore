@@ -587,7 +587,7 @@ class AllVarsBase(IconFix):
         return CubeList([cube])
 
     def _add_coord_from_grid_file(self, cube, coord_name):
-        """Add coordinate from grid file to cube.
+        """Add coordinate from ``cell_area`` variable of grid file to cube.
 
         Note
         ----
@@ -599,38 +599,23 @@ class AllVarsBase(IconFix):
         cube: iris.cube.Cube
             ICON data to which the coordinate from the grid file is added.
         coord_name: str
-            Name of the coordinate to add from the grid file. Must be one of
-            ``'latitude'``, ``'longitude'``.
+            Variable name of the coordinate to add from the grid file.
 
         Raises
         ------
         ValueError
-            Invalid ``coord_name`` is given; input cube does not contain a
-            single unnamed dimension that can be used to add the new
-            coordinate.
+            Input cube does not contain a single unnamed dimension that can be
+            used to add the new coordinate.
 
         """
-        # The following dict maps from desired coordinate name in output file
-        # (dict keys) to coordinate name in grid file (dict values)
-        coord_names_mapping = {
-            "latitude": "grid_latitude",
-            "longitude": "grid_longitude",
-        }
-        if coord_name not in coord_names_mapping:
-            raise ValueError(
-                f"coord_name must be one of {list(coord_names_mapping)}, got "
-                f"'{coord_name}'"
-            )
-        coord_name_in_grid = coord_names_mapping[coord_name]
-
         # Use 'cell_area' as dummy cube to extract desired coordinates
-        # Note: it might be necessary to expand this when more coord_names are
-        # supported
+        # Note: it might be necessary to expand this in the future; currently
+        # this only works for clat and clon
         horizontal_grid = self.get_horizontal_grid(cube)
         grid_cube = horizontal_grid.extract_cube(
             NameConstraint(var_name="cell_area")
         )
-        coord = grid_cube.coord(coord_name_in_grid).copy()
+        coord = grid_cube.coord(var_name=coord_name).copy()
 
         # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
@@ -649,7 +634,7 @@ class AllVarsBase(IconFix):
         # Adapt coordinate names so that the coordinate can be referenced with
         # 'cube.coord(coord_name)'; the exact name will be set at a later stage
         coord.standard_name = None
-        coord.long_name = coord_name
+        coord.long_name = None
         cube.add_aux_coord(coord, coord_dims)
 
     def _add_time(self, cube, cubes):
@@ -704,33 +689,49 @@ class AllVarsBase(IconFix):
         # If possible, extract reversed air_pressure coordinate from list of
         # cubes and add it to cube
         # Note: pfull/phalf have dimensions (time, height, spatial_dim)
-        if cubes.extract(NameConstraint(var_name="pfull")):
-            if cubes.extract(NameConstraint(var_name="phalf")):
-                phalf = "phalf"
+        pfull_var = self.extra_facets.get("pfull_var", "pfull")
+        phalf_var = self.extra_facets.get("phalf_var", "phalf")
+        if cubes.extract(NameConstraint(var_name=pfull_var)):
+            if cubes.extract(NameConstraint(var_name=phalf_var)):
+                phalf = phalf_var
             else:
                 phalf = None
-            plev_coord = self._get_z_coord(cubes, "pfull", bounds_name=phalf)
+            plev_coord = self._get_z_coord(cubes, pfull_var, bounds_name=phalf)
             self.fix_plev_metadata(cube, plev_coord)
             cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
-        elif cubes.extract(NameConstraint(var_name="pres")):
-            plev_coord = self._get_z_coord(cubes, "pres")
-            self.fix_plev_metadata(cube, plev_coord)
-            cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
+        else:
+            logger.debug(
+                "Cannot add pressure level information to ICON data; "
+                "variables '%s' and/or '%s' are not available",
+                pfull_var,
+                phalf_var,
+            )
 
         # If possible, extract reversed altitude coordinate from list of cubes
         # and add it to cube
         # Note: zg/zghalf have dimensions (height, spatial_dim)
-        if cubes.extract(NameConstraint(var_name="zg")):
-            if cubes.extract(NameConstraint(var_name="zghalf")):
-                zghalf = "zghalf"
+        zgfull_var = self.extra_facets.get("zgfull_var", "zg")
+        zghalf_var = self.extra_facets.get("zghalf_var", "zghalf")
+        if cubes.extract(NameConstraint(var_name=zgfull_var)):
+            if cubes.extract(NameConstraint(var_name=zghalf_var)):
+                zghalf = zghalf_var
             else:
                 zghalf = None
-            alt_coord = self._get_z_coord(cubes, "zg", bounds_name=zghalf)
+            alt_coord = self._get_z_coord(
+                cubes, zgfull_var, bounds_name=zghalf
+            )
             self.fix_alt16_metadata(cube, alt_coord)
 
             # Altitude coordinate only spans height and spatial dimensions (no
             # time) -> these are always the last two dimensions in the cube
             cube.add_aux_coord(alt_coord, np.arange(cube.ndim)[-2:])
+        else:
+            logger.debug(
+                "Cannot add altitude information to ICON data; variables '%s' "
+                "and/or '%s' are not available",
+                zgfull_var,
+                zghalf_var,
+            )
 
         # Fix metadata
         z_coord = cube.coord("height")
@@ -749,35 +750,53 @@ class AllVarsBase(IconFix):
 
     def _fix_lat(self, cube):
         """Fix latitude coordinate of cube."""
-        lat_name = self.extra_facets.get("latitude", "latitude")
+        lat_var = self.extra_facets.get("lat_var", "clat")
 
         # Add latitude coordinate if not already present
-        if not cube.coords(lat_name):
+        if not cube.coords(var_name=lat_var):
+            logger.debug(
+                "ICON data does not contain latitude variable '%s', trying to "
+                "add it via grid file",
+                lat_var,
+            )
             try:
-                self._add_coord_from_grid_file(cube, "latitude")
+                self._add_coord_from_grid_file(cube, lat_var)
             except Exception as exc:
-                msg = "Failed to add missing latitude coordinate to cube"
+                msg = (
+                    f"Failed to add missing latitude coordinate '{lat_var}' "
+                    f"to cube"
+                )
                 raise ValueError(msg) from exc
 
         # Fix metadata
-        lat = self.fix_lat_metadata(cube, lat_name)
+        lat = cube.coord(var_name=lat_var)
+        lat = self.fix_lat_metadata(cube, lat)
 
         return cube.coord_dims(lat)
 
     def _fix_lon(self, cube):
         """Fix longitude coordinate of cube."""
-        lon_name = self.extra_facets.get("longitude", "longitude")
+        lon_var = self.extra_facets.get("lon_var", "clon")
 
         # Add longitude coordinate if not already present
-        if not cube.coords(lon_name):
+        if not cube.coords(var_name=lon_var):
+            logger.debug(
+                "ICON data does not contain longitude variable '%s', trying "
+                "to add it via grid file",
+                lon_var,
+            )
             try:
-                self._add_coord_from_grid_file(cube, "longitude")
+                self._add_coord_from_grid_file(cube, lon_var)
             except Exception as exc:
-                msg = "Failed to add missing longitude coordinate to cube"
+                msg = (
+                    f"Failed to add missing longitude coordinate '{lon_var}' "
+                    f"to cube"
+                )
                 raise ValueError(msg) from exc
 
         # Fix metadata and convert to [0, 360]
-        lon = self.fix_lon_metadata(cube, lon_name)
+        lon = cube.coord(var_name=lon_var)
+        lon = self.fix_lon_metadata(cube, lon)
         self._set_range_in_0_360(lon)
 
         return cube.coord_dims(lon)

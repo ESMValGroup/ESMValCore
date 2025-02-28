@@ -64,14 +64,14 @@ def cubes_regular_grid():
     )
     lat_coord = DimCoord(
         [0.0, 1.0],
-        var_name="lat",
+        var_name="clat",
         standard_name="latitude",
         long_name="latitude",
         units="degrees_north",
     )
     lon_coord = DimCoord(
         [-1.0, 1.0],
-        var_name="lon",
+        var_name="clon",
         standard_name="longitude",
         long_name="longitude",
         units="degrees_east",

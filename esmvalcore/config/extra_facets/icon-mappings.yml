@@ -14,14 +14,8 @@ ICON:
 
   '*':
     # Cell measures
-    areacella:
-      latitude: grid_latitude
-      longitude: grid_longitude
-      raw_name: cell_area
-    areacello:
-      latitude: grid_latitude
-      longitude: grid_longitude
-      raw_name: cell_area
+    areacella: {raw_name: cell_area}
+    areacello: {raw_name: cell_area}
 
     # 2D dynamical/meteorological variables
     asr: {var_type: atm_2d_ml}
@@ -84,6 +78,10 @@ ICON:
 ICON-XPP:
 
   '*':
+    # Facets for all variables
+    '*':
+      pfull_var: pres
+
     # 2D dynamical/meteorological variables
     asr: {var_type: atm_2d_ml}
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
