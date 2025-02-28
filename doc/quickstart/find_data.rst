@@ -567,8 +567,8 @@ Key                 Description                      Default value if not specif
 ``lon_var``         Variable name of the longitude   ``clon``
                     coordinate in the raw input
                     file/grid file
-``pfull_var``       Variable name of the pressure at - ``pfull`` (``dataset: ICON``)
-                    full levels in the raw input     - ``pres`` (``dataset: ICON-XPP``)
+``pfull_var``       Variable name of the pressure at ``pfull`` (``dataset: ICON``) or
+                    full levels in the raw input     ``pres`` (``dataset: ICON-XPP``)
                     file
 ``phalf_var``       Variable name of the pressure at ``phalf``
                     half levels in the raw input
