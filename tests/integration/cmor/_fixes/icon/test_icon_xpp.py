@@ -19,7 +19,6 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     Hfss,
     Rlut,
     Rlutcs,
-    Rsuscs,
     Rsutcs,
     Rtmt,
     Rtnt,
@@ -755,44 +754,6 @@ def test_rsut_fix(cubes_2d):
 
     check_time(cube)
     check_lat_lon(cube)
-
-
-# Test rsuscs (for extra fix)
-
-
-def test_get_rsuscs_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Amon", "rsuscs")
-    assert fix == [Rsuscs(None), AllVars(None), GenericFix(None)]
-
-
-def test_rsuscs_fix(cubes_3d):
-    """Test fix."""
-    cube = cubes_3d.extract_cube(NameConstraint(var_name="temp"))
-    cube.var_name = "swflx_up_clr"
-    cube.units = "W m-2"
-    cube.data = np.arange(1 * 47 * 8, dtype=np.float32).reshape(1, 47, 8)
-    cubes = CubeList([cube])
-
-    fixed_cubes = fix_metadata(cubes, "Amon", "rsuscs")
-
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == "rsuscs"
-    assert cube.standard_name == (
-        "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky"
-    )
-    assert cube.long_name == "Surface Upwelling Clear-Sky Shortwave Radiation"
-    assert cube.units == "W m-2"
-    assert cube.attributes["positive"] == "up"
-
-    fixed_cube = fix_data(cube, "Amon", "rsuscs")
-
-    assert fixed_cube.dtype == cube.dtype
-    np.testing.assert_allclose(
-        fixed_cube.data,
-        [[8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0]],
-    )
 
 
 # Test rsutcs (for extra fix)

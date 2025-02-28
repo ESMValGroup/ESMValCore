@@ -102,14 +102,13 @@ ICON-XPP:
     psl: {raw_name: pres_msl, var_type: atm_2d_ml}
     rlns: {raw_name: thb_s, var_type: atm_2d_ml}
     rlut: {raw_name: thb_t, var_type: atm_2d_ml}
-    rlutcs: {raw_name: lwflx_up_clr, var_type: atm_rad_ml}
+    rlutcs: {raw_name: lwflx_up_clr, var_type: atm_2d_ml}
     rsdt: {raw_name: sod_t, var_type: atm_2d_ml}
     rsns: {raw_name: sob_s, var_type: atm_2d_ml}
     rsnt: {raw_name: sob_t, var_type: atm_2d_ml}
     rsus: {raw_name: sou_s, var_type: atm_2d_ml}
-    rsuscs: {raw_name: swflx_up_clr, var_type: atm_rad_ml}
     rsut: {raw_name: sou_t, var_type: atm_2d_ml}
-    rsutcs: {raw_name: swflx_up_clr, var_type: atm_rad_ml}
+    rsutcs: {raw_name: swflx_up_clr, var_type: atm_2d_ml}
     rtmt: {var_type: atm_2d_ml}
     rtnt: {var_type: atm_2d_ml}
     sfcWind: {raw_name: sp_10m, var_type: atm_2d_ml}

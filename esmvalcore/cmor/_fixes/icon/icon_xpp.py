@@ -48,17 +48,6 @@ class Rlutcs(IconFix):
         return CubeList([cube])
 
 
-class Rsuscs(IconFix):
-    """Fixes for ``rsuscs``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        # Level at index 1 is surface
-        cube = self.get_cube(cubes, var_name="swflx_up_clr")[:, 1, ...]
-        cube.remove_coord("height")
-        return CubeList([cube])
-
-
 class Rsutcs(IconFix):
     """Fixes for ``rsutcs``."""
 
