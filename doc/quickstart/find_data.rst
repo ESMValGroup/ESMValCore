@@ -679,21 +679,24 @@ For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
-==================== ====================================== =================================
-Key                  Description                            Default value if not specified
-==================== ====================================== =================================
-``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
-                     and `oce`                              specified in extra facets or
-                                                            recipe if default DRS is used)
-```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to
+==================== ========================================== ====================================
+Key                  Description                                Default value if not specified
+==================== ========================================== ====================================
+``raw_name``         Variable name of the variable in the       CMOR variable name of the
+                     raw input file                             corresponding variable
+``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be
+                     and `oce`                                  specified in extra facets or
+                                                                recipe if default DRS is used)
+``freq_attribute``   A special attribute in the filename        No default
+                     `ACCESS-ESM` raw data, related to the
                      frequency of raw data
-``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
-                     root, need to specify if you want to
-                     use the cmoriser
-==================== ====================================== =================================
+``sub_dataset``      Part of the ACCESS-ESM raw dataset root,   No default
+                     needs to be specified if you want to use
+                     the cmoriser
+``ocean_grid_path``  Path to load the grid data for ACCESS      No default
+                     ocean variables
+==================== ========================================== ====================================
+
 
 .. _data-retrieval:
 
