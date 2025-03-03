@@ -26,7 +26,6 @@ class AccessFix(NativeDatasetFix):
     def get_cubes_from_multivar(self, cubes):
         """Get cube before calculate from multiple variables."""
         name_list = self.extra_facets.get("raw_name", self.vardef.short_name)
-        name_list = self.extra_facets.get("raw_name", self.vardef.short_name)
 
         data_list = []
         for name in name_list:
@@ -35,13 +34,13 @@ class AccessFix(NativeDatasetFix):
 
     def fix_ocean_dim_coords(self, cube):
         """Fix dim coords of ocean variables."""
-        cube.dim_coords[-2].points = np.array([int(i) for i in range(300)])
+        cube.dim_coords[-2].points = np.arange(300)
         cube.dim_coords[-2].standard_name = None
         cube.dim_coords[-2].var_name = "j"
         cube.dim_coords[-2].long_name = "cell index along second dimension"
         cube.dim_coords[-2].attributes = None
 
-        cube.dim_coords[-1].points = np.array([int(i) for i in range(360)])
+        cube.dim_coords[-1].points = np.arange(360)
         cube.dim_coords[-1].standard_name = None
         cube.dim_coords[-1].var_name = "i"
         cube.dim_coords[-1].long_name = "cell index along first dimension"
@@ -53,9 +52,7 @@ class AccessFix(NativeDatasetFix):
         lat_bounds, lon_bounds = self.load_ocean_grid_data("ocean_grid_path")
         temp_points = []
         for i in cube.aux_coords[-1].points:
-            temp_points.append(
-                [j + 360 for j in i if j < 0] + [j for j in i if j >= 0]
-            )
+            temp_points.append([j % 360 for j in i])
         cube.aux_coords[-1].points = np.array(temp_points)
         cube.aux_coords[-1].standard_name = "longitude"
         cube.aux_coords[-1].long_name = "longitude"
@@ -64,10 +61,9 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-1].units = "degrees"
         cube.aux_coords[-1].bounds = lon_bounds
 
-        temp_points = []
-        for i in cube.aux_coords[-2].points:
-            temp_points.append([j.astype(np.float64) for j in i])
-        cube.aux_coords[-2].points = np.array(temp_points)
+        cube.aux_coords[-2].points = np.array(
+            cube.aux_coords[-2].points, dtype=np.float64
+        )
         cube.aux_coords[-2].standard_name = "latitude"
         cube.aux_coords[-2].long_name = "latitude"
         cube.aux_coords[-2].var_name = "latitude"

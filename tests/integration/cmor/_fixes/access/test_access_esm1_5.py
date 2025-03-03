@@ -26,7 +26,7 @@ time_coord = DimCoord(
 )
 
 time_ocn_coord = DimCoord(
-    [int(i) for i in range(1, 13)],
+    list(range(1, 13)),
     standard_name="time",
     var_name="time",
     long_name="time",
@@ -253,17 +253,13 @@ def check_heightxm(cube, height_value):
 
 def check_ocean_dim_coords(cube):
     """Check dim_coords of ocean variables."""
-    assert (
-        cube.dim_coords[-2].points == np.array([int(i) for i in range(300)])
-    ).all()
+    assert (cube.dim_coords[-2].points == np.arange(300)).all()
     assert cube.dim_coords[-2].standard_name is None
     assert cube.dim_coords[-2].var_name == "j"
     assert cube.dim_coords[-2].long_name == "cell index along second dimension"
     assert cube.dim_coords[-2].attributes == {}
 
-    assert (
-        cube.dim_coords[-1].points == np.array([int(i) for i in range(360)])
-    ).all()
+    assert (cube.dim_coords[-1].points == np.arange(360)).all()
     assert cube.dim_coords[-1].standard_name is None
     assert cube.dim_coords[-1].var_name == "i"
     assert cube.dim_coords[-1].long_name == "cell index along first dimension"
