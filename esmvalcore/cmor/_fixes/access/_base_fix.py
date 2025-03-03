@@ -50,10 +50,8 @@ class AccessFix(NativeDatasetFix):
     def fix_ocean_aux_coords(self, cube):
         """Fix aux coords of ocean variables."""
         lat_bounds, lon_bounds = self.load_ocean_grid_data("ocean_grid_path")
-        temp_points = []
-        for i in cube.aux_coords[-1].points:
-            temp_points.append([j % 360 for j in i])
-        cube.aux_coords[-1].points = np.array(temp_points)
+
+        cube.aux_coords[-1].points = np.array(cube.aux_coords[-1].points % 360)
         cube.aux_coords[-1].standard_name = "longitude"
         cube.aux_coords[-1].long_name = "longitude"
         cube.aux_coords[-1].var_name = "longitude"
