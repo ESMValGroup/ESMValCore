@@ -12,8 +12,10 @@ engines:
         enabled: true
     duplication:
         enabled: true
+    # introduced 5 March 2025
     ruff:
         enabled: true
+    # to be removed when all Ruff integration done
     prospector:
         enabled: true
     pylint:
