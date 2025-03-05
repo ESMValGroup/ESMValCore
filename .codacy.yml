@@ -12,11 +12,8 @@ engines:
         enabled: true
     duplication:
         enabled: true
-    prospector:
+    ruff:
         enabled: true
-    pylint:
-        enabled: true
-        python_version: 3
 
 exclude_paths: [
     'doc/conf.py',
