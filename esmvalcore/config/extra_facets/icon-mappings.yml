@@ -125,5 +125,5 @@ ICON-XPP:
     ta: {raw_name: temp, var_type: atm_3d_ml}
     ua: {raw_name: u, var_type: atm_3d_ml}
     va: {raw_name: v, var_type: atm_3d_ml}
-    wap: {raw_name: w, var_type: atm_3d_ml}
+    wap: {raw_name: omega, var_type: atm_3d_ml}
     zg: {raw_name: geopot, var_type: atm_3d_ml}
