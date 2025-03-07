@@ -1155,6 +1155,7 @@ get_input_filelist:
     dirs:
       - amip
       - amip/outdata
+      - amip/output
     file_patterns:
       - amip_atm_2d_ml*.nc
     found_files:
@@ -1185,6 +1186,7 @@ get_input_filelist:
     dirs:
       - amip
       - amip/outdata
+      - amip/output
     file_patterns:
       - amip_var*.nc
     found_files:
