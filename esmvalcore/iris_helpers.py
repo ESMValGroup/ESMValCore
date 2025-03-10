@@ -393,6 +393,14 @@ _SPECIAL_UNIT_CONVERSIONS = [
         ("lwe_precipitation_rate", "mm s-1"),
     ],
     [
+        ("water_evaporation_flux", "kg m-2 s1"),
+        ("lwe_water_evaporation_rate", "mm s-1"),
+    ],
+    [
+        ("water_potential_evaporation_flux", "kg m-2 s1"),
+        ("lwe_water_potential_evaporation_rate", "mm s-1"),
+    ],
+    [
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
     ],
