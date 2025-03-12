@@ -1,5 +1,5 @@
 """Find files using an intake-esm catalog and load them."""
 
-from ._dataset import IntakeDataset, load_catalog
+from ._dataset import IntakeDataset, load_catalogs
 
-__all__ = ["IntakeDataset", "load_catalog"]
+__all__ = ["IntakeDataset", "load_catalogs"]

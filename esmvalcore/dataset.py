@@ -771,7 +771,7 @@ class Dataset:
             "check_level": self.session["check_level"],
             "cmor_table": self.facets["project"],
             "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
+            "frequency": self.facets["frequency"], # Error here
             "short_name": self.facets["short_name"],
         }
         if "timerange" in self.facets:

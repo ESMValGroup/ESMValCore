@@ -40,21 +40,32 @@ CMIP6:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   catalogs:
     NCI:
-      file: 
-        /g/data/fs38/catalog/v2/esm/catalog.json
-        # - /g/data/oi10/catalog/v2/esm/catalog.json
-      facets:
-        # mapping from recipe facets to intake-esm catalog facets
-        # TODO: Fix these when Gadi is back up
-        activity: activity_id
-        dataset: source_id
-        ensemble: member_id
-        exp: experiment_id
-        grid: grid_label
-        institute: institution_id
-        mip: table_id
-        short_name: variable_id
-        version: version
+      - file: 
+          /g/data/fs38/catalog/v2/esm/catalog.json
+        facets:
+          activity: activity_id
+          dataset: source_id
+          ensemble: member_id
+          exp: experiment_id
+          grid: grid_label
+          institute: institution_id
+          mip: table_id
+          short_name: variable_id
+          version: version
+          frequency: frequency
+      - file: 
+          /g/data/oi10/catalog/v2/esm/catalog.json
+        facets:
+          activity: activity_id
+          dataset: source_id
+          ensemble: member_id
+          exp: experiment_id
+          grid: grid_label
+          institute: institution_id
+          mip: table_id
+          short_name: variable_id
+          version: version
+          frequency: frequency
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}'
   cmor_type: 'CMIP6'
 
