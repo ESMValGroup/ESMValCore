@@ -40,7 +40,7 @@ CMIP6:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   catalogs:
     NCI:
-      - file: 
+      - file:
           /g/data/fs38/catalog/v2/esm/catalog.json
         facets:
           activity: activity_id
@@ -53,7 +53,7 @@ CMIP6:
           short_name: variable_id
           version: version
           frequency: frequency
-      - file: 
+      - file:
           /g/data/oi10/catalog/v2/esm/catalog.json
         facets:
           activity: activity_id
@@ -86,7 +86,7 @@ CMIP5:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   catalogs:
      NCI:
-      - file: 
+      - file:
           /g/data/rr3/catalog/v2/esm/catalog.json
         facets:
           # mapping from recipe facets to intake-esm catalog facets
@@ -100,7 +100,7 @@ CMIP5:
           mip: table_id
           short_name: variable
           version: version
-      - file: 
+      - file:
           /g/data/al33/catalog/v2/esm/catalog.json
         facets:
           # mapping from recipe facets to intake-esm catalog facets
@@ -216,7 +216,7 @@ CORDEX:
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc'
   catalogs:
      NCI:
-      files: 
+      files:
         - /g/data/oi10/catalog/v2/esm/catalog.json
       facets:
         # mapping from recipe facets to intake-esm catalog facets
