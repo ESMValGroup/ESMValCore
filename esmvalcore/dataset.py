@@ -35,7 +35,6 @@ from esmvalcore.local import (
 from esmvalcore.preprocessor import preprocess
 from esmvalcore.typing import Facets, FacetValue
 
-
 __all__ = [
     "Dataset",
     "INHERITED_FACETS",
@@ -156,7 +155,6 @@ class Dataset:
         from esmvalcore._recipe.to_datasets import datasets_from_recipe
 
         return datasets_from_recipe(recipe, session)
-
 
     def _file_to_dataset(
         self,
@@ -771,7 +769,7 @@ class Dataset:
             "check_level": self.session["check_level"],
             "cmor_table": self.facets["project"],
             "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"], # Error here
+            "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
         }
         if "timerange" in self.facets:
