@@ -86,21 +86,34 @@ CMIP5:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   catalogs:
      NCI:
-      files: 
-        - /g/data/al33/catalog/v2/esm/catalog.json
-        - /g/data/rr3/catalog/v2/esm/catalog.json
-      facets:
-        # mapping from recipe facets to intake-esm catalog facets
-        # TODO: Fix these when Gadi is back up
-        activity: activity_id
-        dataset: source_id
-        ensemble: member_id
-        exp: experiment_id
-        grid: grid_label
-        institute: institution_id
-        mip: table_id
-        short_name: variable_id
-        version: version
+      - file: 
+          /g/data/rr3/catalog/v2/esm/catalog.json
+        facets:
+          # mapping from recipe facets to intake-esm catalog facets
+          # TODO: Fix these when Gadi is back up
+          activity: activity_id
+          dataset: source_id
+          ensemble: ensemble
+          exp: experiment
+          grid: grid_label
+          institute: institution_id
+          mip: table_id
+          short_name: variable
+          version: version
+      - file: 
+          /g/data/al33/catalog/v2/esm/catalog.json
+        facets:
+          # mapping from recipe facets to intake-esm catalog facets
+          # TODO: Fix these when Gadi is back up
+          activity: activity_id
+          dataset: source_id
+          ensemble: ensemble
+          exp: experiment
+          institute: institute
+          mip: table
+          short_name: variable
+          version: version
+          timerange: time_range
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
 CMIP3:
