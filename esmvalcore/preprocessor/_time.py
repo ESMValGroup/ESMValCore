@@ -48,8 +48,8 @@ logger = logging.getLogger(__name__)
 
 # Ignore warnings about missing bounds where those are not required
 for _coord in (
-    "clim_season",
-    "day_of_year",
+    "clim_season",   
+    "day_of_year",   
     "day_of_month",
     "month_number",
     "season_year",
