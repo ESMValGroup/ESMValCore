@@ -7,7 +7,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -21,6 +20,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     apply_mask,
     get_dims_along_axes,
@@ -240,7 +240,8 @@ def zonal_statistics(
             "Zonal statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.collapsed("longitude", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed("longitude", agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
     return result
@@ -289,7 +290,8 @@ def meridional_statistics(
             "Meridional statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.collapsed("latitude", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed("latitude", agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
     return result
@@ -352,18 +354,15 @@ def area_statistics(
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
-        agg, agg_kwargs, "cell_area", cube, try_adding_calculated_cell_area
+        operator,
+        agg,
+        agg_kwargs,
+        "cell_area",
+        cube,
+        try_adding_calculated_cell_area,
     )
 
-    with warnings.catch_warnings():
-        # Silence various warnings about collapsing multi-dimensional and/or
-        # non contiguous coordinates as this should be fine when the cell areas
-        # are provided and will fail when they needed but not provided.
-        warnings.filterwarnings(
-            "ignore",
-            category=iris.warnings.IrisVagueMetadataWarning,
-            module="iris",
-        )
+    with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed(["latitude", "longitude"], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)

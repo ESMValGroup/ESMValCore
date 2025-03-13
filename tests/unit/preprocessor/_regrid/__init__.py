@@ -37,12 +37,12 @@ def _make_vcoord(data, dtype=None):
 
 
 def _make_cube(
-    data,
-    aux_coord=True,
-    dim_coord=True,
+    data: np.ndarray,
+    aux_coord: bool = True,
+    dim_coord: bool = True,
     dtype=None,
     grid: Literal["regular", "rotated", "mesh"] = "regular",
-):
+) -> iris.cube.Cube:
     """Create a 3d synthetic test cube."""
     if dtype is None:
         dtype = np.int32
