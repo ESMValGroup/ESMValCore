@@ -1,4 +1,4 @@
-"""Import datsets using Intake-ESM."""
+"""Import datasets using Intake-ESM."""
 
 import logging
 from numbers import Number
