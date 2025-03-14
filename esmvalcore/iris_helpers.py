@@ -5,7 +5,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Dict, Iterable, List, Literal, Sequence
+from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple
 
 import dask.array as da
 import iris
@@ -387,10 +387,18 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # the sublists is a tuple (standard_name, units). Note: All units for a single
 # special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
 # mm s-1 for precipitation
-_SPECIAL_UNIT_CONVERSIONS = [
+_SPECIAL_UNIT_CONVERSIONS: List[List[Tuple[Optional[str], str]]] = [
     [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
+    ],
+    [
+        ("water_evaporation_flux", "kg m-2 s-1"),
+        ("lwe_water_evaporation_rate", "mm s-1"),
+    ],
+    [
+        ("water_potential_evaporation_flux", "kg m-2 s-1"),
+        (None, "mm s-1"),  # no standard_name for potential evaporation rate
     ],
     [
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
@@ -427,7 +435,7 @@ def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
             #   one of the other standard_names in that special case
 
             # Step 1: find suitable source name and units
-            if cube.standard_name == std_name and cube.units.is_convertible(
+            if cube.standard_name is std_name and cube.units.is_convertible(
                 special_units
             ):
                 for target_std_name, target_units in special_case:
