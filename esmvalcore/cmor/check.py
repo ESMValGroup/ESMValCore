@@ -985,6 +985,12 @@ def cmor_check_data(
         check_level=check_level,
     )
     cube = checker(cube).check_data()
+    # Remove the "source_file" attribute that `esmvalcore.preprocessor.load`
+    # adds for CMOR fix and check function logging purposes. This is a bit
+    # ugly and it would be nice to stop using the "source_file" attribute and
+    # pass the data source as an argument to those functions that need it
+    # instead.
+    cube.attributes.pop("source_file", None)
     return cube
 
 
