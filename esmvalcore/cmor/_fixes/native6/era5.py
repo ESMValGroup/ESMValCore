@@ -27,24 +27,22 @@ def get_frequency(cube):
         return "fx"
 
     time.convert_units("days since 1850-1-1 00:00:00.0")
-    if len(time.points) == 1:
-        acceptable_long_names = (
-            "Geopotential",
-            "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
-        )
-        if cube.long_name not in acceptable_long_names:
-            raise ValueError(
-                "Unable to infer frequency of cube "
-                f"with length 1 time dimension: {cube}"
-            )
+
+    if len(time.points) == 1 and cube.long_name == "Geopotential":
         return "fx"
 
-    interval = time.points[1] - time.points[0]
+    if len(time.points) > 1:
+        interval = time.points[1] - time.points[0]
+        if interval - 1 / 24 < 1e-4:
+            return "hourly"
+    else:
+        logger.warning(
+            "Unable to infer frequency of cube "
+            "with length 1 time dimension: %s,"
+            "assuming 'monthly' frequency",
+            str(cube),
+        )
 
-    if interval - 1 / 24 < 1e-4:
-        return "hourly"
-    if interval - 1.0 < 1e-4:
-        return "daily"
     return "monthly"
 
 
