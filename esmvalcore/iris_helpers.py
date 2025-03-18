@@ -435,7 +435,7 @@ def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
             #   one of the other standard_names in that special case
 
             # Step 1: find suitable source name and units
-            if cube.standard_name is std_name and cube.units.is_convertible(
+            if cube.standard_name == std_name and cube.units.is_convertible(
                 special_units
             ):
                 for target_std_name, target_units in special_case:
