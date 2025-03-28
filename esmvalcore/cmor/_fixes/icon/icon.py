@@ -15,9 +15,8 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
+
 from ..shared import fix_ocean_depth_coord
-
-
 from ._base_fixes import IconFix, NegateData
 
 logger = logging.getLogger(__name__)
@@ -552,6 +551,7 @@ class Rtmt(IconFix):
 
 class Oyr(IconFix):
     """Fixes for ``thetao``."""
+
     def fix_metadata(self, cubes):
         """Fix ocean depth coordinate.
 
@@ -566,14 +566,16 @@ class Oyr(IconFix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.var_name == 'depth':
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
+                if z_coord.var_name == "depth":
                     fix_ocean_depth_coord(cube)
         return cubes
 
+
 class Omon(IconFix):
     """Fixes for ``thetao``."""
+
     def fix_metadata(self, cubes):
         """Fix ocean depth coordinate.
 
@@ -588,15 +590,16 @@ class Omon(IconFix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.var_name == 'depth':
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
+                if z_coord.var_name == "depth":
                     fix_ocean_depth_coord(cube)
         return cubes
 
 
 class Oday(IconFix):
     """Fixes for ``thetao``."""
+
     def fix_metadata(self, cubes):
         """Fix ocean depth coordinate.
 
@@ -611,9 +614,9 @@ class Oday(IconFix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.var_name == 'depth':
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
+                if z_coord.var_name == "depth":
                     fix_ocean_depth_coord(cube)
         return cubes
 
