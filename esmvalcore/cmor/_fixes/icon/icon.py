@@ -15,6 +15,8 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
+from ..shared import fix_ocean_depth_coord
+
 
 from ._base_fixes import IconFix, NegateData
 
@@ -546,6 +548,74 @@ class Rtmt(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
+
+
+class Oyr(IconFix):
+    """Fixes for ``thetao``."""
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.var_name == 'depth':
+                    fix_ocean_depth_coord(cube)
+        return cubes
+
+class Omon(IconFix):
+    """Fixes for ``thetao``."""
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.var_name == 'depth':
+                    fix_ocean_depth_coord(cube)
+        return cubes
+
+
+class Oday(IconFix):
+    """Fixes for ``thetao``."""
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.var_name == 'depth':
+                    fix_ocean_depth_coord(cube)
+        return cubes
 
 
 Hfls = NegateData

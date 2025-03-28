@@ -1285,7 +1285,7 @@ def extract_levels(
     ):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
-        result = cube
+        result = iris.util.squeeze(cube)
         # Set the levels to the requested values
         src_levels.points = levels
     elif len(src_levels.shape) == 1 and set(levels).issubset(
