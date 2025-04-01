@@ -85,11 +85,11 @@ class TestConvertUnits(tests.Test):
 
     def test_convert_air_mass(self):
         """Test special conversion of surface pressure to air mass."""
-        self.arr.standard_name = (
-            "surface_air_pressure"
-        )
+        self.arr.standard_name = "surface_air_pressure"
         self.arr.units = "Pa"
-        result = convert_units(self.arr, "atmosphere_mass_of_air_per_unit_area")
+        result = convert_units(
+            self.arr, "atmosphere_mass_of_air_per_unit_area"
+        )
         self.assertEqual(
             result.standard_name,
             "atmosphere_mass_of_air_per_unit_area",
@@ -97,14 +97,12 @@ class TestConvertUnits(tests.Test):
         self.assertEqual(result.units, "kg m-2")
         np.testing.assert_allclose(
             result.data,
-            [[0.0, 1./9.80665], [2./9.80665, 3./9.80665]],
+            [[0.0, 1.0 / 9.80665], [2.0 / 9.80665, 3.0 / 9.80665]],
         )
 
     def test_convert_air_mass_convertible(self):
         """Test special conversion of air mass to surface pressure."""
-        self.arr.standard_name = (
-            "atmosphere_mass_of_air_per_unit_area"
-        )
+        self.arr.standard_name = "atmosphere_mass_of_air_per_unit_area"
         self.arr.units = "surface_air_pressure"
         result = convert_units(self.arr, "Pa")
         self.assertEqual(
