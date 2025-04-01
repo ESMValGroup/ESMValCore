@@ -23,9 +23,7 @@ class DerivedVariable(DerivedVariableBase):
         evspsbl_cube = cubes.extract_cube(
             Constraint(name="water_evapotranspiration_flux")
         )
-        pr_cube = cubes.extract_cube(
-            Constraint(name="precipitation_flux")
-        )
+        pr_cube = cubes.extract_cube(Constraint(name="precipitation_flux"))
 
         qep_cube = evspsbl_cube - pr_cube
         qep_cube.units = pr_cube.units
