@@ -204,7 +204,9 @@ ACCESS:
     default:
       - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
   input_file:
-    default: '{sub_dataset}.{special_attr}-*.nc'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{special_attr}_{short_name}'
+    default:
+      - '{sub_dataset}.{freq_attribute}-*.nc'
+      - 'ocean_{freq_attribute}.nc-*'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{freq_attribute}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
