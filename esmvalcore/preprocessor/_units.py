@@ -38,6 +38,8 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
       ``lwe_precipitation_rate`` (``mm day-1``)
     * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
       ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
+    * ``surface_air_pressure`` (``Pa``) -- 
+      ``atmosphere_mass_of_air_per_unit_area`` (``kg m-2``)
 
     Names in the list correspond to ``standard_names`` of the input data.
     Conversions are allowed from each quantity to any other quantity given in a
