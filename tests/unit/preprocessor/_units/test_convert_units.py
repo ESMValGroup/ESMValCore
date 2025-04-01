@@ -88,7 +88,7 @@ class TestConvertUnits(tests.Test):
         self.arr.standard_name = "surface_air_pressure"
         self.arr.units = "Pa"
         result = convert_units(
-            self.arr, "atmosphere_mass_of_air_per_unit_area"
+            self.arr, "kg m-2"
         )
         self.assertEqual(
             result.standard_name,
@@ -103,7 +103,7 @@ class TestConvertUnits(tests.Test):
     def test_convert_air_mass_convertible(self):
         """Test special conversion of air mass to surface pressure."""
         self.arr.standard_name = "atmosphere_mass_of_air_per_unit_area"
-        self.arr.units = "surface_air_pressure"
+        self.arr.units = "kg m-2"
         result = convert_units(self.arr, "Pa")
         self.assertEqual(
             result.standard_name,
