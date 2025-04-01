@@ -10,7 +10,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project: str) -> list[dict]:
+    def required(project: str) -> list[dict[str, str]]:
         """Declare the variables needed for derivation."""
         required = [
             {"short_name": "evspsbl"},
