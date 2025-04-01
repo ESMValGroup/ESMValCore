@@ -1,6 +1,7 @@
 """Derivation of variable `qep`."""
 
 from iris import Constraint
+from iris.cube import Cube, CubeList
 
 from ._baseclass import DerivedVariableBase
 
@@ -9,7 +10,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project):
+    def required(project: str) -> list[dict]:
         """Declare the variables needed for derivation."""
         required = [
             {"short_name": "evspsbl"},
@@ -18,7 +19,7 @@ class DerivedVariable(DerivedVariableBase):
         return required
 
     @staticmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """Compute net moisture flux into atmosphere."""
         evspsbl_cube = cubes.extract_cube(
             Constraint(name="water_evapotranspiration_flux")
