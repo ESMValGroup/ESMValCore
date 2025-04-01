@@ -398,7 +398,7 @@ _SPECIAL_UNIT_CONVERSIONS = [
     ],
     [
         ("surface_air_pressure", "Pa"),
-        ("atmosphere_mass_of_air_per_unit_area", "1/9.8 kg m-2"),
+        ("atmosphere_mass_of_air_per_unit_area", "1/9.80665 kg m-2"),
     ],
 ]
 
