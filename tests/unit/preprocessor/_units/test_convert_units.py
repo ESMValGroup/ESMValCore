@@ -83,6 +83,36 @@ class TestConvertUnits(tests.Test):
             [[0.0, 1e-2], [2e-2, 3e-2]],
         )
 
+    def test_convert_air_mass(self):
+        """Test special conversion of surface pressure to air mass."""
+        self.arr.standard_name = "surface_air_pressure"
+        self.arr.units = "Pa"
+        result = convert_units(self.arr, "kg m-2")
+        self.assertEqual(
+            result.standard_name,
+            "atmosphere_mass_of_air_per_unit_area",
+        )
+        self.assertEqual(result.units, "kg m-2")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0 / 9.80665], [2.0 / 9.80665, 3.0 / 9.80665]],
+        )
+
+    def test_convert_air_mass_convertible(self):
+        """Test special conversion of air mass to surface pressure."""
+        self.arr.standard_name = "atmosphere_mass_of_air_per_unit_area"
+        self.arr.units = "kg m-2"
+        result = convert_units(self.arr, "Pa")
+        self.assertEqual(
+            result.standard_name,
+            "surface_air_pressure",
+        )
+        self.assertEqual(result.units, "Pa")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 9.80665], [19.6133, 29.41995]],
+        )
+
     def test_convert_precipitation_flux(self):
         """Test special conversion of precipitation_flux."""
         self.arr.standard_name = "precipitation_flux"
