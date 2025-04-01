@@ -404,6 +404,10 @@ _SPECIAL_UNIT_CONVERSIONS: List[List[Tuple[Optional[str], str]]] = [
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
     ],
+    [
+        ("surface_air_pressure", "Pa"),
+        ("atmosphere_mass_of_air_per_unit_area", "1/9.80665 kg m-2"),
+    ],
 ]
 
 
