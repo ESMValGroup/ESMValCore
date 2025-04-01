@@ -23,3 +23,13 @@ def test_qep_calculation(cubes):
     np.testing.assert_equal(out_cube.data, 2)
     assert out_cube.units == "kg m-2 s-1"
     assert out_cube.attributes["positive"] == "up"
+
+
+def test_qep_required():
+    """Test function ``required``."""
+    derived_var = qep.DerivedVariable()
+    output = derived_var.required(None)
+    assert output == [
+        {"short_name": "evspsbl"},
+        {"short_name": "pr"},
+    ]
