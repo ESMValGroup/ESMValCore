@@ -596,7 +596,7 @@ def test_get_gpp_fix():
 def test_gpp_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "gpp"
+    cubes[0].var_name = "assimi_gross_assimilation_box"
     cubes[0].units = "kg m-2 s-1"
 
     fixed_cubes = fix_metadata(cubes, "Lmon", "gpp")
@@ -619,8 +619,8 @@ def test_gpp_fix(cubes_regular_grid):
         fixed_cube.data,
         [
             [
-                [0.0, -1.0 * 44.0095 / 1000],
-                [-2.0 * 44.0095 / 1000, -3.0 * 44.0095 / 1000],
+                [0.0, 1.0 * 44.0095 / 1000],
+                [2.0 * 44.0095 / 1000, 3.0 * 44.0095 / 1000],
             ]
         ],
     )
