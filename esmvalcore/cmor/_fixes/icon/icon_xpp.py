@@ -5,7 +5,6 @@ import logging
 from iris.cube import CubeList
 from scipy import constants
 
-from ..shared import fix_ocean_depth_coord
 from ._base_fixes import AllVarsBase, IconFix, NegateData
 
 logger = logging.getLogger(__name__)
@@ -96,31 +95,3 @@ class Zg(IconFix):
         cube.units /= g0_units
 
         return cubes
-
-
-class Omon(IconFix):
-    """Fixes for ocean variables."""
-
-    def fix_metadata(self, cubes):
-        """Fix ocean depth coordinate.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords(axis="Z"):
-                z_coord = cube.coord(axis="Z")
-                if z_coord.var_name == "depth":
-                    fix_ocean_depth_coord(cube)
-        return cubes
-
-
-Oyr = Omon
-Oday = Omon

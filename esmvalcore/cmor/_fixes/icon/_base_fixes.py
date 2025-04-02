@@ -27,6 +27,8 @@ from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 from esmvalcore.local import _get_data_sources
 
+from ..shared import fix_ocean_depth_coord
+
 logger = logging.getLogger(__name__)
 
 
@@ -563,6 +565,10 @@ class AllVarsBase(IconFix):
                 cube.remove_coord("height")
             else:
                 cube = self._fix_height(cube, cubes)
+
+        # Fix depth for ocean data
+        if cube.coords(long_name="depth_below_sea"):
+            fix_ocean_depth_coord(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
