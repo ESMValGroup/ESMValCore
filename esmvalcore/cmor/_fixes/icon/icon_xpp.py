@@ -117,7 +117,7 @@ class Omon(IconFix):
         for cube in cubes:
             if cube.coords(axis="Z"):
                 z_coord = cube.coord(axis="Z")
-                if z_coord.standard_name is None:
+                if z_coord.var_name == "depth":
                     fix_ocean_depth_coord(cube)
         return cubes
 
