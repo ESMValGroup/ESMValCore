@@ -95,3 +95,19 @@ class Zg(IconFix):
         cube.units /= g0_units
 
         return cubes
+
+class Gpp(IconFix):
+    """Fixes for ``gpp``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+    
+        Convert photosynthesis flux from mol(co2) m-2 s-1 to kg m-2 s-1.
+        Molar mass of CO2(kg) is 44.0095 g/mol
+        
+        """
+        cube = self.get_cube(cubes)
+        cube.data = cube.core_data() * 44.0095 / 1000
+        cube.units = 'kg m-2 s-1'
+
+        return cubes
