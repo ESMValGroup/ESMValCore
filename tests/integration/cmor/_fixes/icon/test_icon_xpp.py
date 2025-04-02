@@ -597,7 +597,7 @@ def test_gpp_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList([cubes_regular_grid[0].copy()])
     cubes[0].var_name = "assimi_gross_assimilation_box"
-    cubes[0].units = "kg m-2 s-1"
+    cubes[0].units = "mol m-2 s-1"
 
     fixed_cubes = fix_metadata(cubes, "Lmon", "gpp")
 
@@ -612,6 +612,7 @@ def test_gpp_fix(cubes_regular_grid):
     )
     assert cube.units == "kg m-2 s-1"
     assert "positive" not in cube.attributes
+    assert "invalid_units" not in cube.attributes
 
     fixed_cube = fix_data(cube, "Lmon", "gpp")
 

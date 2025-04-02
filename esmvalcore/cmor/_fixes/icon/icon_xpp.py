@@ -110,5 +110,6 @@ class Gpp(IconFix):
         cube = self.get_cube(cubes)
         cube.data = cube.core_data() * 44.0095 / 1000
         cube.units = "kg m-2 s-1"
+        cube.attributes.pop("invalid_units", None)
 
         return cubes

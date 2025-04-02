@@ -118,8 +118,7 @@ ICON-XPP:
 
     # 2D land variables
     lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
-    gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml,
-          raw_units: 'kg m-2 s-1'}
+    gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
 
     # 3D dynamical/meteorological variables
     cl: {raw_name: clc, var_type: atm_3d_ml}
