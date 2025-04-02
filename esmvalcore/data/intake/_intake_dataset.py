@@ -5,7 +5,6 @@ from numbers import Number
 from pathlib import Path
 from typing import Any, Sequence
 
-# import isodate
 import intake
 import intake_esm
 
@@ -13,6 +12,7 @@ from esmvalcore.config import CFG
 from esmvalcore.config._config import get_project_config
 from esmvalcore.dataset import Dataset, File
 from esmvalcore.local import LocalFile
+from esmvalcore.typing import Facets
 
 __all__ = ["IntakeDataset", "load_catalogs", "clear_catalog_cache"]
 
@@ -21,13 +21,13 @@ logger = logging.getLogger(__name__)
 _CACHE: dict[Path, intake_esm.core.esm_datastore] = {}
 
 
-def clear_catalog_cache():
+def clear_catalog_cache() -> None:
     """Clear the catalog cache."""
     _CACHE.clear()
 
 
 def load_catalogs(
-    project: str, drs: dict
+    project: str, drs: dict[str, Any]
 ) -> tuple[list[intake_esm.core.esm_datastore], list[dict[str, str]]]:
     """Load all intake-esm catalogs for a project and their associated facet mappings.
 
@@ -73,13 +73,17 @@ def load_catalogs(
 
 
 class IntakeDataset(Dataset):
-    """Load data using Intake-ESM."""
+    """Class to handle loading data using Intake-ESM.
 
-    def __init__(self, **facets):
-        project = facets["project"]
+    Crucially, we do not subclass Dataset, as this is going to cause problems.
+    """
+
+    def __init__(self, **facets: dict[str, Any]) -> None:
+        project: str = facets["project"]  # type: ignore[assignment]
+        self.facets: Facets = {}
         self.catalog, self._facets = load_catalogs(project, CFG["drs"])
-        self._unmapped_facets = {}
-        super().__init__(**facets)
+        self._unmapped_facets: dict[str, Any] = {}
+        self._files: Sequence[File] | None = None
 
     @property
     def files(self) -> Sequence[File]:
@@ -109,7 +113,7 @@ class IntakeDataset(Dataset):
 
         Parameters
         ----------
-        variable : dict
+        facet_map : dict
             A dict mapping the variable names used to initialise the IntakeDataset
             object to their ESMValCore facet names. For example,
             ```
@@ -162,3 +166,50 @@ class IntakeDataset(Dataset):
 
         self.augment_facets()
         return files
+
+
+"""
+def find_files(*, project, short_name, dataset, **facets):
+    catalog, facet_map = load_catalogs(project, CFG["drs"])
+
+    if not isinstance(facet_map["project"], str):
+        raise TypeError(
+            "The project facet must be a string for Intake Datasets."
+        )
+
+    # catalogs, facets_list = load_catalogs(facet_map["project"], drs)
+    if not catalogs:
+        return []
+
+    files = []
+
+    for catalog, facets in zip(catalogs, facets_list, strict=False):
+        query = {val: facet_map.get(key) for key, val in facets.items()}
+        query = {key: val for key, val in query.items() if val is not None}
+
+        unmapped = {
+            key: val for key, val in facet_map.items() if key not in facets
+        }
+        unmapped.pop("project", None)
+
+        # self._unmapped_facets = unmapped
+
+        selection = catalog.search(**query)
+
+        # Select latest version
+        if "version" in facets and "version" not in facet_map:
+            latest_version = max(
+                selection.unique().version
+            )  # These are strings - need to double check the sorting here.
+            facet_map["version"] = latest_version
+            query = {
+                facets["version"]: latest_version,
+            }
+            selection = selection.search(**query)
+
+            files += [LocalFile(f) for f in selection.unique().path]
+
+    # self.augment_facets()
+    return files
+
+"""
