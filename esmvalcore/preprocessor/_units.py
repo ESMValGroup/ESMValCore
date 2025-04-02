@@ -36,6 +36,10 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
 
     * ``precipitation_flux`` (``kg m-2 s-1``) --
       ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``water_evaporation_flux`` (``kg m-2 s-1``) --
+      ``lwe_water_evaporation_rate`` (``mm day-1``)
+    * ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+      ``None`` (``mm day-1``)
     * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
       ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
     * ``surface_air_pressure`` (``Pa``) --
@@ -48,8 +52,8 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
     given are also supported (e.g., instead of ``mm day-1``, ``m s-1`` is also
     supported).
 
-    Note that for precipitation variables, a water density of ``1000 kg m-3``
-    is assumed.
+    Note that for precipitation and evaporation variables, a water density of
+    ``1000 kg m-3`` is assumed.
 
     Parameters
     ----------
