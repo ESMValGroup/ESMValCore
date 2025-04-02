@@ -120,7 +120,7 @@ class Oday(IconFix):
         return cubes
 
 
-class Odmon(IconFix):
+class Omon(IconFix):
     """Fixes for ``thetao``."""
 
     def fix_metadata(self, cubes):
