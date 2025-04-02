@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     AllVars,
     Clwvi,
     Evspsbl,
+    Gpp,
     Hfls,
     Hfss,
     Rlut,
@@ -581,6 +582,48 @@ def test_evspsbl_fix(cubes_regular_grid):
     fixed_cube = fix_data(cube, "Amon", "evspsbl")
 
     np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test gpp (for extra fix)
+
+
+def test_get_gpp_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "gpp")
+    assert fix == [Gpp(None), AllVars(None), GenericFix(None)]
+
+
+def test_gpp_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "gpp"
+    cubes[0].units = "kg m-2 s-1"
+
+    fixed_cubes = fix_metadata(cubes, "Lmon", "gpp")
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "gpp"
+    assert cube.standard_name == (
+        "gross_primary_productivity_of_biomass_expressed_as_carbon"
+    )
+    assert cube.long_name == (
+        "Carbon Mass Flux out of Atmosphere Due to Gross Primary Production on Land [kgC m-2 s-1]"
+    )
+    assert cube.units == "kg m-2 s-1"
+    assert "positive" not in cube.attributes
+
+    fixed_cube = fix_data(cube, "Lmon", "gpp")
+
+    np.testing.assert_allclose(
+        fixed_cube.data,
+        [
+            [
+                [0.0, -1.0 * 44.0095 / 1000],
+                [-2.0 * 44.0095 / 1000, -3.0 * 44.0095 / 1000],
+            ]
+        ],
+    )
 
 
 # Test hfls (for extra fix)
