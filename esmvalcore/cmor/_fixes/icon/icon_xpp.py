@@ -98,30 +98,8 @@ class Zg(IconFix):
         return cubes
 
 
-class Oday(IconFix):
-    """Fixes for ``thetao``."""
-
-    def fix_metadata(self, cubes):
-        """Fix ocean depth coordinate.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords("depth"):
-                fix_ocean_depth_coord(cube)
-        return cubes
-
-
 class Omon(IconFix):
-    """Fixes for ``thetao``."""
+    """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
         """Fix ocean depth coordinate.
@@ -137,28 +115,12 @@ class Omon(IconFix):
 
         """
         for cube in cubes:
-            if cube.coords("depth"):
-                fix_ocean_depth_coord(cube)
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
         return cubes
 
 
-class Oyr(IconFix):
-    """Fixes for ``thetao``."""
-
-    def fix_metadata(self, cubes):
-        """Fix ocean depth coordinate.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords("depth"):
-                fix_ocean_depth_coord(cube)
-        return cubes
+Oyr = Omon
+Oday = Omon
