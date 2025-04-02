@@ -387,7 +387,7 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # the sublists is a tuple (standard_name, units). Note: All units for a single
 # special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
 # mm s-1 for precipitation
-_SPECIAL_UNIT_CONVERSIONS: List[List[Tuple[Optional[str], str]]] = [
+_SPECIAL_UNIT_CONVERSIONS: list[list[tuple[Optional[str], str]]] = [
     [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
