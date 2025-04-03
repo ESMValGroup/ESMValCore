@@ -303,6 +303,36 @@ class NativeDatasetFix(Fix):
         return coord
 
     @staticmethod
+    def fix_depth_coord_metadata(cube, coord=None):
+        """Fix metadata of depth_coord coordinate (in-place).
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+        coord: str or iris.coords.Coord or None, optional (default: None)
+            Coordinate for which metadata will be fixed in-place. If ``None``,
+            assume the coordinate's name is `depth`.
+
+        Returns
+        -------
+        iris.coords.AuxCoord or iris.coords.DimCoord
+            Fixed depth coordinate. The coordinate is altered in-place; it is
+            just returned out of convenience for easy access.
+
+        """
+        if coord is None:
+            coord = cube.coord("depth")
+        elif isinstance(coord, str):
+            coord = cube.coord(coord)
+        coord.var_name = "lev"
+        coord.standard_name = "depth"
+        coord.long_name = "ocean depth coordinate"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "down"
+        return coord
+
+    @staticmethod
     def fix_plev_metadata(cube, coord=None):
         """Fix metadata of air_pressure coordinate (in-place).
 
