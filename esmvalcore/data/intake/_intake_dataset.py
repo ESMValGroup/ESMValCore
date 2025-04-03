@@ -1,20 +1,16 @@
 """Import datasets using Intake-ESM."""
 
 import logging
-from numbers import Number
 from pathlib import Path
 from typing import Any, Sequence
 
 import intake
 import intake_esm
 
-from esmvalcore.config import CFG
-from esmvalcore.config._config import get_project_config
-from esmvalcore.dataset import Dataset, File
+from esmvalcore.config._intake import get_intake_config
 from esmvalcore.local import LocalFile
-from esmvalcore.typing import Facets
 
-__all__ = ["IntakeDataset", "load_catalogs", "clear_catalog_cache"]
+__all__ = ["load_catalogs", "clear_catalog_cache"]
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +43,10 @@ def load_catalogs(
         The facet mapping - a dictionary mapping ESMVlCore dataset facet names
         to the fields in the intake-esm datastore.
     """
-    catalog_info: dict[str, Any] = get_project_config(project).get(
-        "catalogs", {}
+    catalog_info: dict[str, Any] = (
+        get_intake_config().get(project, {}).get("catalogs", {})
     )
+
     site = drs.get(project, "default")
     if site not in catalog_info:
         return [None], [{}]
@@ -72,144 +69,64 @@ def load_catalogs(
     return ([_CACHE[cat_url] for cat_url in catalog_urls], facet_list)
 
 
-class IntakeDataset(Dataset):
-    """Class to handle loading data using Intake-ESM.
+def find_files(
+    *, project: str, drs: dict, facets: dict
+) -> Sequence[LocalFile]:
+    """Find files for variable in all intake-esm catalogs associated with a project.
 
-    Crucially, we do not subclass Dataset, as this is going to cause problems.
-    """
-
-    def __init__(self, **facets: dict[str, Any]) -> None:
-        project: str = facets["project"]  # type: ignore[assignment]
-        self.facets: Facets = {}
-        self.catalog, self._facets = load_catalogs(project, CFG["drs"])
-        self._unmapped_facets: dict[str, Any] = {}
-        self._files: Sequence[File] | None = None
-
-    @property
-    def files(self) -> Sequence[File]:
-        if self._files is None:
-            self._files = self._find_files(self.facets, CFG["drs"])
-        return self._files
-
-    @files.setter
-    def files(self, value: Sequence[File]):
-        """Manually set the files for the dataset."""
-        self._files = value
-
-    @property
-    def filenames(self) -> Sequence[str]:
-        """String representation of the filenames in the dataset."""
-        return [str(f) for f in self.files]
-
-    def _find_files(  # type: ignore[override]
-        self,
-        facet_map: dict[str, str | Sequence[str] | Number],
-        drs: dict[str, Any],
-    ) -> Sequence[File]:
-        """Find files for variable in all intake-esm catalogs associated with a project.
-
-        As a side effect, sets the unmapped_facets attribute - this is used to
-        cache facets which are not in the datastore.
-
-        Parameters
-        ----------
-        facet_map : dict
-            A dict mapping the variable names used to initialise the IntakeDataset
-            object to their ESMValCore facet names. For example,
-            ```
-            ACCESS_ESM1_5 = IntakeDataset(
-                short_name='tos',
-                project='CMIP6',
-            )
-            ```
-            would result in a variable dict of {'short_name': 'tos', 'project': 'CMIP6'}.
-        drs : dict
-            The DRS configuration. Can be obtained from the global configuration drs
-            field, eg. CFG['drs'].
-        """
-        if not isinstance(facet_map["project"], str):
-            raise TypeError(
-                "The project facet must be a string for Intake Datasets."
-            )
-
-        catalogs, facets_list = load_catalogs(facet_map["project"], drs)
-        if not catalogs:
-            return []
-
-        files = []
-
-        for catalog, facets in zip(catalogs, facets_list, strict=False):
-            query = {val: facet_map.get(key) for key, val in facets.items()}
-            query = {key: val for key, val in query.items() if val is not None}
-
-            unmapped = {
-                key: val for key, val in facet_map.items() if key not in facets
-            }
-            unmapped.pop("project", None)
-
-            self._unmapped_facets = unmapped
-
-            selection = catalog.search(**query)
-
-            # Select latest version
-            if "version" in facets and "version" not in facet_map:
-                latest_version = max(
-                    selection.unique().version
-                )  # These are strings - need to double check the sorting here.
-                facet_map["version"] = latest_version
-                query = {
-                    facets["version"]: latest_version,
-                }
-                selection = selection.search(**query)
-
-                files += [LocalFile(f) for f in selection.unique().path]
-
-        self.augment_facets()
-        return files
-
-
-"""
-def find_files(*, project, short_name, dataset, **facets):
-    catalog, facet_map = load_catalogs(project, CFG["drs"])
-
-    if not isinstance(facet_map["project"], str):
-        raise TypeError(
-            "The project facet must be a string for Intake Datasets."
+    Parameters
+    ----------
+    facet_map : dict
+        A dict mapping the variable names used to initialise the IntakeDataset
+        object to their ESMValCore facet names. For example,
+        ```
+        ACCESS_ESM1_5 = IntakeDataset(
+            short_name='tos',
+            project='CMIP6',
         )
+        ```
+        would result in a variable dict of {'short_name': 'tos', 'project': 'CMIP6'}.
+    drs : dict
+        The DRS configuration. Can be obtained from the global configuration drs
+        field, eg. CFG['drs'].
+    """
+    catalogs, facet_maps = load_catalogs(project, drs)
 
-    # catalogs, facets_list = load_catalogs(facet_map["project"], drs)
     if not catalogs:
         return []
 
     files = []
 
-    for catalog, facets in zip(catalogs, facets_list, strict=False):
-        query = {val: facet_map.get(key) for key, val in facets.items()}
-        query = {key: val for key, val in query.items() if val is not None}
+    for catalog, facet_map in zip(catalogs, facet_maps, strict=False):
+        query = {facet_map.get(key): val for key, val in facets.items()}
+        query.pop(None, None)
 
-        unmapped = {
-            key: val for key, val in facet_map.items() if key not in facets
+        _unused_facets = {
+            key: val for key, val in facets.items() if key not in facet_map
         }
-        unmapped.pop("project", None)
 
-        # self._unmapped_facets = unmapped
+        logger.info(
+            "Unable to refine datastore search on catalog %s with the following facets %s",
+            catalog.esmcat.catalog_file,
+            _unused_facets,
+        )
 
         selection = catalog.search(**query)
 
+        if not selection:
+            continue
+
         # Select latest version
-        if "version" in facets and "version" not in facet_map:
+        if "version" in facet_map and "version" not in facets:
             latest_version = max(
                 selection.unique().version
             )  # These are strings - need to double check the sorting here.
-            facet_map["version"] = latest_version
             query = {
-                facets["version"]: latest_version,
+                **query,
+                facet_map["version"]: latest_version,
             }
             selection = selection.search(**query)
 
             files += [LocalFile(f) for f in selection.unique().path]
 
-    # self.augment_facets()
     return files
-
-"""
