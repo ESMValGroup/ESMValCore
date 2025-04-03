@@ -137,7 +137,7 @@ ICON-XPP:
     vo: {raw_name: v, var_type: oce_def}
     thetao: {raw_name: to, var_type: oce_def, raw_units: degC}
     so: {raw_name: so, var_type: oce_def, raw_units: 0.001}
-  
+
   # 2D ocean
     mlotst: {raw_name: mld, var_type: oce_dbg}
     zos: {raw_name: zos, var_type: oce_dbg}
