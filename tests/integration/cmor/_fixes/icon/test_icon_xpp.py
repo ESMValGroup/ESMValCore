@@ -43,14 +43,14 @@ def tmp_cache_dir(monkeypatch, tmp_path):
 @pytest.fixture
 def cubes_2d(test_data_path):
     """2D sample cubes."""
-    nc_path = test_data_path / "icon_xpp_2d.nc"
+    nc_path = test_data_path / "icon_xpp_atm_2d.nc"
     return iris.load(str(nc_path))
 
 
 @pytest.fixture
 def cubes_3d(test_data_path):
     """3D sample cubes."""
-    nc_path = test_data_path / "icon_xpp_3d.nc"
+    nc_path = test_data_path / "icon_xpp_atm_3d.nc"
     return iris.load(str(nc_path))
 
 
