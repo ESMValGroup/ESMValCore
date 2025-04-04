@@ -143,4 +143,4 @@ ICON-XPP:
     zos: {raw_name: zos, var_type: oce_dbg}
     hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
     sithick: {raw_name: hi, var_type: oce_ice}
-    sic: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
+    siconc: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
