@@ -1,11 +1,11 @@
 """Common fix operations for native datasets."""
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from iris import NameConstraint
-from iris.coords import Coord
-from iris.cube import Cube, CubeList
 
 from esmvalcore.iris_helpers import safe_convert_units
 
@@ -15,6 +15,10 @@ from .shared import (
     add_scalar_lambda550nm_coord,
     add_scalar_typesi_coord,
 )
+
+if TYPE_CHECKING:
+    from iris.coords import Coord
+    from iris.cube import Cube, CubeList
 
 logger = logging.getLogger(__name__)
 
