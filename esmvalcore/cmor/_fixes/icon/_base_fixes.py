@@ -573,7 +573,7 @@ class AllVarsBase(IconFix):
 
         # Fix depth of ocean data
         if cube.coords(long_name="depth_below_sea"):
-            self.fix_depth_coord_metadata(cube)
+            self._fix_depth(cube, cubes)
 
         # Remove undesired lev coordinate with length 1
         lev_coord = DimCoord(0.0, var_name="lev")
@@ -784,11 +784,13 @@ class AllVarsBase(IconFix):
 
         # Try to get bounds of depth coordinate from depth_2 coordinate that
         # might be present in other variables loaded from the same file
-        # for other_cube in cubes:
-        #     if not other_cube.coords(var_name="depth_2"):
-        #         continue
-        #     depth_2_coord = cube.coord(var_name="depth_2")
-        #     depth_2_coord.convert_units(depth_coord.units)
+        for other_cube in cubes:
+            if not other_cube.coords(var_name="depth_2"):
+                continue
+            depth_2_coord = other_cube.coord(var_name="depth_2")
+            depth_2_coord.convert_units(depth_coord.units)
+            bounds = depth_2_coord.core_points()
+            depth_coord.bounds = np.stack((bounds[:-1], bounds[1:]), axis=-1)
 
     def _fix_lat(self, cube: Cube) -> tuple[int, ...]:
         """Fix latitude coordinate of cube."""
