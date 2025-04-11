@@ -54,6 +54,11 @@ def sample_cube():
         long_name="height",
         units="km",
     )
+    depth_coord = AuxCoord(
+        [2.0, 4.0],
+        long_name="depth",
+        units="km",
+    )
     coord_with_bounds = AuxCoord(
         [2.0, 4.0],
         bounds=[[0.0, 2.5], [2.5, 10.0]],
@@ -81,6 +86,7 @@ def sample_cube():
         aux_coords_and_dims=[
             (alt16_coord, 1),
             (height_coord, 1),
+            (depth_coord, 1),
             (coord_with_bounds, 1),
         ],
     )
@@ -611,4 +617,44 @@ def test_fix_lon_metadata_from_coord(sample_cube, fix):
     assert out_coord.long_name == "longitude"
     assert out_coord.units == "degrees_east"
     np.testing.assert_allclose(out_coord.points, [0.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata``."""
+    out_coord = fix.fix_depth_coord_metadata(sample_cube)
+    assert out_coord is sample_cube.coord("depth")
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata_from_str(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata`` from string."""
+    out_coord = fix.fix_depth_coord_metadata(sample_cube, coord="depth")
+    assert out_coord is sample_cube.coord("depth")
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata_from_coord(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata`` from string."""
+    coord = AuxCoord([2.0], units="m")
+    out_coord = fix.fix_depth_coord_metadata(sample_cube, coord=coord)
+    assert out_coord is coord
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2.0])
     assert out_coord.bounds is None

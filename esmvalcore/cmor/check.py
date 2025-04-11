@@ -639,7 +639,7 @@ class CMORCheck:
         """Check requested values."""
         if coord_info.requested:
             if coord.core_points().ndim != 1:
-                self.report_warning(
+                self.report_debug_message(
                     "Cannot check requested values of {}D coordinate {} since "
                     "it is not 1D",
                     coord.core_points().ndim,
