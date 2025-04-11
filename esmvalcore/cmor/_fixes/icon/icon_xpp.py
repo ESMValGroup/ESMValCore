@@ -19,7 +19,7 @@ class AllVars(AllVarsBase):
 class Clwvi(IconFix):
     """Fixes for ``clwvi``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="tqc_dia") + self.get_cube(
             cubes, var_name="tqi_dia"
@@ -34,7 +34,7 @@ Evspsbl = NegateData
 class Gpp(IconFix):
     """Fixes for ``gpp``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata.
 
         Convert photosynthesis flux from mol(co2) m-2 s-1 to kg m-2 s-1.
@@ -61,7 +61,7 @@ Rlut = NegateData
 class Rlutcs(IconFix):
     """Fixes for ``rlutcs``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         # Level at index 0 is TOA
         cube = self.get_cube(cubes, var_name="lwflx_up_clr")[:, 0, ...]
@@ -72,7 +72,7 @@ class Rlutcs(IconFix):
 class Rsutcs(IconFix):
     """Fixes for ``rsutcs``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         # Level at index 0 is TOA
         cube = self.get_cube(cubes, var_name="swflx_up_clr")[:, 0, ...]
@@ -83,7 +83,7 @@ class Rsutcs(IconFix):
 class Rtmt(IconFix):
     """Fixes for ``rtmt``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="sob_t") + self.get_cube(
             cubes, var_name="thb_t"
@@ -98,7 +98,7 @@ Rtnt = Rtmt
 class Zg(IconFix):
     """Fixes for ``zg``."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata.
 
         Convert geopotential Phi given by ICON-XPP to geopotential height
