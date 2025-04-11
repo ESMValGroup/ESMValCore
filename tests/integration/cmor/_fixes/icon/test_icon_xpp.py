@@ -41,16 +41,23 @@ def tmp_cache_dir(monkeypatch, tmp_path):
 
 
 @pytest.fixture
-def cubes_2d(test_data_path):
+def cubes_atm_2d(test_data_path):
     """2D sample cubes."""
     nc_path = test_data_path / "icon_xpp_atm_2d.nc"
     return iris.load(str(nc_path))
 
 
 @pytest.fixture
-def cubes_3d(test_data_path):
+def cubes_atm_3d(test_data_path):
     """3D sample cubes."""
     nc_path = test_data_path / "icon_xpp_atm_3d.nc"
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_ocean_3d(test_data_path):
+    """3D sample cubes."""
+    nc_path = test_data_path / "icon_xpp_ocean_3d.nc"
     return iris.load(str(nc_path))
 
 
@@ -726,9 +733,9 @@ def test_get_rlutcs_fix():
     assert fix == [Rlutcs(None), AllVars(None), GenericFix(None)]
 
 
-def test_rlutcs_fix(cubes_3d):
+def test_rlutcs_fix(cubes_atm_3d):
     """Test fix."""
-    cube = cubes_3d.extract_cube(NameConstraint(var_name="temp"))
+    cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
     cube.var_name = "lwflx_up_clr"
     cube.units = "W m-2"
     cube.data = np.arange(1 * 47 * 8, dtype=np.float32).reshape(1, 47, 8)
@@ -764,10 +771,10 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsdt_fix(cubes_2d):
+def test_rsdt_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsdt")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -787,10 +794,10 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsut_fix(cubes_2d):
+def test_rsut_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsut")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -813,9 +820,9 @@ def test_get_rsutcs_fix():
     assert fix == [Rsutcs(None), AllVars(None), GenericFix(None)]
 
 
-def test_rsutcs_fix(cubes_3d):
+def test_rsutcs_fix(cubes_atm_3d):
     """Test fix."""
-    cube = cubes_3d.extract_cube(NameConstraint(var_name="temp"))
+    cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
     cube.var_name = "swflx_up_clr"
     cube.units = "W m-2"
     cube.data = np.arange(1 * 47 * 8, dtype=np.float32).reshape(1, 47, 8)
@@ -908,7 +915,7 @@ def test_rtmt_fix(cubes_regular_grid):
     np.testing.assert_allclose(cube.data, [[[0.0, 2.0], [4.0, 6.0]]])
 
 
-# Test siconc and siconca (for extra_facets, extra fix and typesi coordinate)
+# Test siconc (for extra_facets, removal of lev coord and  typesi coordinate)
 
 
 def test_get_siconc_fix():
@@ -917,10 +924,21 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconc_fix(cubes_2d):
+def test_siconc_fix(cubes_ocean_3d):
     """Test fix."""
+    cubes = CubeList(
+        [cubes_ocean_3d.extract_cube(NameConstraint(var_name="to")).copy()]
+    )
+    cubes[0].var_name = "conc"
+    cubes[0].units = None
+
+    # Add lev coord to test removal of it
+    cubes[0] = cubes[0][:, [0], :]
+    cubes[0].remove_coord("depth")
+    cubes[0].add_dim_coord(DimCoord(0.0, var_name="lev"), 1)
+
     fix = get_allvars_fix("SImon", "siconc")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_siconc_metadata(
         fixed_cubes, "siconc", "Sea-Ice Area Percentage (Ocean Grid)"
@@ -929,10 +947,28 @@ def test_siconc_fix(cubes_2d):
     check_lat_lon(cube)
     check_typesi(cube)
 
+    assert cube.shape == (1, 8)
+    assert not cube.coords(var_name="lev")
+
+    assert cube.dtype == np.float32
     np.testing.assert_allclose(
         cube.data,
-        [[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0]],
+        [
+            [
+                18660.58,
+                18646.307,
+                18668.656,
+                18668.893,
+                18651.273,
+                18642.248,
+                18647.305,
+                18664.15,
+            ]
+        ],
     )
+
+
+# Test siconca (for extra_facets and typesi coordinate)
 
 
 def test_get_siconca_fix():
@@ -941,10 +977,10 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconca_fix(cubes_2d):
+def test_siconca_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconca")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
         fixed_cubes, "siconca", "Sea-Ice Area Percentage (Atmospheric Grid)"
@@ -968,15 +1004,18 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_ta_fix(cubes_3d):
+def test_ta_fix(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
-    fixed_cubes = fix.fix_metadata(cubes_3d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_3d)
 
     cube = check_ta_metadata(fixed_cubes)
     check_time(cube)
     check_height(cube)
     check_lat_lon(cube)
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
 
 
 # Test tas (for height2m coordinate)
@@ -988,15 +1027,116 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_tas_fix(cubes_2d):
+def test_tas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     check_time(cube)
     check_lat_lon(cube)
     check_heightxm(cube, 2.0)
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 8)
+    np.testing.assert_allclose(
+        cube.data,
+        [
+            [
+                266.02856,
+                265.08435,
+                264.6843,
+                266.6293,
+                262.27255,
+                262.97803,
+                260.04846,
+                263.80975,
+            ]
+        ],
+    )
+
+
+# Test thetao (for depth coordinate)
+
+
+def test_get_thetao_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Omon", "thetao")
+    assert fix == [AllVars(None), GenericFix(None)]
+
+
+def test_thetao_fix(cubes_ocean_3d):
+    """Test fix."""
+    fix = get_allvars_fix("Omon", "thetao")
+
+    fixed_cubes = fix.fix_metadata(cubes_ocean_3d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+def test_thetao_fix_already_bounds(cubes_ocean_3d):
+    """Test fix."""
+    cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    cube.coord("depth").guess_bounds()
+    bounds = cube.coord("depth").bounds.copy()
+    bounds[0, 0] = -1000.0
+    cube.coord("depth").bounds = bounds
+    cubes = CubeList([cube])
+
+    fix = get_allvars_fix("Omon", "thetao")
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert depth_coord.has_bounds()
+    np.testing.assert_allclose(depth_coord.bounds[0, 0], -1000.0)
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+def test_thetao_fix_no_bounds(cubes_ocean_3d):
+    """Test fix."""
+    cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    cubes = CubeList([cube])
+
+    fix = get_allvars_fix("Omon", "thetao")
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert not depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
 
 
 # Test zg (for extra fix)
