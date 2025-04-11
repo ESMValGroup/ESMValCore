@@ -107,7 +107,6 @@ ICON-XPP:
     rtnt: {var_type: atm_2d_ml}
     sfcWind: {raw_name: sp_10m, var_type: atm_2d_ml}
     sftlf: {raw_name: fr_land, raw_units: '1', var_type: atm_2d_ml}
-    siconc: {raw_name: fr_seaice, var_type: atm_2d_ml}
     siconca: {raw_name: fr_seaice, var_type: atm_2d_ml}
     swcre: {var_type: atm_2d_ml}
     tas: {raw_name: t_2m, var_type: atm_2d_ml}
@@ -131,3 +130,16 @@ ICON-XPP:
     va: {raw_name: v, var_type: atm_3d_ml}
     wap: {raw_name: omega, var_type: atm_3d_ml}
     zg: {raw_name: geopot, var_type: atm_3d_ml}
+
+  # 3D ocean variables
+    uo: {raw_name: u, var_type: oce_def}
+    vo: {raw_name: v, var_type: oce_def}
+    thetao: {raw_name: to, var_type: oce_def, raw_units: degC}
+    so: {raw_name: so, var_type: oce_def, raw_units: 0.001}
+
+  # 2D ocean
+    mlotst: {raw_name: mld, var_type: oce_dbg}
+    zos: {raw_name: zos, var_type: oce_dbg}
+    hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
+    sithick: {raw_name: hi, var_type: oce_ice}
+    siconc: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
