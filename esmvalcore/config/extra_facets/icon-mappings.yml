@@ -17,7 +17,7 @@ ICON:
     areacella: {raw_name: cell_area}
     areacello: {raw_name: cell_area}
 
-    # 2D dynamical/meteorological variables
+    # 2D atmosphere variables
     asr: {var_type: atm_2d_ml}
     clivi: {var_type: atm_2d_ml}
     clt: {var_type: atm_2d_ml}
@@ -50,8 +50,6 @@ ICON:
     rsutcs: {var_type: atm_2d_ml}
     rtmt: {var_type: atm_2d_ml}
     rtnt: {var_type: atm_2d_ml}
-    siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
-    siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
     swcre: {var_type: atm_2d_ml}
     tas: {var_type: atm_2d_ml}
     tasmax: {var_type: atm_2d_ml}
@@ -62,7 +60,7 @@ ICON:
     uas: {var_type: atm_2d_ml}
     vas: {var_type: atm_2d_ml}
 
-    # 3D dynamical/meteorological variables
+    # 3D atmosphere variables
     cl: {var_type: atm_3d_ml}
     cli: {var_type: atm_3d_ml}
     clw: {var_type: atm_3d_ml}
@@ -74,11 +72,15 @@ ICON:
     wap: {var_type: atm_3d_ml}
     zg: {var_type: atm_3d_ml}
 
+    # 2D ocean variables
+    siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
+    siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
+
 
 ICON-XPP:
 
   '*':
-    # 2D dynamical/meteorological variables
+    # 2D atmosphere variables
     asr: {var_type: atm_2d_ml}
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
     clt: {raw_name: clct, var_type: atm_2d_ml}
@@ -107,19 +109,13 @@ ICON-XPP:
     rtnt: {var_type: atm_2d_ml}
     sfcWind: {raw_name: sp_10m, var_type: atm_2d_ml}
     sftlf: {raw_name: fr_land, raw_units: '1', var_type: atm_2d_ml}
-    siconca: {raw_name: fr_seaice, var_type: atm_2d_ml}
     swcre: {var_type: atm_2d_ml}
     tas: {raw_name: t_2m, var_type: atm_2d_ml}
     tauu: {raw_name: umfl_s, var_type: atm_2d_ml}
     tauv: {raw_name: vmfl_s, var_type: atm_2d_ml}
-    tos: {raw_name: t_seasfc, var_type: atm_2d_ml}
     ts: {raw_name: t_s, var_type: atm_2d_ml}
 
-    # 2D land variables
-    lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
-    gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
-
-    # 3D dynamical/meteorological variables
+    # 3D atmosphere variables
     cl: {raw_name: clc, var_type: atm_3d_ml}
     cli: {raw_name: tot_qi_dia, var_type: atm_3d_ml}
     clw: {raw_name: tot_qc_dia, var_type: atm_3d_ml}
@@ -131,15 +127,21 @@ ICON-XPP:
     wap: {raw_name: omega, var_type: atm_3d_ml}
     zg: {raw_name: geopot, var_type: atm_3d_ml}
 
-  # 3D ocean variables
+    # 2D land variables
+    gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
+    lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
+
+    # 2D ocean variables
+    hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
+    mlotst: {raw_name: mld, var_type: oce_dbg}
+    siconc: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
+    siconca: {raw_name: fr_seaice, var_type: atm_2d_ml}
+    sithick: {raw_name: hi, var_type: oce_ice}
+    tos: {raw_name: t_seasfc, var_type: atm_2d_ml}
+    zos: {raw_name: zos, var_type: oce_dbg}
+
+    # 3D ocean variables
+    so: {raw_name: so, var_type: oce_def, raw_units: 0.001}
+    thetao: {raw_name: to, var_type: oce_def, raw_units: degC}
     uo: {raw_name: u, var_type: oce_def}
     vo: {raw_name: v, var_type: oce_def}
-    thetao: {raw_name: to, var_type: oce_def, raw_units: degC}
-    so: {raw_name: so, var_type: oce_def, raw_units: 0.001}
-
-  # 2D ocean
-    mlotst: {raw_name: mld, var_type: oce_dbg}
-    zos: {raw_name: zos, var_type: oce_dbg}
-    hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
-    sithick: {raw_name: hi, var_type: oce_ice}
-    siconc: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
