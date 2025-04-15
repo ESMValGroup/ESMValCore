@@ -231,7 +231,7 @@ jobs:
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
             # Test building documentation
-            MPLBACKEND=Agg sphinx-build -W doc doc/build
+            LC_ALL=C.UTF-8 MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
