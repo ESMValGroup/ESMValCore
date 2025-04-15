@@ -223,7 +223,7 @@ jobs:
             mkdir /logs
             . /opt/conda/etc/profile.d/conda.sh
             # Install
-            mamba env create
+            mamba env create -n esmvaltool -f environment.yml
             conda activate esmvaltool
             pip install .[doc]
             # Log versions
@@ -231,13 +231,14 @@ jobs:
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
             # Test building documentation
-            MPLBACKEND=Agg sphinx-build -W doc doc/build
+            LC_ALL=C MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
 workflows:
   commit:
     jobs:
+      - build_documentation
       - run_tests
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
