@@ -233,7 +233,7 @@ jobs:
             # Test building documentation
             # force set locale, see
             # https://github.com/sphinx-doc/sphinx/issues/11739
-            LC_ALL=C.UTF-8 MPLBACKEND=Agg sphinx-build -W doc doc/build
+            LC_ALL=C MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
