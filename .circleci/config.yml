@@ -231,13 +231,16 @@ jobs:
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
             # Test building documentation
-            MPLBACKEND=Agg sphinx-build -W doc doc/build
+            # force set locale, see
+            # https://github.com/sphinx-doc/sphinx/issues/11739
+            LC_ALL=C.UTF-8 MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
 workflows:
   commit:
     jobs:
+      - build_documentation
       - run_tests
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
