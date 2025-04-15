@@ -431,6 +431,7 @@ To allow ESMValCore to locate the data files, use the following steps:
             default:
               - '{exp}'
               - '{exp}/outdata'
+              - '{exp}/output'
           input_file:
             default: '{exp}_{var_type}*.nc'
           ...
