@@ -48,7 +48,6 @@ if on_rtd:
     # we are not sure if it is Sphinx or Iris at fault
     # see https://github.com/ESMValGroup/ESMValCore/pull/2708
     # os.environ["LC_ALL"] = "C"  # works but only 50% times
-    # os.environ["LC_CTYPE"] = "C"  # same as above
 if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
