@@ -51,6 +51,8 @@ if on_rtd:
 if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
+print(os.environ)
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
