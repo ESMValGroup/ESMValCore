@@ -19,7 +19,7 @@ build:
       html:
         - locale
         - python -m locale
-        - python -c "'import cf_units'"
+        - python -c "import cf_units"
         - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en . $READTHEDOCS_OUTPUT/html
 
 # Declare the requirements required to build your docs
