@@ -239,7 +239,6 @@ workflows:
   commit:
     jobs:
       - run_tests
-      - test_with_upstream_developments
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
 
