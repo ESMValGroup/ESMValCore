@@ -13,6 +13,8 @@ build:
     # DO NOT use mambaforge-*; that is currently sunsetted
     python: "miniconda-latest"
   jobs:
+    pre_create_environment:
+      - echo "  - python != 3.13.3" >> environment.yml
     post_create_environment:
       - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
     build:
