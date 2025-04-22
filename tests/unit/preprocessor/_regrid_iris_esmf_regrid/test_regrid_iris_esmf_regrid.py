@@ -54,7 +54,7 @@ class TestIrisESMFRegrid:
     def test_get_mask_2d(self):
         cube = iris.cube.Cube(
             np.ma.masked_array(np.arange(4), mask=[1, 0, 1, 0]).reshape(
-                (2, 2)
+                (2, 2),
             ),
             dim_coords_and_dims=(
                 [
@@ -79,7 +79,7 @@ class TestIrisESMFRegrid:
     def test_get_mask_3d(self):
         cube = iris.cube.Cube(
             np.ma.masked_array(np.arange(4), mask=[1, 0, 1, 1]).reshape(
-                (2, 1, 2)
+                (2, 1, 2),
             ),
             dim_coords_and_dims=(
                 [
@@ -111,7 +111,7 @@ class TestIrisESMFRegrid:
     def test_get_mask_3d_odd_dim_order(self):
         cube = iris.cube.Cube(
             np.ma.masked_array(np.arange(4), mask=[1, 0, 1, 1]).reshape(
-                (1, 2, 2)
+                (1, 2, 2),
             ),
             dim_coords_and_dims=(
                 [

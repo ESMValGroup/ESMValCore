@@ -47,7 +47,7 @@ def test_decadal_average(method):
         expected = np.zeros([2, 24])
     else:
         expected = np.array(
-            (np.arange(1, 25) - 12.5, np.arange(25, 49) - 36.5)
+            (np.arange(1, 25) - 12.5, np.arange(25, 49) - 36.5),
         )
     assert_array_almost_equal(result.data, expected)
 

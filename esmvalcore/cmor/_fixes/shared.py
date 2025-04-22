@@ -3,7 +3,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
-from functools import lru_cache
+from functools import cache
 
 import dask.array as da
 import iris
@@ -45,7 +45,7 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         if len(coord_cube) != 1:
             raise ValueError(
                 f"Expected exactly one coordinate cube '{coord_name}' in "
-                f"list of cubes {cubes}, got {len(coord_cube):d}"
+                f"list of cubes {cubes}, got {len(coord_cube):d}",
             )
         coord_cube = coord_cube[0]
         aux_coord = cube_to_aux_coord(coord_cube)
@@ -108,13 +108,15 @@ def add_plev_from_altitude(cube):
             height_coord.convert_units("m")
         altitude_to_pressure = get_altitude_to_pressure_func()
         pressure_points = _map_on_filled(
-            altitude_to_pressure, height_coord.core_points()
+            altitude_to_pressure,
+            height_coord.core_points(),
         )
         if height_coord.core_bounds() is None:
             pressure_bounds = None
         else:
             pressure_bounds = _map_on_filled(
-                altitude_to_pressure, height_coord.core_bounds()
+                altitude_to_pressure,
+                height_coord.core_bounds(),
             )
         pressure_coord = iris.coords.AuxCoord(
             pressure_points,
@@ -128,7 +130,7 @@ def add_plev_from_altitude(cube):
         return
     raise ValueError(
         "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
-        "available"
+        "available",
     )
 
 
@@ -151,13 +153,15 @@ def add_altitude_from_plev(cube):
             plev_coord.convert_units("Pa")
         pressure_to_altitude = get_pressure_to_altitude_func()
         altitude_points = _map_on_filled(
-            pressure_to_altitude, plev_coord.core_points()
+            pressure_to_altitude,
+            plev_coord.core_points(),
         )
         if plev_coord.core_bounds() is None:
             altitude_bounds = None
         else:
             altitude_bounds = _map_on_filled(
-                pressure_to_altitude, plev_coord.core_bounds()
+                pressure_to_altitude,
+                plev_coord.core_bounds(),
             )
         altitude_coord = iris.coords.AuxCoord(
             altitude_points,
@@ -171,7 +175,7 @@ def add_altitude_from_plev(cube):
         return
     raise ValueError(
         "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
-        "available"
+        "available",
     )
 
 
@@ -290,7 +294,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_altitude_to_pressure_func():
     """Get function converting altitude [m] to air pressure [Pa].
 
@@ -341,15 +345,15 @@ def get_bounds_cube(cubes, coord_var_name):
             return cube[0]
         if len(cube) > 1:
             raise ValueError(
-                f"Multiple cubes with var_name '{bound_var}' found"
+                f"Multiple cubes with var_name '{bound_var}' found",
             )
     raise ValueError(
         f"No bounds for coordinate variable '{coord_var_name}' available in "
-        f"cubes\n{cubes}"
+        f"cubes\n{cubes}",
     )
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_pressure_to_altitude_func():
     """Get function converting air pressure [Pa] to altitude [m].
 
@@ -528,13 +532,13 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
             if 24 % n_hours:
                 raise NotImplementedError(
                     f"For `n`-hourly data, `n` must be a divisor of 24, got "
-                    f"'{freq}'"
+                    f"'{freq}'",
                 )
             min_bound = date - timedelta(hours=n_hours / 2.0)
             max_bound = date + timedelta(hours=n_hours / 2.0)
         else:
             raise NotImplementedError(
-                f"Cannot guess time bounds for frequency '{freq}'"
+                f"Cannot guess time bounds for frequency '{freq}'",
             )
         bounds.append([min_bound, max_bound])
 

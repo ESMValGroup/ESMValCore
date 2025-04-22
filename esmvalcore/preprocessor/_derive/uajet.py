@@ -28,10 +28,11 @@ class DerivedVariable(DerivedVariableBase):
         # Load cube, extract correct region and perform zonal mean
         ua_cube = cubes.extract_cube(iris.Constraint(name="eastward_wind"))
         ua_cube = ua_cube.interpolate(
-            [("air_pressure", PLEV)], scheme=iris.analysis.Linear()
+            [("air_pressure", PLEV)],
+            scheme=iris.analysis.Linear(),
         )
         ua_cube = ua_cube.extract(
-            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1])
+            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1]),
         )
         with ignore_iris_vague_metadata_warnings():
             ua_cube = ua_cube.collapsed("longitude", iris.analysis.MEAN)

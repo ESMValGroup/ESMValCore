@@ -5,9 +5,10 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Iterable
+from typing import Any
 
 from dask.delayed import Delayed
 from iris.cube import Cube
@@ -245,7 +246,7 @@ def check_preprocessor_settings(settings):
         if step not in DEFAULT_ORDER:
             raise ValueError(
                 f"Unknown preprocessor function '{step}', choose from: "
-                f"{', '.join(DEFAULT_ORDER)}"
+                f"{', '.join(DEFAULT_ORDER)}",
             )
 
         function = globals()[step]
@@ -272,7 +273,7 @@ def check_preprocessor_settings(settings):
             [
                 inspect.Parameter.VAR_POSITIONAL in var_kinds,
                 inspect.Parameter.VAR_KEYWORD in var_kinds,
-            ]
+            ],
         )
         if check_args:
             invalid_args = set(settings[step]) - set(args)
@@ -280,7 +281,7 @@ def check_preprocessor_settings(settings):
                 raise ValueError(
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
-                    f"Valid arguments are: [{', '.join(args)}]"
+                    f"Valid arguments are: [{', '.join(args)}]",
                 )
 
         # Check for missing arguments
@@ -294,7 +295,7 @@ def check_preprocessor_settings(settings):
         if missing_args:
             raise ValueError(
                 f"Missing required argument(s) {missing_args} for "
-                f"preprocessor function {step}"
+                f"preprocessor function {step}",
             )
 
         # Final sanity check in case the above fails to catch a mistake
@@ -327,7 +328,7 @@ def _check_multi_model_settings(products):
                 raise ValueError(
                     "Unable to combine differing multi-dataset settings for "
                     f"{reference.filename} and {product.filename}, "
-                    f"{reference.settings[step]} and {settings}"
+                    f"{reference.settings[step]} and {settings}",
                 )
 
 
@@ -347,7 +348,7 @@ def _get_multi_model_settings(products, step):
 def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
-        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()]
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()],
     )
     if input_files is None:
         file_msg = ""
@@ -405,7 +406,12 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
 
 
 def preprocess(
-    items, step, input_files=None, output_file=None, debug=False, **settings
+    items,
+    step,
+    input_files=None,
+    output_file=None,
+    debug=False,
+    **settings,
 ):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
@@ -420,15 +426,21 @@ def preprocess(
     if itype.endswith("s"):
         result.append(
             _run_preproc_function(
-                function, items, settings, input_files=input_files
-            )
+                function,
+                items,
+                settings,
+                input_files=input_files,
+            ),
         )
     else:
         for item in items:
             result.append(
                 _run_preproc_function(
-                    function, item, settings, input_files=input_files
-                )
+                    function,
+                    item,
+                    settings,
+                    input_files=input_files,
+                ),
             )
 
     if step == "save":
@@ -520,7 +532,7 @@ class PreprocessorFile(TrackedFile):
         """Apply preprocessor step to product."""
         if step not in self.settings:
             raise ValueError(
-                f"PreprocessorFile {self} has no settings for step {step}"
+                f"PreprocessorFile {self} has no settings for step {step}",
             )
         self.cubes = preprocess(
             self.cubes,
@@ -717,7 +729,9 @@ class PreprocessingTask(BaseTask):
             if block[0] in MULTI_MODEL_FUNCTIONS:
                 for step in block:
                     self.products = _apply_multimodel(
-                        self.products, step, self.debug
+                        self.products,
+                        step,
+                        self.debug,
                     )
             else:
                 for product in _sort_products(self.products):
@@ -755,7 +769,8 @@ class PreprocessingTask(BaseTask):
                 logger.debug("Released save lock for task %s", self.name)
 
         metadata_files = write_metadata(
-            self.products, self.write_ncl_interface
+            self.products,
+            self.write_ncl_interface,
         )
         return metadata_files
 
@@ -772,7 +787,7 @@ class PreprocessingTask(BaseTask):
                     str(p),
                     "input files: " + pformat(p._input_files),
                     "settings: " + pformat(p.settings),
-                ]
+                ],
             )
             for p in self.products
         )
@@ -782,6 +797,6 @@ class PreprocessingTask(BaseTask):
                 f"order: {order}",
                 f"{products}",
                 self.print_ancestors(),
-            ]
+            ],
         )
         return txt

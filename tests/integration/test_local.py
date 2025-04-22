@@ -86,7 +86,9 @@ def test_find_files(monkeypatch, root, cfg):
     monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
     monkeypatch.setitem(CFG, "rootpath", {project: root})
     create_tree(
-        root, cfg.get("available_files"), cfg.get("available_symlinks")
+        root,
+        cfg.get("available_files"),
+        cfg.get("available_symlinks"),
     )
 
     # Find files
@@ -111,7 +113,9 @@ def test_find_files_with_facets(monkeypatch, root):
     monkeypatch.setitem(CFG, "rootpath", {project: root})
 
     create_tree(
-        root, cfg.get("available_files"), cfg.get("available_symlinks")
+        root,
+        cfg.get("available_files"),
+        cfg.get("available_symlinks"),
     )
 
     # Find files

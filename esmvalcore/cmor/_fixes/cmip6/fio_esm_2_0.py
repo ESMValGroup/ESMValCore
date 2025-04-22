@@ -30,7 +30,9 @@ class Omon(Fix):
         iris.cube.CubeList
         """
         round_coordinates(
-            cubes, decimals=6, coord_names=["longitude", "latitude"]
+            cubes,
+            decimals=6,
+            coord_names=["longitude", "latitude"],
         )
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "

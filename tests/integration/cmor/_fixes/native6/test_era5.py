@@ -182,7 +182,7 @@ def _era5_plev():
         [
             1,
             1000,
-        ]
+        ],
     )
     return DimCoord(
         values,
@@ -235,16 +235,16 @@ def _cmor_time(mip, bounds=None, shifted=False):
         timestamps = np.array([51134.5, 51135.5, 51136.5])
         if bounds is not None:
             bounds = np.array(
-                [[51134.0, 51135.0], [51135.0, 51136.0], [51136.0, 51137.0]]
+                [[51134.0, 51135.0], [51135.0, 51136.0], [51136.0, 51137.0]],
             )
     elif "mon" in mip:
         timestamps = np.array([51149.5, 51179.0, 51208.5])
         if bounds is not None:
             bounds = np.array(
-                [[51134.0, 51165.0], [51165.0, 51193.0], [51193.0, 51224.0]]
+                [[51134.0, 51165.0], [51165.0, 51193.0], [51193.0, 51224.0]],
             )
     else:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     return DimCoord(
         np.array(timestamps, dtype=float),
@@ -272,7 +272,7 @@ def _cmor_plev():
         [
             100000.0,
             100.0,
-        ]
+        ],
     )
     return DimCoord(
         values,
@@ -293,7 +293,9 @@ def _cmor_data(mip):
 def era5_2d(frequency):
     if frequency == "monthly":
         time = DimCoord(
-            [-31, 0, 31], standard_name="time", units="days since 1850-01-01"
+            [-31, 0, 31],
+            standard_name="time",
+            units="days since 1850-01-01",
         )
     else:
         time = _era5_time(frequency)
@@ -1501,10 +1503,14 @@ def test_cmorization(era5_cubes, cmor_cubes, var, mip):
 def unstructured_grid_cubes():
     """Sample cubes with unstructured grid."""
     time = DimCoord(
-        [0.0, 31.0], standard_name="time", units="days since 1950-01-01"
+        [0.0, 31.0],
+        standard_name="time",
+        units="days since 1950-01-01",
     )
     lat = AuxCoord(
-        [1.0, 1.0, -1.0, -1.0], standard_name="latitude", units="degrees_north"
+        [1.0, 1.0, -1.0, -1.0],
+        standard_name="latitude",
+        units="degrees_north",
     )
     lon = AuxCoord(
         [179.0, 180.0, 180.0, 179.0],

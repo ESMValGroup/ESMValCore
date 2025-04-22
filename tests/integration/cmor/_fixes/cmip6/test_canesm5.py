@@ -58,6 +58,7 @@ def test_gpp_fix_data(gpp_cube):
     fix = Gpp(None)
     out_cube = fix.fix_data(gpp_cube)
     np.testing.assert_allclose(
-        out_cube.data, np.ma.masked_invalid([np.nan, 1])
+        out_cube.data,
+        np.ma.masked_invalid([np.nan, 1]),
     )
     assert np.array_equal(out_cube.data.mask, [True, False])

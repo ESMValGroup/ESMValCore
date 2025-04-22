@@ -50,27 +50,32 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute mole fraction of CO2 at surface."""
         co2_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_carbon_dioxide_in_air")
+            iris.Constraint(name="mole_fraction_of_carbon_dioxide_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
 
         # Fill masked data if necessary (interpolation fails with masked data)
         (z_axis,) = co2_cube.coord_dims(
-            co2_cube.coord(axis="Z", dim_coords=True)
+            co2_cube.coord(axis="Z", dim_coords=True),
         )
         mask = da.ma.getmaskarray(co2_cube.core_data())
         if mask.any():
             first_unmasked_data = _get_first_unmasked_data(
-                co2_cube.core_data(), axis=z_axis
+                co2_cube.core_data(),
+                axis=z_axis,
             )
             dim_map = [dim for dim in range(co2_cube.ndim) if dim != z_axis]
             first_unmasked_data = iris.util.broadcast_to_shape(
-                first_unmasked_data, co2_cube.shape, dim_map
+                first_unmasked_data,
+                co2_cube.shape,
+                dim_map,
             )
             co2_cube.data = da.where(
-                mask, first_unmasked_data, co2_cube.core_data()
+                mask,
+                first_unmasked_data,
+                co2_cube.core_data(),
             )
 
         # Interpolation (not supported for dask arrays)

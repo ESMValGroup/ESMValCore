@@ -125,7 +125,7 @@ def accumulate_coordinate(
 
     if coord.ndim > 1:
         raise NotImplementedError(
-            f"Multidimensional coordinate {coord} not supported."
+            f"Multidimensional coordinate {coord} not supported.",
         )
 
     array_module = da if coord.has_lazy_bounds() else np

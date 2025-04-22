@@ -49,7 +49,9 @@ def test_contributor_from_dict():
 def test_reference(monkeypatch):
     """Coverage test for Reference."""
     monkeypatch.setattr(
-        esmvalcore.experimental.recipe_metadata, "DIAGNOSTICS", DIAGNOSTICS
+        esmvalcore.experimental.recipe_metadata,
+        "DIAGNOSTICS",
+        DIAGNOSTICS,
     )
 
     reference = Reference.from_tag("doe2021")
@@ -78,7 +80,7 @@ def test_recipe_info_str():
         "documentation": {
             "title": "Test recipe",
             "description": "This is a very empty test recipe.",
-        }
+        },
     }
 
     recipe = RecipeInfo(data, filename="/path/to/recipe_test.yml")

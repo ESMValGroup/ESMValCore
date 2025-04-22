@@ -25,17 +25,25 @@ class Test(tests.Test):
         mid_dx, mid_dy = dx / 2, dy / 2
         if lat_off and lon_off:
             expected_lat_points = np.linspace(
-                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, int(_LAT_RANGE / dy)
+                _LAT_MIN + mid_dy,
+                _LAT_MAX - mid_dy,
+                int(_LAT_RANGE / dy),
             )
             expected_lon_points = np.linspace(
-                _LON_MIN + mid_dx, _LON_MAX - mid_dx, int(_LON_RANGE / dx)
+                _LON_MIN + mid_dx,
+                _LON_MAX - mid_dx,
+                int(_LON_RANGE / dx),
             )
         else:
             expected_lat_points = np.linspace(
-                _LAT_MIN, _LAT_MAX, int(_LAT_RANGE / dy) + 1
+                _LAT_MIN,
+                _LAT_MAX,
+                int(_LAT_RANGE / dy) + 1,
             )
             expected_lon_points = np.linspace(
-                _LON_MIN, _LON_MAX - dx, int(_LON_RANGE / dx)
+                _LON_MIN,
+                _LON_MAX - dx,
+                int(_LON_RANGE / dx),
             )
 
         # Check the stock cube coordinates.
@@ -82,11 +90,13 @@ class Test(tests.Test):
     def setUp(self):
         self.Cube = mock.sentinel.Cube
         self.mock_Cube = self.patch(
-            "esmvalcore.preprocessor._regrid.Cube", return_value=self.Cube
+            "esmvalcore.preprocessor._regrid.Cube",
+            return_value=self.Cube,
         )
         self.mock_coord = mock.Mock(spec=iris.coords.DimCoord)
         self.mock_DimCoord = self.patch(
-            "iris.coords.DimCoord", return_value=self.mock_coord
+            "iris.coords.DimCoord",
+            return_value=self.mock_coord,
         )
         self.mocks = [self.mock_Cube, self.mock_coord, self.mock_DimCoord]
 
@@ -125,7 +135,9 @@ class Test(tests.Test):
         specs = ["0.5x0.5", "1x1", "2.5x2.5", "5x5", "10x10"]
         for spec in specs:
             result = _global_stock_cube(
-                spec, lat_offset=False, lon_offset=False
+                spec,
+                lat_offset=False,
+                lon_offset=False,
             )
             self.assertEqual(result, self.Cube)
             self._check(

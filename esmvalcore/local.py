@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from glob import glob
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import iris
 import isodate
@@ -126,7 +126,10 @@ def _get_start_end_date(
 
     # Find dates using the regex
     start_date, end_date = _get_from_pattern(
-        datetime_pattern, date_range_pattern, stem, "datetime"
+        datetime_pattern,
+        date_range_pattern,
+        stem,
+        "datetime",
     )
 
     # As final resort, try to get the dates from the file contents
@@ -145,18 +148,20 @@ def _get_start_end_date(
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             start_date = isodate.date_isoformat(
-                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+                time.cell(0).point,
+                format=isodate.isostrf.DATE_BAS_COMPLETE,
             )
 
             end_date = isodate.date_isoformat(
-                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+                time.cell(-1).point,
+                format=isodate.isostrf.DATE_BAS_COMPLETE,
             )
             break
 
     if start_date is None or end_date is None:
         raise ValueError(
             f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file"
+            f"time coordinate can not be read from the file",
         )
 
     # Remove potential '-' characters from datetimes
@@ -258,14 +263,14 @@ def _parse_period(timerange):
 
     if time_format == datetime_format:
         start_date = str(
-            isodate.datetime_isoformat(start_date, format=datetime_format)
+            isodate.datetime_isoformat(start_date, format=datetime_format),
         )
         end_date = str(
-            isodate.datetime_isoformat(end_date, format=datetime_format)
+            isodate.datetime_isoformat(end_date, format=datetime_format),
         )
     elif time_format == isodate.DATE_BAS_COMPLETE:
         start_date = str(
-            isodate.date_isoformat(start_date, format=time_format)
+            isodate.date_isoformat(start_date, format=time_format),
         )
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
@@ -328,7 +333,7 @@ def _select_files(filenames, timerange):
 
 
 def _replace_tags(
-    paths: Union[str, list[str]],
+    paths: str | list[str],
     variable: Facets,
 ) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
@@ -346,7 +351,7 @@ def _replace_tags(
                 (
                     re.sub(r"(\b{ensemble}\b)", r"{sub_experiment}-\1", path),
                     re.sub(r"({ensemble})", r"{sub_experiment}-\1", path),
-                )
+                ),
             )
             tlist.add("sub_experiment")
         pathset = new_paths
@@ -362,7 +367,7 @@ def _replace_tags(
         else:
             raise RecipeError(
                 f"Dataset key '{tag}' must be specified for "
-                f"{variable}, check your recipe entry"
+                f"{variable}, check your recipe entry",
             )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
@@ -415,9 +420,7 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
         return value
 
     raise KeyError(
-        "drs {} for {} project not specified in config-developer file".format(
-            structure, project
-        )
+        f"drs {structure} for {project} project not specified in config-developer file",
     )
 
 
@@ -476,7 +479,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
                 structure = CFG["drs"].get(project, "default")
-                paths = {p: structure for p in paths}
+                paths = dict.fromkeys(paths, structure)
             sources: list[DataSource] = []
             for path, structure in paths.items():
                 path = Path(path)
@@ -491,7 +494,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
 
     raise KeyError(
         f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the configuration."
+        "the configuration.",
     )
 
 
@@ -542,7 +545,7 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     # Add time period if possible
     if "timerange" in attributes:
         filename_segments.append(
-            f"{attributes['timerange'].replace('/', '-')}"
+            f"{attributes['timerange'].replace('/', '-')}",
         )
 
     filename = f"{'_'.join(filename_segments)}.nc"
@@ -580,8 +583,8 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
 
 
 def _filter_versions_called_latest(
-    files: list["LocalFile"],
-) -> list["LocalFile"]:
+    files: list[LocalFile],
+) -> list[LocalFile]:
     """Filter out versions called 'latest' if they are duplicates.
 
     On compute clusters it is usual to have a symbolic link to the
@@ -601,7 +604,7 @@ def _filter_versions_called_latest(
     ]
 
 
-def _select_latest_version(files: list["LocalFile"]) -> list["LocalFile"]:
+def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     """Select only the latest version of files."""
 
     def filename(file):
@@ -612,7 +615,8 @@ def _select_latest_version(files: list["LocalFile"]) -> list["LocalFile"]:
 
     result = []
     for _, group in itertools.groupby(
-        sorted(files, key=filename), key=filename
+        sorted(files, key=filename),
+        key=filename,
     ):
         duplicates = sorted(group, key=version)
         latest = duplicates[-1]
@@ -624,7 +628,7 @@ def find_files(
     *,
     debug: bool = False,
     **facets: FacetValue,
-) -> Union[list[LocalFile], tuple[list[LocalFile], list[Path]]]:
+) -> list[LocalFile] | tuple[list[LocalFile], list[Path]]:
     """Find files on the local filesystem.
 
     The directories that are searched for files are defined in

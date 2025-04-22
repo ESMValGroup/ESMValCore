@@ -22,7 +22,7 @@ def _get_land_fraction(cube):
         except iris.exceptions.AncillaryVariableNotFoundError:
             errors.append(
                 "Ancillary variables land/sea area fraction not "
-                "found in cube. Check ancillary data availability."
+                "found in cube. Check ancillary data availability.",
             )
             return (land_fraction, errors)
 
@@ -73,13 +73,13 @@ def weighting_landsea_fraction(cube, area_type):
     """
     if area_type not in ("land", "sea"):
         raise TypeError(
-            f"Expected 'land' or 'sea' for area_type, got '{area_type}'"
+            f"Expected 'land' or 'sea' for area_type, got '{area_type}'",
         )
     (land_fraction, errors) = _get_land_fraction(cube)
     if land_fraction is None:
         raise ValueError(
             f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
-            f"failed because of the following errors: {' '.join(errors)}"
+            f"failed because of the following errors: {' '.join(errors)}",
         )
     core_data = cube.core_data()
     if area_type == "land":

@@ -7,5 +7,5 @@ try:
 except PackageNotFoundError as exc:
     raise PackageNotFoundError(
         "ESMValCore package not found, please run `pip install -e .` before "
-        "importing the package."
+        "importing the package.",
     ) from exc

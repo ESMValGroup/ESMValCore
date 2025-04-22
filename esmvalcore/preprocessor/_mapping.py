@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Provides mapping of a cube."""
 
 import collections
@@ -15,7 +14,8 @@ def _is_single_item(testee):
     We count string types as 'single', also.
     """
     return isinstance(testee, str) or not isinstance(
-        testee, collections.abc.Iterable
+        testee,
+        collections.abc.Iterable,
     )
 
 
@@ -59,12 +59,12 @@ def ref_to_dims_index_as_index(cube, ref):
         dim = int(ref)
     except (ValueError, TypeError) as exc:
         raise ValueError(
-            "{} Incompatible type {} for slicing".format(ref, type(ref))
+            f"{ref} Incompatible type {type(ref)} for slicing",
         ) from exc
     if dim < 0 or dim > cube.ndim:
         msg = (
-            "Requested an iterator over a dimension ({}) "
-            "which does not exist.".format(dim)
+            f"Requested an iterator over a dimension ({dim}) "
+            "which does not exist."
         )
         raise ValueError(msg)
     dims = [dim]

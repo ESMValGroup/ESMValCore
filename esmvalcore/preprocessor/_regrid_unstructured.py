@@ -88,12 +88,12 @@ class UnstructuredLinearRegridder:
         if not has_unstructured_grid(src_cube):
             raise ValueError(
                 f"Source cube {src_cube.summary(shorten=True)} does not have "
-                f"unstructured grid"
+                f"unstructured grid",
             )
         if not has_regular_grid(tgt_cube):
             raise ValueError(
                 f"Target cube {tgt_cube.summary(shorten=True)} does not have "
-                f"regular grid"
+                f"regular grid",
             )
         src_lat = src_cube.coord("latitude").copy()
         src_lon = src_cube.coord("longitude").copy()
@@ -168,7 +168,8 @@ class UnstructuredLinearRegridder:
         # Wrap around points on convex hull by -360° and +360° and add them to
         # list of source points
         src_points_with_convex_hull = self._add_convex_hull_twice(
-            src_points, hull.vertices
+            src_points,
+            hull.vertices,
         )
         lon_period = np.array(360, dtype=src_points_with_convex_hull.dtype)
         src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= lon_period
@@ -176,7 +177,8 @@ class UnstructuredLinearRegridder:
 
         # Actual weights calculation
         (weights, indices) = self._calculate_weights(
-            src_points_with_convex_hull, tgt_points
+            src_points_with_convex_hull,
+            tgt_points,
         )
 
         return (weights, indices, hull.vertices)
@@ -198,13 +200,13 @@ class UnstructuredLinearRegridder:
         if not has_unstructured_grid(cube):
             raise ValueError(
                 f"Cube {cube.summary(shorten=True)} does not have "
-                f"unstructured grid"
+                f"unstructured grid",
             )
         coords = [cube.coord("latitude"), cube.coord("longitude")]
         if coords != self.src_coords:
             raise ValueError(
                 f"The given cube {cube.summary(shorten=True)} is not defined "
-                f"on the same source grid as this regridder"
+                f"on the same source grid as this regridder",
             )
 
         # Get coordinates of regridded cube
@@ -266,7 +268,9 @@ class UnstructuredLinearRegridder:
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
-                src_data, udim, self._weights.dtype
+                src_data,
+                udim,
+                self._weights.dtype,
             )
         else:
             regridded_data = self._regrid_eager(src_data, udim)
@@ -277,7 +281,8 @@ class UnstructuredLinearRegridder:
     def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""
         v_interpolate = np.vectorize(
-            self._interpolate, signature="(i)->(lat,lon)"
+            self._interpolate,
+            signature="(i)->(lat,lon)",
         )
 
         # Make sure that interpolation dimension is rightmost dimension and
@@ -328,7 +333,9 @@ class UnstructuredLinearRegridder:
         """
         data = self._add_convex_hull_twice(data, self._convex_hull_idx)
         interp_data = np.einsum(
-            "nj,nj->n", np.take(data, self._indices), self._weights
+            "nj,nj->n",
+            np.take(data, self._indices),
+            self._weights,
         )
         interp_data = interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
         return interp_data

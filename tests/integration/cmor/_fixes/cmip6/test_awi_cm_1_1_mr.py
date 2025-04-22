@@ -11,7 +11,10 @@ from esmvalcore.cmor.fix import Fix
 @pytest.fixture
 def cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude", long_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
+        long_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
         [0.0],
@@ -20,7 +23,9 @@ def cubes():
         long_name="Latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[10.0]],

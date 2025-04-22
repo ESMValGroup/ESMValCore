@@ -1,7 +1,6 @@
 """Common fix operations for native datasets."""
 
 import logging
-from typing import Dict
 
 from iris import NameConstraint
 
@@ -21,7 +20,7 @@ class NativeDatasetFix(Fix):
     """Common fix operations for native datasets."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS: Dict[str, str] = {}
+    INVALID_UNITS: dict[str, str] = {}
 
     def fix_scalar_coords(self, cube):
         """Add missing scalar coordinate to cube (in-place).
@@ -77,7 +76,7 @@ class NativeDatasetFix(Fix):
             except ValueError as exc:
                 raise ValueError(
                     f"Failed to fix invalid units '{invalid_units}' for "
-                    f"variable '{self.vardef.short_name}'"
+                    f"variable '{self.vardef.short_name}'",
                 ) from exc
         safe_convert_units(cube, self.vardef.units)
 
@@ -110,12 +109,13 @@ class NativeDatasetFix(Fix):
         """
         if var_name is None:
             var_name = self.extra_facets.get(
-                "raw_name", self.vardef.short_name
+                "raw_name",
+                self.vardef.short_name,
             )
         if not cubes.extract(NameConstraint(var_name=var_name)):
             raise ValueError(
                 f"Variable '{var_name}' used to extract "
-                f"'{self.vardef.short_name}' is not available in input file"
+                f"'{self.vardef.short_name}' is not available in input file",
             )
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 

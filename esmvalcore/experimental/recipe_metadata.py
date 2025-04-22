@@ -1,7 +1,5 @@
 """API for recipe metadata."""
 
-from typing import Optional
-
 import pybtex
 from pybtex.database.input import bibtex
 
@@ -25,7 +23,7 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: Optional[str] = None):
+    def __init__(self, name: str, institute: str, orcid: str | None = None):
         self.name = name
         self.institute = institute
         self.orcid = orcid
@@ -137,7 +135,7 @@ class Reference:
         if len(bib_data.entries) > 1:
             raise NotImplementedError(
                 f"{self.__class__.__name__} cannot handle bibtex files "
-                "with more than 1 entry."
+                "with more than 1 entry.",
             )
 
         self._bib_data = bib_data
@@ -186,7 +184,8 @@ class Reference:
         style = "plain"  # alpha, plain, unsrt, unsrtalpha
         backend = pybtex.plugin.find_plugin("pybtex.backends", renderer)()
         formatter = pybtex.plugin.find_plugin(
-            "pybtex.style.formatting", style
+            "pybtex.style.formatting",
+            style,
         )()
 
         try:
@@ -194,7 +193,7 @@ class Reference:
             rendered = formatter.text.render(backend)
         except Exception as err:
             raise RenderError(
-                f"Could not render {self._key!r}: {err}"
+                f"Could not render {self._key!r}: {err}",
             ) from None
 
         return rendered

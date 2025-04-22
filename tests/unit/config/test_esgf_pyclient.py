@@ -62,8 +62,8 @@ def test_read_v25_config_file(monkeypatch, tmp_path):
         "search_connection": {
             "urls": [
                 "https://some.host/path",
-            ]
-        }
+            ],
+        },
     }
 
     cfg = _esgf_pyclient.read_config_file()
@@ -74,7 +74,9 @@ def test_read_v25_config_file(monkeypatch, tmp_path):
 def test_default_config(monkeypatch, mocker, tmp_path, with_keyring_creds):
     """Test that load_esgf_pyclient_config returns the default config."""
     monkeypatch.setattr(
-        _esgf_pyclient, "CONFIG_FILE", tmp_path / "non-existent.yml"
+        _esgf_pyclient,
+        "CONFIG_FILE",
+        tmp_path / "non-existent.yml",
     )
 
     cfg = _esgf_pyclient.load_esgf_pyclient_config()

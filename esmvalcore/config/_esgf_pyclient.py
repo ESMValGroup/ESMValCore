@@ -85,7 +85,7 @@ def load_esgf_pyclient_config():
     return cfg
 
 
-@lru_cache()
+@lru_cache
 def get_esgf_config():
     """Get the esgf-pyclient configuration."""
     return load_esgf_pyclient_config()

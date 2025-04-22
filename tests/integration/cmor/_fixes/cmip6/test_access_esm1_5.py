@@ -98,7 +98,9 @@ B_BOUNDS = [
 def cl_cubes():
     """``cl`` cubes."""
     b_coord = iris.coords.AuxCoord(
-        np.zeros_like(B_POINTS), bounds=np.zeros_like(B_BOUNDS), var_name="b"
+        np.zeros_like(B_POINTS),
+        bounds=np.zeros_like(B_BOUNDS),
+        var_name="b",
     )
     cube = iris.cube.Cube(
         np.ones_like(B_POINTS),
@@ -195,14 +197,16 @@ def test_hus_fix_metadata(cubes_with_wrong_air_pressure):
     assert hus_cube.var_name == "hus"
     assert zg_cube.var_name == "zg"
     np.testing.assert_allclose(
-        hus_cube.coord("air_pressure").points, [1000.0, 601.0, 200.0]
+        hus_cube.coord("air_pressure").points,
+        [1000.0, 601.0, 200.0],
     )
     np.testing.assert_allclose(
         hus_cube.coord("air_pressure").bounds,
         [[1200.0, 800.0], [800.0, 401.0], [401.0, 2.0]],
     )
     np.testing.assert_allclose(
-        zg_cube.coord("air_pressure").points, [1000.09, 600.6, 200.0]
+        zg_cube.coord("air_pressure").points,
+        [1000.09, 600.6, 200.0],
     )
     np.testing.assert_allclose(
         zg_cube.coord("air_pressure").bounds,
@@ -227,14 +231,16 @@ def test_zg_fix_metadata(cubes_with_wrong_air_pressure):
     assert hus_cube.var_name == "hus"
     assert zg_cube.var_name == "zg"
     np.testing.assert_allclose(
-        hus_cube.coord("air_pressure").points, [1000.09, 600.6, 200.0]
+        hus_cube.coord("air_pressure").points,
+        [1000.09, 600.6, 200.0],
     )
     np.testing.assert_allclose(
         hus_cube.coord("air_pressure").bounds,
         [[1200.00001, 800], [800, 400.8], [400.8, 1.9]],
     )
     np.testing.assert_allclose(
-        zg_cube.coord("air_pressure").points, [1000.0, 601.0, 200.0]
+        zg_cube.coord("air_pressure").points,
+        [1000.0, 601.0, 200.0],
     )
     np.testing.assert_allclose(
         zg_cube.coord("air_pressure").bounds,

@@ -101,7 +101,9 @@ def clcalipso_cubes():
         dim_coords_and_dims=[(alt_40_coord.copy(), 0)],
     )
     x_cube = iris.cube.Cube(
-        [0.0], var_name="x", dim_coords_and_dims=[(alt_40_coord.copy(), 0)]
+        [0.0],
+        var_name="x",
+        dim_coords_and_dims=[(alt_40_coord.copy(), 0)],
     )
     return iris.cube.CubeList([cube, x_cube])
 
@@ -129,10 +131,16 @@ def thetao_cubes():
         units="days since 1850-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     lev_coord = iris.coords.DimCoord(
         [5.0, 10.0],

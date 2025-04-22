@@ -14,7 +14,7 @@ import logging
 from collections.abc import Iterable
 from datetime import datetime
 from functools import reduce
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import cf_units
 import iris
@@ -96,12 +96,12 @@ def _unify_time_coordinates(cubes):
                 logger.warning(
                     "Multimodel encountered (sub)daily data and inconsistent "
                     "time units or calendars. Attempting to continue, but "
-                    "might produce unexpected results."
+                    "might produce unexpected results.",
                 )
         else:
             raise ValueError(
                 "Multimodel statistics preprocessor currently does not "
-                "support sub-daily data."
+                "support sub-daily data.",
             )
 
         # Update the cubes' time coordinate (both point values and the units!)
@@ -116,7 +116,7 @@ def _guess_time_bounds(cube):
     if cube.coord("time").shape == (1,):
         logger.debug(
             "Encountered scalar time coordinate in multi_model_statistics: "
-            "cannot determine its bounds"
+            "cannot determine its bounds",
         )
     else:
         cube.coord("time").guess_bounds()
@@ -145,7 +145,8 @@ def _map_to_new_time(cube, time_points):
     # Try if the required time points can be obtained by slicing the cube.
     time_slice = np.isin(time_coord.points, time_points)
     if np.any(time_slice) and np.array_equal(
-        time_coord.points[time_slice], time_points
+        time_coord.points[time_slice],
+        time_points,
     ):
         (time_idx,) = cube.coord_dims("time")
         indices = tuple(
@@ -165,7 +166,8 @@ def _map_to_new_time(cube, time_points):
     # anyway).
     int_time_coords = []
     for coord in cube.coords(
-        dimensions=cube.coord_dims("time"), dim_coords=False
+        dimensions=cube.coord_dims("time"),
+        dim_coords=False,
     ):
         if np.issubdtype(coord.points.dtype, np.integer):
             int_time_coords.append(coord.name())
@@ -186,7 +188,7 @@ def _map_to_new_time(cube, time_points):
             )
         raise ValueError(
             f"Tried to align cubes in multi-model statistics, but failed for "
-            f"cube {cube}\n and time points {time_points}.{additional_info}"
+            f"cube {cube}\n and time points {time_points}.{additional_info}",
         ) from excinfo
 
     # Change the dtype of int_time_coords to their original values
@@ -217,7 +219,7 @@ def _align_time_coord(cubes, span):
     else:
         raise ValueError(
             f"Invalid argument for span: {span!r}"
-            "Must be one of 'overlap', 'full'."
+            "Must be one of 'overlap', 'full'.",
         )
 
     new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
@@ -286,7 +288,7 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
         # --> Get metadata that is identical across all cubes
         else:
             std_names = list(
-                {c.coord(coord_name).standard_name for c in cubes}
+                {c.coord(coord_name).standard_name for c in cubes},
             )
             long_names = list({c.coord(coord_name).long_name for c in cubes})
             var_names = list({c.coord(coord_name).var_name for c in cubes})
@@ -312,7 +314,8 @@ def _equalise_coordinate_metadata(cubes):
     # --> keep matching names of these coordinates
     # Note: ignores duplicate coordinates
     equal_names_metadata = _get_equal_coord_names_metadata(
-        cubes, equal_coords_metadata
+        cubes,
+        equal_coords_metadata,
     )
 
     # Modify all coordinates of all cubes accordingly
@@ -434,7 +437,7 @@ def _combine(cubes):
         msg = "\n".join(str(exc).split("\n")[1:])
         raise ValueError(
             f"Multi-model statistics failed to merge input cubes into a "
-            f"single array:\n{cubes}\n{msg}"
+            f"single array:\n{cubes}\n{msg}",
         ) from exc
 
     return merged_cube
@@ -499,7 +502,7 @@ def _compute_eager(
             f"single array. This happened for operator {operator} "
             f"with computed statistics {result_slices}. "
             f"This can happen e.g. if the calculation results in inconsistent "
-            f"dtypes"
+            f"dtypes",
         ) from excinfo
 
     result_cube.data = np.ma.array(result_cube.data)
@@ -552,7 +555,7 @@ def _multicube_statistics(
     """
     if not cubes:
         raise ValueError(
-            "Cannot perform multicube statistics for an empty list of cubes"
+            "Cannot perform multicube statistics for an empty list of cubes",
         )
 
     # Avoid modifying inputs
@@ -582,7 +585,7 @@ def _multicube_statistics(
         raise ValueError(
             "Multi-model statistics failed to merge input cubes into a single "
             "array: some cubes have a 'time' dimension, some do not have a "
-            "'time' dimension."
+            "'time' dimension.",
         )
 
     # Calculate statistics
@@ -652,7 +655,7 @@ def _get_operator_and_kwargs(statistic: str | dict) -> tuple[str, dict]:
         if "operator" not in statistic:
             raise ValueError(
                 f"`statistic` given as dictionary, but missing required key "
-                f"`operator`, got {statistic}"
+                f"`operator`, got {statistic}",
             )
         operator = statistic.pop("operator")
         kwargs = statistic
@@ -674,7 +677,7 @@ def multi_model_statistics(
     span: str,
     statistics: list[str | dict],
     output_products=None,
-    groupby: Optional[tuple] = None,
+    groupby: tuple | None = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
@@ -812,7 +815,7 @@ def multi_model_statistics(
     raise ValueError(
         f"Input type for multi_model_statistics not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-        f"got {products}"
+        f"got {products}",
     )
 
 

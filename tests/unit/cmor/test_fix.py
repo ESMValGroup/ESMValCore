@@ -52,13 +52,14 @@ class TestFixFile:
             assert file_returned != self.filename
             assert file_returned == "new_filename"
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )
 
     def test_nofix(self):
         """Check that the same file is returned if no fix is available."""
         with patch(
-            "esmvalcore.cmor._fixes.fix.Fix.get_fixes", return_value=[]
+            "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
+            return_value=[],
         ) as mock_get_fixes:
             file_returned = fix_file(
                 file="filename",
@@ -72,7 +73,7 @@ class TestFixFile:
             )
             assert file_returned == self.filename
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )
 
 
@@ -161,13 +162,14 @@ class TestFixMetadata:
             assert cube_returned is not self.cube
             assert cube_returned is self.fixed_cube
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )
 
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
         with patch(
-            "esmvalcore.cmor._fixes.fix.Fix.get_fixes", return_value=[]
+            "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
+            return_value=[],
         ) as mock_get_fixes:
             cube_returned = fix_metadata(
                 cubes=[self.cube],
@@ -181,13 +183,14 @@ class TestFixMetadata:
             assert cube_returned is self.cube
             assert cube_returned is not self.fixed_cube
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )
 
     def test_select_var(self):
         """Check that the same cube is returned if no fix is available."""
         with patch(
-            "esmvalcore.cmor._fixes.fix.Fix.get_fixes", return_value=[]
+            "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
+            return_value=[],
         ):
             cube_returned = fix_metadata(
                 cubes=[self.cube, self._create_mock_cube("extra")],
@@ -258,13 +261,14 @@ class TestFixData:
             assert cube_returned is not self.cube
             assert cube_returned is self.fixed_cube
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )
 
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
         with patch(
-            "esmvalcore.cmor._fixes.fix.Fix.get_fixes", return_value=[]
+            "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
+            return_value=[],
         ) as mock_get_fixes:
             cube_returned = fix_data(
                 self.cube,
@@ -278,5 +282,5 @@ class TestFixData:
             assert cube_returned is self.cube
             assert cube_returned is not self.fixed_cube
             mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call
+                **self.expected_get_fixes_call,
             )

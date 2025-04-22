@@ -18,7 +18,7 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute toa net downward longwave radiation assuming clear sky."""
         rlutcs_cube = cubes.extract_cube(
-            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky")
+            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky"),
         )
         rlutcs_cube.data = -rlutcs_cube.core_data()
         rlutcs_cube.attributes["positive"] = "down"

@@ -34,14 +34,14 @@ class DerivedVariable(DerivedVariableBase):
         rldscs_cube = cubes.extract_cube(
             Constraint(
                 name="surface_downwelling_longwave_flux_in_air_"
-                + "assuming_clear_sky"
-            )
+                + "assuming_clear_sky",
+            ),
         )
         rlus_cube = cubes.extract_cube(
-            Constraint(name="surface_upwelling_longwave_flux_in_air")
+            Constraint(name="surface_upwelling_longwave_flux_in_air"),
         )
         rlutcs_cube = cubes.extract_cube(
-            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky")
+            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky"),
         )
 
         rlnstcs_cube = rlutcs_cube + (rldscs_cube - rlus_cube)

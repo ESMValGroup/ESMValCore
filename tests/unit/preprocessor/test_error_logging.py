@@ -113,7 +113,10 @@ def test_short_items_short_input_files(mock_logger, items):
     """Test short list of items and short list of input files."""
     with pytest.raises(ValueError, match=VALUE_ERROR_MSG):
         _run_preproc_function(
-            failing_function, items, KWARGS, input_files=SHORT_INPUT_FILES
+            failing_function,
+            items,
+            KWARGS,
+            input_files=SHORT_INPUT_FILES,
         )
     assert len(mock_logger.mock_calls) == 2
 
@@ -143,7 +146,10 @@ def test_short_items_long_input_files(mock_logger, items):
     """Test short list of items and long list of input files."""
     with pytest.raises(ValueError, match=VALUE_ERROR_MSG):
         _run_preproc_function(
-            failing_function, items, KWARGS, input_files=LONG_INPUT_FILES
+            failing_function,
+            items,
+            KWARGS,
+            input_files=LONG_INPUT_FILES,
         )
     assert len(mock_logger.mock_calls) == 2
 
@@ -199,7 +205,10 @@ def test_long_items_short_input_files(mock_logger, items):
     """Test long list of items and short list of input files."""
     with pytest.raises(ValueError, match=VALUE_ERROR_MSG):
         _run_preproc_function(
-            failing_function, items, KWARGS, input_files=SHORT_INPUT_FILES
+            failing_function,
+            items,
+            KWARGS,
+            input_files=SHORT_INPUT_FILES,
         )
     assert len(mock_logger.mock_calls) == 2
 
@@ -229,7 +238,10 @@ def test_long_items_long_input_files(mock_logger, items):
     """Test long list of items and long list of input files."""
     with pytest.raises(ValueError, match=VALUE_ERROR_MSG):
         _run_preproc_function(
-            failing_function, items, KWARGS, input_files=LONG_INPUT_FILES
+            failing_function,
+            items,
+            KWARGS,
+            input_files=LONG_INPUT_FILES,
         )
     assert len(mock_logger.mock_calls) == 2
 

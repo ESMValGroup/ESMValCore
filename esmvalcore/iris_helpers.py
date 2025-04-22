@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Generator
+from collections.abc import Generator, Iterable, Sequence
 from contextlib import contextmanager
-from typing import Dict, Iterable, List, Literal, Optional, Sequence
+from typing import Literal
 
 import dask.array as da
 import iris
@@ -163,7 +163,7 @@ def merge_cube_attributes(
         return
 
     # Step 1: collect all attribute values in a list
-    attributes: Dict[str, List[NetCDFAttr]] = {}
+    attributes: dict[str, list[NetCDFAttr]] = {}
     for cube in cubes:
         for attr, val in cube.attributes.items():
             attributes.setdefault(attr, [])
@@ -222,11 +222,15 @@ def _rechunk_dim_metadata(
         if complete_dims_:
             if coord.has_lazy_points():
                 coord.points = _rechunk(
-                    coord.lazy_points(), complete_dims_, remaining_dims
+                    coord.lazy_points(),
+                    complete_dims_,
+                    remaining_dims,
                 )
             if coord.has_bounds() and coord.has_lazy_bounds():
                 coord.bounds = _rechunk(
-                    coord.lazy_bounds(), complete_dims_, remaining_dims
+                    coord.lazy_bounds(),
+                    complete_dims_,
+                    remaining_dims,
                 )
 
     # Rechunk cell measures that span complete_dims
@@ -235,7 +239,9 @@ def _rechunk_dim_metadata(
         complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
         if complete_dims_ and measure.has_lazy_data():
             measure.data = _rechunk(
-                measure.lazy_data(), complete_dims_, remaining_dims
+                measure.lazy_data(),
+                complete_dims_,
+                remaining_dims,
             )
 
     # Rechunk ancillary variables that span complete_dims
@@ -244,7 +250,9 @@ def _rechunk_dim_metadata(
         complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
         if complete_dims_ and anc_var.has_lazy_data():
             anc_var.data = _rechunk(
-                anc_var.lazy_data(), complete_dims_, remaining_dims
+                anc_var.lazy_data(),
+                complete_dims_,
+                remaining_dims,
             )
 
 
@@ -387,7 +395,7 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # the sublists is a tuple (standard_name, units). Note: All units for a single
 # special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
 # mm s-1 for precipitation
-_SPECIAL_UNIT_CONVERSIONS: list[list[tuple[Optional[str], str]]] = [
+_SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
     [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
@@ -440,7 +448,7 @@ def _try_special_unit_conversions(cube: Cube, units: str | Unit) -> bool:
 
             # Step 1: find suitable source name and units
             if cube.standard_name == std_name and cube.units.is_convertible(
-                special_units
+                special_units,
             ):
                 for target_std_name, target_units in special_case:
                     if target_units == special_units:
@@ -507,6 +515,6 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
         raise ValueError(
             f"Cannot safely convert units from '{old_units}' to '{units}'; "
             f"standard_name changed from '{old_standard_name}' to "
-            f"'{cube.standard_name}'"
+            f"'{cube.standard_name}'",
         )
     return cube

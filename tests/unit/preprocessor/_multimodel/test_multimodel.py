@@ -66,7 +66,7 @@ def cubes_with_arbitrary_dimensions():
             Cube([[0.0], [0.0], [0.0]], **cube_kwargs),
             Cube([[0.0], [2.0], [1.0]], **cube_kwargs),
             Cube([[0.0], [4.0], [2.0]], **cube_kwargs),
-        ]
+        ],
     )
 
     return cubes
@@ -91,19 +91,24 @@ def cubes_5d():
     cubes = CubeList(
         [
             Cube(
-                np.full((1, 1, 1, 1, 1), 1.0), dim_coords_and_dims=coord_spec
+                np.full((1, 1, 1, 1, 1), 1.0),
+                dim_coords_and_dims=coord_spec,
             ),
             Cube(
-                np.full((1, 1, 1, 1, 1), 2.0), dim_coords_and_dims=coord_spec
+                np.full((1, 1, 1, 1, 1), 2.0),
+                dim_coords_and_dims=coord_spec,
             ),
-        ]
+        ],
     )
 
     return cubes
 
 
 def timecoord(
-    frequency, calendar="standard", offset="days since 1850-01-01", num=3
+    frequency,
+    calendar="standard",
+    offset="days since 1850-01-01",
+    num=3,
 ):
     """Return a time coordinate with the given time points and calendar."""
     time_points = range(1, num + 1)
@@ -157,7 +162,9 @@ def generate_cube_from_dates(
         len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
         time = DimCoord(
-            date2num(dates, unit), standard_name="time", units=unit
+            date2num(dates, unit),
+            standard_name="time",
+            units=unit,
         )
 
     data = np.array((fill_val,) * len_data, dtype=np.float32)
@@ -400,13 +407,16 @@ def test_lazy_data_inconsistent_times(span):
     """
     cubes = (
         generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)], lazy=True
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)],
+            lazy=True,
         ),
         generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(3, 8)], lazy=True
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(3, 8)],
+            lazy=True,
         ),
         generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(2, 9)], lazy=True
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(2, 9)],
+            lazy=True,
         ),
     )
 
@@ -503,7 +513,9 @@ def test_align(span):
 
     for calendar in CALENDAR_OPTIONS:
         cube = generate_cube_from_dates(
-            "monthly", calendar=calendar, len_data=3
+            "monthly",
+            calendar=calendar,
+            len_data=3,
         )
         cubes.append(cube)
 
@@ -529,7 +541,10 @@ def test_combine_same_shape(span):
 
     for i in range(num_cubes):
         cube = generate_cube_from_dates(
-            "monthly", "360_day", fill_val=i, len_data=len_data
+            "monthly",
+            "360_day",
+            fill_val=i,
+            len_data=len_data,
         )
         cubes.append(cube)
 
@@ -540,7 +555,10 @@ def test_combine_same_shape(span):
     assert result_cube.shape == (num_cubes, len_data)
 
     desired = np.linspace(
-        (0,) * len_data, num_cubes - 1, num=num_cubes, dtype=int
+        (0,) * len_data,
+        num_cubes - 1,
+        num=num_cubes,
+        dtype=int,
     )
     np.testing.assert_equal(result_cube.data, desired)
 
@@ -569,7 +587,9 @@ def test_combine_inconsistent_var_names_fail():
 
     for num in range(num_cubes):
         cube = generate_cube_from_dates(
-            "monthly", "360_day", var_name=f"test_var_{num}"
+            "monthly",
+            "360_day",
+            var_name=f"test_var_{num}",
         )
         cubes.append(cube)
 
@@ -656,10 +676,14 @@ def test_equalise_coordinate_metadata_one_cube():
 def test_edge_case_different_time_offsets(span):
     cubes = (
         generate_cube_from_dates(
-            "monthly", "360_day", offset="days since 1888-01-01"
+            "monthly",
+            "360_day",
+            offset="days since 1888-01-01",
         ),
         generate_cube_from_dates(
-            "monthly", "360_day", offset="days since 1899-01-01"
+            "monthly",
+            "360_day",
+            offset="days since 1899-01-01",
         ),
     )
 
@@ -767,10 +791,14 @@ def test_edge_case_sub_daily_data_fail(span):
 def test_unify_time_coordinates():
     """Test set common calendar."""
     cube1 = generate_cube_from_dates(
-        "monthly", calendar="360_day", offset="days since 1850-01-01"
+        "monthly",
+        calendar="360_day",
+        offset="days since 1850-01-01",
     )
     cube2 = generate_cube_from_dates(
-        "monthly", calendar="standard", offset="days since 1943-05-16"
+        "monthly",
+        calendar="standard",
+        offset="days since 1943-05-16",
     )
 
     mm._unify_time_coordinates([cube1, cube2])
@@ -833,11 +861,15 @@ def test_return_products():
     }
 
     result1 = mm._multiproduct_statistics(
-        products, keep_input_datasets=True, **kwargs
+        products,
+        keep_input_datasets=True,
+        **kwargs,
     )
 
     result2 = mm._multiproduct_statistics(
-        products, keep_input_datasets=False, **kwargs
+        products,
+        keep_input_datasets=False,
+        **kwargs,
     )
 
     assert result1 == set([input1, input2, output])
@@ -846,7 +878,9 @@ def test_return_products():
     kwargs["output_products"] = output_products
     result3 = mm.multi_model_statistics(products, **kwargs)
     result4 = mm.multi_model_statistics(
-        products, keep_input_datasets=False, **kwargs
+        products,
+        keep_input_datasets=False,
+        **kwargs,
     )
 
     assert result3 == result1
@@ -916,11 +950,13 @@ def test_ignore_tas_scalar_height_coord():
         cube.rename("air_temperature")
         cube.attributes["short_name"] = "tas"
         cube.add_aux_coord(
-            iris.coords.AuxCoord([height], var_name="height", units="m")
+            iris.coords.AuxCoord([height], var_name="height", units="m"),
         )
 
     result = mm.multi_model_statistics(
-        [tas_2m, tas_2m.copy(), tas_1p5m], statistics=["mean"], span="full"
+        [tas_2m, tas_2m.copy(), tas_1p5m],
+        statistics=["mean"],
+        span="full",
     )
 
     # iris automatically averages the value of the scalar coordinate.
@@ -998,11 +1034,15 @@ def test_daily_inconsistent_calendars():
 
     # 1852 is a leap year, and include 1 extra day at the end
     leapdates = cftime.num2date(
-        start + np.arange(367), ref_standard.name, ref_standard.calendar
+        start + np.arange(367),
+        ref_standard.name,
+        ref_standard.calendar,
     )
 
     noleapdates = cftime.num2date(
-        start + np.arange(365), ref_noleap.name, ref_noleap.calendar
+        start + np.arange(365),
+        ref_noleap.name,
+        ref_noleap.calendar,
     )
 
     leapcube = generate_cube_from_dates(
@@ -1055,7 +1095,9 @@ def test_remove_fx_variables():
 
     cube2 = generate_cube_from_dates("monthly", fill_val=9)
     result = mm.multi_model_statistics(
-        [cube1, cube2], statistics=["mean"], span="full"
+        [cube1, cube2],
+        statistics=["mean"],
+        span="full",
     )
     assert result["mean"].ancillary_variables() == []
 
@@ -1086,7 +1128,9 @@ def test_map_to_new_time_int_coords():
     cube = generate_cube_from_dates("yearly")
     iris.coord_categorisation.add_year(cube, "time")
     decade_coord = AuxCoord(
-        [1850, 1850, 1850], bounds=[[1845, 1855]] * 3, long_name="decade"
+        [1850, 1850, 1850],
+        bounds=[[1845, 1855]] * 3,
+        long_name="decade",
     )
     cube.add_aux_coord(decade_coord, 0)
     target_points = [200.0, 500.0, 1000.0]
@@ -1094,7 +1138,8 @@ def test_map_to_new_time_int_coords():
     out_cube = mm._map_to_new_time(cube, target_points)
 
     assert_array_allclose(
-        out_cube.data, np.ma.masked_invalid([1.0, 1.0, np.nan])
+        out_cube.data,
+        np.ma.masked_invalid([1.0, 1.0, np.nan]),
     )
     assert_array_allclose(out_cube.coord("time").points, target_points)
     assert_array_allclose(
@@ -1202,7 +1247,9 @@ def test_preserve_equal_name_cubes(equal_names):
                 setattr(cube, name, None)
 
     stat_cubes = multi_model_statistics(
-        cubes, span="overlap", statistics=["sum"]
+        cubes,
+        span="overlap",
+        statistics=["sum"],
     )
 
     assert len(stat_cubes) == 1
@@ -1284,7 +1331,9 @@ def test_preserve_equal_coordinates():
     """Test ``multi_model_statistics`` with equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
     stat_cubes = multi_model_statistics(
-        cubes, span="overlap", statistics=["sum"]
+        cubes,
+        span="overlap",
+        statistics=["sum"],
     )
 
     assert len(stat_cubes) == 1
@@ -1307,7 +1356,9 @@ def test_preserve_non_equal_coordinates():
     cubes[2].coord("time").circular = False
 
     stat_cubes = multi_model_statistics(
-        cubes, span="overlap", statistics=["sum"]
+        cubes,
+        span="overlap",
+        statistics=["sum"],
     )
 
     assert len(stat_cubes) == 1
@@ -1347,7 +1398,9 @@ def test_preserve_equal_name_coordinates(equal_names):
         time_coord.attributes = {"test": idx}
 
     stat_cubes = multi_model_statistics(
-        cubes, span="overlap", statistics=["sum"]
+        cubes,
+        span="overlap",
+        statistics=["sum"],
     )
 
     assert len(stat_cubes) == 1
@@ -1389,7 +1442,11 @@ def test_ignore_duplicate_equal_name_coordinates(cube_idx):
 
     # Add duplicate scalar coordinate
     d_coord_0 = AuxCoord(
-        0.0, var_name="d", long_name="d", units="m", attributes={"test": 1}
+        0.0,
+        var_name="d",
+        long_name="d",
+        units="m",
+        attributes={"test": 1},
     )
     d_coord_1 = AuxCoord(
         1.0,
@@ -1450,7 +1507,10 @@ def test_empty_input_ensemble_statistics():
     msg = "Cannot perform multicube statistics for an empty list of cubes"
     with pytest.raises(ValueError, match=msg):
         mm.ensemble_statistics(
-            [], span="full", statistics=["mean"], output_products=[]
+            [],
+            span="full",
+            statistics=["mean"],
+            output_products=[],
         )
 
 
@@ -1497,7 +1557,8 @@ def test_single_input_multi_model_statistics(products, stat):
 
     if stat == "std_dev":
         assert_array_allclose(
-            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+            cube.data,
+            np.ma.masked_invalid([np.nan, np.nan, np.nan]),
         )
     else:
         assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
@@ -1539,7 +1600,8 @@ def test_single_input_ensemble_statistics(products, stat):
 
     if stat == "std_dev":
         assert_array_allclose(
-            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+            cube.data,
+            np.ma.masked_invalid([np.nan, np.nan, np.nan]),
         )
     else:
         assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
