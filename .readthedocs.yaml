@@ -13,8 +13,41 @@ build:
     # DO NOT use mambaforge-*; that is currently sunsetted
     python: "miniconda-latest"
   jobs:
+    # pre_create_environment:
+    #   - echo "  - python != 3.13.3" >> environment.yml
     post_create_environment:
       - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
+    build:
+      html:
+        - locale
+        - python -m locale
+        #- python -c "import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import cf_units"
+        #- python -c "import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import iris"
+        #- python -c "import esmvalcore"
+        #- python -c "import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        #- python -c "import locale; locale.setlocale(locale.LC_ALL, ''); import esmvalcore.preprocessor"
+        - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en doc/ $READTHEDOCS_OUTPUT/html
 
 # Declare the requirements required to build your docs
 conda:
