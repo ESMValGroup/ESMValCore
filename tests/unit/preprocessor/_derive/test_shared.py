@@ -62,8 +62,7 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
         ]
     else:
         coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
-    return cube
+    return Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
 
 
 def test_column_average():

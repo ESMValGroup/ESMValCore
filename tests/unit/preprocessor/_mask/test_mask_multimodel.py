@@ -104,15 +104,15 @@ def _get_cube(ndim):
             (x_coord, 4),
         ]
     else:
-        assert False, f"Invalid ndim: {ndim}"
+        msg = f"Invalid ndim: {ndim}"
+        raise AssertionError(msg)
 
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         cube_data,
         var_name="y",
         long_name="Y",
         dim_coords_and_dims=coord_spec,
     )
-    return cube
 
 
 @pytest.fixture

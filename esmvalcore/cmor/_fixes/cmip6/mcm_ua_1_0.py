@@ -4,8 +4,11 @@ import iris
 import numpy as np
 from dask import array as da
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord, fix_ocean_depth_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_scalar_height_coord,
+    fix_ocean_depth_coord,
+)
 
 
 def strip_cube_metadata(cube):

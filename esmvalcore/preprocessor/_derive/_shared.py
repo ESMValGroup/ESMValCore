@@ -177,9 +177,7 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 
     # Make surface pressure the first pressure level
     data = ps_cube.data[:, np.newaxis, :, :]
-    pressure_4d = np.concatenate((data, pressure_4d), axis=1)
-
-    return pressure_4d
+    return np.concatenate((data, pressure_4d), axis=1)
 
 
 def _get_pressure_level_widths(array, air_pressure_axis=1):
@@ -191,7 +189,8 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     """
     array = np.copy(array)
     if np.any(np.diff(array, axis=air_pressure_axis) > 0.0):
-        raise ValueError("Pressure level value increased with height")
+        msg = "Pressure level value increased with height"
+        raise ValueError(msg)
 
     # Calculate array of centers between two neighboring pressure levels
     indices = [slice(None)] * array.ndim
@@ -224,5 +223,4 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     )
 
     # Calculate level widths
-    p_level_widths = -np.diff(array_centers, axis=air_pressure_axis)
-    return p_level_widths
+    return -np.diff(array_centers, axis=air_pressure_axis)

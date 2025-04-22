@@ -32,7 +32,7 @@ def unstructured_grid_cube_2d():
     )
     acoord_0 = AuxCoord([0, 0], var_name="aux0")
     acoord_1 = AuxCoord([0, 0, 0, 0], var_name="aux1")
-    cube = Cube(
+    return Cube(
         np.array(
             [[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]],
             dtype=np.float32,
@@ -46,7 +46,6 @@ def unstructured_grid_cube_2d():
         attributes={"test": "1"},
         cell_methods=(CellMethod("test", "time"),),
     )
-    return cube
 
 
 @pytest.fixture
@@ -69,7 +68,7 @@ def unstructured_grid_cube_3d():
         units="degrees_east",
     )
     acoord = AuxCoord([0, 0], var_name="aux")
-    cube = Cube(
+    return Cube(
         np.ma.masked_greater(
             np.arange(16, dtype=np.float32).reshape(2, 2, 4),
             7.5,
@@ -81,7 +80,6 @@ def unstructured_grid_cube_3d():
         dim_coords_and_dims=[(time, 0), (alt, 1)],
         aux_coords_and_dims=[(acoord, 1), (lat, 2), (lon, 2)],
     )
-    return cube
 
 
 @pytest.fixture

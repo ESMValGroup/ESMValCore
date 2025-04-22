@@ -13,8 +13,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{"short_name": "mrsos"}]
-        return required
+        return [{"short_name": "mrsos"}]
 
     @staticmethod
     def calculate(cubes):

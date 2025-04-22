@@ -555,7 +555,7 @@ class TestCustomInfo(unittest.TestCase):
 
 
 @pytest.mark.parametrize(
-    "project,mip,short_name,frequency",
+    ("project", "mip", "short_name", "frequency"),
     [
         ("CMIP5", "Amon", "tas", "mon"),
         ("CMIP5", "day", "tas", "day"),
@@ -573,7 +573,7 @@ def test_get_var_info(project, mip, short_name, frequency):
 
 
 @pytest.mark.parametrize(
-    "mip,short_name",
+    ("mip", "short_name"),
     [
         ("INVALID_MIP", "tas"),
         ("Amon", "INVALID_VAR"),

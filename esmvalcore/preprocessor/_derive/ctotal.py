@@ -38,10 +38,13 @@ class DerivedVariable(DerivedVariableBase):
                     Constraint(name="soil_mass_content_of_carbon"),
                 )
             except iris.exceptions.ConstraintMismatchError as exc:
-                raise ValueError(
+                msg = (
                     f"No cube from {cubes} can be loaded with "
                     f"standard name CMIP5: soil_carbon_content "
-                    f"or CMIP6: soil_mass_content_of_carbon",
+                    f"or CMIP6: soil_mass_content_of_carbon"
+                )
+                raise ValueError(
+                    msg,
                 ) from exc
         c_veg_cube = cubes.extract_cube(
             Constraint(name="vegetation_carbon_content"),

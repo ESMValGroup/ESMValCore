@@ -65,9 +65,12 @@ def parse_resume(resume, recipe):
     for resume_dir in resume:
         resume_recipe = resume_dir / "run" / recipe.name
         if current_recipe != resume_recipe.read_text(encoding="utf-8"):
-            raise ValueError(
+            msg = (
                 f"Only identical recipes can be resumed, but "
-                f"{resume_recipe} is different from {recipe}",
+                f"{resume_recipe} is different from {recipe}"
+            )
+            raise ValueError(
+                msg,
             )
     return resume
 
@@ -263,16 +266,15 @@ class Recipes:
         configure_logging(console_log_level="info")
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
-        print("# Installed recipes")
         for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == ".":
                 root = ""
             if root:
-                print(f"\n# {root.replace(os.sep, ' - ').title()}")
+                pass
             for filename in sorted(files):
                 if filename.endswith(".yml"):
-                    print(os.path.join(root, filename))
+                    pass
 
     @staticmethod
     def get(recipe):
@@ -294,9 +296,12 @@ class Recipes:
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            raise RecipeError(
+            msg = (
                 f"Recipe {recipe} not found. To list all available recipes, "
-                'execute "esmvaltool list"',
+                'execute "esmvaltool list"'
+            )
+            raise RecipeError(
+                msg,
             )
         logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
@@ -320,14 +325,16 @@ class Recipes:
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            raise RecipeError(
+            msg = (
                 f"Recipe {recipe} not found. To list all available recipes, "
-                'execute "esmvaltool list"',
+                'execute "esmvaltool list"'
+            )
+            raise RecipeError(
+                msg,
             )
         msg = f"Recipe {recipe}"
         logger.info(msg)
         logger.info("=" * len(msg))
-        print(installed_recipe.read_text(encoding="utf-8"))
 
 
 class ESMValTool:
@@ -341,11 +348,7 @@ class ESMValTool:
         self._extra_packages = {}
         esmvaltool_commands = entry_points(group="esmvaltool_commands")
         if not esmvaltool_commands:
-            print(
-                "Running esmvaltool executable from ESMValCore. "
-                "No other command line utilities are available "
-                "until ESMValTool is installed.",
-            )
+            pass
         for entry_point in esmvaltool_commands:
             self._extra_packages[entry_point.dist.name] = (
                 entry_point.dist.version
@@ -365,11 +368,8 @@ class ESMValTool:
         any other package that adds a subcommand to 'esmvaltool'
         command.
         """
-        from . import __version__
-
-        print(f"ESMValCore: {__version__}")
-        for project, version in self._extra_packages.items():
-            print(f"{project}: {version}")
+        for _project, _version in self._extra_packages.items():
+            pass
 
     def run(self, recipe, **kwargs):
         """Execute an ESMValTool recipe.
@@ -390,9 +390,12 @@ class ESMValTool:
         if cli_config_dir is not None:
             cli_config_dir = Path(cli_config_dir).expanduser().absolute()
             if not cli_config_dir.is_dir():
-                raise NotADirectoryError(
+                msg = (
                     f"Invalid --config_dir given: {cli_config_dir} is not an "
-                    f"existing directory",
+                    f"existing directory"
+                )
+                raise NotADirectoryError(
+                    msg,
                 )
 
         # TODO: remove in v2.14.0
@@ -416,10 +419,13 @@ class ESMValTool:
             # validated) when importing the module with `from .config import
             # CFG`
             except InvalidConfigParameter as exc:
-                raise InvalidConfigParameter(
+                msg = (
                     f"Failed to parse configuration directory "
                     f"{cli_config_dir} (command line argument): "
-                    f"{exc!s}",
+                    f"{exc!s}"
+                )
+                raise InvalidConfigParameter(
+                    msg,
                 ) from exc
 
         recipe = self._get_recipe(recipe)
@@ -456,9 +462,12 @@ class ESMValTool:
                 session.session_name = session_dir.name
                 return
 
-        raise RecipeError(
+        msg = (
             f"Output directory '{session.session_dir}' already exists and"
-            " unable to find alternative, aborting to prevent data loss.",
+            " unable to find alternative, aborting to prevent data loss."
+        )
+        raise RecipeError(
+            msg,
         )
 
     def _run(
@@ -534,8 +543,7 @@ class ESMValTool:
             installed_recipe = DIAGNOSTICS.recipes / recipe
             if os.path.isfile(installed_recipe):
                 recipe = installed_recipe
-        recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
-        return recipe
+        return Path(os.path.expandvars(recipe)).expanduser().absolute()
 
     @staticmethod
     def _get_config_info(cli_config_dir):
@@ -607,7 +615,7 @@ def run():
         raise
     except RecipeError as exc:
         # Hide the stack trace for RecipeErrors
-        logger.error("%s", exc)
+        logger.exception("%s", exc)
         logger.debug("Stack trace for debugging:", exc_info=True)
         sys.exit(1)
     except Exception:

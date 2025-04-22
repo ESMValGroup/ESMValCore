@@ -11,11 +11,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rlds"},
             {"short_name": "rlus"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -27,6 +26,4 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(name="surface_upwelling_longwave_flux_in_air"),
         )
 
-        rlns_cube = rlds_cube - rlus_cube
-
-        return rlns_cube
+        return rlds_cube - rlus_cube

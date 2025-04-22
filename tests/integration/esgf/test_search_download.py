@@ -167,7 +167,8 @@ def test_mock_search(variable, mocker):
         with expected_results_file.open("w", encoding="utf-8") as file:
             yaml.safe_dump(expected_results, file)
 
-        assert False, "Wrote expected results, please check."
+        msg = "Wrote expected results, please check."
+        raise AssertionError(msg)
 
     assert len(files) == len(expected_files)
     for found_file, expected in zip(files, expected_files, strict=False):

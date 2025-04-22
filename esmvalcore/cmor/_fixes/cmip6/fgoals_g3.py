@@ -4,8 +4,8 @@ import dask.array as da
 import iris
 import numpy as np
 
-from ..common import OceanFixGrid
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 def _check_bounds_monotonicity(coord):

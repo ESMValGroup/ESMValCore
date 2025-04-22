@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
-import contextlib
 import datetime
 import logging
 import threading
 import time
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import dask.diagnostics
 import distributed
 import rich.progress
-from dask.delayed import Delayed
 
 from esmvalcore.config import CFG
+
+if TYPE_CHECKING:
+    import contextlib
+    from collections.abc import Iterable
+
+    from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 

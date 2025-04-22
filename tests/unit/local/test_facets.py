@@ -6,7 +6,7 @@ from esmvalcore.local import LocalFile, _path2facets
 
 
 @pytest.mark.parametrize(
-    "path,drs,expected",
+    ("path", "drs", "expected"),
     [
         (
             "/climate_data/value1/value2/filename.nc",

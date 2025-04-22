@@ -16,7 +16,7 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CMOR_TABLES
 
 
-@pytest.mark.parametrize("mip_table", ("Amon", "day"))
+@pytest.mark.parametrize("mip_table", ["Amon", "day"])
 def test_get_pr_fix(mip_table):
     """Test whether the right fix gets found."""
     fix = Fix.get_fixes("native6", "MSWEP", mip_table, "pr")

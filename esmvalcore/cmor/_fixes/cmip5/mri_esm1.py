@@ -2,7 +2,7 @@
 
 from dask import array as da
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Msftmyz(Fix):

@@ -61,15 +61,13 @@ def cubes_with_arbitrary_dimensions():
         "aux_coords_and_dims": [(s_coord, ())],
     }
 
-    cubes = CubeList(
+    return CubeList(
         [
             Cube([[0.0], [0.0], [0.0]], **cube_kwargs),
             Cube([[0.0], [2.0], [1.0]], **cube_kwargs),
             Cube([[0.0], [4.0], [2.0]], **cube_kwargs),
         ],
     )
-
-    return cubes
 
 
 @pytest.fixture
@@ -88,7 +86,7 @@ def cubes_5d():
         (e_coord, 4),
     ]
 
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(
                 np.full((1, 1, 1, 1, 1), 1.0),
@@ -100,8 +98,6 @@ def cubes_5d():
             ),
         ],
     )
-
-    return cubes
 
 
 def timecoord(
@@ -278,7 +274,7 @@ VALIDATION_DATA_SUCCESS = (
 
 
 @pytest.mark.parametrize(
-    "length,slices",
+    ("length", "slices"),
     [
         (1, [slice(0, 1)]),
         (25000, [slice(0, 8334), slice(8334, 16668), slice(16668, 25000)]),
@@ -351,7 +347,10 @@ def test_compute_slices_equals_end_index():
 
 
 @pytest.mark.parametrize("frequency", FREQUENCY_OPTIONS)
-@pytest.mark.parametrize("span, statistics, expected", VALIDATION_DATA_SUCCESS)
+@pytest.mark.parametrize(
+    ("span", "statistics", "expected"),
+    VALIDATION_DATA_SUCCESS,
+)
 def test_multimodel_statistics(frequency, span, statistics, expected):
     """High level test for multicube statistics function."""
     cubes = get_cubes_for_validation_test(frequency)
@@ -465,7 +464,7 @@ VALIDATION_DATA_FAIL = (
 )
 
 
-@pytest.mark.parametrize("statistic, error", VALIDATION_DATA_FAIL)
+@pytest.mark.parametrize(("statistic", "error"), VALIDATION_DATA_FAIL)
 def test_unsupported_statistics_fail(statistic, error):
     """Check that unsupported statistics raise an exception."""
     cubes = get_cubes_for_validation_test("monthly")
@@ -476,8 +475,8 @@ def test_unsupported_statistics_fail(statistic, error):
 
 
 @pytest.mark.parametrize(
-    "calendar1, calendar2, expected",
-    (
+    ("calendar1", "calendar2", "expected"),
+    [
         ("360_day", "360_day", ("360_day",)),
         ("365_day", "365_day", ("365_day",)),
         ("365_day", "360_day", ("standard", "gregorian")),
@@ -485,7 +484,7 @@ def test_unsupported_statistics_fail(statistic, error):
         ("standard", "365_day", ("standard", "gregorian")),
         ("proleptic_gregorian", "julian", ("standard", "gregorian")),
         ("julian", "365_day", ("standard", "gregorian")),
-    ),
+    ],
 )
 def test_get_consistent_time_unit(calendar1, calendar2, expected):
     """Test same calendar returned or default if calendars differ.
@@ -521,15 +520,15 @@ def test_align(span):
 
     result_cubes = mm._align_time_coord(cubes, span)
 
-    calendars = set(cube.coord("time").units.calendar for cube in result_cubes)
+    calendars = {cube.coord("time").units.calendar for cube in result_cubes}
 
     assert len(calendars) == 1
-    assert list(calendars)[0] in ("standard", "gregorian")
+    assert next(iter(calendars)) in ("standard", "gregorian")
 
-    shapes = set(cube.shape for cube in result_cubes)
+    shapes = {cube.shape for cube in result_cubes}
 
     assert len(shapes) == 1
-    assert tuple(shapes)[0] == (len_data,)
+    assert next(iter(shapes)) == (len_data,)
 
 
 @pytest.mark.parametrize("span", SPAN_OPTIONS)
@@ -849,7 +848,7 @@ def test_return_products():
     input1 = PreprocessorFile(cube1)
     input2 = PreprocessorFile(cube2)
 
-    products = set([input1, input2])
+    products = {input1, input2}
 
     output = PreprocessorFile()
     output_products = {"": {"mean": output}}
@@ -872,8 +871,8 @@ def test_return_products():
         **kwargs,
     )
 
-    assert result1 == set([input1, input2, output])
-    assert result2 == set([output])
+    assert result1 == {input1, input2, output}
+    assert result2 == {output}
 
     kwargs["output_products"] = output_products
     result3 = mm.multi_model_statistics(products, **kwargs)
@@ -923,7 +922,7 @@ def test_ensemble_products():
     }
 
     input4 = PreprocessorFile(cube1, attributes=attributes4)
-    products = set([input1, input2, input3, input4])
+    products = {input1, input2, input3, input4}
 
     output1 = PreprocessorFile()
     output2 = PreprocessorFile()
@@ -1529,7 +1528,7 @@ STATS = [
     "products",
     [
         CubeList([generate_cube_from_dates("monthly")]),
-        set([PreprocessorFile(generate_cube_from_dates("monthly"))]),
+        {PreprocessorFile(generate_cube_from_dates("monthly"))},
     ],
 )
 def test_single_input_multi_model_statistics(products, stat):
@@ -1619,7 +1618,7 @@ def test_operator_missing_in_stat():
 
 
 @pytest.mark.parametrize(
-    "statistic,output",
+    ("statistic", "output"),
     [
         ("mean", ("mean", {})),
         ({"operator": "mean"}, ("mean", {})),
@@ -1655,7 +1654,7 @@ def test_get_operator_and_kwargs_operator_missing(statistic):
 
 
 @pytest.mark.parametrize(
-    "statistic,output",
+    ("statistic", "output"),
     [
         ("mean", "mean"),
         ({"operator": "mean"}, "mean"),

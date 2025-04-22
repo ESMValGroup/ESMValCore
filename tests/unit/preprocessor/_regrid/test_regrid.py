@@ -180,8 +180,8 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
 
 
 @pytest.mark.parametrize(
-    "cube2_spec, expected",
-    (
+    ("cube2_spec", "expected"),
+    [
         # equal lat/lon
         (
             {
@@ -222,7 +222,7 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
             },
             False,
         ),
-    ),
+    ],
 )
 def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     """Test for `_horizontal_grid_is_close`."""

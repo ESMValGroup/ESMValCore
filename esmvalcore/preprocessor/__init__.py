@@ -5,18 +5,17 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
-from collections.abc import Iterable
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from dask.delayed import Delayed
 from iris.cube import Cube
 
-from .._provenance import TrackedFile
-from .._task import BaseTask
-from ..cmor.check import cmor_check_data, cmor_check_metadata
-from ..cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore._provenance import TrackedFile
+from esmvalcore._task import BaseTask
+from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
+from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -94,105 +93,110 @@ from ._volume import (
 )
 from ._weighting import weighting_landsea_fraction
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from dask.delayed import Delayed
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    # File reformatting/CMORization
-    "fix_file",
-    # Load cubes from file
-    "load",
-    # Metadata reformatting/CMORization
-    "fix_metadata",
-    # Concatenate all cubes in one
-    "concatenate",
-    "cmor_check_metadata",
-    # Extract years given by dataset keys (start_year and end_year)
-    "clip_timerange",
-    # Data reformatting/CMORization
-    "fix_data",
-    "cmor_check_data",
+    "accumulate_coordinate",
     # Attach ancillary variables and cell measures
     "add_supplementary_variables",
-    # Derive variable
-    "derive",
-    # Time extraction (as defined in the preprocessor section)
-    "extract_time",
-    "extract_season",
-    "extract_month",
-    "resample_hours",
-    "resample_time",
-    # Level extraction
-    "extract_levels",
-    # Weighting
-    "weighting_landsea_fraction",
-    # Mask landsea (fx or Natural Earth)
-    "mask_landsea",
-    # Natural Earth only
-    "mask_glaciated",
-    # Mask landseaice, sftgif only
-    "mask_landseaice",
-    # Regridding
-    "regrid",
-    # Point interpolation
-    "extract_coordinate_points",
-    "extract_point",
-    "extract_location",
-    # Masking missing values
-    "mask_multimodel",
-    "mask_fillvalues",
-    "mask_above_threshold",
-    "mask_below_threshold",
-    "mask_inside_range",
-    "mask_outside_range",
-    # Other
-    "clip",
-    "rolling_window_statistics",
-    "cumulative_sum",
-    # Region operations
-    "extract_region",
-    "extract_shape",
-    "extract_volume",
-    "extract_trajectory",
-    "extract_transect",
-    "detrend",
-    "extract_named_regions",
-    "axis_statistics",
-    "depth_integration",
-    "area_statistics",
-    "volume_statistics",
-    # Time operations
-    "local_solar_time",
     "amplitude",
-    "zonal_statistics",
-    "meridional_statistics",
-    "accumulate_coordinate",
-    "hourly_statistics",
-    "daily_statistics",
-    "monthly_statistics",
-    "seasonal_statistics",
     "annual_statistics",
-    "decadal_statistics",
-    "climate_statistics",
     "anomalies",
-    "regrid_time",
-    "timeseries_filter",
-    "linear_trend",
-    "linear_trend_stderr",
-    # Convert units
-    "convert_units",
-    # Histograms
-    "histogram",
-    # Ensemble statistics
-    "ensemble_statistics",
-    # Multi model statistics
-    "multi_model_statistics",
+    "area_statistics",
+    "axis_statistics",
     # Comparison with reference datasets
     "bias",
+    "climate_statistics",
+    # Other
+    "clip",
+    # Extract years given by dataset keys (start_year and end_year)
+    "clip_timerange",
+    "cmor_check_data",
+    "cmor_check_metadata",
+    # Concatenate all cubes in one
+    "concatenate",
+    # Convert units
+    "convert_units",
+    "cumulative_sum",
+    "daily_statistics",
+    "decadal_statistics",
+    "depth_integration",
+    # Derive variable
+    "derive",
+    "detrend",
     "distance_metric",
+    # Ensemble statistics
+    "ensemble_statistics",
+    # Point interpolation
+    "extract_coordinate_points",
+    # Level extraction
+    "extract_levels",
+    "extract_location",
+    "extract_month",
+    "extract_named_regions",
+    "extract_point",
+    # Region operations
+    "extract_region",
+    "extract_season",
+    "extract_shape",
+    # Time extraction (as defined in the preprocessor section)
+    "extract_time",
+    "extract_trajectory",
+    "extract_transect",
+    "extract_volume",
+    # Data reformatting/CMORization
+    "fix_data",
+    # File reformatting/CMORization
+    "fix_file",
+    # Metadata reformatting/CMORization
+    "fix_metadata",
+    # Histograms
+    "histogram",
+    "hourly_statistics",
+    "linear_trend",
+    "linear_trend_stderr",
+    # Load cubes from file
+    "load",
+    # Time operations
+    "local_solar_time",
+    "mask_above_threshold",
+    "mask_below_threshold",
+    "mask_fillvalues",
+    # Natural Earth only
+    "mask_glaciated",
+    "mask_inside_range",
+    # Mask landsea (fx or Natural Earth)
+    "mask_landsea",
+    # Mask landseaice, sftgif only
+    "mask_landseaice",
+    # Masking missing values
+    "mask_multimodel",
+    "mask_outside_range",
+    "meridional_statistics",
+    "monthly_statistics",
+    # Multi model statistics
+    "multi_model_statistics",
+    # Regridding
+    "regrid",
+    "regrid_time",
     # Remove supplementary variables from cube
     "remove_supplementary_variables",
+    "resample_hours",
+    "resample_time",
+    "rolling_window_statistics",
     # Save to file
     "save",
+    "seasonal_statistics",
+    "timeseries_filter",
+    "volume_statistics",
+    # Weighting
+    "weighting_landsea_fraction",
+    "zonal_statistics",
 ]
 
 TIME_PREPROCESSORS = [
@@ -236,17 +240,19 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = list(inspect.signature(function).parameters)[0]
-    return itype
+    return next(iter(inspect.signature(function).parameters))
 
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
     for step in settings:
         if step not in DEFAULT_ORDER:
-            raise ValueError(
+            msg = (
                 f"Unknown preprocessor function '{step}', choose from: "
-                f"{', '.join(DEFAULT_ORDER)}",
+                f"{', '.join(DEFAULT_ORDER)}"
+            )
+            raise ValueError(
+                msg,
             )
 
         function = globals()[step]
@@ -278,10 +284,13 @@ def check_preprocessor_settings(settings):
         if check_args:
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
-                raise ValueError(
+                msg = (
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
-                    f"Valid arguments are: [{', '.join(args)}]",
+                    f"Valid arguments are: [{', '.join(args)}]"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Check for missing arguments
@@ -293,16 +302,19 @@ def check_preprocessor_settings(settings):
         end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
-            raise ValueError(
+            msg = (
                 f"Missing required argument(s) {missing_args} for "
-                f"preprocessor function {step}",
+                f"preprocessor function {step}"
+            )
+            raise ValueError(
+                msg,
             )
 
         # Final sanity check in case the above fails to catch a mistake
         try:
             signature.bind(None, **settings[step])
         except TypeError:
-            logger.error(
+            logger.exception(
                 "Wrong preprocessor function arguments in function '%s'",
                 step,
             )
@@ -325,10 +337,13 @@ def _check_multi_model_settings(products):
             if reference is None:
                 reference = product
             elif reference.settings[step] != settings:
-                raise ValueError(
+                msg = (
                     "Unable to combine differing multi-dataset settings for "
                     f"{reference.filename} and {product.filename}, "
-                    f"{reference.settings[step]} and {settings}",
+                    f"{reference.settings[step]} and {settings}"
+                )
+                raise ValueError(
+                    msg,
                 )
 
 
@@ -394,7 +409,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
                 f"{n_not_shown_args:d} further argument(s) not shown "
                 f"here; refer to the debug log for a full list)"
             )
-        logger.error(
+        logger.exception(
             "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
             "function argument(s)\n%s",
             function.__name__,
@@ -531,8 +546,9 @@ class PreprocessorFile(TrackedFile):
     def apply(self, step: str, debug: bool = False):
         """Apply preprocessor step to product."""
         if step not in self.settings:
+            msg = f"PreprocessorFile {self} has no settings for step {step}"
             raise ValueError(
-                f"PreprocessorFile {self} has no settings for step {step}",
+                msg,
             )
         self.cubes = preprocess(
             self.cubes,
@@ -768,11 +784,10 @@ class PreprocessingTask(BaseTask):
                 self.scheduler_lock.release()
                 logger.debug("Released save lock for task %s", self.name)
 
-        metadata_files = write_metadata(
+        return write_metadata(
             self.products,
             self.write_ncl_interface,
         )
-        return metadata_files
 
     def __str__(self):
         """Get human readable description."""
@@ -791,7 +806,7 @@ class PreprocessingTask(BaseTask):
             )
             for p in self.products
         )
-        txt = "\n".join(
+        return "\n".join(
             [
                 f"{self.__class__.__name__}: {self.name}",
                 f"order: {order}",
@@ -799,4 +814,3 @@ class PreprocessingTask(BaseTask):
                 self.print_ancestors(),
             ],
         )
-        return txt

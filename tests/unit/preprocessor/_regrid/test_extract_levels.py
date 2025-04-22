@@ -170,7 +170,7 @@ class Test(tests.Test):
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs,
-                dict(axis=0, interpolation=scheme, extrapolation="nan"),
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
@@ -183,7 +183,7 @@ class Test(tests.Test):
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})
 
     def test_preserve_2d_fx_interpolation(self):
         area_data = np.ones((2, 1))
@@ -292,7 +292,7 @@ class Test(tests.Test):
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs,
-                dict(axis=0, interpolation=scheme, extrapolation="nan"),
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
@@ -309,11 +309,11 @@ class Test(tests.Test):
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})
 
     def test_interpolation__masked(self):
         levels = np.array([0.5, 1.5])
-        new_data = np.empty([len(levels)] + list(self.shape[1:]), dtype=float)
+        new_data = np.empty([len(levels), *list(self.shape[1:])], dtype=float)
         new_data[:, 0, :] = np.nan
         new_data_mask = np.isnan(new_data)
         scheme = "linear"
@@ -341,7 +341,7 @@ class Test(tests.Test):
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs,
-                dict(axis=0, interpolation=scheme, extrapolation="nan"),
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         input_cube = args[0]
@@ -365,4 +365,4 @@ class Test(tests.Test):
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})

@@ -4,7 +4,8 @@ import dask.array as da
 import iris
 from iris import NameConstraint
 
-from .._regrid import regrid
+from esmvalcore.preprocessor._regrid import regrid
+
 from ._baseclass import DerivedVariableBase
 
 
@@ -14,12 +15,11 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "baresoilFrac"},
             {"short_name": "residualFrac"},
             {"short_name": "sftlf", "mip": "fx"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):

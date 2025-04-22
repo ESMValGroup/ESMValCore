@@ -10,17 +10,20 @@ from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import iris
 import numpy as np
 import requests
 from iris import NameConstraint
-from iris.cube import Cube, CubeList
 from iris.mesh import Connectivity, MeshXY
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 from esmvalcore.local import _get_data_sources
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
 
 logger = logging.getLogger(__name__)
 
@@ -133,22 +136,23 @@ class IconFix(NativeDatasetFix):
             start_index=start_index,
             location_axis=0,
         )
-        mesh = MeshXY(
+        return MeshXY(
             topology_dimension=2,
             node_coords_and_axes=[(node_lat, "y"), (node_lon, "x")],
             connectivities=[connectivity],
             face_coords_and_axes=[(face_lat, "y"), (face_lon, "x")],
         )
 
-        return mesh
-
     def _get_grid_url(self, cube):
         """Get ICON grid URL from cube."""
         if self.GRID_FILE_ATTR not in cube.attributes:
-            raise ValueError(
+            msg = (
                 f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
                 f"necessary to download the ICON horizontal grid file:\n"
-                f"{cube}",
+                f"{cube}"
+            )
+            raise ValueError(
+                msg,
             )
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
@@ -195,11 +199,14 @@ class IconFix(NativeDatasetFix):
         if not path.is_file():
             new_path = self.session["auxiliary_data_dir"] / path
             if not new_path.is_file():
-                raise FileNotFoundError(
+                msg = (
                     f"{description} '{path}' given by facet '{facet}' does "
                     f"not exist (specify a valid absolute path or a path "
                     f"relative to the auxiliary_data_dir "
-                    f"'{self.session['auxiliary_data_dir']}')",
+                    f"'{self.session['auxiliary_data_dir']}')"
+                )
+                raise FileNotFoundError(
+                    msg,
                 )
             path = new_path
         return path
@@ -310,8 +317,7 @@ class IconFix(NativeDatasetFix):
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
-                cubes = self._load_cubes(grid_path)
-                return cubes
+                return self._load_cubes(grid_path)
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -370,8 +376,7 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-        cubes = self._load_cubes(grid_path)
-        return cubes
+        return self._load_cubes(grid_path)
 
     def get_horizontal_grid(self, cube):
         """Get ICON horizontal grid.
@@ -510,8 +515,7 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module="iris",
             )
-            cubes = iris.load(path)
-        return cubes
+            return iris.load(path)
 
     @staticmethod
     def _set_range_in_0_360(lon_coord):

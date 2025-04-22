@@ -2,7 +2,7 @@
 
 from iris.exceptions import CoordinateNotFoundError
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):

@@ -57,7 +57,7 @@ def test_repr_supplementary():
 
 
 @pytest.mark.parametrize(
-    "separator,join_lists,output",
+    ("separator", "join_lists", "output"),
     [
         ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
         ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
@@ -118,9 +118,9 @@ def test_session_setter():
 
 
 @pytest.mark.parametrize(
-    "facets,added_facets",
+    ("facets", "added_facets"),
     [
-        [
+        (
             {
                 "short_name": "areacella",
                 "project": "ICON",
@@ -140,8 +140,8 @@ def test_session_setter():
                 "longitude": "grid_longitude",
                 "raw_name": "cell_area",
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "zg",
                 "mip": "A1",
@@ -161,8 +161,8 @@ def test_session_setter():
                 # Added from extra facets YAML file
                 "institute": ["BCCR"],
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "pr",
                 "mip": "3hr",
@@ -184,8 +184,8 @@ def test_session_setter():
                 "institute": ["CNRM-CERFACS"],
                 "product": ["output1", "output2"],
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "pr",
                 "mip": "3hr",
@@ -208,8 +208,8 @@ def test_session_setter():
                 "timerange": "2000/2001",
                 "units": "kg m-2 s-1",
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "tas",
                 "mip": "mon",
@@ -234,7 +234,7 @@ def test_session_setter():
                 "timerange": "1991/1993",
                 "units": "K",
             },
-        ],
+        ),
     ],
 )
 def test_augment_facets(session, facets, added_facets):
@@ -590,13 +590,13 @@ def test_from_recipe_with_automatic_supplementary(
 
 
 @pytest.mark.parametrize(
-    "pattern,result",
-    (
-        ["a", False],
-        ["*", True],
-        ["r?i1p1", True],
-        ["r[1-3]i1p1*", True],
-    ),
+    ("pattern", "result"),
+    [
+        ("a", False),
+        ("*", True),
+        ("r?i1p1", True),
+        ("r[1-3]i1p1*", True),
+    ],
 )
 def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
@@ -1617,7 +1617,7 @@ TEST_YEAR_FORMAT = [
 ]
 
 
-@pytest.mark.parametrize("input_time,output_time", TEST_YEAR_FORMAT)
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_YEAR_FORMAT)
 def test_update_timerange_year_format(session, input_time, output_time):
     variable = {
         "project": "CMIP6",

@@ -4,9 +4,9 @@ import logging
 
 from iris import NameConstraint
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.iris_helpers import safe_convert_units
 
-from ..fix import Fix
 from .shared import (
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
@@ -74,9 +74,12 @@ class NativeDatasetFix(Fix):
             try:
                 cube.units = new_units
             except ValueError as exc:
-                raise ValueError(
+                msg = (
                     f"Failed to fix invalid units '{invalid_units}' for "
-                    f"variable '{self.vardef.short_name}'",
+                    f"variable '{self.vardef.short_name}'"
+                )
+                raise ValueError(
+                    msg,
                 ) from exc
         safe_convert_units(cube, self.vardef.units)
 
@@ -113,9 +116,12 @@ class NativeDatasetFix(Fix):
                 self.vardef.short_name,
             )
         if not cubes.extract(NameConstraint(var_name=var_name)):
-            raise ValueError(
+            msg = (
                 f"Variable '{var_name}' used to extract "
-                f"'{self.vardef.short_name}' is not available in input file",
+                f"'{self.vardef.short_name}' is not available in input file"
+            )
+            raise ValueError(
+                msg,
             )
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 

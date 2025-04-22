@@ -105,7 +105,7 @@ def create_test_file(filename, tracking_id=None):
 
 def _get_default_settings_for_chl(save_filename):
     """Get default preprocessor settings for chl."""
-    defaults = {
+    return {
         "remove_supplementary_variables": {},
         "save": {
             "compress": False,
@@ -113,19 +113,17 @@ def _get_default_settings_for_chl(save_filename):
             "compute": False,
         },
     }
-    return defaults
 
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
     def get_required(short_name, _):
         if short_name != "tas":
-            assert False
-        required = [
+            raise AssertionError
+        return [
             {"short_name": "pr"},
             {"short_name": "areacella", "mip": "fx", "optional": True},
         ]
-        return required
 
     monkeypatch.setattr(
         esmvalcore._recipe.to_datasets,
@@ -155,9 +153,7 @@ def get_recipe(tempdir: Path, content: str, session: Session):
     content = str(DEFAULT_DOCUMENTATION + content)
     recipe_file.write_text(content)
 
-    recipe = read_recipe_file(recipe_file, session)
-
-    return recipe
+    return read_recipe_file(recipe_file, session)
 
 
 def test_recipe_missing_scripts(tmp_path, session):
@@ -416,12 +412,12 @@ def test_simple_recipe(
         print("Task", task.name)
         assert task.order == list(DEFAULT_ORDER)
         for product in task.products:
-            dataset = [
+            dataset = next(
                 d
                 for d in datasets
                 if _get_output_file(d.facets, session.preproc_dir)
                 == product.filename
-            ][0]
+            )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
             attributes["filename"] = product.filename
@@ -757,7 +753,7 @@ TEST_ISO_TIMERANGE = [
 ]
 
 
-@pytest.mark.parametrize("input_time,output_time", TEST_ISO_TIMERANGE)
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange(
     tmp_path,
     patched_datafinder,
@@ -786,7 +782,7 @@ def test_recipe_iso_timerange(
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.tasks) == 2
-    pr_task = [t for t in recipe.tasks if t.name.endswith("pr")][0]
+    pr_task = next(t for t in recipe.tasks if t.name.endswith("pr"))
     assert len(pr_task.products) == 1
     pr_product = pr_task.products.pop()
 
@@ -795,9 +791,9 @@ def test_recipe_iso_timerange(
     )
     assert pr_product.filename.name == filename
 
-    areacella_task = [t for t in recipe.tasks if t.name.endswith("areacella")][
-        0
-    ]
+    areacella_task = next(
+        t for t in recipe.tasks if t.name.endswith("areacella")
+    )
     assert len(areacella_task.products) == 1
     areacella_product = areacella_task.products.pop()
 
@@ -805,7 +801,7 @@ def test_recipe_iso_timerange(
     assert areacella_product.filename.name == filename
 
 
-@pytest.mark.parametrize("input_time,output_time", TEST_ISO_TIMERANGE)
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange_as_dataset(
     tmp_path,
     patched_datafinder,
@@ -1054,14 +1050,14 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
             )
         elif task.name == "diagnostic_name/chl_empty_custom":
             assert len(task.products) == 1
-            product = list(task.products)[0]
+            product = next(iter(task.products))
             assert set(product.settings.keys()) == set(
                 DEFAULT_PREPROCESSOR_STEPS,
             )
         elif task.name == "diagnostic_name/chl_with_extract_time":
             assert len(task.products) == 1
-            product = list(task.products)[0]
-            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(["extract_time"]))
+            product = next(iter(task.products))
+            steps = {*DEFAULT_PREPROCESSOR_STEPS, "extract_time"}
             assert set(product.settings.keys()) == steps
             assert product.settings["extract_time"] == {
                 "start_year": 2001,
@@ -1072,7 +1068,8 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
                 "end_day": 28,
             }
         else:
-            assert False, f"invalid task {task.name}"
+            msg = f"invalid task {task.name}"
+            raise AssertionError(msg)
 
 
 def test_derive(tmp_path, patched_datafinder, session):
@@ -1191,10 +1188,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
         volcello_ds = next(
             d for d in product.datasets if d.facets["short_name"] == "volcello"
         )
-        if volcello_ds.facets["project"] == "CMIP6":
-            mip = "Ofx"
-        else:
-            mip = "fx"
+        mip = "Ofx" if volcello_ds.facets["project"] == "CMIP6" else "fx"
         assert volcello_ds.facets["mip"] == mip
 
 
@@ -1826,7 +1820,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    datasets = set([ds["dataset"] for ds in recipe.datasets])
+    datasets = {ds["dataset"] for ds in recipe.datasets}
     task = next(iter(recipe.tasks))
 
     products = task.products
@@ -1990,7 +1984,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    datasets = set([ds["dataset"] for ds in recipe.datasets])
+    datasets = {ds["dataset"] for ds in recipe.datasets}
 
     products = next(iter(recipe.tasks)).products
 
@@ -2637,7 +2631,7 @@ TEST_DIAG_SELECTION = [
 ]
 
 
-@pytest.mark.parametrize("diags_to_run,tasks_run", TEST_DIAG_SELECTION)
+@pytest.mark.parametrize(("diags_to_run", "tasks_run"), TEST_DIAG_SELECTION)
 def test_diag_selection(
     tmp_path,
     patched_datafinder,
@@ -2899,7 +2893,7 @@ def test_statistics_missing_operator_no_default_fail(
 
 
 @pytest.mark.parametrize(
-    "preproc,option",
+    ("preproc", "option"),
     [
         ("annual_statistics", ""),
         ("climate_statistics", ""),
@@ -2942,7 +2936,7 @@ def test_statistics_missing_operator_with_default(
 
 
 @pytest.mark.parametrize(
-    "preproc,preproc_kwargs",
+    ("preproc", "preproc_kwargs"),
     [
         ("annual_statistics", {"invalid_value": 1}),
         ("area_statistics", {"percent": 10, "invalid_value": 1}),

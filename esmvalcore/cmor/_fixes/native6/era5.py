@@ -33,9 +33,12 @@ def get_frequency(cube):
             "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
         )
         if cube.long_name not in acceptable_long_names:
-            raise ValueError(
+            msg = (
                 "Unable to infer frequency of cube "
-                f"with length 1 time dimension: {cube}",
+                f"with length 1 time dimension: {cube}"
+            )
+            raise ValueError(
+                msg,
             )
         return "fx"
 
@@ -63,9 +66,12 @@ def fix_accumulated_units(cube):
     elif get_frequency(cube) == "hourly":
         cube.units = cube.units * "h-1"
     elif get_frequency(cube) == "daily":
-        raise NotImplementedError(
+        msg = (
             f"Fixing of accumulated units of cube "
-            f"{cube.summary(shorten=True)} is not implemented for daily data",
+            f"{cube.summary(shorten=True)} is not implemented for daily data"
+        )
+        raise NotImplementedError(
+            msg,
         )
     return cube
 

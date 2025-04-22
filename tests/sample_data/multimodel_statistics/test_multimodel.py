@@ -67,9 +67,7 @@ def preprocess_data(cubes, time_slice: dict | None = None):
         "scheme": iris.analysis.Nearest(),
     }
 
-    cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
-
-    return cubes
+    return [cube.regrid(**regrid_kwargs) for cube in cubes]
 
 
 def get_cache_key(value):
@@ -157,9 +155,7 @@ def timeseries_cubes_day(request):
     # groupby requires sorted list
     grouped = groupby(sorted(cubes, key=calendar), key=calendar)
 
-    cube_dict = {key: list(group) for key, group in grouped}
-
-    return cube_dict
+    return {key: list(group) for key, group in grouped}
 
 
 def multimodel_test(cubes, statistic, span, **kwargs):
@@ -202,7 +198,8 @@ def multimodel_regression_test(cubes, span, name):
     else:
         # The test will fail if no regression data are available.
         iris.save(result_cube, filename)
-        raise RuntimeError(f"Wrote reference data to {filename.absolute()}")
+        msg = f"Wrote reference data to {filename.absolute()}"
+        raise RuntimeError(msg)
 
 
 @pytest.mark.use_sample_data
