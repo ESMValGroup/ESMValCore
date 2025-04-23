@@ -21,7 +21,6 @@ on:
   push:
     branches:
       - main
-      - pin_dask_2025.4.0
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
