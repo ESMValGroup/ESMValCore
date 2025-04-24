@@ -1,5 +1,7 @@
 """Tests for the fixes of CESM2-WACCM-FV2."""
+
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
@@ -8,6 +10,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Clw,
     Fgco2,
     Omon,
+    Pr,
     Siconc,
     Tas,
 )
@@ -18,7 +21,7 @@ from esmvalcore.cmor.fix import Fix
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -29,7 +32,7 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'Amon', 'cli')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
 
 
@@ -40,7 +43,7 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'Amon', 'clw')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "clw")
     assert fix == [Clw(None), GenericFix(None)]
 
 
@@ -51,7 +54,7 @@ def test_clw_fix():
 
 def test_get_fgco2_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'Omon', 'fgco2')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Omon", "fgco2")
     assert fix == [Fgco2(None), Omon(None), GenericFix(None)]
 
 
@@ -62,7 +65,7 @@ def test_fgco2_fix():
 
 def test_get_siconc_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'SImon', 'siconc')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "SImon", "siconc")
     assert fix == [Siconc(None), GenericFix(None)]
 
 
@@ -73,10 +76,23 @@ def test_siconc_fix():
 
 def test_get_tas_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'Amon', 'tas')
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "Amon", "tas")
+    assert fix == [Tas(None), GenericFix(None)]
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM-FV2", "day", "tas")
     assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():
     """Test fix for ``tas``."""
     assert Tas is BaseTas
+
+
+def test_get_pr_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM_FV2", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
+
+
+def test_pr_fix():
+    """Test fix for ``Pr``."""
+    assert Pr is BasePr

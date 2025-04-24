@@ -14,8 +14,9 @@ def _is_single_item(testee):
     Return whether this is a single item, rather than an iterable.
     We count string types as 'single', also.
     """
-    return (isinstance(testee, str)
-            or not isinstance(testee, collections.abc.Iterable))
+    return isinstance(testee, str) or not isinstance(
+        testee, collections.abc.Iterable
+    )
 
 
 def _as_list_of_coords(cube, names_or_coords):
@@ -29,9 +30,11 @@ def _as_list_of_coords(cube, names_or_coords):
             coords.append(cube.coord(name_or_coord))
         else:
             # Don't know how to handle this type
-            msg = ("Don't know how to handle coordinate of type %s. "
-                   "Ensure all coordinates are of type str "
-                   "or iris.coords.Coord.") % (type(name_or_coord), )
+            msg = (
+                "Don't know how to handle coordinate of type %s. "
+                "Ensure all coordinates are of type str "
+                "or iris.coords.Coord."
+            ) % (type(name_or_coord),)
             raise TypeError(msg)
     return coords
 
@@ -41,8 +44,10 @@ def ref_to_dims_index_as_coordinate(cube, ref):
     coord = _as_list_of_coords(cube, ref)[0]
     dims = cube.coord_dims(coord)
     if not dims:
-        msg = ('Requested an iterator over a coordinate ({}) '
-               'which does not describe a dimension.')
+        msg = (
+            "Requested an iterator over a coordinate ({}) "
+            "which does not describe a dimension."
+        )
         msg = msg.format(coord.name())
         raise ValueError(msg)
     return dims
@@ -52,12 +57,15 @@ def ref_to_dims_index_as_index(cube, ref):
     """Get dim for index ref."""
     try:
         dim = int(ref)
-    except (ValueError, TypeError):
-        raise ValueError('{} Incompatible type {} for '
-                         'slicing'.format(ref, type(ref)))
+    except (ValueError, TypeError) as exc:
+        raise ValueError(
+            "{} Incompatible type {} for slicing".format(ref, type(ref))
+        ) from exc
     if dim < 0 or dim > cube.ndim:
-        msg = ('Requested an iterator over a dimension ({}) '
-               'which does not exist.'.format(dim))
+        msg = (
+            "Requested an iterator over a dimension ({}) "
+            "which does not exist.".format(dim)
+        )
         raise ValueError(msg)
     dims = [dim]
     return dims
@@ -161,9 +169,14 @@ def index_iterator(dims_to_slice, shape):
     for index_tuple in np.ndindex(*dims):
         src_ind = tuple(
             slice(None, None) if n in dims_to_slice else i
-            for n, i in enumerate(index_tuple))
-        dst_ind = tuple(i for n, i in enumerate(index_tuple)
-                        if n not in dims_to_slice) + dst_slices
+            for n, i in enumerate(index_tuple)
+        )
+        dst_ind = (
+            tuple(
+                i for n, i in enumerate(index_tuple) if n not in dims_to_slice
+            )
+            + dst_slices
+        )
         yield src_ind, dst_ind
 
 
