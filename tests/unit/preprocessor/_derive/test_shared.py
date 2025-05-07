@@ -3,9 +3,13 @@
 import iris
 import numpy as np
 import pytest
+from iris import Constraint
+from iris.coords import DimCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive._shared import (
     _get_pressure_level_widths,
+    cloud_area_fraction,
     column_average,
 )
 
@@ -52,7 +56,7 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
         ]
     else:
         coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = iris.cube.Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
+    cube = Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
     return cube
 
 
@@ -179,7 +183,7 @@ def test_low_lev_below_surf_press():
     """Test for lowest level below surface pressure."""
     plev = 970
     top_limit = 5
-    col = np.array([np.NaN, 900, 800])
+    col = np.array([np.nan, 900, 800])
     col = np.insert(col, 0, plev)
     col = np.append(col, top_limit)
     result = np.array([0, 120, 845])
@@ -197,7 +201,7 @@ def test_low_lev_below_surf_press():
         np.atleast_3d(result),
     )
 
-    col = np.array([np.NaN, np.NaN, 900, 800])
+    col = np.array([np.nan, np.nan, 900, 800])
     col = np.insert(col, 0, plev)
     col = np.append(col, top_limit)
     result = np.array([0, 0, 120, 845])
@@ -252,3 +256,26 @@ def test_high_level_above_top_limit():
         _get_pressure_level_widths(np.atleast_2d(col), air_pressure_axis=1)
     with pytest.raises(ValueError):
         _get_pressure_level_widths(np.atleast_3d(col), air_pressure_axis=1)
+
+
+def test_cloud_area_fraction():
+    """Test ``cloud_area_fraction``."""
+    p_coord = DimCoord([1, 2], standard_name="air_pressure", units="Pa")
+    opt_coord = DimCoord(
+        [1, 2],
+        standard_name="atmosphere_optical_thickness_due_to_cloud",
+    )
+    clisccp_cube = Cube(
+        np.arange(4).reshape(2, 2),
+        var_name="clisccp",
+        units="%",
+        dim_coords_and_dims=[(p_coord, 0), (opt_coord, 1)],
+    )
+    cubes = CubeList([clisccp_cube])
+
+    result = cloud_area_fraction(cubes, Constraint(), Constraint())
+
+    assert result.var_name == "clisccp"
+    assert result.units == "%"
+    assert result.shape == ()
+    np.testing.assert_equal(result.data, 6)

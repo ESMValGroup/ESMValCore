@@ -1,8 +1,4 @@
-"""
-Integration tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
-function.
-
-"""
+"""Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
 import iris
 import numpy as np
@@ -44,6 +40,31 @@ class Test:
         self.grid_for_linear = iris.cube.Cube(
             np.empty((1, 1)),
             dim_coords_and_dims=coords_spec,
+        )
+
+        # Setup cube with multiple horizontal dimensions
+        self.multidim_cube = _make_cube(data, grid="rotated", aux_coord=False)
+        lats, lons = np.meshgrid(
+            np.arange(1, data.shape[-2] + 1),
+            np.arange(1, data.shape[-1] + 1),
+        )
+        self.multidim_cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                lats,
+                var_name="lat",
+                standard_name="latitude",
+                units="degrees",
+            ),
+            (1, 2),
+        )
+        self.multidim_cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                lons,
+                var_name="lon",
+                standard_name="longitude",
+                units="degrees",
+            ),
+            (1, 2),
         )
 
         # Setup mesh cube
@@ -127,6 +148,17 @@ class Test:
             cache_weights=cache_weights,
         )
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_multidim(self):
+        """Test that latitude/longitude are used by default."""
+        result = regrid(
+            self.multidim_cube,
+            self.grid_for_linear,
+            "linear",
+        )
+        expected = np.ma.masked_array([[[1.5]], [[5.5]], [[9.5]]], mask=False)
+        result.data = np.round(result.data, 1)
         assert_array_equal(result.data, expected)
 
     @pytest.mark.parametrize("cache_weights", [True, False])

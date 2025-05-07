@@ -17,7 +17,10 @@ from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
-from esmvalcore.iris_helpers import rechunk_cube
+from esmvalcore.iris_helpers import (
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._io import concatenate
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
@@ -332,25 +335,9 @@ def distance_metric(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-        reference_products = []
-        for product in products:
-            if product.attributes.get("reference_for_metric", False):
-                reference_products.append(product)
-        if len(reference_products) != 1:
-            raise ValueError(
-                f"Expected exactly 1 dataset with 'reference_for_metric: "
-                f"true', found {len(reference_products):d}"
-            )
-        reference_product = reference_products[0]
-
-        # Extract reference cube
-        # Note: For technical reasons, product objects contain the member
-        # ``cubes``, which is a list of cubes. However, this is expected to be
-        # a list with exactly one element due to the call of concatenate
-        # earlier in the preprocessing chain of ESMValTool. To make sure that
-        # this preprocessor can also be used outside the ESMValTool
-        # preprocessing chain, an additional concatenate call is added here.
-        reference = concatenate(reference_product.cubes)
+        reference, reference_product = _get_ref(
+            products, "reference_for_metric"
+        )
 
     # If input is an Iterable of Cube objects, calculate distance metric for
     # each element
@@ -431,7 +418,8 @@ def _calculate_metric(
 
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
-    res_cube = cube.collapsed(coords, iris.analysis.MAX)
+    with ignore_iris_vague_metadata_warnings():
+        res_cube = cube.collapsed(coords, iris.analysis.MAX)
     res_cube.data = res_data
     res_cube.metadata = res_metadata
     res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]
@@ -452,7 +440,11 @@ def _calculate_rmse(
     weights = get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - reference.core_data()) ** 2
     npx = get_array_module(squared_error)
-    rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
+    mse = npx.ma.average(squared_error, axis=axis, weights=weights)
+    if isinstance(mse, da.Array):
+        rmse = da.reductions.safe_sqrt(mse)
+    else:
+        rmse = np.ma.sqrt(mse)
 
     # Metadata
     metadata = CubeMetadata(

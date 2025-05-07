@@ -11,77 +11,23 @@ import dask.array as da
 import iris
 import numpy as np
 from cf_units import Unit
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube
+
+from esmvalcore.iris_helpers import _try_special_unit_conversions
 
 logger = logging.getLogger(__name__)
 
 
-# List containing special cases for convert_units. Each list item is another
-# list. Each of these sublists defines one special conversion. Each element in
-# the sublists is a tuple (standard_name, units). Note: All units for a single
-# special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
-# mm s-1 for precipitation
-SPECIAL_CASES = [
-    [
-        ("precipitation_flux", "kg m-2 s-1"),
-        ("lwe_precipitation_rate", "mm s-1"),
-    ],
-    [
-        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
-        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
-    ],
-]
-
-
-def _try_special_conversions(cube, units):
-    """Try special conversion."""
-    for special_case in SPECIAL_CASES:
-        for std_name, special_units in special_case:
-            # Special unit conversion only works if all of the following
-            # criteria are met:
-            # - the cube's standard_name is one of the supported
-            #   standard_names
-            # - the cube's units are convertible to the ones defined for
-            #   that given standard_name
-            # - the desired target units are convertible to the units of
-            #   one of the other standard_names in that special case
-
-            # Step 1: find suitable source name and units
-            if cube.standard_name == std_name and cube.units.is_convertible(
-                special_units
-            ):
-                for target_std_name, target_units in special_case:
-                    if target_units == special_units:
-                        continue
-
-                    # Step 2: find suitable target name and units
-                    if Unit(units).is_convertible(target_units):
-                        cube.standard_name = target_std_name
-
-                        # In order to avoid two calls to cube.convert_units,
-                        # determine the conversion factor between the cube's
-                        # units and the source units first and simply add this
-                        # factor to the target units (remember that the source
-                        # units and the target units should be "physically
-                        # identical").
-                        factor = cube.units.convert(1.0, special_units)
-                        cube.units = f"{factor} {target_units}"
-                        cube.convert_units(units)
-                        return True
-
-    # If no special case has been detected, return False
-    return False
-
-
-def convert_units(cube, units):
-    """Convert the units of a cube to new ones.
-
-    This converts units of a cube.
+def convert_units(cube: Cube, units: str | Unit) -> Cube:
+    """Convert the units of a cube to new ones (in-place).
 
     Note
     ----
     Allows special unit conversions which transforms one quantity to another
-    (physically related) quantity. These quantities are identified via their
-    ``standard_name`` and their ``units`` (units convertible to the ones
+    (physically related) quantity, which may also change the input cube's
+    :attr:`~iris.cube.Cube.standard_name`. These quantities are identified via
+    their ``standard_name`` and their ``units`` (units convertible to the ones
     defined are also supported). For example, this enables conversions between
     precipitation fluxes measured in ``kg m-2 s-1`` and precipitation rates
     measured in ``mm day-1`` (and vice versa).
@@ -90,8 +36,14 @@ def convert_units(cube, units):
 
     * ``precipitation_flux`` (``kg m-2 s-1``) --
       ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``water_evaporation_flux`` (``kg m-2 s-1``) --
+      ``lwe_water_evaporation_rate`` (``mm day-1``)
+    * ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+      ``None`` (``mm day-1``)
     * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
       ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
+    * ``surface_air_pressure`` (``Pa``) --
+      ``atmosphere_mass_of_air_per_unit_area`` (``kg m-2``)
 
     Names in the list correspond to ``standard_names`` of the input data.
     Conversions are allowed from each quantity to any other quantity given in a
@@ -100,35 +52,43 @@ def convert_units(cube, units):
     given are also supported (e.g., instead of ``mm day-1``, ``m s-1`` is also
     supported).
 
-    Note that for precipitation variables, a water density of ``1000 kg m-3``
-    is assumed.
+    Note that for precipitation and evaporation variables, a water density of
+    ``1000 kg m-3`` is assumed.
 
-    Arguments
-    ---------
-    cube: iris.cube.Cube
-        Input cube.
-    units: str
-        New units in udunits form.
+    Parameters
+    ----------
+    cube:
+        Input cube (modified in place).
+    units:
+        New units.
 
     Returns
     -------
     iris.cube.Cube
-        converted cube.
+        Converted cube. Just returned for convenience; input cube is modified
+        in place.
+
+    Raises
+    ------
+    iris.exceptions.UnitConversionError
+        Old units are unknown.
+    ValueError
+        Old units are not convertible to new units.
 
     """
     try:
         cube.convert_units(units)
     except ValueError:
-        if not _try_special_conversions(cube, units):
+        if not _try_special_unit_conversions(cube, units):
             raise
 
     return cube
 
 
 def accumulate_coordinate(
-    cube: iris.cube.Cube,
-    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord,
-) -> iris.cube.Cube:
+    cube: Cube,
+    coordinate: str | DimCoord | AuxCoord,
+) -> Cube:
     """Weight data using the bounds from a given coordinate.
 
     The resulting cube will then have units given by
@@ -137,7 +97,7 @@ def accumulate_coordinate(
     Parameters
     ----------
     cube:
-        Data cube for the flux
+        Data cube for the flux.
 
     coordinate:
         Name of the coordinate that will be used as weights.
@@ -145,7 +105,7 @@ def accumulate_coordinate(
     Returns
     -------
     iris.cube.Cube
-        Cube with the aggregated data
+        Cube with the aggregated data.
 
     Raises
     ------
@@ -169,7 +129,7 @@ def accumulate_coordinate(
         )
 
     array_module = da if coord.has_lazy_bounds() else np
-    factor = iris.coords.AuxCoord(
+    factor = AuxCoord(
         array_module.diff(coord.core_bounds())[..., -1],
         var_name=coord.var_name,
         long_name=coord.long_name,

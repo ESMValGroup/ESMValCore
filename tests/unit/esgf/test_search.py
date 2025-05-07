@@ -115,7 +115,7 @@ ESGF_FACETS = (
 
 
 @pytest.mark.parametrize(
-    "our_facets, esgf_facets", zip(OUR_FACETS, ESGF_FACETS)
+    "our_facets, esgf_facets", zip(OUR_FACETS, ESGF_FACETS, strict=False)
 )
 def test_get_esgf_facets(our_facets, esgf_facets):
     """Test that facet translation by get_esgf_facets works as expected."""
@@ -158,8 +158,7 @@ def get_mock_connection(mocker, search_results):
 def test_esgf_search_files(mocker):
     # Set up some fake FileResults
     dataset_id = (
-        "cmip5.output1.INM.inmcm4.historical"
-        ".mon.atmos.Amon.r1i1p1.v20130207"
+        "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207"
     )
     dataset_id_template = (
         "cmip5.%(product)s.%(valid_institute)s.%(model)s."

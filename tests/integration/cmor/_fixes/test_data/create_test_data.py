@@ -456,7 +456,7 @@ def save_gfdl_cm4_cl_file(save_path):
 
 
 def main():
-    """Main function to create datasets."""
+    """Create all datasets."""
     save_path = os.path.dirname(os.path.abspath(__file__))
     save_cl_file_with_a(save_path)
     save_cl_file_with_ap(save_path)

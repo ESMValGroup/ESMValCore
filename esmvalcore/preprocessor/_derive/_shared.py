@@ -8,6 +8,8 @@ import numpy as np
 from iris import NameConstraint
 from scipy import constants
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,12 +23,13 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
         for coord in new_cube.coords()
         if len(coord.points) > 1
     ]
-    if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
-        new_cube = new_cube.collapsed(
-            "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
-        )
-    if "air_pressure" in coord_names:
-        new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
+    with ignore_iris_vague_metadata_warnings():
+        if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
+            new_cube = new_cube.collapsed(
+                "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
+            )
+        if "air_pressure" in coord_names:
+            new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
 
     return new_cube
 
@@ -108,11 +111,12 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
     cube.data = cube.core_data() * n_dry.core_data()
 
     # Column-average
-    cube = cube.collapsed("air_pressure", iris.analysis.SUM)
-    cube.data = (
-        cube.core_data()
-        / n_dry.collapsed("air_pressure", iris.analysis.SUM).core_data()
-    )
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed("air_pressure", iris.analysis.SUM)
+        cube.data = (
+            cube.core_data()
+            / n_dry.collapsed("air_pressure", iris.analysis.SUM).core_data()
+        )
     return cube
 
 
@@ -163,7 +167,7 @@ def _create_pressure_array(cube, ps_cube, top_limit):
     ps_4d_array = iris.util.broadcast_to_shape(ps_cube.data, shape, [0, 2, 3])
 
     # Set pressure levels below the surface pressure to NaN
-    pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.NaN, p_4d_array)
+    pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.nan, p_4d_array)
 
     # Make top_limit last pressure level
     top_limit_array = np.full(ps_cube.shape, top_limit, dtype=np.float32)

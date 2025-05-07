@@ -1,9 +1,13 @@
-"""Integration tests for :func:`esmvalcore.preprocessor.save`"""
+"""Integration tests for :func:`esmvalcore.preprocessor.save`."""
+
+import logging
+import re
 
 import iris
 import netCDF4
 import numpy as np
 import pytest
+from dask.delayed import Delayed
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
@@ -59,32 +63,51 @@ def _check_chunks(path, expected_chunks):
 
 def test_save(cube, filename):
     """Test save."""
-    path = save([cube], filename)
-    loaded_cube = iris.load_cube(path)
+    delayed = save([cube], filename)
+    assert delayed is None
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
+
+
+def test_delayed_save(cube, filename):
+    """Test save."""
+    delayed = save([cube], filename, compute=False)
+    assert isinstance(delayed, Delayed)
+    delayed.compute()
+    loaded_cube = iris.load_cube(filename)
+    _compare_cubes(cube, loaded_cube)
+
+
+def test_save_noop(cube, filename, caplog):
+    """Test save."""
+    cube.data = cube.lazy_data()
+    save([cube], filename)
+    with caplog.at_level(logging.DEBUG):
+        save([cube], filename)
+    assert re.findall("Not saving cubes .* to avoid data loss.", caplog.text)
 
 
 def test_save_create_parent_dir(cube, tmp_path):
     filename = tmp_path / "preproc" / "something" / "test.nc"
-    path = save([cube], filename)
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename)
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
 
 
 def test_save_alias(cube, filename):
     """Test save."""
-    path = save([cube], filename, alias="alias")
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, alias="alias")
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
     assert loaded_cube.var_name == "alias"
 
 
 def test_save_zlib(cube, filename):
     """Test save."""
-    path = save([cube], filename, compress=True)
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, compress=True)
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
-    with netCDF4.Dataset(path, "r") as handler:
+    with netCDF4.Dataset(filename, "r") as handler:
         sample_filters = handler.variables["sample"].filters()
     assert sample_filters["zlib"] is True
     assert sample_filters["shuffle"] is True
@@ -106,32 +129,32 @@ def test_fail_without_filename(cube):
 
 def test_save_optimized_map(cube, filename):
     """Test save."""
-    path = save([cube], filename, optimize_access="map")
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, optimize_access="map")
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
-    _check_chunks(path, [2, 2, 1])
+    _check_chunks(filename, [2, 2, 1])
 
 
 def test_save_optimized_timeseries(cube, filename):
     """Test save."""
-    path = save([cube], filename, optimize_access="timeseries")
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, optimize_access="timeseries")
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
-    _check_chunks(path, [1, 1, 2])
+    _check_chunks(filename, [1, 1, 2])
 
 
 def test_save_optimized_lat(cube, filename):
     """Test save."""
-    path = save([cube], filename, optimize_access="latitude")
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, optimize_access="latitude")
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
     expected_chunks = [2, 1, 1]
-    _check_chunks(path, expected_chunks)
+    _check_chunks(filename, expected_chunks)
 
 
 def test_save_optimized_lon_time(cube, filename):
     """Test save."""
-    path = save([cube], filename, optimize_access="longitude time")
-    loaded_cube = iris.load_cube(path)
+    save([cube], filename, optimize_access="longitude time")
+    loaded_cube = iris.load_cube(filename)
     _compare_cubes(cube, loaded_cube)
-    _check_chunks(path, [1, 2, 2])
+    _check_chunks(filename, [1, 2, 2])

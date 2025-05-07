@@ -101,7 +101,7 @@ class TestGetCube:
 
     def test_get_default_raises(self):
         """Check that the default raises (Fix is not a cube)."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             self.fix.get_cube_from_list(self.cubes)
 
     def test_get_default(self):

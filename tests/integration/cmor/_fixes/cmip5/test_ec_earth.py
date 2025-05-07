@@ -28,7 +28,7 @@ class TestSic(unittest.TestCase):
         self.fix = Sic(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "EC-EARTH", "Amon", "sic"),
             [Sic(None), GenericFix(None)],
@@ -50,7 +50,7 @@ class TestSftlf(unittest.TestCase):
         self.fix = Sftlf(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "EC-EARTH", "Amon", "sftlf"),
             [Sftlf(None), GenericFix(None)],
@@ -68,7 +68,6 @@ class TestTas(unittest.TestCase):
 
     def setUp(self):
         """Prepare tests."""
-
         height_coord = DimCoord(
             2.0,
             standard_name="height",
@@ -99,7 +98,7 @@ class TestTas(unittest.TestCase):
         self.fix = Tas(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "EC-EARTH", "Amon", "tas"),
             [Tas(None), GenericFix(None)],
@@ -107,7 +106,6 @@ class TestTas(unittest.TestCase):
 
     def test_tas_fix_metadata(self):
         """Test metadata fix."""
-
         out_cube_without = self.fix.fix_metadata(self.cube_without)
 
         # make sure this does not raise an error
@@ -131,7 +129,6 @@ class TestAreacello(unittest.TestCase):
 
     def setUp(self):
         """Prepare tests."""
-
         latitude = Cube(
             np.ones((2, 2)),
             standard_name="latitude",
@@ -163,7 +160,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "EC-EARTH", "Omon", "areacello"),
             [Areacello(None), GenericFix(None)],
@@ -171,7 +168,6 @@ class TestAreacello(unittest.TestCase):
 
     def test_areacello_fix_metadata(self):
         """Test metadata fix."""
-
         out_cube = self.fix.fix_metadata(self.cubes)
         assert len(out_cube) == 1
 
@@ -184,7 +180,6 @@ class TestPr(unittest.TestCase):
 
     def setUp(self):
         """Prepare tests."""
-
         wrong_time_coord = AuxCoord(
             points=[1.0, 2.0, 1.0, 2.0, 3.0],
             var_name="time",
@@ -192,7 +187,7 @@ class TestPr(unittest.TestCase):
             units="days since 1850-01-01",
         )
 
-        correct_time_coord = AuxCoord(
+        correct_time_coord = DimCoord(
             points=[1.0, 2.0, 3.0],
             var_name="time",
             standard_name="time",
@@ -221,12 +216,12 @@ class TestPr(unittest.TestCase):
         self.correct_cube = CubeList(
             [Cube(np.ones(3), var_name="pr", units="kg m-2 s-1")]
         )
-        self.correct_cube[0].add_aux_coord(correct_time_coord, 0)
+        self.correct_cube[0].add_dim_coord(correct_time_coord, 0)
 
         self.fix = Pr(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes("CMIP5", "EC-EARTH", "Amon", "pr"),
             [Pr(None), GenericFix(None)],
@@ -234,14 +229,13 @@ class TestPr(unittest.TestCase):
 
     def test_pr_fix_metadata(self):
         """Test metadata fix."""
-
         out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
         out_correct_cube = self.fix.fix_metadata(self.correct_cube)
 
-        time = out_wrong_cube[0].coord("time")
+        time = out_wrong_cube[0].coord("time", dim_coords=True)
         assert time == self.time_coord
 
-        time = out_correct_cube[0].coord("time")
+        time = out_correct_cube[0].coord("time", dim_coords=True)
         assert time == self.time_coord
 
     def test_pr_fix_metadata_no_time(self):

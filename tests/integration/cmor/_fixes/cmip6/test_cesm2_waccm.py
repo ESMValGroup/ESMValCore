@@ -1,7 +1,6 @@
 """Tests for the fixes of CESM2-WACCM."""
 
 import os
-import sys
 import unittest.mock
 
 import iris
@@ -10,15 +9,21 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Pr as BasePr
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tasmax as BaseTasmax
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tasmin as BaseTasmin
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
     Cl,
     Cli,
     Clw,
     Fgco2,
     Omon,
+    Pr,
     Siconc,
     Tas,
+    Tasmax,
+    Tasmin,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -36,9 +41,6 @@ def test_cl_fix():
     assert issubclass(Cl, BaseCl)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7, 6), reason="requires python3.7.6 or newer"
-)
 @unittest.mock.patch(
     "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath", autospec=True
 )
@@ -123,8 +125,43 @@ def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "Amon", "tas")
     assert fix == [Tas(None), GenericFix(None)]
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "day", "tas")
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():
     """Test fix for ``tas``."""
     assert Tas is BaseTas
+
+
+def test_get_pr_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "day", "pr")
+    assert fix == [Pr(None), GenericFix(None)]
+
+
+def test_pr_fix():
+    """Test fix for ``Pr``."""
+    assert Pr is BasePr
+
+
+def test_get_tasmin_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "day", "tasmin")
+    assert fix == [Tasmin(None), GenericFix(None)]
+
+
+def test_tasmin_fix():
+    """Test fix for ``Tasmin``."""
+    assert Tasmin is BaseTasmin
+
+
+def test_get_tasmax_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "CESM2-WACCM", "day", "tasmax")
+    assert fix == [Tasmax(None), GenericFix(None)]
+
+
+def test_tasmax_fix():
+    """Test fix for ``Tasmax``."""
+    assert Tasmax is BaseTasmax

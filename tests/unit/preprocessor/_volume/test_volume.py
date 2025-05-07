@@ -196,8 +196,7 @@ class Test(tests.Test):
         """Test _add_axis_stats_weights_coord."""
         assert not self.grid_4d.coords("_axis_statistics_weights_")
         coord = self.grid_4d.coord("zcoord")
-        coord_dims = self.grid_4d.coord_dims("zcoord")
-        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
+        _add_axis_stats_weights_coord(self.grid_4d, coord)
         weights_coord = self.grid_4d.coord("_axis_statistics_weights_")
         assert not weights_coord.has_lazy_points()
         assert weights_coord.units == "m"
@@ -205,13 +204,15 @@ class Test(tests.Test):
 
     def test_add_axis_stats_weights_coord_lazy(self):
         """Test _add_axis_stats_weights_coord."""
-        self.grid_4d.data = self.grid_4d.lazy_data()
-        assert not self.grid_4d.coords("_axis_statistics_weights_")
-        coord = self.grid_4d.coord("zcoord")
-        coord_dims = self.grid_4d.coord_dims("zcoord")
-        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
-        weights_coord = self.grid_4d.coord("_axis_statistics_weights_")
+        assert not self.grid_4d_lazy.coords("_axis_statistics_weights_")
+        coord = self.grid_4d_lazy.coord("zcoord")
+        _add_axis_stats_weights_coord(self.grid_4d_lazy, coord)
+        weights_coord = self.grid_4d_lazy.coord("_axis_statistics_weights_")
         assert weights_coord.has_lazy_points()
+        assert (
+            weights_coord.lazy_points().chunks[0]
+            == self.grid_4d_lazy.lazy_data().chunks[1]
+        )
         assert weights_coord.units == "m"
         np.testing.assert_allclose(weights_coord.points, [2.5, 22.5, 225.0])
 
@@ -369,7 +370,6 @@ class Test(tests.Test):
         """Test to extract the top two layers of a 3 layer depth column."""
         result = extract_volume(self.grid_3d, 0.0, 10.0)
         expected = np.ones((2, 2, 2))
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_volume_intervals(self):
@@ -441,8 +441,7 @@ class Test(tests.Test):
         )
 
     def test_extract_volume_mean(self):
-        """Test to extract the top two layers and compute the weighted average
-        of a cube."""
+        """Test extracting the top layers and computing the weighted mean."""
         grid_volume = calculate_volume(self.grid_4d)
         assert isinstance(grid_volume, np.ndarray)
         measure = iris.coords.CellMeasure(
@@ -479,10 +478,10 @@ class Test(tests.Test):
         self.assertFalse(result.cell_measures("ocean_volume"))
 
     def test_volume_nolevbounds(self):
-        """Test to take the volume weighted average of a cube with no bounds
-        in the z axis.
-        """
+        """Test to take the volume weighted average of a cube.
 
+        Test a cube with no bounds in the z axis.
+        """
         self.assertFalse(self.grid_4d_znobounds.coord(axis="z").has_bounds())
         result = volume_statistics(self.grid_4d_znobounds, "mean")
 
@@ -492,14 +491,39 @@ class Test(tests.Test):
         self.assertFalse(self.grid_4d.cell_measures("ocean_volume"))
         self.assertFalse(result.cell_measures("ocean_volume"))
 
-    def test_calculate_volume_lazy(self):
-        """Test that calculate_volume returns a lazy volume
+    def test_calculate_volume_lazy_cube(self):
+        """Test that calculate_volume returns a lazy volume.
 
         The volume chunks should match those of the input cube for
         computational efficiency.
         """
         chunks = self.grid_4d_lazy.core_data().chunks
         volume = calculate_volume(self.grid_4d_lazy)
+        assert self.grid_4d_lazy.has_lazy_data()
+        assert isinstance(volume, da.Array)
+        assert volume.chunks == chunks
+
+    def test_calculate_volume_all_lazy(self):
+        """Test that calculate_volume returns a lazy volume.
+
+        The volume chunks should match those of the input cube for
+        computational efficiency.
+        """
+        # Only aux coords can have lazy bounds
+        z_coord = self.grid_4d_lazy.coord("zcoord")
+        z_aux_coord = iris.coords.AuxCoord(
+            z_coord.lazy_points(),
+            bounds=z_coord.lazy_bounds(),
+            long_name="zcoord",
+            units="m",
+            attributes={"positive": "up"},
+        )
+        self.grid_4d_lazy.remove_coord("zcoord")
+        self.grid_4d_lazy.add_aux_coord(z_aux_coord, 1)
+        chunks = self.grid_4d_lazy.core_data().chunks
+
+        volume = calculate_volume(self.grid_4d_lazy)
+
         assert self.grid_4d_lazy.has_lazy_data()
         assert isinstance(volume, da.Array)
         assert volume.chunks == chunks
@@ -553,16 +577,22 @@ class Test(tests.Test):
         self.assertEqual(result.units, "kg m-3")
 
     def test_volume_statistics_masked_level(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube where
-        the last depth level is fully masked."""
+        """Test to take the volume weighted average.
+
+        This is a test for a (2,3,2,2) cube where the last depth level is fully
+        masked.
+        """
         self.grid_4d.data[:, -1, :, :] = np.ma.masked_all((2, 2, 2))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array([1.0, 1.0], mask=False)
         self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_masked_timestep(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube where
-        the first timestep is fully masked."""
+        """Test taking the volume weighted average.
+
+        This is a test for a (2,3,2,2) cube where the first timestep is fully
+        masked.
+        """
         self.grid_4d.data[0, :, :, :] = np.ma.masked_all((3, 2, 2))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array([1.0, 1], mask=[True, False])
@@ -653,8 +683,7 @@ class Test(tests.Test):
         self.assertEqual(result.units, "kg m-3")
 
     def test_volume_statistics_invalid_bounds(self):
-        """Test z-axis bounds is not 2 in last dimension"""
-
+        """Test z-axis bounds is not 2 in last dimension."""
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_invalid_z_bounds, "mean")
         assert (
@@ -663,8 +692,7 @@ class Test(tests.Test):
         ) in str(err.exception)
 
     def test_volume_statistics_invalid_units(self):
-        """Test z-axis units cannot be converted to m"""
-
+        """Test z-axis units cannot be converted to m."""
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_sigma_space, "mean")
         assert (

@@ -1,5 +1,4 @@
-"""Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
-function."""
+"""Unit tests for :func:`esmvalcore.preprocessor.regrid`."""
 
 import dask
 import dask.array as da
@@ -25,7 +24,7 @@ def clear_regridder_cache(monkeypatch):
 
 
 def _make_coord(start: float, stop: float, step: int, *, name: str):
-    """Helper function for creating a coord."""
+    """Create a latitude or longitude coordinate with bounds."""
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
         standard_name=name,
@@ -36,7 +35,7 @@ def _make_coord(start: float, stop: float, step: int, *, name: str):
 
 
 def _make_cube(*, lat: tuple, lon: tuple):
-    """Helper function for creating a cube."""
+    """Create a cube with a latitude and longitude dimension."""
     lat_coord = _make_coord(*lat, name="latitude")
     lon_coord = _make_coord(*lon, name="longitude")
 
@@ -83,7 +82,7 @@ SCHEMES = ["area_weighted", "linear", "nearest"]
 @pytest.mark.parametrize("cache_weights", [True, False])
 @pytest.mark.parametrize("scheme", SCHEMES)
 def test_builtin_regridding(scheme, cache_weights, cube_10x10, cube_30x30):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     assert _cached_regridders == {}
 
@@ -104,7 +103,7 @@ def test_builtin_regridding(scheme, cache_weights, cube_10x10, cube_30x30):
 
 @pytest.mark.parametrize("scheme", SCHEMES)
 def test_invalid_target_grid(scheme, cube_10x10, mocker):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     target_grid = mocker.sentinel.target_grid
     msg = "Expecting a cube"
     with pytest.raises(ValueError, match=msg):
@@ -112,7 +111,7 @@ def test_invalid_target_grid(scheme, cube_10x10, mocker):
 
 
 def test_invalid_scheme(cube_10x10, cube_30x30):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     msg = (
         "Regridding scheme 'wibble' not available for regular data, "
         "expected one of: area_weighted, linear, nearest"
@@ -122,14 +121,14 @@ def test_invalid_scheme(cube_10x10, cube_30x30):
 
 
 def test_regrid_generic_missing_reference(cube_10x10, cube_30x30):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     msg = "No reference specified for generic regridding."
     with pytest.raises(ValueError, match=msg):
         regrid(cube_10x10, cube_30x30, {})
 
 
 def test_regrid_generic_invalid_reference(cube_10x10, cube_30x30):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     msg = "Could not import specified generic regridding module."
     with pytest.raises(ValueError, match=msg):
         regrid(cube_10x10, cube_30x30, {"reference": "this.does:not.exist"})
@@ -137,7 +136,7 @@ def test_regrid_generic_invalid_reference(cube_10x10, cube_30x30):
 
 @pytest.mark.parametrize("cache_weights", [True, False])
 def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     assert _cached_regridders == {}
 
@@ -227,17 +226,48 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
-def test_regrid_is_skipped_if_grids_are_the_same():
+def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+    )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
-    scheme = "linear"
 
-    # regridding to the same spec returns the same cube
-    expected_same_cube = regrid(cube, target_grid="10x10", scheme=scheme)
-    assert expected_same_cube is cube
+    expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
 
-    # regridding to a different spec returns a different cube
-    expected_different_cube = regrid(cube, target_grid="5x5", scheme=scheme)
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
+    assert cube.coords("latitude", dim_coords=True)
+    assert cube.coords("longitude", dim_coords=True)
+
+
+def test_regrid_is_skipped_if_grids_are_the_same_aux_coord(mocker):
+    """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder", autospec=True
+    )
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    lat = cube.coord("latitude")
+    lon = cube.coord("longitude")
+    cube.remove_coord(lat)
+    cube.remove_coord(lon)
+    cube.add_aux_coord(lat, 0)
+    cube.add_aux_coord(lon, 1)
+
+    expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
+
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
+    assert cube.coords("latitude", dim_coords=False)
+    assert cube.coords("longitude", dim_coords=False)
+
+
+def test_regrid_is_not_skipped_if_grids_are_different():
+    """Test that regridding is not skipped if the grids are different."""
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+
+    expected_different_cube = regrid(cube, target_grid="5x5", scheme="linear")
+
     assert expected_different_cube is not cube
 
 
@@ -401,7 +431,7 @@ def test_no_rechunk_non_lazy():
 
 @pytest.mark.parametrize("scheme", SCHEMES)
 def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
-    """Test `regrid.`"""
+    """Test `regrid.`."""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     assert _cached_regridders == {}
 
@@ -429,7 +459,7 @@ def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
 
 
 def test_clear_regridding_weights_cache():
-    """Test `regrid.cache_clear().`"""
+    """Test `regrid.cache_clear().`."""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     _cached_regridders["test"] = "test"
 

@@ -233,8 +233,10 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region_mean(self):
-        """Test for extracting a region and performing the area mean of a 2D
-        field."""
+        """Test for extracting a region and performing the area mean.
+
+        Use a 2D field.
+        """
         cube = guess_bounds(self.grid, ["longitude", "latitude"])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -869,7 +871,10 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     np.testing.assert_array_equal(result.data.data, expected)
 
 
-def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
+@pytest.mark.parametrize("lazy", [True, False])
+def test_extract_shape_with_supplementaries(
+    make_testcube, ne_ocean_shapefile, lazy
+):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
     cube = make_testcube
@@ -886,6 +891,10 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
         var_name="sftgif",
         units="%",
     )
+    if lazy:
+        cube.data = cube.lazy_data()
+        measure.data = measure.lazy_data()
+        ancillary_var.data = ancillary_var.lazy_data()
     cube.add_cell_measure(measure, (0, 1))
     cube.add_ancillary_variable(ancillary_var, (0, 1))
     result = extract_shape(
@@ -893,17 +902,20 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
         ne_ocean_shapefile,
         crop=False,
     )
+    assert result.has_lazy_data() is lazy
     np.testing.assert_array_equal(result.data.data, expected)
 
     assert result.cell_measures()
-    result_measure = result.cell_measure("cell_area").data
-    np.testing.assert_array_equal(measure.data, result_measure)
+    result_measure = result.cell_measure("cell_area")
+    assert result_measure.has_lazy_data() is lazy
+    np.testing.assert_array_equal(measure.data, result_measure.data)
 
     assert result.ancillary_variables()
-    result_ancillary_var = result.ancillary_variable(
-        "land_ice_area_fraction"
-    ).data
-    np.testing.assert_array_equal(ancillary_var.data, result_ancillary_var)
+    result_ancillary_var = result.ancillary_variable("land_ice_area_fraction")
+    assert result_ancillary_var.has_lazy_data() is lazy
+    np.testing.assert_array_equal(
+        ancillary_var.data, result_ancillary_var.data
+    )
 
 
 def test_extract_shape_ne_check_nans(ne_ocean_shapefile):
@@ -1333,7 +1345,7 @@ def test_update_shapefile_path_abs(session, tmp_path):
 
     # Test with Path and str object
     for shapefile_in in (shapefile, str(shapefile)):
-        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        shapefile_out = _update_shapefile_path(shapefile_in, session=session)
         assert isinstance(shapefile_out, Path)
         assert shapefile_out == shapefile
 
@@ -1469,7 +1481,8 @@ def test_meridional_statistics_invalid_norm_fail(make_testcube):
         meridional_statistics(make_testcube, "sum", normalize="x")
 
 
-def test_time_dependent_volcello():
+@pytest.mark.parametrize("lazy", [True, False])
+def test_time_dependent_volcello(lazy):
     coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
     data = np.ma.ones((2, 3, 2, 2))
 
@@ -1506,8 +1519,11 @@ def test_time_dependent_volcello():
     volcello = iris.coords.CellMeasure(
         data, standard_name="ocean_volume", units="m3", measure="volume"
     )
+    if lazy:
+        cube.data = cube.lazy_data()
+        volcello.data = volcello.lazy_data()
     cube.add_cell_measure(volcello, range(0, volcello.ndim))
-    cube = extract_shape(
+    result = extract_shape(
         cube,
         "AR6",
         method="contains",
@@ -1515,8 +1531,11 @@ def test_time_dependent_volcello():
         decomposed=True,
         ids={"Acronym": ["EAO", "WAF"]},
     )
+    assert cube.has_lazy_data() is lazy
+    assert volcello.has_lazy_data() is lazy
+    assert result.has_lazy_data() is lazy
 
-    assert cube.shape == cube.cell_measure("ocean_volume").shape
+    assert result.shape == result.cell_measure("ocean_volume").shape
 
 
 if __name__ == "__main__":

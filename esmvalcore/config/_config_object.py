@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 import warnings
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -92,7 +92,7 @@ class Config(ValidatedConfig):
             "Do not instantiate `Config` objects directly, this will lead "
             "to unexpected behavior. Use `esmvalcore.config.CFG` instead."
         )
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     # TODO: remove in v2.14.0
     @classmethod
@@ -313,7 +313,7 @@ class Config(ValidatedConfig):
             "ESMValCore version 2.12.0 and is scheduled for removal in "
             "version 2.14.0. Please use `CFG.load_from_dirs()` instead."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         self.clear()
         self.update(Config._load_user_config(filename))
 
@@ -399,7 +399,9 @@ class Config(ValidatedConfig):
                 f"alternatively use a custom `--config_dir`) and omit "
                 f"`--config_file`."
             )
-            warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+            warnings.warn(
+                deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
+            )
             self.update(Config._load_user_config(raise_exception=False))
             return
 
@@ -462,9 +464,29 @@ class Config(ValidatedConfig):
 
         """
         new_config_dict = self._get_config_dict_from_dirs(dirs)
-        merged_config_dict = dask.config.merge(self, new_config_dict)
-        self.update(merged_config_dict)
+        self.nested_update(new_config_dict)
 
+    def nested_update(self, new_options: Mapping) -> None:
+        """Nested update of configuration object with another mapping.
+
+        Merge the existing configuration object with a new mapping using
+        :func:`dask.config.merge`  (new values are preferred over old values).
+        Nested objects are properly considered; see :func:`dask.config.update`
+        for details.
+
+        Parameters
+        ----------
+        new_options:
+            New configuration options.
+
+        Raises
+        ------
+        esmvalcore.exceptions.InvalidConfigParameter
+            Invalid configuration option given.
+
+        """
+        merged_config_dict = dask.config.merge(self, new_options)
+        self.update(merged_config_dict)
         self.check_missing()
 
 
@@ -505,7 +527,7 @@ class Session(ValidatedConfig):
             "to unexpected behavior. Use "
             "`esmvalcore.config.CFG.start_session` instead."
         )
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     def set_session_name(self, name: str = "session"):
         """Set the name for the session.
@@ -556,7 +578,7 @@ class Session(ValidatedConfig):
             "ESMValCore version 2.12.0 and is scheduled for removal in "
             "version 2.14.0."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         if self.get("config_file") is None:
             return None
         return Path(self["config_file"]).parent

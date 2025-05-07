@@ -110,6 +110,7 @@ def _get_default_settings_for_chl(save_filename):
         "save": {
             "compress": False,
             "filename": save_filename,
+            "compute": False,
         },
     }
     return defaults
@@ -569,7 +570,6 @@ def test_default_preprocessor_custom_order(
     tmp_path, patched_datafinder, session
 ):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         preprocessors:
           default_custom_order:
@@ -631,7 +631,6 @@ def test_invalid_preprocessor(tmp_path, patched_datafinder, session):
 
 def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         datasets:
           - dataset: HadGEM3-GC31-LL
@@ -695,6 +694,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         "save": {
             "compress": False,
             "filename": product.filename,
+            "compute": False,
         },
     }
     assert product.settings == defaults
@@ -740,12 +740,12 @@ TEST_ISO_TIMERANGE = [
     ("1990/P2Y", "1990-P2Y"),
     ("19900101/P2Y2M1D", "19900101-P2Y2M1D"),
     (
-        "19900101TH00M00S/P2Y2M1DT12H00M00S",
-        "19900101TH00M00S-P2Y2M1DT12H00M00S",
+        "19900101T0000/P2Y2M1DT12H00M00S",
+        "19900101T0000-P2Y2M1DT12H00M00S",
     ),
     ("P2Y/1992", "P2Y-1992"),
     ("P1Y2M1D/19920101", "P1Y2M1D-19920101"),
-    ("P1Y2M1D/19920101T12H00M00S", "P1Y2M1D-19920101T12H00M00S"),
+    ("P1Y2M1D/19920101T120000", "P1Y2M1D-19920101T120000"),
     ("P2Y/*", "P2Y-2019"),
     ("P2Y2M1D/*", "P2Y2M1D-2019"),
     ("P2Y21DT12H00M00S/*", "P2Y21DT12H00M00S-2019"),
@@ -785,8 +785,7 @@ def test_recipe_iso_timerange(
     pr_product = pr_task.products.pop()
 
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert pr_product.filename.name == filename
 
@@ -831,8 +830,7 @@ def test_recipe_iso_timerange_as_dataset(
     assert len(task.products) == 1
     product = task.products.pop()
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert product.filename.name == filename
 
@@ -1750,7 +1748,7 @@ def test_extract_shape_raises(
 def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
-    for i, product in enumerate(products):
+    for product in products:
         settings = product.settings.get(preprocessor)
         if settings:
             output_products = settings["output_products"]
@@ -1760,7 +1758,7 @@ def _test_output_product_consistency(products, preprocessor, statistics):
                     product_out[identifier, statistic].append(preproc_file)
 
     # Make sure that output products are consistent
-    for (identifier, statistic), value in product_out.items():
+    for (_, statistic), value in product_out.items():
         assert statistic in statistics
         assert len(set(value)) == 1, "Output products are not equal"
 
@@ -1908,7 +1906,7 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
 
     assert len(product_out) == len(statistics)
     assert "OBS" not in product_out
-    for id, prods in product_out:
+    for id, _ in product_out:
         assert id != "OBS"
         assert id == "CMIP5"
     task._initialize_product_provenance()
@@ -3054,6 +3052,45 @@ def test_bias_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
+def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            custom_order: true
+            multi_model_statistics:
+              statistics: [mean]
+              span: overlap
+              groupby: [group]
+              keep_input_datasets: false
+            bias:
+              bias_type: relative
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5,    group: ref, reference_for_bias: true}
+                  - {dataset: CESM2,      group: ref, reference_for_bias: true}
+                  - {dataset: MPI-ESM-LR, group: notref}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
+
+
 def test_invalid_bias_type(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -3324,6 +3361,44 @@ def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
+def test_distance_metrics_two_refs_with_mmm(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            custom_order: true
+            ensemble_statistics:
+              statistics: [mean]
+              span: overlap
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
+                  - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
+                  - {dataset: MPI-ESM-LR}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
+
+
 def test_invalid_metric(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -3392,3 +3467,116 @@ def test_invalid_interpolate(tmp_path, patched_datafinder, session):
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert exc.value.failed_tasks[0].message == msg
+
+
+def test_automatic_regrid_era5_nc(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "0.25x0.25",
+        "scheme": "linear",
+    }
+
+
+def test_automatic_no_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3, automatic_regrid: false}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_already_regrid_era5_grib(
+    tmp_path, patched_datafinder_grib, session
+):
+    content = dedent("""
+        preprocessors:
+          test_automatic_regrid_era5:
+            regrid:
+              target_grid: 1x1
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test_automatic_regrid_era5
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "1x1",
+        "scheme": "nearest",
+    }

@@ -3,7 +3,9 @@
 import abc
 import contextlib
 import datetime
+import importlib
 import logging
+import multiprocessing
 import numbers
 import os
 import pprint
@@ -13,11 +15,11 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from multiprocessing import Pool
 from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
 
+import dask
 import psutil
 import yaml
 from distributed import Client
@@ -109,9 +111,12 @@ def _get_resource_usage(process, start_time, children=True):
             continue
 
         # Create and yield log entry
-        entries = [sum(entry) for entry in zip(*cache.values())]
+        entries = [sum(entry) for entry in zip(*cache.values(), strict=False)]
         entries.insert(0, time.time() - start_time)
-        entries = [round(entry, p) for entry, p in zip(entries, precision)]
+        entries = [
+            round(entry, p)
+            for entry, p in zip(entries, precision, strict=False)
+        ]
         entries.insert(0, datetime.datetime.utcnow())
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
@@ -256,6 +261,7 @@ class BaseTask:
         self.name = name
         self.activity = None
         self.priority = 0
+        self.scheduler_lock = None
 
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
@@ -324,7 +330,7 @@ class BaseTask:
 
 
 class ResumeTask(BaseTask):
-    """Task for re-using preprocessor output files from a previous run."""
+    """Task for reusing preprocessor output files from a previous run."""
 
     def __init__(self, prev_preproc_dir, preproc_dir, name):
         """Create a resume task."""
@@ -383,9 +389,24 @@ class DiagnosticTask(BaseTask):
         """Create an executable command from script."""
         diagnostics_root = DIAGNOSTICS.scripts
         script = self.script
-        script_file = (diagnostics_root / Path(script).expanduser()).absolute()
 
+        # Check if local diagnostic path exists
+        script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
+        if not script_file.is_file():
+            logger.debug(
+                "No local diagnostic script found. Attempting to load the script from the base repository."
+            )
+            # Check if esmvaltool package is available
+            if importlib.util.find_spec("esmvaltool") is None:
+                logger.warning(
+                    "The 'esmvaltool' package cannot be found. Please ensure it is installed."
+                )
+
+            # Try diagnostics_root
+            script_file = (
+                diagnostics_root / Path(script).expanduser()
+            ).absolute()
         if not script_file.is_file():
             raise DiagnosticError(f"{err_msg}: file does not exist.")
 
@@ -609,9 +630,10 @@ class DiagnosticTask(BaseTask):
 
         returncode = None
 
-        with resource_usage_logger(process.pid, self.resource_log), open(
-            self.log, "ab"
-        ) as log:
+        with (
+            resource_usage_logger(process.pid, self.resource_log),
+            open(self.log, "ab") as log,
+        ):
             last_line = [""]
             while returncode is None:
                 returncode = process.poll()
@@ -763,6 +785,16 @@ class DiagnosticTask(BaseTask):
         return string
 
 
+def available_cpu_count() -> int:
+    """Return the number of available CPU cores."""
+    if hasattr(os, "sched_getaffinity"):
+        # Not available on OSX.
+        return len(os.sched_getaffinity(0))
+    if count := os.cpu_count():
+        return count
+    return 1
+
+
 class TaskSet(set):
     """Container for tasks."""
 
@@ -815,6 +847,50 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
+    def _get_dask_config(self, max_parallel_tasks: int) -> dict:
+        """Configure the threaded Dask scheduler.
+
+        Configure the threaded Dask scheduler to use a reasonable number
+        of threads when the user has not done so. We will run multiple
+        processes, each of which will start its own scheduler with
+        `num_workers` threads. To avoid too much parallelism, we would like to
+        create n_threads = n_cpu_cores / n_processes.
+        """
+        # pylint: disable=import-outside-toplevel
+        from esmvalcore.preprocessor import PreprocessingTask
+
+        if dask.config.get("scheduler", "threads") not in (
+            "threads",
+            "threading",
+        ):
+            # No need to do anything when not using the threaded scheduler
+            # https://github.com/dask/dask/blob/3504bcc89f7a937b2d48306a17b8eeff57b1e5ae/dask/base.py#L1027-L1050
+            return {}
+        if dask.config.get("num_workers", None) is not None:
+            # No need to do anything when the user has configured "num_workers".
+            return {}
+
+        n_preproc_tasks = sum(
+            isinstance(t, PreprocessingTask) for t in self.flatten()
+        )
+        if n_preproc_tasks == 0:
+            # No need to do anything when we are not running PreprocessingTasks.
+            return {}
+
+        n_available_cpu_cores = available_cpu_count()
+        n_threaded_dask_schedulers = min(n_preproc_tasks, max_parallel_tasks)
+        n_workers = max(
+            1, round(n_available_cpu_cores / n_threaded_dask_schedulers)
+        )
+        logger.info(
+            "Using the threaded Dask scheduler with %s worker threads per "
+            "preprocessing task. "
+            "See https://docs.esmvaltool.org/projects/ESMValCore/en/"
+            "latest/quickstart/configure.html#f5 for more information.",
+            n_workers,
+        )
+        return {"num_workers": n_workers}
+
     def _run_parallel(self, scheduler_address, max_parallel_tasks):
         """Run tasks in parallel."""
         scheduled = self.flatten()
@@ -824,55 +900,75 @@ class TaskSet(set):
         n_running = 0
 
         if max_parallel_tasks is None:
-            max_parallel_tasks = os.cpu_count()
+            max_parallel_tasks = available_cpu_count()
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
         logger.info(
             "Running %s tasks using %s processes", n_tasks, max_parallel_tasks
         )
 
+        dask_config = self._get_dask_config(max_parallel_tasks)
+
         def done(task):
             """Assume a task is done if it not scheduled or running."""
             return not (task in scheduled or task in running)
 
-        with Pool(processes=max_parallel_tasks) as pool:
-            while scheduled or running:
-                # Submit new tasks to pool
-                for task in sorted(scheduled, key=lambda t: t.priority):
-                    if len(running) >= max_parallel_tasks:
-                        break
-                    if all(done(t) for t in task.ancestors):
-                        future = pool.apply_async(
-                            _run_task, [task, scheduler_address]
+        with multiprocessing.Manager() as manager:
+            # Use a lock to avoid overloading the Dask workers by making only
+            # one :class:`esmvalcore.preprocessor.PreprocessingTask` submit its
+            # data save task graph to the distributed scheduler at a time.
+            #
+            # See https://github.com/ESMValGroup/ESMValCore/issues/2609 for
+            # additional detail.
+            scheduler_lock = (
+                None if scheduler_address is None else manager.Lock()
+            )
+
+            with (
+                dask.config.set(dask_config),
+                multiprocessing.Pool(processes=max_parallel_tasks) as pool,
+            ):
+                while scheduled or running:
+                    # Submit new tasks to pool
+                    for task in sorted(scheduled, key=lambda t: t.priority):
+                        if len(running) >= max_parallel_tasks:
+                            break
+                        if all(done(t) for t in task.ancestors):
+                            future = pool.apply_async(
+                                _run_task,
+                                [task, scheduler_address, scheduler_lock],
+                            )
+                            running[task] = future
+                            scheduled.remove(task)
+
+                    # Handle completed tasks
+                    ready = {t for t in running if running[t].ready()}
+                    for task in ready:
+                        _copy_results(task, running[task])
+                        running.pop(task)
+
+                    # Wait if there are still tasks running
+                    if running:
+                        time.sleep(0.1)
+
+                    # Log progress message
+                    if (
+                        len(scheduled) != n_scheduled
+                        or len(running) != n_running
+                    ):
+                        n_scheduled, n_running = len(scheduled), len(running)
+                        n_done = n_tasks - n_scheduled - n_running
+                        logger.info(
+                            "Progress: %s tasks running, %s tasks waiting for "
+                            "ancestors, %s/%s done",
+                            n_running,
+                            n_scheduled,
+                            n_done,
+                            n_tasks,
                         )
-                        running[task] = future
-                        scheduled.remove(task)
 
-                # Handle completed tasks
-                ready = {t for t in running if running[t].ready()}
-                for task in ready:
-                    _copy_results(task, running[task])
-                    running.pop(task)
-
-                # Wait if there are still tasks running
-                if running:
-                    time.sleep(0.1)
-
-                # Log progress message
-                if len(scheduled) != n_scheduled or len(running) != n_running:
-                    n_scheduled, n_running = len(scheduled), len(running)
-                    n_done = n_tasks - n_scheduled - n_running
-                    logger.info(
-                        "Progress: %s tasks running, %s tasks waiting for "
-                        "ancestors, %s/%s done",
-                        n_running,
-                        n_scheduled,
-                        n_done,
-                        n_tasks,
-                    )
-
-            logger.info("Successfully completed all tasks.")
-            pool.close()
-            pool.join()
+                logger.info("Successfully completed all tasks.")
+                pool.close()
+                pool.join()
 
 
 def _copy_results(task, future):
@@ -880,7 +976,7 @@ def _copy_results(task, future):
     task.output_files, task.products = future.get()
 
 
-def _run_task(task, scheduler_address):
+def _run_task(task, scheduler_address, scheduler_lock):
     """Run task and return the result."""
     if scheduler_address is None:
         client = contextlib.nullcontext()
@@ -888,6 +984,7 @@ def _run_task(task, scheduler_address):
         client = Client(scheduler_address)
 
     with client:
+        task.scheduler_lock = scheduler_lock
         output_files = task.run()
 
     return output_files, task.products

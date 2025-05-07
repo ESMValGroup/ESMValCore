@@ -170,7 +170,7 @@ def test_mock_search(variable, mocker):
         assert False, "Wrote expected results, please check."
 
     assert len(files) == len(expected_files)
-    for found_file, expected in zip(files, expected_files):
+    for found_file, expected in zip(files, expected_files, strict=False):
         assert found_file.name == expected["name"]
         assert found_file.local_file(Path()) == Path(expected["local_file"])
         assert found_file.dataset == expected["dataset"]
@@ -227,10 +227,8 @@ def test_real_search_many():
             "tas_Amon_EC-EARTH_historical_r1i1p1_199001-199912.nc",
         ],
         [
-            "tas_Amon_AWI-ESM-1-1-LR_historical_"
-            "r1i1p1f1_gn_200001-200012.nc",
-            "tas_Amon_AWI-ESM-1-1-LR_historical_"
-            "r1i1p1f1_gn_200101-200112.nc",
+            "tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_200001-200012.nc",
+            "tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_200101-200112.nc",
         ],
         [
             "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
@@ -295,7 +293,7 @@ def test_real_search_many():
     ]
 
     for variable, files, datasets in zip(
-        VARIABLES, expected_files, expected_datasets
+        VARIABLES, expected_files, expected_datasets, strict=False
     ):
         result = find_files(**variable)
         found_files = [file.name for file in result]

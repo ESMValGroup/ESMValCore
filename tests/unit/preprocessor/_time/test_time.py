@@ -12,6 +12,7 @@ import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
 import iris.fileformats
+import isodate
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -35,7 +36,6 @@ from esmvalcore.preprocessor._time import (
     extract_month,
     extract_season,
     extract_time,
-    get_time_weights,
     hourly_statistics,
     monthly_statistics,
     regrid_time,
@@ -155,6 +155,14 @@ class TestTimeSlice(tests.Test):
         sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
         assert_array_equal(np.array([59]), sliced.coord("time").points)
 
+    def test_extract_time_none_years(self):
+        """Test extract slice if both end and start year are None."""
+        sliced = extract_time(self.cube, None, 2, 5, None, 4, 17)
+        assert_array_equal(
+            np.array([45.0, 75.0, 105.0, 405.0, 435.0, 465.0]),
+            sliced.coord("time").points,
+        )
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         self.cube.coord("time").guess_bounds()
@@ -179,6 +187,28 @@ class TestTimeSlice(tests.Test):
         cube = _create_sample_cube()[0]
         sliced = extract_time(cube, 1950, 1, 1, 1950, 12, 31)
         assert cube == sliced
+
+    def test_extract_time_start_none_year(self):
+        """Test extract_time when only start_year is None."""
+        cube = self.cube.coord("time").guess_bounds()
+        msg = (
+            "If start_year or end_year is None, both start_year and "
+            "end_year have to be None. Currently, start_year is None and "
+            "end_year is 1950."
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_time(cube, None, 1, 1, 1950, 2, 1)
+
+    def test_extract_time_end_none_year(self):
+        """Test extract_time when only end_year is None."""
+        cube = self.cube.coord("time").guess_bounds()
+        msg = (
+            "If start_year or end_year is None, both start_year and "
+            "end_year have to be None. Currently, start_year is 1950 and "
+            "end_year is None."
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_time(cube, 1950, 1, 1, None, 2, 1)
 
 
 class TestClipTimerange(tests.Test):
@@ -320,8 +350,10 @@ class TestClipTimerange(tests.Test):
             assert sliced_backward.coord("time").cell(0).point.day == 1
 
     def test_clip_timerange_duration_seconds(self):
-        """Test timerange with duration periods with resolution up to
-        seconds."""
+        """Test clip_timerange.
+
+        Test with duration periods with resolution up to seconds.
+        """
         data = np.arange(8)
         times = np.arange(0, 48, 6)
         calendars = [
@@ -485,6 +517,24 @@ class TestClipTimerange(tests.Test):
             assert sliced_cube.coord_dims(coord_name) == cube_3.coord_dims(
                 coord_name
             )
+
+    def test_clip_timerange_start_date_invalid_isodate(self):
+        cube = self._create_cube(
+            [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
+        )
+        with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
+            clip_timerange(cube, "1950010101/1950")
+        mssg = "Unrecognised ISO 8601 date format: '1950010101'"
+        assert mssg in str(exc)
+
+    def test_clip_timerange_end_date_invalid_isodate(self):
+        cube = self._create_cube(
+            [[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]], "standard"
+        )
+        with pytest.raises(isodate.isoerror.ISO8601Error) as exc:
+            clip_timerange(cube, "1950/1950010101")
+        mssg = "Unrecognised ISO 8601 date format: '1950010101'"
+        assert mssg in str(exc)
 
 
 class TestExtractSeason(tests.Test):
@@ -1256,7 +1306,7 @@ class TestDailyStatistics(tests.Test):
 
 @pytest.fixture
 def cube_1d_time():
-    """Simple 1D cube with time coordinate of length one."""
+    """Create a 1D cube with a time coordinate of length one."""
     units = Unit("days since 2000-01-01", calendar="standard")
     time_coord = iris.coords.DimCoord(
         units.date2num(datetime(2024, 1, 26, 14, 57, 28)),
@@ -1477,18 +1527,24 @@ def test_regrid_time_hour_no_divisor_of_24(cube_1d_time, freq):
         regrid_time(cube_1d_time, freq)
 
 
-class TestTimeseriesFilter(tests.Test):
+class TestTimeseriesFilter:
     """Tests for timeseries filter."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
 
-    def test_timeseries_filter_simple(self):
+    @pytest.mark.parametrize("lazy", [True, False])
+    def test_timeseries_filter_simple(self, lazy):
         """Test timeseries_filter func."""
+        if lazy:
+            self.cube.data = self.cube.lazy_data()
         filtered_cube = timeseries_filter(
             self.cube, 7, 14, filter_type="lowpass", filter_stats="sum"
         )
+        if lazy:
+            assert filtered_cube.has_lazy_data()
         expected_data = np.array(
             [
                 2.44824568,
@@ -1518,14 +1574,14 @@ class TestTimeseriesFilter(tests.Test):
         """Test missing time axis."""
         new_cube = self.cube.copy()
         new_cube.remove_coord(new_cube.coord("time"))
-        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             timeseries_filter(
                 new_cube, 7, 14, filter_type="lowpass", filter_stats="sum"
             )
 
     def test_timeseries_filter_implemented(self):
         """Test a not implemented filter."""
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             timeseries_filter(
                 self.cube, 7, 14, filter_type="bypass", filter_stats="sum"
             )
@@ -1749,7 +1805,9 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
     metadata = copy.deepcopy(cube.metadata)
     result = anomalies(cube, period, reference, standardize=standardize)
     assert result.metadata == metadata
-    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+    for coord_cube, coord_res in zip(
+        cube.coords(), result.coords(), strict=False
+    ):
         if coord_cube.has_bounds() and coord_res.has_bounds():
             assert_array_equal(coord_cube.bounds, coord_res.bounds)
         assert coord_cube == coord_res
@@ -1846,34 +1904,12 @@ def test_anomalies_hourly(period):
     assert result.coord("time") == cube.coord("time")
 
 
-def get_0d_time():
-    """Get 0D time coordinate."""
-    time = iris.coords.AuxCoord(
-        15.0,
-        bounds=[0.0, 30.0],
-        standard_name="time",
-        units="days since 1850-01-01 00:00:00",
-    )
-    return time
-
-
 def get_1d_time():
     """Get 1D time coordinate."""
     time = iris.coords.DimCoord(
         [20.0, 45.0],
         standard_name="time",
         bounds=[[15.0, 30.0], [30.0, 60.0]],
-        units=Unit("days since 1950-01-01", calendar="gregorian"),
-    )
-    return time
-
-
-def get_2d_time():
-    """Get 2D time coordinate."""
-    time = iris.coords.AuxCoord(
-        [[20.0, 45.0]],
-        standard_name="time",
-        bounds=[[[15.0, 30.0], [30.0, 60.0]]],
         units=Unit("days since 1950-01-01", calendar="gregorian"),
     )
     return time
@@ -1921,92 +1957,6 @@ def _make_cube():
         units="kg m-2 s-1",
     )
     return cube1
-
-
-def test_get_time_weights():
-    """Test ``get_time_weights`` for complex cube."""
-    cube = _make_cube()
-    weights = get_time_weights(cube)
-    assert isinstance(weights, np.ndarray)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_lazy():
-    """Test ``get_time_weights`` for complex cube with lazy data."""
-    cube = _make_cube()
-    cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
-    weights = get_time_weights(cube)
-    assert isinstance(weights, da.Array)
-    assert weights.shape == (2,)
-    assert weights.chunks == ((1, 1),)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_0d_time():
-    """Test ``get_time_weights`` for 0D time coordinate."""
-    time = get_0d_time()
-    cube = iris.cube.Cube(
-        0.0, var_name="x", units="K", aux_coords_and_dims=[(time, ())]
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (1,)
-    np.testing.assert_allclose(weights, [30.0])
-
-
-def test_get_time_weights_0d_time_1d_lon():
-    """Test ``get_time_weights`` for 0D time and 1D longitude coordinate."""
-    time = get_0d_time()
-    lons = get_lon_coord()
-    cube = iris.cube.Cube(
-        [0.0, 0.0, 0.0],
-        var_name="x",
-        units="K",
-        aux_coords_and_dims=[(time, ())],
-        dim_coords_and_dims=[(lons, 0)],
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (1,)
-    np.testing.assert_allclose(weights, [30.0])
-
-
-def test_get_time_weights_1d_time():
-    """Test ``get_time_weights`` for 1D time coordinate."""
-    time = get_1d_time()
-    cube = iris.cube.Cube(
-        [0.0, 1.0], var_name="x", units="K", dim_coords_and_dims=[(time, 0)]
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_1d_time_1d_lon():
-    """Test ``get_time_weights`` for 1D time and 1D longitude coordinate."""
-    time = get_1d_time()
-    lons = get_lon_coord()
-    cube = iris.cube.Cube(
-        [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
-        var_name="x",
-        units="K",
-        dim_coords_and_dims=[(time, 0), (lons, 1)],
-    )
-    weights = get_time_weights(cube)
-    assert weights.shape == (2,)
-    np.testing.assert_allclose(weights, [15.0, 30.0])
-
-
-def test_get_time_weights_2d_time():
-    """Test ``get_time_weights`` for 1D time coordinate."""
-    time = get_2d_time()
-    cube = iris.cube.Cube(
-        [[0.0, 1.0]],
-        var_name="x",
-        units="K",
-        aux_coords_and_dims=[(time, (0, 1))],
-    )
-    with pytest.raises(ValueError):
-        get_time_weights(cube)
 
 
 def test_climate_statistics_0d_time_1d_lon():

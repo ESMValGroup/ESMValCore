@@ -1,12 +1,14 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 
 import datetime
+import warnings
 from copy import deepcopy
 from itertools import permutations
 from pprint import pformat
 from unittest import mock
 
 import dask.array as da
+import iris.analysis
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -18,7 +20,7 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateMultiDimError
+from iris.exceptions import CoordinateMultiDimError, UnitConversionError
 
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
@@ -26,8 +28,10 @@ from esmvalcore.iris_helpers import (
     has_irregular_grid,
     has_regular_grid,
     has_unstructured_grid,
+    ignore_iris_vague_metadata_warnings,
     merge_cube_attributes,
     rechunk_cube,
+    safe_convert_units,
 )
 
 
@@ -329,10 +333,10 @@ def test_rechunk_cube_partly_lazy(cube_3d, complete_dims):
     input_cube = cube_3d.copy()
 
     # Realize some arrays
-    input_cube.data
-    input_cube.coord("xyz").points
-    input_cube.coord("xyz").bounds
-    input_cube.cell_measure("cell_measure").data
+    input_cube.data  # noqa: B018
+    input_cube.coord("xyz").points  # noqa: B018
+    input_cube.coord("xyz").bounds  # noqa: B018
+    input_cube.cell_measure("cell_measure").data  # noqa: B018
 
     result = rechunk_cube(input_cube, complete_dims, remaining_dims=2)
 
@@ -571,3 +575,69 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
         aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)],
     )
     assert has_unstructured_grid(cube) is True
+
+
+@pytest.mark.parametrize(
+    "old_units,new_units,old_standard_name,new_standard_name,err_msg",
+    [
+        ("m", "km", "altitude", "altitude", None),
+        ("Pa", "hPa", "air_pressure", "air_pressure", None),
+        (
+            "m",
+            "DU",
+            "equivalent_thickness_at_stp_of_atmosphere_ozone_content",
+            "equivalent_thickness_at_stp_of_atmosphere_ozone_content",
+            None,
+        ),
+        (
+            "m",
+            "s",
+            "altitude",
+            ValueError,
+            r"Unable to convert from 'Unit\('m'\)' to 'Unit\('s'\)'",
+        ),
+        (
+            "unknown",
+            "s",
+            "air_temperature",
+            UnitConversionError,
+            r"Cannot convert from unknown units",
+        ),
+        (
+            "kg m-2 s-1",
+            "mm day-1",
+            "precipitation_flux",
+            ValueError,
+            r"Cannot safely convert units from 'kg m-2 s-1' to 'mm day-1'; "
+            r"standard_name changed from 'precipitation_flux' to "
+            r"'lwe_precipitation_rate'",
+        ),
+    ],
+)
+def test_safe_convert_units(
+    old_units, new_units, old_standard_name, new_standard_name, err_msg
+):
+    """Test ``esmvalcore.preprocessor._units.safe_convert_units``."""
+    cube = Cube(0, standard_name=old_standard_name, units=old_units)
+
+    # Exceptions
+    if isinstance(new_standard_name, type):
+        with pytest.raises(new_standard_name, match=err_msg):
+            safe_convert_units(cube, new_units)
+        return
+
+    # Regular test cases
+    new_cube = safe_convert_units(cube, new_units)
+    assert new_cube is cube
+    assert new_cube.standard_name == new_standard_name
+    assert new_cube.units == new_units
+
+
+def test_ignore_iris_vague_metadata_warnings():
+    """Test ``ignore_iris_vague_metadata_warnings``."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        x_coord = DimCoord([0, 3], bounds=[[-1, 1], [2, 4]], var_name="x")
+        cube = Cube([1, 1], dim_coords_and_dims=[(x_coord, 0)])
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", iris.analysis.MEAN)

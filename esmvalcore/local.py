@@ -183,7 +183,7 @@ def _dates_to_timerange(start_date, end_date):
     Note
     ----
     This function ensures that dates in years format follow the pattern YYYY
-    (i.e., that they have at least 4 digits). Other formats, such as  wildcards
+    (i.e., that they have at least 4 digits). Other formats, such as wildcards
     (``'*'``) and relative time ranges (e.g., ``'P6Y'``) are used unchanged.
 
     Parameters
@@ -479,6 +479,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 paths = {p: structure for p in paths}
             sources: list[DataSource] = []
             for path, structure in paths.items():
+                path = Path(path)
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
@@ -538,14 +539,18 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     # Remove duplicate segments:
     filename_segments = list(dict.fromkeys(filename_segments))
 
-    # Add period and extension
-    filename_segments.append(f"{attributes['timerange'].replace('/', '-')}.nc")
+    # Add time period if possible
+    if "timerange" in attributes:
+        filename_segments.append(
+            f"{attributes['timerange'].replace('/', '-')}"
+        )
 
+    filename = f"{'_'.join(filename_segments)}.nc"
     outfile = Path(
         preproc_dir,
         attributes["diagnostic"],
         attributes["variable_group"],
-        "_".join(filename_segments),
+        filename,
     )
 
     return outfile

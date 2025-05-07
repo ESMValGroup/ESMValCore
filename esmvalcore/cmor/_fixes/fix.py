@@ -27,7 +27,7 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import has_unstructured_grid
+from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -151,7 +151,7 @@ class Fix:
 
         Raises
         ------
-        Exception
+        ValueError
             No cube is found.
 
         Returns
@@ -165,7 +165,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception(f'Cube for variable "{short_name}" not found')
+        raise ValueError(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
@@ -465,7 +465,7 @@ class GenericFix(Fix):
             if str(cube.units) != units:
                 old_units = cube.units
                 try:
-                    cube.convert_units(units)
+                    safe_convert_units(cube, units)
                 except (ValueError, UnitConversionError):
                     self._warning_msg(
                         cube,
@@ -841,20 +841,30 @@ class GenericFix(Fix):
 
                     branch_parent = "branch_time_in_parent"
                     if branch_parent in attrs:
-                        attrs[branch_parent] = parent_units.convert(
-                            attrs[branch_parent], cube_coord.units
-                        )
+                        try:
+                            attrs[branch_parent] = parent_units.convert(
+                                attrs[branch_parent], cube_coord.units
+                            )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
                     branch_child = "branch_time_in_child"
                     if branch_child in attrs:
-                        attrs[branch_child] = old_units.convert(
-                            attrs[branch_child], cube_coord.units
-                        )
+                        try:
+                            attrs[branch_child] = old_units.convert(
+                                attrs[branch_child], cube_coord.units
+                            )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
         times = {"time", "time1", "time2", "time3"}
         key = times.intersection(self.vardef.coordinates)
+        if not key:  # cube has time, but CMOR variable does not
+            return
         cmor = self.vardef.coordinates[" ".join(key)]
         if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
             cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)

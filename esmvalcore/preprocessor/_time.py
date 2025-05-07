@@ -32,10 +32,14 @@ from iris.util import broadcast_to_shape
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
-from esmvalcore.iris_helpers import date2num, rechunk_cube
+from esmvalcore.iris_helpers import (
+    date2num,
+    ignore_iris_vague_metadata_warnings,
+    rechunk_cube,
+)
 from esmvalcore.preprocessor._shared import (
+    get_coord_weights,
     get_iris_aggregator,
-    get_time_weights,
     preserve_float_dtype,
     update_weights_kwargs,
 )
@@ -62,10 +66,10 @@ for _coord in (
 
 def extract_time(
     cube: Cube,
-    start_year: int,
+    start_year: int | None,
     start_month: int,
     start_day: int,
-    end_year: int,
+    end_year: int | None,
     end_month: int,
     end_day: int,
 ) -> Cube:
@@ -80,13 +84,23 @@ def extract_time(
     cube:
         Input cube.
     start_year:
-        Start year.
+        Start year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `start_year` is
+        ``None``, `end_year` has to be ``None`` too.
     start_month:
         Start month.
     start_day:
         Start day.
     end_year:
-        End year.
+        End year. If ``None``, the date ranges (`start_month`-`start_day` to
+        `end_month`-`end_day`) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        `start_year=None`, `start_month=2`, `start_day=3`,
+        `end_year=None`, `end_month=4`, `end_day=6`. If `end_year` is ``None``,
+        `start_year` has to be ``None`` too.
     end_month:
         End month.
     end_day:
@@ -101,13 +115,24 @@ def extract_time(
     ------
     ValueError
         Time ranges are outside the cube time limits.
-
     """
+    if start_year is not None:
+        start_year = int(start_year)
+    if end_year is not None:
+        end_year = int(end_year)
+    if (start_year is None) ^ (end_year is None):
+        raise ValueError(
+            "If start_year or end_year is None, both "
+            "start_year and end_year have to be None. "
+            f"Currently, start_year is {start_year} "
+            f"and end_year is {end_year}."
+        )
+
     t_1 = PartialDateTime(
-        year=int(start_year), month=int(start_month), day=int(start_day)
+        year=start_year, month=int(start_month), day=int(start_day)
     )
     t_2 = PartialDateTime(
-        year=int(end_year), month=int(end_month), day=int(end_day)
+        year=end_year, month=int(end_month), day=int(end_day)
     )
 
     return _extract_datetime(cube, t_1, t_2)
@@ -117,17 +142,17 @@ def _parse_start_date(date):
     """Parse start of the input `timerange` tag given in ISO 8601 format.
 
     Returns a datetime.datetime object.
+
+    Raises an ISO8601 parser error if data can not be parsed.
     """
     if date.startswith("P"):
         start_date = isodate.parse_duration(date)
+    elif "T" in date:
+        start_date = isodate.parse_datetime(date)
     else:
-        try:
-            start_date = isodate.parse_datetime(date)
-        except isodate.isoerror.ISO8601Error:
-            start_date = isodate.parse_date(date)
-            start_date = datetime.datetime.combine(
-                start_date, datetime.time.min
-            )
+        start_date = isodate.parse_date(date)
+        start_date = datetime.datetime.combine(start_date, datetime.time.min)
+
     return start_date
 
 
@@ -135,6 +160,8 @@ def _parse_end_date(date):
     """Parse end of the input `timerange` given in ISO 8601 format.
 
     Returns a datetime.datetime object.
+
+    Raises an ISO8601 parser error if data can not be parsed.
     """
     if date.startswith("P"):
         end_date = isodate.parse_duration(date)
@@ -145,9 +172,9 @@ def _parse_end_date(date):
             month, year = get_next_month(int(date[4:]), int(date[0:4]))
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
-            try:
+            if "T" in date:
                 end_date = isodate.parse_datetime(date)
-            except isodate.ISO8601Error:
+            else:
                 end_date = isodate.parse_date(date)
                 end_date = datetime.datetime.combine(
                     end_date, datetime.time.min
@@ -219,7 +246,7 @@ def _extract_datetime(
         if isinstance(end_datetime.day, int) and end_datetime.day > 30:
             end_datetime.day = 30
 
-    if not cube.coord_dims(time_coord):
+    if (not cube.coord_dims(time_coord)) or (start_datetime.year is None):
         constraint = iris.Constraint(
             time=lambda t: start_datetime <= t.point < end_datetime
         )
@@ -268,6 +295,8 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
     ------
     ValueError
         Time ranges are outside the cube's time limits.
+    isodate.isoerror.ISO8601Error
+        Start/end times can not be parsed by isodate.
 
     """
     start_date = _parse_start_date(timerange.split("/")[0])
@@ -326,7 +355,6 @@ def extract_season(cube: Cube, season: str) -> Cube:
     ------
     ValueError
         Requested season is not present in the cube.
-
     """
     season = season.upper()
 
@@ -380,7 +408,6 @@ def extract_month(cube: Cube, month: int) -> Cube:
     ------
     ValueError
         Requested month is not present in the cube.
-
     """
     if month not in range(1, 13):
         raise ValueError("Please provide a month number between 1 and 12.")
@@ -460,7 +487,6 @@ def hourly_statistics(
     -------
     iris.cube.Cube
         Hourly statistics cube.
-
     """
     if not cube.coords("hour_group"):
         iris.coord_categorisation.add_categorised_coord(
@@ -476,9 +502,10 @@ def hourly_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(
-        ["hour_group", "day_of_year", "year"], agg, **agg_kwargs
-    )
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["hour_group", "day_of_year", "year"], agg, **agg_kwargs
+        )
 
     result.remove_coord("hour_group")
     result.remove_coord("day_of_year")
@@ -513,7 +540,6 @@ def daily_statistics(
     -------
     iris.cube.Cube
         Daily statistics cube.
-
     """
     if not cube.coords("day_of_year"):
         iris.coord_categorisation.add_day_of_year(cube, "time")
@@ -521,7 +547,8 @@ def daily_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(["day_of_year", "year"], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(["day_of_year", "year"], agg, **agg_kwargs)
 
     result.remove_coord("day_of_year")
     result.remove_coord("year")
@@ -554,7 +581,6 @@ def monthly_statistics(
     -------
     iris.cube.Cube
         Monthly statistics cube.
-
     """
     if not cube.coords("month_number"):
         iris.coord_categorisation.add_month_number(cube, "time")
@@ -562,7 +588,10 @@ def monthly_statistics(
         iris.coord_categorisation.add_year(cube, "time")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(["month_number", "year"], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["month_number", "year"], agg, **agg_kwargs
+        )
     _aggregate_time_fx(result, cube)
     return result
 
@@ -599,7 +628,6 @@ def seasonal_statistics(
     -------
     iris.cube.Cube
         Seasonal statistic cube.
-
     """
     seasons = tuple(sea.upper() for sea in seasons)
 
@@ -613,7 +641,9 @@ def seasonal_statistics(
             cube, "time", name="clim_season", seasons=seasons
         )
     else:
-        old_seasons = sorted(set(cube.coord("clim_season").points))
+        old_seasons = sorted(
+            {str(s) for s in cube.coord("clim_season").points}
+        )
         if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
@@ -626,9 +656,10 @@ def seasonal_statistics(
         )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    result = cube.aggregated_by(
-        ["clim_season", "season_year"], agg, **agg_kwargs
-    )
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by(
+            ["clim_season", "season_year"], agg, **agg_kwargs
+        )
 
     # CMOR Units are days so we are safe to operate on days
     # Ranging on [29, 31] days makes this calendar-independent
@@ -646,7 +677,6 @@ def seasonal_statistics(
         -------
         list[bool]
             Truth statements if time bounds are within (month*29, month*31)
-
         """
         time = cube.coord("time")
         num_days = [(tt.bounds[0, 1] - tt.bounds[0, 0]) for tt in time]
@@ -654,7 +684,10 @@ def seasonal_statistics(
         seasons = cube.coord("clim_season").points
         tar_days = [(len(sea) * 29, len(sea) * 31) for sea in seasons]
 
-        return [dt[0] <= dn <= dt[1] for dn, dt in zip(num_days, tar_days)]
+        return [
+            dt[0] <= dn <= dt[1]
+            for dn, dt in zip(num_days, tar_days, strict=False)
+        ]
 
     full_seasons = spans_full_season(result)
     result = result[full_seasons]
@@ -690,7 +723,6 @@ def annual_statistics(
     -------
     iris.cube.Cube
         Annual statistics cube.
-
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -699,7 +731,8 @@ def annual_statistics(
 
     if not cube.coords("year"):
         iris.coord_categorisation.add_year(cube, "time")
-    result = cube.aggregated_by("year", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by("year", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
     return result
 
@@ -732,7 +765,6 @@ def decadal_statistics(
     -------
     iris.cube.Cube
         Decadal statistics cube.
-
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -749,7 +781,8 @@ def decadal_statistics(
         iris.coord_categorisation.add_categorised_coord(
             cube, "decade", "time", get_decade
         )
-    result = cube.aggregated_by("decade", agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.aggregated_by("decade", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
     return result
 
@@ -803,7 +836,12 @@ def climate_statistics(
     if period in ("full",):
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
-            agg, agg_kwargs, "_time_weights_", cube, _add_time_weights_coord
+            operator,
+            agg,
+            agg_kwargs,
+            "_time_weights_",
+            cube,
+            _add_time_weights_coord,
         )
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -815,7 +853,8 @@ def climate_statistics(
                 category=UserWarning,
                 module="iris",
             )
-            clim_cube = cube.collapsed("time", agg, **agg_kwargs)
+            with ignore_iris_vague_metadata_warnings():
+                clim_cube = cube.collapsed("time", agg, **agg_kwargs)
 
         # Make sure input and output cubes do not have auxiliary coordinate
         if cube.coords("_time_weights_"):
@@ -827,7 +866,8 @@ def climate_statistics(
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-        clim_cube = cube.aggregated_by(clim_coord, agg, **agg_kwargs)
+        with ignore_iris_vague_metadata_warnings():
+            clim_cube = cube.aggregated_by(clim_coord, agg, **agg_kwargs)
         clim_cube.remove_coord("time")
         _aggregate_time_fx(clim_cube, cube)
         if clim_cube.coord(clim_coord.name()).is_monotonic():
@@ -846,7 +886,7 @@ def climate_statistics(
 def _add_time_weights_coord(cube):
     """Add time weight coordinate to cube (in-place)."""
     time_weights_coord = AuxCoord(
-        get_time_weights(cube),
+        get_coord_weights(cube, "time"),
         long_name="_time_weights_",
         units=cube.coord("time").units,
     )
@@ -1055,7 +1095,6 @@ def regrid_time(
     NotImplementedError
         An invalid `frequency` is given or `calendar` is set for a
         non-supported frequency.
-
     """
     # Do not overwrite input cube
     cube = cube.copy()
@@ -1240,7 +1279,6 @@ def timeseries_filter(
         Cube does not have time coordinate.
     NotImplementedError:
         `filter_type` is not implemented.
-
     """
     try:
         cube.coord("time")
@@ -1267,7 +1305,12 @@ def timeseries_filter(
     # Apply filter
     (agg, agg_kwargs) = get_iris_aggregator(filter_stats, **operator_kwargs)
     agg_kwargs["weights"] = wgts
-    cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
+    if cube.has_lazy_data():
+        # Ensure the cube data chunktype is np.MaskedArray so rolling_window
+        # does not ignore a potential mask.
+        cube.data = da.ma.masked_array(cube.core_data())
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.rolling_window("time", agg, len(wgts), **agg_kwargs)
 
     return cube
 
@@ -1316,7 +1359,6 @@ def resample_hours(
         `interval` is not a divisor of 24; invalid `interpolate` given; or
         input data does not contain any target hour (if `interpolate` is
         ``None``).
-
     """
     allowed_intervals = (1, 2, 3, 4, 6, 12)
     if interval not in allowed_intervals:
@@ -1415,7 +1457,6 @@ def resample_time(
     -------
     iris.cube.Cube
         Cube with the new frequency.
-
     """
     time = cube.coord("time")
     dates = time.units.num2date(time.points)
@@ -1454,7 +1495,6 @@ def _get_lst_offset(lon_coord: Coord) -> np.ndarray:
     ----
     This function expects longitude in degrees. Can be in [0, 360] or [-180,
     180] format.
-
     """
     # Make sure that longitude is in degrees and shift it to [-180, 180] first
     # (do NOT overwrite input coordinate)
@@ -1471,7 +1511,6 @@ def _get_lsts(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
     ----
     LSTs outside of the time bins given be the time coordinate bounds are put
     into a bin below/above the time coordinate.
-
     """
     # Pad time coordinate with 1 time step at both sides for the bins for LSTs
     # outside of the time coordinate
@@ -1517,7 +1556,6 @@ def _get_time_index_and_mask(
     (LSTs) are given.  E.g., for hourly data with first time point 01:00:00
     UTC, LST in Berlin is already 02:00:00 (assuming no daylight saving time).
     Thus, for 01:00:00 LST on this day, there is no value for Berlin.
-
     """
     # Make sure that time coordinate has bounds (these are necessary for the
     # binning) and uses 'hours' as reference units
@@ -1582,11 +1620,10 @@ def _transform_to_lst_eager(
     reorder the data along the time axis based on the longitude axis.
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
-
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
-    idx = np.ogrid[tuple(slice(0, d) for d in data.shape)]
+    idx = list(np.ogrid[tuple(slice(0, d) for d in data.shape)])
     time_index = broadcast_to_shape(
         time_index, data.shape, (time_dim, lon_dim)
     )
@@ -1626,7 +1663,6 @@ def _transform_to_lst_lazy(
     reorder the data along the time axis based on the longitude axis.
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
-
     """
     new_data = da.apply_gufunc(
         _transform_to_lst_eager,
@@ -1657,7 +1693,6 @@ def _transform_arr_to_lst(
     ----
     This function either calls `_transform_to_lst_eager` or
     `_transform_to_lst_lazy` depending on the type of input data.
-
     """
     if isinstance(data, np.ndarray):
         func = _transform_to_lst_eager  # type: ignore
@@ -1839,7 +1874,6 @@ def local_solar_time(cube: Cube) -> Cube:
         Input cube has multidimensional `longitude` coordinate.
     ValueError
         `time` coordinate of input cube is not monotonically increasing.
-
     """
     # Make sure that cube has valid time and longitude coordinates
     _check_cube_coords(cube)

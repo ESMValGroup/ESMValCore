@@ -1,31 +1,26 @@
-"""ESMValTool - Earth System Model Evaluation Tool.
+"""Earth System Model Evaluation Tool
 
-http://www.esmvaltool.org
+A community tool for the evaluation of Earth system models.
 
-CORE DEVELOPMENT TEAM AND CONTACTS:
-  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
-  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
-  Bouwe Andela (Netherlands eScience Center, The Netherlands - b.andela@esciencecenter.nl)
-  Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (Netherlands eScience Center, The Netherlands - n.drost@esciencecenter.nl)
-  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
-  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
-  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
-  Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
-  Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
-  Saskia Loosveldt-Tomas (BSC, Spain - saskia.loosveldt@bsc.es)
-  Ruth Lorenz (ETH Zurich, Switzerland - ruth.lorenz@env.ethz.ch)
-  Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
-  Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-  Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
-  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
-  Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
-  Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
+https://esmvaltool.org
 
-For further help, please read the documentation at
-http://docs.esmvaltool.org. Have fun!
-"""
+The Earth System Model Evaluation Tool (ESMValTool) is a community
+diagnostics and performance metrics tool for the evaluation of Earth
+System Models (ESMs) that allows for routine comparison of single or
+multiple models, either against predecessor versions or against
+observations.
+
+Tutorial: https://tutorial.esmvaltool.org
+Documentation: https://docs.esmvaltool.org
+Contact: esmvaltool-dev@listserv.dfn.de
+
+If you find this software useful for your research, please cite it using
+https://doi.org/10.5281/zenodo.3387139 for ESMValCore or
+https://doi.org/10.5281/zenodo.3401363 for ESMValTool or
+any of the reference papers listed at https://esmvaltool.org/references/.
+
+Have fun!
+"""  # noqa: D400
 
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
@@ -33,13 +28,9 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Optional
-
-if (sys.version_info.major, sys.version_info.minor) < (3, 10):
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points  # type: ignore
 
 import fire
 
@@ -88,7 +79,6 @@ def process_recipe(recipe_file: Path, session):
     import shutil
 
     from esmvalcore._recipe.recipe import read_recipe_file
-    from esmvalcore.config._dask import check_distributed_config
 
     if not recipe_file.is_file():
         import errno
@@ -124,8 +114,6 @@ def process_recipe(recipe_file: Path, session):
         "If you experience memory problems, try reducing "
         "'max_parallel_tasks' in your configuration."
     )
-
-    check_distributed_config()
 
     if session["compress_netcdf"]:
         logger.warning(
@@ -342,19 +330,9 @@ class Recipes:
 
 
 class ESMValTool:
-    """A community tool for routine evaluation of Earth system models.
-
-    The Earth System Model Evaluation Tool (ESMValTool) is a community
-    diagnostics and performance metrics tool for the evaluation of Earth
-    System Models (ESMs) that allows for routine comparison of single or
-    multiple models, either against predecessor versions or against
-    observations.
-
-    Documentation is available at https://docs.esmvaltool.org.
-
-    To report issues or ask for improvements, please visit
-    https://github.com/ESMValGroup/ESMValTool.
-    """
+    # This is the `esmvaltool` command. The line below shows the documentation
+    # at the top of this module when users run e.g. `esmvaltool -- --help`.
+    __doc__ = __doc__
 
     def __init__(self):
         self.config = Config()
@@ -403,6 +381,7 @@ class ESMValTool:
 
         """
         from .config import CFG
+        from .config._dask import warn_if_old_dask_config_exists
         from .exceptions import InvalidConfigParameter
 
         cli_config_dir = kwargs.pop("config_dir", None)
@@ -443,9 +422,9 @@ class ESMValTool:
 
         recipe = self._get_recipe(recipe)
 
+        CFG.nested_update(kwargs)
+        CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
-        session.update(kwargs)
-        session["resume_from"] = parse_resume(session["resume_from"], recipe)
 
         self._run(recipe, session, cli_config_dir)
 
@@ -458,6 +437,8 @@ class ESMValTool:
         else:
             if cli_config_dir is not None:
                 CFG.update_from_dirs([cli_config_dir])
+
+        warn_if_old_dask_config_exists()
 
     @staticmethod
     def _create_session_dir(session):
@@ -583,6 +564,7 @@ class ESMValTool:
                 zip(
                     config_dirs,
                     _get_all_config_sources(cli_config_dir),
+                    strict=False,
                 )
             )
 

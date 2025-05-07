@@ -7,7 +7,6 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
@@ -17,14 +16,18 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
-from ._shared import (
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._shared import (
+    get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
     update_weights_kwargs,
 )
-from ._supplementary_vars import register_supplementaries
+from esmvalcore.preprocessor._supplementary_vars import (
+    register_supplementaries,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +107,7 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube: Cube) -> da.core.Array:
+def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
@@ -119,13 +122,13 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         input cube.
 
     Returns
     -------
-    dask.array.core.Array
-        Grid volumes.
+    np.ndarray | dask.array.Array
+        Grid volume.
 
     """
     # Load depth field and figure out which dim is which
@@ -158,7 +161,11 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
     if cube.has_lazy_data():
-        thickness = da.array(thickness)
+        z_chunks = tuple(cube.lazy_data().chunks[d] for d in z_dim)
+        if isinstance(thickness, da.Array):
+            thickness = thickness.rechunk(z_chunks)
+        else:
+            thickness = da.asarray(thickness, chunks=z_chunks)
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures("cell_area"))
@@ -182,6 +189,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
         thickness, cube.shape, z_dim, chunks=chunks
     )
     grid_volume = area_arr * thickness_arr
+    if cube.has_lazy_data():
+        grid_volume = grid_volume.rechunk(chunks)
 
     return grid_volume
 
@@ -284,6 +293,7 @@ def volume_statistics(
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "ocean_volume",
@@ -291,7 +301,8 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
+    with ignore_iris_vague_metadata_warnings():
+        result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
@@ -360,33 +371,23 @@ def axis_statistics(
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError(
-            "axis_statistics not implemented for multidimensional "
-            "coordinates."
+            "axis_statistics not implemented for multidimensional coordinates."
         )
 
     # For weighted operations, create a dummy weights coordinate using the
     # bounds of the original coordinate (this handles units properly, e.g., for
     # sums)
     agg_kwargs = update_weights_kwargs(
+        operator,
         agg,
         agg_kwargs,
         "_axis_statistics_weights_",
         cube,
         _add_axis_stats_weights_coord,
         coord=coord,
-        coord_dims=coord_dims,
     )
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                "Cannot check if coordinate is contiguous: Invalid "
-                "operation for '_axis_statistics_weights_'"
-            ),
-            category=UserWarning,
-            module="iris",
-        )
+    with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
     if normalize is not None:
@@ -401,16 +402,15 @@ def axis_statistics(
     return result
 
 
-def _add_axis_stats_weights_coord(cube, coord, coord_dims):
+def _add_axis_stats_weights_coord(cube, coord):
     """Add weights for axis_statistics to cube (in-place)."""
-    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
-    if not cube.has_lazy_data():
-        weights = weights.compute()
+    weights = get_coord_weights(cube, coord)
     weights_coord = AuxCoord(
         weights,
         long_name="_axis_statistics_weights_",
         units=coord.units,
     )
+    coord_dims = cube.coord_dims(coord)
     cube.add_aux_coord(weights_coord, coord_dims)
 
 
@@ -457,7 +457,7 @@ def extract_transect(
     transect along 28 West.
 
     Also, `'extract_transect(cube, longitude=-28, latitude=[-50, 50])'` will
-    produce a transect along 28 West  between 50 south and 50 North.
+    produce a transect along 28 West between 50 south and 50 North.
 
     This function is not yet implemented for irregular arrays - instead
     try the extract_trajectory function, but note that it is currently
@@ -510,7 +510,10 @@ def extract_transect(
         )
 
     for dim_name, dim_cut, coord in zip(
-        ["latitude", "longitude"], [latitude, longitude], [lats, lons]
+        ["latitude", "longitude"],
+        [latitude, longitude],
+        [lats, lons],
+        strict=False,
     ):
         # ####
         # Look for the first coordinate.

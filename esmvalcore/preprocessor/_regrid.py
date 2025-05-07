@@ -10,6 +10,7 @@ import os
 import re
 import ssl
 import warnings
+from collections.abc import Iterable
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -32,6 +33,7 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
+    _rechunk_aux_factory_dependencies,
     get_array_module,
     get_dims_along_axes,
     preserve_float_dtype,
@@ -209,7 +211,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
 
     # Construct the resultant stock cube, with dummy data.
     shape = (latdata.size, londata.size)
-    dummy = np.empty(shape, dtype=np.dtype("int8"))
+    dummy = np.empty(shape, dtype=np.int32)
     coords_spec = [(lats, 0), (lons, 1)]
     cube = Cube(dummy, dim_coords_and_dims=coords_spec)
 
@@ -321,8 +323,7 @@ def _spec_to_latlonvals(
 
     if step_longitude == 0:
         raise ValueError(
-            "Longitude step cannot be 0, "
-            f"got step_longitude={step_longitude}."
+            f"Longitude step cannot be 0, got step_longitude={step_longitude}."
         )
 
     if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
@@ -588,7 +589,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
             "version 2.11.0, ESMValCore is able to determine the most "
             "suitable regridding scheme based on the input data."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         scheme = "nearest"
 
     if scheme == "linear_extrapolate":
@@ -601,7 +602,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
             "latest/recipe/preprocessor.html#generic-regridding-schemes)."
             "This is an exact replacement."
         )
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         scheme = "linear"
         loaded_scheme = Linear(extrapolation_mode="extrapolate")
         logger.debug("Loaded regridding scheme %s", loaded_scheme)
@@ -745,6 +746,7 @@ def regrid(
     lat_offset: bool = True,
     lon_offset: bool = True,
     cache_weights: bool = False,
+    use_src_coords: Iterable[str] = ("latitude", "longitude"),
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -800,6 +802,9 @@ def regrid(
         support weights caching. More details on this are given in the section
         on :ref:`caching_regridding_weights`. To clear the cache, use
         :func:`esmvalcore.preprocessor.regrid.cache_clear`.
+    use_src_coords:
+        If there are multiple horizontal coordinates available in the source
+        cube, only use horizontal coordinates with these standard names.
 
     Returns
     -------
@@ -848,6 +853,16 @@ def regrid(
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
     """
+    # Remove unwanted coordinates from the source cube.
+    cube = cube.copy()
+    use_src_coords = set(use_src_coords)
+    for axis in ("X", "Y"):
+        coords = cube.coords(axis=axis)
+        if len(coords) > 1:
+            for coord in coords:
+                if coord.standard_name not in use_src_coords:
+                    cube.remove_coord(coord)
+
     # Load target grid and select appropriate scheme
     target_grid_cube = _get_target_grid_cube(
         cube,
@@ -858,15 +873,18 @@ def regrid(
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
-    if _horizontal_grid_is_close(cube, target_grid_cube):
-        for coord in ["latitude", "longitude"]:
-            cube.coord(coord).points = target_grid_cube.coord(
-                coord
-            ).core_points()
-            cube.coord(coord).bounds = target_grid_cube.coord(
-                coord
-            ).core_bounds()
-        return cube
+    if cube.coords("latitude") and cube.coords("longitude"):
+        if _horizontal_grid_is_close(cube, target_grid_cube):
+            for coord in ["latitude", "longitude"]:
+                is_dim_coord = cube.coords(coord, dim_coords=True)
+                coord_dims = cube.coord_dims(coord)
+                cube.remove_coord(coord)
+                target_coord = target_grid_cube.coord(coord).copy()
+                if is_dim_coord:
+                    cube.add_dim_coord(target_coord, coord_dims)
+                else:
+                    cube.add_aux_coord(target_coord, coord_dims)
+            return cube
 
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
@@ -1172,36 +1190,6 @@ def parse_vertical_scheme(scheme):
         extrap_scheme = "nearest"
 
     return scheme, extrap_scheme
-
-
-def _rechunk_aux_factory_dependencies(
-    cube: iris.cube.Cube,
-    coord_name: str,
-) -> iris.cube.Cube:
-    """Rechunk coordinate aux factory dependencies.
-
-    This ensures that the resulting coordinate has reasonably sized
-    chunks that are aligned with the cube data for optimal computational
-    performance.
-    """
-    # Workaround for https://github.com/SciTools/iris/issues/5457
-    try:
-        factory = cube.aux_factory(coord_name)
-    except iris.exceptions.CoordinateNotFoundError:
-        return cube
-
-    cube = cube.copy()
-    cube_chunks = cube.lazy_data().chunks
-    for coord in factory.dependencies.values():
-        coord_dims = cube.coord_dims(coord)
-        if coord_dims:
-            coord = coord.copy()
-            chunks = tuple(cube_chunks[i] for i in coord_dims)
-            coord.points = coord.lazy_points().rechunk(chunks)
-            if coord.has_bounds():
-                coord.bounds = coord.lazy_bounds().rechunk(chunks + (None,))
-            cube.replace_coord(coord)
-    return cube
 
 
 @preserve_float_dtype

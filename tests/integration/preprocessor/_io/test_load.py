@@ -4,6 +4,8 @@ import os
 import tempfile
 import unittest
 import warnings
+from importlib.resources import files as importlib_files
+from pathlib import Path
 
 import iris
 import numpy as np
@@ -52,6 +54,23 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
 
+    def test_load_grib(self):
+        """Test loading a grib file."""
+        grib_path = (
+            Path(importlib_files("tests"))
+            / "sample_data"
+            / "iris-sample-data"
+            / "polar_stereo.grib2"
+        )
+        cubes = load(grib_path)
+
+        assert len(cubes) == 1
+        cube = cubes[0]
+        assert cube.standard_name == "air_temperature"
+        assert cube.units == "K"
+        assert cube.shape == (200, 247)
+        assert "source_file" in cube.attributes
+
     def test_callback_remove_attributes(self):
         """Test callback remove unwanted attributes."""
         attributes = ("history", "creation_date", "tracking_id", "comment")
@@ -90,7 +109,7 @@ class TestLoad(unittest.TestCase):
             )
             for coord in cube.coords():
                 for attr in attributes:
-                    self.assertTrue(attr not in cube.attributes)
+                    self.assertTrue(attr not in coord.attributes)
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""
@@ -118,7 +137,9 @@ class TestLoad(unittest.TestCase):
     def load_with_warning(*_, **__):
         """Mock load with a warning."""
         warnings.warn(
-            "This is a custom expected warning", category=UserWarning
+            "This is a custom expected warning",
+            category=UserWarning,
+            stacklevel=2,
         )
         return CubeList([Cube(0)])
 
