@@ -18,7 +18,7 @@ build:
     build:
       html:
         # - locale
-        # - python -m locale
+        - python -m locale
         - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en doc/ $READTHEDOCS_OUTPUT/html
 
 # Declare the requirements required to build your docs
