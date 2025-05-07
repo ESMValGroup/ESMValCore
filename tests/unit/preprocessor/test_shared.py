@@ -440,7 +440,7 @@ def test_try_adding_calculated_cell_area():
             np.ma.masked_array(np.arange(2), mask=[1, 0]),
             da.arange(2),
             (0,),
-            da.ma.masked_array(np.ones(2), np.arange(2)),
+            da.ma.masked_array(np.arange(2), np.ones(2)),
         ),
         (
             np.ones((2, 5)),
