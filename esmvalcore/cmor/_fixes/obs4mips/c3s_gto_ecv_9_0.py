@@ -1,6 +1,7 @@
 """Fixes for obs4MIPs dataset C3S-GTO-ECV-9-0."""
 
 import dask.array as da
+from iris.cube import Cube
 
 from ..fix import Fix
 
@@ -8,19 +9,19 @@ from ..fix import Fix
 class Toz(Fix):
     """Fixes for toz."""
 
-    def fix_data(self, cube):
+    def fix_data(self, cube: Cube) -> Cube:
         """Fix data.
 
-        Convert nan's to fill missing values.
+        Mask nan's.
 
         Parameters
         ----------
-        cube: iris.cube
+        cube:
             Input cube.
 
         Returns
         -------
-        iris.cube
+        iris.cube.Cube
             Fixed cube.
 
         """
