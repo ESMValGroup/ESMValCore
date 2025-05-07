@@ -44,14 +44,8 @@ if on_rtd:
     os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
     os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
     os.environ["PROJ_NETWORK"] = "OFF"
-    # there is an ongoing issue with `locale` when building with Sphinx
-    # we are not sure if it is Sphinx or Iris at fault
-    # see https://github.com/ESMValGroup/ESMValCore/pull/2708
-    # os.environ["LC_ALL"] = "C"  # works but only 50% times
 if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
-
-print(os.environ)
 
 # -- General configuration ------------------------------------------------
 
