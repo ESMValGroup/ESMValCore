@@ -17,7 +17,7 @@ build:
       - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
     build:
       html:
-        # - locale
+        - locale
         - python -m locale
         - python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en doc/ $READTHEDOCS_OUTPUT/html
 
