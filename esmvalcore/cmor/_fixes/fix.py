@@ -90,7 +90,7 @@ class Fix:
         filepath: Path,
         output_dir: Path,
         add_unique_suffix: bool = False,
-        ignore_warnings: Optional[list[dict]] = None,
+        ignore_warnings: Optional[list[dict[str, Any]]] = None,
     ) -> str | Path | Cube | CubeList:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 

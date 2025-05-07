@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from iris.cube import Cube, CubeList
 
@@ -33,7 +33,7 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     frequency: Optional[str] = None,
-    ignore_warnings: Optional[list[dict]] = None,
+    ignore_warnings: Optional[list[dict[str, Any]]] = None,
     **extra_facets,
 ) -> str | Path | Cube | CubeList:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.

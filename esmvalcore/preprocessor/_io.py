@@ -8,7 +8,7 @@ import os
 from collections.abc import Iterable, Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -20,6 +20,7 @@ import yaml
 from dask.delayed import Delayed
 from iris.coords import Coord
 from iris.cube import Cube, CubeList
+from iris.fileformats.cf import CFVariable
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
@@ -45,7 +46,11 @@ VARIABLE_KEYS = {
 GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
 
-def _get_attr_from_field_coord(ncfield, coord_name, attr):
+def _get_attr_from_field_coord(
+    ncfield: CFVariable,
+    coord_name: str | None,
+    attr: str,
+) -> Any:
     """Get attribute from netCDF field coordinate."""
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()
@@ -56,9 +61,9 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 
 
 def _restore_lat_lon_units(
-    cube,
-    field,
-    filename,
+    cube: Cube,
+    field: CFVariable,
+    filename: str,
 ):  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees

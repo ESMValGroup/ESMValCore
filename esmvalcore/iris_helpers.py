@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import warnings
 from collections.abc import Generator, Iterable
-from typing import Literal, Optional, Sequence
+from typing import Any, Literal, Optional, Sequence
 
 import dask.array as da
 import iris
@@ -516,7 +516,7 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
 
 @contextlib.contextmanager
 def ignore_warnings_context(
-    warnings_to_ignore: Optional[list[dict]] = None,
+    warnings_to_ignore: Optional[list[dict[str, Any]]] = None,
 ) -> Generator[None]:
     """Ignore warnings (context manager).
 
@@ -530,7 +530,7 @@ def ignore_warnings_context(
     if warnings_to_ignore is None:
         warnings_to_ignore = []
 
-    default_warnings_to_ignore: list[dict] = [
+    default_warnings_to_ignore: list[dict[str, Any]] = [
         {
             "message": "Missing CF-netCDF measure variable .*",
             "category": UserWarning,
