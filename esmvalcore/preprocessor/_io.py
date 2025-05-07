@@ -64,7 +64,7 @@ def _restore_lat_lon_units(
     cube: Cube,
     field: CFVariable,
     filename: str,
-):  # pylint: disable=unused-argument
+) -> None:  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees
     # regardless of value in file, so reinstating file value
