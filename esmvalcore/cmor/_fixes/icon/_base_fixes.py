@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 import iris
@@ -42,7 +42,7 @@ class IconFix(NativeDatasetFix):
     TIMEOUT = 5 * 60  # [s]; = 5 min
     GRID_FILE_ATTR = "grid_file_uri"
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize ICON fix."""
         super().__init__(*args, **kwargs)
         self._horizontal_grids: dict[str, CubeList] = {}
