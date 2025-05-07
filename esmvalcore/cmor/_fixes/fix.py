@@ -200,7 +200,7 @@ class Fix:
         self,
         dataset: ncdata.NcData | xr.Dataset,
         filepath: str | Path,
-        ignore_warnings: Optional[list[dict]] = None,
+        ignore_warnings: Optional[list[dict[str, Any]]] = None,
     ) -> CubeList:
         """Convert dataset to :class:`~iris.cube.CubeList`.
 
