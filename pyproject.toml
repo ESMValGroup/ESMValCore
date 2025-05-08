@@ -34,7 +34,7 @@ dynamic = [
 ]
 dependencies = [
     "cartopy",
-    "cf-units",
+    # "cf-units",
     "dask[array,distributed]>=2025",  # ESMValCore/issues/2503
     "dask-jobqueue",
     "esgf-pyclient>=0.3.1",
