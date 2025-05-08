@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - cartopy
-  # - cf-units
+  - cf-units
   - cftime
   - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
@@ -18,9 +18,9 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - iris ==3.11  # 3.11 first to support Numpy 2 and Python 3.13
-  # - iris-esmf-regrid >=0.11.0
-  # - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
+  - iris ==3.10  # 3.11 first to support Numpy 2 and Python 3.13
+  - iris-esmf-regrid >=0.11.0
+  - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
   - isodate >=0.7.0  # incompatible with very old 0.6.1
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
