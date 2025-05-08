@@ -63,5 +63,5 @@ dependencies:
   - pre-commit
   - pylint
   # Not on conda forge - vprof
-  - pip:
-      - ESMValTool_sample_data
+  # - pip:
+  #     - ESMValTool_sample_data
