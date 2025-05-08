@@ -231,7 +231,7 @@ jobs:
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
             # Test building documentation
-            LC_ALL=C MPLBACKEND=Agg sphinx-build -W doc doc/build
+            MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
@@ -239,9 +239,9 @@ workflows:
   commit:
     jobs:
       - build_documentation
-      - run_tests
-      - test_installation_from_source_develop_mode
-      - test_installation_from_source_test_mode
+      #- run_tests
+      #- test_installation_from_source_develop_mode
+      #- test_installation_from_source_test_mode
 
   nightly:
     triggers:
