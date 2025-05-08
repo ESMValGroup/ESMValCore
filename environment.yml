@@ -36,7 +36,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python ==3.13.3
+  - python ==3.13.2
   - python-stratify >=0.3
   - pyyaml
   - requests
