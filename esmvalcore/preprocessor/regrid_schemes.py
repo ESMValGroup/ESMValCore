@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-
-from iris.cube import Cube
+from typing import TYPE_CHECKING
 
 from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyAreaWeighted,
@@ -20,6 +18,11 @@ from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredNearest,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from iris.cube import Cube
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -27,9 +30,9 @@ __all__ = [
     "ESMPyLinear",
     "ESMPyNearest",
     "ESMPyRegridder",
-    "IrisESMFRegrid",
     "GenericFuncScheme",
     "GenericRegridder",
+    "IrisESMFRegrid",
     "UnstructuredLinear",
     "UnstructuredLinearRegridder",
     "UnstructuredNearest",

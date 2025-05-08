@@ -14,7 +14,9 @@ from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
 
 def _create_2d_cube():
     cube = Cube(
-        np.broadcast_to(np.arange(1, 16), (11, 15)), var_name="tas", units="K"
+        np.broadcast_to(np.arange(1, 16), (11, 15)),
+        var_name="tas",
+        units="K",
     )
     cube.add_dim_coord(
         iris.coords.DimCoord(
@@ -46,7 +48,10 @@ class TestRollingWindow(unittest.TestCase):
     def test_rolling_window_time(self):
         """Test rolling_window_statistics over time coordinate."""
         cube_time_sum = rolling_window_statistics(
-            self.cube, coordinate="time", operator="sum", window_length=2
+            self.cube,
+            coordinate="time",
+            operator="sum",
+            window_length=2,
         )
         expected_data = np.broadcast_to(np.arange(3, 30, 2), (11, 14))
         assert_equal(cube_time_sum.data, expected_data)
@@ -55,7 +60,10 @@ class TestRollingWindow(unittest.TestCase):
     def test_rolling_window_latitude(self):
         """Test rolling_window_statistics over latitude coordinate."""
         cube_lat_mean = rolling_window_statistics(
-            self.cube, coordinate="latitude", operator="mean", window_length=3
+            self.cube,
+            coordinate="latitude",
+            operator="mean",
+            window_length=3,
         )
         expected_data = np.broadcast_to(np.arange(1, 16), (9, 15))
         assert_equal(cube_lat_mean.data, expected_data)

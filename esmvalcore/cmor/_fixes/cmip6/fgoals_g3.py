@@ -4,8 +4,8 @@ import dask.array as da
 import iris
 import numpy as np
 
-from ..common import OceanFixGrid
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 def _check_bounds_monotonicity(coord):
@@ -139,7 +139,8 @@ class Tas(Fix):
                     )
                     data = cube.data
                     new_data = np.ma.append(
-                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
                     )
                     new_data = new_data.reshape(dims)
 

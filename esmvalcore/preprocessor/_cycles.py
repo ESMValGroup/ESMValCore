@@ -60,14 +60,18 @@ def amplitude(cube, coords):
         )
         if hasattr(iris.coord_categorisation, f"add_{coord_name}"):
             getattr(iris.coord_categorisation, f"add_{coord_name}")(
-                cube, "time"
+                cube,
+                "time",
             )
             logger.debug("Added temporal coordinate '%s'", coord_name)
         else:
-            raise iris.exceptions.CoordinateNotFoundError(
+            msg = (
                 f"Coordinate '{coord_name}' is not a coordinate of cube "
                 f"{cube.summary(shorten=True)} and cannot be added via "
                 f"iris.coord_categorisation"
+            )
+            raise iris.exceptions.CoordinateNotFoundError(
+                msg,
             )
 
     # Calculate amplitude

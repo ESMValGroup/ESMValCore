@@ -43,7 +43,7 @@ def assert_derived_var_calc_called_once_with(*args):
     """Assert that derivation script of variable has been called."""
     (
         _derive.ALL_DERIVED_VARIABLES.__getitem__.return_value.return_value.calculate.assert_called_once_with(
-            *args
+            *args,
         )
     )
 

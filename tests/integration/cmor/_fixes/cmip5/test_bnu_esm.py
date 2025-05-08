@@ -2,9 +2,9 @@
 
 import unittest
 
-import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
+from numpy import ma
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import (
     Ch4,

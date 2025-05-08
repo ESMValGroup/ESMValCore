@@ -36,7 +36,8 @@ def test_get_pr_fix():
 
 
 @unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata", autospec=True
+    "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata",
+    autospec=True,
 )
 def test_hur_fix_metadata(mock_base_fix_metadata):
     """Test ``fix_metadata`` for ``hur``."""
@@ -46,7 +47,8 @@ def test_hur_fix_metadata(mock_base_fix_metadata):
 
 
 @unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata", autospec=True
+    "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata",
+    autospec=True,
 )
 def test_pr_fix_metadata(mock_base_fix_metadata):
     """Test ``fix_metadata`` for ``pr``."""

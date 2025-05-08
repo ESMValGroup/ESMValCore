@@ -35,7 +35,9 @@ def test_generic_fix_empty_units(generic_fix, monkeypatch):
     monkeypatch.setattr(coord_info, "units", "")
 
     ret = generic_fix._fix_coord_units(
-        sentinel.cube, coord_info, sentinel.cube_coord
+        sentinel.cube,
+        coord_info,
+        sentinel.cube_coord,
     )
 
     assert ret is None
@@ -45,7 +47,9 @@ def test_generic_fix_no_generic_lev_coords(generic_fix, monkeypatch):
     """Test ``GenericFix``."""
     # Artificially remove generic_lev_coords
     monkeypatch.setattr(
-        generic_fix.vardef.coordinates["alevel"], "generic_lev_coords", {}
+        generic_fix.vardef.coordinates["alevel"],
+        "generic_lev_coords",
+        {},
     )
 
     cube = generic_fix._fix_alternative_generic_level_coords(sentinel.cube)
@@ -59,7 +63,9 @@ def test_requested_levels_2d_coord(generic_fix, mocker):
     cmor_coord = mocker.Mock(requested=True)
 
     ret = generic_fix._fix_requested_coord_values(
-        sentinel.cube, cmor_coord, cube_coord
+        sentinel.cube,
+        cmor_coord,
+        cube_coord,
     )
 
     assert ret is None
@@ -71,7 +77,9 @@ def test_requested_levels_invalid_arr(generic_fix, mocker):
     cmor_coord = mocker.Mock(requested=["a", "b"])
 
     ret = generic_fix._fix_requested_coord_values(
-        sentinel.cube, cmor_coord, cube_coord
+        sentinel.cube,
+        cmor_coord,
+        cube_coord,
     )
 
     assert ret is None
@@ -80,11 +88,15 @@ def test_requested_levels_invalid_arr(generic_fix, mocker):
 def test_lon_no_fix_needed(generic_fix):
     """Test ``GenericFix``."""
     cube_coord = AuxCoord(
-        [0.0, 180.0, 360.0], standard_name="longitude", units="rad"
+        [0.0, 180.0, 360.0],
+        standard_name="longitude",
+        units="rad",
     )
 
     ret = generic_fix._fix_longitude_0_360(
-        sentinel.cube, sentinel.cmor_coord, cube_coord
+        sentinel.cube,
+        sentinel.cmor_coord,
+        cube_coord,
     )
 
     assert ret == (sentinel.cube, cube_coord)
@@ -93,11 +105,15 @@ def test_lon_no_fix_needed(generic_fix):
 def test_lon_too_low_to_fix(generic_fix):
     """Test ``GenericFix``."""
     cube_coord = AuxCoord(
-        [-370.0, 0.0], standard_name="longitude", units="rad"
+        [-370.0, 0.0],
+        standard_name="longitude",
+        units="rad",
     )
 
     ret = generic_fix._fix_longitude_0_360(
-        sentinel.cube, sentinel.cmor_coord, cube_coord
+        sentinel.cube,
+        sentinel.cmor_coord,
+        cube_coord,
     )
 
     assert ret == (sentinel.cube, cube_coord)
@@ -108,7 +124,9 @@ def test_lon_too_high_to_fix(generic_fix):
     cube_coord = AuxCoord([750.0, 0.0], standard_name="longitude", units="rad")
 
     ret = generic_fix._fix_longitude_0_360(
-        sentinel.cube, sentinel.cmor_coord, cube_coord
+        sentinel.cube,
+        sentinel.cmor_coord,
+        cube_coord,
     )
 
     assert ret == (sentinel.cube, cube_coord)
@@ -119,7 +137,9 @@ def test_fix_direction_2d_coord(generic_fix):
     cube_coord = AuxCoord([[0]], standard_name="latitude", units="rad")
 
     ret = generic_fix._fix_coord_direction(
-        sentinel.cube, sentinel.cmor_coord, cube_coord
+        sentinel.cube,
+        sentinel.cmor_coord,
+        cube_coord,
     )
 
     assert ret == (sentinel.cube, cube_coord)
@@ -130,7 +150,9 @@ def test_fix_direction_string_coord(generic_fix):
     cube_coord = AuxCoord(["a"], standard_name="latitude", units="rad")
 
     ret = generic_fix._fix_coord_direction(
-        sentinel.cube, sentinel.cmor_coord, cube_coord
+        sentinel.cube,
+        sentinel.cmor_coord,
+        cube_coord,
     )
 
     assert ret == (sentinel.cube, cube_coord)
@@ -154,12 +176,15 @@ def test_fix_metadata_not_fail_with_empty_cube(generic_fix):
     assert isinstance(fixed_cubes, CubeList)
     assert len(fixed_cubes) == 1
     assert fixed_cubes[0] == Cube(
-        0, standard_name="air_temperature", long_name="Air Temperature"
+        0,
+        standard_name="air_temperature",
+        long_name="Air Temperature",
     )
 
 
 @pytest.mark.parametrize(
-    "extra_facets", [{}, {"project": "P", "dataset": "D"}]
+    "extra_facets",
+    [{}, {"project": "P", "dataset": "D"}],
 )
 def test_fix_metadata_multiple_cubes_fail(extra_facets):
     """Generic fixes should fail when multiple invalid cubes are given."""
@@ -178,7 +203,9 @@ def test_fix_metadata_no_extra_facets():
     assert isinstance(fixed_cubes, CubeList)
     assert len(fixed_cubes) == 1
     assert fixed_cubes[0] == Cube(
-        0, standard_name="air_temperature", long_name="Air Temperature"
+        0,
+        standard_name="air_temperature",
+        long_name="Air Temperature",
     )
 
 

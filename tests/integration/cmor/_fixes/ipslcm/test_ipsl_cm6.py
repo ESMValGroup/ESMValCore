@@ -35,5 +35,5 @@ def test_tas_fix_metadata(cubes):
     out_cubes = fix.fix_metadata(cubes)
     out_cube = fix.get_cube_from_list(out_cubes, "tas")
     assert any(
-        [coord.standard_name == "height" for coord in out_cube.aux_coords]
+        coord.standard_name == "height" for coord in out_cube.aux_coords
     )

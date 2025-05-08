@@ -11,9 +11,7 @@ from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Iterator, Sequence, Union
-
-from iris.cube import Cube
+from typing import TYPE_CHECKING, Any, Union
 
 from esmvalcore import esgf, local
 from esmvalcore._recipe import check
@@ -33,11 +31,17 @@ from esmvalcore.local import (
     _get_start_end_date,
 )
 from esmvalcore.preprocessor import preprocess
-from esmvalcore.typing import Facets, FacetValue
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    from iris.cube import Cube
+
+    from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
-    "Dataset",
     "INHERITED_FACETS",
+    "Dataset",
     "datasets_to_recipe",
 ]
 
@@ -71,7 +75,7 @@ def _augment(base: dict, update: dict):
 def _isglob(facet_value: FacetValue | None) -> bool:
     """Check if a facet value is a glob pattern."""
     return isinstance(facet_value, str) and bool(
-        re.match(r".*[\*\?]+.*|.*\[.*\].*", facet_value)
+        re.match(r".*[\*\?]+.*|.*\[.*\].*", facet_value),
     )
 
 
@@ -120,7 +124,7 @@ class Dataset:
 
     def __init__(self, **facets: FacetValue):
         self.facets: Facets = {}
-        self.supplementaries: list["Dataset"] = []
+        self.supplementaries: list[Dataset] = []
 
         self._persist: set[str] = set()
         self._session: Session | None = None
@@ -134,7 +138,7 @@ class Dataset:
     def from_recipe(
         recipe: Path | str | dict,
         session: Session,
-    ) -> list["Dataset"]:
+    ) -> list[Dataset]:
         """Read datasets from a recipe.
 
         Parameters
@@ -248,7 +252,7 @@ class Dataset:
                 )
                 yield dataset
 
-    def from_files(self) -> Iterator["Dataset"]:
+    def from_files(self) -> Iterator[Dataset]:
         """Create datasets based on the available files.
 
         The facet values for local files are retrieved from the directory tree
@@ -351,11 +355,10 @@ class Dataset:
                         score += any(elem in value2 for elem in value1)
                     else:
                         score += value2 in value1
+                elif isinstance(value2, (list, tuple)):
+                    score += value1 in value2
                 else:
-                    if isinstance(value2, (list, tuple)):
-                        score += value1 in value2
-                    else:
-                        score += value1 == value2
+                    score += value1 == value2
         return score
 
     def _remove_duplicate_supplementaries(self) -> None:
@@ -364,7 +367,8 @@ class Dataset:
         supplementaries = list(self.supplementaries)
         self.supplementaries.clear()
         for _, duplicates in groupby(
-            supplementaries, key=lambda ds: ds["short_name"]
+            supplementaries,
+            key=lambda ds: ds["short_name"],
         ):
             group = sorted(duplicates, key=self._match, reverse=True)
             self.supplementaries.append(group[0])
@@ -375,7 +379,7 @@ class Dataset:
                 "List of all supplementary datasets found for %s:\n%s",
                 self.summary(shorten=True),
                 "\n".join(
-                    sorted(ds.summary(shorten=True) for ds in supplementaries)
+                    sorted(ds.summary(shorten=True) for ds in supplementaries),
                 ),
             )
 
@@ -398,7 +402,7 @@ class Dataset:
                         )
                         break
 
-    def copy(self, **facets: FacetValue) -> "Dataset":
+    def copy(self, **facets: FacetValue) -> Dataset:
         """Create a copy.
 
         Parameters
@@ -757,7 +761,8 @@ class Dataset:
         }
         settings["load"] = {
             "ignore_warnings": get_ignored_warnings(
-                self.facets["project"], "load"
+                self.facets["project"],
+                "load",
             ),
         }
         settings["fix_metadata"] = {
@@ -804,10 +809,9 @@ class Dataset:
                 **kwargs,
             )
 
-        cube = result[0]
-        return cube
+        return result[0]
 
-    def from_ranges(self) -> list["Dataset"]:
+    def from_ranges(self) -> list[Dataset]:
         """Create a list of datasets from short notations.
 
         This expands the ``'ensemble'`` and ``'sub_experiment'`` facets in the
@@ -854,9 +858,12 @@ class Dataset:
         if isinstance(tag, (list, tuple)):
             for elem in tag:
                 if regex.search(elem):
-                    raise RecipeError(
+                    msg = (
                         f"In {self}: {input_tag} expansion "
                         f"cannot be combined with {input_tag} lists"
+                    )
+                    raise RecipeError(
+                        msg,
                     )
             expanded.append(tag)
         else:
@@ -879,8 +886,9 @@ class Dataset:
 
         timerange = self.facets["timerange"]
         if not isinstance(timerange, str):
+            msg = f"timerange should be a string, got '{timerange!r}'"
             raise TypeError(
-                f"timerange should be a string, got '{timerange!r}'"
+                msg,
             )
         check.valid_time_selection(timerange)
 

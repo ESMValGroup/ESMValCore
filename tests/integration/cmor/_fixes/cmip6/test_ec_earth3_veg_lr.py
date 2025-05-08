@@ -12,7 +12,10 @@ from esmvalcore.cmor._fixes.fix import Fix
 def test_get_siconc_fix():
     """Test getting of fix."""
     assert Siconc(None) in Fix.get_fixes(
-        "CMIP6", "EC-Earth3-Veg-LR", "SImon", "siconc"
+        "CMIP6",
+        "EC-Earth3-Veg-LR",
+        "SImon",
+        "siconc",
     )
 
 
@@ -24,7 +27,10 @@ def test_siconc_fix():
 def test_get_allvars_fix():
     """Test getting of fix."""
     assert AllVars(None) in Fix.get_fixes(
-        "CMIP6", "EC-Earth3-Veg-LR", "Omon", "tos"
+        "CMIP6",
+        "EC-Earth3-Veg-LR",
+        "Omon",
+        "tos",
     )
 
 

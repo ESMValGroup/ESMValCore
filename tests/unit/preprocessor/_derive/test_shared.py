@@ -35,10 +35,16 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
         units="m",
     )
     lat_coord = iris.coords.DimCoord(
-        [45.0], standard_name="latitude", var_name="lat", units="degrees"
+        [45.0],
+        standard_name="latitude",
+        var_name="lat",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [10.0], standard_name="longitude", var_name="lon", units="degrees"
+        [10.0],
+        standard_name="longitude",
+        var_name="lon",
+        units="degrees",
     )
     if air_pressure_coord:
         coord_specs = [
@@ -56,8 +62,7 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
         ]
     else:
         coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
-    return cube
+    return Cube(data, dim_coords_and_dims=coord_specs, **kwargs)
 
 
 def test_column_average():
@@ -75,10 +80,16 @@ def test_column_average():
         units="1",
     )
     zg_cube = get_cube(
-        [[[100.0]]], air_pressure_coord=False, var_name="zg", units="m"
+        [[[100.0]]],
+        air_pressure_coord=False,
+        var_name="zg",
+        units="m",
     )
     ps_cube = get_cube(
-        [[[100000.0]]], air_pressure_coord=False, var_name="ps", units="Pa"
+        [[[100000.0]]],
+        air_pressure_coord=False,
+        var_name="ps",
+        units="Pa",
     )
     x_cube = column_average(cube, hus_cube, zg_cube, ps_cube)
     assert x_cube.shape == (1, 1, 1)
@@ -91,7 +102,8 @@ def test_column_average():
     np.testing.assert_allclose(x_cube.coord("time").points, [0.0])
     np.testing.assert_allclose(x_cube.coord("air_pressure").points, 85000.0)
     np.testing.assert_allclose(
-        x_cube.coord("air_pressure").bounds, [[80000.0, 90000.0]]
+        x_cube.coord("air_pressure").bounds,
+        [[80000.0, 90000.0]],
     )
     np.testing.assert_allclose(x_cube.coord("latitude").points, [45.0])
     np.testing.assert_allclose(x_cube.coord("longitude").points, [10.0])
@@ -142,7 +154,8 @@ def test_low_lev_surf_press():
     col = np.append(col, top_limit)
     result = np.array([50, 100, 845])
     assert np.array_equal(
-        _get_pressure_level_widths(col, air_pressure_axis=0), result
+        _get_pressure_level_widths(col, air_pressure_axis=0),
+        result,
     )
     col = np.atleast_2d(col)
     assert np.array_equal(
@@ -165,7 +178,8 @@ def test_low_lev_above_surf_press():
     col = np.append(col, top_limit)
     result = np.array([70, 100, 845])
     assert np.array_equal(
-        _get_pressure_level_widths(col, air_pressure_axis=0), result
+        _get_pressure_level_widths(col, air_pressure_axis=0),
+        result,
     )
     col = np.atleast_2d(col)
     assert np.array_equal(
@@ -188,7 +202,8 @@ def test_low_lev_below_surf_press():
     col = np.append(col, top_limit)
     result = np.array([0, 120, 845])
     assert np.array_equal(
-        _get_pressure_level_widths(col, air_pressure_axis=0), result
+        _get_pressure_level_widths(col, air_pressure_axis=0),
+        result,
     )
     col = np.atleast_2d(col)
     assert np.array_equal(
@@ -206,7 +221,8 @@ def test_low_lev_below_surf_press():
     col = np.append(col, top_limit)
     result = np.array([0, 0, 120, 845])
     assert np.array_equal(
-        _get_pressure_level_widths(col, air_pressure_axis=0), result
+        _get_pressure_level_widths(col, air_pressure_axis=0),
+        result,
     )
     col = np.atleast_2d(col)
     assert np.array_equal(
@@ -229,7 +245,8 @@ def test_high_level_top_limit():
     col = np.append(col, top_limit)
     result = np.array([70, 50 + 895 / 2, 895 / 2])
     assert np.array_equal(
-        _get_pressure_level_widths(col, air_pressure_axis=0), result
+        _get_pressure_level_widths(col, air_pressure_axis=0),
+        result,
     )
     col = np.atleast_2d(col)
     assert np.array_equal(

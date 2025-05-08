@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # ESMValTool documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun 2 11:34:13 2015.
@@ -56,58 +55,58 @@ if rtd_version not in ["latest", "stable", "doc"]:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'autodocsumm',
-    'nbsphinx',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
+    "autodocsumm",
+    "nbsphinx",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
 ]
 
 autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'inherited-members': True,
-    'show-inheritance': True,
-    'autosummary': True,
+    "members": True,
+    "undoc-members": True,
+    "inherited-members": True,
+    "show-inheritance": True,
+    "autosummary": True,
 }
 
 # Show type hints in function signature AND docstring
-autodoc_typehints = 'both'
+autodoc_typehints = "both"
 
 # See https://github.com/sphinx-doc/sphinx/issues/12589
 suppress_warnings = [
-    'autosummary.import_cycle',
+    "autosummary.import_cycle",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = {'.rst': 'restructuredtext'}
+source_suffix = {".rst": "restructuredtext"}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'ESMValTool'
-copyright = u'{0}, ESMValTool Development Team'.format(datetime.now().year)
+project = "ESMValTool"
+copyright = f"{datetime.now().year}, ESMValTool Development Team"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(__version__.split('.')[0:1])
+version = ".".join(__version__.split(".")[0:1])
 # The full version, including alpha/beta/rc tags.
 release = __version__
 
@@ -141,7 +140,7 @@ exclude_patterns: list = []
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -153,7 +152,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -185,11 +184,11 @@ html_theme_options = {
 # html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "ESMValTool {0}".format(release)
+html_short_title = f"ESMValTool {release}"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo-2.png'
+html_logo = "figures/ESMValTool-logo-2.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -248,7 +247,7 @@ html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ESMValTooldoc'
+htmlhelp_basename = "ESMValTooldoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -260,8 +259,8 @@ latex_elements = {
     # 'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    'preamble':
-    r'''
+    "preamble":
+    r"""
    \makeatletter
    \renewcommand{\maketitle}{
      \newcommand{\MONTH}{%
@@ -295,7 +294,7 @@ latex_elements = {
      \end{titlepage}
      \clearpage
    }
-   \makeatother'''
+   \makeatother""",
 }
 
 # latex_additional_files = []
@@ -304,9 +303,9 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'ESMValTool_Users_Guide.tex',
-     u'ESMValTool User\'s and Developer\'s Guide',
-     u'ESMValTool Development Team', 'manual'),
+    ("index", "ESMValTool_Users_Guide.tex",
+     "ESMValTool User's and Developer's Guide",
+     "ESMValTool Development Team", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -373,10 +372,10 @@ latex_toplevel_sectioning = "part"
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'ESMValTool'
-epub_author = u'ESMValTool Development Team'
-epub_publisher = u'ESMValTool Development Team'
-epub_copyright = u'ESMValTool Development Team'
+epub_title = "ESMValTool"
+epub_author = "ESMValTool Development Team"
+epub_publisher = "ESMValTool Development Team"
+epub_copyright = "ESMValTool Development Team"
 
 # The basename for the epub file. It defaults to the project name.
 # epub_basename = u'ESMValTool'
@@ -416,7 +415,7 @@ epub_copyright = u'ESMValTool Development Team'
 # epub_post_files = []
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ["search.html"]
 
 # The depth of the table of contents in toc.ncx.
 # epub_tocdepth = 3
@@ -443,23 +442,23 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
-    'cftime': ('https://unidata.github.io/cftime/', None),
-    'esmvalcore':
-    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
+    "cf_units": ("https://cf-units.readthedocs.io/en/stable/", None),
+    "cftime": ("https://unidata.github.io/cftime/", None),
+    "esmvalcore":
+    (f"https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/",
      None),
-    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
-    'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
+    "esmvaltool": (f"https://docs.esmvaltool.org/en/{rtd_version}/", None),
+    "esmpy": ("https://earthsystemmodeling.org/esmpy_doc/release/latest/html/",
               None),
-    'dask': ('https://docs.dask.org/en/stable/', None),
-    'distributed': ('https://distributed.dask.org/en/stable/', None),
-    'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
-    'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
-    'matplotlib': ('https://matplotlib.org/stable/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
-    'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    "dask": ("https://docs.dask.org/en/stable/", None),
+    "distributed": ("https://distributed.dask.org/en/stable/", None),
+    "iris": ("https://scitools-iris.readthedocs.io/en/stable/", None),
+    "esmf_regrid": ("https://iris-esmf-regrid.readthedocs.io/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pyesgf": ("https://esgf-pyclient.readthedocs.io/en/stable/", None),
+    "python": ("https://docs.python.org/3/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
 }
 
 # -- Extlinks extension -------------------------------------------------------

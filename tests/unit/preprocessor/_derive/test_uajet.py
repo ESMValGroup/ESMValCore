@@ -8,7 +8,8 @@ from esmvalcore.preprocessor._derive import uajet
 
 TIME_COORD = iris.coords.DimCoord([1.0, 2.0, 3.0], standard_name="time")
 LEV_COORD = iris.coords.DimCoord(
-    [80000.0, 83000.0, 87000.0], standard_name="air_pressure"
+    [80000.0, 83000.0, 87000.0],
+    standard_name="air_pressure",
 )
 LON_COORD = iris.coords.DimCoord(
     [0.0, 90.0, 180.0, 270.0],
@@ -29,8 +30,7 @@ def broadcast(lat_array):
         len(LON_COORD.points),
     )
     lat_array = np.expand_dims(lat_array, -1)
-    lat_array = np.broadcast_to(lat_array, target_shape)
-    return lat_array
+    return np.broadcast_to(lat_array, target_shape)
 
 
 def gaussian(lat_array, shift):
@@ -40,7 +40,7 @@ def gaussian(lat_array, shift):
 @pytest.fixture
 def cubes():
     lat_array = np.array(
-        [-90.0, -80.0, -70.0, -60.0, -50.0, -40.0, -30.0, -20.0, -10.0, 0.0]
+        [-90.0, -80.0, -70.0, -60.0, -50.0, -40.0, -30.0, -20.0, -10.0, 0.0],
     )
     lat_coord = iris.coords.DimCoord(lat_array, standard_name="latitude")
 

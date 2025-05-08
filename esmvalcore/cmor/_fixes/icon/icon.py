@@ -110,9 +110,12 @@ class AllVars(IconFix):
             "longitude": "grid_longitude",
         }
         if coord_name not in coord_names_mapping:
-            raise ValueError(
+            msg = (
                 f"coord_name must be one of {list(coord_names_mapping)}, got "
                 f"'{coord_name}'"
+            )
+            raise ValueError(
+                msg,
             )
         coord_name_in_grid = coord_names_mapping[coord_name]
 
@@ -121,17 +124,20 @@ class AllVars(IconFix):
         # supported
         horizontal_grid = self.get_horizontal_grid(cube)
         grid_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name="cell_area")
+            NameConstraint(var_name="cell_area"),
         )
         coord = grid_cube.coord(coord_name_in_grid).copy()
 
         # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
         if n_unnamed_dimensions != 1:
-            raise ValueError(
+            msg = (
                 f"Cannot determine coordinate dimension for coordinate "
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
+            )
+            raise ValueError(
+                msg,
             )
         coord_dims = ()
         for idx in range(cube.ndim):
@@ -152,12 +158,14 @@ class AllVars(IconFix):
             if not other_cube.coords("time"):
                 continue
             time_coord = other_cube.coord("time")
-            cube = add_leading_dim_to_cube(cube, time_coord)
-            return cube
-        raise ValueError(
+            return add_leading_dim_to_cube(cube, time_coord)
+        msg = (
             f"Cannot add required coordinate 'time' to variable "
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it"
+        )
+        raise ValueError(
+            msg,
         )
 
     def _get_z_coord(self, cubes, points_name, bounds_name=None):
@@ -176,17 +184,17 @@ class AllVars(IconFix):
             )
             bounds = bounds_cube.core_data()
             bounds = da.stack(
-                (bounds[..., :-1, :], bounds[..., 1:, :]), axis=-1
+                (bounds[..., :-1, :], bounds[..., 1:, :]),
+                axis=-1,
             )
         else:
             bounds = None
 
-        z_coord = AuxCoord(
+        return AuxCoord(
             points,
             bounds=bounds,
             units=points_cube.units,
         )
-        return z_coord
 
     def _fix_height(self, cube, cubes):
         """Fix height coordinate of cube."""
@@ -322,7 +330,7 @@ class AllVars(IconFix):
         if "dec" in freq or "yr" in freq or "mon" in freq:
             time_units = time_coord.units
             time_coord.convert_units(
-                Unit("days since 1850-01-01", calendar=time_units.calendar)
+                Unit("days since 1850-01-01", calendar=time_units.calendar),
             )
             try:
                 time_coord.points = np.around(time_coord.points)
@@ -338,23 +346,24 @@ class AllVars(IconFix):
             time_coord.convert_units(time_units)
             logger.debug(
                 "Rounded ICON time coordinate to closest day for decadal, "
-                "yearly and monthly data"
+                "yearly and monthly data",
             )
 
         # Use original time points to calculate bounds (for a given point,
         # start of bounds is previous point, end of bounds is point)
         first_datetime = time_coord.units.num2date(time_coord.points[0])
         previous_time_point = time_coord.units.date2num(
-            self._get_previous_timestep(first_datetime)
+            self._get_previous_timestep(first_datetime),
         )
         extended_time_points = np.concatenate(
-            ([previous_time_point], time_coord.points)
+            ([previous_time_point], time_coord.points),
         )
         time_coord.points = (
             np.convolve(extended_time_points, np.ones(2), "valid") / 2.0
         )  # running mean with window length 2
         time_coord.bounds = np.stack(
-            (extended_time_points[:-1], extended_time_points[1:]), axis=-1
+            (extended_time_points[:-1], extended_time_points[1:]),
+            axis=-1,
         )
         logger.debug(
             "Shifted ICON time coordinate back by 1/2 of output interval (%s)",
@@ -380,11 +389,14 @@ class AllVars(IconFix):
         # first of the month 00:00:00
         if "dec" in freq or "yr" in freq or "mon" in freq:
             if datetime_point != datetime(year, month, 1):
-                raise ValueError(
+                msg = (
                     f"Cannot shift time coordinate: expected first of the "
                     f"month at 00:00:00 for decadal, yearly and monthly data, "
                     f"got {datetime_point}. Use `shift_time=false` in the "
                     f"recipe to disable this feature"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Decadal data
@@ -460,10 +472,7 @@ class AllVars(IconFix):
 
         # If latitude and longitude are multi-dimensional (e.g., curvilinear
         # grid), no unstructured grid is present
-        if len(lat_idx) != 1:
-            return False
-
-        return True
+        return len(lat_idx) == 1
 
     @staticmethod
     def _fix_invalid_time_units(time_coord):
@@ -474,12 +483,16 @@ class AllVars(IconFix):
         time_format = "day as %Y%m%d.%f"
         t_unit = time_coord.attributes.pop("invalid_units")
         if t_unit != time_format:
-            raise ValueError(
+            msg = (
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'"
             )
+            raise ValueError(
+                msg,
+            )
         new_t_units = Unit(
-            "days since 1850-01-01", calendar="proleptic_gregorian"
+            "days since 1850-01-01",
+            calendar="proleptic_gregorian",
         )
 
         # New routine to convert time of daily and hourly data. The string %f
@@ -494,7 +507,8 @@ class AllVars(IconFix):
 
         # Second, extract day fraction and convert it to timedelta object
         day_float_str = time_str.str.extract(
-            r"\d*(\.\d*)", expand=False
+            r"\d*(\.\d*)",
+            expand=False,
         ).fillna("0.0")
         day_float = pd.to_timedelta(day_float_str.astype(float), unit="D")
 
@@ -528,7 +542,8 @@ class Clwvi(IconFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="cllvi") + self.get_cube(
-            cubes, var_name="clivi"
+            cubes,
+            var_name="clivi",
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])

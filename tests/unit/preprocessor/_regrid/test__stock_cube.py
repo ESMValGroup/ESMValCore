@@ -25,17 +25,25 @@ class Test(tests.Test):
         mid_dx, mid_dy = dx / 2, dy / 2
         if lat_off and lon_off:
             expected_lat_points = np.linspace(
-                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, int(_LAT_RANGE / dy)
+                _LAT_MIN + mid_dy,
+                _LAT_MAX - mid_dy,
+                int(_LAT_RANGE / dy),
             )
             expected_lon_points = np.linspace(
-                _LON_MIN + mid_dx, _LON_MAX - mid_dx, int(_LON_RANGE / dx)
+                _LON_MIN + mid_dx,
+                _LON_MAX - mid_dx,
+                int(_LON_RANGE / dx),
             )
         else:
             expected_lat_points = np.linspace(
-                _LAT_MIN, _LAT_MAX, int(_LAT_RANGE / dy) + 1
+                _LAT_MIN,
+                _LAT_MAX,
+                int(_LAT_RANGE / dy) + 1,
             )
             expected_lon_points = np.linspace(
-                _LON_MIN, _LON_MAX - dx, int(_LON_RANGE / dx)
+                _LON_MIN,
+                _LON_MAX - dx,
+                int(_LON_RANGE / dx),
             )
 
         # Check the stock cube coordinates.
@@ -45,23 +53,23 @@ class Test(tests.Test):
         # Check the latitude coordinate creation.
         [args], kwargs = call_lats
         self.assert_array_equal(args, expected_lat_points)
-        expected_lat_kwargs = dict(
-            standard_name="latitude",
-            units="degrees_north",
-            var_name="lat",
-            circular=False,
-        )
+        expected_lat_kwargs = {
+            "standard_name": "latitude",
+            "units": "degrees_north",
+            "var_name": "lat",
+            "circular": False,
+        }
         self.assertEqual(kwargs, expected_lat_kwargs)
 
         # Check the longitude coordinate creation.
         [args], kwargs = call_lons
         self.assert_array_equal(args, expected_lon_points)
-        expected_lon_kwargs = dict(
-            standard_name="longitude",
-            units="degrees_east",
-            var_name="lon",
-            circular=False,
-        )
+        expected_lon_kwargs = {
+            "standard_name": "longitude",
+            "units": "degrees_east",
+            "var_name": "lon",
+            "circular": False,
+        }
         self.assertEqual(kwargs, expected_lon_kwargs)
 
         # Check that the coordinate guess_bounds method has been called.
@@ -72,7 +80,7 @@ class Test(tests.Test):
         self.mock_Cube.assert_called_once()
         _, kwargs = self.mock_Cube.call_args
         spec = [(self.mock_coord, 0), (self.mock_coord, 1)]
-        expected_cube_kwargs = dict(dim_coords_and_dims=spec)
+        expected_cube_kwargs = {"dim_coords_and_dims": spec}
         self.assertEqual(kwargs, expected_cube_kwargs)
 
         # Reset the mocks to enable multiple calls per test-case.
@@ -82,11 +90,13 @@ class Test(tests.Test):
     def setUp(self):
         self.Cube = mock.sentinel.Cube
         self.mock_Cube = self.patch(
-            "esmvalcore.preprocessor._regrid.Cube", return_value=self.Cube
+            "esmvalcore.preprocessor._regrid.Cube",
+            return_value=self.Cube,
         )
         self.mock_coord = mock.Mock(spec=iris.coords.DimCoord)
         self.mock_DimCoord = self.patch(
-            "iris.coords.DimCoord", return_value=self.mock_coord
+            "iris.coords.DimCoord",
+            return_value=self.mock_coord,
         )
         self.mocks = [self.mock_Cube, self.mock_coord, self.mock_DimCoord]
 
@@ -125,7 +135,9 @@ class Test(tests.Test):
         specs = ["0.5x0.5", "1x1", "2.5x2.5", "5x5", "10x10"]
         for spec in specs:
             result = _global_stock_cube(
-                spec, lat_offset=False, lon_offset=False
+                spec,
+                lat_offset=False,
+                lon_offset=False,
             )
             self.assertEqual(result, self.Cube)
             self._check(

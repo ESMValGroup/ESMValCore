@@ -72,7 +72,7 @@ CMOR_NEWVAR_ENTRY = dedent(
     positive:          up
     !----------------------------------
     !
-    """
+    """,
 )
 CMOR_NETCRE_ENTRY = dedent(
     """
@@ -96,7 +96,7 @@ CMOR_NETCRE_ENTRY = dedent(
     positive:          up
     !----------------------------------
     !
-    """
+    """,
 )
 CMOR_NEWCOORD_ENTRY = dedent(
     """
@@ -121,7 +121,7 @@ CMOR_NEWCOORD_ENTRY = dedent(
     must_have_bounds: yes
     !----------------------------------
     !
-    """
+    """,
 )
 
 
@@ -153,7 +153,7 @@ def test_read_custom_cmor_tables(tmp_path):
 
     custom_table = CMOR_TABLES["custom"]
     assert custom_table._cmor_folder == str(
-        Path(root).parent / "tables" / "custom"
+        Path(root).parent / "tables" / "custom",
     )
     assert custom_table._user_table_folder == str(tmp_path)
 

@@ -3,7 +3,7 @@
 import cf_units
 import numpy as np
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Siconca(Fix):
@@ -40,7 +40,8 @@ class CalendarFix(Fix):
             if cube.coords("time"):
                 time_coord = cube.coord("time")
                 time_coord.units = cf_units.Unit(
-                    time_coord.units.origin, "proleptic_gregorian"
+                    time_coord.units.origin,
+                    "proleptic_gregorian",
                 )
         return cubes
 

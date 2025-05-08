@@ -2,7 +2,7 @@
 
 import iris
 
-from ..common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 
 
 class Cl(ClFixHybridHeightCoord):

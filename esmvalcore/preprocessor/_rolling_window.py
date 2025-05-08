@@ -48,6 +48,4 @@ def rolling_window_statistics(
     """
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
-        cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
-
-    return cube
+        return cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)

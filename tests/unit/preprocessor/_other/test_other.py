@@ -37,7 +37,8 @@ class TestOther(unittest.TestCase):
                 np.arange(3),
                 standard_name="time",
                 units=Unit(
-                    "days since 1950-01-01 00:00:00", calendar="gregorian"
+                    "days since 1950-01-01 00:00:00",
+                    calendar="gregorian",
                 ),
             ),
             0,
@@ -45,10 +46,12 @@ class TestOther(unittest.TestCase):
         # Cube needs to be copied, since it is modified in-place and test cube
         # should not change.
         assert_array_equal(
-            clip(cube.copy(), 0, None).data, np.array([0, 0, 10])
+            clip(cube.copy(), 0, None).data,
+            np.array([0, 0, 10]),
         )
         assert_array_equal(
-            clip(cube.copy(), None, 0).data, np.array([-10, 0, 0])
+            clip(cube.copy(), None, 0).data,
+            np.array([-10, 0, 0]),
         )
         assert_array_equal(clip(cube.copy(), -1, 2).data, np.array([-1, 0, 2]))
         # Masked cube TODO
@@ -64,13 +67,17 @@ class TestOther(unittest.TestCase):
 def cube():
     """Regular cube."""
     cube_data = np.ma.masked_inside(
-        np.arange(8.0, dtype=np.float32).reshape(2, 2, 2), 1.5, 3.5
+        np.arange(8.0, dtype=np.float32).reshape(2, 2, 2),
+        1.5,
+        3.5,
     )
     cube_data = np.swapaxes(cube_data, 0, -1)
-    cube = get_3d_cube(
-        cube_data, standard_name="air_temperature", var_name="tas", units="K"
+    return get_3d_cube(
+        cube_data,
+        standard_name="air_temperature",
+        var_name="tas",
+        units="K",
     )
-    return cube
 
 
 def assert_metadata(cube, normalization=None):
@@ -117,7 +124,8 @@ def test_histogram_defaults(cube, lazy):
         assert not result.has_lazy_data()
     assert result.dtype == np.float32
     np.testing.assert_allclose(
-        result.data, [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]
+        result.data,
+        [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0],
     )
     np.testing.assert_allclose(result.data.mask, [False] * 10)
     bin_coord = result.coord("air_temperature")
@@ -178,21 +186,21 @@ def test_histogram_over_time(cube, lazy, weights, normalization):
             [
                 [[np.nan, np.nan, np.nan], [0.5, 0.0, 0.0]],
                 [[np.nan, np.nan, np.nan], [0.25, 0.25, 0.0]],
-            ]
+            ],
         )
     elif normalization == "sum":
         expected_data = np.ma.masked_invalid(
             [
                 [[np.nan, np.nan, np.nan], [1.0, 0.0, 0.0]],
                 [[np.nan, np.nan, np.nan], [0.5, 0.5, 0.0]],
-            ]
+            ],
         )
     else:
         expected_data = np.ma.masked_invalid(
             [
                 [[np.nan, np.nan, np.nan], [1.0, 0.0, 0.0]],
                 [[np.nan, np.nan, np.nan], [1.0, 1.0, 0.0]],
-            ]
+            ],
         )
     np.testing.assert_allclose(result.data, expected_data)
     np.testing.assert_allclose(result.data.mask, expected_data.mask)
@@ -291,15 +299,15 @@ def test_histogram_weights(cube, lazy, weights, normalization):
     assert result.dtype == np.float32
     if normalization == "integral":
         expected_data = np.ma.masked_invalid(
-            [[0.25, 0.0, 0.125], [0.0, 0.0, 0.25]]
+            [[0.25, 0.0, 0.125], [0.0, 0.0, 0.25]],
         )
     elif normalization == "sum":
         expected_data = np.ma.masked_invalid(
-            [[0.5, 0.0, 0.5], [0.0, 0.0, 1.0]]
+            [[0.5, 0.0, 0.5], [0.0, 0.0, 1.0]],
         )
     else:
         expected_data = np.ma.masked_invalid(
-            [[8.0, 0.0, 8.0], [0.0, 0.0, 8.0]]
+            [[8.0, 0.0, 8.0], [0.0, 0.0, 8.0]],
         )
     np.testing.assert_allclose(result.data, expected_data)
     np.testing.assert_allclose(result.data.mask, expected_data.mask)
@@ -326,7 +334,7 @@ def cube_with_rich_metadata():
     sigma_factory = AtmosphereSigmaFactory(ptop, sigma, psur)
     cell_area = CellMeasure([[1]], var_name="area", units="m2", measure="area")
     ancillary = AncillaryVariable([0], var_name="ancillary")
-    cube = Cube(
+    return Cube(
         np.ones((1, 1, 1, 1), dtype=np.float32),
         standard_name=None,
         long_name="Air Temperature",
@@ -340,14 +348,16 @@ def cube_with_rich_metadata():
         ancillary_variables_and_dims=[(ancillary, 1)],
         cell_measures_and_dims=[(cell_area, (2, 3))],
     )
-    return cube
 
 
 @pytest.mark.parametrize("normalization", [None, "sum", "integral"])
 @pytest.mark.parametrize("weights", [True, False, None])
 @pytest.mark.parametrize("lazy", [False, True])
 def test_histogram_metadata(
-    cube_with_rich_metadata, lazy, weights, normalization
+    cube_with_rich_metadata,
+    lazy,
+    weights,
+    normalization,
 ):
     """Test `histogram`."""
     if lazy:
@@ -385,7 +395,8 @@ def test_histogram_metadata(
     assert not result.coords("time", dim_coords=True)
     for dim_coord in ("sigma", "lat", "lon"):
         assert result.coord(dim_coord, dim_coords=True) == input_cube.coord(
-            dim_coord, dim_coords=True
+            dim_coord,
+            dim_coords=True,
         )
         assert result.coord_dims(dim_coord) == (
             input_cube.coord_dims(dim_coord)[0] - 1,

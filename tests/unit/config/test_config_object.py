@@ -135,7 +135,9 @@ def test_reload_fail(monkeypatch, tmp_path):
     config_file = tmp_path / "invalid_config_file.yml"
     config_file.write_text("invalid_option: 1")
     monkeypatch.setattr(
-        esmvalcore.config._config_object, "USER_CONFIG_DIR", tmp_path
+        esmvalcore.config._config_object,
+        "USER_CONFIG_DIR",
+        tmp_path,
     )
     cfg = Config()
 
@@ -293,10 +295,17 @@ TEST_GET_CFG_PATH = [
 
 # TODO: remove in v2.14.0
 @pytest.mark.parametrize(
-    "filename,env,cli_args,output,env_var_set", TEST_GET_CFG_PATH
+    ("filename", "env", "cli_args", "output", "env_var_set"),
+    TEST_GET_CFG_PATH,
 )
 def test_get_config_user_path(
-    filename, env, cli_args, output, env_var_set, monkeypatch, tmp_path
+    filename,
+    env,
+    cli_args,
+    output,
+    env_var_set,
+    monkeypatch,
+    tmp_path,
 ):
     """Test `Config._get_config_user_path`."""
     output = output.format(tmp_path=tmp_path)
@@ -424,8 +433,8 @@ def _setup_config_dirs(tmp_path):
         rootpath:
           default: '1'
           '1': '1'
-        """
-        )
+        """,
+        ),
     )
     config2a.write_text(
         dedent(
@@ -434,8 +443,8 @@ def _setup_config_dirs(tmp_path):
         rootpath:
           default: '2a'
           '2': '2a'
-        """
-        )
+        """,
+        ),
     )
     config2b.write_text(
         dedent(
@@ -444,13 +453,13 @@ def _setup_config_dirs(tmp_path):
         rootpath:
           default: '2b'
           '2': '2b'
-        """
-        )
+        """,
+        ),
     )
 
 
 @pytest.mark.parametrize(
-    "dirs,output_file_type,rootpath",
+    ("dirs", "output_file_type", "rootpath"),
     [
         ([], "png", {"default": "~/climate_data"}),
         (["/this/path/does/not/exist"], "png", {"default": "~/climate_data"}),
@@ -473,7 +482,10 @@ def _setup_config_dirs(tmp_path):
     ],
 )
 def test_load_from_dirs_always_default(
-    dirs, output_file_type, rootpath, tmp_path
+    dirs,
+    output_file_type,
+    rootpath,
+    tmp_path,
 ):
     """Test `Config.load_from_dirs`."""
     _setup_config_dirs(tmp_path)
@@ -498,7 +510,7 @@ def test_load_from_dirs_always_default(
 
 
 @pytest.mark.parametrize(
-    "cli_config_dir,output",
+    ("cli_config_dir", "output"),
     [
         (None, [DEFAULT_CONFIG_DIR, "~/.config/esmvaltool"]),
         (Path("/c"), [DEFAULT_CONFIG_DIR, "~/.config/esmvaltool", "/c"]),
@@ -512,14 +524,14 @@ def test_get_all_config_dirs(cli_config_dir, output, monkeypatch):
         excepted.append(Path(out).expanduser().absolute())
 
     config_dirs = esmvalcore.config._config_object._get_all_config_dirs(
-        cli_config_dir
+        cli_config_dir,
     )
 
     assert config_dirs == excepted
 
 
 @pytest.mark.parametrize(
-    "cli_config_dir,output",
+    ("cli_config_dir", "output"),
     [
         (None, ["defaults", "default user configuration directory"]),
         (
@@ -536,13 +548,13 @@ def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
     """Test `_get_all_config_sources`."""
     monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
     config_srcs = esmvalcore.config._config_object._get_all_config_sources(
-        cli_config_dir
+        cli_config_dir,
     )
     assert config_srcs == output
 
 
 @pytest.mark.parametrize(
-    "dirs,output_file_type,rootpath",
+    ("dirs", "output_file_type", "rootpath"),
     [
         ([], None, {"X": "x"}),
         (["/this/path/does/not/exist"], None, {"X": "x"}),

@@ -63,13 +63,15 @@ class ValidatedConfig(MutableMapping):
     def __setitem__(self, key, val):
         """Map key to value."""
         if key not in self._validate:
+            msg = f"`{key}` is not a valid config parameter."
             raise InvalidConfigParameter(
-                f"`{key}` is not a valid config parameter."
+                msg,
             )
         try:
             cval = self._validate[key](val)
         except ValidationError as verr:
-            raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
+            msg = f"Key `{key}`: {verr}"
+            raise InvalidConfigParameter(msg) from None
 
         if key in self._deprecate:
             self._deprecate[key](self, val, cval)
@@ -90,15 +92,17 @@ class ValidatedConfig(MutableMapping):
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
         repr_split = pprint.pformat(
-            self._mapping, indent=1, width=80 - indent
+            self._mapping,
+            indent=1,
+            width=80 - indent,
         ).split("\n")
         repr_indented = ("\n" + " " * indent).join(repr_split)
-        return "{}({})".format(class_name, repr_indented)
+        return f"{class_name}({repr_indented})"
 
     def __str__(self):
         """Return string representation."""
         return "\n".join(
-            map("{0[0]}: {0[1]}".format, sorted(self._mapping.items()))
+            map("{0[0]}: {0[1]}".format, sorted(self._mapping.items())),
         )
 
     def __iter__(self):

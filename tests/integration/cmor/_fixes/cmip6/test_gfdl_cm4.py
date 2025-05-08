@@ -35,8 +35,8 @@ AIR_PRESSURE_POINTS = np.array(
             [[1.0, 1.0], [1.0, 1.0]],
             [[2.0, 3.0], [4.0, 5.0]],
             [[5.0, 8.0], [11.0, 14.0]],
-        ]
-    ]
+        ],
+    ],
 )
 AIR_PRESSURE_BOUNDS = np.array(
     [
@@ -44,8 +44,8 @@ AIR_PRESSURE_BOUNDS = np.array(
             [[[0.0, 1.5], [-1.0, 2.0]], [[-2.0, 2.5], [-3.0, 3.0]]],
             [[[1.5, 3.0], [2.0, 5.0]], [[2.5, 7.0], [3.0, 9.0]]],
             [[[3.0, 6.0], [5.0, 11.0]], [[7.0, 16.0], [9.0, 21.0]]],
-        ]
-    ]
+        ],
+    ],
 )
 
 
@@ -74,16 +74,18 @@ def test_cl_fix_metadata(test_data_path):
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer"
+        "cloud_area_fraction_in_atmosphere_layer",
     )
     fixed_air_pressure_coord = fixed_cl_cube.coord("air_pressure")
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.points, AIR_PRESSURE_POINTS
+        fixed_air_pressure_coord.points,
+        AIR_PRESSURE_POINTS,
     )
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.bounds, AIR_PRESSURE_BOUNDS
+        fixed_air_pressure_coord.bounds,
+        AIR_PRESSURE_BOUNDS,
     )
 
 
@@ -151,16 +153,24 @@ def test_tos_fix():
 @pytest.fixture
 def tas_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[2.0]],
@@ -205,16 +215,24 @@ def test_tas_fix_metadata(tas_cubes):
 @pytest.fixture
 def uas_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[10.0]],

@@ -56,7 +56,8 @@ class TestNaming(unittest.TestCase):
                 os.path.splitext(filename)[0] for filename in filenames
             )
             self.assertTrue(
-                reserved_names.isdisjoint(without_extensions), error_msg
+                reserved_names.isdisjoint(without_extensions),
+                error_msg,
             )
 
     def test_avoid_casing_collisions(self):
@@ -69,9 +70,9 @@ class TestNaming(unittest.TestCase):
             self.assertEqual(
                 len(filenames) + len(dirnames),
                 len({name.lower() for name in filenames + dirnames}),
-                "Colliding names found at {0}. Please do not "
+                f"Colliding names found at {dirpath}. Please do not "
                 "use names that only differ in "
-                "capitalization".format(dirpath),
+                "capitalization",
             )
 
     def test_no_namelist(self):
@@ -85,13 +86,11 @@ class TestNaming(unittest.TestCase):
         for dirpath, dirnames, filenames in os.walk(self.esmvaltool_folder):
             if ".git" in dirpath.split(os.sep):
                 continue
-            if any([item in dirpath for item in exclude_paths]):
+            if any(item in dirpath for item in exclude_paths):
                 continue
             self.assertFalse(
                 any(
                     "namelist" in name.lower() for name in filenames + dirnames
                 ),
-                'Namelist reference found at {}. Please use "recipe" instead'.format(
-                    dirpath
-                ),
+                f'Namelist reference found at {dirpath}. Please use "recipe" instead',
             )
