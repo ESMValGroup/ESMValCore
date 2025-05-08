@@ -135,8 +135,6 @@ def test_session_setter():
                 "modeling_realm": ["atmos", "land"],
                 "frequency": "fx",
                 # Added from extra facets YAML file
-                "latitude": "grid_latitude",
-                "longitude": "grid_longitude",
                 "raw_name": "cell_area",
             },
         ],
