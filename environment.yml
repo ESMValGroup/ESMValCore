@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - cartopy
-  - cf-units==3.3.0
+  #- cf-units==3.3.0
   - cftime
   - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
