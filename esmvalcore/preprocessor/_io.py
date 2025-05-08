@@ -5,10 +5,10 @@ from __future__ import annotations
 import copy
 import logging
 import os
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -17,13 +17,17 @@ import iris.aux_factory
 import iris.exceptions
 import numpy as np
 import yaml
-from cf_units import suppress_errors
 from dask.delayed import Delayed
-from iris.cube import CubeList
+from iris.coords import Coord
+from iris.cube import Cube, CubeList
+from iris.fileformats.cf import CFVariable
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
-from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.iris_helpers import (
+    ignore_warnings_context,
+    merge_cube_attributes,
+)
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 from .._task import write_ncl_settings
@@ -42,7 +46,12 @@ VARIABLE_KEYS = {
 GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 
 
-def _get_attr_from_field_coord(ncfield, coord_name, attr):
+def _get_attr_from_field_coord(
+    ncfield: CFVariable,
+    coord_name: str | None,
+    attr: str,
+) -> Any:
+    """Get attribute from netCDF field coordinate."""
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()
         attr_val = [value for (key, value) in attrs if key == attr]
@@ -51,31 +60,30 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def _load_callback(raw_cube, field, _):
-    """Use this callback to fix anything Iris tries to break."""
-    # Remove attributes that cause issues with merging and concatenation
-    _delete_attributes(
-        raw_cube, ("creation_date", "tracking_id", "history", "comment")
-    )
-    for coord in raw_cube.coords():
-        # Iris chooses to change longitude and latitude units to degrees
-        # regardless of value in file, so reinstating file value
+def _restore_lat_lon_units(
+    cube: Cube,
+    field: CFVariable,
+    filename: str,
+) -> None:  # pylint: disable=unused-argument
+    """Use this callback to restore the original lat/lon units."""
+    # Iris chooses to change longitude and latitude units to degrees
+    # regardless of value in file, so reinstating file value
+    for coord in cube.coords():
         if coord.standard_name in ["longitude", "latitude"]:
             units = _get_attr_from_field_coord(field, coord.var_name, "units")
             if units is not None:
                 coord.units = units
-        # CMOR sometimes adds a history to the coordinates.
-        _delete_attributes(coord, ("history",))
 
 
-def _delete_attributes(iris_object, atts):
+def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
+    """Delete attributes from Iris cube or coordinate."""
     for att in atts:
         if att in iris_object.attributes:
             del iris_object.attributes[att]
 
 
 def load(
-    file: str | Path,
+    file: str | Path | Cube | CubeList,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
@@ -83,7 +91,9 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded. Could be string or POSIX Path object.
+        File to be loaded. If ``file`` is already a :class:`~iris.cube.Cube` or
+        :class:`~iris.cube.CubeList`, this object will be returned as a
+        :class:`~iris.cube.CubeList`.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -99,55 +109,22 @@ def load(
     ValueError
         Cubes are empty.
     """
+    if isinstance(file, Cube):
+        return CubeList([file])
+    if isinstance(file, CubeList):
+        return file
+
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
-    if ignore_warnings is None:
-        ignore_warnings = []
-
-    # Avoid duplication of ignored warnings when load() is called more often
-    # than once
-    ignore_warnings = list(ignore_warnings)
-
-    # Default warnings ignored for every dataset
-    ignore_warnings.append(
-        {
-            "message": "Missing CF-netCDF measure variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )
-    ignore_warnings.append(
-        {
-            "message": "Ignoring netCDF variable '.*' invalid units '.*'",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )  # iris < 3.8
-    ignore_warnings.append(
-        {
-            "message": "Ignoring invalid units .* on netCDF variable .*",
-            "category": UserWarning,
-            "module": "iris",
-        }
-    )  # iris >= 3.8
-
-    # Filter warnings
-    with catch_warnings():
-        for warning_kwargs in ignore_warnings:
-            warning_kwargs.setdefault("action", "ignore")
-            filterwarnings(**warning_kwargs)
-        # Suppress UDUNITS-2 error messages that cannot be ignored with
-        # warnings.filterwarnings
-        # (see https://github.com/SciTools/cf-units/issues/240)
-        with suppress_errors():
-            # GRIB files need to be loaded with iris.load, otherwise we will
-            # get separate (lat, lon) slices for each time step, pressure
-            # level, etc.
-            if file.suffix in GRIB_FORMATS:
-                raw_cubes = iris.load(file, callback=_load_callback)
-            else:
-                raw_cubes = iris.load_raw(file, callback=_load_callback)
+    with ignore_warnings_context(ignore_warnings):
+        # GRIB files need to be loaded with iris.load, otherwise we will
+        # get separate (lat, lon) slices for each time step, pressure
+        # level, etc.
+        if file.suffix in GRIB_FORMATS:
+            raw_cubes = iris.load(file, callback=_restore_lat_lon_units)
+        else:
+            raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
@@ -176,7 +153,7 @@ def _concatenate_cubes(cubes, check_level):
             "and derived coordinates present in the cubes.",
         )
 
-    concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
+    concatenated = CubeList(cubes).concatenate(**kwargs)
 
     return concatenated
 
@@ -196,7 +173,7 @@ class _TimesHelper:
         return self.times[key]
 
 
-def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
+def _check_time_overlaps(cubes: CubeList) -> CubeList:
     """Handle time overlaps.
 
     Parameters
@@ -215,7 +192,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
         return cubes
 
     class _TrackedCube(NamedTuple):
-        cube: iris.cube.Cube
+        cube: Cube
         times: iris.coords.DimCoord
         start: float
         end: float
@@ -227,7 +204,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
             start, end = times.core_points()[[0, -1]]
             return cls(cube, times, start, end)
 
-    new_cubes = iris.cube.CubeList()
+    new_cubes = CubeList()
     current_cube = _TrackedCube.from_cube(cubes[0])
     for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
         if new_cube.start > current_cube.end:
@@ -308,7 +285,7 @@ def _get_concatenation_error(cubes):
     """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
     try:
-        iris.cube.CubeList(cubes).concatenate_cube()
+        CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
     logger.error("Can not concatenate cubes into a single one: %s", msg)
@@ -338,9 +315,7 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def _concatenate_cubes_by_experiment(
-    cubes: list[iris.cube.Cube],
-) -> list[iris.cube.Cube]:
+def _concatenate_cubes_by_experiment(cubes: list[Cube]) -> list[Cube]:
     """Concatenate cubes by experiment.
 
     This ensures overlapping (branching) experiments are handled correctly.
@@ -351,7 +326,7 @@ def _concatenate_cubes_by_experiment(
         project["exp"] for project in FACETS.values() if "exp" in project
     }
 
-    def get_exp(cube: iris.cube.Cube) -> str:
+    def get_exp(cube: Cube) -> str:
         for key in exp_facet_names:
             if key in cube.attributes:
                 return cube.attributes[key]
@@ -393,6 +368,15 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     if len(cubes) == 1:
         return cubes[0]
 
+    for cube in cubes:
+        # Remove attributes that cause issues with merging and concatenation
+        _delete_attributes(
+            cube, ("creation_date", "tracking_id", "history", "comment")
+        )
+        for coord in cube.coords():
+            # CMOR sometimes adds a history to the coordinates.
+            _delete_attributes(coord, ("history",))
+
     cubes = _concatenate_cubes_by_experiment(cubes)
 
     merge_cube_attributes(cubes)
@@ -411,7 +395,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
 
 
 def save(
-    cubes: Sequence[iris.cube.Cube],
+    cubes: Sequence[Cube],
     filename: Path | str,
     optimize_access: str = "",
     compress: bool = False,
@@ -445,14 +429,15 @@ def save(
         Var name to use when saving instead of the one in the cube.
 
     compute : bool, default=True
-        Default is ``True``, meaning complete the file immediately, and return ``None``.
+        Default is ``True``, meaning complete the file immediately, and return
+        ``None``.
 
-        When ``False``, create the output file but don't write any lazy array content to
-        its variables, such as lazy cube data or aux-coord points and bounds.
-        Instead return a :class:`dask.delayed.Delayed` which, when computed, will
-        stream all the lazy content via :meth:`dask.store`, to complete the file.
-        Several such data saves can be performed in parallel, by passing a list of them
-        into a :func:`dask.compute` call.
+        When ``False``, create the output file but don't write any lazy array
+        content to its variables, such as lazy cube data or aux-coord points
+        and bounds.  Instead return a :class:`dask.delayed.Delayed` which, when
+        computed, will stream all the lazy content via :meth:`dask.store`, to
+        complete the file.  Several such data saves can be performed in
+        parallel, by passing a list of them into a :func:`dask.compute` call.
 
     **kwargs:
         See :func:`iris.fileformats.netcdf.saver.save` for additional

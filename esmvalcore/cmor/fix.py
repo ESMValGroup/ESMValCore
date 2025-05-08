@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from iris.cube import Cube, CubeList
 
@@ -33,19 +33,30 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     frequency: Optional[str] = None,
+    ignore_warnings: Optional[list[dict[str, Any]]] = None,
     **extra_facets,
-) -> str | Path:
-    """Fix files before ESMValTool can load them.
+) -> str | Path | Cube | CubeList:
+    """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-    These fixes are only for issues that prevent iris from loading the cube or
-    that cannot be fixed after the cube is loaded.
+    This is mainly intended to fix errors that prevent loading the data with
+    Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
+    operations that are more efficient with other packages (e.g., loading files
+    with lots of variables is much faster with Xarray than Iris).
 
-    Original files are not overwritten.
+    Warning
+    -------
+    A path should only be returned if it points to the original (unchanged)
+    file (i.e., a fix was not necessary). If a fix is necessary, this function
+    should return a :class:`~iris.cube.Cube` or :class:`~iris.cube.CubeList`,
+    which can for example be created from an :class:`~ncdata.NcData` or
+    :class:`~xarray.Dataset` object using the helper function
+    ``Fix.dataset_to_iris()``. Under no circumstances a copy of the input data
+    should be created (this is very inefficient).
 
     Parameters
     ----------
     file:
-        Path to the original file.
+        Path to the original file. Original files are not overwritten.
     short_name:
         Variable's short name.
     project:
@@ -57,19 +68,23 @@ def fix_file(
     output_dir:
         Output directory for fixed files.
     add_unique_suffix:
-        Adds a unique suffix to `output_dir` for thread safety.
+        Adds a unique suffix to ``output_dir`` for thread safety.
     session:
         Current session which includes configuration and directory information.
     frequency:
         Variable's data frequency, if available.
+    ignore_warnings:
+        Keyword arguments passed to :func:`warnings.filterwarnings` used to
+        ignore warnings during data loading. Each list element corresponds to
+        one call to :func:`warnings.filterwarnings`.
     **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    str or pathlib.Path
-        Path to the fixed file.
+    str | Path | Cube | CubeList:
+        Fixed cube(s) or a path to them.
 
     """
     # Update extra_facets with variable information given as regular arguments
@@ -94,7 +109,10 @@ def fix_file(
         frequency=frequency,
     ):
         file = fix.fix_file(
-            file, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
+            ignore_warnings=ignore_warnings,
         )
     return file
 
