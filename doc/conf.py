@@ -78,6 +78,11 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
+# show locale
+import locale
+print("XXX")
+print(locale.getlocale()
+
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
 
