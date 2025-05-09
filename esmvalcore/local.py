@@ -421,7 +421,7 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     )
 
 
-@dataclass(order=True, frozen=True)
+@dataclass(order=True)
 class DataSource:
     """Class for storing a data source and finding the associated files."""
 
@@ -448,13 +448,114 @@ class DataSource:
         for glob_ in globs:
             for filename in glob(str(glob_)):
                 file = LocalFile(filename)
-                file.facets.update(_path2facets(file, self.dirname_template))
+                file.facets.update(self.path2facets(file))
                 files.append(file)
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
             files = _select_files(files, facets["timerange"])
         return files
+
+    def path2facets(self, path: Path) -> dict[str, str]:
+        """Extract facets from path."""
+        facets: dict[str, str] = {}
+        match = re.search(self.regex_pattern, str(path))
+        if match is None:
+            return facets
+        for facet, value in match.groupdict().items():
+            if value:
+                facets[facet] = value
+        return facets
+
+    def _templates_to_regex(self) -> str:
+        r"""Convert template strings to regex pattern.
+
+        The resulting regex pattern can be used to extract facets from paths
+        using :func:`re.search`.
+
+        Note
+        ----
+        Facets must not contain "/" or "_".
+
+        Examples
+        --------
+        - rootpath: "/root"
+          dirname_template: "{f2.upper}"
+          filename_template: "{f3}[._]{f4}*"
+          --> regex_pattern:
+          "/root/(?P<f2>[^_/]*?)/(?P<f3>[^_/]*?)[\._](?P<f4>[^_/]*?).*?"
+        - rootpath: "/root"
+          dirname_template: "{f1}/{f1}-{f2}"
+          filename_template: "*.nc"
+          --> regex_pattern:
+          "/root/(?P<f1>[^_/]*?)/(?P=f1)\-(?P<f2>[^_/]*?)/.*?\.nc"
+        - rootpath: "/root"
+          dirname_template: "{f1}/{f2}{f3}"
+          filename_template: "*.nc"
+          --> regex_pattern:
+          "/root/(?P<f1>[^_/]*?)/(?:[^_/]*?)/.*?\.nc"
+
+        """
+        dirname_template = self.dirname_template
+        filename_template = self.filename_template
+
+        # Templates must not be absolute paths (i.e., start with /), otherwise
+        # the roopath is ignored (see
+        # https://docs.python.org/3/library/pathlib.html#operators)
+        if self.dirname_template.startswith(os.sep):
+            dirname_template = dirname_template[1:]
+        if self.filename_template.startswith(os.sep):
+            filename_template = filename_template[1:]
+
+        pattern = re.escape(
+            str(self.rootpath / dirname_template / filename_template)
+        )
+
+        # Remove all tags that are in between other tags, e.g.,
+        # {tag1}{tag2}{tag3} -> {tag1}{tag2} (there is no way to reliably
+        # extract facets from those)
+        pattern = re.sub(r"(?<=\})\\\{[^\}]+?\\\}(?=\\(?=\{))", "", pattern)
+
+        # Replace consecutive tags, e.g. {tag1}{tag2} with non-capturing groups
+        # (?:[^_/]*?) (there is no way to reliably extract facets from those)
+        # Note: This assumes that facets do NOT contain / or _
+        pattern = re.sub(
+            r"\\\{[^\{]+?\}\\\{[^\}]+?\\\}", rf"(?:[^_{os.sep}]*?)", pattern
+        )
+
+        # Convert tags {tag} to named capture groups (?P<tag>[^_/]*?); for
+        # duplicates use named backreferences (?P=tag)
+        # Note: This assumes that facets do NOT contain / or _
+        already_used_tags: set[str] = set()
+        for full_tag in re.findall(r"\\\{(.+?)\\\}", pattern):
+            # Ignore .upper and .lower (full_tag: {tag.lower}, tag: {tag})
+            if full_tag.endswith(r"\.upper") or full_tag.endswith(r"\.lower"):
+                tag = full_tag[:-7]
+            else:
+                tag = full_tag
+
+            old_str = rf"\{{{full_tag}\}}"
+            if tag in already_used_tags:
+                new_str = rf"(?P={tag})"
+            else:
+                new_str = rf"(?P<{tag}>[^_{os.sep}]*?)"
+                already_used_tags.add(tag)
+
+            pattern = pattern.replace(old_str, new_str, 1)
+
+        # Convert fnmatch wildcards * and [] to regex wildcards
+        pattern = pattern.replace(r"\*", ".*?")
+        for chars in re.findall(r"\\\[(.*?)\\\]", pattern):
+            pattern = pattern.replace(rf"\[{chars}\]", f"[{chars}]")
+
+        return pattern
+
+    @property
+    def regex_pattern(self):
+        """Get regex pattern that can be used to extract facets from paths."""
+        if not hasattr(self, "_regex_pattern"):
+            self._regex_pattern = self._templates_to_regex()
+        return self._regex_pattern
 
 
 _ROOTPATH_WARNED = set()
@@ -554,29 +655,6 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     )
 
     return outfile
-
-
-def _path2facets(path: Path, drs: str) -> dict[str, str]:
-    """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = []
-    for key in re.findall(r"{(.*?)}[^-]", f"{drs} "):
-        key = key.split(".")[0]  # Remove trailing .lower and .upper
-        keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {
-        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
-    }
-
-    if len(facets) != len(keys):
-        # Extract hyphen separated facet: {facet1}-{facet2},
-        # where facet1 is already known.
-        for idx, key in enumerate(keys):
-            if key not in facets:
-                facet1, facet2 = key.split("}-{")
-                facets[facet2] = values[idx].replace(f"{facets[facet1]}-", "")
-
-    return facets
 
 
 def _filter_versions_called_latest(
