@@ -551,7 +551,7 @@ class DataSource:
         return pattern
 
     @property
-    def regex_pattern(self):
+    def regex_pattern(self) -> str:
         """Get regex pattern that can be used to extract facets from paths."""
         if not hasattr(self, "_regex_pattern"):
             self._regex_pattern = self._templates_to_regex()
