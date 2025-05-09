@@ -81,7 +81,7 @@ autodoc_default_options = {
 # show locale
 import locale
 print("XXX")
-print(locale.getlocale()
+print(locale.getlocale())
 
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
