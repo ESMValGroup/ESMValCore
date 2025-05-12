@@ -11,8 +11,9 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
-import iris
 import isodate
+from cf_units import Unit
+from netCDF4 import Dataset
 
 from .config import CFG
 from .config._config import get_project_config
@@ -136,22 +137,21 @@ def _get_start_end_date(
         and Path(file).exists()
     ):
         logger.debug("Must load file %s for daterange ", file)
-        cubes = iris.load(file)
-
-        for cube in cubes:
-            logger.debug(cube)
-            try:
-                time = cube.coord("time")
-            except iris.exceptions.CoordinateNotFoundError:
-                continue
+        dataset = Dataset(file)
+        if (
+            "time" in dataset.variables
+            and "units" in dataset.variables["time"].ncattrs()
+        ):
+            time = dataset.variables["time"]
+            time_units = Unit(time.getncattr("units"))
             start_date = isodate.date_isoformat(
-                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+                time_units.num2date(time[0]),
+                format=isodate.isostrf.DATE_BAS_COMPLETE,
             )
-
             end_date = isodate.date_isoformat(
-                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE
+                time_units.num2date(time[-1]),
+                format=isodate.isostrf.DATE_BAS_COMPLETE,
             )
-            break
 
     if start_date is None or end_date is None:
         raise ValueError(
