@@ -8,6 +8,7 @@ import os
 import stat
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -122,3 +123,49 @@ def load_intake_config():
 def get_intake_config():
     """Get the esgf-pyclient configuration."""
     return load_intake_config()
+
+
+def _read_facets(
+    cfg: dict,
+    fhandle: str | None,
+    project: str | None = None,
+) -> tuple[dict[str, Any], str]:
+    """
+    Extract facet mapping from ESMValCore configuration for a given catalog file handle.
+
+    Recursively traverses the ESMValCore configuration structure to find the
+    facet mapping that corresponds to the specified file handle.
+
+    Parameters
+    ----------
+    cfg : dict
+        The ESMValCore intake configuration dictionary.
+    fhandle : str
+        The file handle/path of the intake-esm catalog to match.
+    project : str, optional
+        The current project name in the configuration hierarchy.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - dict: Facet mapping between ESMValCore facets and catalog columns
+        - str: The project name associated with the catalog file
+    """
+    if fhandle is None:
+        raise ValueError(
+            "Unable to ascertain facets without valid file handle."
+        )
+
+    for _project, val in cfg.items():
+        if not (isinstance(val, list)):
+            return _read_facets(val, fhandle, project or _project)
+        for facet_info in val:
+            file, facets = facet_info.get("file"), facet_info.get("facets")
+            if file == fhandle:
+                return facets, project  # type: ignore[return-value]
+    else:
+        raise ValueError(
+            f"No facets found for {fhandle} in the config file. "
+            "Please check the config file and ensure it is valid."
+        )
