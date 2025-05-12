@@ -164,9 +164,9 @@ def test_get_start_end_date(case):
 def test_read_years_from_cube(tmp_path):
     """Try to get years from cube if no date in filename."""
     temp_file = LocalFile(tmp_path / "test.nc")
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 366], "time", units="days since 1990-01-01"
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -178,9 +178,9 @@ def test_read_years_from_cube(tmp_path):
 def test_read_datetime_from_cube(tmp_path):
     """Try to get datetime from cube if no date in filename."""
     temp_file = tmp_path / "test.nc"
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 366], "time", units="days since 1990-01-01"
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
