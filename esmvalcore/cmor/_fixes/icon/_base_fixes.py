@@ -816,7 +816,7 @@ class AllVarsBase(IconFix):
         lat = cube.coord(var_name=lat_var)
         lat = self.fix_lat_metadata(cube, lat)
 
-        return cube.coord_dims(lat)
+        return cube.coord_dims(lat)  # type: ignore
 
     def _fix_lon(self, cube: Cube) -> tuple[int, ...]:
         """Fix longitude coordinate of cube."""
@@ -843,7 +843,7 @@ class AllVarsBase(IconFix):
         lon = self.fix_lon_metadata(cube, lon)
         self._set_range_in_0_360(lon)
 
-        return cube.coord_dims(lon)
+        return cube.coord_dims(lon)  # type: ignore
 
     def _fix_time(self, cube: Cube, cubes: CubeList) -> Cube:
         """Fix time coordinate of cube."""
@@ -1092,7 +1092,7 @@ class AllVarsBase(IconFix):
                 category=FutureWarning,
             )
             new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
-        new_dt_points = date2num(np.array(new_datetimes), new_t_units)
+        new_dt_points = date2num(np.array(new_datetimes), new_t_units)  # type: ignore
 
         # Modify time coordinate in place
         time_coord.points = new_dt_points
