@@ -161,13 +161,12 @@ def test_get_start_end_date(case):
         assert case_end == end
 
 
-def test_read_years_from_cube(monkeypatch, tmp_path):
+def test_read_years_from_cube(tmp_path):
     """Try to get years from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = LocalFile("test.nc")
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    temp_file = LocalFile(tmp_path / "test.nc")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 366], standard_name="time", units="days since 1990-01-01"
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -176,13 +175,16 @@ def test_read_years_from_cube(monkeypatch, tmp_path):
     assert end == 1991
 
 
-def test_read_datetime_from_cube(monkeypatch, tmp_path):
+def test_read_datetime_from_cube(tmp_path):
     """Try to get datetime from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = "test.nc"
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    temp_file = tmp_path / "test.nc"
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 366],
+        standard_name=None,
+        long_name="time",
+        var_name="t",
+        units="days since 1990-01-01",
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -191,11 +193,30 @@ def test_read_datetime_from_cube(monkeypatch, tmp_path):
     assert end == "19910102"
 
 
-def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
+def test_raises_if_unable_to_deduce_no_time(tmp_path):
     """Try to get time from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = "test.nc"
+    temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0], var_name="var")
+    not_time = iris.coords.DimCoord(
+        [0, 366],
+        var_name="time",
+        long_name="not_time",
+        units="days since 2000-01-01",
+    )
+    cube.add_dim_coord(not_time, 0)
+    iris.save(cube, temp_file)
+    with pytest.raises(ValueError):
+        _get_start_end_date(temp_file)
+    with pytest.raises(ValueError):
+        _get_start_end_year(temp_file)
+
+
+def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
+    """Try to get time from cube if no date in filename."""
+    temp_file = tmp_path / "test.nc"
+    cube = iris.cube.Cube([0, 0], var_name="var")
+    time = iris.coords.DimCoord([0, 366], "time")
+    cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
         _get_start_end_date(temp_file)
