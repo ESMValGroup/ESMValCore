@@ -231,10 +231,7 @@ jobs:
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
             # Test building documentation
-            # there is an ongoing issue with `locale` when building with Sphinx
-            # we are not sure if it is Sphinx or Iris at fault
-            # see https://github.com/ESMValGroup/ESMValCore/pull/2708
-            LC_ALL=C MPLBACKEND=Agg sphinx-build -W doc doc/build
+            MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
 
