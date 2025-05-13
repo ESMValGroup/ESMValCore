@@ -621,10 +621,7 @@ def _get_first_unmasked_data(array, axis):
     return first_unmasked_data
 
 
-@register_supplementaries(
-    variables=['ps'],
-    required='require_at_least_one'
-)
+@register_supplementaries(variables=["ps"], required="require_at_least_one")
 def extract_surface_from_atm(
     cube: Cube,
 ) -> Cube:
@@ -653,9 +650,7 @@ def extract_surface_from_atm(
         )
     if ps_cube:
         # Fill masked data if necessary (interpolation fails with masked data)
-        (z_axis,) = cube.coord_dims(
-            cube.coord(axis="Z", dim_coords=True)
-        )
+        (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
         mask = da.ma.getmaskarray(cube.core_data())
         if mask.any():
             first_unmasked_data = _get_first_unmasked_data(
@@ -665,9 +660,7 @@ def extract_surface_from_atm(
             first_unmasked_data = iris.util.broadcast_to_shape(
                 first_unmasked_data, cube.shape, dim_map
             )
-            cube.data = da.where(
-                mask, first_unmasked_data, cube.core_data()
-            )
+            cube.data = da.where(mask, first_unmasked_data, cube.core_data())
 
         # Interpolation
         target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
@@ -677,14 +670,14 @@ def extract_surface_from_atm(
             scheme="linear_extrapolate",
             coordinate="air_pressure",
             rtol=1e-7,
-            atol=None
+            atol=None,
         )
-        var_cube.var_name = cube.var_name + 's'
+        var_cube.var_name = cube.var_name + "s"
         # Remove remaining interpolated dimension of size 1 if needed.
         if any(dim == 1 for dim in var_cube.shape):
             var_cube = iris.util.squeeze(var_cube)
         # Remove remaining auxiliary coordinate of air_pressure
-        var_cube.remove_coord('air_pressure')
+        var_cube.remove_coord("air_pressure")
         logger.debug("Extracting surface using surface air pressure.")
 
     else:

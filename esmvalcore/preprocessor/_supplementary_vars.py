@@ -126,7 +126,9 @@ def add_ancillary_variable(cube, ancillary_cube):
         for coord in ancillary_cube.coords():
             try:
                 for ancillary_dim, cube_dim in zip(
-                    ancillary_cube.coord_dims(coord), cube.coord_dims(coord)
+                    ancillary_cube.coord_dims(coord),
+                    cube.coord_dims(coord),
+                    strict=False,
                 ):
                     data_dims[ancillary_dim] = cube_dim
             except iris.exceptions.CoordinateNotFoundError:
@@ -135,7 +137,8 @@ def add_ancillary_variable(cube, ancillary_cube):
                 )
         if None in data_dims:
             none_dims = ", ".join(
-                str(i) for i, d in enumerate(data_dims) if d is None)
+                str(i) for i, d in enumerate(data_dims) if d is None
+            )
             msg = (
                 f"Failed to add {ancillary_cube} to {cube} as ancillary var."
                 f"No coordinate associated with ancillary cube dimensions"

@@ -12,15 +12,15 @@ from iris.exceptions import CoordinateMultiDimError
 import tests
 from esmvalcore.preprocessor._volume import (
     _add_axis_stats_weights_coord,
+    _get_first_unmasked_data,
     axis_statistics,
     calculate_volume,
     depth_integration,
+    extract_surface_from_atm,
     extract_trajectory,
     extract_transect,
     extract_volume,
     volume_statistics,
-    extract_surface_from_atm,
-    _get_first_unmasked_data
 )
 
 
@@ -36,10 +36,7 @@ class Test(tests.Test):
         mask3 = np.full((4, 3, 2, 2), False)
         mask3[0, 0, 0, 0] = True
         data3 = np.ma.array(data3, mask=mask3)
-        data4 = np.broadcast_to(
-            [[[[0]], [[2]], [[4]]]],
-            (4, 3, 2, 2)
-        )
+        data4 = np.broadcast_to([[[[0]], [[2]], [[4]]]], (4, 3, 2, 2))
 
         time = iris.coords.DimCoord(
             [15, 45],
@@ -135,7 +132,7 @@ class Test(tests.Test):
             [0.5, 5.0, 50.0],
             bounds=[[0.0, 2.5], [2.5, 25.0], [25.0, 250.0]],
             standard_name="air_pressure",
-            units='Pa'
+            units="Pa",
         )
 
         coords_spec3 = [(zcoord, 0), (lats2, 1), (lons2, 2)]
@@ -204,13 +201,13 @@ class Test(tests.Test):
             data4,
             dim_coords_and_dims=coords_spec_ps,
             units="kg m-3",
-            var_name="var"
+            var_name="var",
         )
         self.grid_4d_ps_mask = iris.cube.Cube(
             data3,
             dim_coords_and_dims=coords_spec_ps,
             units="kg m-3",
-            var_name="var"
+            var_name="var",
         )
 
         # allow iris to figure out the axis='z' coordinate
@@ -218,12 +215,8 @@ class Test(tests.Test):
         iris.util.guess_coord_axis(self.grid_4d.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_2.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_z.coord("zcoord"))
-        iris.util.guess_coord_axis(
-            self.grid_4d_ps.coord("air_pressure")
-        )
-        iris.util.guess_coord_axis(
-            self.grid_4d_ps_mask.coord("air_pressure")
-        )
+        iris.util.guess_coord_axis(self.grid_4d_ps.coord("air_pressure"))
+        iris.util.guess_coord_axis(self.grid_4d_ps_mask.coord("air_pressure"))
 
     def test_add_axis_stats_weights_coord(self):
         """Test _add_axis_stats_weights_coord."""
@@ -801,32 +794,23 @@ class Test(tests.Test):
         ps_ancillary = iris.coords.AncillaryVariable(
             np.broadcast_to([[[0.25]], [[0.5]], [[5.0]], [[27.5]]], (4, 2, 2)),
             standard_name="surface_air_pressure",
-            units='Pa',
-            var_name='ps'
+            units="Pa",
+            var_name="ps",
         )
         # Test without air pressure ancillary variable
         with self.assertRaises(ValueError) as err:
             extract_surface_from_atm(self.grid_4d_ps)
         assert "Surface air pressure could not be found" in str(err.exception)
         # Test with ancillary variable
-        self.grid_4d_ps.add_ancillary_variable(
-            ps_ancillary,
-            [0, 2, 3]
-        )
+        self.grid_4d_ps.add_ancillary_variable(ps_ancillary, [0, 2, 3])
         result = extract_surface_from_atm(self.grid_4d_ps)
         expected = np.ma.array(
-            np.broadcast_to(
-                [[[0.]], [[0.]], [[2.]], [[3.]]],
-                (4, 2, 2)
-            )
+            np.broadcast_to([[[0.0]], [[0.0]], [[2.0]], [[3.0]]], (4, 2, 2))
         )
         self.assert_array_equal(result.data, expected)
         assert result.var_name == "vars"
         # Test with ancillary variable and masked input
-        self.grid_4d_ps_mask.add_ancillary_variable(
-            ps_ancillary,
-            [0, 2, 3]
-        )
+        self.grid_4d_ps_mask.add_ancillary_variable(ps_ancillary, [0, 2, 3])
         result = extract_surface_from_atm(self.grid_4d_ps_mask)
         expected = np.ma.array(np.ones((4, 2, 2)))
         self.assert_array_equal(result.data, expected)

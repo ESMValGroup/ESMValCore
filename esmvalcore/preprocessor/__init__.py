@@ -86,11 +86,11 @@ from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     axis_statistics,
     depth_integration,
+    extract_surface_from_atm,
     extract_trajectory,
     extract_transect,
     extract_volume,
     volume_statistics,
-    extract_surface_from_atm,
 )
 from ._weighting import weighting_landsea_fraction
 

@@ -1053,7 +1053,7 @@ def _create_cube(src_cube, data, src_levels, levels):
         coord = iris.coords.AuxCoord(levels, **kwargs)
         result.add_aux_coord(
             coord,
-            z_dim if len(levels.shape) == 1 else np.arange(len(coord.shape))
+            z_dim if len(levels.shape) == 1 else np.arange(len(coord.shape)),
         )
 
     # Collapse the z-dimension for the scalar case.
@@ -1149,7 +1149,7 @@ def _preserve_fx_vars(cube, result):
                     units=ancillary_var.units,
                     var_name=ancillary_var.var_name,
                     attributes=ancillary_var.attributes,
-                    dim_coords_and_dims=ancillary_coords
+                    dim_coords_and_dims=ancillary_coords,
                 )
                 add_ancillary_variable(result, ancillary_cube)
 
@@ -1288,8 +1288,10 @@ def extract_levels(
         result = cube
         # Set the levels to the requested values
         src_levels.points = levels
-    elif len(src_levels.shape) == 1 and (set(levels).issubset(
-        set(src_levels.points)) if len(levels.shape) == 1 else False
+    elif len(src_levels.shape) == 1 and (
+        set(levels).issubset(set(src_levels.points))
+        if len(levels.shape) == 1
+        else False
     ):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
