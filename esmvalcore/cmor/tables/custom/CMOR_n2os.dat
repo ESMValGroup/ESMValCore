@@ -7,7 +7,7 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:     mole_fraction_of_nitrous_oxide_in_air
-units:             1e-09
+units:             mol mol-1
 cell_methods:      area: time: mean
 cell_measures:     area: areacella
 long_name:         Atmosphere N2O surface
