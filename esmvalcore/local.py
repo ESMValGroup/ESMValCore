@@ -70,8 +70,8 @@ def _get_var_name(variable: Variable) -> str:
     """Get variable name (following Iris' Cube.name())."""
     for attr in ("standard_name", "long_name"):
         if attr in variable.ncattrs():
-            return variable.getncattr(attr)
-    return variable.name
+            return str(variable.getncattr(attr))
+    return str(variable.name)
 
 
 def _get_start_end_date(
