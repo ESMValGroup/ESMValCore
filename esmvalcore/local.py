@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Union
 
 import isodate
 from cf_units import Unit
-from netCDF4 import Dataset
+from netCDF4 import Dataset, Variable
 
 from .config import CFG
 from .config._config import get_project_config
@@ -64,6 +64,14 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
                 start_point = end_point = end.group(group)
 
     return start_point, end_point
+
+
+def _get_var_name(variable: Variable) -> str:
+    """Get variable name (following Iris' Cube.name())."""
+    for attr in ("standard_name", "long_name"):
+        if attr in variable.ncattrs():
+            return variable.getncattr(attr)
+    return variable.name
 
 
 def _get_start_end_date(
@@ -138,20 +146,19 @@ def _get_start_end_date(
     ):
         logger.debug("Must load file %s for daterange ", file)
         dataset = Dataset(file)
-        if (
-            "time" in dataset.variables
-            and "units" in dataset.variables["time"].ncattrs()
-        ):
-            time = dataset.variables["time"]
-            time_units = Unit(time.getncattr("units"))
-            start_date = isodate.date_isoformat(
-                time_units.num2date(time[0]),
-                format=isodate.isostrf.DATE_BAS_COMPLETE,
-            )
-            end_date = isodate.date_isoformat(
-                time_units.num2date(time[-1]),
-                format=isodate.isostrf.DATE_BAS_COMPLETE,
-            )
+        for variable in dataset.variables.values():
+            var_name = _get_var_name(variable)
+            if var_name == "time" and "units" in variable.ncattrs():
+                time_units = Unit(variable.getncattr("units"))
+                start_date = isodate.date_isoformat(
+                    time_units.num2date(variable[0]),
+                    format=isodate.isostrf.DATE_BAS_COMPLETE,
+                )
+                end_date = isodate.date_isoformat(
+                    time_units.num2date(variable[-1]),
+                    format=isodate.isostrf.DATE_BAS_COMPLETE,
+                )
+                break
 
     if start_date is None or end_date is None:
         raise ValueError(
