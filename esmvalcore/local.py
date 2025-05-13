@@ -368,8 +368,8 @@ def _replace_tags(
             replacewith = "*"
         else:
             raise RecipeError(
-                f"Dataset key '{tag}' must be specified for "
-                f"{variable}, check your recipe entry"
+                f"Dataset key '{tag}' must be specified for {variable}, check "
+                f"your recipe entry and/or extra facet file(s)"
             )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
