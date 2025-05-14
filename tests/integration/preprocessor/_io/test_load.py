@@ -97,7 +97,7 @@ def test_load_xarray_dataset(caplog):
 
 
 def test_load_ncdata(caplog):
-    """Test loading an xarray.Dataset."""
+    """Test loading an ncdata.NcData."""
     dataset = ncdata.NcData(
         dimensions=(ncdata.NcDimension("time", 2),),
         variables=(ncdata.NcVariable("tas", ("time",), [0, 1]),),
@@ -118,6 +118,12 @@ def test_load_ncdata(caplog):
     assert (
         "does not contain attribute 'source_file'" in caplog.records[0].message
     )
+
+
+def test_load_invalid_type_fail():
+    """Test loading an invalid type."""
+    with pytest.raises(TypeError):
+        load(1)
 
 
 def test_callback_fix_lat_units(tmp_path):
