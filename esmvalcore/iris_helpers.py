@@ -641,6 +641,6 @@ def dataset_to_iris(
             # If possible, add the source file as an attribute to support
             # grouping by file when calling fix_metadata.
             if filepath is not None:
-                cube.attributes["source_file"] = str(filepath)
+                cube.attributes.globals["source_file"] = str(filepath)
 
     return cubes

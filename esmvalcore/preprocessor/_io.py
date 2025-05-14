@@ -131,6 +131,16 @@ def load(
     if not cubes:
         raise ValueError(f"{file} does not contain any data")
 
+    for cube in cubes:
+        if "source_file" not in cube.attributes:
+            logger.warning(
+                "Cube %s loaded from\n%s\ndoes not contain attribute "
+                "'source_file' with original file, please make sure to add it "
+                "during the fix_file step",
+                cube.summary(shorten=True),
+                file,
+            )
+
     return cubes
 
 
@@ -152,7 +162,7 @@ def _load_from_file(
     logger.debug("Done with loading %s", file)
 
     for cube in cubes:
-        cube.attributes["source_file"] = str(file)
+        cube.attributes.globals["source_file"] = str(file)
 
     return cubes
 
