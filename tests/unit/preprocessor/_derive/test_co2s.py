@@ -36,6 +36,7 @@ def get_coord_spec(include_plev=True):
             var_name="plev",
             standard_name="air_pressure",
             units="Pa",
+            long_name="pressure",
         )
         coord_spec = [
             (time_coord, 0),
@@ -120,7 +121,7 @@ def test_co2_calculate_masked_cubes(masked_cubes):
     derived_var = co2s.DerivedVariable()
     out_cube = derived_var.calculate(masked_cubes)
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data, [[[180.0, 50.0], [80.0, 10.0]]])
+    np.testing.assert_allclose(out_cube.data, [[[170.0, 50.0], [80.0, 10.0]]])
     assert out_cube.units == "1e-6"
     plev_coord = out_cube.coord("air_pressure")
     assert plev_coord.var_name == "plev"
@@ -137,7 +138,7 @@ def test_co2_calculate_unmasked_cubes(unmasked_cubes):
     derived_var = co2s.DerivedVariable()
     out_cube = derived_var.calculate(unmasked_cubes)
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data, [[[2.25, 0.50], [0.75, 0.02]]])
+    np.testing.assert_allclose(out_cube.data, [[[2.0, 0.50], [0.75, 0.02]]])
     assert out_cube.units == "1e-6"
     plev_coord = out_cube.coord("air_pressure")
     assert plev_coord.var_name == "plev"

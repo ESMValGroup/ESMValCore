@@ -673,11 +673,13 @@ def extract_surface_from_atm(
             atol=None,
         )
         var_cube.var_name = cube.var_name + "s"
-        # Remove remaining interpolated dimension of size 1 if needed.
-        if any(dim == 1 for dim in var_cube.shape):
-            var_cube = iris.util.squeeze(var_cube)
+        # Remove remaining interpolated dimension of size 1.
+        slices = [
+            0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
+            for dim in range(var_cube.ndim)
+        ]
+        var_cube = var_cube[tuple(slices)]
         # Remove remaining auxiliary coordinate of air_pressure
-        var_cube.remove_coord("air_pressure")
         logger.debug("Extracting surface using surface air pressure.")
 
     else:
