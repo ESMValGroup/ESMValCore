@@ -87,7 +87,7 @@ def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict] | None = None,
 ) -> CubeList:
-    """Load Iris cube.
+    """Load Iris cubes.
 
     Parameters
     ----------
