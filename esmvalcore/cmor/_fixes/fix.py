@@ -190,7 +190,7 @@ class Fix:
         attribute_name: str,
     ) -> Any:
         """Get attribute from an ncdata or xarray object."""
-        if hasattr(data, "attributes"):  # ncdata.NcData | ncdata.NcVariable
+        if isinstance(data, ncdata.NcData | ncdata.NcVariable):
             attribute = data.attributes[attribute_name].value
         else:  # xr.Dataset | xr.DataArray
             attribute = data.attrs[attribute_name]
