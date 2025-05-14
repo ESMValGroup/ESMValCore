@@ -8,29 +8,30 @@ import os
 from collections.abc import Iterable, Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 from warnings import catch_warnings, filterwarnings
 
 import cftime
 import iris
-import iris.aux_factory
 import iris.exceptions
+import ncdata
 import numpy as np
+import xarray as xr
 import yaml
 from dask.delayed import Delayed
 from iris.coords import Coord
 from iris.cube import Cube, CubeList
 from iris.fileformats.cf import CFVariable
 
+from esmvalcore._task import write_ncl_settings
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.iris_helpers import (
+    dataset_to_iris,
     ignore_warnings_context,
     merge_cube_attributes,
 )
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
-
-from .._task import write_ncl_settings
 
 logger = logging.getLogger(__name__)
 
@@ -83,17 +84,16 @@ def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
 
 
 def load(
-    file: str | Path | Cube | CubeList,
-    ignore_warnings: Optional[list[dict]] = None,
+    file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+    ignore_warnings: list[dict] | None = None,
 ) -> CubeList:
-    """Load iris cubes from string or Path objects.
+    """Load Iris cube.
 
     Parameters
     ----------
     file:
-        File to be loaded. If ``file`` is already a :class:`~iris.cube.Cube` or
-        :class:`~iris.cube.CubeList`, this object will be returned as a
-        :class:`~iris.cube.CubeList`.
+        File to be loaded. If ``file`` is already a loaded dataset, return it
+        as a :class:`~iris.cube.CubeList`.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -108,12 +108,36 @@ def load(
     ------
     ValueError
         Cubes are empty.
-    """
-    if isinstance(file, Cube):
-        return CubeList([file])
-    if isinstance(file, CubeList):
-        return file
+    TypeError
+        Invalid type for ``file``.
 
+    """
+    if isinstance(file, (str, Path)):
+        cubes = _load_from_file(file, ignore_warnings)
+    elif isinstance(file, Cube):
+        cubes = CubeList([file])
+    elif isinstance(file, CubeList):
+        cubes = file
+    elif isinstance(file, (xr.Dataset, ncdata.NcData)):
+        cubes = dataset_to_iris(file)
+        pass
+    else:
+        raise TypeError(
+            f"Expected type str, pathlib.Path, iris.cube.Cube, "
+            f"iris.cube.CubeList, xarray.Dataset, or ncdata.NcData for file, "
+            f"got type {type(file)}"
+        )
+
+    if not cubes:
+        raise ValueError(f"{file} does not contain any data")
+
+    return cubes
+
+
+def _load_from_file(
+    file: str | Path, ignore_warnings: list[dict] | None = None
+) -> CubeList:
+    """Load data from file."""
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
@@ -122,18 +146,15 @@ def load(
         # get separate (lat, lon) slices for each time step, pressure
         # level, etc.
         if file.suffix in GRIB_FORMATS:
-            raw_cubes = iris.load(file, callback=_restore_lat_lon_units)
+            cubes = iris.load(file, callback=_restore_lat_lon_units)
         else:
-            raw_cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+            cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
     logger.debug("Done with loading %s", file)
 
-    if not raw_cubes:
-        raise ValueError(f"Can not load cubes from {file}")
-
-    for cube in raw_cubes:
+    for cube in cubes:
         cube.attributes["source_file"] = str(file)
 
-    return raw_cubes
+    return cubes
 
 
 def _concatenate_cubes(cubes, check_level):

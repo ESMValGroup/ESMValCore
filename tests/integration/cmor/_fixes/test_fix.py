@@ -1,16 +1,10 @@
 """Integration tests for fixes."""
 
 import os
-import warnings
 from pathlib import Path
 
-import ncdata.iris
-import ncdata.iris_xarray
-import numpy as np
 import pytest
-import xarray as xr
-from iris.cube import Cube, CubeList
-from iris.warnings import IrisUnknownCellMethodWarning
+from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
@@ -24,7 +18,6 @@ from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config import CFG
-from tests import create_realistic_4d_cube
 
 
 def test_get_fix():
@@ -212,106 +205,3 @@ def test_frequency_not_from_vardef():
     vardef = get_var_info("CMIP6", "Amon", "tas")
     fix = Fix(vardef, frequency="3hr")
     assert fix.frequency == "3hr"
-
-
-@pytest.fixture
-def dummy_cubes():
-    cube = create_realistic_4d_cube()
-    cube.remove_ancillary_variable(cube.ancillary_variables()[0])
-    cube.data = cube.lazy_data()
-    return CubeList([cube])
-
-
-@pytest.fixture
-def empty_cubes():
-    return CubeList([Cube(0.0)])
-
-
-@pytest.mark.parametrize(
-    "conversion_func",
-    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
-)
-def test_dataset_to_iris(conversion_func, dummy_cubes):
-    dataset = conversion_func(dummy_cubes)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
-
-    assert len(cubes) == 1
-    cube = cubes[0]
-    assert cube.has_lazy_data()
-    np.testing.assert_allclose(cube.data, dummy_cubes[0].data)
-    assert cube.standard_name == dummy_cubes[0].standard_name
-    assert cube.var_name == dummy_cubes[0].var_name
-    assert cube.long_name == dummy_cubes[0].long_name
-    assert cube.units == dummy_cubes[0].units
-    assert str(cube.coord("latitude").units) == "degrees_north"
-    assert str(cube.coord("longitude").units) == "degrees_east"
-    assert cube.attributes["source_file"] == "path/to/file.nc"
-
-
-@pytest.mark.parametrize(
-    "conversion_func",
-    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
-)
-def test_dataset_to_iris_empty_cube(conversion_func, empty_cubes):
-    dataset = conversion_func(empty_cubes)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        cubes = Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
-
-    assert len(cubes) == 1
-    cube = cubes[0]
-
-    assert cube.has_lazy_data()
-    np.testing.assert_allclose(cube.data, np.array(0.0))
-    assert cube.standard_name is None
-    assert cube.var_name == "unknown"
-    assert cube.long_name is None
-    assert cube.units == "unknown"
-    assert not cube.coords()
-
-
-@pytest.mark.parametrize(
-    "conversion_func",
-    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
-)
-def test_dataset_to_iris_ignore_warnings(conversion_func, dummy_cubes):
-    dataset = conversion_func(dummy_cubes)
-    if isinstance(dataset, xr.Dataset):
-        dataset.ta.attrs["units"] = "invalid_units"
-    else:
-        dataset.variables["ta"].attributes["units"] = "invalid_units"
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
-
-
-@pytest.mark.parametrize(
-    "conversion_func",
-    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
-)
-def test_dataset_to_iris_no_ignore_warnings(conversion_func, dummy_cubes):
-    dataset = conversion_func(dummy_cubes)
-    if isinstance(dataset, xr.Dataset):
-        dataset.ta.attrs["cell_methods"] = "time: invalid_method"
-    else:
-        dataset.variables["ta"].set_attrval(
-            "cell_methods", "time: invalid_method"
-        )
-
-    msg = r"NetCDF variable 'ta' contains unknown cell method 'invalid_method'"
-    with pytest.warns(IrisUnknownCellMethodWarning, match=msg):
-        Fix(None).dataset_to_iris(dataset, "path/to/file.nc")
-
-
-def test_dataset_to_iris_invalid_type_fail():
-    msg = (
-        r"Expected type ncdata.NcData or xr.Dataset for dataset, got type "
-        r"<class 'int'>"
-    )
-    with pytest.raises(TypeError, match=msg):
-        Fix(None).dataset_to_iris(1, "path/to/file.nc")

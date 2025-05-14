@@ -17,7 +17,7 @@ class Cl(BaseCl):
 
     def fix_file(
         self,
-        filepath,
+        file,
         output_dir,
         add_unique_suffix=False,
         ignore_warnings=None,
@@ -35,7 +35,7 @@ class Cl(BaseCl):
 
         Parameters
         ----------
-        filepath : str
+        file: str
             Path to the original file.
         output_dir: Path
             Output directory for fixed files.
@@ -49,7 +49,7 @@ class Cl(BaseCl):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            file, output_dir, add_unique_suffix=add_unique_suffix
         )
         dataset = Dataset(new_path, mode="a")
         dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][:, ::-1]

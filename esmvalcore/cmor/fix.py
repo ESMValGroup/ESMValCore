@@ -13,6 +13,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+import ncdata
+import xarray as xr
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
@@ -35,7 +37,7 @@ def fix_file(
     frequency: Optional[str] = None,
     ignore_warnings: Optional[list[dict[str, Any]]] = None,
     **extra_facets,
-) -> str | Path | Cube | CubeList:
+) -> str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
     This is mainly intended to fix errors that prevent loading the data with
@@ -47,11 +49,10 @@ def fix_file(
     -------
     A path should only be returned if it points to the original (unchanged)
     file (i.e., a fix was not necessary). If a fix is necessary, this function
-    should return a :class:`~iris.cube.Cube` or :class:`~iris.cube.CubeList`,
-    which can for example be created from an :class:`~ncdata.NcData` or
-    :class:`~xarray.Dataset` object using the helper function
-    ``Fix.dataset_to_iris()``. Under no circumstances a copy of the input data
-    should be created (this is very inefficient).
+    should return a :class:`~iris.cube.Cube`, :class:`~iris.cube.CubeList`,
+    :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object. Under no
+    circumstances a copy of the input data should be created (this is very
+    inefficient).
 
     Parameters
     ----------
@@ -83,8 +84,8 @@ def fix_file(
 
     Returns
     -------
-    str | Path | Cube | CubeList:
-        Fixed cube(s) or a path to them.
+    str | pathlib.Path | iris.cube.Cube | iris.cube.CubeList | xr.Dataset | ncdata.NcData:
+        Fixed data or a path to them.
 
     """
     # Update extra_facets with variable information given as regular arguments

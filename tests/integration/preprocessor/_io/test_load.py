@@ -8,7 +8,9 @@ from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import iris
+import ncdata
 import numpy as np
+import xarray as xr
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
@@ -54,12 +56,6 @@ class TestLoad(unittest.TestCase):
             (cube.coord("latitude").points == np.array([1, 2])).all()
         )
 
-    def test_load_cube(self):
-        """Test loading an Iris Cube."""
-        cube = _create_sample_cube()
-        cubes = load(cube)
-        assert cubes == CubeList([cube])
-
     def test_load_grib(self):
         """Test loading a grib file."""
         grib_path = (
@@ -77,11 +73,54 @@ class TestLoad(unittest.TestCase):
         assert cube.shape == (200, 247)
         assert "source_file" in cube.attributes
 
+    def test_load_cube(self):
+        """Test loading an Iris Cube."""
+        cube = _create_sample_cube()
+        cubes = load(cube)
+        assert cubes == CubeList([cube])
+
     def test_load_cubes(self):
         """Test loading an Iris CubeList."""
         cube = _create_sample_cube()
         cubes = load(CubeList([cube]))
         assert cubes == CubeList([cube])
+
+    def test_load_xarray_dataset(self):
+        """Test loading an xarray.Dataset."""
+        dataset = xr.Dataset(
+            data_vars={"tas": ("time", [1, 2])},
+            coords={"time": [0, 1]},
+            attrs={"test": 1},
+        )
+
+        cubes = load(dataset)
+
+        assert len(cubes) == 1
+        cube = cubes[0]
+        assert cube.var_name == "tas"
+        assert cube.standard_name is None
+        assert cube.long_name is None
+        assert cube.units == "unknown"
+        assert len(cube.coords()) == 1
+        assert cube.coords()[0].var_name == "time"
+        assert cube.attributes["test"] == 1
+
+    def test_load_ncdata(self):
+        """Test loading an xarray.Dataset."""
+        dataset = ncdata.NcData(
+            dimensions=(ncdata.NcDimension("time", 2),),
+            variables=(ncdata.NcVariable("tas", ("time",), [0, 1]),),
+        )
+
+        cubes = load(dataset)
+
+        assert len(cubes) == 1
+        cube = cubes[0]
+        assert cube.var_name == "tas"
+        assert cube.standard_name is None
+        assert cube.long_name is None
+        assert cube.units == "unknown"
+        assert not cube.coords()
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""

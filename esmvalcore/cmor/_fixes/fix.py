@@ -11,9 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import dask
-import iris
-import ncdata.iris
-import ncdata.iris_xarray
 import ncdata.threadlock_sharing
 import numpy as np
 import xarray as xr
@@ -34,7 +31,6 @@ from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import (
     has_unstructured_grid,
-    ignore_warnings_context,
     safe_convert_units,
 )
 
@@ -87,11 +83,11 @@ class Fix:
 
     def fix_file(
         self,
-        filepath: Path,
+        file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
         output_dir: Path,
         add_unique_suffix: bool = False,
         ignore_warnings: Optional[list[dict[str, Any]]] = None,
-    ) -> str | Path | Cube | CubeList:
+    ) -> str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
@@ -104,16 +100,16 @@ class Fix:
         -------
         A path should only be returned if it points to the original (unchanged)
         file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~iris.cube.Cube` or
-        :class:`~iris.cube.CubeList`, which can for example be created from an
-        :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object using the
-        helper function ``Fix.dataset_to_iris()``. Under no circumstances a
-        copy of the input data should be created (this is very inefficient).
+        function should return a :class:`~iris.cube.Cube`,
+        :class:`~iris.cube.CubeList`, :class:`~ncdata.NcData` or
+        :class:`~xarray.Dataset` object. Under no circumstances a copy of the
+        input data should be created (this is very inefficient).
 
         Parameters
         ----------
-        filepath:
-            Path to the original file. Original files should not be overwritten.
+        file:
+            Data to fix or path to them. Original files should not be
+            overwritten.
         output_dir:
             Output directory for fixed files.
         add_unique_suffix:
@@ -125,11 +121,11 @@ class Fix:
 
         Returns
         -------
-        str | Path | Cube | CubeList:
-            Fixed cube(s) or a path to them.
+        str | pathlib.Path | iris.cube.Cube | iris.cube.CubeList | xr.Dataset | ncdata.NcData:
+            Fixed data or a path to them.
 
         """
-        return filepath
+        return file
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         """Apply fixes to the metadata of the cube.
@@ -145,7 +141,7 @@ class Fix:
 
         Returns
         -------
-        Iterable[iris.cube.Cube]
+        Sequence[iris.cube.Cube]
             Fixed cubes. They can be different instances.
 
         """
@@ -183,84 +179,6 @@ class Fix:
             if cube.var_name == short_name:
                 return cube
         raise ValueError(f'Cube for variable "{short_name}" not found')
-
-    @staticmethod
-    def _get_attribute(
-        data: ncdata.NcData | ncdata.NcVariable | xr.Dataset | xr.DataArray,
-        attribute_name: str,
-    ) -> Any:
-        """Get attribute from an ncdata or xarray object."""
-        if isinstance(data, ncdata.NcData | ncdata.NcVariable):
-            attribute = data.attributes[attribute_name].value
-        else:  # xr.Dataset | xr.DataArray
-            attribute = data.attrs[attribute_name]
-        return attribute
-
-    def dataset_to_iris(
-        self,
-        dataset: ncdata.NcData | xr.Dataset,
-        filepath: str | Path,
-        ignore_warnings: Optional[list[dict[str, Any]]] = None,
-    ) -> CubeList:
-        """Convert dataset to :class:`~iris.cube.CubeList`.
-
-        This function mimics the behavior of
-        :func:`esmvalcore.preprocessor.load`.
-
-        Parameters
-        ----------
-        dataset:
-            The dataset object to convert.
-        filepath:
-            The path that the dataset was loaded from.
-        ignore_warnings:
-            Keyword arguments passed to :func:`warnings.filterwarnings` used to
-            ignore warnings during data loading. Each list element corresponds
-            to one call to :func:`warnings.filterwarnings`.
-
-        Returns
-        -------
-        CubeList
-            :class:`~iris.cube.CubeList` containing the requested cubes.
-
-        Raises
-        ------
-        TypeError
-            Invalid type for ``dataset`` given.
-
-        """
-        if isinstance(dataset, ncdata.NcData):
-            conversion_func = ncdata.iris.to_iris
-            ds_coords = dataset.variables
-        elif isinstance(dataset, xr.Dataset):
-            conversion_func = ncdata.iris_xarray.cubes_from_xarray
-            ds_coords = dataset.coords
-        else:
-            raise TypeError(
-                f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
-                f"type {type(dataset)}"
-            )
-
-        with ignore_warnings_context(ignore_warnings):
-            cubes = conversion_func(dataset)
-
-        # Restore the lat/lon coordinate units that iris changes to degrees
-        for coord_name in ["latitude", "longitude"]:
-            for cube in cubes:
-                try:
-                    coord = cube.coord(coord_name)
-                except iris.exceptions.CoordinateNotFoundError:
-                    pass
-                else:
-                    if coord.var_name in ds_coords:
-                        ds_coord = ds_coords[coord.var_name]
-                        coord.units = self._get_attribute(ds_coord, "units")
-
-                # Add the source file as an attribute to support grouping by
-                # file when calling fix_metadata.
-                cube.attributes["source_file"] = str(filepath)
-
-        return cubes
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.

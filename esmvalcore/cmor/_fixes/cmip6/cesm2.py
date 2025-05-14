@@ -22,16 +22,16 @@ class Cl(Fix):
 
     def _fix_formula_terms(
         self,
-        filepath,
+        file,
         output_dir,
         add_unique_suffix=False,
         ignore_warnings=None,
     ):
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir, file, add_unique_suffix=add_unique_suffix
         )
-        copyfile(filepath, new_path)
+        copyfile(file, new_path)
         dataset = Dataset(new_path, mode="a")
         dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
         dataset.variables[
@@ -40,7 +40,7 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -54,7 +54,7 @@ class Cl(Fix):
 
         Parameters
         ----------
-        filepath : str
+        file : str
             Path to the original file.
         output_dir: Path
             Output directory for fixed files.
@@ -68,7 +68,7 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            file, output_dir, add_unique_suffix=add_unique_suffix
         )
         dataset = Dataset(new_path, mode="a")
         dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][::-1, :]
