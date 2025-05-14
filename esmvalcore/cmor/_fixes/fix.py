@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import dask
-import ncdata.threadlock_sharing
+import ncdata
 import numpy as np
 import xarray as xr
 from cf_units import Unit
@@ -40,9 +40,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
-
-# Enable lock sharing between ncdata and iris/xarray
-ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
 
 
 class Fix:

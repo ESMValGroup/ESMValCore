@@ -15,6 +15,7 @@ import iris.util
 import ncdata
 import ncdata.iris
 import ncdata.iris_xarray
+import ncdata.threadlock_sharing
 import numpy as np
 import xarray as xr
 from cf_units import Unit, suppress_errors
@@ -24,6 +25,9 @@ from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.warnings import IrisVagueMetadataWarning
 
 from esmvalcore.typing import NetCDFAttr
+
+# Enable lock sharing between ncdata and iris/xarray
+ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
 
 
 @contextlib.contextmanager
