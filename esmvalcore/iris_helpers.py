@@ -15,7 +15,7 @@ import iris.exceptions
 import iris.util
 import numpy as np
 from cf_units import Unit, suppress_errors
-from iris.coords import Coord
+from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.warnings import IrisVagueMetadataWarning
@@ -40,7 +40,7 @@ def ignore_iris_vague_metadata_warnings() -> Generator[None]:
         yield
 
 
-def add_leading_dim_to_cube(cube, dim_coord):
+def add_leading_dim_to_cube(cube: Cube, dim_coord: DimCoord) -> Cube:
     """Add new leading dimension to cube.
 
     An input cube with shape ``(x, ..., z)`` will be transformed to a cube with
@@ -49,9 +49,9 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    dim_coord: iris.coords.DimCoord
+    dim_coord:
         Dimensional coordinate that is used to describe the new leading
         dimension. Needs to be 1D.
 
