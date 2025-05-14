@@ -102,6 +102,7 @@ commands:
             conda activate esmvaltool
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
+            conda list  # print to screen too
             pip freeze | tee /logs/requirements.txt
       - test_and_report
       - save_cache:
@@ -238,6 +239,7 @@ jobs:
 workflows:
   commit:
     jobs:
+      - test_with_upstream_developments
       - run_tests
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
