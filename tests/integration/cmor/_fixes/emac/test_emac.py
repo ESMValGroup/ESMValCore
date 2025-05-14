@@ -2806,3 +2806,22 @@ def test_fix_invalid_units():
     assert "positive" not in cube.attributes
 
     np.testing.assert_allclose(cube.data, 1.0)
+
+
+# Test fix invalid time bounds
+
+
+def test_fix_time_bounds(cubes_2d):
+    """Test fix."""
+    cubes_2d[0].var_name = "tsurf"
+    cubes_2d[0].units = "K"
+    cubes_2d[0].coord("time").bounds = [0.0, 0.5]
+
+    fix = get_allvars_fix("Amon", "ts")
+    fix.extra_facets["reset_time_bounds"] = True
+
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = fixed_cubes[0]
+
+    assert not cube.coord("time").has_bounds()

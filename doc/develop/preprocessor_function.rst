@@ -244,11 +244,12 @@ and add the following content:
     """Test function `esmvalcore.preprocessor.example_preprocessor_function`."""
     from pathlib import Path
 
-    import esmvaltool_sample_data
     import iris
     import pytest
 
     from esmvalcore.preprocessor import example_preprocessor_function
+
+    esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 
     @pytest.mark.use_sample_data

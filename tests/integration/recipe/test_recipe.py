@@ -785,8 +785,7 @@ def test_recipe_iso_timerange(
     pr_product = pr_task.products.pop()
 
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert pr_product.filename.name == filename
 
@@ -831,8 +830,7 @@ def test_recipe_iso_timerange_as_dataset(
     assert len(task.products) == 1
     product = task.products.pop()
     filename = (
-        "CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_"
-        f"pr_gn_{output_time}.nc"
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
     assert product.filename.name == filename
 
@@ -3054,6 +3052,45 @@ def test_bias_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
+def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            custom_order: true
+            multi_model_statistics:
+              statistics: [mean]
+              span: overlap
+              groupby: [group]
+              keep_input_datasets: false
+            bias:
+              bias_type: relative
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5,    group: ref, reference_for_bias: true}
+                  - {dataset: CESM2,      group: ref, reference_for_bias: true}
+                  - {dataset: MPI-ESM-LR, group: notref}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
+
+
 def test_invalid_bias_type(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -3322,6 +3359,44 @@ def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert msg in exc.value.failed_tasks[0].message
     assert "found 2" in exc.value.failed_tasks[0].message
+
+
+def test_distance_metrics_two_refs_with_mmm(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            custom_order: true
+            ensemble_statistics:
+              statistics: [mean]
+              span: overlap
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
+                  - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
+                  - {dataset: MPI-ESM-LR}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
 
 
 def test_invalid_metric(tmp_path, patched_datafinder, session):

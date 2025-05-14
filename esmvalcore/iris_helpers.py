@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Literal, Sequence
+import warnings
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Dict, Iterable, List, Literal, Optional, Sequence
 
 import dask.array as da
 import iris
@@ -10,14 +13,32 @@ import iris.cube
 import iris.util
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord
+from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.warnings import IrisVagueMetadataWarning
 
 from esmvalcore.typing import NetCDFAttr
 
 
-def add_leading_dim_to_cube(cube, dim_coord):
+@contextmanager
+def ignore_iris_vague_metadata_warnings() -> Generator[None]:
+    """Ignore specific warnings.
+
+    This can be used as a context manager. See also
+    https://scitools-iris.readthedocs.io/en/stable/generated/api/iris.warnings.html#iris.warnings.IrisVagueMetadataWarning.
+
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=IrisVagueMetadataWarning,
+            module="iris",
+        )
+        yield
+
+
+def add_leading_dim_to_cube(cube: Cube, dim_coord: DimCoord) -> Cube:
     """Add new leading dimension to cube.
 
     An input cube with shape ``(x, ..., z)`` will be transformed to a cube with
@@ -26,9 +47,9 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    dim_coord: iris.coords.DimCoord
+    dim_coord:
         Dimensional coordinate that is used to describe the new leading
         dimension. Needs to be 1D.
 
@@ -39,7 +60,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
 
     Raises
     ------
-    CoordinateMultiDimError
+    iris.exceptions.CoordinateMultiDimError
         ``dim_coord`` is not 1D.
 
     """
@@ -247,14 +268,14 @@ def rechunk_cube(
     cube:
         Input cube.
     complete_coords:
-        (Names of) coordinates along which the output cubes should not be
+        (Names of) coordinates along which the output cube should not be
         chunked.
     remaining_dims:
         Chunksize of the remaining dimensions.
 
     Returns
     -------
-    Cube
+    iris.cube.Cube
         Rechunked cube. This will always be a copy of the input cube.
 
     """
@@ -366,14 +387,26 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # the sublists is a tuple (standard_name, units). Note: All units for a single
 # special case need to be "physically identical", e.g., 1 kg m-2 s-1 "equals" 1
 # mm s-1 for precipitation
-_SPECIAL_UNIT_CONVERSIONS = [
+_SPECIAL_UNIT_CONVERSIONS: list[list[tuple[Optional[str], str]]] = [
     [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
     ],
     [
+        ("water_evaporation_flux", "kg m-2 s-1"),
+        ("lwe_water_evaporation_rate", "mm s-1"),
+    ],
+    [
+        ("water_potential_evaporation_flux", "kg m-2 s-1"),
+        (None, "mm s-1"),  # no standard_name for potential evaporation rate
+    ],
+    [
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
         ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
+    ],
+    [
+        ("surface_air_pressure", "Pa"),
+        ("atmosphere_mass_of_air_per_unit_area", "1/9.80665 kg m-2"),
     ],
 ]
 

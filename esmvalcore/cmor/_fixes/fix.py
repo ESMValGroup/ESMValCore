@@ -831,15 +831,23 @@ class GenericFix(Fix):
 
                     branch_parent = "branch_time_in_parent"
                     if branch_parent in attrs:
-                        attrs[branch_parent] = parent_units.convert(
-                            attrs[branch_parent], cube_coord.units
-                        )
+                        try:
+                            attrs[branch_parent] = parent_units.convert(
+                                attrs[branch_parent], cube_coord.units
+                            )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
                     branch_child = "branch_time_in_child"
                     if branch_child in attrs:
-                        attrs[branch_child] = old_units.convert(
-                            attrs[branch_child], cube_coord.units
-                        )
+                        try:
+                            attrs[branch_child] = old_units.convert(
+                                attrs[branch_child], cube_coord.units
+                            )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""

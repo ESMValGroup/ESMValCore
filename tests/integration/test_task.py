@@ -92,7 +92,9 @@ def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
         get_distributed_client_mock(None),
     )
     monkeypatch.setattr(
-        esmvalcore._task, "Pool", multiprocessing.get_context(mpmethod).Pool
+        esmvalcore._task.multiprocessing,
+        "Pool",
+        multiprocessing.get_context(mpmethod).Pool,
     )
     example_tasks.run(max_parallel_tasks=max_parallel_tasks)
 
@@ -152,7 +154,7 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
         return [f"{self.name}_test.nc"]
 
     monkeypatch.setattr(MockBaseTask, "_run", _run)
-    monkeypatch.setattr(esmvalcore._task, "Pool", ThreadPool)
+    monkeypatch.setattr(esmvalcore._task.multiprocessing, "Pool", ThreadPool)
 
     runner(example_tasks)
     print(order)
@@ -165,11 +167,17 @@ def test_run_task(mocker, address):
     # Set up mock Dask distributed client
     mocker.patch.object(esmvalcore._task, "Client")
 
+    # Set up a mock multiprocessing.Lock
+    scheduler_lock = mocker.sentinel
+
     task = mocker.create_autospec(DiagnosticTask, instance=True)
     task.products = mocker.Mock()
-    output_files, products = _run_task(task, scheduler_address=address)
+    output_files, products = _run_task(
+        task, scheduler_address=address, scheduler_lock=scheduler_lock
+    )
     assert output_files == task.run.return_value
     assert products == task.products
+    assert task.scheduler_lock == scheduler_lock
     if address is None:
         esmvalcore._task.Client.assert_not_called()
     else:
@@ -206,7 +214,7 @@ def _get_single_base_task():
 def test_base_task_names():
     task = _get_single_base_task()
     assert task.name == "task0"
-    ancestor_names = [anc.name for anc in task.ancestors]
+    ancestor_names = [ancestor.name for ancestor in task.ancestors]
     assert ancestor_names == ["task0-ancestor0", "task0-ancestor1"]
 
 
@@ -243,7 +251,7 @@ def test_py_diagnostic_task_constructor(tmp_path):
     diag_script = tmp_path / "diag_cow.py"
     task = _get_single_diagnostic_task(tmp_path, diag_script)
     assert task.name == "task0"
-    ancestor_names = [anc.name for anc in task.ancestors]
+    ancestor_names = [ancestor.name for ancestor in task.ancestors]
     assert ancestor_names == ["task0-ancestor0", "task0-ancestor1"]
     assert task.script == diag_script
     assert task.settings == {
