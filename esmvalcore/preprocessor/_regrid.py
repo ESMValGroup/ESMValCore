@@ -1309,9 +1309,10 @@ def extract_levels(
         result = cube
         # Set the levels to the requested values
         src_levels.points = levels
-    elif len(src_levels.shape) == 1 and 
-        len(levels.shape) == 1 and
-        set(levels).issubset(set(src_levels.points))
+    elif (
+        len(src_levels.shape) == 1
+        and len(levels.shape) == 1
+        and set(levels.flatten()).issubset(set(src_levels.points))
     ):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
