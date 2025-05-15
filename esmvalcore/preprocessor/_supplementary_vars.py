@@ -101,20 +101,17 @@ def add_cell_measure(
     )
 
 
-def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
+def add_ancillary_variable(
+    cube: Cube, ancillary_cube: Cube | iris.coords.AncillaryVariable
+) -> None:
     """Add ancillary variable to cube (in-place).
-
-    Note
-    ----
-    This assumes that the ancillary variable spans the rightmost dimensions of
-    the cube.
 
     Parameters
     ----------
     cube:
         Iris cube with input data.
     ancillary_cube:
-        Iris cube with ancillary data.
+        Iris cube or AncillaryVariable with ancillary data.
 
     Returns
     -------
@@ -136,15 +133,11 @@ def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
             "iris.coords.AncillaryVariable object."
         )
         raise ValueError(msg) from err
+    data_dims: list[int | None] = []
     if isinstance(ancillary_cube, iris.coords.AncillaryVariable):
         start_dim = cube.ndim - len(ancillary_var.shape)
-        cube.add_ancillary_variable(ancillary_var, range(start_dim, cube.ndim))
-        logger.debug(
-            "Added %s as ancillary variable in cube of %s.",
-            ancillary_cube.var_name,
-            cube.var_name,
-        )
-    elif isinstance(ancillary_cube, iris.cube.Cube):
+        data_dims = list(range(start_dim, cube.ndim))
+    else:
         data_dims = [None] * ancillary_cube.ndim
         for coord in ancillary_cube.coords():
             try:
@@ -168,12 +161,17 @@ def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
                 f"{none_dims}"
             )
             raise ValueError(msg)
-        cube.add_ancillary_variable(ancillary_var, data_dims)
-        logger.debug(
-            "Added %s as ancillary variable in cube of %s.",
-            ancillary_cube.var_name,
-            cube.var_name,
-        )
+    if ancillary_cube.has_lazy_data():
+        cube_chunks = tuple(cube.lazy_data().chunks[d] for d in data_dims)
+        ancillary_data = ancillary_cube.core_data()
+        ancillary_data = ancillary_data.rechunk(cube_chunks)
+        ancillary_var.data = ancillary_data
+    cube.add_ancillary_variable(ancillary_var, data_dims)
+    logger.debug(
+        "Added %s as ancillary variable in cube of %s.",
+        ancillary_cube.var_name,
+        cube.var_name,
+    )
 
 
 def add_supplementary_variables(
