@@ -264,9 +264,9 @@ class Test:
             ],
         )
         # Ancillary var not an iris.cube.Cube or iris.coords.AncillaryVariable
-        with pytest.raises(ValueError) as err:
+        msg = "ancillary_cube should be either an iris"
+        with pytest.raises(ValueError, match=msg) as err:
             add_ancillary_variable(cube, np.ones(self.new_cube_3D_data.shape))
-        assert "ancillary_cube should be either an iris" in str(err)
         # Ancillary var as iris.cube.Cube without matching dimensions
         plev_dim = iris.coords.DimCoord(
             [0, 1.5, 3],
