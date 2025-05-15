@@ -253,7 +253,7 @@ class Test:
         assert cube.cell_measures() == []
         assert cube.ancillary_variables() == []
 
-    def test_add_ancillary_vars(self):
+    def test_add_ancillary_vars_errors(self):
         """Test errors when adding ancillary variable."""
         cube = iris.cube.Cube(
             self.new_cube_3D_data,

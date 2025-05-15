@@ -16,8 +16,6 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
-from ._regrid import extract_levels
-
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     get_coord_weights,
@@ -30,6 +28,8 @@ from esmvalcore.preprocessor._shared import (
 from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
+
+from ._regrid import extract_levels
 
 logger = logging.getLogger(__name__)
 
@@ -607,7 +607,7 @@ def extract_trajectory(
     return interpolated_cube
 
 
-def _get_first_unmasked_data(array, axis):
+def _get_first_unmasked_data(array: da.Array, axis: int) -> da.Array:
     """Get first unmasked value of an array along an axis."""
     mask = da.ma.getmaskarray(array)
     numerical_mask = da.where(mask, -1.0, 1.0)
