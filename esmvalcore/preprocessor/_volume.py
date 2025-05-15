@@ -631,7 +631,7 @@ def extract_surface_from_atm(
     Parameters
     ----------
     cube:
-        Input cube.
+        Input cube. Needs :class:`~iris.coords.AncillaryVariable` ``surface_air_pressure``.
 
     Returns
     -------
