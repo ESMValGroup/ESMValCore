@@ -1155,7 +1155,7 @@ def _preserve_fx_vars(cube, result):
                 )
             else:
                 # Create cube and add coordinates to ancillary variable
-                ancillary_coords = []
+                ancillary_coords: list[tuple] = []
                 for i, coord in enumerate(cube.coords()):
                     if i in ancillary_dims:
                         coord_idx = len(ancillary_coords)
