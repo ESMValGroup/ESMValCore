@@ -2119,7 +2119,6 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 
 ``zonal_statistics``
 --------------------
-preprocessor.rst:315: WARNING: u
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate.
 
