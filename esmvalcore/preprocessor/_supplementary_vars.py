@@ -134,6 +134,8 @@ def add_ancillary_variable(
             "iris.coords.AncillaryVariable object."
         )
         raise ValueError(msg) from err
+    # Match the coordinates of the ancillary cube to coordinates and
+    # dimensions in the input cube before adding the ancillary variable.
     data_dims: list[int | None] = []
     if isinstance(ancillary_cube, iris.coords.AncillaryVariable):
         start_dim = cube.ndim - len(ancillary_var.shape)
@@ -164,8 +166,6 @@ def add_ancillary_variable(
             raise ValueError(msg)
     if ancillary_cube.has_lazy_data():
         cube_chunks = tuple(cube.lazy_data().chunks[d] for d in data_dims)
-        ancillary_data = ancillary_cube.core_data()
-        ancillary_data = ancillary_data.rechunk(cube_chunks)
         ancillary_var.data = ancillary_cube.lazy_data().rechunk(cube_chunks)
     cube.add_ancillary_variable(ancillary_var, data_dims)
     logger.debug(

@@ -646,39 +646,39 @@ def extract_surface_from_atm(
         ps_cube = cube.ancillary_variable("surface_air_pressure")
     except iris.exceptions.AncillaryVariableNotFoundError as exc:
         raise ValueError("Surface air pressure could not be found") from exc
-        # Fill masked data if necessary (interpolation fails with masked data)
-        (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
-        mask = da.ma.getmaskarray(cube.core_data())
-        if mask.any():
-            first_unmasked_data = _get_first_unmasked_data(
-                cube.core_data(), axis=z_axis
-            )
-            dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
-            first_unmasked_data = iris.util.broadcast_to_shape(
-                first_unmasked_data, cube.shape, dim_map
-            )
-            cube.data = da.where(mask, first_unmasked_data, cube.core_data())
 
-        # Interpolation
-        target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
-        var_cube = extract_levels(
-            cube,
-            levels=target_levels,
-            scheme="linear_extrapolate",
-            coordinate="air_pressure",
-            rtol=1e-7,
-            atol=None,
+    # Fill masked data if necessary (interpolation fails with masked data)
+    (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
+    mask = da.ma.getmaskarray(cube.core_data())
+    if mask.any():
+        first_unmasked_data = _get_first_unmasked_data(
+            cube.core_data(), axis=z_axis
         )
-        if cube.var_name is not None:
-            var_cube.var_name = cube.var_name + "s"
-        # Remove remaining interpolated dimension of size 1.
-        slices = [
-            0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
-            for dim in range(var_cube.ndim)
-        ]
-        var_cube = var_cube[tuple(slices)]
-        # Remove remaining auxiliary coordinate of air_pressure
-        logger.debug("Extracting surface using surface air pressure.")
+        dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
+        first_unmasked_data = iris.util.broadcast_to_shape(
+            first_unmasked_data, cube.shape, dim_map
+        )
+        cube.data = da.where(mask, first_unmasked_data, cube.core_data())
 
+    # Interpolation
+    target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
+    var_cube = extract_levels(
+        cube,
+        levels=target_levels,
+        scheme="linear_extrapolate",
+        coordinate="air_pressure",
+        rtol=1e-7,
+        atol=None,
+    )
+    if cube.var_name is not None:
+        var_cube.var_name = cube.var_name + "s"
+
+    # Remove remaining interpolated dimension of size 1.
+    slices = [
+        0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
+        for dim in range(var_cube.ndim)
+    ]
+    var_cube = var_cube[tuple(slices)]
+    logger.debug("Extracting surface using surface air pressure.")
 
     return var_cube
