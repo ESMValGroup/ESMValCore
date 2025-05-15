@@ -982,6 +982,7 @@ Example:
        default:
          - '{exp}'
          - '{exp}/outdata'
+         - '{exp}/output'
      input_file:
        default: '{exp}_{var_type}*.nc'
      output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'

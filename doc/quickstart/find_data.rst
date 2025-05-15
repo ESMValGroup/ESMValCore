@@ -420,16 +420,24 @@ Key                   Description                            Default value if no
 ICON
 ^^^^
 
-ESMValCore is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
+ESMValCore is able to read native `ICON <https://www.icon-model.org/>`__ model
+output.
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``{exp}`` or ``{exp}/outdata``
+* input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 :ref:`configuration option <config_options>` ``drs: default``).
+
+Currently, two different versions of ICON are supported:
+
+1. ICON-A, which is based on ECHAM physics (deprecated): select via ``dataset:
+   ICON``.
+2. ICON-XPP, which is based on NWP physics (preferred; model code can be
+   downloaded from `DKRZ's GitLab <https://gitlab.dkrz.de/icon/icon-model>`__):
+   select via ``dataset: ICON-XPP``.
 
 Thus, example dataset entries could look like this:
 
@@ -437,17 +445,20 @@ Thus, example dataset entries could look like this:
 
   datasets:
     - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
-       mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, exp: historical, mip: Amon,
-       short_name: ta, var_type: atm_dyn_3d_ml, start_year: 2000,
-       end_year: 2014}
+       mip: Amon, short_name: tas, timerange: 20010101/20020101}
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, timerange: 20010101/20020101}
 
-Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValCore's data finding and
-CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
-recipe.
+recipe, for example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, var_type: atm_dyn_3d_ml, timerange: 20010101/20020101}
+
 This is necessary if your ICON output is structured in one variable per file.
 For example, if your output is stored in files called
 ``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
@@ -504,12 +515,14 @@ support input data in UGRID format (yet), like the
 :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
-(from the variables `pfull` and `phalf`) and/or altitude information (from the
-variables `zg` and `zghalf`) to the preprocessed output files.
+and/or altitude information to the preprocessed output files.
+If the names of these variables differ from the default values, the facets
+``pfull_var``, ``phalf_var``, ``zg_var``, and ``zghalf_var`` can be specified
+in the recipe or extra facets.
 If neither of these variables are available in the input files, it is possible
-to specify the location of files that include the corresponding `zg` or
-`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
-recipe or the extra facets.
+to specify the location of files that include the corresponding altitude
+information with the facets ``zg_file`` and/or ``zghalf_file`` in the recipe or
+the extra facets.
 The paths to these files can be specified absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
@@ -548,12 +561,18 @@ Key                 Description                      Default value if not specif
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
                     ``auxiliary_data_dir``)          ``grid_file_uri`` to retrieve ICON
                     path to the ICON grid file       grid file (see details above)
-``latitude``        Standard name of the latitude    ``latitude``
+``lat_var``         Variable name of the latitude    ``clat``
                     coordinate in the raw input
+                    file/grid file
+``lon_var``         Variable name of the longitude   ``clon``
+                    coordinate in the raw input
+                    file/grid file
+``pfull_var``       Variable name of the pressure at ``pfull`` (``dataset: ICON``) or
+                    full levels in the raw input     ``pres`` (``dataset: ICON-XPP``)
                     file
-``longitude``       Standard name of the             ``longitude``
-                    longitude coordinate in the
-                    raw input file
+``phalf_var``       Variable name of the pressure at ``phalf``
+                    half levels in the raw input
+                    file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
@@ -569,14 +588,22 @@ Key                 Description                      Default value if not specif
 ``var_type``        Variable type of the             No default (needs to be specified
                     variable in the raw input        in extra facets or recipe if
                     file                             default DRS is used)
-``zg_file``         Absolute or relative (to         If possible, use `zg` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zg`
-``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zghalf`
+``zg_file``         Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at full levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at full
+                    levels
+``zg_var``          Variable name of the geometric    ``zg``
+                    height at full levels in the raw
+                    input file
+``zghalf_file``     Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at half levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at half
+                    levels
+``zghalf_var``      Variable name of the geometric   ``zghalf``
+                    height at half levels in the raw
+                    input file
 =================== ================================ ===================================
 
 .. hint::
@@ -679,21 +706,24 @@ For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
-==================== ====================================== =================================
-Key                  Description                            Default value if not specified
-==================== ====================================== =================================
-``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
-                     and `oce`                              specified in extra facets or
-                                                            recipe if default DRS is used)
-```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to
+==================== ========================================== ====================================
+Key                  Description                                Default value if not specified
+==================== ========================================== ====================================
+``raw_name``         Variable name of the variable in the       CMOR variable name of the
+                     raw input file                             corresponding variable
+``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be
+                     and `oce`                                  specified in extra facets or
+                                                                recipe if default DRS is used)
+``freq_attribute``   A special attribute in the filename        No default
+                     `ACCESS-ESM` raw data, related to the
                      frequency of raw data
-``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
-                     root, need to specify if you want to
-                     use the cmoriser
-==================== ====================================== =================================
+``sub_dataset``      Part of the ACCESS-ESM raw dataset root,   No default
+                     needs to be specified if you want to use
+                     the cmoriser
+``ocean_grid_path``  Path to load the grid data for ACCESS      No default
+                     ocean variables
+==================== ========================================== ====================================
+
 
 .. _data-retrieval:
 

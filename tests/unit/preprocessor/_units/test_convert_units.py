@@ -83,6 +83,78 @@ class TestConvertUnits(tests.Test):
             [[0.0, 1e-2], [2e-2, 3e-2]],
         )
 
+    def test_convert_water_evaporation_flux(self):
+        """Test special conversion of water_evaporation_flux."""
+        self.arr.standard_name = "water_evaporation_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, "lwe_water_evaporation_rate")
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
+    def test_convert_lwe_water_evaporation_rate(self):
+        """Test special conversion of lwe_water_evaporation_rate."""
+        self.arr.standard_name = "lwe_water_evaporation_rate"
+        self.arr.units = "mm s-1"
+        result = convert_units(self.arr, "kg m-2 s-1")
+        self.assertEqual(result.standard_name, "water_evaporation_flux")
+        self.assertEqual(result.units, "kg m-2 s-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0], [2.0, 3.0]],
+        )
+
+    def test_convert_water_potential_evaporation_flux(self):
+        """Test special conversion of water_potential_evaporation_flux."""
+        self.arr.standard_name = "water_potential_evaporation_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, None)
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
+    def test_convert_rate_without_standard_name(self):
+        """Test conversion of a flux without a standard name."""
+        self.arr.units = "mm s-1"
+        result = convert_units(self.arr, "kg m-2 s-1")
+        self.assertEqual(result.units, "kg m-2 s-1")
+
+    def test_convert_air_mass(self):
+        """Test special conversion of surface pressure to air mass."""
+        self.arr.standard_name = "surface_air_pressure"
+        self.arr.units = "Pa"
+        result = convert_units(self.arr, "kg m-2")
+        self.assertEqual(
+            result.standard_name,
+            "atmosphere_mass_of_air_per_unit_area",
+        )
+        self.assertEqual(result.units, "kg m-2")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0 / 9.80665], [2.0 / 9.80665, 3.0 / 9.80665]],
+        )
+
+    def test_convert_air_mass_convertible(self):
+        """Test special conversion of air mass to surface pressure."""
+        self.arr.standard_name = "atmosphere_mass_of_air_per_unit_area"
+        self.arr.units = "kg m-2"
+        result = convert_units(self.arr, "Pa")
+        self.assertEqual(
+            result.standard_name,
+            "surface_air_pressure",
+        )
+        self.assertEqual(result.units, "Pa")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 9.80665], [19.6133, 29.41995]],
+        )
+
     def test_convert_precipitation_flux(self):
         """Test special conversion of precipitation_flux."""
         self.arr.standard_name = "precipitation_flux"
@@ -149,6 +221,7 @@ class TestConvertUnits(tests.Test):
 
     def test_convert_lwe_precipitation_rate_fail_invalid_name(self):
         """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = "precipitation_flux"
         self.arr.units = "mm s-1"
         self.assertRaises(ValueError, convert_units, self.arr, "kg m-2 s-1")
 
