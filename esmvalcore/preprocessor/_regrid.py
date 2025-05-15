@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import dask.array as da
 import iris
+import iris.coords
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
@@ -1155,7 +1156,9 @@ def _preserve_fx_vars(cube, result):
                 )
             else:
                 # Create cube and add coordinates to ancillary variable
-                ancillary_coords: list[tuple] = []
+                ancillary_coords: list[
+                    tuple[iris.coords.AncillaryVariable, int]
+                ] = []
                 for i, coord in enumerate(cube.coords()):
                     if i in ancillary_dims:
                         coord_idx = len(ancillary_coords)
