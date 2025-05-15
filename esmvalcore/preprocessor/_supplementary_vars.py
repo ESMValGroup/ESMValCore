@@ -125,6 +125,7 @@ def add_ancillary_variable(
             units=ancillary_cube.units,
             var_name=ancillary_cube.var_name,
             attributes=ancillary_cube.attributes,
+            long_name=ancillary_cube.long_name,
         )
     except AttributeError as err:
         msg = (
