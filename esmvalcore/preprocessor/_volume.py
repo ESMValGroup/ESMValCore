@@ -673,7 +673,8 @@ def extract_surface_from_atm(
             rtol=1e-7,
             atol=None,
         )
-        var_cube.var_name = cube.var_name + "s"
+        if cube.var_name is not None:
+            var_cube.var_name = cube.var_name + "s"
         # Remove remaining interpolated dimension of size 1.
         slices = [
             0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
