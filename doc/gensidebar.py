@@ -2,6 +2,7 @@
 
 Generates the common sidebar/toctree for the sphinx/ReadTheDocs
 documentation of the ESMValTool and its subprojects.
+Swap order so that ESMValCore is at the top for ESMValCore documentation.
 """
 
 import os
@@ -56,6 +57,17 @@ def generate_sidebar(conf, conf_api):
     # Specify the sidebar contents here
     #
 
+    _header("esmvalcore", "ESMValCore")
+    _write("esmvalcore", "Getting started", "quickstart/index")
+    _write("esmvalcore", "Example notebooks", "example-notebooks")
+    _write("esmvalcore", "The recipe format", "recipe/index")
+    _write("esmvalcore", "Diagnostic script interfaces", "interfaces")
+    _write("esmvalcore", "Development", "develop/index")
+    _write("esmvalcore", "Contributing", "contributing")
+    _write("esmvalcore", "ESMValCore API Reference", "api/esmvalcore")
+    _write("esmvalcore", "Changelog", "changelog")
+    _endl()
+
     _header("esmvaltool", "ESMValTool")
     _write("esmvaltool", "Introduction", "introduction")
     _write("esmvaltool", "ESMValTool Functionalities", "functionalities")
@@ -69,17 +81,6 @@ def generate_sidebar(conf, conf_api):
     _write("esmvaltool", "Diagnostics API Reference", "api/esmvaltool")
     _write("esmvaltool", "Frequently Asked Questions", "faq")
     _write("esmvaltool", "Changelog", "changelog")
-    _endl()
-
-    _header("esmvalcore", "ESMValCore")
-    _write("esmvalcore", "Getting started", "quickstart/index")
-    _write("esmvalcore", "Example notebooks", "example-notebooks")
-    _write("esmvalcore", "The recipe format", "recipe/index")
-    _write("esmvalcore", "Diagnostic script interfaces", "interfaces")
-    _write("esmvalcore", "Development", "develop/index")
-    _write("esmvalcore", "Contributing", "contributing")
-    _write("esmvalcore", "ESMValCore API Reference", "api/esmvalcore")
-    _write("esmvalcore", "Changelog", "changelog")
     _endl()
 
     _write_if_changed("_sidebar.rst.inc", "\n".join(lines))
