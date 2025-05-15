@@ -1166,6 +1166,7 @@ def _preserve_fx_vars(cube, result):
                 ancillary_cube = iris.cube.Cube(
                     ancillary_var.core_data(),
                     standard_name=ancillary_var.standard_name,
+                    long_name=ancillary_var.long_name,
                     units=ancillary_var.units,
                     var_name=ancillary_var.var_name,
                     attributes=ancillary_var.attributes,
