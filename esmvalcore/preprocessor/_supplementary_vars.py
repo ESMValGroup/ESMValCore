@@ -166,7 +166,7 @@ def add_ancillary_variable(
         cube_chunks = tuple(cube.lazy_data().chunks[d] for d in data_dims)
         ancillary_data = ancillary_cube.core_data()
         ancillary_data = ancillary_data.rechunk(cube_chunks)
-        ancillary_var.data = ancillary_data
+        ancillary_var.data = ancillary_cube.lazy_data().rechunk(cube_chunks)
     cube.add_ancillary_variable(ancillary_var, data_dims)
     logger.debug(
         "Added %s as ancillary variable in cube of %s.",
