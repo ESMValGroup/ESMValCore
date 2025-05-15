@@ -2410,7 +2410,7 @@ See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 ``extract_surface_from_atm``
 ----------------------------
 
-This function extract data at the surface for an atmospheric variable.
+This function extracts data at the surface for an atmospheric variable.
 
 The function retrieves the first unmasked data points along the pressure levels
 and returns the interpolated value at the corresponding surface pressure
