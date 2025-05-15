@@ -825,7 +825,9 @@ class Test(tests.Test):
         # Test without air pressure ancillary variable
         with self.assertRaises(ValueError) as err:
             extract_surface_from_atm(self.grid_4d_ps)
-        assert "Surface air pressure could not be found" in str(err.exception)
+        self.assertEqual(
+            "Surface air pressure could not be found", str(err.exception)
+        )
         # Test with ancillary variable
         self.grid_4d_ps.add_ancillary_variable(ps_ancillary, [0, 2, 3])
         result = extract_surface_from_atm(self.grid_4d_ps)
