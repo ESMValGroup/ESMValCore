@@ -642,14 +642,10 @@ def extract_surface_from_atm(
     # Declare required variables
     #   - 3D atmo variable to extract at the surface
     #   - surface_air_pressure (ps)
-    ps_cube = None
     try:
         ps_cube = cube.ancillary_variable("surface_air_pressure")
-    except iris.exceptions.AncillaryVariableNotFoundError:
-        logger.debug(
-            "Ancillary variable surface air pressure not found in cube. "
-            "Check file availability."
-        )
+    except iris.exceptions.AncillaryVariableNotFoundError as exc:
+        raise ValueError("Surface air pressure could not be found") from exc
     if ps_cube:
         # Fill masked data if necessary (interpolation fails with masked data)
         (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
