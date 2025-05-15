@@ -646,7 +646,6 @@ def extract_surface_from_atm(
         ps_cube = cube.ancillary_variable("surface_air_pressure")
     except iris.exceptions.AncillaryVariableNotFoundError as exc:
         raise ValueError("Surface air pressure could not be found") from exc
-    if ps_cube:
         # Fill masked data if necessary (interpolation fails with masked data)
         (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
         mask = da.ma.getmaskarray(cube.core_data())
