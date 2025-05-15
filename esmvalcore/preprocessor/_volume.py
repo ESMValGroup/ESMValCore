@@ -623,6 +623,7 @@ def _get_first_unmasked_data(array: da.Array, axis: int) -> da.Array:
 
 
 @register_supplementaries(variables=["ps"], required="require_at_least_one")
+@preserve_float_dtype
 def extract_surface_from_atm(
     cube: Cube,
 ) -> Cube:
