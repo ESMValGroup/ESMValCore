@@ -429,6 +429,15 @@ class DataSource:
     dirname_template: str
     filename_template: str
 
+    def __post_init__(self) -> None:
+        """Set further attributes."""
+        self._regex_pattern = self._templates_to_regex()
+
+    @property
+    def regex_pattern(self) -> str:
+        """Get regex pattern that can be used to extract facets from paths."""
+        return self._regex_pattern
+
     def get_glob_patterns(self, **facets) -> list[Path]:
         """Compose the globs that will be used to look for files."""
         dirname_globs = _replace_tags(self.dirname_template, facets)
@@ -549,13 +558,6 @@ class DataSource:
             pattern = pattern.replace(rf"\[{chars}\]", f"[{chars}]")
 
         return pattern
-
-    @property
-    def regex_pattern(self) -> str:
-        """Get regex pattern that can be used to extract facets from paths."""
-        if not hasattr(self, "_regex_pattern"):
-            self._regex_pattern = self._templates_to_regex()
-        return self._regex_pattern
 
 
 _ROOTPATH_WARNED = set()
