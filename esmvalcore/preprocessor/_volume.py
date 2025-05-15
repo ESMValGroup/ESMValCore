@@ -680,7 +680,5 @@ def extract_surface_from_atm(
         # Remove remaining auxiliary coordinate of air_pressure
         logger.debug("Extracting surface using surface air pressure.")
 
-    else:
-        raise ValueError("Surface air pressure could not be found. Stopping.")
 
     return var_cube
