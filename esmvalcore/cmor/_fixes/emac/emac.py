@@ -392,7 +392,7 @@ class Zg(EmacFix):
         """Fix metadata.
 
         Convert geopotential Phi given by EMAC to geopotential height Z using
-        Z = Phi / g0 (g0 is standard acceleration of gravity)
+        Z = Phi / g0 (g0 is standard acceleration of gravity).
 
         """
         g0_value = constants.value("standard acceleration of gravity")

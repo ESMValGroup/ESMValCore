@@ -11,8 +11,9 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
-import iris
 import isodate
+from cf_units import Unit
+from netCDF4 import Dataset, Variable
 
 from .config import CFG
 from .config._config import get_project_config
@@ -63,6 +64,14 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
                 start_point = end_point = end.group(group)
 
     return start_point, end_point
+
+
+def _get_var_name(variable: Variable) -> str:
+    """Get variable name (following Iris' Cube.name())."""
+    for attr in ("standard_name", "long_name"):
+        if attr in variable.ncattrs():
+            return str(variable.getncattr(attr))
+    return str(variable.name)
 
 
 def _get_start_end_date(
@@ -136,22 +145,20 @@ def _get_start_end_date(
         and Path(file).exists()
     ):
         logger.debug("Must load file %s for daterange ", file)
-        cubes = iris.load(file)
-
-        for cube in cubes:
-            logger.debug(cube)
-            try:
-                time = cube.coord("time")
-            except iris.exceptions.CoordinateNotFoundError:
-                continue
-            start_date = isodate.date_isoformat(
-                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-
-            end_date = isodate.date_isoformat(
-                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-            break
+        dataset = Dataset(file)
+        for variable in dataset.variables.values():
+            var_name = _get_var_name(variable)
+            if var_name == "time" and "units" in variable.ncattrs():
+                time_units = Unit(variable.getncattr("units"))
+                start_date = isodate.date_isoformat(
+                    time_units.num2date(variable[0]),
+                    format=isodate.isostrf.DATE_BAS_COMPLETE,
+                )
+                end_date = isodate.date_isoformat(
+                    time_units.num2date(variable[-1]),
+                    format=isodate.isostrf.DATE_BAS_COMPLETE,
+                )
+                break
 
     if start_date is None or end_date is None:
         raise ValueError(
@@ -361,8 +368,8 @@ def _replace_tags(
             replacewith = "*"
         else:
             raise RecipeError(
-                f"Dataset key '{tag}' must be specified for "
-                f"{variable}, check your recipe entry"
+                f"Dataset key '{tag}' must be specified for {variable}, check "
+                f"your recipe entry and/or extra facet file(s)"
             )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
