@@ -1269,7 +1269,7 @@ class TestCMORCheck(unittest.TestCase):
             delta = float(frequency[:-2]) / 24
         else:
             msg = f"Frequency {frequency} not supported"
-            raise Exception(msg)
+            raise ValueError(msg)
         start = 0
         end = start + delta * 20
         return np.arange(start, end, step=delta)

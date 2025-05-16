@@ -318,7 +318,7 @@ def test_sorting():
 
     file1 = _download.ESGFFile([result1])
     file2 = _download.ESGFFile([result2])
-    assert file1 == file1
+    assert file1 == file1  # noqa: PLR0124
     assert file1 != file2
     assert file1 < file2
     assert file2 > file1
@@ -538,10 +538,7 @@ def test_single_download_fail(mocker, tmp_path):
     }
     file = _download.ESGFFile([FileResult(json=json, context=None)])
     local_file = file.local_file(dest_folder)
-    msg = (
-        f"Failed to download file {local_file}, errors:"
-        "\n" + f"{url}: test error"
-    )
+    msg = f"Failed to download file {local_file}, errors:\n{url}: test error"
     with pytest.raises(_download.DownloadError, match=re.escape(msg)):
         file.download(dest_folder)
 

@@ -28,8 +28,10 @@ class DerivedVariable(DerivedVariableBase):
         """Compute Heating from Shortwave Absorption assuming clear sky."""
         rsdscs_cube = cubes.extract_cube(
             Constraint(
-                name="surface_downwelling_shortwave_flux_in_air_"
-                + "assuming_clear_sky",
+                name=(
+                    "surface_downwelling_shortwave_flux_in_air_"
+                    "assuming_clear_sky"
+                ),
             ),
         )
         rsdt_cube = cubes.extract_cube(
@@ -37,8 +39,10 @@ class DerivedVariable(DerivedVariableBase):
         )
         rsuscs_cube = cubes.extract_cube(
             Constraint(
-                name="surface_upwelling_shortwave_flux_in_air_"
-                + "assuming_clear_sky",
+                name=(
+                    "surface_upwelling_shortwave_flux_in_air_"
+                    "assuming_clear_sky"
+                ),
             ),
         )
         rsutcs_cube = cubes.extract_cube(

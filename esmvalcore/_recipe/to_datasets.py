@@ -425,7 +425,9 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
+def _dataset_from_files(  # noqa: C901
+    dataset: Dataset,
+) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
     errors: list[str] = []
@@ -519,7 +521,7 @@ def _report_unexpanded_globs(
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        patterns = expanded_ds._file_globs
+        patterns = expanded_ds._file_globs  # noqa: SLF001
         msg = (
             f"{msg}\nNo files found matching:\n"
             + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]

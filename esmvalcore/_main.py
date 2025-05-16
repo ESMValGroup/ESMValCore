@@ -521,7 +521,7 @@ class ESMValTool:
 
         if (
             not session["save_intermediary_cubes"]
-            and session._fixed_file_dir.exists()
+            and session._fixed_file_dir.exists()  # noqa: SLF001
         ):
             logger.debug(
                 "Removing `preproc/fixed_files` directory containing fixed "
@@ -532,7 +532,7 @@ class ESMValTool:
                 "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
                 "to `false` in your configuration",
             )
-            shutil.rmtree(session._fixed_file_dir)
+            shutil.rmtree(session._fixed_file_dir)  # noqa: SLF001
 
         if session["remove_preproc_dir"] and session.preproc_dir.exists():
             logger.info(
@@ -634,7 +634,6 @@ def run():
         logger.exception(
             "Program terminated abnormally, see stack trace "
             "below for more information:",
-            exc_info=True,
         )
         logger.info(
             "\n"

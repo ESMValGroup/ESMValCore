@@ -37,8 +37,9 @@ def cube():
         units="days since 2000-1-1",
     )
 
+    rng = np.random.default_rng(42)
     return Cube(
-        np.random.random_sample([2, 2, 2]),
+        rng.random((2, 2, 2)),
         var_name="sample",
         units="1",
         dim_coords_and_dims=((lat, 0), (lon, 1), (time, 2)),

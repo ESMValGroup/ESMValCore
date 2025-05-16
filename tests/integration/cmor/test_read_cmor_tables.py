@@ -13,7 +13,7 @@ def test_read_cmor_tables_raiser():
     cfg_file = {"cow": "moo"}
     with pytest.raises(TypeError) as exc:
         read_cmor_tables(cfg_file)
-        assert "cow" in str(exc)
+    assert "cow" in str(exc)
 
 
 def test_read_cmor_tables():

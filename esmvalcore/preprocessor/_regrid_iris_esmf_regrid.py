@@ -114,7 +114,7 @@ class IrisESMFRegrid:
         Keyword arguments that will be provided to the regridder.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         method: Literal["bilinear", "conservative", "nearest"],
         mdtol: float | None = None,

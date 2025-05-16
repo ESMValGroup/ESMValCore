@@ -37,7 +37,7 @@ def test_compute_with_progress(
 
     delayeds = [dask.delayed(func)(0.11)]
     _dask_progress._compute_with_progress(delayeds, description="test")
-    if interval == 0.0:
+    if interval == 0.0:  # noqa: SIM108
         # Assert that some progress bar has been written to stdout.
         progressbar = capsys.readouterr().out
     else:

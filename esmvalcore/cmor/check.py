@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-from collections import namedtuple
 from enum import IntEnum
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import cf_units
 import dask
@@ -247,7 +246,9 @@ class CMORCheck:
         #
         #  => Very difficult to check!
 
-    def _check_var_metadata(self):
+    def _check_var_metadata(  # noqa: C901
+        self,
+    ):
         """Check metadata of variable."""
         # Check standard_name
         if self._cmor_var.standard_name:
@@ -534,7 +535,12 @@ class CMORCheck:
 
     def _check_coord_ranges(self, coords: list[tuple[CoordinateInfo, Coord]]):
         """Check coordinate value are inside valid ranges."""
-        Limit = namedtuple("Limit", ["name", "type", "limit", "value"])
+
+        class Limit(NamedTuple):
+            name: str
+            type: str
+            limit: float
+            value: float
 
         limits = []
         for coord_info, coord in coords:
@@ -621,7 +627,12 @@ class CMORCheck:
                 self._cmor_var.short_name,
             )
 
-    def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
+    def _check_coord_monotonicity_and_direction(  # noqa: C901
+        self,
+        cmor,
+        coord,
+        var_name,
+    ):
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
             return
@@ -687,7 +698,9 @@ class CMORCheck:
                         str(coord.units),
                     )
 
-    def _check_time_coord(self):
+    def _check_time_coord(  # noqa: C901,PLR0912,PLR0915
+        self,
+    ):
         """Check time coordinate."""
         try:
             coord = self._cube.coord("time", dim_coords=True)

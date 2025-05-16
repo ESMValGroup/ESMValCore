@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from contextlib import suppress
+from typing import TYPE_CHECKING, ClassVar
 
 from iris import NameConstraint
 
@@ -27,7 +28,7 @@ class NativeDatasetFix(Fix):
     """Common fix operations for native datasets."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS: dict[str, str] = {}
+    INVALID_UNITS: ClassVar[dict[str, str]] = {}
 
     def fix_scalar_coords(self, cube: Cube) -> None:
         """Add missing scalar coordinate to cube (in-place).
@@ -240,10 +241,8 @@ class NativeDatasetFix(Fix):
         if isinstance(coord, str):
             coord = cube.coord(coord)
         if not coord.has_bounds():
-            try:
+            with suppress(ValueError):
                 coord.guess_bounds()
-            except ValueError:  # Coord has only 1 point
-                pass
         return coord
 
     @staticmethod

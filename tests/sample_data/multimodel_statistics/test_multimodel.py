@@ -93,7 +93,7 @@ def timeseries_cubes_month(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode("latin1"))
+        cubes = pickle.loads(data.encode("latin1"))  # noqa: S301
     else:
         # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
@@ -126,7 +126,7 @@ def timeseries_cubes_day(request):
     data = request.config.cache.get(cache_key, None)
 
     if data:
-        cubes = pickle.loads(data.encode("latin1"))
+        cubes = pickle.loads(data.encode("latin1"))  # noqa: S301
 
     else:
         # Increase TEST_REVISION anytime you make changes here.

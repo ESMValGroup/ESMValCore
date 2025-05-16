@@ -107,7 +107,7 @@ def _search_index_nodes(facets):
     search_args = dict(cfg["search_connection"])
     urls = search_args.pop("urls")
 
-    global FIRST_ONLINE_INDEX_NODE
+    global FIRST_ONLINE_INDEX_NODE  # noqa: PLW0603
     if FIRST_ONLINE_INDEX_NODE:
         urls.insert(0, urls.pop(urls.index(FIRST_ONLINE_INDEX_NODE)))
 
@@ -155,7 +155,7 @@ def esgf_search_files(facets):
     """
     results = _search_index_nodes(facets)
 
-    files = ESGFFile._from_results(results, facets)
+    files = ESGFFile._from_results(results, facets)  # noqa: SLF001
 
     msg = "none" if not files else "\n" + "\n".join(str(f) for f in files)
     logger.debug(

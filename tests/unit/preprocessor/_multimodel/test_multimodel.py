@@ -504,8 +504,8 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
 @pytest.mark.parametrize("span", SPAN_OPTIONS)
 def test_align(span):
     """Test _align function."""
-    # TODO --> check that if a cube is extended,
-    #          the extended points are masked (not NaN!)
+    # TODO: check that if a cube is extended,
+    # the extended points are masked (not NaN!)
     len_data = 3
 
     cubes = []

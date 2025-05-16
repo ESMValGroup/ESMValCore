@@ -102,7 +102,7 @@ class RichDistributedProgressBar(
         self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
 
-    def _draw_bar(self, remaining, all, **kwargs):  # pylint: disable=redefined-builtin
+    def _draw_bar(self, remaining, all, **kwargs):  # noqa: A002 # pylint: disable=redefined-builtin
         completed = all - remaining
         self.progress.update(self.task_id, completed=completed, total=all)
 
@@ -173,7 +173,7 @@ class DistributedProgressLogger(
     def _draw_bar(
         self,
         remaining: int,
-        all: int,  # pylint: disable=redefined-builtin
+        all: int,  # noqa: A002 # pylint: disable=redefined-builtin
         **kwargs,
     ) -> None:
         frac = (1 - remaining / all) if all else 1.0

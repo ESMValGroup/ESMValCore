@@ -11,7 +11,7 @@ from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore import esgf, local
 from esmvalcore._recipe import check
@@ -47,7 +47,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-File = Union[esgf.ESGFFile, local.LocalFile]
+File = esgf.ESGFFile | local.LocalFile
 
 INHERITED_FACETS: list[str] = [
     "dataset",
@@ -228,8 +228,8 @@ class Dataset:
                 ):
                     partially_defined.append((dataset, file))
                 else:
-                    dataset._update_timerange()
-                    dataset._supplementaries_from_files()
+                    dataset._update_timerange()  # noqa: SLF001
+                    dataset._supplementaries_from_files()  # noqa: SLF001
                     expanded = True
                     yield dataset
 
@@ -301,7 +301,7 @@ class Dataset:
 
             for mip in mips:
                 dataset_template = self.copy(mip=mip)
-                for dataset in dataset_template._get_available_datasets():
+                for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
                     expanded = True
                     yield dataset
 
@@ -418,7 +418,7 @@ class Dataset:
             A copy of the dataset.
         """
         new = self.__class__()
-        new._session = self._session
+        new._session = self._session  # noqa: SLF001
         for key, value in self.facets.items():
             new.set_facet(key, deepcopy(value), key in self._persist)
         for key, value in facets.items():
@@ -584,7 +584,7 @@ class Dataset:
     def session(self, session: Session | None) -> None:
         self._session = session
         for supplementary in self.supplementaries:
-            supplementary._session = session
+            supplementary._session = session  # noqa: SLF001
 
     def add_supplementary(self, **facets: FacetValue) -> None:
         """Add an supplementary dataset.
@@ -613,7 +613,7 @@ class Dataset:
         """
         self._augment_facets()
         for supplementary in self.supplementaries:
-            supplementary._augment_facets()
+            supplementary._augment_facets()  # noqa: SLF001
 
     def _augment_facets(self):
         extra_facets = get_extra_facets(self, self.session["extra_facets_dir"])
@@ -718,7 +718,7 @@ class Dataset:
         cube = self._load()
         supplementary_cubes = []
         for supplementary_dataset in self.supplementaries:
-            supplementary_cube = supplementary_dataset._load()
+            supplementary_cube = supplementary_dataset._load()  # noqa: SLF001
             supplementary_cubes.append(supplementary_cube)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
@@ -748,7 +748,7 @@ class Dataset:
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
         fix_dir_prefix = Path(
-            self.session._fixed_file_dir,
+            self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",
         )
 
@@ -832,7 +832,7 @@ class Dataset:
                 datasets = [
                     ds.copy(**{key: value})
                     for ds in datasets
-                    for value in ds._expand_range(key)
+                    for value in ds._expand_range(key)  # noqa: SLF001
                 ]
         return datasets
 

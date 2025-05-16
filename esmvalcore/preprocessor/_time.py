@@ -1362,7 +1362,7 @@ def timeseries_filter(
         raise
 
     # Construct weights depending on frequency
-    # TODO implement more filters!
+    # TODO: implement more filters!
     supported_filters = [
         "lowpass",
     ]

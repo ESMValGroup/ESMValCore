@@ -70,8 +70,8 @@ def test_tags_manager_fails():
     with pytest.raises(ValueError):
         tags.get_tag_value(section="section", tag="undefined")
 
+    dict_with_undefined_tags = {"section": ["tag1", "undefined"]}
     with pytest.raises(ValueError):
-        dict_with_undefined_tags = {"section": ["tag1", "undefined"]}
         tags.replace_tags_in_dict(dict_with_undefined_tags)
 
 

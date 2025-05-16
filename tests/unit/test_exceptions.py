@@ -9,7 +9,7 @@ from esmvalcore.exceptions import SuppressedError
 def test_suppressedhook(capsys, exception):
     try:
         msg = "error"
-        raise exception(msg)
+        raise exception(msg)  # noqa: TRY301
     except exception:
         args = sys.exc_info()
     sys.excepthook(*args)
