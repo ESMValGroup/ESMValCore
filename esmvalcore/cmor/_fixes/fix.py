@@ -80,11 +80,10 @@ class Fix:
 
     def fix_file(
         self,
-        file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+        file: str | Path | xr.Dataset | ncdata.NcData,
         output_dir: Path,
         add_unique_suffix: bool = False,
-        ignore_warnings: Optional[list[dict[str, Any]]] = None,
-    ) -> str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData:
+    ) -> str | Path | xr.Dataset | ncdata.NcData:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
@@ -97,9 +96,8 @@ class Fix:
         -------
         A path should only be returned if it points to the original (unchanged)
         file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~iris.cube.Cube`,
-        :class:`~iris.cube.CubeList`, :class:`~ncdata.NcData` or
-        :class:`~xarray.Dataset` object. Under no circumstances a copy of the
+        function should return a :class:`~ncdata.NcData` or
+        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
         input data should be created (this is very inefficient).
 
         Parameters
@@ -111,14 +109,10 @@ class Fix:
             Output directory for fixed files.
         add_unique_suffix:
             Adds a unique suffix to ``output_dir`` for thread safety.
-        ignore_warnings:
-            Keyword arguments passed to :func:`warnings.filterwarnings` used to
-            ignore warnings during data loading. Each list element corresponds
-            to one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------
-        str | pathlib.Path | iris.cube.Cube | iris.cube.CubeList | xr.Dataset | ncdata.NcData:
+        str | pathlib.Path | xr.Dataset | ncdata.NcData:
             Fixed data or a path to them.
 
         """

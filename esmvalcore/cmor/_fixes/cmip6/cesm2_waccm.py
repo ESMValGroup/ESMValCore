@@ -15,13 +15,7 @@ from .cesm2 import Tasmin as BaseTasmin
 class Cl(BaseCl):
     """Fixes for cl."""
 
-    def fix_file(
-        self,
-        file,
-        output_dir,
-        add_unique_suffix=False,
-        ignore_warnings=None,
-    ):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.

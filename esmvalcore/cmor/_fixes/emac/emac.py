@@ -40,13 +40,7 @@ class AllVars(EmacFix):
         "kg/m**2s": "kg m-2 s-1",
     }
 
-    def fix_file(
-        self,
-        file,
-        output_dir,
-        add_unique_suffix=False,
-        ignore_warnings=None,
-    ):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Fix file.
 
         Fixes hybrid pressure level coordinate.

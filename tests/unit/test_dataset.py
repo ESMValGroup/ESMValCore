@@ -1725,7 +1725,6 @@ def test_load(mocker, session):
             "ensemble": "r1i1p1",
             "exp": "historical",
             "frequency": "yr",
-            "ignore_warnings": None,
             "mip": "Oyr",
             "output_dir": fix_dir_prefix,
             "project": "CMIP5",

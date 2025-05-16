@@ -934,7 +934,6 @@ the preprocessing chain.
 
 Currently supported preprocessor steps:
 
-* :func:`~esmvalcore.preprocessor.fix_file`
 * :func:`~esmvalcore.preprocessor.load`
 
 Here is an example on how to ignore specific warnings during the preprocessor

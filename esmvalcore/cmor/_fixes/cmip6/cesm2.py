@@ -20,13 +20,7 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(
-        self,
-        file,
-        output_dir,
-        add_unique_suffix=False,
-        ignore_warnings=None,
-    ):
+    def _fix_formula_terms(self, file, output_dir, add_unique_suffix=False):
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
             output_dir, file, add_unique_suffix=add_unique_suffix
