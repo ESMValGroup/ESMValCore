@@ -732,7 +732,7 @@ class PreprocessingTask(BaseTask):
         for product in products:
             product.initialize_provenance(self.activity)
 
-    def _run(self, _) -> list[str]:
+    def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
         self._initialize_product_provenance()
 
@@ -803,7 +803,7 @@ class PreprocessingTask(BaseTask):
             "\n".join(
                 [
                     str(p),
-                    "input files: " + pformat(p._input_files),
+                    "input files: " + pformat(p._input_files),  # noqa: SLF001
                     "settings: " + pformat(p.settings),
                 ],
             )

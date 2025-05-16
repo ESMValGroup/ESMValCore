@@ -423,7 +423,7 @@ def check_lat_lon(cube):
     check_mesh(mesh)
 
 
-def check_mesh(mesh):
+def check_mesh(mesh):  # noqa: PLR0915
     """Check the mesh."""
     assert mesh is not None
     assert mesh.var_name is None

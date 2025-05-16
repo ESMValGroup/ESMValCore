@@ -151,7 +151,9 @@ class Test(tests.Test):
             points=np.array([1.1, 2.2]),
         )
 
-    def setUp(self):
+    def setUp(  # noqa: C901
+        self,
+    ):
         """Set up fixtures for mapping test."""
         self.coord_system = mock.Mock(return_value=None)
         self.scalar_coord = mock.sentinel.scalar_coord

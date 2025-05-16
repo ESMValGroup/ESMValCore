@@ -270,7 +270,7 @@ def save_cnrm_cm6_1_cl_file(save_path):
     print(f"Saved {nc_path}")
 
 
-def save_cesm2_cl_file(save_path):
+def save_cesm2_cl_file(save_path):  # noqa: PLR0915
     """Create netcdf file with similar issues as ``cl``."""
     nc_path = os.path.join(save_path, "cesm2_cl.nc")
     with Dataset(nc_path, mode="w") as dataset:

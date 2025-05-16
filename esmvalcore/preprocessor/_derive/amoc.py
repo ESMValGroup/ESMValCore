@@ -23,9 +23,7 @@ class DerivedVariable(DerivedVariableBase):
             ]
         else:
             msg = f"Project {project} can not be used for Amoc derivation."
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         return required
 

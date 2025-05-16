@@ -412,7 +412,7 @@ AREA_WEIGHTS = CellMeasure(
     ("metric", "data", "ref_data", "long_name", "var_name", "units"),
     TEST_DISTANCE_METRICS,
 )
-def test_distance_metric(
+def test_distance_metric(  # noqa: PLR0913, PLR0915
     regular_cubes,
     ref_cubes,
     metric,
@@ -607,15 +607,14 @@ def test_distance_metric_lazy(
 
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize(
-    ("metric", "data", "_", "long_name", "var_name", "units"),
-    TEST_DISTANCE_METRICS,
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_cubes(
+def test_distance_metric_cubes(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -653,15 +652,14 @@ def test_distance_metric_cubes(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    ("metric", "data", "_", "long_name", "var_name", "units"),
-    TEST_DISTANCE_METRICS,
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_masked_data(
+def test_distance_metric_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -747,15 +745,13 @@ def test_distance_metric_masked_data(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    ("metric", "_", "__", "long_name", "var_name", "units"),
-    TEST_DISTANCE_METRICS,
+    ("metric", "long_name", "var_name", "units"),
+    [t[:1] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_fully_masked_data(
+def test_distance_metric_fully_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
-    _,
-    __,
     long_name,
     var_name,
     units,

@@ -412,9 +412,9 @@ def deprecate_config_file(validated_config, value, validated_value):
         Validated value for ``config_file`` option.
 
     """
-    validated_config  # noqa
-    value  # noqa
-    validated_value  # noqa
+    validated_config  # noqa: B018
+    value  # noqa: B018
+    validated_value  # noqa: B018
     option = "config_file"
     deprecated_version = "2.12.0"
     remove_version = "2.14.0"

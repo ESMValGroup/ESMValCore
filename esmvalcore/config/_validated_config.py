@@ -5,7 +5,7 @@ from __future__ import annotations
 import pprint
 import warnings
 from collections.abc import Callable, MutableMapping
-from typing import Any
+from typing import Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -22,7 +22,7 @@ from ._config_validators import ValidationError
 class ValidatedConfig(MutableMapping):
     """Based on `matplotlib.rcParams`."""
 
-    _validate: dict[str, Callable] = {}
+    _validate: ClassVar[dict[str, Callable]] = {}
     """Validation function for each configuration option.
 
     Each key and value in the dictionary corresponds to a configuration option
@@ -31,7 +31,7 @@ class ValidatedConfig(MutableMapping):
     ``ValidationError`` if invalid values are given.
     """
 
-    _deprecate: dict[str, Callable] = {}
+    _deprecate: ClassVar[dict[str, Callable]] = {}
     """Handle deprecated options.
 
     Each key and value in the dictionary corresponds to a configuration option
@@ -40,14 +40,14 @@ class ValidatedConfig(MutableMapping):
     ``f(self, value, validated_value) -> None``.
     """
 
-    _deprecated_defaults: dict[str, Any] = {}
+    _deprecated_defaults: ClassVar[dict[str, Any]] = {}
     """Default values for deprecated options.
 
     Default values for deprecated options that are used if the option is not
     present in the ``_mapping`` dictionary.
     """
 
-    _warn_if_missing: tuple[tuple[str, str], ...] = ()
+    _warn_if_missing: ClassVar[tuple[tuple[str, str], ...]] = ()
     """Handle missing options.
 
     Each sub-tuple in the tuple consists of an option for which a warning is

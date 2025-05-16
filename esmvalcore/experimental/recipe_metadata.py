@@ -193,7 +193,7 @@ class Reference:
         try:
             formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             msg = f"Could not render {self._key!r}: {err}"
             raise RenderError(
                 msg,

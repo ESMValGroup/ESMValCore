@@ -105,9 +105,11 @@ def _get_start_end_date(
     ValueError
         Start or end date cannot be determined.
     """
-    if hasattr(file, "name"):  # Path, LocalFile, ESGFFile
+    if hasattr(file, "name"):  # noqa: SIM108
+        # Path, LocalFile, ESGFFile
         stem = Path(file.name).stem
-    else:  # str
+    else:
+        # str
         stem = Path(file).stem
 
     start_date = end_date = None

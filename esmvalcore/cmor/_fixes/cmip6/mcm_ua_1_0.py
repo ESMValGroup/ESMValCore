@@ -26,7 +26,10 @@ def strip_cube_metadata(cube):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(  # noqa: C901
+        self,
+        cubes,
+    ):
         """Fix metadata.
 
         Remove unnecessary spaces in metadata and rename ``var_name`` of

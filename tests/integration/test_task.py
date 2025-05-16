@@ -373,4 +373,4 @@ def test_diagnostic_run_task_fail(
     monkeypatch.setattr(BaseTask, "_run", _run)
     with pytest.raises(DiagnosticError) as err_mssg:
         task.run()
-        assert diag_text[1] in str(err_mssg.value)
+    assert diag_text[1] in str(err_mssg.value)

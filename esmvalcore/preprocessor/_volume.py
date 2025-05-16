@@ -524,24 +524,21 @@ def extract_transect(
     lons = cube.coord("longitude")
 
     if lats.ndim == 2:
-        raise ValueError(
-            "extract_transect: Not implemented for irregular arrays!"
-            + "\nTry regridding the data first.",
+        msg = (
+            "extract_transect: Not implemented for irregular arrays!\n"
+            "Try regridding the data first."
         )
+        raise ValueError(msg)
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         msg = (
             "extract_transect: Can't slice along lat and lon at the same time"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)  # noqa: TRY004
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         msg = "extract_transect: Can't reduce lat and lon at the same time"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)  # noqa: TRY004
 
     for dim_name, dim_cut, coord in zip(
         ["latitude", "longitude"],

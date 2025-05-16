@@ -20,11 +20,12 @@ class TestAllVars(unittest.TestCase):
     def setUp(self):
         """Set up tests."""
         vardef = get_var_info("CMIP6", "Omon", "tos")
+        rng = np.random.default_rng()
         self.fix = AllVars(vardef)
-        self.cube = Cube(np.random.rand(2, 2, 2), var_name="tos")
+        self.cube = Cube(rng.random((2, 2, 2)), var_name="tos")
         self.cube.add_aux_coord(
             AuxCoord(
-                np.random.rand(2, 2),
+                rng.random((2, 2)),
                 var_name="nav_lat",
                 standard_name="latitude",
             ),
@@ -32,7 +33,7 @@ class TestAllVars(unittest.TestCase):
         )
         self.cube.add_aux_coord(
             AuxCoord(
-                np.random.rand(2, 2),
+                rng.random((2, 2)),
                 var_name="nav_lon",
                 standard_name="longitude",
             ),
@@ -41,7 +42,10 @@ class TestAllVars(unittest.TestCase):
 
     def test_fix_metadata_ocean_var(self):
         """Test ``fix_metadata`` for ocean variables."""
-        cell_area = Cube(np.random.rand(2, 2), standard_name="cell_area")
+        cell_area = Cube(
+            np.random.default_rng().random((2, 2)),
+            standard_name="cell_area",
+        )
         cubes = self.fix.fix_metadata(CubeList([self.cube, cell_area]))
 
         self.assertEqual(len(cubes), 1)

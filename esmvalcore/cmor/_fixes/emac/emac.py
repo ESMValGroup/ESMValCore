@@ -14,6 +14,7 @@ variable) as single argument.
 import logging
 import warnings
 from shutil import copyfile
+from typing import ClassVar
 
 import dask.array as da
 import iris.analysis
@@ -36,7 +37,7 @@ class AllVars(EmacFix):
     """Fixes for all variables."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS = {
+    INVALID_UNITS: ClassVar[dict[str, str]] = {
         "kg/m**2s": "kg m-2 s-1",
     }
 

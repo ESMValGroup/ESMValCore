@@ -497,7 +497,10 @@ class Zg(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def _fix_coordinates(self, cube):
+    def _fix_coordinates(  # noqa: C901
+        self,
+        cube,
+    ):
         """Fix coordinates."""
         # Add scalar height coordinates
         if "height2m" in self.vardef.dimensions:

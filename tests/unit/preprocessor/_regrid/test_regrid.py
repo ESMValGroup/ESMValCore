@@ -109,7 +109,7 @@ def test_invalid_target_grid(scheme, cube_10x10, mocker):
     """Test `regrid.`."""
     target_grid = mocker.sentinel.target_grid
     msg = "Expecting a cube"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         regrid(cube_10x10, target_grid, scheme)
 
 

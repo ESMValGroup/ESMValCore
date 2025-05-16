@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 SHAPE_ID_KEYS: tuple[str, ...] = ("name", "NAME", "Name", "id", "ID")
 
 
-def extract_region(
+def extract_region(  # noqa: C901
     cube: Cube,
     start_longitude: float,
     end_longitude: float,

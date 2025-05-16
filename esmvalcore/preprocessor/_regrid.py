@@ -596,7 +596,7 @@ def _get_target_grid_cube(
 
     if not isinstance(target_grid_cube, Cube):
         msg = f"Expecting a cube, got {target_grid}."
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     return target_grid_cube
 

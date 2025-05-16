@@ -127,12 +127,12 @@ class RecipeOutput(Mapping):
         The session used to run the recipe.
     """
 
-    FILTER_ATTRS: list = [
+    FILTER_ATTRS: tuple = (
         "realms",
         "plot_type",  # Used by several diagnostics
         "plot_types",
         "long_names",
-    ]
+    )
 
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output

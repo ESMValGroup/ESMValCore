@@ -1542,7 +1542,7 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + ".xml")
 
 
-def test_alias_generation(tmp_path, patched_datafinder, session):
+def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901, PLR0912
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1934,9 +1934,9 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
 
     assert len(product_out) == len(statistics)
     assert "OBS" not in product_out
-    for id, _ in product_out:
-        assert id != "OBS"
-        assert id == "CMIP5"
+    for id_, _ in product_out:
+        assert id_ != "OBS"
+        assert id_ == "CMIP5"
     task._initialize_product_provenance()
     assert next(iter(products)).provenance is not None
 

@@ -117,7 +117,7 @@ class TestHelpers(tests.Test):
     """Unit tests for helper functions."""
 
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
-    def setUp(self):
+    def setUp(self):  # noqa: PLR0915
         """Set up fixtures."""
         # pylint: disable=too-many-locals
         lat_1d_pre_bounds = np.linspace(-90, 90, 5)
@@ -555,7 +555,7 @@ class TestHelpers(tests.Test):
 
     def test_is_lon_circular_invalid_argument(self):
         """Test detection of circular longitudes, invalid argument."""
-        self.assertRaises(ValueError, is_lon_circular, None)
+        self.assertRaises(TypeError, is_lon_circular, None)
 
     def test_is_lon_circular_2d_aux_coords(self):
         """Test detection of circular longitudes 2d aux coords."""

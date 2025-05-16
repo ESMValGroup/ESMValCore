@@ -36,7 +36,7 @@ def _make_vcoord(data, dtype=None):
     return zcoord
 
 
-def _make_cube(
+def _make_cube(  # noqa: PLR0915,C901
     data: np.ndarray,
     aux_coord: bool = True,
     dim_coord: bool = True,

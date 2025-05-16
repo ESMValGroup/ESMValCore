@@ -59,7 +59,7 @@ def test_logging_log_level_invalid():
 )
 def test_filter_multiple_names(names, mode, output):
     """Test `FilterMultipleNames`."""
-    filter = FilterMultipleNames(names, mode)
+    filter_ = FilterMultipleNames(names, mode)
     record = logging.LogRecord(
         "a.b.c",
         "level",
@@ -69,4 +69,4 @@ def test_filter_multiple_names(names, mode, output):
         [],
         "exc_info",
     )
-    assert filter.filter(record) is output
+    assert filter_.filter(record) is output

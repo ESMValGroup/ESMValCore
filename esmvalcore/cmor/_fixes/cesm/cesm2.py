@@ -16,6 +16,7 @@ esmvalcore/cmor/_fixes/emac/emac.py for examples).
 """
 
 import logging
+from typing import ClassVar
 
 from iris.cube import CubeList
 
@@ -28,7 +29,7 @@ class AllVars(NativeDatasetFix):
     """Fixes for all variables."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS = {
+    INVALID_UNITS: ClassVar[dict[str, str]] = {
         "fraction": "1",
     }
 

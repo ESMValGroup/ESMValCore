@@ -130,6 +130,6 @@ def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
 
     session = CFG.start_session(recipe.path.stem)
 
+    task = "example/non-existent"
     with pytest.raises(RecipeError):
-        task = "example/non-existent"
         _ = recipe.run(task, session)

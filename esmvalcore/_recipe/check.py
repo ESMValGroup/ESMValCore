@@ -167,7 +167,7 @@ def variable(
 def _log_data_availability_errors(dataset):
     """Check if the required input data is available."""
     input_files = dataset.files
-    patterns = dataset._file_globs
+    patterns = dataset._file_globs  # noqa: SLF001
     if not input_files:
         logger.error("No input files found for %s", dataset)
         if patterns:
@@ -436,22 +436,20 @@ def _check_duration_periods(timerange):
         try:
             isodate.parse_duration(timerange[0])
         except isodate.isoerror.ISO8601Error as exc:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                f"{timerange[0]} is not valid duration according to ISO 8601."
-                + "\n"
-                + str(exc),
-            ) from exc
+            msg = (
+                f"Invalid value encountered for `timerange`. {timerange[0]} is "
+                f"not valid duration according to ISO 8601.\n{exc}"
+            )
+            raise RecipeError(msg) from exc
     elif timerange[1].startswith("P"):
         try:
             isodate.parse_duration(timerange[1])
         except isodate.isoerror.ISO8601Error as exc:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                f"{timerange[1]} is not valid duration according to ISO 8601."
-                + "\n"
-                + str(exc),
-            ) from exc
+            msg = (
+                f"Invalid value encountered for `timerange`. {timerange[1]} is "
+                f"not valid duration according to ISO 8601.\n{exc}"
+            )
+            raise RecipeError(msg) from exc
 
 
 def _check_format_years(date):
@@ -475,13 +473,14 @@ def _check_timerange_values(date, timerange):
         else:
             isodate.parse_date(date)
     except isodate.isoerror.ISO8601Error as exc:
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `timerange`. "
             "Valid value must follow ISO 8601 standard "
             "for dates and duration periods, or be "
             "set to '*' to load available years. "
-            f"Got {timerange} instead." + "\n" + str(exc),
-        ) from exc
+            f"Got {timerange} instead.\n{exc}"
+        )
+        raise RecipeError(msg) from exc
 
 
 def valid_time_selection(timerange):
