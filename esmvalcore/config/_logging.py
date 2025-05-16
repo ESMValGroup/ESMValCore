@@ -4,15 +4,22 @@ import logging
 import logging.config
 import os
 import time
+import warnings
 from collections.abc import Iterable
+from copy import copy
 from pathlib import Path
 from typing import Literal, Optional, Union
 
 import yaml
 
+from esmvalcore.exceptions import ESMValCoreUserWarning
+
+# Unique ID to distinguish ESMValCore warnings from other warnings
+ESMVALCORE_WARNING_ID = "E741CF251D2FD29FEACBFD591FE6EC06"
+
 
 class FilterMultipleNames:
-    """Only allow/Disallow events from loggers with specific names."""
+    """Only allow/disallow events from loggers with specific names."""
 
     def __init__(
         self,
@@ -21,10 +28,7 @@ class FilterMultipleNames:
     ) -> None:
         """Initialize filter."""
         self.names = names
-        if mode == "allow":
-            self.starts_with_name = True
-        else:
-            self.starts_with_name = False
+        self.starts_with_name = mode == "allow"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
@@ -32,6 +36,27 @@ class FilterMultipleNames:
             if record.name.startswith(name):
                 return self.starts_with_name
         return not self.starts_with_name
+
+
+class FilterExternalWarnings:
+    """Do not show warnings from external packages."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        apply_filter = (
+            record.name != "py.warnings" or ESMVALCORE_WARNING_ID in record.msg
+        )
+        return apply_filter
+
+
+class Formatter(logging.Formatter):
+    """Format logging message (always remove ESMVALCORE_WARNING_ID)."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Remove ESMVALCORE_WARNING_ID before default formatting."""
+        record = copy(record)
+        record.msg = record.msg.replace(ESMVALCORE_WARNING_ID, "")
+        return super().format(record)
 
 
 def _purge_file_handlers(cfg: dict) -> None:
@@ -123,5 +148,23 @@ def configure_logging(
     logging.config.dictConfig(cfg)
     logging.Formatter.converter = time.gmtime
     logging.captureWarnings(True)
+
+    # Add unique ID to ESMValCore warnings to be able to filter them during
+    # logging
+    original_showwarning = copy(warnings.showwarning)
+
+    def showwarning(message, category, filename, lineno, file=None, line=None):
+        """Add unique ID to ESMValCore warnings."""
+        if issubclass(category, ESMValCoreUserWarning):
+            if isinstance(message, str):
+                message = ESMVALCORE_WARNING_ID + message
+            else:
+                message.args = (
+                    ESMVALCORE_WARNING_ID + message.args[0],
+                    *message.args[1:],
+                )
+        original_showwarning(message, category, filename, lineno, file, line)
+
+    warnings.showwarning = showwarning
 
     return log_files
