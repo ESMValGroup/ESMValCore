@@ -5,13 +5,10 @@ version: 1
 disable_existing_loggers: false
 formatters:
   console:
-    (): esmvalcore.config._logging.Formatter
     format: '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s'
   brief:
-    (): esmvalcore.config._logging.Formatter
     format: '%(levelname)-7s [%(process)d] %(message)s'
   debug:
-    (): esmvalcore.config._logging.Formatter
     format: '%(asctime)s UTC [%(process)d] %(levelname)-7s %(name)s:%(lineno)s %(message)s'
 filters:
   only_cmor:  # only events from CMOR check and generic fixes

@@ -4,18 +4,13 @@ import logging
 import logging.config
 import os
 import time
-import warnings
 from collections.abc import Iterable
-from copy import copy
 from pathlib import Path
 from typing import Literal, Optional, Union
 
 import yaml
 
-from esmvalcore.exceptions import ESMValCoreUserWarning
-
-# Unique ID to distinguish ESMValCore warnings from other warnings
-ESMVALCORE_WARNING_ID = "E741CF251D2FD29FEACBFD591FE6EC06"
+from esmvalcore.exceptions import _WARNINGS_SHOWN_IN_MAIN_LOG
 
 
 class FilterMultipleNames:
@@ -43,20 +38,12 @@ class FilterExternalWarnings:
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
-        apply_filter = (
-            record.name != "py.warnings" or ESMVALCORE_WARNING_ID in record.msg
-        )
-        return apply_filter
-
-
-class Formatter(logging.Formatter):
-    """Format logging message (always remove ESMVALCORE_WARNING_ID)."""
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Remove ESMVALCORE_WARNING_ID before default formatting."""
-        record = copy(record)
-        record.msg = record.msg.replace(ESMVALCORE_WARNING_ID, "")
-        return super().format(record)
+        if record.name != "py.warnings":
+            return True
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG:
+            if f" {warning}: " in record.msg:
+                return True
+        return False
 
 
 def _purge_file_handlers(cfg: dict) -> None:
@@ -148,23 +135,5 @@ def configure_logging(
     logging.config.dictConfig(cfg)
     logging.Formatter.converter = time.gmtime
     logging.captureWarnings(True)
-
-    # Add unique ID to ESMValCore warnings to be able to filter them during
-    # logging
-    original_showwarning = copy(warnings.showwarning)
-
-    def showwarning(message, category, filename, lineno, file=None, line=None):
-        """Add unique ID to ESMValCore warnings."""
-        if issubclass(category, ESMValCoreUserWarning):
-            if isinstance(message, str):
-                message = ESMVALCORE_WARNING_ID + message
-            else:
-                message.args = (
-                    ESMVALCORE_WARNING_ID + message.args[0],
-                    *message.args[1:],
-                )
-        original_showwarning(message, category, filename, lineno, file, line)
-
-    warnings.showwarning = showwarning
 
     return log_files

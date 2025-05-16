@@ -55,3 +55,12 @@ class ESMValCoreDeprecationWarning(ESMValCoreUserWarning):
 
 class MissingConfigParameter(ESMValCoreUserWarning):
     """Config parameter is missing."""
+
+
+# Warnings that are shown in main log and stdout; all other warnings are only
+# shown in debug log
+_WARNINGS_SHOWN_IN_MAIN_LOG = [
+    "ESMValCoreUserWarning",
+    "ESMValCoreDeprecationWarning",
+    "MissingConfigParameter",
+]
