@@ -12,7 +12,7 @@ import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 from functools import wraps
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import dask.array as da
 import iris.analysis
@@ -79,27 +79,30 @@ def get_iris_aggregator(
     # Check if valid aggregator is found
     if not hasattr(iris.analysis, cap_operator):
         raise ValueError(
-            f"Aggregator '{operator}' not found in iris.analysis module"
+            f"Aggregator '{operator}' not found in iris.analysis module",
         )
     aggregator = getattr(iris.analysis, cap_operator)
     if not hasattr(aggregator, "aggregate"):
         raise ValueError(
             f"Aggregator {aggregator} found by '{operator}' is not a valid "
-            f"iris.analysis.Aggregator"
+            f"iris.analysis.Aggregator",
         )
 
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
     test_kwargs = update_weights_kwargs(
-        operator, aggregator, aggregator_kwargs, np.array([1.0])
+        operator,
+        aggregator,
+        aggregator_kwargs,
+        np.array([1.0]),
     )
     try:
         with ignore_iris_vague_metadata_warnings():
             cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
-            f"Invalid kwargs for operator '{operator}': {str(exc)}"
+            f"Invalid kwargs for operator '{operator}': {exc!s}",
         ) from exc
 
     return (aggregator, aggregator_kwargs)
@@ -131,8 +134,8 @@ def update_weights_kwargs(
     aggregator: iris.analysis.Aggregator,
     kwargs: dict,
     weights: Any,
-    cube: Optional[Cube] = None,
-    callback: Optional[Callable] = None,
+    cube: Cube | None = None,
+    callback: Callable | None = None,
     **callback_kwargs,
 ) -> dict:
     """Update weights keyword argument.
@@ -166,7 +169,7 @@ def update_weights_kwargs(
     kwargs = dict(kwargs)
     if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
         raise ValueError(
-            f"Aggregator '{operator}' does not support 'weights' option"
+            f"Aggregator '{operator}' does not support 'weights' option",
         )
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
@@ -216,13 +219,13 @@ def get_normalized_cube(
         # (https://github.com/SciTools/iris/issues/5523). Make sure to
         # consistently mask them here.
         normalized_cube.data = da.ma.masked_invalid(
-            normalized_cube.core_data()
+            normalized_cube.core_data(),
         )
 
     else:
         raise ValueError(
             f"Expected 'subtract' or 'divide' for `normalize`, got "
-            f"'{normalize}'"
+            f"'{normalize}'",
         )
 
     # Keep old metadata except for units
@@ -261,7 +264,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
     if not signature.parameters:
         raise TypeError(
             f"Cannot preserve float dtype during function '{func.__name__}', "
-            f"function takes no arguments"
+            f"function takes no arguments",
         )
 
     @wraps(func)
@@ -282,7 +285,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
                 f"'{func.__name__}', the function's first argument of type "
                 f"{type(first_arg)} and/or the function's return value of "
                 f"type {type(result)} do not have the necessary attribute "
-                f"'dtype'"
+                f"'dtype'",
             )
 
         return result
@@ -356,13 +359,13 @@ def get_weights(
     if "latitude" in coords:
         cube = cube.copy()  # avoid overwriting input cube
         if not cube.cell_measures("cell_area") and not cube.coords(
-            "longitude"
+            "longitude",
         ):
             raise CoordinateNotFoundError(
                 f"Cube {cube.summary(shorten=True)} needs a `longitude` "
                 f"coordinate to calculate cell area weights (alternatively, a "
                 f"`cell_area` can be given to the cube as supplementary "
-                f"variable)"
+                f"variable)",
             )
         try_adding_calculated_cell_area(cube)
         area_weights = cube.cell_measure("cell_area").core_data()
@@ -416,13 +419,13 @@ def get_coord_weights(
     if not coord.has_bounds():
         raise ValueError(
             f"Cannot calculate weights for coordinate '{coord.name()}' "
-            f"without bounds"
+            f"without bounds",
         )
     if coord.core_bounds().shape[-1] != 2:
         raise ValueError(
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"with {coord.core_bounds().shape[-1]} bounds per point, expected "
-            f"2 bounds per point"
+            f"2 bounds per point",
         )
 
     # Calculate weights of same shape as coordinate and make sure to use
@@ -440,13 +443,15 @@ def get_coord_weights(
         chunks = cube.lazy_data().chunks if cube.has_lazy_data() else None
         if coord_dims:
             weights = broadcast_to_shape(
-                weights, cube.shape, coord_dims, chunks=chunks
+                weights,
+                cube.shape,
+                coord_dims,
+                chunks=chunks,
             )
+        elif cube.has_lazy_data():
+            weights = da.broadcast_to(weights, cube.shape, chunks=chunks)
         else:
-            if cube.has_lazy_data():
-                weights = da.broadcast_to(weights, cube.shape, chunks=chunks)
-            else:
-                weights = np.broadcast_to(weights, cube.shape)
+            weights = np.broadcast_to(weights, cube.shape)
 
     return weights
 
@@ -469,7 +474,7 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
             cube.coord("longitude").core_points().ndim == 2,
             cube.coords("grid_latitude"),
             cube.coords("grid_longitude"),
-        ]
+        ],
     )
 
     # For regular grids, calculate grid cell areas with iris function
@@ -543,7 +548,7 @@ def get_all_coords(
             raise ValueError(
                 f"If coords=None is specified, the cube "
                 f"{cube.summary(shorten=True)} must not have unnamed "
-                f"dimensions"
+                f"dimensions",
             )
     return coords
 
@@ -625,7 +630,10 @@ def apply_mask(
         array_chunks = None
 
     mask = iris.util.broadcast_to_shape(
-        mask, array.shape, dim_map=dim_map, chunks=array_chunks
+        mask,
+        array.shape,
+        dim_map=dim_map,
+        chunks=array_chunks,
     )
 
     array_module = get_array_module(mask, array)
@@ -662,7 +670,7 @@ def _rechunk_aux_factory_dependencies(
                 coord.points = coord.lazy_points().rechunk(chunks)
                 if coord.has_bounds():
                     coord.bounds = coord.lazy_bounds().rechunk(
-                        chunks + (None,)
+                        chunks + (None,),
                     )
                 cube.replace_coord(coord)
     return cube

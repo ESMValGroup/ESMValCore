@@ -87,7 +87,8 @@ class Test:
         )
         coords_spec = [(lats, 0), (lons, 1)]
         self.tgt_grid_for_unstructured = iris.cube.Cube(
-            np.zeros((1, 1)), dim_coords_and_dims=coords_spec
+            np.zeros((1, 1)),
+            dim_coords_and_dims=coords_spec,
         )
 
         lons = self.cube.coord("longitude")
@@ -117,7 +118,8 @@ class Test:
         )
 
         unstructured_data = np.ma.masked_less(
-            self.cube.data.reshape(3, -1).astype(np.float32), 3.5
+            self.cube.data.reshape(3, -1).astype(np.float32),
+            3.5,
         )
 
         self.unstructured_grid_cube = iris.cube.Cube(
@@ -129,10 +131,14 @@ class Test:
 
         # Setup irregular cube and grid
         lons_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="longitude", units="degrees_east"
+            [[0, 1]],
+            standard_name="longitude",
+            units="degrees_east",
         )
         lats_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="latitude", units="degrees_north"
+            [[0, 1]],
+            standard_name="latitude",
+            units="degrees_north",
         )
         self.irregular_grid = iris.cube.Cube(
             [[1, 1]],
@@ -181,7 +187,10 @@ class Test:
             short_name="tas",
         )
         result = regrid(
-            self.cube, dataset, "linear", cache_weights=cache_weights
+            self.cube,
+            dataset,
+            "linear",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         assert_array_equal(result.data, expected)
@@ -332,7 +341,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[3]], [[7]], [[11]]])
         assert_array_equal(result.data, expected)
@@ -357,7 +369,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
@@ -384,7 +399,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "area_weighted", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "area_weighted",
+            cache_weights=cache_weights,
         )
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)

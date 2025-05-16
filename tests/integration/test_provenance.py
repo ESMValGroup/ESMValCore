@@ -35,7 +35,7 @@ def check_product_wasderivedfrom(product):
         for record in relations:
             if input_identifier == record.get_attribute(PROV_ATTR_USED_ENTITY):
                 assert identifier == record.get_attribute(
-                    PROV_ATTR_GENERATED_ENTITY
+                    PROV_ATTR_GENERATED_ENTITY,
                 )
                 break
         else:

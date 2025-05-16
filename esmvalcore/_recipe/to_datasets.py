@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Iterator
 from copy import deepcopy
 from numbers import Number
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.config import Session
@@ -116,7 +117,7 @@ def _set_alias(variables):
 
     for info in datasets_info:
         alias[info] = "_".join(
-            [str(value) for value in alias[info] if value is not None]
+            [str(value) for value in alias[info] if value is not None],
         )
         if not alias[info]:
             alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
@@ -124,7 +125,8 @@ def _set_alias(variables):
     for variable in variables:
         for dataset in variable:
             dataset.facets["alias"] = alias.get(
-                dataset.facets["alias"], dataset.facets["alias"]
+                dataset.facets["alias"],
+                dataset.facets["alias"],
             )
 
 
@@ -152,7 +154,7 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
         if "short_name" not in facets:
             raise RecipeError(
                 "'short_name' is required for supplementary_variables "
-                f"entries, but missing in {facets}"
+                f"entries, but missing in {facets}",
             )
 
 
@@ -277,7 +279,8 @@ def _get_dataset_facets_from_recipe(
     # after any wildcards have been resolved.
     if "end_year" in facets and session["max_years"]:
         facets["end_year"] = min(
-            facets["end_year"], facets["start_year"] + session["max_years"] - 1
+            facets["end_year"],
+            facets["start_year"] + session["max_years"] - 1,
         )
 
     # Legacy: support start_year and end_year instead of timerange
@@ -287,7 +290,7 @@ def _get_dataset_facets_from_recipe(
     if facets["project"] == "obs4mips":
         logger.warning(
             "Correcting capitalization, project 'obs4mips' "
-            "should be written as 'obs4MIPs'"
+            "should be written as 'obs4MIPs'",
         )
         facets["project"] = "obs4MIPs"
 
@@ -440,7 +443,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             for key, value in dataset.facets.items():
                 if _isglob(value):
                     if key in expanded_ds.facets and not _isglob(
-                        expanded_ds[key]
+                        expanded_ds[key],
                     ):
                         updated_facets[key] = expanded_ds.facets[key]
                     else:
@@ -448,7 +451,9 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
 
             if unexpanded_globs:
                 msg = _report_unexpanded_globs(
-                    dataset, expanded_ds, unexpanded_globs
+                    dataset,
+                    expanded_ds,
+                    unexpanded_globs,
                 )
                 errors.append(msg)
                 continue

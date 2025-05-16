@@ -10,8 +10,9 @@ import copy
 import datetime
 import logging
 import warnings
+from collections.abc import Iterable
 from functools import partial
-from typing import Iterable, Literal, Optional
+from typing import Literal
 from warnings import filterwarnings
 
 import dask.array as da
@@ -125,14 +126,18 @@ def extract_time(
             "If start_year or end_year is None, both "
             "start_year and end_year have to be None. "
             f"Currently, start_year is {start_year} "
-            f"and end_year is {end_year}."
+            f"and end_year is {end_year}.",
         )
 
     t_1 = PartialDateTime(
-        year=start_year, month=int(start_month), day=int(start_day)
+        year=start_year,
+        month=int(start_month),
+        day=int(start_day),
     )
     t_2 = PartialDateTime(
-        year=end_year, month=int(end_month), day=int(end_day)
+        year=end_year,
+        month=int(end_month),
+        day=int(end_day),
     )
 
     return _extract_datetime(cube, t_1, t_2)
@@ -165,21 +170,21 @@ def _parse_end_date(date):
     """
     if date.startswith("P"):
         end_date = isodate.parse_duration(date)
+    elif len(date) == 4:
+        end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
+    elif len(date) == 6:
+        month, year = get_next_month(int(date[4:]), int(date[0:4]))
+        end_date = datetime.datetime(year, month, 1, 0, 0, 0)
     else:
-        if len(date) == 4:
-            end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
-        elif len(date) == 6:
-            month, year = get_next_month(int(date[4:]), int(date[0:4]))
-            end_date = datetime.datetime(year, month, 1, 0, 0, 0)
+        if "T" in date:
+            end_date = isodate.parse_datetime(date)
         else:
-            if "T" in date:
-                end_date = isodate.parse_datetime(date)
-            else:
-                end_date = isodate.parse_date(date)
-                end_date = datetime.datetime.combine(
-                    end_date, datetime.time.min
-                )
-            end_date += datetime.timedelta(seconds=1)
+            end_date = isodate.parse_date(date)
+            end_date = datetime.datetime.combine(
+                end_date,
+                datetime.time.min,
+            )
+        end_date += datetime.timedelta(seconds=1)
     return end_date
 
 
@@ -248,7 +253,7 @@ def _extract_datetime(
 
     if (not cube.coord_dims(time_coord)) or (start_datetime.year is None):
         constraint = iris.Constraint(
-            time=lambda t: start_datetime <= t.point < end_datetime
+            time=lambda t: start_datetime <= t.point < end_datetime,
         )
         cube_slice = cube.extract(constraint)
     else:
@@ -270,7 +275,7 @@ def _extract_datetime(
             f"Time slice {dt2str(start_datetime)} "
             f"to {dt2str(end_datetime)} is outside "
             f"cube time bounds {time_coord.cell(0).point} to "
-            f"{time_coord.cell(-1).point}."
+            f"{time_coord.cell(-1).point}.",
         )
 
     return cube_slice
@@ -362,7 +367,7 @@ def extract_season(cube: Cube, season: str) -> Cube:
     if season not in allmonths:
         raise ValueError(
             f"Unable to extract Season {season} "
-            f"combination of months not possible."
+            f"combination of months not possible.",
         )
     sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season) : sstart + 12]
@@ -371,13 +376,19 @@ def extract_season(cube: Cube, season: str) -> Cube:
 
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
-            cube, "time", name="clim_season", seasons=seasons
+            cube,
+            "time",
+            name="clim_season",
+            seasons=seasons,
         )
         coords_to_remove.append("clim_season")
 
     if not cube.coords("season_year"):
         iris.coord_categorisation.add_season_year(
-            cube, "time", name="season_year", seasons=seasons
+            cube,
+            "time",
+            name="season_year",
+            seasons=seasons,
         )
         coords_to_remove.append("season_year")
 
@@ -413,7 +424,9 @@ def extract_month(cube: Cube, month: int) -> Cube:
         raise ValueError("Please provide a month number between 1 and 12.")
     if not cube.coords("month_number"):
         iris.coord_categorisation.add_month_number(
-            cube, "time", name="month_number"
+            cube,
+            "time",
+            name="month_number",
         )
     result = cube.extract(iris.Constraint(month_number=month))
     if result is None:
@@ -428,10 +441,12 @@ def _aggregate_time_fx(result_cube, source_cube):
             measure_dims = set(source_cube.cell_measure_dims(measure))
             if time_dim.intersection(measure_dims):
                 logger.debug(
-                    "Averaging time dimension in measure %s.", measure.var_name
+                    "Averaging time dimension in measure %s.",
+                    measure.var_name,
                 )
                 result_measure = da.mean(
-                    measure.core_data(), axis=tuple(time_dim)
+                    measure.core_data(),
+                    axis=tuple(time_dim),
                 )
                 measure = measure.copy(result_measure)
                 measure_dims = tuple(measure_dims - time_dim)
@@ -440,7 +455,7 @@ def _aggregate_time_fx(result_cube, source_cube):
     if source_cube.ancillary_variables():
         for ancillary_var in source_cube.ancillary_variables():
             ancillary_dims = set(
-                source_cube.ancillary_variable_dims(ancillary_var)
+                source_cube.ancillary_variable_dims(ancillary_var),
             )
             if time_dim.intersection(ancillary_dims):
                 logger.debug(
@@ -448,12 +463,14 @@ def _aggregate_time_fx(result_cube, source_cube):
                     ancillary_var.var_name,
                 )
                 result_ancillary_var = da.mean(
-                    ancillary_var.core_data(), axis=tuple(time_dim)
+                    ancillary_var.core_data(),
+                    axis=tuple(time_dim),
                 )
                 ancillary_var = ancillary_var.copy(result_ancillary_var)
                 ancillary_dims = tuple(ancillary_dims - time_dim)
                 result_cube.add_ancillary_variable(
-                    ancillary_var, ancillary_dims
+                    ancillary_var,
+                    ancillary_dims,
                 )
 
 
@@ -504,7 +521,9 @@ def hourly_statistics(
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by(
-            ["hour_group", "day_of_year", "year"], agg, **agg_kwargs
+            ["hour_group", "day_of_year", "year"],
+            agg,
+            **agg_kwargs,
         )
 
     result.remove_coord("hour_group")
@@ -590,7 +609,9 @@ def monthly_statistics(
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by(
-            ["month_number", "year"], agg, **agg_kwargs
+            ["month_number", "year"],
+            agg,
+            **agg_kwargs,
         )
     _aggregate_time_fx(result, cube)
     return result
@@ -633,32 +654,40 @@ def seasonal_statistics(
 
     if any(len(sea) < 2 for sea in seasons):
         raise ValueError(
-            f"Minimum of 2 month is required per Seasons: {seasons}."
+            f"Minimum of 2 month is required per Seasons: {seasons}.",
         )
 
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
-            cube, "time", name="clim_season", seasons=seasons
+            cube,
+            "time",
+            name="clim_season",
+            seasons=seasons,
         )
     else:
         old_seasons = sorted(
-            {str(s) for s in cube.coord("clim_season").points}
+            {str(s) for s in cube.coord("clim_season").points},
         )
         if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
-                f"{old_seasons}."
+                f"{old_seasons}.",
             )
 
     if not cube.coords("season_year"):
         iris.coord_categorisation.add_season_year(
-            cube, "time", name="season_year", seasons=seasons
+            cube,
+            "time",
+            name="season_year",
+            seasons=seasons,
         )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by(
-            ["clim_season", "season_year"], agg, **agg_kwargs
+            ["clim_season", "season_year"],
+            agg,
+            **agg_kwargs,
         )
 
     # CMOR Units are days so we are safe to operate on days
@@ -779,7 +808,10 @@ def decadal_statistics(
             return date.year - date.year % 10
 
         iris.coord_categorisation.add_categorised_coord(
-            cube, "decade", "time", get_decade
+            cube,
+            "decade",
+            "time",
+            get_decade,
         )
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by("decade", agg, **agg_kwargs)
@@ -872,11 +904,12 @@ def climate_statistics(
         _aggregate_time_fx(clim_cube, cube)
         if clim_cube.coord(clim_coord.name()).is_monotonic():
             iris.util.promote_aux_coord_to_dim_coord(
-                clim_cube, clim_coord.name()
+                clim_cube,
+                clim_coord.name(),
             )
         else:
             clim_cube = CubeList(
-                clim_cube.slices_over(clim_coord.name())
+                clim_cube.slices_over(clim_coord.name()),
             ).merge_cube()
         cube.remove_coord(clim_coord)
 
@@ -897,7 +930,7 @@ def _add_time_weights_coord(cube):
 def anomalies(
     cube: Cube,
     period: str,
-    reference: Optional[dict] = None,
+    reference: dict | None = None,
     standardize: bool = False,
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
 ) -> Cube:
@@ -933,7 +966,9 @@ def anomalies(
     else:
         reference_cube = extract_time(cube, **reference)
     reference = climate_statistics(
-        reference_cube, period=period, seasons=seasons
+        reference_cube,
+        period=period,
+        seasons=seasons,
     )
     if period in ["full"]:
         metadata = copy.deepcopy(cube.metadata)
@@ -941,7 +976,10 @@ def anomalies(
         cube.metadata = metadata
         if standardize:
             cube_stddev = climate_statistics(
-                cube, operator="std_dev", period=period, seasons=seasons
+                cube,
+                operator="std_dev",
+                period=period,
+                seasons=seasons,
             )
             cube = cube / cube_stddev
             cube.units = "1"
@@ -952,7 +990,9 @@ def anomalies(
     # standardize the results if requested
     if standardize:
         cube_stddev = climate_statistics(
-            cube, operator="std_dev", period=period
+            cube,
+            operator="std_dev",
+            period=period,
         )
         tdim = cube.coord_dims("time")[0]
         reps = cube.shape[tdim] / cube_stddev.shape[tdim]
@@ -960,10 +1000,11 @@ def anomalies(
             raise ValueError(
                 "Cannot safely apply preprocessor to this dataset, "
                 "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
+                f"a multiple of the period '{period}'",
             )
         cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim
+            [cube_stddev.core_data() for _ in range(int(reps))],
+            axis=tdim,
         )
         cube.units = "1"
     return cube
@@ -1016,7 +1057,9 @@ def _get_period_coord(cube, period, seasons):
     if period in ["seasonal", "season"]:
         if not cube.coords("season_number"):
             iris.coord_categorisation.add_season_number(
-                cube, "time", seasons=seasons
+                cube,
+                "time",
+                seasons=seasons,
             )
         return cube.coord("season_number")
     raise ValueError(f"Period '{period}' not supported")
@@ -1025,7 +1068,7 @@ def _get_period_coord(cube, period, seasons):
 def regrid_time(
     cube: Cube,
     frequency: str,
-    calendar: Optional[str] = None,
+    calendar: str | None = None,
     units: str = "days since 1850-01-01 00:00:00",
 ) -> Cube:
     """Align time coordinate for cubes.
@@ -1104,7 +1147,7 @@ def regrid_time(
     if calendar is not None and ("day" in frequency or "hr" in frequency):
         raise NotImplementedError(
             f"Setting a fixed calendar is not supported for frequency "
-            f"'{frequency}'"
+            f"'{frequency}'",
         )
 
     # Setup new time coordinate
@@ -1147,7 +1190,8 @@ def regrid_time(
         if cube.coords(coord_name):
             cube.remove_coord(coord_name)
             getattr(iris.coord_categorisation, f"add_{coord_name}")(
-                cube, new_coord
+                cube,
+                new_coord,
             )
 
     return cube
@@ -1178,12 +1222,17 @@ def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
         if 24 % n_hours:
             raise NotImplementedError(
                 f"For `n`-hourly data, `n` must be a divisor of 24, got "
-                f"'{frequency}'"
+                f"'{frequency}'",
             )
         half_interval = datetime.timedelta(hours=n_hours / 2.0)
         dates = [
             datetime.datetime(
-                d.year, d.month, d.day, d.hour - d.hour % n_hours, 0, 0
+                d.year,
+                d.month,
+                d.day,
+                d.hour - d.hour % n_hours,
+                0,
+                0,
             )
             + half_interval
             for d in dates
@@ -1299,7 +1348,7 @@ def timeseries_filter(
     else:
         raise NotImplementedError(
             f"Filter type {filter_type} not implemented, "
-            f"please choose one of {', '.join(supported_filters)}"
+            f"please choose one of {', '.join(supported_filters)}",
         )
 
     # Apply filter
@@ -1319,7 +1368,7 @@ def resample_hours(
     cube: Cube,
     interval: int,
     offset: int = 0,
-    interpolate: Optional[Literal["nearest", "linear"]] = None,
+    interpolate: Literal["nearest", "linear"] | None = None,
 ) -> Cube:
     """Convert x-hourly data to y-hourly data.
 
@@ -1363,19 +1412,19 @@ def resample_hours(
     allowed_intervals = (1, 2, 3, 4, 6, 12)
     if interval not in allowed_intervals:
         raise ValueError(
-            f"The number of hours must be one of {allowed_intervals}"
+            f"The number of hours must be one of {allowed_intervals}",
         )
     if offset >= interval:
         raise ValueError(
             f"The offset ({offset}) must be lower than "
-            f"the interval ({interval})"
+            f"the interval ({interval})",
         )
     time = cube.coord("time")
     cube_period = time.cell(1).point - time.cell(0).point
     if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(
             f"Data period ({cube_period}) should be lower than "
-            f"the interval ({interval})"
+            f"the interval ({interval})",
         )
     dates = time.units.num2date(time.points)
 
@@ -1388,14 +1437,14 @@ def resample_hours(
         else:
             raise ValueError(
                 f"Expected `None`, 'nearest' or 'linear' for `interpolate`, "
-                f"got '{interpolate}'"
+                f"got '{interpolate}'",
             )
         new_dates = sorted(
             [
                 cf_datetime(y, m, d, h, calendar=time.units.calendar)
                 for h in range(0 + offset, 24, interval)
                 for (y, m, d) in {(d.year, d.month, d.day) for d in dates}
-            ]
+            ],
         )
         cube = cube.interpolate([("time", new_dates)], interpolation_scheme)
     else:
@@ -1409,7 +1458,7 @@ def resample_hours(
         cube = _select_timeslice(cube, select)
         if cube is None:
             raise ValueError(
-                f"Time coordinate {dates} does not contain {hours} for {cube}"
+                f"Time coordinate {dates} does not contain {hours} for {cube}",
             )
 
     return cube
@@ -1417,9 +1466,9 @@ def resample_hours(
 
 def resample_time(
     cube: Cube,
-    month: Optional[int] = None,
-    day: Optional[int] = None,
-    hour: Optional[int] = None,
+    month: int | None = None,
+    day: int | None = None,
+    hour: int | None = None,
 ) -> Cube:
     """Change frequency of data by resampling it.
 
@@ -1465,7 +1514,7 @@ def resample_time(
     cube = _select_timeslice(cube, select)
     if cube is None:
         raise ValueError(
-            f"Time coordinate {dates} does not contain {requested} for {cube}"
+            f"Time coordinate {dates} does not contain {requested} for {cube}",
         )
     return cube
 
@@ -1560,7 +1609,7 @@ def _get_time_index_and_mask(
     # Make sure that time coordinate has bounds (these are necessary for the
     # binning) and uses 'hours' as reference units
     time_coord.convert_units(
-        Unit("hours since 1850-01-01", calendar=time_coord.units.calendar)
+        Unit("hours since 1850-01-01", calendar=time_coord.units.calendar),
     )
     _guess_time_bounds(time_coord)
 
@@ -1625,7 +1674,9 @@ def _transform_to_lst_eager(
     # is ensured with np.ogrid
     idx = list(np.ogrid[tuple(slice(0, d) for d in data.shape)])
     time_index = broadcast_to_shape(
-        time_index, data.shape, (time_dim, lon_dim)
+        time_index,
+        data.shape,
+        (time_dim, lon_dim),
     )
     idx[time_dim] = time_index
     new_data = data[tuple(idx)]
@@ -1797,7 +1848,7 @@ def _check_cube_coords(cube):
     if not cube.coords("time", dim_coords=True):
         raise CoordinateNotFoundError(
             f"Input cube {cube.summary(shorten=True)} needs a dimensional "
-            f"coordinate `time`"
+            f"coordinate `time`",
         )
     time_coord = cube.coord("time", dim_coords=True)
     # The following works since DimCoords are always 1D and monotonic
@@ -1807,13 +1858,13 @@ def _check_cube_coords(cube):
     if not cube.coords("longitude"):
         raise CoordinateNotFoundError(
             f"Input cube {cube.summary(shorten=True)} needs a coordinate "
-            f"`longitude`"
+            f"`longitude`",
         )
     lon_ndim = len(cube.coord_dims("longitude"))
     if lon_ndim != 1:
         raise CoordinateMultiDimError(
             f"Input cube {cube.summary(shorten=True)} needs a 1D coordinate "
-            f"`longitude`, got {lon_ndim:d}D"
+            f"`longitude`, got {lon_ndim:d}D",
         )
 
 

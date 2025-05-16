@@ -72,7 +72,7 @@ LAND_FRACTION = [
         None,
         [
             "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability."
+            "Check ancillary data availability.",
         ],
     ),
     (
@@ -80,7 +80,7 @@ LAND_FRACTION = [
         None,
         [
             "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability."
+            "Check ancillary data availability.",
         ],
     ),
     (CUBE_ANCILLARY_3, FRAC_SFTLF, []),
@@ -125,7 +125,8 @@ def test_weighting_landsea_fraction(cube, area_type, out):
     if isinstance(out, type):
         with pytest.raises(out):
             weighted_cube = weighting.weighting_landsea_fraction(
-                cube, area_type
+                cube,
+                area_type,
             )
         return
 

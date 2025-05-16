@@ -84,7 +84,7 @@ class TagsManager(dict):
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
             logger.debug("Loading tags from %s", filename)
-            with open(filename, "r", encoding="utf-8") as file:
+            with open(filename, encoding="utf-8") as file:
                 tags = cls(yaml.safe_load(file))
                 tags.source_file = filename
                 return tags
@@ -139,7 +139,7 @@ class TagsManager(dict):
         if tag not in self[section]:
             postfix = f" of {self.source_file}" if self.source_file else ""
             raise ValueError(
-                f"Tag '{tag}' does not exist in section '{section}'{postfix}"
+                f"Tag '{tag}' does not exist in section '{section}'{postfix}",
             )
 
         return self[section][tag]

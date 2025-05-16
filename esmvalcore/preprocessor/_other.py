@@ -54,9 +54,9 @@ def clip(cube, minimum=None, maximum=None):
     if minimum is None and maximum is None:
         raise ValueError(
             "Either minimum, maximum or both have to be\
-                          specified."
+                          specified.",
         )
-    elif minimum is not None and maximum is not None:
+    if minimum is not None and maximum is not None:
         if maximum < minimum:
             raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = da.clip(cube.core_data(), minimum, maximum)
@@ -127,7 +127,9 @@ def cumulative_sum(
     if axes:
         if cube.has_lazy_data():
             cube.data = da.cumsum(
-                cube.core_data(), axis=axes[0], method=method
+                cube.core_data(),
+                axis=axes[0],
+                method=method,
             )
         else:
             cube.data = np.cumsum(cube.core_data(), axis=axes[0])
@@ -227,13 +229,13 @@ def histogram(
     if isinstance(bins, str):
         raise TypeError(
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
-            f"int"
+            f"int",
         )
     allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
         raise ValueError(
             f"Expected one of {allowed_norms} for normalization, got "
-            f"'{normalization}'"
+            f"'{normalization}'",
         )
 
     # If histogram is calculated over all coordinates, we can use
@@ -262,7 +264,11 @@ def histogram(
 
     # Get final cube
     hist_cube = _get_histogram_cube(
-        cube, hist_data, coords, bin_edges, normalization
+        cube,
+        hist_data,
+        coords,
+        bin_edges,
+        normalization,
     )
 
     return hist_cube
@@ -276,11 +282,15 @@ def _get_bins(
     """Calculate bin range and edges."""
     if bin_range is None:
         bin_range = dask.compute(
-            cube.core_data().min(), cube.core_data().max()
+            cube.core_data().min(),
+            cube.core_data().max(),
         )
     if isinstance(bins, int):
         bin_edges = np.linspace(
-            bin_range[0], bin_range[1], bins + 1, dtype=np.float64
+            bin_range[0],
+            bin_range[1],
+            bins + 1,
+            dtype=np.float64,
         )
     else:
         bin_edges = np.array(bins, dtype=np.float64)
@@ -289,7 +299,7 @@ def _get_bins(
     if not all(finite_bin_range):
         raise ValueError(
             f"Cannot calculate histogram for bin_range={bin_range} (or for "
-            f"fully masked data when `bin_range` is not given)"
+            f"fully masked data when `bin_range` is not given)",
         )
 
     return (bin_range, bin_edges)
@@ -352,7 +362,10 @@ def _calculate_histogram_lazy(
         data = data[~mask]
         weights = weights[~mask]
         hist = da.histogram(
-            data, bins=bin_edges, range=bin_range, weights=weights
+            data,
+            bins=bin_edges,
+            range=bin_range,
+            weights=weights,
         )[0]
         hist_sum = hist.sum()
         hist = da.ma.masked_array(hist, mask=da.allclose(hist_sum, 0.0))
@@ -413,7 +426,8 @@ def _calculate_histogram_eager(
     remaining_dims = tuple(a for a in range(data.ndim) if a not in along_axes)
     reshaped_data = np.transpose(data, axes=(*remaining_dims, *along_axes))
     reshaped_weights = np.transpose(
-        weights, axes=(*remaining_dims, *along_axes)
+        weights,
+        axes=(*remaining_dims, *along_axes),
     )
     shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
     reshaped_data = reshaped_data.reshape(*shape_rem_dims, -1)
@@ -425,7 +439,10 @@ def _calculate_histogram_eager(
         arr = arr[~mask]
         wgts = wgts[~mask]
         return np.histogram(
-            arr, bins=bin_edges, range=bin_range, weights=wgts
+            arr,
+            bins=bin_edges,
+            range=bin_range,
+            weights=wgts,
         )[0]
 
     v_histogram = np.vectorize(_get_hist_values, signature="(n),(n)->(m)")
@@ -482,7 +499,7 @@ def _get_histogram_cube(
     )
     var_name_suffix = "" if cube.var_name is None else f"_{cube.var_name}"
     dim_spec = [(d, cube.coord_dims(d)) for d in cube.dim_coords] + [
-        (bin_coord, cube.ndim)
+        (bin_coord, cube.ndim),
     ]
     if normalization == "sum":
         long_name = f"Relative Frequency{long_name_suffix}"

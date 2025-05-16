@@ -7,7 +7,6 @@ import os.path
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Optional, Tuple, Type
 
 import iris
 
@@ -322,17 +321,17 @@ class OutputFile:
         Attributes corresponding to the recipe output
     """
 
-    kind: Optional[str] = None
+    kind: str | None = None
 
-    def __init__(self, path: str, attributes: Optional[dict] = None):
+    def __init__(self, path: str, attributes: dict | None = None):
         if not attributes:
             attributes = {}
 
         self.attributes = attributes
         self.path = Path(path)
 
-        self._authors: Optional[Tuple[Contributor, ...]] = None
-        self._references: Optional[Tuple[Reference, ...]] = None
+        self._authors: tuple[Contributor, ...] | None = None
+        self._references: tuple[Reference, ...] | None = None
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -361,7 +360,7 @@ class OutputFile:
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
+    def _get_derived_path(self, append: str, suffix: str | None = None):
         """Return path of related files.
 
         Parameters
@@ -398,13 +397,13 @@ class OutputFile:
     def create(
         cls,
         path: str,
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
     ) -> "OutputFile":
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
         """
-        item_class: Type[OutputFile]
+        item_class: type[OutputFile]
 
         ext = Path(path).suffix
         if ext in (".png",):

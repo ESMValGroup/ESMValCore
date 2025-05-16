@@ -54,7 +54,8 @@ class AllVars(Fix):
                         for c in times
                     ]
                     time.bounds = date2num(
-                        np.stack([starts, ends], -1), time.units
+                        np.stack([starts, ends], -1),
+                        time.units,
                     )
         return cubes
 

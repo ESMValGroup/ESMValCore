@@ -43,7 +43,8 @@ def test_altitude_to_pressure_func():
     np.testing.assert_allclose(func(80000.0), 0.88628)
     np.testing.assert_allclose(func(90000.0), 0.1576523580997673)
     np.testing.assert_allclose(
-        func(np.array([0.0, 100.0])), [101325.0, 100129.0]
+        func(np.array([0.0, 100.0])),
+        [101325.0, 100129.0],
     )
 
 
@@ -58,7 +59,9 @@ def test_pressure_to_altitude_func():
     np.testing.assert_allclose(func(75.9448), 50000)
     np.testing.assert_allclose(func(0.1), 91607.36011892557)
     np.testing.assert_allclose(
-        func(np.array([101325.0, 177687.0])), [0.0, -5000.0], atol=1.0e-7
+        func(np.array([101325.0, 177687.0])),
+        [0.0, -5000.0],
+        atol=1.0e-7,
     )
 
 
@@ -87,7 +90,7 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
             iris.cube.Cube([0.0], var_name="c"),
             iris.cube.Cube([0.0], var_name="c"),
             iris.cube.Cube([[0.0]], var_name="d"),
-        ]
+        ],
     )
     if output == 1:
         add_aux_coords_from_cubes(cube, cubes, coord_dict)
@@ -233,16 +236,24 @@ P_COORD_NB = iris.coords.AuxCoord(
     long_name="pressure",
 )
 CUBE_ALT = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(ALT_COORD, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(ALT_COORD, 0)],
 )
 CUBE_ALT_MASKED = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(ALT_COORD_MASKED, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(ALT_COORD_MASKED, 0)],
 )
 CUBE_ALT_NB = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(ALT_COORD_NB, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(ALT_COORD_NB, 0)],
 )
 CUBE_ALT_KM = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(ALT_COORD_KM, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(ALT_COORD_KM, 0)],
 )
 
 
@@ -280,13 +291,17 @@ def test_add_plev_from_altitude(cube, output):
     for attr in metadata_list:
         assert getattr(air_pressure_coord, attr) == getattr(output, attr)
     np.testing.assert_allclose(
-        air_pressure_coord.points, output.points, atol=1e-7
+        air_pressure_coord.points,
+        output.points,
+        atol=1e-7,
     )
     if output.bounds is None:
         assert air_pressure_coord.bounds is None
     else:
         np.testing.assert_allclose(
-            air_pressure_coord.bounds, output.bounds, rtol=1e-3
+            air_pressure_coord.bounds,
+            output.bounds,
+            rtol=1e-3,
         )
     assert cube.coords("altitude")
 
@@ -300,16 +315,24 @@ P_COORD_HPA = iris.coords.AuxCoord(
     units="hPa",
 )
 CUBE_PLEV = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(P_COORD, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(P_COORD, 0)],
 )
 CUBE_PLEV_MASKED = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(P_COORD_MASKED, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(P_COORD_MASKED, 0)],
 )
 CUBE_PLEV_NB = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(P_COORD_NB, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(P_COORD_NB, 0)],
 )
 CUBE_PLEV_HPA = iris.cube.Cube(
-    [1.0], var_name="x", aux_coords_and_dims=[(P_COORD_HPA, 0)]
+    [1.0],
+    var_name="x",
+    aux_coords_and_dims=[(P_COORD_HPA, 0)],
 )
 
 
@@ -351,13 +374,17 @@ def test_add_altitude_from_plev(cube, output):
         assert altitude_coord.bounds is None
     else:
         np.testing.assert_allclose(
-            altitude_coord.bounds, output.bounds, rtol=1e-3
+            altitude_coord.bounds,
+            output.bounds,
+            rtol=1e-3,
         )
     assert cube.coords("air_pressure")
 
 
 DIM_COORD = iris.coords.DimCoord(
-    [3.141592], bounds=[[1.23, 4.567891011]], standard_name="latitude"
+    [3.141592],
+    bounds=[[1.23, 4.567891011]],
+    standard_name="latitude",
 )
 CUBE_1 = iris.cube.Cube([1.0], standard_name="air_temperature")
 CUBE_2 = iris.cube.Cube([3.0], dim_coords_and_dims=[(DIM_COORD, 0)])
@@ -575,7 +602,7 @@ def test_get_bounds_cube(coord_name, output):
             iris.cube.Cube([[0.0]], var_name="d_bounds"),
             iris.cube.Cube([[0.0]], var_name="e_bounds"),
             iris.cube.Cube([[0.0]], var_name="e_bounds"),
-        ]
+        ],
     )
     if output is None:
         with pytest.raises(ValueError) as err:
@@ -616,7 +643,7 @@ def test_fix_bounds(var_names, output):
             iris.cube.Cube([1.0, 2.0], var_name="a_bnds"),
             iris.cube.Cube([1.0, 2.0], var_name="b_bounds"),
             iris.cube.Cube([1000.0, 2000.0], var_name="c_bounds"),
-        ]
+        ],
     )
     assert cube.coord(var_name="a").bounds is None
     fix_bounds(cube, cubes, var_names)
@@ -659,10 +686,14 @@ def test_round_coordinates_single_coord():
     """Test rounding of specified coordinate."""
     coords, bounds = [10.0001], [[9.0001, 11.0001]]
     latcoord = iris.coords.DimCoord(
-        coords.copy(), bounds=bounds.copy(), standard_name="latitude"
+        coords.copy(),
+        bounds=bounds.copy(),
+        standard_name="latitude",
     )
     loncoord = iris.coords.DimCoord(
-        coords.copy(), bounds=bounds.copy(), standard_name="longitude"
+        coords.copy(),
+        bounds=bounds.copy(),
+        standard_name="longitude",
     )
     cube = iris.cube.Cube(
         [[1.0]],
@@ -681,10 +712,14 @@ def test_round_coordinates_single_coord():
 def test_fix_ocean_depth_coord():
     """Test `fix_ocean_depth_coord`."""
     z_coord = iris.coords.DimCoord(
-        0.0, var_name="alt", attributes={"positive": "up"}
+        0.0,
+        var_name="alt",
+        attributes={"positive": "up"},
     )
     cube = iris.cube.Cube(
-        [0.0], var_name="x", dim_coords_and_dims=[(z_coord, 0)]
+        [0.0],
+        var_name="x",
+        dim_coords_and_dims=[(z_coord, 0)],
     )
     fix_ocean_depth_coord(cube)
     depth_coord = cube.coord("depth")
@@ -699,7 +734,9 @@ def test_fix_ocean_depth_coord():
 def time_coord():
     """Time coordinate."""
     time_coord = AuxCoord(
-        [15.0, 350.0], standard_name="time", units="days since 1850-01-01"
+        [15.0, 350.0],
+        standard_name="time",
+        units="days since 1850-01-01",
     )
     return time_coord
 

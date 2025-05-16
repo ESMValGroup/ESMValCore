@@ -34,7 +34,9 @@ class TestConvertUnits(tests.Test):
         )
         coords_spec3 = [(lats2, 0), (lons2, 1)]
         self.arr = iris.cube.Cube(
-            self.data2, units="K", dim_coords_and_dims=coords_spec3
+            self.data2,
+            units="K",
+            dim_coords_and_dims=coords_spec3,
         )
 
     def test_convert_incompatible_units(self):
@@ -254,13 +256,18 @@ class TestFluxToTotal(tests.Test):
             (time, 0),
         ]
         self.cube = iris.cube.Cube(
-            data, units="kg day-1", dim_coords_and_dims=coords_spec
+            data,
+            units="kg day-1",
+            dim_coords_and_dims=coords_spec,
         )
 
     def test_missing_coordinate(self):
         """Test error is raised if missing coordinate."""
         self.assertRaises(
-            ValueError, accumulate_coordinate, self.cube, "longitude"
+            ValueError,
+            accumulate_coordinate,
+            self.cube,
+            "longitude",
         )
 
     def test_multidim_coordinate(self):
@@ -300,7 +307,10 @@ class TestFluxToTotal(tests.Test):
             aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
         )
         self.assertRaises(
-            NotImplementedError, accumulate_coordinate, cube, "longitude"
+            NotImplementedError,
+            accumulate_coordinate,
+            cube,
+            "longitude",
         )
 
     def test_flux_by_second(self):

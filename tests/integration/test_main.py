@@ -68,7 +68,9 @@ def test_run():
 def test_empty_run(tmp_path, monkeypatch):
     """Test real run with no diags."""
     monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping, "config_file", raising=False
+        esmvalcore.config.CFG._mapping,
+        "config_file",
+        raising=False,
     )
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
@@ -95,10 +97,13 @@ def test_empty_run(tmp_path, monkeypatch):
         ESMValTool().run(recipe_file, config_dir=config_dir)
     assert str(exc.value) == "The given recipe does not have any diagnostic."
     log_file = os.path.join(
-        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
+        log_dir,
+        os.listdir(log_dir)[0],
+        "run",
+        "main_log.txt",
     )
     filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
+        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
     )
     shutil.rmtree(log_dir)
 
@@ -155,7 +160,10 @@ def test_get_config_developer_path(tmp_path):
     """Test version command."""
     new_path = tmp_path / "subdir"
     with arguments(
-        "esmvaltool", "config", "get_config_developer", f"--path={new_path}"
+        "esmvaltool",
+        "config",
+        "get_config_developer",
+        f"--path={new_path}",
     ):
         run()
     assert (new_path / "config-developer.yml").is_file()
@@ -197,7 +205,10 @@ def test_get_config_developer_no_overwrite(tmp_path):
 def test_get_config_developer_bad_option_fails():
     """Test version command."""
     with arguments(
-        "esmvaltool", "config", "get_config_developer", "--bad_option=path"
+        "esmvaltool",
+        "config",
+        "get_config_developer",
+        "--bad_option=path",
     ):
         with pytest.raises(FireExit):
             run()
@@ -225,7 +236,10 @@ def test_get_config_user_path(tmp_path):
     """Test version command."""
     new_path = tmp_path / "subdir"
     with arguments(
-        "esmvaltool", "config", "get_config_user", f"--path={new_path}"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        f"--path={new_path}",
     ):
         run()
     assert (new_path / "config-user.yml").is_file()
@@ -251,7 +265,10 @@ def test_get_config_user_no_overwrite(tmp_path):
     config_user = tmp_path / "configuration_file.yml"
     config_user.write_text("old text")
     with arguments(
-        "esmvaltool", "config", "get_config_user", f"--path={config_user}"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        f"--path={config_user}",
     ):
         run()
     assert config_user.read_text() == "old text"
@@ -264,7 +281,10 @@ def test_get_config_user_no_overwrite(tmp_path):
 def test_get_config_user_bad_option_fails():
     """Test version command."""
     with arguments(
-        "esmvaltool", "config", "get_config_user", "--bad_option=path"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        "--bad_option=path",
     ):
         with pytest.raises(FireExit):
             run()

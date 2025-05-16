@@ -25,17 +25,19 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute vegetation fraction from bare soil fraction."""
         baresoilfrac_cube = cubes.extract_cube(
-            NameConstraint(var_name="baresoilFrac")
+            NameConstraint(var_name="baresoilFrac"),
         )
         residualfrac_cube = cubes.extract_cube(
-            NameConstraint(var_name="residualFrac")
+            NameConstraint(var_name="residualFrac"),
         )
         sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
 
         # Add time dimension to sftlf
         target_shape_sftlf = (baresoilfrac_cube.shape[0], *sftlf_cube.shape)
         sftlf_data = iris.util.broadcast_to_shape(
-            sftlf_cube.data, target_shape_sftlf, (1, 2)
+            sftlf_cube.data,
+            target_shape_sftlf,
+            (1, 2),
         )
         sftlf_cube = baresoilfrac_cube.copy(sftlf_data)
         sftlf_cube.data = sftlf_cube.lazy_data()

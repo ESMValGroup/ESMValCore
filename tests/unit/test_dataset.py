@@ -78,7 +78,8 @@ def test_get_joined_summary_facet(separator, join_lists, output):
         version="v1",
     )
     joined_str = ds._get_joined_summary_facets(
-        separator, join_lists=join_lists
+        separator,
+        join_lists=join_lists,
     )
     assert joined_str == output
 
@@ -507,7 +508,9 @@ def test_from_recipe_with_skip_supplementary(session, tmp_path):
 
 
 def test_from_recipe_with_automatic_supplementary(
-    session, tmp_path, monkeypatch
+    session,
+    tmp_path,
+    monkeypatch,
 ):
     def _find_files(self):
         if self.facets["short_name"] == "areacello":
@@ -691,10 +694,16 @@ def test_from_files(session, monkeypatch):
 
     expected = [
         Dataset(
-            short_name="tas", mip="Amon", project="CMIP6", dataset="FGOALS-g3"
+            short_name="tas",
+            mip="Amon",
+            project="CMIP6",
+            dataset="FGOALS-g3",
         ),
         Dataset(
-            short_name="tas", mip="Amon", project="CMIP6", dataset="NorESM2-LM"
+            short_name="tas",
+            mip="Amon",
+            project="CMIP6",
+            dataset="NorESM2-LM",
         ),
     ]
     for expected_ds in expected:
@@ -1338,7 +1347,7 @@ def create_esgf_file(timerange, version):
         "dataset_id_template_": [
             "%(mip_era)s.%(activity_drs)s.%(institution_id)s."
             "%(source_id)s.%(experiment_id)s.%(member_id)s."
-            "%(table_id)s.%(variable_id)s.%(grid_label)s"
+            "%(table_id)s.%(variable_id)s.%(grid_label)s",
         ],
         "project": ["CMIP6"],
         "size": 4745571,
@@ -1469,7 +1478,7 @@ def test_find_files_outdated_local(mocker, dataset):
     local_dir = Path("/local_dir")
     local_files = [
         create_esgf_file(version="v1", timerange="185001-185012").local_file(
-            local_dir
+            local_dir,
         ),
     ]
 
@@ -1687,7 +1696,12 @@ def test_load(mocker, session):
     order = []
 
     def mock_preprocess(
-        items, step, input_files, output_file, debug, **kwargs
+        items,
+        step,
+        input_files,
+        output_file,
+        debug,
+        **kwargs,
     ):
         order.append(step)
         args[step] = kwargs

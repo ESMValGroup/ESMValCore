@@ -135,7 +135,7 @@ def _search_index_nodes(facets):
 
     raise FileNotFoundError(
         "Failed to search ESGF, unable to connect:\n"
-        + "\n".join(f"- {e}" for e in errors)
+        + "\n".join(f"- {e}" for e in errors),
     )
 
 
@@ -158,7 +158,9 @@ def esgf_search_files(facets):
 
     msg = "none" if not files else "\n" + "\n".join(str(f) for f in files)
     logger.debug(
-        "Found the following files matching facets %s: %s", facets, msg
+        "Found the following files matching facets %s: %s",
+        facets,
+        msg,
     )
 
     return files
@@ -334,7 +336,7 @@ def find_files(*, project, short_name, dataset, **facets):
     if project not in FACETS:
         raise ValueError(
             f"Unable to download from ESGF, because project {project} is not"
-            " on it or is not supported by the esmvalcore.esgf module."
+            " on it or is not supported by the esmvalcore.esgf module.",
         )
 
     # The project is required for the function to work.

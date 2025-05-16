@@ -252,7 +252,11 @@ from esmvalcore.local import DataSource, LocalFile
     ],
 )
 def test_path2facets(
-    path, rootpath, dirname_template, filename_template, facets
+    path,
+    rootpath,
+    dirname_template,
+    filename_template,
+    facets,
 ):
     """Test `DataSource.path2facets."""
     path = Path(path)

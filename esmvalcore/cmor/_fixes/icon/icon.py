@@ -18,7 +18,8 @@ class Clwvi(IconFix):
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="cllvi") + self.get_cube(
-            cubes, var_name="clivi"
+            cubes,
+            var_name="clivi",
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])

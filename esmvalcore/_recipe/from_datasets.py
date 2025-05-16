@@ -8,7 +8,7 @@ import re
 from collections.abc import Iterable, Mapping, Sequence
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from nested_lookup import nested_delete
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-Recipe = Dict[str, Any]
-Facets = Dict[str, Any]
+Recipe = dict[str, Any]
+Facets = dict[str, Any]
 
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
@@ -64,7 +64,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
         if "diagnostic" not in dataset.facets:
             raise RecipeError(
                 f"'diagnostic' facet missing from {dataset},"
-                "unable to convert to recipe."
+                "unable to convert to recipe.",
             )
 
     recipe = _datasets_to_raw_recipe(datasets)
@@ -74,7 +74,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
     for diagnostic in diagnostics:
         for variable in diagnostic["variables"].values():
             variable["additional_datasets"] = _group_ensemble_members(
-                variable["additional_datasets"]
+                variable["additional_datasets"],
             )
 
     # Move identical facets from dataset to variable
@@ -266,7 +266,8 @@ def _create_ensemble_ranges(
         grouped_ensembles = []
         ensembles = sorted(ensembles, key=partial(order, i))
         for (prefix, suffix), ibunch in itertools.groupby(
-            ensembles, key=partial(grouper, i)
+            ensembles,
+            key=partial(grouper, i),
         ):
             bunch = list(ibunch)
             prev = bunch[0][i]

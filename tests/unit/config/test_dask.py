@@ -72,7 +72,10 @@ def test_force_new_dask_config(
     # Create mock distributed.Client
     mock_client = mocker.Mock()
     mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
     )
 
     mock_module = mocker.Mock()
@@ -121,7 +124,10 @@ def test_get_old_dask_config(mocker, tmp_path):
 
 
 def test_get_distributed_client_external(
-    monkeypatch, mocker, mock_dask_config_set, ignore_existing_user_config
+    monkeypatch,
+    mocker,
+    mock_dask_config_set,
+    ignore_existing_user_config,
 ):
     monkeypatch.setitem(
         CFG,
@@ -139,7 +145,10 @@ def test_get_distributed_client_external(
     # Create mock distributed.Client
     mock_client = mocker.Mock()
     mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
     )
 
     with _dask.get_distributed_client() as client:
@@ -177,7 +186,10 @@ def test_get_distributed_client_external_old(
     # Create mock distributed.Client
     mock_client = mocker.Mock()
     mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
     )
 
     with pytest.warns(ESMValCoreDeprecationWarning):
@@ -222,7 +234,10 @@ def test_get_distributed_client_slurm(
     # Create mock distributed.Client
     mock_client = mocker.Mock()
     mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
     )
 
     mock_module = mocker.Mock()
@@ -254,7 +269,10 @@ def test_get_distributed_client_slurm(
 # TODO: Remove in v2.14.0
 @pytest.mark.parametrize("shutdown_timeout", [False, True])
 def test_get_distributed_client_slurm_old(
-    mocker, tmp_path, mock_dask_config_set, shutdown_timeout
+    mocker,
+    tmp_path,
+    mock_dask_config_set,
+    shutdown_timeout,
 ):
     cfg = {
         "cluster": {
@@ -272,7 +290,10 @@ def test_get_distributed_client_slurm_old(
     # Create mock distributed.Client
     mock_client = mocker.Mock()
     mocker.patch.object(
-        _dask, "Client", create_autospec=True, return_value=mock_client
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
     )
 
     mock_module = mocker.Mock()
@@ -320,7 +341,7 @@ def test_custom_default_scheduler(
         assert client is None
 
     mock_dask_config_set.assert_called_with(
-        {"num_workers": 42, "scheduler": "processes"}
+        {"num_workers": 42, "scheduler": "processes"},
     )
 
 
@@ -352,10 +373,12 @@ def test_invalid_dask_config_invalid_profiles(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "address_name", ["scheduler_address", "scheduler-address"]
+    "address_name",
+    ["scheduler_address", "scheduler-address"],
 )
 def test_invalid_dask_config_profile_with_cluster_and_address(
-    monkeypatch, address_name
+    monkeypatch,
+    address_name,
 ):
     monkeypatch.setitem(
         CFG,

@@ -50,14 +50,15 @@ TEST_LOAD_EXTRA_FACETS = [
             PROJECT1=dict(
                 Amon=dict(
                     tas=dict(
-                        cds_var_name="2m_temperature", source_var_name="2t"
+                        cds_var_name="2m_temperature",
+                        source_var_name="2t",
                     ),
                     psl=dict(
                         cds_var_name="mean_sea_level_pressure",
                         source_var_name="msl",
                     ),
-                )
-            )
+                ),
+            ),
         ),
     ),
     (
@@ -67,7 +68,8 @@ TEST_LOAD_EXTRA_FACETS = [
             PROJECT1=dict(
                 Amon=dict(
                     tas=dict(
-                        cds_var_name="temperature_2m", source_var_name="t2m"
+                        cds_var_name="temperature_2m",
+                        source_var_name="t2m",
                     ),
                     psl=dict(
                         cds_var_name="mean_sea_level_pressure",
@@ -81,15 +83,16 @@ TEST_LOAD_EXTRA_FACETS = [
                         cds_var_name="v-component_of_neutral_wind_at_10m",
                         source_var_name="10v",
                     ),
-                )
-            )
+                ),
+            ),
         ),
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    "project, extra_facets_dir, expected", TEST_LOAD_EXTRA_FACETS
+    "project, extra_facets_dir, expected",
+    TEST_LOAD_EXTRA_FACETS,
 )
 def test_load_extra_facets(project, extra_facets_dir, expected):
     extra_facets = _load_extra_facets(project, extra_facets_dir)
@@ -98,12 +101,10 @@ def test_load_extra_facets(project, extra_facets_dir, expected):
 
 def test_get_extra_facets(tmp_path):
     dataset = Dataset(
-        **{
-            "project": "test_project",
-            "mip": "test_mip",
-            "dataset": "test_dataset",
-            "short_name": "test_short_name",
-        }
+        project="test_project",
+        mip="test_mip",
+        dataset="test_dataset",
+        short_name="test_short_name",
     )
     extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
     extra_facets_file.write_text(
@@ -114,7 +115,7 @@ def test_get_extra_facets(tmp_path):
                   key: value
             """)
         .strip()
-        .format(**dataset.facets)
+        .format(**dataset.facets),
     )
 
     extra_facets = get_extra_facets(dataset, extra_facets_dir=(tmp_path,))
@@ -124,12 +125,10 @@ def test_get_extra_facets(tmp_path):
 
 def test_get_extra_facets_cmip3():
     dataset = Dataset(
-        **{
-            "project": "CMIP3",
-            "mip": "A1",
-            "short_name": "tas",
-            "dataset": "CM3",
-        }
+        project="CMIP3",
+        mip="A1",
+        short_name="tas",
+        dataset="CM3",
     )
     extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
@@ -138,12 +137,10 @@ def test_get_extra_facets_cmip3():
 
 def test_get_extra_facets_cmip5():
     dataset = Dataset(
-        **{
-            "project": "CMIP5",
-            "mip": "Amon",
-            "short_name": "tas",
-            "dataset": "ACCESS1-0",
-        }
+        project="CMIP5",
+        mip="Amon",
+        short_name="tas",
+        dataset="ACCESS1-0",
     )
     extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
@@ -243,7 +240,7 @@ def test_load_default_config(cfg_default, monkeypatch):
 
     # Check output directories
     assert str(session.session_dir).startswith(
-        str(Path.home() / "esmvaltool_output" / "recipe_example")
+        str(Path.home() / "esmvaltool_output" / "recipe_example"),
     )
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path

@@ -4,13 +4,15 @@ import numpy as np
 import pytest
 from iris.cube import Cube, CubeList
 
-import esmvalcore.preprocessor._derive.lwcre as lwcre
+from esmvalcore.preprocessor._derive import lwcre
 
 
 @pytest.fixture
 def cubes():
     rlut_cube = Cube(
-        3, standard_name="toa_outgoing_longwave_flux", units="W m-2"
+        3,
+        standard_name="toa_outgoing_longwave_flux",
+        units="W m-2",
     )
     rlutcs_cube = Cube(
         1,

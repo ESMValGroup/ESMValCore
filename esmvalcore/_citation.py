@@ -104,7 +104,9 @@ def _save_citation_bibtex(product_name, tags, json_urls):
     citation_entries.extend(sorted(entries))
 
     with open(
-        f"{product_name}_citation.bibtex", "w", encoding="utf-8"
+        f"{product_name}_citation.bibtex",
+        "w",
+        encoding="utf-8",
     ) as file:
         file.write("\n".join(citation_entries))
 
@@ -115,7 +117,7 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
     # Save CMIP6 url_info
     if info_urls:
         lines.append(
-            "Follow the links below to find more information about CMIP6 data:"
+            "Follow the links below to find more information about CMIP6 data:",
         )
         lines.extend(f"- {url}" for url in sorted(info_urls))
 
@@ -126,7 +128,7 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
             lines.append("")
         lines.append(
             "Additional data citation information was found, for "
-            "which no entry is available in the bibtex file:"
+            "which no entry is available in the bibtex file:",
         )
         lines.extend(
             "- " + str(t).replace("\n", " ") for t in sorted(other_info)
@@ -134,7 +136,9 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
 
     if lines:
         with open(
-            f"{product_name}_data_citation_info.txt", "w", encoding="utf-8"
+            f"{product_name}_data_citation_info.txt",
+            "w",
+            encoding="utf-8",
         ) as file:
             file.write("\n".join(lines) + "\n")
 
@@ -160,10 +164,10 @@ def _get_response(url):
                 json_data = response.json()
             else:
                 logger.warning("Error in the CMIP6 citation link: %s", url)
-        except IOError:
+        except OSError:
             logger.info(
                 "No network connection, "
-                "unable to retrieve CMIP6 citation information"
+                "unable to retrieve CMIP6 citation information",
             )
     return json_data
 

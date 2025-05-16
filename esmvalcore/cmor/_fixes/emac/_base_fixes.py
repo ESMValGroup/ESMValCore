@@ -18,7 +18,8 @@ class EmacFix(NativeDatasetFix):
         # If no var_name given, use the CMOR short_name
         if var_name is None:
             var_name = self.extra_facets.get(
-                "raw_name", self.vardef.short_name
+                "raw_name",
+                self.vardef.short_name,
             )
 
         # Convert to list if only a single var_name is given
@@ -40,7 +41,7 @@ class EmacFix(NativeDatasetFix):
             f"No variable of {var_names} necessary for the extraction/"
             f"derivation the CMOR variable '{self.vardef.short_name}' is "
             f"available in the input file. Please specify a valid `raw_name` "
-            f"in the recipe or extra facets file."
+            f"in the recipe or extra facets file.",
         )
 
 

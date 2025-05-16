@@ -256,7 +256,8 @@ def check_time(cube):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time.points, [54770.5])
     np.testing.assert_allclose(time.bounds, [[54755.0, 54786.0]])
@@ -502,7 +503,9 @@ def check_mesh(mesh):
     assert mesh_node_lat.units == "degrees_north"
     assert mesh_node_lat.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lat.points, [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0], rtol=1e-5
+        mesh_node_lat.points,
+        [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0],
+        rtol=1e-5,
     )
     assert mesh_node_lat.bounds is None
 
@@ -513,7 +516,9 @@ def check_mesh(mesh):
     assert mesh_node_lon.units == "degrees_east"
     assert mesh_node_lon.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lon.points, [0.0, 180.0, 270.0, 0.0, 90, 0.0], rtol=1e-5
+        mesh_node_lon.points,
+        [0.0, 180.0, 270.0, 0.0, 90, 0.0],
+        rtol=1e-5,
     )
     assert mesh_node_lon.bounds is None
 
@@ -627,7 +632,7 @@ def test_get_clwvi_fix():
 def test_clwvi_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList(
-        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()]
+        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()],
     )
     cubes[0].var_name = "cllvi"
     cubes[1].var_name = "clivi"
@@ -741,7 +746,9 @@ def test_siconc_fix(cubes_atm_2d):
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconc", "Sea-Ice Area Percentage (Ocean Grid)"
+        fixed_cubes,
+        "siconc",
+        "Sea-Ice Area Percentage (Ocean Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
@@ -765,7 +772,9 @@ def test_siconca_fix(cubes_atm_2d):
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconca", "Sea-Ice Area Percentage (Atmospheric Grid)"
+        fixed_cubes,
+        "siconca",
+        "Sea-Ice Area Percentage (Atmospheric Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
@@ -804,7 +813,7 @@ def test_ta_fix_no_plev_bounds(cubes_atm_3d):
         [
             cubes_atm_3d.extract_cube(NameConstraint(var_name="ta")),
             cubes_atm_3d.extract_cube(NameConstraint(var_name="pfull")),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -935,7 +944,8 @@ def test_tas_no_shift_time(cubes_atm_2d):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time.points, [54786.0])
     assert time.bounds is None
@@ -1096,7 +1106,8 @@ def test_ch4clim_fix(cubes_regular_grid):
     assert time_coord.standard_name == "time"
     assert time_coord.long_name == "time"
     assert time_coord.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time_coord.points, [15.5])
     np.testing.assert_allclose(time_coord.bounds, [[0.0, 31.0]])
@@ -1152,7 +1163,7 @@ def test_add_time_fail():
         [
             cube,
             Cube(1, var_name="tas", units="K"),
-        ]
+        ],
     )
     msg = "Cannot add required coordinate 'time' to variable 'ta'"
     with pytest.raises(ValueError, match=msg):
@@ -1317,7 +1328,9 @@ def test_get_horizontal_grid_from_attr_cached_in_dict(
 
 @mock.patch.object(IconFix, "_get_grid_from_facet", autospec=True)
 def test_get_horizontal_grid_from_attr_rootpath(
-    mock_get_grid_from_facet, monkeypatch, tmp_path
+    mock_get_grid_from_facet,
+    monkeypatch,
+    tmp_path,
 ):
     """Test fix."""
     rootpath = deepcopy(CFG["rootpath"])
@@ -1353,7 +1366,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     cube = Cube(
         0,
         attributes={
-            "grid_file_uri": "https://temporary.url/this/is/the/grid_file.nc"
+            "grid_file_uri": "https://temporary.url/this/is/the/grid_file.nc",
         },
     )
     fix = get_allvars_fix("Amon", "tas")
@@ -1517,7 +1530,7 @@ def test_only_time(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(time_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1539,7 +1552,8 @@ def test_only_time(monkeypatch):
     # Check time data
     np.testing.assert_allclose(new_time_coord.points, [-15.5, 15.5])
     np.testing.assert_allclose(
-        new_time_coord.bounds, [[-31.0, 0.0], [0.0, 31.0]]
+        new_time_coord.bounds,
+        [[-31.0, 0.0], [0.0, 31.0]],
     )
 
     # Check that no mesh has been created
@@ -1559,7 +1573,10 @@ def test_only_height(monkeypatch):
 
     # Create cube with only a single dimension
     height_coord = DimCoord(
-        [1000.0, 100.0], var_name="height", standard_name="height", units="cm"
+        [1000.0, 100.0],
+        var_name="height",
+        standard_name="height",
+        units="cm",
     )
     cubes = CubeList(
         [
@@ -1569,7 +1586,7 @@ def test_only_height(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(height_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1613,7 +1630,10 @@ def test_only_latitude(monkeypatch):
 
     # Create cube with only a single dimension
     lat_coord = DimCoord(
-        [0.0, 10.0], var_name="clat", standard_name="latitude", units="degrees"
+        [0.0, 10.0],
+        var_name="clat",
+        standard_name="latitude",
+        units="degrees",
     )
     cubes = CubeList(
         [
@@ -1623,7 +1643,7 @@ def test_only_latitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lat_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1676,7 +1696,7 @@ def test_only_longitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lon_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1744,7 +1764,8 @@ def test_hourly_data(cubes_atm_2d):
     date_bnds = cube.coord("time").units.num2date(cube.coord("time").bounds)
     np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 13, 30)])
     np.testing.assert_array_equal(
-        date_bnds, [[datetime(2004, 11, 4, 13), datetime(2004, 11, 4, 14)]]
+        date_bnds,
+        [[datetime(2004, 11, 4, 13), datetime(2004, 11, 4, 14)]],
     )
 
 
@@ -1911,10 +1932,12 @@ def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
     dt_out = [datetime(*dt) for dt in dt_out]
     bounds = [[datetime(*dt1), datetime(*dt2)] for (dt1, dt2) in bounds]
     np.testing.assert_allclose(
-        time_coord.points, time_coord.units.date2num(dt_out)
+        time_coord.points,
+        time_coord.units.date2num(dt_out),
     )
     np.testing.assert_allclose(
-        time_coord.bounds, time_coord.units.date2num(bounds)
+        time_coord.bounds,
+        time_coord.units.date2num(bounds),
     )
 
 
@@ -1949,13 +1972,15 @@ def test_shift_time_point_measurement(frequency, dt_in):
     fix._shift_time_coord(cube, time_coord)
 
     np.testing.assert_allclose(
-        time_coord.points, time_coord.units.date2num(datetimes)
+        time_coord.points,
+        time_coord.units.date2num(datetimes),
     )
     assert time_coord.bounds is None
 
 
 @pytest.mark.parametrize(
-    "frequency", ["dec", "yr", "yrPt", "mon", "monC", "monPt"]
+    "frequency",
+    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
 )
 def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
     """Test ``_shift_time_coord``."""
@@ -1978,7 +2003,8 @@ def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
 
 
 @pytest.mark.parametrize(
-    "frequency", ["dec", "yr", "yrPt", "mon", "monC", "monPt"]
+    "frequency",
+    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
 )
 def test_shift_time_coord_not_first_of_month(frequency):
     """Test ``_get_previous_timestep``."""
@@ -2095,7 +2121,7 @@ def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
         "the grid file) differ from the corresponding values "
         "calculated from the connectivity ('vertex_of_cell') and the "
         "node coordinate ('vlat'). Using bounds defined by "
-        "connectivity."
+        "connectivity.",
     )
 
 
@@ -2120,7 +2146,7 @@ def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d):
         "calculated from the connectivity ('vertex_of_cell') and the "
         "node coordinate ('vlon'). Note that these values are allowed "
         "to differ by 360° or at the poles of the grid. Using bounds "
-        "defined by connectivity."
+        "defined by connectivity.",
     )
 
 
@@ -2458,7 +2484,7 @@ def test_rtnt_fix(cubes_regular_grid):
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
-        ]
+        ],
     )
     cubes[0].var_name = "rsdt"
     cubes[1].var_name = "rsut"
@@ -2496,7 +2522,7 @@ def test_rtmt_fix(cubes_regular_grid):
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
-        ]
+        ],
     )
     cubes[0].var_name = "rsdt"
     cubes[1].var_name = "rsut"

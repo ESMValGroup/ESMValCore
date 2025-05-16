@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from numbers import Number
-from typing import Dict, Iterable, Sequence, Union
+from typing import Union
 
 import dask.array as da
 import numpy as np
@@ -12,7 +13,7 @@ from iris.cube import Cube
 FacetValue = Union[str, Sequence[str], Number]
 """Type describing a single facet."""
 
-Facets = Dict[str, FacetValue]
+Facets = dict[str, FacetValue]
 """Type describing a collection of facets."""
 
 NetCDFAttr = Union[str, Number, Iterable]

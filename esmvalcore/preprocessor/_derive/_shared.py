@@ -26,7 +26,8 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     with ignore_iris_vague_metadata_warnings():
         if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
             new_cube = new_cube.collapsed(
-                "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
+                "atmosphere_optical_thickness_due_to_cloud",
+                iris.analysis.SUM,
             )
         if "air_pressure" in coord_names:
             new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
@@ -212,10 +213,14 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     dim_map = np.arange(array_centers.ndim)
     dim_map = np.delete(dim_map, air_pressure_axis)
     array_centers_surface = iris.util.broadcast_to_shape(
-        array_centers[tuple(index_0)], array_centers.shape, dim_map
+        array_centers[tuple(index_0)],
+        array_centers.shape,
+        dim_map,
     )
     array_centers = np.where(
-        np.isnan(array_centers), array_centers_surface, array_centers
+        np.isnan(array_centers),
+        array_centers_surface,
+        array_centers,
     )
 
     # Calculate level widths

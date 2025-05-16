@@ -44,9 +44,12 @@ def make_cube():
     simple_cube = guess_bounds(simple_cube, ["longitude", "latitude"])
     grid_areas = iris.analysis.cartography.area_weights(simple_cube)
     measure = iris.coords.CellMeasure(
-        grid_areas, standard_name="cell_area", units="m2", measure="area"
+        grid_areas,
+        standard_name="cell_area",
+        units="m2",
+        measure="area",
     )
-    simple_cube.add_cell_measure(measure, range(0, measure.ndim))
+    simple_cube.add_cell_measure(measure, range(measure.ndim))
 
     # add ancillary variable
     ancillary_var = iris.coords.AncillaryVariable(
@@ -56,7 +59,8 @@ def make_cube():
         units="%",
     )
     simple_cube.add_ancillary_variable(
-        ancillary_var, range(0, simple_cube.ndim)
+        ancillary_var,
+        range(simple_cube.ndim),
     )
 
     return simple_cube

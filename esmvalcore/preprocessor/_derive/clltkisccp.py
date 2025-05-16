@@ -19,7 +19,7 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute ISCCP low level thick cloud area fraction."""
         tau = Constraint(
-            atmosphere_optical_thickness_due_to_cloud=lambda t: t > 23.0
+            atmosphere_optical_thickness_due_to_cloud=lambda t: t > 23.0,
         )
         plev = Constraint(air_pressure=lambda p: p > 68000.0)
 

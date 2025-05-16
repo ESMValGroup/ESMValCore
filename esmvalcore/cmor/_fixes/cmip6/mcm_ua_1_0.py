@@ -57,7 +57,8 @@ class AllVars(Fix):
             time_units = cube.attributes.get("parent_time_units")
             if time_units is not None:
                 cube.attributes["parent_time_units"] = time_units.replace(
-                    " (noleap)", ""
+                    " (noleap)",
+                    "",
                 )
 
         for cube in cubes:
@@ -81,7 +82,9 @@ class AllVars(Fix):
                         cube.data = da.roll(cube.core_data(), -1, axis=lon_dim)
                         lon_points = np.roll(lon_coord.core_points(), -1)
                         lon_bounds = np.roll(
-                            lon_coord.core_bounds(), -1, axis=0
+                            lon_coord.core_bounds(),
+                            -1,
+                            axis=0,
                         )
                         lon_points[-1] += 360.0
                         lon_bounds[-1] += 360.0

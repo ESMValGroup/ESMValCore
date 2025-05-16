@@ -126,7 +126,7 @@ class IrisESMFRegrid:
         if method not in METHODS:
             raise ValueError(
                 "`method` should be one of 'bilinear', 'conservative', or "
-                "'nearest'"
+                "'nearest'",
             )
 
         if use_src_mask is None:
@@ -146,7 +146,7 @@ class IrisESMFRegrid:
             if mdtol is not None:
                 raise TypeError(
                     "`mdol` can only be specified when `method='bilinear'` "
-                    "or `method='conservative'`"
+                    "or `method='conservative'`",
                 )
         else:
             self.kwargs["mdtol"] = mdtol
@@ -156,19 +156,17 @@ class IrisESMFRegrid:
         elif src_resolution is not None:
             raise TypeError(
                 "`src_resolution` can only be specified when "
-                "`method='conservative'`"
+                "`method='conservative'`",
             )
         elif tgt_resolution is not None:
             raise TypeError(
                 "`tgt_resolution` can only be specified when "
-                "`method='conservative'`"
+                "`method='conservative'`",
             )
 
     def __repr__(self) -> str:
         """Return string representation of class."""
-        kwargs_str = ", ".join(
-            f"{k}={repr(v)}" for k, v in self.kwargs.items()
-        )
+        kwargs_str = ", ".join(f"{k}={v!r}" for k, v in self.kwargs.items())
         return f"{self.__class__.__name__}({kwargs_str})"
 
     @staticmethod

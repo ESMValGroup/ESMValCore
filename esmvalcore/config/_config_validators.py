@@ -8,7 +8,7 @@ import warnings
 from collections.abc import Callable, Iterable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from packaging import version
 
@@ -58,7 +58,7 @@ def _make_type_validator(cls, *, allow_none=False):
         except ValueError as err:
             if isinstance(cls, type):
                 raise ValidationError(
-                    f"Could not convert {repr(inp)} to {cls.__name__}"
+                    f"Could not convert {inp!r} to {cls.__name__}",
                 ) from err
             raise
 
@@ -75,7 +75,7 @@ def _make_type_validator(cls, *, allow_none=False):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-@lru_cache()
+@lru_cache
 def _listify_validator(
     scalar_validator,
     allow_stringlist=False,
@@ -108,7 +108,8 @@ def _listify_validator(
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
         elif isinstance(inp, Iterable) and not isinstance(
-            inp, (set, frozenset)
+            inp,
+            (set, frozenset),
         ):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
@@ -121,19 +122,19 @@ def _listify_validator(
             )
         else:
             raise ValidationError(
-                f"Expected str or other non-set iterable, but got {inp}"
+                f"Expected str or other non-set iterable, but got {inp}",
             )
         if n_items is not None and len(inp) != n_items:
             raise ValidationError(
                 f"Expected {n_items} values, "
-                f"but there are {len(inp)} values in {inp}"
+                f"but there are {len(inp)} values in {inp}",
             )
         return inp
 
     try:
-        func.__name__ = "{}list".format(scalar_validator.__name__)
+        func.__name__ = f"{scalar_validator.__name__}list"
     except AttributeError:  # class instance.
-        func.__name__ = "{}List".format(type(scalar_validator).__name__)
+        func.__name__ = f"{type(scalar_validator).__name__}List"
     func.__qualname__ = (
         func.__qualname__.rsplit(".", 1)[0] + "." + func.__name__
     )
@@ -185,7 +186,8 @@ def _chain_validator(*funcs):
 validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(
-    validate_string, docstring="Return a list of strings."
+    validate_string,
+    docstring="Return a list of strings.",
 )
 
 validate_bool_or_none = partial(validate_bool, allow_none=True)
@@ -193,7 +195,8 @@ validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
 validate_floatlist = _listify_validator(
-    validate_float, docstring="Return a list of floats."
+    validate_float,
+    docstring="Return a list of floats.",
 )
 
 validate_dict = _make_type_validator(dict)
@@ -201,12 +204,14 @@ validate_dict = _make_type_validator(dict)
 validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 
 validate_pathlist = _listify_validator(
-    validate_path, docstring="Return a list of paths."
+    validate_path,
+    docstring="Return a list of paths.",
 )
 
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(
-    validate_int_positive, allow_none=True
+    validate_int_positive,
+    allow_none=True,
 )
 
 
@@ -218,7 +223,7 @@ def validate_rootpath(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'rootpath'"
+                "written as 'obs4MIPs' in configured 'rootpath'",
             )
             key = "obs4MIPs"
         if isinstance(paths, Path):
@@ -248,7 +253,7 @@ def validate_drs(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'drs'"
+                "written as 'obs4MIPs' in configured 'drs'",
             )
             key = "obs4MIPs"
         new_mapping[key] = validate_string(drs)
@@ -272,7 +277,7 @@ def validate_check_level(value):
             value = CheckLevels[value.upper()]
         except KeyError:
             raise ValidationError(
-                f"`{value}` is not a valid strictness level"
+                f"`{value}` is not a valid strictness level",
             ) from None
 
     else:
@@ -288,14 +293,14 @@ def validate_search_esgf(value):
     if value not in SEARCH_ESGF_OPTIONS:
         raise ValidationError(
             f"`{value}` is not a valid option ESGF search option, possible "
-            f"values are {SEARCH_ESGF_OPTIONS}"
+            f"values are {SEARCH_ESGF_OPTIONS}",
         ) from None
     return value
 
 
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
-) -> Optional[set[str]]:
+    diagnostics: Iterable[str] | str | None,
+) -> set[str] | None:
     """Validate diagnostic location."""
     if diagnostics is None:
         return None
