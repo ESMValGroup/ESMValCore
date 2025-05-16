@@ -29,6 +29,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
 
+from ._regrid import extract_levels
+
 logger = logging.getLogger(__name__)
 
 
@@ -603,3 +605,80 @@ def extract_trajectory(
     points = [("latitude", latitudes), ("longitude", longitudes)]
     interpolated_cube = interpolate(cube, points)  # Very slow!
     return interpolated_cube
+
+
+def _get_first_unmasked_data(array: da.Array, axis: int) -> da.Array:
+    """Get first unmasked value of an array along an axis."""
+    mask = da.ma.getmaskarray(array)
+    numerical_mask = da.where(mask, -1.0, 1.0)
+    indices_first_positive = da.argmax(numerical_mask, axis=axis)
+    indices = da.meshgrid(
+        *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
+        indexing="ij",
+    )
+    indices = list(indices)
+    indices.insert(axis, indices_first_positive)
+    first_unmasked_data = np.array(array)[tuple(indices)]
+    return first_unmasked_data
+
+
+@register_supplementaries(variables=["ps"], required="require_at_least_one")
+@preserve_float_dtype
+def extract_surface_from_atm(
+    cube: Cube,
+) -> Cube:
+    """Extract surface from 3D atmospheric variable based on surface pressure.
+
+    Parameters
+    ----------
+    cube:
+        Input cube. Needs :class:`~iris.coords.AncillaryVariable` ``surface_air_pressure``.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Collapsed cube.
+    """
+    # Declare required variables
+    #   - 3D atmo variable to extract at the surface
+    #   - surface_air_pressure (ps)
+    try:
+        ps_cube = cube.ancillary_variable("surface_air_pressure")
+    except iris.exceptions.AncillaryVariableNotFoundError as exc:
+        raise ValueError("Surface air pressure could not be found") from exc
+
+    # Fill masked data if necessary (interpolation fails with masked data)
+    (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
+    mask = da.ma.getmaskarray(cube.core_data())
+    if mask.any():
+        first_unmasked_data = _get_first_unmasked_data(
+            cube.core_data(), axis=z_axis
+        )
+        dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
+        first_unmasked_data = iris.util.broadcast_to_shape(
+            first_unmasked_data, cube.shape, dim_map
+        )
+        cube.data = da.where(mask, first_unmasked_data, cube.core_data())
+
+    # Interpolation
+    target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
+    var_cube = extract_levels(
+        cube,
+        levels=target_levels,
+        scheme="linear_extrapolate",
+        coordinate="air_pressure",
+        rtol=1e-7,
+        atol=None,
+    )
+    if cube.var_name is not None:
+        var_cube.var_name = cube.var_name + "s"
+
+    # Remove remaining interpolated dimension of size 1.
+    slices = [
+        0 if var_cube.shape[dim] == 1 and dim == z_axis else slice(None)
+        for dim in range(var_cube.ndim)
+    ]
+    var_cube = var_cube[tuple(slices)]
+    logger.debug("Extracting surface using surface air pressure.")
+
+    return var_cube

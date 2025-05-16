@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import dask.array as da
 import iris
+import iris.coords
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
@@ -1020,7 +1021,7 @@ def _create_cube(src_cube, data, src_levels, levels):
     z_coord = src_cube.coord(axis="z", dim_coords=True)
     (z_dim,) = src_cube.coord_dims(z_coord)
 
-    if data.shape[z_dim] != levels.size:
+    if (len(levels.shape) == 1) and (data.shape[z_dim] != levels.size):
         emsg = (
             "Mismatch between data and levels for data dimension {!r}, "
             "got data shape {!r} with levels shape {!r}."
@@ -1068,7 +1069,10 @@ def _create_cube(src_cube, data, src_levels, levels):
         result.add_dim_coord(coord, z_dim)
     except ValueError:
         coord = iris.coords.AuxCoord(levels, **kwargs)
-        result.add_aux_coord(coord, z_dim)
+        result.add_aux_coord(
+            coord,
+            z_dim if len(levels.shape) == 1 else np.arange(len(coord.shape)),
+        )
 
     # Collapse the z-dimension for the scalar case.
     if levels.size == 1:
@@ -1151,7 +1155,24 @@ def _preserve_fx_vars(cube, result):
                     result.var_name,
                 )
             else:
-                add_ancillary_variable(result, ancillary_var)
+                # Create cube and add coordinates to ancillary variable
+                ancillary_coords: list[
+                    tuple[iris.coords.AncillaryVariable, int]
+                ] = []
+                for i, coord in enumerate(cube.coords()):
+                    if i in ancillary_dims:
+                        coord_idx = len(ancillary_coords)
+                        ancillary_coords.append((coord.copy(), coord_idx))
+                ancillary_cube = iris.cube.Cube(
+                    ancillary_var.core_data(),
+                    standard_name=ancillary_var.standard_name,
+                    long_name=ancillary_var.long_name,
+                    units=ancillary_var.units,
+                    var_name=ancillary_var.var_name,
+                    attributes=ancillary_var.attributes,
+                    dim_coords_and_dims=ancillary_coords,
+                )
+                add_ancillary_variable(result, ancillary_cube)
 
 
 def parse_vertical_scheme(scheme):
@@ -1288,8 +1309,10 @@ def extract_levels(
         result = cube
         # Set the levels to the requested values
         src_levels.points = levels
-    elif len(src_levels.shape) == 1 and set(levels).issubset(
-        set(src_levels.points)
+    elif (
+        len(src_levels.shape) == 1
+        and len(levels.shape) == 1
+        and set(levels.flatten()).issubset(set(src_levels.points))
     ):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
