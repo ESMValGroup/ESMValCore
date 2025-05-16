@@ -13,6 +13,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
+import ncdata
+import xarray as xr
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
@@ -34,18 +36,26 @@ def fix_file(
     session: Optional[Session] = None,
     frequency: Optional[str] = None,
     **extra_facets,
-) -> str | Path:
-    """Fix files before ESMValTool can load them.
+) -> str | Path | xr.Dataset | ncdata.NcData:
+    """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-    These fixes are only for issues that prevent iris from loading the cube or
-    that cannot be fixed after the cube is loaded.
+    This is mainly intended to fix errors that prevent loading the data with
+    Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
+    operations that are more efficient with other packages (e.g., loading files
+    with lots of variables is much faster with Xarray than Iris).
 
-    Original files are not overwritten.
+    Warning
+    -------
+    A path should only be returned if it points to the original (unchanged)
+    file (i.e., a fix was not necessary). If a fix is necessary, this function
+    should return a :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object.
+    Under no circumstances a copy of the input data should be created (this is
+    very inefficient).
 
     Parameters
     ----------
     file:
-        Path to the original file.
+        Path to the original file. Original files are not overwritten.
     short_name:
         Variable's short name.
     project:
@@ -57,7 +67,7 @@ def fix_file(
     output_dir:
         Output directory for fixed files.
     add_unique_suffix:
-        Adds a unique suffix to `output_dir` for thread safety.
+        Adds a unique suffix to ``output_dir`` for thread safety.
     session:
         Current session which includes configuration and directory information.
     frequency:
@@ -68,8 +78,8 @@ def fix_file(
 
     Returns
     -------
-    str or pathlib.Path
-        Path to the fixed file.
+    str | pathlib.Path | xr.Dataset | ncdata.NcData:
+        Fixed data or a path to them.
 
     """
     # Update extra_facets with variable information given as regular arguments

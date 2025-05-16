@@ -126,9 +126,9 @@ Then we have to create the class for the fix deriving from
 Next we must choose the method to use between the ones offered by the
 Fix class:
 
-- ``fix_file``: should be used only to fix errors that prevent data loading.
-  As a rule of thumb, you should only use it if the execution halts before
-  reaching the checks.
+- ``fix_file``: you need to fix errors that prevent loading the data with Iris
+  or perform operations that are more efficient with other packages (e.g.,
+  loading files with lots of variables is much faster with Xarray than Iris).
 
 - ``fix_metadata``: you want to change something in the cube that is not
   the data (e.g., variable or coordinate names, data units).
