@@ -15,7 +15,7 @@ from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Recipe:
@@ -32,7 +32,8 @@ class Recipe:
     def __init__(self, path: os.PathLike):
         self.path = Path(path)
         if not self.path.exists():
-            raise FileNotFoundError(f"Cannot find recipe: `{path}`.")
+            msg = f"Cannot find recipe: `{path}`."
+            raise FileNotFoundError(msg)
 
         self._engine: RecipeEngine | None = None
         self._data: dict | None = None
@@ -154,7 +155,8 @@ class Recipe:
             grouped by diagnostic task.
         """
         if self._engine is None:
-            raise AttributeError("Run the recipe first using `.run()`.")
+            msg = "Run the recipe first using `.run()`."
+            raise AttributeError(msg)
 
         output = self._engine.get_output()
         task_output = output["task_output"]

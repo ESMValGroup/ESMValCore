@@ -7,13 +7,14 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from ..config._esgf_pyclient import get_esgf_config
-from ..local import (
+from esmvalcore.config._esgf_pyclient import get_esgf_config
+from esmvalcore.local import (
     _get_start_end_date,
     _parse_period,
     _replace_years_with_timerange,
     _truncate_dates,
 )
+
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -334,9 +335,12 @@ def find_files(*, project, short_name, dataset, **facets):
         A list of files that have been found.
     """  # pylint: disable=locally-disabled, line-too-long
     if project not in FACETS:
-        raise ValueError(
+        msg = (
             f"Unable to download from ESGF, because project {project} is not"
-            " on it or is not supported by the esmvalcore.esgf module.",
+            " on it or is not supported by the esmvalcore.esgf module."
+        )
+        raise ValueError(
+            msg,
         )
 
     # The project is required for the function to work.

@@ -338,14 +338,13 @@ def create_irregular_grid_cube(data, lons, lats):
         (lat, [1, 2]),
         (lon, [1, 2]),
     ]
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         data,
         var_name="tos",
         units="K",
         dim_coords_and_dims=dim_coord_spec,
         aux_coords_and_dims=aux_coord_spec,
     )
-    return cube
 
 
 IRREGULAR_EXTRACT_REGION_TESTS = [
@@ -447,8 +446,7 @@ def irregular_extract_region_cube():
         ],
         dtype=np.float64,
     )
-    cube = create_irregular_grid_cube(data, lons, lats)
-    return cube
+    return create_irregular_grid_cube(data, lons, lats)
 
 
 @pytest.mark.parametrize("case", IRREGULAR_EXTRACT_REGION_TESTS)
@@ -542,14 +540,13 @@ def create_rotated_grid_cube(data):
         (lat, [0, 1]),
         (lon, [0, 1]),
     ]
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         data,
         var_name="tos",
         units="K",
         dim_coords_and_dims=dim_coord_spec,
         aux_coords_and_dims=aux_coord_spec,
     )
-    return cube
 
 
 ROTATED_AREA_STATISTICS_TEST = [
@@ -626,13 +623,12 @@ def create_unstructured_grid_cube():
         standard_name="longitude",
         units="degrees",
     )
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [0, 10, 20],
         var_name="tas",
         units="K",
         aux_coords_and_dims=[(lat, 0), (lon, 0)],
     )
-    return cube
 
 
 def test_area_statistics_max_irregular_grid():
@@ -1158,8 +1154,7 @@ def irreg_extract_shape_cube():
         ],
         dtype=np.float64,
     )
-    cube = create_irregular_grid_cube(data, lons, lats)
-    return cube
+    return create_irregular_grid_cube(data, lons, lats)
 
 
 @pytest.mark.parametrize("method", ["contains", "representative"])
@@ -1353,12 +1348,11 @@ def test_extract_shape_invalid_dict(make_testcube, ids):
 @pytest.fixture
 def ar6_shapefile():
     """Path to AR6 shapefile."""
-    shapefile = (
+    return (
         Path(esmvalcore.preprocessor.__file__).parent
         / "shapefiles"
         / "ar6.shp"
     )
-    return shapefile
 
 
 def test_get_requested_geometries_invalid_ids(ar6_shapefile):

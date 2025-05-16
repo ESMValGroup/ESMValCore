@@ -10,7 +10,6 @@ import os
 import re
 import ssl
 import warnings
-from collections.abc import Iterable
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -51,6 +50,8 @@ from esmvalcore.preprocessor.regrid_schemes import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -214,9 +215,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
     shape = (latdata.size, londata.size)
     dummy = np.empty(shape, dtype=np.int32)
     coords_spec = [(lats, 0), (lons, 1)]
-    cube = Cube(dummy, dim_coords_and_dims=coords_spec)
-
-    return cube
+    return Cube(dummy, dim_coords_and_dims=coords_spec)
 
 
 @functools.lru_cache
@@ -274,9 +273,7 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
             int(_LON_RANGE / dlon),
         )
 
-    cube = _generate_cube_from_dimcoords(latdata=latdata, londata=londata)
-
-    return cube
+    return _generate_cube_from_dimcoords(latdata=latdata, londata=londata)
 
 
 def _spec_to_latlonvals(
@@ -324,19 +321,26 @@ def _spec_to_latlonvals(
         List of latitudes
     """
     if step_latitude == 0:
+        msg = f"Latitude step cannot be 0, got step_latitude={step_latitude}."
         raise ValueError(
-            f"Latitude step cannot be 0, got step_latitude={step_latitude}.",
+            msg,
         )
 
     if step_longitude == 0:
+        msg = (
+            f"Longitude step cannot be 0, got step_longitude={step_longitude}."
+        )
         raise ValueError(
-            f"Longitude step cannot be 0, got step_longitude={step_longitude}.",
+            msg,
         )
 
     if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
-        raise ValueError(
+        msg = (
             f"Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, "
-            f"got start_latitude={start_latitude}:end_latitude={end_latitude}.",
+            f"got start_latitude={start_latitude}:end_latitude={end_latitude}."
+        )
+        raise ValueError(
+            msg,
         )
 
     def get_points(start, stop, step):
@@ -422,15 +426,21 @@ def extract_location(cube, location, scheme):
         If given location cannot be found by the geolocator.
     """
     if location is None:
-        raise ValueError(
+        msg = (
             "Location needs to be specified."
             " Examples: 'mount everest', 'romania',"
-            " 'new york, usa'",
+            " 'new york, usa'"
+        )
+        raise ValueError(
+            msg,
         )
     if scheme is None:
-        raise ValueError(
+        msg = (
             "Interpolation scheme needs to be specified."
-            " Use either 'linear' or 'nearest'.",
+            " Use either 'linear' or 'nearest'."
+        )
+        raise ValueError(
+            msg,
         )
     try:
         # Try to use the default SSL context, see
@@ -448,7 +458,8 @@ def extract_location(cube, location, scheme):
         geolocator = Nominatim(user_agent="esmvalcore")
     geolocation = geolocator.geocode(location)
     if geolocation is None:
-        raise ValueError(f"Requested location {location} can not be found.")
+        msg = f"Requested location {location} can not be found."
+        raise ValueError(msg)
     logger.info(
         "Extracting data for %s (%s °N, %s °E)",
         geolocation,
@@ -540,8 +551,7 @@ def extract_point(cube, latitude, longitude, scheme):
         raise ValueError(msg)
 
     point = [("latitude", latitude), ("longitude", longitude)]
-    cube = cube.interpolate(point, scheme=scheme)
-    return cube
+    return cube.interpolate(point, scheme=scheme)
 
 
 def is_dataset(dataset):
@@ -585,7 +595,8 @@ def _get_target_grid_cube(
         target_grid_cube = target_grid
 
     if not isinstance(target_grid_cube, Cube):
-        raise ValueError(f"Expecting a cube, got {target_grid}.")
+        msg = f"Expecting a cube, got {target_grid}."
+        raise ValueError(msg)
 
     return target_grid_cube
 
@@ -640,9 +651,12 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
 
         schemes = globals()[f"HORIZONTAL_SCHEMES_{grid_type.upper()}"]
         if scheme not in schemes:
-            raise ValueError(
+            msg = (
                 f"Regridding scheme '{scheme}' not available for {grid_type} "
-                f"data, expected one of: {', '.join(schemes)}",
+                f"data, expected one of: {', '.join(schemes)}"
+            )
+            raise ValueError(
+                msg,
             )
         loaded_scheme = schemes[scheme]
 
@@ -658,17 +672,21 @@ def _load_generic_scheme(scheme: dict):
     try:
         object_ref = scheme.pop("reference")
     except KeyError as key_err:
+        msg = "No reference specified for generic regridding."
         raise ValueError(
-            "No reference specified for generic regridding.",
+            msg,
         ) from key_err
     module_name, separator, scheme_name = object_ref.partition(":")
     try:
         obj: Any = importlib.import_module(module_name)
     except ImportError as import_err:
-        raise ValueError(
+        msg = (
             f"Could not import specified generic regridding module "
             f"'{module_name}'. Please double check spelling and that the "
-            f"required module is installed.",
+            f"required module is installed."
+        )
+        raise ValueError(
+            msg,
         ) from import_err
     if separator:
         for attr in scheme_name.split("."):
@@ -908,9 +926,7 @@ def regrid(
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
-    cube = regridder(cube)
-
-    return cube
+    return regridder(cube)
 
 
 def _cache_clear():
@@ -991,7 +1007,7 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
         coord1 = cube1.coord(coord)
         coord2 = cube2.coord(coord)
 
-        if not coord1.shape == coord2.shape:
+        if coord1.shape != coord2.shape:
             return False
 
         if not np.allclose(coord1.bounds, coord2.bounds):
@@ -1212,9 +1228,12 @@ def parse_vertical_scheme(scheme):
     """
     # Check if valid scheme is given
     if scheme not in VERTICAL_SCHEMES:
-        raise ValueError(
+        msg = (
             f"Unknown vertical interpolation scheme, got '{scheme}', possible "
-            f"schemes are {VERTICAL_SCHEMES}",
+            f"schemes are {VERTICAL_SCHEMES}"
+        )
+        raise ValueError(
+            msg,
         )
 
     # This allows us to put level 0. to load the ocean surface.
@@ -1378,13 +1397,15 @@ def get_cmor_levels(cmor_table, coordinate):
         levels or the string is badly formatted.
     """
     if cmor_table not in CMOR_TABLES:
+        msg = f"Level definition cmor_table '{cmor_table}' not available"
         raise ValueError(
-            f"Level definition cmor_table '{cmor_table}' not available",
+            msg,
         )
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
+        msg = f"Coordinate {coordinate} not available for {cmor_table}"
         raise ValueError(
-            f"Coordinate {coordinate} not available for {cmor_table}",
+            msg,
         )
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
@@ -1394,9 +1415,12 @@ def get_cmor_levels(cmor_table, coordinate):
     if cmor.value:
         return [float(cmor.value)]
 
-    raise ValueError(
+    msg = (
         f"Coordinate {coordinate} in {cmor_table} does not have requested "
-        f"values",
+        f"values"
+    )
+    raise ValueError(
+        msg,
     )
 
 
@@ -1425,7 +1449,8 @@ def get_reference_levels(dataset):
     try:
         coord = cube.coord(axis="Z")
     except iris.exceptions.CoordinateNotFoundError as exc:
-        raise ValueError(f"z-coord not available in {dataset.files}") from exc
+        msg = f"z-coord not available in {dataset.files}"
+        raise ValueError(msg) from exc
     return coord.points.tolist()
 
 
@@ -1465,5 +1490,4 @@ def extract_coordinate_points(cube, definition, scheme):
     scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
     if not scheme:
         raise ValueError(msg)
-    cube = cube.interpolate(definition.items(), scheme=scheme)
-    return cube
+    return cube.interpolate(definition.items(), scheme=scheme)

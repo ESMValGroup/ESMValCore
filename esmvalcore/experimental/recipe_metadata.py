@@ -98,8 +98,7 @@ class Project:
 
     def __str__(self) -> str:
         """Return string representation."""
-        string = f"{self.project}"
-        return string
+        return f"{self.project}"
 
     @classmethod
     def from_tag(cls, tag: str) -> "Project":
@@ -133,13 +132,16 @@ class Reference:
         bib_data = parser.parse_file(filename)
 
         if len(bib_data.entries) > 1:
-            raise NotImplementedError(
+            msg = (
                 f"{self.__class__.__name__} cannot handle bibtex files "
-                "with more than 1 entry.",
+                "with more than 1 entry."
+            )
+            raise NotImplementedError(
+                msg,
             )
 
         self._bib_data = bib_data
-        self._key, self._entry = list(bib_data.entries.items())[0]
+        self._key, self._entry = next(iter(bib_data.entries.items()))
         self._filename = filename
 
     @classmethod
@@ -192,8 +194,9 @@ class Reference:
             formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
         except Exception as err:
+            msg = f"Could not render {self._key!r}: {err}"
             raise RenderError(
-                f"Could not render {self._key!r}: {err}",
+                msg,
             ) from None
 
         return rendered

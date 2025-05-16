@@ -2,7 +2,8 @@
 
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon

@@ -126,7 +126,7 @@ def test_troz_calculate_hybrid_plevs(cubes_hybrid_plevs):
 
 
 @pytest.mark.parametrize(
-    "project,out",
+    ("project", "out"),
     [
         ("CMIP5", [{"short_name": "tro3"}, {"short_name": "ps"}]),
         ("TEST", [{"short_name": "tro3"}, {"short_name": "ps"}]),

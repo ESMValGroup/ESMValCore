@@ -31,7 +31,8 @@ class TestHelpers(tests.Test):
                 return self.coord
             if name_or_coord == "scalar_coord":
                 return self.scalar_coord
-            raise iris.exceptions.CoordinateNotFoundError("")
+            msg = ""
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
         def coord_dims(coord):
             """Return associated dims for coord in mock cube."""
@@ -39,7 +40,8 @@ class TestHelpers(tests.Test):
                 return [0]
             if coord == self.scalar_coord:
                 return []
-            raise iris.exceptions.CoordinateNotFoundError("")
+            msg = ""
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
         self.cube = mock.Mock(
             spec=iris.cube.Cube,
@@ -164,7 +166,8 @@ class Test(tests.Test):
                 return self.src_longitude
             if name_or_coord == "scalar_coord":
                 return self.scalar_coord
-            raise iris.exceptions.CoordinateNotFoundError("")
+            msg = ""
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
         def coord_dims(coord):
             """Return coord dim for mock cubes."""
@@ -178,7 +181,8 @@ class Test(tests.Test):
                 return [3]
             if coord == self.scalar_coord:
                 return []
-            raise iris.exceptions.CoordinateNotFoundError("")
+            msg = ""
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
         def src_coords(*args, **kwargs):
             """Return selected coords for source cube."""
@@ -198,7 +202,7 @@ class Test(tests.Test):
                 return []
             if dim_coords:
                 return dim_coords_list
-            return [self.scalar_coord] + dim_coords_list
+            return [self.scalar_coord, *dim_coords_list]
 
         def src_repr_coords(*args, **kwargs):
             """Return selected coords for source representant cube."""
@@ -209,7 +213,7 @@ class Test(tests.Test):
                 return dim_coords
             if "contains_dimension" in kwargs:
                 return dim_coords
-            return [self.scalar_coord] + dim_coords
+            return [self.scalar_coord, *dim_coords]
 
         def dst_repr_coords(*args, **kwargs):
             """Return selected coords for destination representant cube."""
@@ -218,7 +222,7 @@ class Test(tests.Test):
             dim_coords = [self.dst_latitude, self.dst_longitude]
             if kwargs.get("dim_coords", False):
                 return dim_coords
-            return [self.scalar_coord] + dim_coords
+            return [self.scalar_coord, *dim_coords]
 
         self.src_cube = mock.Mock(
             spec=iris.cube.Cube,

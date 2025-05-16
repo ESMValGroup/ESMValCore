@@ -230,8 +230,7 @@ class TestClipTimerange(tests.Test):
             standard_name="time",
             units=Unit("days since 1950-01-01", calendar=calendar),
         )
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_clip_timerange_1_year(self):
         """Test clip_timerange with 1 year."""
@@ -677,12 +676,11 @@ class TestClimatology(tests.Test):
             standard_name="time",
             units=Unit("days since 1950-01-01", calendar="gregorian"),
         )
-        cube = iris.cube.Cube(
+        return iris.cube.Cube(
             data,
             dim_coords_and_dims=[(time, 0)],
             units="kg m-2 s-1",
         )
-        return cube
 
     def test_time_mean(self):
         """Test for time average of a 1D field."""
@@ -978,8 +976,7 @@ class TestSeasonalStatistics(tests.Test):
             units=Unit("days since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_season_mean(self):
         """Test for season average of a 1D field."""
@@ -1125,8 +1122,7 @@ class TestMonthlyStatistics(tests.Test):
             units=Unit("days since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_mean(self):
         """Test average of a 1D field."""
@@ -1256,8 +1252,7 @@ class TestHourlyStatistics(tests.Test):
             units=Unit("hours since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_mean(self):
         """Test average of a 1D field."""
@@ -1321,8 +1316,7 @@ class TestDailyStatistics(tests.Test):
             units=Unit("hours since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_mean(self):
         """Test average of a 1D field."""
@@ -1389,12 +1383,11 @@ def cube_1d_time():
         attributes={"test": 1},
         units=units,
     )
-    cube = Cube([1], var_name="tas", dim_coords_and_dims=[(time_coord, 0)])
-    return cube
+    return Cube([1], var_name="tas", dim_coords_and_dims=[(time_coord, 0)])
 
 
 @pytest.mark.parametrize(
-    "frequency,calendar,new_date,new_bounds",
+    ("frequency", "calendar", "new_date", "new_bounds"),
     [
         ("dec", None, (2024, 1, 1), [(2019, 1, 1), (2029, 1, 1)]),
         ("dec", "365_day", (2024, 1, 1), [(2019, 1, 1), (2029, 1, 1)]),
@@ -1520,10 +1513,7 @@ def test_regrid_time(cube_1d_time, frequency, calendar, new_date, new_bounds):
     assert time.bounds.dtype == np.float64
     date = time.units.num2date(time.points)
     date_bounds = time.units.num2date(time.bounds)
-    if calendar is None:
-        dt_mod = datetime
-    else:
-        dt_mod = DatetimeNoLeap
+    dt_mod = datetime if calendar is None else DatetimeNoLeap
     np.testing.assert_array_equal(date, np.array(dt_mod(*new_date)))
     np.testing.assert_array_equal(
         date_bounds,
@@ -1686,8 +1676,7 @@ def make_time_series(number_years=2):
         standard_name="time",
         units=Unit("days since 1950-01-01", calendar="360_day"),
     )
-    cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-    return cube
+    return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
 
 @pytest.mark.parametrize("existing_coord", [True, False])
@@ -1827,11 +1816,10 @@ def make_map_data(number_years=2):
     )
     data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
     chunks = (int(data.shape[0] / 2), 1, 2)
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         da.asarray(data, chunks=chunks),
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
-    return cube
 
 
 PARAMETERS: list[tuple] = []
@@ -1895,7 +1883,7 @@ def test_standardized_anomalies(period, standardize=True):
             assert_array_equal(result.data, expected)
 
 
-@pytest.mark.parametrize("period, reference", PARAMETERS)
+@pytest.mark.parametrize(("period", "reference"), PARAMETERS)
 def test_anomalies_preserve_metadata(period, reference, standardize=False):
     """Test that ``anomalies`` preserves metadata."""
     cube = make_map_data(number_years=2)
@@ -1914,7 +1902,7 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
         assert coord_cube == coord_res
 
 
-@pytest.mark.parametrize("period, reference", PARAMETERS)
+@pytest.mark.parametrize(("period", "reference"), PARAMETERS)
 def test_anomalies(period, reference, standardize=False):
     """Test ``anomalies``."""
     cube = make_map_data(number_years=2)
@@ -2006,25 +1994,23 @@ def test_anomalies_hourly(period):
 
 def get_1d_time():
     """Get 1D time coordinate."""
-    time = iris.coords.DimCoord(
+    return iris.coords.DimCoord(
         [20.0, 45.0],
         standard_name="time",
         bounds=[[15.0, 30.0], [30.0, 60.0]],
         units=Unit("days since 1950-01-01", calendar="gregorian"),
     )
-    return time
 
 
 def get_lon_coord():
     """Get longitude coordinate."""
-    lons = iris.coords.DimCoord(
+    return iris.coords.DimCoord(
         [1.5, 2.5, 3.5],
         standard_name="longitude",
         long_name="longitude",
         bounds=[[1.0, 2.0], [2.0, 3.0], [3.0, 4.0]],
         units="degrees_east",
     )
-    return lons
 
 
 def _make_cube():
@@ -2051,12 +2037,11 @@ def _make_cube():
     )
     lons = get_lon_coord()
     coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
-    cube1 = iris.cube.Cube(
+    return iris.cube.Cube(
         data2,
         dim_coords_and_dims=coords_spec4,
         units="kg m-2 s-1",
     )
-    return cube1
 
 
 def test_climate_statistics_0d_time_1d_lon():
@@ -2113,8 +2098,7 @@ class TestResampleHours(tests.Test):
             units=Unit("hours since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_resample_1_to_6(self):
         """Test ``resample_hours``."""
@@ -2248,8 +2232,7 @@ class TestResampleTime(tests.Test):
             units=Unit("hours since 1950-01-01", calendar="360_day"),
         )
         time.guess_bounds()
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        return cube
+        return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
     def test_resample_hourly_to_daily(self):
         """Test average of a 1D field."""

@@ -459,4 +459,5 @@ class Test:
                 assert product.cubes[0].has_lazy_data() == lazy
                 assert not np.ma.is_masked(product.cubes[0].data)
             else:
-                assert False, f"Invalid filename: {product.filename}"
+                msg = f"Invalid filename: {product.filename}"
+                raise AssertionError(msg)

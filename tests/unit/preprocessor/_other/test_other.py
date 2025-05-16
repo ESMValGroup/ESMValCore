@@ -72,13 +72,12 @@ def cube():
         3.5,
     )
     cube_data = np.swapaxes(cube_data, 0, -1)
-    cube = get_3d_cube(
+    return get_3d_cube(
         cube_data,
         standard_name="air_temperature",
         var_name="tas",
         units="K",
     )
-    return cube
 
 
 def assert_metadata(cube, normalization=None):
@@ -335,7 +334,7 @@ def cube_with_rich_metadata():
     sigma_factory = AtmosphereSigmaFactory(ptop, sigma, psur)
     cell_area = CellMeasure([[1]], var_name="area", units="m2", measure="area")
     ancillary = AncillaryVariable([0], var_name="ancillary")
-    cube = Cube(
+    return Cube(
         np.ones((1, 1, 1, 1), dtype=np.float32),
         standard_name=None,
         long_name="Air Temperature",
@@ -349,7 +348,6 @@ def cube_with_rich_metadata():
         ancillary_variables_and_dims=[(ancillary, 1)],
         cell_measures_and_dims=[(cell_area, (2, 3))],
     )
-    return cube
 
 
 @pytest.mark.parametrize("normalization", [None, "sum", "integral"])

@@ -102,7 +102,7 @@ CMD = {
 }
 
 
-@pytest.mark.parametrize("ext_profile,cmd", CMD.items())
+@pytest.mark.parametrize(("ext_profile", "cmd"), CMD.items())
 def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     """Test creating the command to run the diagnostic script."""
     monkeypatch.setattr(
@@ -179,13 +179,12 @@ def diagnostic_task(mocker, tmp_path):
         "some_diagnostic_setting": True,
     }
 
-    task = esmvalcore._task.DiagnosticTask(
+    return esmvalcore._task.DiagnosticTask(
         "test.py",
         settings,
         output_dir=str(tmp_path),
         name="some-diagnostic-task",
     )
-    return task
 
 
 def write_mock_provenance(diagnostic_task, record):

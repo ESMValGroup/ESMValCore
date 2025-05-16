@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Literal
 
@@ -32,6 +31,8 @@ from esmvalcore.preprocessor._shared import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from esmvalcore.preprocessor import PreprocessorFile
 
 logger = logging.getLogger(__name__)
@@ -114,9 +115,12 @@ def bias(
     # Get reference cube if not explicitly given
     if reference is None:
         if all_cubes_given:
-            raise ValueError(
+            msg = (
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`",
+                "specify a `reference`"
+            )
+            raise ValueError(
+                msg,
             )
         (reference, ref_product) = _get_ref(products, "reference_for_bias")
     else:
@@ -170,9 +174,12 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
         if product.attributes.get(ref_tag, False):
             ref_products.append(product)
     if len(ref_products) != 1:
-        raise ValueError(
+        msg = (
             f"Expected exactly 1 dataset with '{ref_tag}: true', found "
-            f"{len(ref_products):d}",
+            f"{len(ref_products):d}"
+        )
+        raise ValueError(
+            msg,
         )
     ref_product = ref_products[0]
 
@@ -199,9 +206,12 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
         cube = (cube - reference) / reference
         new_units = "1"
     else:
-        raise ValueError(
+        msg = (
             f"Expected one of ['absolute', 'relative'] for bias_type, got "
-            f"'{bias_type}'",
+            f"'{bias_type}'"
+        )
+        raise ValueError(
+            msg,
         )
 
     cube.metadata = cube_metadata
@@ -331,9 +341,12 @@ def distance_metric(
     # Get reference cube if not explicitly given
     if reference is None:
         if all_cubes_given:
-            raise ValueError(
+            msg = (
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`",
+                "specify a `reference`"
+            )
+            raise ValueError(
+                msg,
             )
         reference, reference_product = _get_ref(
             products,
@@ -385,16 +398,22 @@ def _calculate_metric(
     """Calculate metric for a single cube relative to a reference cube."""
     # Make sure that dimensional metadata of data and ref data is compatible
     if cube.shape != reference.shape:
-        raise ValueError(
+        msg = (
             f"Expected identical shapes of cube and reference cube for "
             f"distance metric calculation, got {cube.shape} and "
-            f"{reference.shape}, respectively",
+            f"{reference.shape}, respectively"
+        )
+        raise ValueError(
+            msg,
         )
     try:
         cube + reference  # dummy operation to check if cubes are compatible
     except Exception as exc:
+        msg = (
+            "Cannot calculate distance metric between cube and reference cube "
+        )
         raise ValueError(
-            "Cannot calculate distance metric between cube and reference cube ",
+            msg,
         ) from exc
 
     # Perform the actual calculation of the distance metric
@@ -414,8 +433,11 @@ def _calculate_metric(
         "weighted_emd": partial(_calculate_emd, weighted=True, **kwargs),
     }
     if metric not in metrics_funcs:
+        msg = (
+            f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'"
+        )
         raise ValueError(
-            f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'",
+            msg,
         )
     (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 

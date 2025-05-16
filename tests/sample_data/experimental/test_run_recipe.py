@@ -51,13 +51,12 @@ def get_mock_distributed_client(monkeypatch):
 
 @pytest.fixture
 def recipe():
-    recipe = get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
-    return recipe
+    return get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize("ssh", (True, False))
-@pytest.mark.parametrize("task", (None, "example/ta"))
+@pytest.mark.parametrize("ssh", [True, False])
+@pytest.mark.parametrize("task", [None, "example/ta"])
 def test_run_recipe(
     monkeypatch,
     cfg_default,

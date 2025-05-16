@@ -30,7 +30,8 @@ def register_supplementaries(
     """
     valid = ("require_at_least_one", "prefer_at_least_one")
     if required not in valid:
-        raise NotImplementedError(f"`required` should be one of {valid}")
+        msg = f"`required` should be one of {valid}"
+        raise NotImplementedError(msg)
     supplementaries = {
         "variables": variables,
         "required": required,
@@ -75,8 +76,9 @@ def add_cell_measure(
         If measure name is not 'area' or 'volume'.
     """
     if measure not in ["area", "volume"]:
+        msg = f"measure name must be 'area' or 'volume', got {measure} instead"
         raise ValueError(
-            f"measure name must be 'area' or 'volume', got {measure} instead",
+            msg,
         )
     coord_dims = tuple(
         range(cube.ndim - len(cell_measure_cube.shape), cube.ndim),

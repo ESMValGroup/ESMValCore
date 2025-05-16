@@ -106,8 +106,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon_xpp, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session=session)
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session=session)
 
 
 def get_fix(mip, short_name, session=None):
@@ -126,8 +125,7 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def fix_data(cube, mip, short_name, session=None):
@@ -135,8 +133,7 @@ def fix_data(cube, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cube = fix.fix_data(cube)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cube = fix.fix_data(cube)
-    return cube
+    return fix.fix_data(cube)
 
 
 def check_ta_metadata(cubes):

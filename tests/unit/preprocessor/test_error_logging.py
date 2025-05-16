@@ -59,9 +59,9 @@ TEST_ITEMS_SHORT = [
     [Cube(0)],
     ["a"],
     # 1-element sets
-    set([PREPROC_FILE]),
-    set([Cube(0)]),
-    set(["a"]),
+    {PREPROC_FILE},
+    {Cube(0)},
+    {"a"},
     # 1-element CubeList
     CubeList([Cube(0)]),
     # 4-element lists
@@ -69,7 +69,7 @@ TEST_ITEMS_SHORT = [
     [Cube(0)] * 4,
     ["a"] * 4,
     # 4-element sets
-    set(["a", "b", "c", "d"]),
+    {"a", "b", "c", "d"},
     # 4-element CubeList
     CubeList([Cube(0), Cube(1), Cube(2), Cube(3)]),
 ]
@@ -77,7 +77,7 @@ TEST_ITEMS_LONG = [
     # 6-element list
     ["a", "b", "c", "d", "e", "f"],
     # 6-element set
-    set(["a", "b", "c", "d", "e", "f"]),
+    {"a", "b", "c", "d", "e", "f"},
 ]
 SHORT_INPUT_FILES = ["x", "y", "z", "w"]
 LONG_INPUT_FILES = ["x", "y", "z", "w", "v", "u"]

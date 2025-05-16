@@ -39,7 +39,7 @@ def check_product_wasderivedfrom(product):
                 )
                 break
         else:
-            assert False
+            raise AssertionError
 
     if not product._ancestors:
         assert "tracking_id" in product.attributes

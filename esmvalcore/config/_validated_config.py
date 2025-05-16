@@ -63,13 +63,15 @@ class ValidatedConfig(MutableMapping):
     def __setitem__(self, key, val):
         """Map key to value."""
         if key not in self._validate:
+            msg = f"`{key}` is not a valid config parameter."
             raise InvalidConfigParameter(
-                f"`{key}` is not a valid config parameter.",
+                msg,
             )
         try:
             cval = self._validate[key](val)
         except ValidationError as verr:
-            raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
+            msg = f"Key `{key}`: {verr}"
+            raise InvalidConfigParameter(msg) from None
 
         if key in self._deprecate:
             self._deprecate[key](self, val, cval)

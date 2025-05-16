@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import logging
 import string
-from collections.abc import Iterable, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import dask
 import dask.array as da
@@ -27,6 +26,9 @@ from esmvalcore.preprocessor._shared import (
     get_weights,
     preserve_float_dtype,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +54,15 @@ def clip(cube, minimum=None, maximum=None):
         clipped cube.
     """
     if minimum is None and maximum is None:
+        msg = "Either minimum, maximum or both have to be\
+                          specified."
         raise ValueError(
-            "Either minimum, maximum or both have to be\
-                          specified.",
+            msg,
         )
     if minimum is not None and maximum is not None:
         if maximum < minimum:
-            raise ValueError("Maximum should be equal or larger than minimum.")
+            msg = "Maximum should be equal or larger than minimum."
+            raise ValueError(msg)
     cube.data = da.clip(cube.core_data(), minimum, maximum)
     return cube
 
@@ -227,15 +231,21 @@ def histogram(
     """
     # Check arguments
     if isinstance(bins, str):
-        raise TypeError(
+        msg = (
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
-            f"int",
+            f"int"
+        )
+        raise TypeError(
+            msg,
         )
     allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
-        raise ValueError(
+        msg = (
             f"Expected one of {allowed_norms} for normalization, got "
-            f"'{normalization}'",
+            f"'{normalization}'"
+        )
+        raise ValueError(
+            msg,
         )
 
     # If histogram is calculated over all coordinates, we can use
@@ -263,15 +273,13 @@ def histogram(
     )
 
     # Get final cube
-    hist_cube = _get_histogram_cube(
+    return _get_histogram_cube(
         cube,
         hist_data,
         coords,
         bin_edges,
         normalization,
     )
-
-    return hist_cube
 
 
 def _get_bins(
@@ -297,9 +305,12 @@ def _get_bins(
 
     finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
     if not all(finite_bin_range):
-        raise ValueError(
+        msg = (
             f"Cannot calculate histogram for bin_range={bin_range} (or for "
-            f"fully masked data when `bin_range` is not given)",
+            f"fully masked data when `bin_range` is not given)"
+        )
+        raise ValueError(
+            msg,
         )
 
     return (bin_range, bin_edges)
@@ -513,7 +524,7 @@ def _get_histogram_cube(
         long_name = f"Frequency{long_name_suffix}"
         var_name = f"frequency{var_name_suffix}"
         units = "1"
-    hist_cube = Cube(
+    return Cube(
         data,
         standard_name=None,
         long_name=long_name,
@@ -532,5 +543,3 @@ def _get_histogram_cube(
             (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()
         ],
     )
-
-    return hist_cube

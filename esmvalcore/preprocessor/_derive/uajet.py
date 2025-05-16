@@ -19,8 +19,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{"short_name": "ua"}]
-        return required
+        return [{"short_name": "ua"}]
 
     @staticmethod
     def calculate(cubes):
@@ -53,7 +52,7 @@ class DerivedVariable(DerivedVariableBase):
             polynom = np.poly1d(polyfit)
             uajet_vals.append(polynom(np.max(ua_data)))
 
-        uajet_cube = iris.cube.Cube(
+        return iris.cube.Cube(
             uajet_vals,
             units=cf_units.Unit("degrees_north"),
             dim_coords_and_dims=[(ua_cube.coord("time"), 0)],
@@ -63,5 +62,3 @@ class DerivedVariable(DerivedVariableBase):
                 "lat_range_1": LAT[1],
             },
         )
-
-        return uajet_cube

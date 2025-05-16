@@ -39,7 +39,7 @@ TEST_ALLOW_SKIPPING = [
 ]
 
 
-@pytest.mark.parametrize("var,cfg,out", TEST_ALLOW_SKIPPING)
+@pytest.mark.parametrize(("var", "cfg", "out"), TEST_ALLOW_SKIPPING)
 def test_allow_skipping(var, cfg, out):
     """Test ``_allow_skipping``."""
     dataset = Dataset(**var)
@@ -415,7 +415,7 @@ def test_update_multiproduct_no_timerange():
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
 
     assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
 
@@ -612,7 +612,7 @@ def test_update_multiproduct_ensemble_statistics():
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
         "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
@@ -699,7 +699,7 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
         "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
@@ -802,7 +802,7 @@ TEST_GET_TASKS_TO_RUN = [
 
 
 @pytest.mark.parametrize(
-    "diags_to_run,tasknames_to_run",
+    ("diags_to_run", "tasknames_to_run"),
     TEST_GET_TASKS_TO_RUN,
 )
 def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
@@ -827,7 +827,7 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 
 @pytest.mark.parametrize(
-    "tasks_to_run,tasks_run",
+    ("tasks_to_run", "tasks_run"),
     TEST_CREATE_DIAGNOSTIC_TASKS,
 )
 @mock.patch("esmvalcore._recipe.recipe.DiagnosticTask", autospec=True)

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Generator, Iterable, Sequence
 from contextlib import contextmanager
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import iris
@@ -13,12 +12,16 @@ import iris.cube
 import iris.util
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.warnings import IrisVagueMetadataWarning
 
-from esmvalcore.typing import NetCDFAttr
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Sequence
+
+    from iris.coords import Coord, DimCoord
+
+    from esmvalcore.typing import NetCDFAttr
 
 
 @contextmanager
@@ -329,9 +332,7 @@ def has_regular_grid(cube: Cube) -> bool:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
         return False
-    if cube.coord_dims(lat) == cube.coord_dims(lon):
-        return False
-    return True
+    return cube.coord_dims(lat) != cube.coord_dims(lon)
 
 
 def has_irregular_grid(cube: Cube) -> bool:
@@ -356,9 +357,7 @@ def has_irregular_grid(cube: Cube) -> bool:
         lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
-    if lat.ndim == 2 and lon.ndim == 2:
-        return True
-    return False
+    return bool(lat.ndim == 2 and lon.ndim == 2)
 
 
 def has_unstructured_grid(cube: Cube) -> bool:
@@ -385,9 +384,7 @@ def has_unstructured_grid(cube: Cube) -> bool:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
         return False
-    if cube.coord_dims(lat) != cube.coord_dims(lon):
-        return False
-    return True
+    return cube.coord_dims(lat) == cube.coord_dims(lon)
 
 
 # List containing special cases for unit conversion. Each list item is another
@@ -512,9 +509,12 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             raise
 
     if cube.standard_name != old_standard_name:
-        raise ValueError(
+        msg = (
             f"Cannot safely convert units from '{old_units}' to '{units}'; "
             f"standard_name changed from '{old_standard_name}' to "
-            f"'{cube.standard_name}'",
+            f"'{cube.standard_name}'"
+        )
+        raise ValueError(
+            msg,
         )
     return cube

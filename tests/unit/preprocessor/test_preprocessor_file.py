@@ -63,7 +63,7 @@ def test_update_attributes(product):
 
 
 @pytest.mark.parametrize(
-    "name,cube_property,expected_name",
+    ("name", "cube_property", "expected_name"),
     [
         ("standard_name", "standard_name", ""),
         ("long_name", "long_name", ""),

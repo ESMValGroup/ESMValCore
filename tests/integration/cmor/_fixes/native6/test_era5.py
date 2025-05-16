@@ -167,7 +167,8 @@ def _era5_time(frequency):
     elif frequency == "monthly":
         timestamps = [788928, 789672, 790344]
     else:
-        raise NotImplementedError(f"Invalid frequency {frequency}")
+        msg = f"Invalid frequency {frequency}"
+        raise NotImplementedError(msg)
     return DimCoord(
         np.array(timestamps, dtype="int32"),
         standard_name="time",
@@ -1466,7 +1467,7 @@ VARIABLES = [
 ]
 
 
-@pytest.mark.parametrize("era5_cubes, cmor_cubes, var, mip", VARIABLES)
+@pytest.mark.parametrize(("era5_cubes", "cmor_cubes", "var", "mip"), VARIABLES)
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
     fixed_cubes = fix_metadata(era5_cubes, var, "native6", "era5", mip)

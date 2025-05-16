@@ -31,10 +31,10 @@ def _as_list_of_coords(cube, names_or_coords):
         else:
             # Don't know how to handle this type
             msg = (
-                "Don't know how to handle coordinate of type %s. "
+                f"Don't know how to handle coordinate of type {type(name_or_coord)}. "
                 "Ensure all coordinates are of type str "
                 "or iris.coords.Coord."
-            ) % (type(name_or_coord),)
+            )
             raise TypeError(msg)
     return coords
 
@@ -58,8 +58,9 @@ def ref_to_dims_index_as_index(cube, ref):
     try:
         dim = int(ref)
     except (ValueError, TypeError) as exc:
+        msg = f"{ref} Incompatible type {type(ref)} for slicing"
         raise ValueError(
-            f"{ref} Incompatible type {type(ref)} for slicing",
+            msg,
         ) from exc
     if dim < 0 or dim > cube.ndim:
         msg = (
@@ -67,8 +68,7 @@ def ref_to_dims_index_as_index(cube, ref):
             "which does not exist."
         )
         raise ValueError(msg)
-    dims = [dim]
-    return dims
+    return [dim]
 
 
 def ref_to_dims_index(cube, ref_to_slice):

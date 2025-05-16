@@ -86,7 +86,7 @@ class TestNaming(unittest.TestCase):
         for dirpath, dirnames, filenames in os.walk(self.esmvaltool_folder):
             if ".git" in dirpath.split(os.sep):
                 continue
-            if any([item in dirpath for item in exclude_paths]):
+            if any(item in dirpath for item in exclude_paths):
                 continue
             self.assertFalse(
                 any(

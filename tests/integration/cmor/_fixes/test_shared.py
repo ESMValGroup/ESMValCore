@@ -79,7 +79,10 @@ TEST_ADD_AUX_COORDS_FROM_CUBES = [
 ]
 
 
-@pytest.mark.parametrize("coord_dict,output", TEST_ADD_AUX_COORDS_FROM_CUBES)
+@pytest.mark.parametrize(
+    ("coord_dict", "output"),
+    TEST_ADD_AUX_COORDS_FROM_CUBES,
+)
 def test_add_aux_coords_from_cubes(coord_dict, output):
     """Test extraction of auxiliary coordinates from cubes."""
     cube = iris.cube.Cube([[0.0]])
@@ -266,7 +269,7 @@ TEST_ADD_PLEV_FROM_ALTITUDE = [
 ]
 
 
-@pytest.mark.parametrize("cube,output", TEST_ADD_PLEV_FROM_ALTITUDE)
+@pytest.mark.parametrize(("cube", "output"), TEST_ADD_PLEV_FROM_ALTITUDE)
 def test_add_plev_from_altitude(cube, output):
     """Test adding of pressure level coordinate."""
     if output is None:
@@ -345,7 +348,7 @@ TEST_ADD_ALTITUDE_FROM_PLEV = [
 ]
 
 
-@pytest.mark.parametrize("cube,output", TEST_ADD_ALTITUDE_FROM_PLEV)
+@pytest.mark.parametrize(("cube", "output"), TEST_ADD_ALTITUDE_FROM_PLEV)
 def test_add_altitude_from_plev(cube, output):
     """Test adding of altitude coordinate."""
     if output is None:
@@ -397,7 +400,7 @@ TEST_ADD_SCALAR_COORD = [
 TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 
-@pytest.mark.parametrize("cube_in,depth", TEST_ADD_SCALAR_COORD)
+@pytest.mark.parametrize(("cube_in", "depth"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_depth_coord(cube_in, depth):
     """Test adding of scalar depth coordinate."""
     cube_in = cube_in.copy()
@@ -426,7 +429,7 @@ def test_add_scalar_depth_coord(cube_in, depth):
     assert coord == depth_coord
 
 
-@pytest.mark.parametrize("cube_in,height", TEST_ADD_SCALAR_COORD)
+@pytest.mark.parametrize(("cube_in", "height"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_height_coord(cube_in, height):
     """Test adding of scalar height coordinate."""
     cube_in = cube_in.copy()
@@ -478,7 +481,7 @@ def test_add_scalar_lambda550nm_coord(cube_in):
     assert coord == lambda550nm_coord
 
 
-@pytest.mark.parametrize("cube_in,typeland", TEST_ADD_SCALAR_COORD)
+@pytest.mark.parametrize(("cube_in", "typeland"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typeland_coord(cube_in, typeland):
     """Test adding of scalar typeland coordinate."""
     cube_in = cube_in.copy()
@@ -506,7 +509,7 @@ def test_add_scalar_typeland_coord(cube_in, typeland):
     assert coord == typeland_coord
 
 
-@pytest.mark.parametrize("cube_in,typesea", TEST_ADD_SCALAR_COORD)
+@pytest.mark.parametrize(("cube_in", "typesea"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typesea_coord(cube_in, typesea):
     """Test adding of scalar typesea coordinate."""
     cube_in = cube_in.copy()
@@ -534,7 +537,7 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     assert coord == typesea_coord
 
 
-@pytest.mark.parametrize("cube_in,typesi", TEST_ADD_SCALAR_COORD)
+@pytest.mark.parametrize(("cube_in", "typesi"), TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typesi_coord(cube_in, typesi):
     """Test adding of scalar typesi coordinate."""
     cube_in = cube_in.copy()
@@ -589,7 +592,7 @@ TEST_GET_BOUNDS_CUBE = [
 ]
 
 
-@pytest.mark.parametrize("coord_name,output", TEST_GET_BOUNDS_CUBE)
+@pytest.mark.parametrize(("coord_name", "output"), TEST_GET_BOUNDS_CUBE)
 def test_get_bounds_cube(coord_name, output):
     """Test retrieving of bounds cube from list of cubes."""
     cubes = iris.cube.CubeList(
@@ -628,7 +631,7 @@ TEST_FIX_BOUNDS = [
 ]
 
 
-@pytest.mark.parametrize("var_names,output", TEST_FIX_BOUNDS)
+@pytest.mark.parametrize(("var_names", "output"), TEST_FIX_BOUNDS)
 def test_fix_bounds(var_names, output):
     """Test retrieving of bounds cube from list of cubes."""
     a_coord = iris.coords.AuxCoord(1.5, var_name="a")
@@ -668,7 +671,7 @@ TEST_ROUND = [
 ]
 
 
-@pytest.mark.parametrize("cubes_in,decimals,out", TEST_ROUND)
+@pytest.mark.parametrize(("cubes_in", "decimals", "out"), TEST_ROUND)
 def test_round_coordinate(cubes_in, decimals, out):
     """Test rounding of coordinates."""
     kwargs = {} if decimals is None else {"decimals": decimals}
@@ -733,16 +736,15 @@ def test_fix_ocean_depth_coord():
 @pytest.fixture
 def time_coord():
     """Time coordinate."""
-    time_coord = AuxCoord(
+    return AuxCoord(
         [15.0, 350.0],
         standard_name="time",
         units="days since 1850-01-01",
     )
-    return time_coord
 
 
 @pytest.mark.parametrize(
-    "freq,expected_bounds",
+    ("freq", "expected_bounds"),
     [
         ("mon", [[0, 31], [334, 365]]),
         ("mo", [[0, 31], [334, 365]]),

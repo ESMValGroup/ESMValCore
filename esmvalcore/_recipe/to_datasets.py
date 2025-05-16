@@ -6,11 +6,9 @@ import logging
 from collections.abc import Iterable, Iterator
 from copy import deepcopy
 from numbers import Number
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
-from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
@@ -20,10 +18,15 @@ from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
-from esmvalcore.typing import Facets, FacetValue
 
 from . import check
 from ._io import _load_recipe
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from esmvalcore.config import Session
+    from esmvalcore.typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +136,7 @@ def _set_alias(variables):
 def _get_next_alias(alias, datasets_info, i):
     if i >= len(_ALIAS_INFO_KEYS):
         return
-    key_values = set(info[i] for info in datasets_info)
+    key_values = {info[i] for info in datasets_info}
     if len(key_values) == 1:
         for info in iter(datasets_info):
             alias[info].append(None)
@@ -152,9 +155,12 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
     """Check that supplementary variables have a short_name."""
     for facets in supplementaries:
         if "short_name" not in facets:
-            raise RecipeError(
+            msg = (
                 "'short_name' is required for supplementary_variables "
-                f"entries, but missing in {facets}",
+                f"entries, but missing in {facets}"
+            )
+            raise RecipeError(
+                msg,
             )
 
 

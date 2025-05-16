@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import dask
 import dask.array as da
 import numpy as np
 from iris.analysis import UnstructuredNearest as IrisUnstructuredNearest
-from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
-from iris.coords import Coord
 from iris.cube import Cube
-from numpy.typing import DTypeLike
 from scipy.spatial import ConvexHull, Delaunay
 
 from esmvalcore.iris_helpers import (
@@ -20,6 +18,11 @@ from esmvalcore.iris_helpers import (
     rechunk_cube,
 )
 from esmvalcore.preprocessor._shared import preserve_float_dtype
+
+if TYPE_CHECKING:
+    from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
+    from iris.coords import Coord
+    from numpy.typing import DTypeLike
 
 logger = logging.getLogger(__name__)
 
@@ -86,14 +89,20 @@ class UnstructuredLinearRegridder:
     def __init__(self, src_cube: Cube, tgt_cube: Cube) -> None:
         """Initialize class instance."""
         if not has_unstructured_grid(src_cube):
-            raise ValueError(
+            msg = (
                 f"Source cube {src_cube.summary(shorten=True)} does not have "
-                f"unstructured grid",
+                f"unstructured grid"
+            )
+            raise ValueError(
+                msg,
             )
         if not has_regular_grid(tgt_cube):
-            raise ValueError(
+            msg = (
                 f"Target cube {tgt_cube.summary(shorten=True)} does not have "
-                f"regular grid",
+                f"regular grid"
+            )
+            raise ValueError(
+                msg,
             )
         src_lat = src_cube.coord("latitude").copy()
         src_lon = src_cube.coord("longitude").copy()
@@ -198,15 +207,21 @@ class UnstructuredLinearRegridder:
 
         """
         if not has_unstructured_grid(cube):
-            raise ValueError(
+            msg = (
                 f"Cube {cube.summary(shorten=True)} does not have "
-                f"unstructured grid",
+                f"unstructured grid"
+            )
+            raise ValueError(
+                msg,
             )
         coords = [cube.coord("latitude"), cube.coord("longitude")]
         if coords != self.src_coords:
-            raise ValueError(
+            msg = (
                 f"The given cube {cube.summary(shorten=True)} is not defined "
-                f"on the same source grid as this regridder",
+                f"on the same source grid as this regridder"
+            )
+            raise ValueError(
+                msg,
             )
 
         # Get coordinates of regridded cube
@@ -290,9 +305,7 @@ class UnstructuredLinearRegridder:
         data = np.moveaxis(data, axis, -1)
         regridded_arr = v_interpolate(data)
         regridded_arr = np.moveaxis(regridded_arr, -2, axis)
-        regridded_arr = np.moveaxis(regridded_arr, -1, axis + 1)
-
-        return regridded_arr
+        return np.moveaxis(regridded_arr, -1, axis + 1)
 
     def _regrid_lazy(
         self,
@@ -301,7 +314,7 @@ class UnstructuredLinearRegridder:
         dtype: DTypeLike,
     ) -> da.Array:
         """Lazy regridding."""
-        regridded_arr = da.apply_gufunc(
+        return da.apply_gufunc(
             self._interpolate,
             "(i)->(lat,lon)",
             data,
@@ -310,7 +323,6 @@ class UnstructuredLinearRegridder:
             output_dtypes=dtype,
             output_sizes={"lat": self.tgt_n_lat, "lon": self.tgt_n_lon},
         )
-        return regridded_arr
 
     def _interpolate(self, data: np.ndarray) -> np.ndarray:
         """Interpolate data.
@@ -337,8 +349,7 @@ class UnstructuredLinearRegridder:
             np.take(data, self._indices),
             self._weights,
         )
-        interp_data = interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
-        return interp_data
+        return interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
 
     @staticmethod
     def _add_convex_hull_twice(arr: np.ndarray, idx: np.ndarray) -> np.ndarray:

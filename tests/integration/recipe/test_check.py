@@ -124,17 +124,20 @@ DATA_AVAILABILITY_DATA = [
         ERR_RANGE.format("2023-2025", "\n".join(FILES[:-3])),
     ),
     (
-        [FILES[1]] + [FILES[3]],
+        [FILES[1], FILES[3]],
         dict(VAR),
         ERR_RANGE.format(
             "2020, 2022, 2024-2025",
-            "\n".join([FILES[1]] + [FILES[3]]),
+            "\n".join([FILES[1], FILES[3]]),
         ),
     ),
 ]
 
 
-@pytest.mark.parametrize("input_files,var,error", DATA_AVAILABILITY_DATA)
+@pytest.mark.parametrize(
+    ("input_files", "var", "error"),
+    DATA_AVAILABILITY_DATA,
+)
 @mock.patch("esmvalcore._recipe.check.logger", autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
@@ -161,7 +164,10 @@ DATA_AVAILABILITY_NO_DATA: list[Any] = [
 ]
 
 
-@pytest.mark.parametrize("dirnames,filenames,error", DATA_AVAILABILITY_NO_DATA)
+@pytest.mark.parametrize(
+    ("dirnames", "filenames", "error"),
+    DATA_AVAILABILITY_NO_DATA,
+)
 @mock.patch("esmvalcore._recipe.check.logger", autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data when no data is present."""
@@ -260,7 +266,7 @@ BAD_TIMERANGES = [
 ]
 
 
-@pytest.mark.parametrize("timerange,message", BAD_TIMERANGES)
+@pytest.mark.parametrize(("timerange", "message"), BAD_TIMERANGES)
 def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:

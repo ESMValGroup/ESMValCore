@@ -30,8 +30,7 @@ def broadcast(lat_array):
         len(LON_COORD.points),
     )
     lat_array = np.expand_dims(lat_array, -1)
-    lat_array = np.broadcast_to(lat_array, target_shape)
-    return lat_array
+    return np.broadcast_to(lat_array, target_shape)
 
 
 def gaussian(lat_array, shift):

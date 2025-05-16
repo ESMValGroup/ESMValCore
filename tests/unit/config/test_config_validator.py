@@ -252,7 +252,7 @@ def generate_validator_testcases(valid):
 
 
 @pytest.mark.parametrize(
-    "validator, arg, target",
+    ("validator", "arg", "target"),
     generate_validator_testcases(True),
 )
 def test_validator_valid(validator, arg, target):
@@ -261,7 +261,7 @@ def test_validator_valid(validator, arg, target):
 
 
 @pytest.mark.parametrize(
-    "validator, arg, exception_type",
+    ("validator", "arg", "exception_type"),
     generate_validator_testcases(False),
 )
 def test_validator_invalid(validator, arg, exception_type):
@@ -269,7 +269,7 @@ def test_validator_invalid(validator, arg, exception_type):
         validator(arg)
 
 
-@pytest.mark.parametrize("remove_version", (current_version, "0.0.1", "9.9.9"))
+@pytest.mark.parametrize("remove_version", [current_version, "0.0.1", "9.9.9"])
 def test_handle_deprecation(remove_version):
     """Test ``_handle_deprecation``."""
     option = "test_var"

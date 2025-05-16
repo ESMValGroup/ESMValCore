@@ -1,6 +1,7 @@
 """Fixes for FIO ESM model."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
+
 from .cesm1_cam5 import Cl as BaseCl
 
 Cl = BaseCl

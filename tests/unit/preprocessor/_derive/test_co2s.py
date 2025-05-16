@@ -57,14 +57,13 @@ def get_ps_cube():
     """Surface air pressure cube."""
     ps_data = [[[105000.0, 50000.0], [95000.0, 60000.0]]]
     coord_spec = get_coord_spec(include_plev=False)
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         ps_data,
         var_name="ps",
         standard_name="surface_air_pressure",
         units="Pa",
         dim_coords_and_dims=coord_spec,
     )
-    return cube
 
 
 @pytest.fixture

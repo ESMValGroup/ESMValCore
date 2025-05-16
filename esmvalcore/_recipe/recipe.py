@@ -7,11 +7,10 @@ import logging
 import os
 import warnings
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -57,6 +56,9 @@ from .to_datasets import (
     _representative_datasets,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
 logger = logging.getLogger(__name__)
 
 PreprocessorSettings = dict[str, Any]
@@ -81,7 +83,7 @@ def _special_name_to_dataset(facets, special_name):
     """Convert special names to dataset names."""
     if special_name in ("reference_dataset", "alternative_dataset"):
         if special_name not in facets:
-            raise RecipeError(
+            msg = (
                 "Preprocessor '{preproc}' uses '{name}', but '{name}' is not "
                 "defined for variable '{variable_group}' of diagnostic "
                 "'{diagnostic}'.".format(
@@ -89,7 +91,10 @@ def _special_name_to_dataset(facets, special_name):
                     name=special_name,
                     variable_group=facets["variable_group"],
                     diagnostic=facets["diagnostic"],
-                ),
+                )
+            )
+            raise RecipeError(
+                msg,
             )
         special_name = facets[special_name]
 
@@ -170,9 +175,12 @@ def _select_dataset(dataset_name, datasets):
             return dataset
     diagnostic = datasets[0].facets["diagnostic"]
     variable_group = datasets[0].facets["variable_group"]
-    raise RecipeError(
+    msg = (
         f"Unable to find dataset '{dataset_name}' in the list of datasets"
-        f"for variable '{variable_group}' of diagnostic '{diagnostic}'.",
+        f"for variable '{variable_group}' of diagnostic '{diagnostic}'."
+    )
+    raise RecipeError(
+        msg,
     )
 
 
@@ -337,7 +345,7 @@ def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
     missing = set()
 
     for input_dataset in input_datasets:
-        for dataset in [input_dataset] + input_dataset.supplementaries:
+        for dataset in [input_dataset, *input_dataset.supplementaries]:
             try:
                 check.data_availability(dataset)
             except RecipeError as exc:
@@ -464,7 +472,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     if not multiproducts:
         return input_products, {}
 
-    settings = list(multiproducts)[0].settings[step]
+    settings = next(iter(multiproducts)).settings[step]
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
@@ -536,14 +544,13 @@ def _update_extract_shape(settings, session):
 
 def _allow_skipping(dataset: Dataset):
     """Allow skipping of datasets."""
-    allow_skipping = all(
+    return all(
         [
             dataset.session["skip_nonexistent"],
             dataset.facets["dataset"]
             != dataset.facets.get("reference_dataset"),
         ],
     )
-    return allow_skipping
 
 
 def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
@@ -618,9 +625,12 @@ def _get_preprocessor_products(
 
     if missing_vars:
         separator = "\n- "
-        raise InputFilesNotFound(
+        msg = (
             f"Missing data for preprocessor {name}:{separator}"
-            f"{separator.join(sorted(missing_vars))}",
+            f"{separator.join(sorted(missing_vars))}"
+        )
+        raise InputFilesNotFound(
+            msg,
         )
 
     check.reference_for_bias_preproc(products)
@@ -745,9 +755,12 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     session = datasets[0].session
     preprocessor = facets.get("preprocessor", "default")
     if preprocessor not in profiles:
-        raise RecipeError(
+        msg = (
             f"Unknown preprocessor '{preprocessor}' in variable "
-            f"{facets['variable_group']} of diagnostic {facets['diagnostic']}",
+            f"{facets['variable_group']} of diagnostic {facets['diagnostic']}"
+        )
+        raise RecipeError(
+            msg,
         )
     logger.info(
         "Creating preprocessor '%s' task for variable '%s'",
@@ -766,7 +779,8 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     )
 
     if not products:
-        raise RecipeError(f"Did not find any input data for task {task_name}")
+        msg = f"Did not find any input data for task {task_name}"
+        raise RecipeError(msg)
 
     task = PreprocessingTask(
         products=products,
@@ -792,7 +806,7 @@ def _extract_preprocessor_order(profile):
     if not custom_order:
         return DEFAULT_ORDER
     if "derive" not in profile:
-        initial_steps = INITIAL_STEPS + ("derive",)
+        initial_steps = (*INITIAL_STEPS, "derive")
     else:
         initial_steps = INITIAL_STEPS
     order = tuple(p for p in profile if p not in initial_steps + FINAL_STEPS)
@@ -987,9 +1001,12 @@ class Recipe:
                     for id_glob in script_cfg["ancestors"]:
                         ancestor_ids = fnmatch.filter(tasks, id_glob)
                         if not ancestor_ids:
-                            raise RecipeError(
+                            msg = (
                                 "Could not find any ancestors matching "
-                                f"'{id_glob}'.",
+                                f"'{id_glob}'."
+                            )
+                            raise RecipeError(
+                                msg,
                             )
                         logger.debug(
                             "Pattern %s matches %s",
@@ -1219,7 +1236,8 @@ class Recipe:
     def run(self):
         """Run all tasks in the recipe."""
         if not self.tasks:
-            raise RecipeError("No tasks to run!")
+            msg = "No tasks to run!"
+            raise RecipeError(msg)
         filled_recipe = self.write_filled_recipe()
 
         # Download required data

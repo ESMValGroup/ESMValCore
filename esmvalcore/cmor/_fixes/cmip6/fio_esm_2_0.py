@@ -5,9 +5,9 @@ import logging
 import numpy as np
 from iris.util import promote_aux_coord_to_dim_coord
 
-from ..common import OceanFixGrid
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 logger = logging.getLogger(__name__)
 

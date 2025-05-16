@@ -28,8 +28,7 @@ def _slope(x_arr, y_arr):
     xy_sum = (x_arr * y_arr).sum()
     xx_sum = (x_arr * x_arr).sum()
     x_mean = x_arr.mean()
-    slope = (xy_sum - x_mean * y_arr.sum()) / (xx_sum - x_mean * x_arr.sum())
-    return slope
+    return (xy_sum - x_mean * y_arr.sum()) / (xx_sum - x_mean * x_arr.sum())
 
 
 def _get_slope(y_arr, x_arr):
@@ -61,10 +60,9 @@ def _get_slope_stderr(y_arr, x_arr):
     slope = _slope(x_arr, y_arr)
     intercept = y_mean - slope * x_mean
     y_estim = slope * x_arr + intercept
-    slope_stderr = np.sqrt(
+    return np.sqrt(
         ((y_arr - y_estim) ** 2).sum() / dof / ((x_arr - x_mean) ** 2).sum(),
     )
-    return slope_stderr
 
 
 def _set_trend_units(cube, coord):
@@ -115,8 +113,7 @@ def linear_trend(cube, coordinate="time"):
     def call_func(data, axis, x_data):
         """Calculate trend."""
         trend_arr = np.apply_along_axis(_get_slope, axis, data, x_data)
-        trend_arr = np.ma.masked_invalid(trend_arr)
-        return trend_arr
+        return np.ma.masked_invalid(trend_arr)
 
     def lazy_func(data, axis, x_data):
         """Calculate trend lazily."""
@@ -128,8 +125,7 @@ def linear_trend(cube, coordinate="time"):
             dtype=data.dtype,
             shape=(),
         )
-        trend_arr = da.ma.masked_invalid(trend_arr)
-        return trend_arr
+        return da.ma.masked_invalid(trend_arr)
 
     aggregator = iris.analysis.Aggregator(
         "trend",
@@ -185,8 +181,7 @@ def linear_trend_stderr(cube, coordinate="time"):
             data,
             x_data,
         )
-        trend_std_arr = np.ma.masked_invalid(trend_std_arr)
-        return trend_std_arr
+        return np.ma.masked_invalid(trend_std_arr)
 
     def lazy_func(data, axis, x_data):
         """Calculate trend standard error lazily."""
@@ -198,8 +193,7 @@ def linear_trend_stderr(cube, coordinate="time"):
             dtype=data.dtype,
             shape=(),
         )
-        trend_std_arr = da.ma.masked_invalid(trend_std_arr)
-        return trend_std_arr
+        return da.ma.masked_invalid(trend_std_arr)
 
     aggregator = iris.analysis.Aggregator(
         "trend_stderr",

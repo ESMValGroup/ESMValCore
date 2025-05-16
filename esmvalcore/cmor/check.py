@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 from collections import namedtuple
-from collections.abc import Callable
 from enum import IntEnum
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import cf_units
 import dask
@@ -15,8 +15,6 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
-from iris.coords import Coord
-from iris.cube import Cube
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -26,6 +24,12 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from iris.coords import Coord
+    from iris.cube import Cube
 
 
 class CheckLevels(IntEnum):
@@ -93,9 +97,9 @@ class CMORCheck:
         self._failerr = fail_on_error
         self._check_level = check_level
         self._logger = logging.getLogger(__name__)
-        self._errors = list()
-        self._warnings = list()
-        self._debug_messages = list()
+        self._errors = []
+        self._warnings = []
+        self._debug_messages = []
 
         self._cmor_var = var_info
         if not frequency:
@@ -968,8 +972,7 @@ def cmor_check_metadata(
         frequency=frequency,
         check_level=check_level,
     )
-    cube = checker(cube).check_metadata()
-    return cube
+    return checker(cube).check_metadata()
 
 
 def cmor_check_data(
@@ -1011,8 +1014,7 @@ def cmor_check_data(
         frequency=frequency,
         check_level=check_level,
     )
-    cube = checker(cube).check_data()
-    return cube
+    return checker(cube).check_data()
 
 
 def cmor_check(
@@ -1058,7 +1060,7 @@ def cmor_check(
         frequency=frequency,
         check_level=check_level,
     )
-    cube = cmor_check_data(
+    return cmor_check_data(
         cube,
         cmor_table,
         mip,
@@ -1066,4 +1068,3 @@ def cmor_check(
         frequency=frequency,
         check_level=check_level,
     )
-    return cube

@@ -18,10 +18,10 @@ from netCDF4 import Dataset, Variable
 from .config import CFG
 from .config._config import get_project_config
 from .exceptions import RecipeError
-from .typing import Facets, FacetValue
 
 if TYPE_CHECKING:
     from .esgf import ESGFFile
+    from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
 
     if daterange:
         start_point = daterange.group(group)
-        end_group = "_".join([group, "end"])
+        end_group = f"{group}_end"
         end_point = daterange.group(end_group)
     else:
         # Check for single dates in the filename
@@ -164,9 +164,12 @@ def _get_start_end_date(
                     break
 
     if start_date is None or end_date is None:
-        raise ValueError(
+        msg = (
             f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file",
+            f"time coordinate can not be read from the file"
+        )
+        raise ValueError(
+            msg,
         )
 
     # Remove potential '-' characters from datetimes
@@ -343,9 +346,9 @@ def _replace_tags(
 ) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        pathset = set((paths.strip("/"),))
+        pathset = {paths.strip("/")}
     else:
-        pathset = set(path.strip("/") for path in paths)
+        pathset = {path.strip("/") for path in paths}
     tlist: set[str] = set()
     for path in pathset:
         tlist = tlist.union(re.findall(r"{([^}]*)}", path))
@@ -370,9 +373,12 @@ def _replace_tags(
         elif tag == "version":
             replacewith = "*"
         else:
-            raise RecipeError(
+            msg = (
                 f"Dataset key '{tag}' must be specified for {variable}, check "
-                f"your recipe entry and/or extra facet file(s)",
+                f"your recipe entry and/or extra facet file(s)"
+            )
+            raise RecipeError(
+                msg,
             )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
@@ -424,8 +430,9 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
             value = [value]
         return value
 
+    msg = f"drs {structure} for {project} project not specified in config-developer file"
     raise KeyError(
-        f"drs {structure} for {project} project not specified in config-developer file",
+        msg,
     )
 
 
@@ -548,7 +555,7 @@ class DataSource:
         already_used_tags: set[str] = set()
         for full_tag in re.findall(r"\\\{(.+?)\\\}", pattern):
             # Ignore .upper and .lower (full_tag: {tag.lower}, tag: {tag})
-            if full_tag.endswith(r"\.upper") or full_tag.endswith(r"\.lower"):
+            if full_tag.endswith((r"\.upper", r"\.lower")):
                 tag = full_tag[:-7]
             else:
                 tag = full_tag
@@ -602,9 +609,12 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 )
             return sources
 
-    raise KeyError(
+    msg = (
         f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the configuration.",
+        "the configuration."
+    )
+    raise KeyError(
+        msg,
     )
 
 
@@ -659,14 +669,12 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
         )
 
     filename = f"{'_'.join(filename_segments)}.nc"
-    outfile = Path(
+    return Path(
         preproc_dir,
         attributes["diagnostic"],
         attributes["variable_group"],
         filename,
     )
-
-    return outfile
 
 
 def _filter_versions_called_latest(

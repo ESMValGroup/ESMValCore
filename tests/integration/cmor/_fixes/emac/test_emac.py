@@ -55,7 +55,7 @@ def cubes_1d():
         units=Unit("day since 1950-01-01 00:00:00", calendar="gregorian"),
     )
     cube = Cube([1.0], dim_coords_and_dims=[(time_coord, 0)])
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
@@ -63,7 +63,6 @@ def cubes_1d():
             cube.copy(),
         ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -91,7 +90,7 @@ def cubes_2d():
         [[[1.0]]],
         dim_coords_and_dims=[(time_coord, 0), (lat_coord, 1), (lon_coord, 2)],
     )
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
@@ -99,7 +98,6 @@ def cubes_2d():
             cube.copy(),
         ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -174,7 +172,7 @@ def cubes_3d():
         long_name="surface pressure",
         units="Pa",
     )
-    cubes = CubeList(
+    return CubeList(
         [
             cube.copy(),
             cube.copy(),
@@ -187,7 +185,6 @@ def cubes_3d():
             aps_ave_cube,
         ],
     )
-    return cubes
 
 
 def _get_fix(mip, short_name, fix_name):
@@ -201,8 +198,7 @@ def _get_fix(mip, short_name, fix_name):
     extra_facets = get_extra_facets(dataset, ())
     vardef = get_var_info(project="EMAC", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.emac.emac, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets)
-    return fix
+    return cls(vardef, extra_facets=extra_facets)
 
 
 def get_fix(mip, short_name):
@@ -219,8 +215,7 @@ def fix_metadata(cubes, mip, short_name):
     fix = get_fix(mip, short_name)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def check_tas_metadata(cubes):

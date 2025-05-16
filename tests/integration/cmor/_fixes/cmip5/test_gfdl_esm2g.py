@@ -30,7 +30,7 @@ CUBES_LISTS = [
 ]
 
 
-@pytest.mark.parametrize("cubes_in,cubes_out", CUBES_LISTS)
+@pytest.mark.parametrize(("cubes_in", "cubes_out"), CUBES_LISTS)
 def test_get_and_remove(cubes_in, cubes_out):
     """Test get and remove helper method."""
     _get_and_remove(cubes_in, "to_be_rm")

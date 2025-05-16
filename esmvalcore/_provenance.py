@@ -29,12 +29,10 @@ def get_esmvaltool_provenance():
     namespace = "software"
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
-    activity = provenance.activity(
+    return provenance.activity(
         namespace + ":esmvaltool==" + __version__,
         other_attributes=attributes,
     )
-
-    return activity
 
 
 ESMVALTOOL_PROVENANCE = get_esmvaltool_provenance()
@@ -167,7 +165,8 @@ class TrackedFile:
     def copy_provenance(self):
         """Create a copy with identical provenance information."""
         if self.provenance is None:
-            raise ValueError(f"Provenance of {self} not initialized")
+            msg = f"Provenance of {self} not initialized"
+            raise ValueError(msg)
         new = TrackedFile(self.filename, self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
         new.entity = new.provenance.get_record(self.entity.identifier)[0]
@@ -192,8 +191,9 @@ class TrackedFile:
         propagate into the provenance of this file.
         """
         if self.provenance is not None:
+            msg = f"Provenance of {self} already initialized"
             raise ValueError(
-                f"Provenance of {self} already initialized",
+                msg,
             )
         self.provenance = ProvDocument()
         self._initialize_namespaces()
@@ -252,7 +252,8 @@ class TrackedFile:
             other_entity = other
         self.provenance.update(other_entity.bundle)
         if not self.activity:
-            raise ValueError("Activity not initialized.")
+            msg = "Activity not initialized."
+            raise ValueError(msg)
         self.entity.wasDerivedFrom(other_entity, self.activity)
 
     def _select_for_include(self):

@@ -10,7 +10,8 @@ from pathlib import Path
 
 import iris
 
-from ..config._config import TASKSEP
+from esmvalcore.config._config import TASKSEP
+
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
@@ -193,9 +194,7 @@ class RecipeOutput(Mapping):
 
     def __repr__(self):
         """Return canonical string representation."""
-        string = "\n".join(repr(item) for item in self._task_output.values())
-
-        return string
+        return "\n".join(repr(item) for item in self._task_output.values())
 
     def __getitem__(self, key: str):
         """Get task indexed by `key`."""
@@ -288,15 +287,13 @@ class RecipeOutput(Mapping):
         """
         if not template:
             template = get_template(self.__class__.__name__ + ".j2")
-        rendered = template.render(
+        return template.render(
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
             filters=self.filters,
             relpath=os.path.relpath,
         )
-
-        return rendered
 
     def read_main_log(self) -> str:
         """Read log file."""

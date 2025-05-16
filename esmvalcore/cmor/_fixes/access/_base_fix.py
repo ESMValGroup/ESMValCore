@@ -74,8 +74,9 @@ class AccessFix(NativeDatasetFix):
         """Try to get path from facet."""
         path = Path(self.extra_facets[facet])
         if not path.is_file():
+            msg = f"'{path}' given by facet '{facet}' does not exist"
             raise FileNotFoundError(
-                f"'{path}' given by facet '{facet}' does not exist",
+                msg,
             )
         return path
 
@@ -84,9 +85,9 @@ class AccessFix(NativeDatasetFix):
         path_to_grid_data = self._get_path_from_facet(facet)
         cubes = self._load_cubes(path_to_grid_data)
 
-        y_vert_t = [cube for cube in cubes if cube.var_name == "y_vert_T"][0]
+        y_vert_t = next(cube for cube in cubes if cube.var_name == "y_vert_T")
         lat_bounds = np.transpose(y_vert_t.data, (1, 2, 0))
-        x_vert_t = [cube for cube in cubes if cube.var_name == "x_vert_T"][0]
+        x_vert_t = next(cube for cube in cubes if cube.var_name == "x_vert_T")
         lon_bounds = np.transpose(x_vert_t.data, (1, 2, 0))
 
         return lat_bounds, lon_bounds
@@ -119,5 +120,4 @@ class AccessFix(NativeDatasetFix):
                 category=UserWarning,
                 module="iris",
             )
-            cubes = iris.load(path)
-        return cubes
+            return iris.load(path)

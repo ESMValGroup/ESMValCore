@@ -142,22 +142,23 @@ class IconFix(NativeDatasetFix):
             start_index=start_index,
             location_axis=0,
         )
-        mesh = MeshXY(
+        return MeshXY(
             topology_dimension=2,
             node_coords_and_axes=[(node_lat, "y"), (node_lon, "x")],
             connectivities=[connectivity],
             face_coords_and_axes=[(face_lat, "y"), (face_lon, "x")],
         )
 
-        return mesh
-
     def _get_grid_url(self, cube: Cube) -> tuple[str, str]:
         """Get ICON grid URL from cube."""
         if self.GRID_FILE_ATTR not in cube.attributes:
-            raise ValueError(
+            msg = (
                 f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
                 f"necessary to download the ICON horizontal grid file:\n"
-                f"{cube}",
+                f"{cube}"
+            )
+            raise ValueError(
+                msg,
             )
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
@@ -211,11 +212,14 @@ class IconFix(NativeDatasetFix):
         if not path.is_file() and self.session is not None:
             new_path = self.session["auxiliary_data_dir"] / path
             if not new_path.is_file():
-                raise FileNotFoundError(
+                msg = (
                     f"{description} '{path}' given by facet '{facet}' does "
                     f"not exist (specify a valid absolute path or a path "
                     f"relative to the auxiliary_data_dir "
-                    f"'{self.session['auxiliary_data_dir']}')",
+                    f"'{self.session['auxiliary_data_dir']}')"
+                )
+                raise FileNotFoundError(
+                    msg,
                 )
             path = new_path
         return path
@@ -326,8 +330,7 @@ class IconFix(NativeDatasetFix):
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
-                cubes = self._load_cubes(grid_path)
-                return cubes
+                return self._load_cubes(grid_path)
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -386,8 +389,7 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-        cubes = self._load_cubes(grid_path)
-        return cubes
+        return self._load_cubes(grid_path)
 
     def get_horizontal_grid(self, cube: Cube) -> CubeList:
         """Get ICON horizontal grid.
@@ -526,8 +528,7 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module="iris",
             )
-            cubes = iris.load(path)
-        return cubes
+            return iris.load(path)
 
     @staticmethod
     def _set_range_in_0_360(lon_coord: Coord) -> None:
@@ -643,10 +644,13 @@ class AllVarsBase(IconFix):
         # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
         if n_unnamed_dimensions != 1:
-            raise ValueError(
+            msg = (
                 f"Cannot determine coordinate dimension for coordinate "
                 f"'{coord_name}', cube does not contain a single unnamed "
-                f"dimension:\n{cube}",
+                f"dimension:\n{cube}"
+            )
+            raise ValueError(
+                msg,
             )
         coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
@@ -667,12 +671,14 @@ class AllVarsBase(IconFix):
             if not other_cube.coords("time"):
                 continue
             time_coord = other_cube.coord("time")
-            cube = add_leading_dim_to_cube(cube, time_coord)
-            return cube
-        raise ValueError(
+            return add_leading_dim_to_cube(cube, time_coord)
+        msg = (
             f"Cannot add required coordinate 'time' to variable "
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
-            f"contain it",
+            f"contain it"
+        )
+        raise ValueError(
+            msg,
         )
 
     def _get_z_coord(
@@ -702,12 +708,11 @@ class AllVarsBase(IconFix):
         else:
             bounds = None
 
-        z_coord = AuxCoord(
+        return AuxCoord(
             points,
             bounds=bounds,
             units=points_cube.units,
         )
-        return z_coord
 
     def _fix_height(self, cube: Cube, cubes: CubeList) -> Cube:
         """Fix height coordinate of cube."""
@@ -961,11 +966,14 @@ class AllVarsBase(IconFix):
         # first of the month 00:00:00
         if "dec" in freq or "yr" in freq or "mon" in freq:
             if datetime_point != datetime(year, month, 1):
-                raise ValueError(
+                msg = (
                     f"Cannot shift time coordinate: expected first of the "
                     f"month at 00:00:00 for decadal, yearly and monthly data, "
                     f"got {datetime_point}. Use `shift_time=false` in the "
-                    f"recipe to disable this feature",
+                    f"recipe to disable this feature"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Decadal data
@@ -1044,10 +1052,7 @@ class AllVarsBase(IconFix):
 
         # If latitude and longitude are multi-dimensional (e.g., curvilinear
         # grid), no unstructured grid is present
-        if len(lat_idx) != 1:
-            return False
-
-        return True
+        return len(lat_idx) == 1
 
     @staticmethod
     def _fix_invalid_time_units(time_coord: Coord) -> None:
@@ -1058,9 +1063,12 @@ class AllVarsBase(IconFix):
         time_format = "day as %Y%m%d.%f"
         t_unit = time_coord.attributes.pop("invalid_units")
         if t_unit != time_format:
-            raise ValueError(
+            msg = (
                 f"Expected time units '{time_format}' in input file, got "
-                f"'{t_unit}'",
+                f"'{t_unit}'"
+            )
+            raise ValueError(
+                msg,
             )
         new_t_units = Unit(
             "days since 1850-01-01",

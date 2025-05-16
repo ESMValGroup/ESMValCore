@@ -90,10 +90,7 @@ def get_recipe(name: os.PathLike | str) -> Recipe:
 
     locations = Path(), DIAGNOSTICS.recipes
 
-    if isinstance(name, str):
-        filenames = (name, name + ".yml")
-    else:
-        filenames = (name,)
+    filenames = (name, name + ".yml") if isinstance(name, str) else (name,)
 
     for location in locations:
         for filename in filenames:
@@ -101,4 +98,5 @@ def get_recipe(name: os.PathLike | str) -> Recipe:
             if try_path.exists():
                 return Recipe(try_path)
 
-    raise FileNotFoundError(f"Could not find `{name}` in {locations}.")
+    msg = f"Could not find `{name}` in {locations}."
+    raise FileNotFoundError(msg)

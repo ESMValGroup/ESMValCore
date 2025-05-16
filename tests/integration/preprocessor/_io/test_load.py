@@ -17,8 +17,7 @@ from esmvalcore.preprocessor._io import load
 
 def _create_sample_cube():
     coord = DimCoord([1, 2], standard_name="latitude", units="degrees_north")
-    cube = Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
-    return cube
+    return Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
 
 
 class TestLoad(unittest.TestCase):

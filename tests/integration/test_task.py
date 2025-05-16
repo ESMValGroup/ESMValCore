@@ -73,7 +73,7 @@ def get_distributed_client_mock(client):
 
 
 @pytest.mark.parametrize(
-    ["mpmethod", "max_parallel_tasks"],
+    ("mpmethod", "max_parallel_tasks"),
     [
         ("fork", 1),
         ("fork", 2),
@@ -204,11 +204,10 @@ def test_py2ncl():
 
 def _get_single_base_task():
     """Test BaseTask basic attributes."""
-    task = BaseTask(
+    return BaseTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
     )
-    return task
 
 
 def test_base_task_names():
@@ -235,15 +234,13 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
         with open(diag_script, "w", encoding="utf-8") as fil:
             fil.write("import os\n\nprint(os.getcwd())")
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
         script=diag_script,
         settings=diag_settings,
         output_dir=diag_output_dir,
     )
-
-    return task
 
 
 def test_py_diagnostic_task_constructor(tmp_path):
@@ -304,15 +301,13 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
     with open(diag_script, "w", encoding="utf-8") as fil:
         fil.write(diagnostic_text)
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=None,
         script=diag_script.as_posix(),
         settings=diag_settings,
         output_dir=diag_output_dir.as_posix(),
     )
-
-    return task
 
 
 # skip if no exec
@@ -343,7 +338,7 @@ CMD_diag_fail = {
 }
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag.items())
 @no_ncl
 @no_rscript
 def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
@@ -359,7 +354,7 @@ def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
     task.run()
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag_fail.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag_fail.items())
 @no_ncl
 def test_diagnostic_run_task_fail(
     monkeypatch,

@@ -5,18 +5,17 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
-from collections.abc import Iterable
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from dask.delayed import Delayed
 from iris.cube import Cube
 
-from .._provenance import TrackedFile
-from .._task import BaseTask
-from ..cmor.check import cmor_check_data, cmor_check_metadata
-from ..cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore._provenance import TrackedFile
+from esmvalcore._task import BaseTask
+from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
+from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -94,6 +93,11 @@ from ._volume import (
     volume_statistics,
 )
 from ._weighting import weighting_landsea_fraction
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 
@@ -239,17 +243,19 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = list(inspect.signature(function).parameters)[0]
-    return itype
+    return next(iter(inspect.signature(function).parameters))
 
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
     for step in settings:
         if step not in DEFAULT_ORDER:
-            raise ValueError(
+            msg = (
                 f"Unknown preprocessor function '{step}', choose from: "
-                f"{', '.join(DEFAULT_ORDER)}",
+                f"{', '.join(DEFAULT_ORDER)}"
+            )
+            raise ValueError(
+                msg,
             )
 
         function = globals()[step]
@@ -281,10 +287,13 @@ def check_preprocessor_settings(settings):
         if check_args:
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
-                raise ValueError(
+                msg = (
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
-                    f"Valid arguments are: [{', '.join(args)}]",
+                    f"Valid arguments are: [{', '.join(args)}]"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Check for missing arguments
@@ -296,9 +305,12 @@ def check_preprocessor_settings(settings):
         end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
-            raise ValueError(
+            msg = (
                 f"Missing required argument(s) {missing_args} for "
-                f"preprocessor function {step}",
+                f"preprocessor function {step}"
+            )
+            raise ValueError(
+                msg,
             )
 
         # Final sanity check in case the above fails to catch a mistake
@@ -328,10 +340,13 @@ def _check_multi_model_settings(products):
             if reference is None:
                 reference = product
             elif reference.settings[step] != settings:
-                raise ValueError(
+                msg = (
                     "Unable to combine differing multi-dataset settings for "
                     f"{reference.filename} and {product.filename}, "
-                    f"{reference.settings[step]} and {settings}",
+                    f"{reference.settings[step]} and {settings}"
+                )
+                raise ValueError(
+                    msg,
                 )
 
 
@@ -534,8 +549,9 @@ class PreprocessorFile(TrackedFile):
     def apply(self, step: str, debug: bool = False):
         """Apply preprocessor step to product."""
         if step not in self.settings:
+            msg = f"PreprocessorFile {self} has no settings for step {step}"
             raise ValueError(
-                f"PreprocessorFile {self} has no settings for step {step}",
+                msg,
             )
         self.cubes = preprocess(
             self.cubes,
@@ -771,11 +787,10 @@ class PreprocessingTask(BaseTask):
                 self.scheduler_lock.release()
                 logger.debug("Released save lock for task %s", self.name)
 
-        metadata_files = write_metadata(
+        return write_metadata(
             self.products,
             self.write_ncl_interface,
         )
-        return metadata_files
 
     def __str__(self):
         """Get human readable description."""
@@ -794,7 +809,7 @@ class PreprocessingTask(BaseTask):
             )
             for p in self.products
         )
-        txt = "\n".join(
+        return "\n".join(
             [
                 f"{self.__class__.__name__}: {self.name}",
                 f"order: {order}",
@@ -802,4 +817,3 @@ class PreprocessingTask(BaseTask):
                 self.print_ancestors(),
             ],
         )
-        return txt

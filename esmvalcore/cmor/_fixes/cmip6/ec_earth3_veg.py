@@ -3,7 +3,7 @@
 import cf_units
 import numpy as np
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Siconca(Fix):

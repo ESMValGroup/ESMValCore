@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
-
-from iris.coords import Coord
-from iris.cube import Cube
+from typing import TYPE_CHECKING
 
 from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from iris.coords import Coord
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +71,12 @@ def _get_alternative_generic_lev_coord(
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
             return (cmor_coord, cube_coord)
 
-    raise ValueError(
+    msg = (
         f"Found no valid alternative coordinate for generic level coordinate "
-        f"'{coord_name}'",
+        f"'{coord_name}'"
+    )
+    raise ValueError(
+        msg,
     )
 
 
@@ -186,16 +192,16 @@ def _get_single_cube(
             cube = raw_cube
             break
 
-    if dataset_str is None:
-        dataset_str = ""
-    else:
-        dataset_str = f" in {dataset_str}"
+    dataset_str = "" if dataset_str is None else f" in {dataset_str}"
 
     if not cube:
-        raise ValueError(
+        msg = (
             f"More than one cube found for variable {short_name}{dataset_str} "
             f"but none of their var_names match the expected.\nFull list of "
-            f"cubes encountered: {cube_list}",
+            f"cubes encountered: {cube_list}"
+        )
+        raise ValueError(
+            msg,
         )
     logger.warning(
         "Found variable %s%s, but there were other present in the file. Those "

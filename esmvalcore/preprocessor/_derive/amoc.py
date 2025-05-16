@@ -22,8 +22,9 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "msftyz", "optional": True},
             ]
         else:
+            msg = f"Project {project} can not be used for Amoc derivation."
             raise ValueError(
-                f"Project {project} can not be used for Amoc derivation.",
+                msg,
             )
 
         return required
@@ -69,9 +70,12 @@ class DerivedVariable(DerivedVariableBase):
         cube = cube.extract(constraint=atl_constraint)
 
         if cube is None:
-            raise ValueError(
+            msg = (
                 f"Amoc calculation: {cube_orig} doesn't contain"
-                f" atlantic_arctic_ocean.",
+                f" atlantic_arctic_ocean."
+            )
+            raise ValueError(
+                msg,
             )
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
@@ -91,6 +95,4 @@ class DerivedVariable(DerivedVariableBase):
 
         # 4: find the maximum in the water column along the time axis.
         with ignore_iris_vague_metadata_warnings():
-            cube = cube.collapsed(["depth", "region"], iris.analysis.MAX)
-
-        return cube
+            return cube.collapsed(["depth", "region"], iris.analysis.MAX)

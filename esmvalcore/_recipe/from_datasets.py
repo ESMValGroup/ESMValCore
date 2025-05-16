@@ -7,7 +7,6 @@ import logging
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from functools import partial
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from nested_lookup import nested_delete
@@ -17,6 +16,8 @@ from esmvalcore.exceptions import RecipeError
 from ._io import _load_recipe
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -54,17 +55,19 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
             facets["supplementary_variables"].append(anc_facets)
         variables[variable_group]["additional_datasets"].append(facets)
 
-    recipe = {"diagnostics": diagnostics}
-    return recipe
+    return {"diagnostics": diagnostics}
 
 
 def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
     """Convert datasets to a condensed recipe dict."""
     for dataset in datasets:
         if "diagnostic" not in dataset.facets:
-            raise RecipeError(
+            msg = (
                 f"'diagnostic' facet missing from {dataset},"
-                "unable to convert to recipe.",
+                "unable to convert to recipe."
+            )
+            raise RecipeError(
+                msg,
             )
 
     recipe = _datasets_to_raw_recipe(datasets)
@@ -85,9 +88,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
         }
 
     # Deduplicate by moving datasets up from variable to diagnostic to recipe
-    recipe = _move_datasets_up(recipe)
-
-    return recipe
+    return _move_datasets_up(recipe)
 
 
 def _move_datasets_up(recipe: Recipe) -> Recipe:
@@ -282,7 +283,7 @@ def _create_ensemble_ranges(
             groups[-1].append(prev)
             result = []
             for group in groups:
-                item = prefix + (tuple(group),) + suffix
+                item = (*prefix, tuple(group), *suffix)
                 result.append(item)
             grouped_ensembles.extend(result)
 

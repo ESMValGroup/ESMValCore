@@ -18,7 +18,7 @@ def test_get_single_cube_one_cube(cubes, caplog):
 
 
 @pytest.mark.parametrize(
-    "dataset_str,msg",
+    ("dataset_str", "msg"),
     [
         (None, "Found variable x, but"),
         ("XYZ", "Found variable x in XYZ, but"),
@@ -44,7 +44,7 @@ def test_get_single_cube_multiple_cubes(cubes, dataset_str, msg, caplog):
 
 
 @pytest.mark.parametrize(
-    "dataset_str,msg",
+    ("dataset_str", "msg"),
     [
         (None, "More than one cube found for variable x but"),
         ("XYZ", "More than one cube found for variable x in XYZ but"),

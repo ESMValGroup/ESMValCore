@@ -25,7 +25,8 @@ def wrapper(f):
     @functools.wraps(f)
     def empty(*args, **kwargs):
         if kwargs:
-            raise ValueError(f"Parameters not supported: {kwargs}")
+            msg = f"Parameters not supported: {kwargs}"
+            raise ValueError(msg)
         return True
 
     return empty

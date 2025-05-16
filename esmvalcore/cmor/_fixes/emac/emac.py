@@ -24,9 +24,9 @@ from iris.cube import CubeList
 from netCDF4 import Dataset
 from scipy import constants
 
+from esmvalcore.cmor._fixes.shared import add_aux_coords_from_cubes
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
-from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData
 
 logger = logging.getLogger(__name__)
@@ -111,10 +111,13 @@ class AllVars(EmacFix):
 
             return
 
-        raise ValueError(
+        msg = (
             f"Cannot find requested pressure level coordinate for variable "
             f"'{self.vardef.short_name}', searched for Z-coordinates with "
-            f"units that are convertible to Pa",
+            f"units that are convertible to Pa"
+        )
+        raise ValueError(
+            msg,
         )
 
     @staticmethod

@@ -107,8 +107,7 @@ class ESMPyRegridder:
             self.method,
             mask_threshold=self.mask_threshold,
         )
-        result = map_slices(cube, regridder, src_rep, dst_rep)
-        return result
+        return map_slices(cube, regridder, src_rep, dst_rep)
 
 
 class _ESMPyScheme:
@@ -233,10 +232,7 @@ def cf_2d_bounds_to_esmpy_corners(bounds, circular):
     """Convert cf style 2d bounds to normal (esmpy style) corners."""
     no_lat_points, no_lon_points = bounds.shape[:2]
     no_lat_bounds = no_lat_points + 1
-    if circular:
-        no_lon_bounds = no_lon_points
-    else:
-        no_lon_bounds = no_lon_points + 1
+    no_lon_bounds = no_lon_points if circular else no_lon_points + 1
     esmpy_corners = np.empty((no_lon_bounds, no_lat_bounds))
     esmpy_corners[:no_lon_points, :no_lat_points] = bounds[:, :, 0].T
     esmpy_corners[:no_lon_points, no_lat_points:] = bounds[-1:, :, 3].T
@@ -272,8 +268,9 @@ def coords_iris_to_esmpy(lat, lon, circular):
         esmpy_lat_corners = cf_2d_bounds_to_esmpy_corners(lat.bounds, circular)
         esmpy_lon_corners = cf_2d_bounds_to_esmpy_corners(lon.bounds, circular)
     else:
+        msg = f"Coord dimension is {dim}. Expected 1 or 2."
         raise NotImplementedError(
-            f"Coord dimension is {dim}. Expected 1 or 2.",
+            msg,
         )
     return esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners
 
@@ -286,10 +283,7 @@ def get_grid(
     circular,
 ):
     """Build EMSF grid from given coordinate information."""
-    if circular:
-        num_peri_dims = 1
-    else:
-        num_peri_dims = 0
+    num_peri_dims = 1 if circular else 0
 
     grid = esmpy.Grid(
         np.vstack(esmpy_lat.shape),
@@ -323,13 +317,17 @@ def is_lon_circular(lon):
         elif lon.ndim == 2:
             seam = lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)]
         else:
+            msg = (
+                "AuxCoord longitude is higher dimensional than 2d. Giving up."
+            )
             raise NotImplementedError(
-                "AuxCoord longitude is higher dimensional than 2d. Giving up.",
+                msg,
             )
         circular = np.all(abs(seam) % 360.0 < 1.0e-3)
     else:
+        msg = "longitude is neither DimCoord nor AuxCoord. Giving up."
         raise ValueError(
-            "longitude is neither DimCoord nor AuxCoord. Giving up.",
+            msg,
         )
     return circular
 
@@ -341,12 +339,11 @@ def cube_to_empty_field(cube):
     circular = is_lon_circular(lon)
     esmpy_coords = coords_iris_to_esmpy(lat, lon, circular)
     grid = get_grid(*esmpy_coords, circular=circular)
-    field = esmpy.Field(
+    return esmpy.Field(
         grid,
         name=cube.long_name,
         staggerloc=esmpy.StaggerLoc.CENTER,
     )
-    return field
 
 
 def get_representant(cube, ref_to_slice):
@@ -483,9 +480,10 @@ def get_grid_representant(cube, horizontal_only=False):
                 # scalar z coordinate, go on with 2d regridding
                 pass
             elif n_zdims == 1:
-                ref_to_slice = [cube_z_coord] + horizontal_slice
+                ref_to_slice = [cube_z_coord, *horizontal_slice]
             else:
-                raise ValueError("Cube has multidimensional Z coordinate.")
+                msg = "Cube has multidimensional Z coordinate."
+                raise ValueError(msg)
         except iris.exceptions.CoordinateNotFoundError:
             # no z coordinate, go on with 2d regridding
             pass
@@ -518,7 +516,7 @@ def get_grid_representants(src, dst):
         dst_shape = (src_rep.shape[0],)
         dim_coords = [src_rep.coord(dimensions=[0], dim_coords=True)]
     else:
-        dst_shape = tuple()
+        dst_shape = ()
         dim_coords = []
     dst_shape += dst_horiz_rep.shape
     dim_coords += dst_horiz_rep.coords(dim_coords=True)

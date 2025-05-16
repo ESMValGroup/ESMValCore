@@ -32,4 +32,4 @@ def test_duplications_in_changelog():
                 ),
             ),
         )
-        assert False
+        raise AssertionError

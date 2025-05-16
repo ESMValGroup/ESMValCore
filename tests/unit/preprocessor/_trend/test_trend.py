@@ -36,7 +36,7 @@ def get_cube(times=None, time_units=None):
     )
     aux_coord = iris.coords.AuxCoord([0.0, 0.0], var_name="aux")
     if times is None:
-        cube = iris.cube.Cube(
+        return iris.cube.Cube(
             [[1.0, 2.0], [3.0, 4.0]],
             var_name="x",
             long_name="X",
@@ -44,12 +44,11 @@ def get_cube(times=None, time_units=None):
             dim_coords_and_dims=[(lats, 0), (lons, 1)],
             aux_coords_and_dims=[(aux_coord, 0)],
         )
-        return cube
     if time_units is None:
         time_units = Unit("days since 1850-01-01 00:00:00")
     times = iris.coords.DimCoord(times, standard_name="time", units=time_units)
     cube_data = np.arange(4 * times.shape[0]).reshape(times.shape[0], 2, 2)
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         cube_data.astype("float32"),
         var_name="x",
         long_name="X",
@@ -57,8 +56,6 @@ def get_cube(times=None, time_units=None):
         dim_coords_and_dims=[(times, 0), (lats, 1), (lons, 2)],
         aux_coords_and_dims=[(aux_coord, 1)],
     )
-
-    return cube
 
 
 @pytest.fixture

@@ -64,10 +64,7 @@ class CoordinateInfoMock:
         self.axis = ""
         self.value = ""
         standard_names = {"lat": "latitude", "lon": "longitude"}
-        if name in standard_names:
-            self.standard_name = standard_names[name]
-        else:
-            self.standard_name = name
+        self.standard_name = standard_names.get(name, name)
         self.long_name = "Long name"
         self.out_name = self.name
         self.var_name = self.name
@@ -77,10 +74,7 @@ class CoordinateInfoMock:
             "lon": "degrees_east",
             "time": "days since 1950-01-01 00:00:00",
         }
-        if name in units:
-            self.units = units[name]
-        else:
-            self.units = "units"
+        self.units = units.get(name, "units")
 
         self.stored_direction = "increasing"
         self.must_have_bounds = "yes"
@@ -1151,10 +1145,7 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.add_dim_coord(coord, 3)
 
     def _get_valid_limits(self, var_info):
-        if var_info.valid_min:
-            valid_min = float(var_info.valid_min)
-        else:
-            valid_min = 0
+        valid_min = float(var_info.valid_min) if var_info.valid_min else 0
 
         if var_info.valid_max:
             valid_max = float(var_info.valid_max)
@@ -1228,17 +1219,11 @@ class TestCMORCheck(unittest.TestCase):
                     f"Value{x}" for x in range(len(dim_spec.requested), 20)
                 ]
         valid_min = dim_spec.valid_min
-        if valid_min:
-            valid_min = float(valid_min)
-        else:
-            valid_min = 0.0
+        valid_min = float(valid_min) if valid_min else 0.0
         valid_max = dim_spec.valid_max
-        if valid_max:
-            valid_max = float(valid_max)
-        else:
-            valid_max = 100.0
+        valid_max = float(valid_max) if valid_max else 100.0
         decreasing = dim_spec.stored_direction == "decreasing"
-        endpoint = not dim_spec.standard_name == "longitude"
+        endpoint = dim_spec.standard_name != "longitude"
         if decreasing:
             values = np.linspace(valid_max, valid_min, 20, endpoint=endpoint)
         else:
@@ -1283,7 +1268,8 @@ class TestCMORCheck(unittest.TestCase):
                 frequency = "1hr"
             delta = float(frequency[:-2]) / 24
         else:
-            raise Exception(f"Frequency {frequency} not supported")
+            msg = f"Frequency {frequency} not supported"
+            raise Exception(msg)
         start = 0
         end = start + delta * 20
         return np.arange(start, end, step=delta)

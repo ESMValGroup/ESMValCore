@@ -115,7 +115,7 @@ ESGF_FACETS = (
 
 
 @pytest.mark.parametrize(
-    "our_facets, esgf_facets",
+    ("our_facets", "esgf_facets"),
     zip(OUR_FACETS, ESGF_FACETS, strict=False),
 )
 def test_get_esgf_facets(our_facets, esgf_facets):
@@ -331,7 +331,7 @@ def test_select_latest_versions_filenotfound(mocker):
 
 
 @pytest.mark.parametrize(
-    "timerange,selection",
+    ("timerange", "selection"),
     [
         ("1851/1852", slice(1, 3)),
         ("1851/P1Y", slice(1, 3)),

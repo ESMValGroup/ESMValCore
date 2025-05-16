@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
 import iris.cube
-import iris.exceptions
-import numpy as np
 from esmf_regrid.schemes import (
     ESMFAreaWeightedRegridder,
     ESMFBilinearRegridder,
@@ -20,6 +17,12 @@ from esmvalcore.preprocessor._shared import (
     get_dims_along_axes,
     get_dims_along_coords,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.exceptions
+    import numpy as np
 
 METHODS = {
     "conservative": ESMFAreaWeightedRegridder,
@@ -124,9 +127,12 @@ class IrisESMFRegrid:
         tgt_location: Literal["face", "node"] | None = None,
     ) -> None:
         if method not in METHODS:
-            raise ValueError(
+            msg = (
                 "`method` should be one of 'bilinear', 'conservative', or "
-                "'nearest'",
+                "'nearest'"
+            )
+            raise ValueError(
+                msg,
             )
 
         if use_src_mask is None:
@@ -144,9 +150,12 @@ class IrisESMFRegrid:
         }
         if method == "nearest":
             if mdtol is not None:
-                raise TypeError(
+                msg = (
                     "`mdol` can only be specified when `method='bilinear'` "
-                    "or `method='conservative'`",
+                    "or `method='conservative'`"
+                )
+                raise TypeError(
+                    msg,
                 )
         else:
             self.kwargs["mdtol"] = mdtol
@@ -154,14 +163,20 @@ class IrisESMFRegrid:
             self.kwargs["src_resolution"] = src_resolution
             self.kwargs["tgt_resolution"] = tgt_resolution
         elif src_resolution is not None:
-            raise TypeError(
+            msg = (
                 "`src_resolution` can only be specified when "
-                "`method='conservative'`",
+                "`method='conservative'`"
+            )
+            raise TypeError(
+                msg,
             )
         elif tgt_resolution is not None:
-            raise TypeError(
+            msg = (
                 "`tgt_resolution` can only be specified when "
-                "`method='conservative'`",
+                "`method='conservative'`"
+            )
+            raise TypeError(
+                msg,
             )
 
     def __repr__(self) -> str:

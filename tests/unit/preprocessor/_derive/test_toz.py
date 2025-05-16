@@ -23,14 +23,13 @@ def get_masked_o3_cube():
         ],
         0.0,
     )
-    o3_cube = iris.cube.Cube(
+    return iris.cube.Cube(
         o3_data,
         var_name="o3",
         standard_name="mole_fraction_of_ozone_in_air",
         units="1e-9",
         dim_coords_and_dims=coord_spec,
     )
-    return o3_cube
 
 
 def get_masked_o3_hybrid_plevs_cube():
@@ -189,7 +188,7 @@ def test_toz_calculate_unmasked_cubes(unmasked_cubes):
 
 
 @pytest.mark.parametrize(
-    "project,out",
+    ("project", "out"),
     [
         ("CMIP5", [{"short_name": "tro3"}, {"short_name": "ps"}]),
         ("TEST", [{"short_name": "tro3"}, {"short_name": "ps"}]),

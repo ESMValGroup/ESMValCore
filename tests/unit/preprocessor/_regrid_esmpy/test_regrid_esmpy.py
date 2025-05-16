@@ -317,7 +317,7 @@ class TestHelpers(tests.Test):
         def coord(name=None, axis=None):
             """Return selected coordinate for mock cube."""
             if axis == "Z":
-                raise CoordinateNotFoundError()
+                raise CoordinateNotFoundError
             return self.coords[name]
 
         def coords(dim_coords=None, dimensions=None):
@@ -625,8 +625,8 @@ class TestHelpers(tests.Test):
         kwargs = mock_regrid.call_args_list[0][-1]
         expected_kwargs = expected_calls[0][-1]
         self.assertEqual(expected_kwargs.keys(), kwargs.keys())
-        array_keys = set(["src_mask_values", "dst_mask_values"])
-        for key in kwargs.keys():
+        array_keys = {"src_mask_values", "dst_mask_values"}
+        for key in kwargs:
             if key in array_keys:
                 self.assertTrue((expected_kwargs[key] == kwargs[key]).all())
             else:
@@ -905,7 +905,7 @@ class TestHelpers(tests.Test):
 
 
 @pytest.mark.parametrize(
-    "scheme,output",
+    ("scheme", "output"),
     [
         (ESMPyAreaWeighted(), "ESMPyAreaWeighted(mask_threshold=0.99)"),
         (ESMPyLinear(), "ESMPyLinear(mask_threshold=0.99)"),
