@@ -24,6 +24,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
+from ._bias_adjust import bias_adjust
 from ._compare_with_refs import bias, distance_metric
 from ._cycles import amplitude
 from ._dask_progress import _compute_with_progress
@@ -188,6 +189,8 @@ __all__ = [
     # Comparison with reference datasets
     "bias",
     "distance_metric",
+    # Bias adjustment
+    "bias_adjust",
     # Remove supplementary variables from cube
     "remove_supplementary_variables",
     # Save to file
@@ -225,6 +228,7 @@ FINAL_STEPS = DEFAULT_ORDER[
 MULTI_MODEL_FUNCTIONS = {
     "bias",
     "distance_metric",
+    "bias_adjust",
     "ensemble_statistics",
     "multi_model_statistics",
     "mask_multimodel",
