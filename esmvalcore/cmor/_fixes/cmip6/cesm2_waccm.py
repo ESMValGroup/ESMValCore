@@ -43,7 +43,9 @@ class Cl(BaseCl):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            filepath,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][

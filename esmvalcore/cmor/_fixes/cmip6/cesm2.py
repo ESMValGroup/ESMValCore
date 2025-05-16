@@ -28,7 +28,9 @@ class Cl(Fix):
     ):
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            filepath,
+            add_unique_suffix=add_unique_suffix,
         )
         copyfile(filepath, new_path)
         with Dataset(new_path, mode="a") as dataset:
@@ -66,7 +68,9 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            filepath,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
@@ -152,7 +156,8 @@ class Prw(Fix):
                 if not coord.has_bounds():
                     coord.guess_bounds()
                 coord.bounds = np.round(
-                    coord.core_bounds().astype(np.float64), 4
+                    coord.core_bounds().astype(np.float64),
+                    4,
                 )
 
         return cubes
@@ -219,7 +224,8 @@ class Tas(Prw):
                     )
                     data = cube.data
                     new_data = np.ma.append(
-                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
                     )
                     new_data = new_data.reshape(dims)
 
@@ -312,7 +318,8 @@ class Tos(Fix):
         for cube in cubes:
             if cube.attributes["mipTable"] == "Omon":
                 cube.coord("time").points = np.round(
-                    cube.coord("time").points, 1
+                    cube.coord("time").points,
+                    1,
                 )
         return cubes
 
@@ -400,7 +407,8 @@ class Pr(Fix):
                     )
                     data = cube.data
                     new_data = np.ma.append(
-                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
                     )
                     new_data = new_data.reshape(dims)
 

@@ -29,19 +29,17 @@ class TestHelpers(tests.Test):
             """Return coord for mock cube."""
             if name_or_coord == "coord":
                 return self.coord
-            elif name_or_coord == "scalar_coord":
+            if name_or_coord == "scalar_coord":
                 return self.scalar_coord
-            else:
-                raise iris.exceptions.CoordinateNotFoundError("")
+            raise iris.exceptions.CoordinateNotFoundError("")
 
         def coord_dims(coord):
             """Return associated dims for coord in mock cube."""
             if coord == self.coord:
                 return [0]
-            elif coord == self.scalar_coord:
+            if coord == self.scalar_coord:
                 return []
-            else:
-                raise iris.exceptions.CoordinateNotFoundError("")
+            raise iris.exceptions.CoordinateNotFoundError("")
 
         self.cube = mock.Mock(
             spec=iris.cube.Cube,
@@ -73,7 +71,10 @@ class TestHelpers(tests.Test):
     def test_ref_to_dims_index__scalar_coord(self):
         """Test ref_to_dims_index with scalar coordinate."""
         self.assertRaises(
-            ValueError, ref_to_dims_index, self.cube, "scalar_coord"
+            ValueError,
+            ref_to_dims_index,
+            self.cube,
+            "scalar_coord",
         )
 
     def test_ref_to_dims_index__valid_coordinate_name(self):
@@ -93,7 +94,10 @@ class TestHelpers(tests.Test):
     def test_ref_to_dims_index__invalid_type(self):
         """Test ref_to_dims_index with invalid argument."""
         self.assertRaises(
-            ValueError, ref_to_dims_index, self.cube, mock.sentinel.something
+            ValueError,
+            ref_to_dims_index,
+            self.cube,
+            mock.sentinel.something,
         )
 
 
@@ -156,27 +160,25 @@ class Test(tests.Test):
             """Return coord for mock source cube."""
             if name_or_coord in ["latitude", self.src_latitude]:
                 return self.src_latitude
-            elif name_or_coord in ["longitude", self.src_longitude]:
+            if name_or_coord in ["longitude", self.src_longitude]:
                 return self.src_longitude
-            elif name_or_coord == "scalar_coord":
+            if name_or_coord == "scalar_coord":
                 return self.scalar_coord
-            else:
-                raise iris.exceptions.CoordinateNotFoundError("")
+            raise iris.exceptions.CoordinateNotFoundError("")
 
         def coord_dims(coord):
             """Return coord dim for mock cubes."""
             if coord in [self.time, self.dst_latitude]:
                 return [0]
-            elif coord in [self.z, self.dst_longitude]:
+            if coord in [self.z, self.dst_longitude]:
                 return [1]
-            elif coord in [self.src_latitude]:
+            if coord in [self.src_latitude]:
                 return [2]
-            elif coord in [self.src_longitude]:
+            if coord in [self.src_longitude]:
                 return [3]
-            elif coord == self.scalar_coord:
+            if coord == self.scalar_coord:
                 return []
-            else:
-                raise iris.exceptions.CoordinateNotFoundError("")
+            raise iris.exceptions.CoordinateNotFoundError("")
 
         def src_coords(*args, **kwargs):
             """Return selected coords for source cube."""
@@ -188,13 +190,12 @@ class Test(tests.Test):
                 self.src_latitude,
                 self.src_longitude,
             ]
-            contains_dimension = kwargs.get("contains_dimension", None)
-            dim_coords = kwargs.get("dim_coords", None)
+            contains_dimension = kwargs.get("contains_dimension")
+            dim_coords = kwargs.get("dim_coords")
             if contains_dimension is not None:
                 if dim_coords:
                     return [dim_coords_list[contains_dimension]]
-                else:
-                    return []
+                return []
             if dim_coords:
                 return dim_coords_list
             return [self.scalar_coord] + dim_coords_list

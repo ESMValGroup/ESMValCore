@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Optional, Pattern, Tuple, Union
+from re import Pattern
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 
@@ -42,7 +42,7 @@ class RecipeList(list):
         return matches
 
 
-def get_all_recipes(subdir: Optional[str] = None) -> list:
+def get_all_recipes(subdir: str | None = None) -> list:
     """Return a list of all available recipes.
 
     Parameters
@@ -63,7 +63,7 @@ def get_all_recipes(subdir: Optional[str] = None) -> list:
     return RecipeList(Recipe(file) for file in files)
 
 
-def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
+def get_recipe(name: os.PathLike | str) -> Recipe:
     """Get a recipe by its name.
 
     The function looks first in the local directory, and second in the
@@ -86,7 +86,7 @@ def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
     FileNotFoundError
         If the name cannot be resolved to a recipe file.
     """
-    filenames: Tuple[Union[str, os.PathLike], ...]
+    filenames: tuple[str | os.PathLike, ...]
 
     locations = Path(), DIAGNOSTICS.recipes
 

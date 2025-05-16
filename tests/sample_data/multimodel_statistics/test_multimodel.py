@@ -4,7 +4,6 @@ import pickle
 import platform
 from itertools import groupby
 from pathlib import Path
-from typing import Optional
 
 import cf_units
 import iris
@@ -54,7 +53,7 @@ def fix_metadata(cubes):
         cube.coord("air_pressure").bounds = None
 
 
-def preprocess_data(cubes, time_slice: Optional[dict] = None):
+def preprocess_data(cubes, time_slice: dict | None = None):
     """Regrid the data to the first cube and optional time-slicing."""
     # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:
@@ -112,7 +111,8 @@ def timeseries_cubes_month(request):
 
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(
-            cache_key, pickle.dumps(cubes).decode("latin1")
+            cache_key,
+            pickle.dumps(cubes).decode("latin1"),
         )
 
     fix_metadata(cubes)
@@ -145,7 +145,8 @@ def timeseries_cubes_day(request):
 
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(
-            cache_key, pickle.dumps(cubes).decode("latin1")
+            cache_key,
+            pickle.dumps(cubes).decode("latin1"),
         )
 
     fix_metadata(cubes)
@@ -166,7 +167,10 @@ def multimodel_test(cubes, statistic, span, **kwargs):
     statistics = [statistic]
 
     result = multi_model_statistics(
-        products=cubes, statistics=statistics, span=span, **kwargs
+        products=cubes,
+        statistics=statistics,
+        span=span,
+        **kwargs,
     )
     assert isinstance(result, dict)
     assert statistic in result
@@ -240,7 +244,7 @@ def test_multimodel_regression_day_365_day(timeseries_cubes_day, span):
 
 
 @pytest.mark.skip(
-    reason="Cannot calculate statistics with single cube in list"
+    reason="Cannot calculate statistics with single cube in list",
 )
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize("span", SPAN_PARAMS)
@@ -253,7 +257,7 @@ def test_multimodel_regression_day_360_day(timeseries_cubes_day, span):
 
 
 @pytest.mark.skip(
-    reason="Cannot calculate statistics with single cube in list"
+    reason="Cannot calculate statistics with single cube in list",
 )
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize("span", SPAN_PARAMS)
@@ -384,7 +388,10 @@ def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     )
     with pytest.raises(ValueError, match=msg):
         multimodel_test(
-            cubes, span=span, statistic="mean", ignore_scalar_coords=True
+            cubes,
+            span=span,
+            statistic="mean",
+            ignore_scalar_coords=True,
         )
 
 
@@ -454,7 +461,10 @@ def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     cubes[1].coord("time").bounds = [0.0, 40.0]
 
     result = multimodel_test(
-        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+        cubes,
+        span=span,
+        statistic="mean",
+        ignore_scalar_coords=True,
     )["mean"]
     assert result.shape == (3, 2)
 
@@ -476,7 +486,10 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
         cube.add_aux_coord(aux_coord, ())
 
     result = multimodel_test(
-        cubes, span=span, statistic="mean", ignore_scalar_coords=True
+        cubes,
+        span=span,
+        statistic="mean",
+        ignore_scalar_coords=True,
     )["mean"]
     assert result.shape == (3, 2)
 

@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import dask.array as da
 import iris
@@ -253,7 +253,9 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     # Construct the latitude coordinate, with bounds.
     if lat_offset:
         latdata = np.linspace(
-            _LAT_MIN + mid_dlat, _LAT_MAX - mid_dlat, int(_LAT_RANGE / dlat)
+            _LAT_MIN + mid_dlat,
+            _LAT_MAX - mid_dlat,
+            int(_LAT_RANGE / dlat),
         )
     else:
         latdata = np.linspace(_LAT_MIN, _LAT_MAX, int(_LAT_RANGE / dlat) + 1)
@@ -261,11 +263,15 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     # Construct the longitude coordinat, with bounds.
     if lon_offset:
         londata = np.linspace(
-            _LON_MIN + mid_dlon, _LON_MAX - mid_dlon, int(_LON_RANGE / dlon)
+            _LON_MIN + mid_dlon,
+            _LON_MAX - mid_dlon,
+            int(_LON_RANGE / dlon),
         )
     else:
         londata = np.linspace(
-            _LON_MIN, _LON_MAX - dlon, int(_LON_RANGE / dlon)
+            _LON_MIN,
+            _LON_MAX - dlon,
+            int(_LON_RANGE / dlon),
         )
 
     cube = _generate_cube_from_dimcoords(latdata=latdata, londata=londata)
@@ -319,18 +325,18 @@ def _spec_to_latlonvals(
     """
     if step_latitude == 0:
         raise ValueError(
-            f"Latitude step cannot be 0, got step_latitude={step_latitude}."
+            f"Latitude step cannot be 0, got step_latitude={step_latitude}.",
         )
 
     if step_longitude == 0:
         raise ValueError(
-            f"Longitude step cannot be 0, got step_longitude={step_longitude}."
+            f"Longitude step cannot be 0, got step_longitude={step_longitude}.",
         )
 
     if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
         raise ValueError(
             f"Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, "
-            f"got start_latitude={start_latitude}:end_latitude={end_latitude}."
+            f"got start_latitude={start_latitude}:end_latitude={end_latitude}.",
         )
 
     def get_points(start, stop, step):
@@ -356,7 +362,9 @@ def _regional_stock_cube(spec: dict):
     latdata, londata = _spec_to_latlonvals(**spec)
 
     cube = _generate_cube_from_dimcoords(
-        latdata=latdata, londata=londata, circular=True
+        latdata=latdata,
+        londata=londata,
+        circular=True,
     )
 
     def add_bounds_from_step(coord, step):
@@ -417,12 +425,12 @@ def extract_location(cube, location, scheme):
         raise ValueError(
             "Location needs to be specified."
             " Examples: 'mount everest', 'romania',"
-            " 'new york, usa'"
+            " 'new york, usa'",
         )
     if scheme is None:
         raise ValueError(
             "Interpolation scheme needs to be specified."
-            " Use either 'linear' or 'nearest'."
+            " Use either 'linear' or 'nearest'.",
         )
     try:
         # Try to use the default SSL context, see
@@ -430,11 +438,12 @@ def extract_location(cube, location, scheme):
         # information.
         ssl_context = ssl.create_default_context()
         geolocator = Nominatim(
-            user_agent="esmvalcore", ssl_context=ssl_context
+            user_agent="esmvalcore",
+            ssl_context=ssl_context,
         )
     except ssl.SSLError:
         logger.warning(
-            "ssl.create_default_context() encountered a problem, not using it."
+            "ssl.create_default_context() encountered a problem, not using it.",
         )
         geolocator = Nominatim(user_agent="esmvalcore")
     geolocation = geolocator.geocode(location)
@@ -448,7 +457,10 @@ def extract_location(cube, location, scheme):
     )
 
     return extract_point(
-        cube, geolocation.latitude, geolocation.longitude, scheme
+        cube,
+        geolocation.latitude,
+        geolocation.longitude,
+        scheme,
     )
 
 
@@ -555,7 +567,9 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, str):
         # Generate a target grid from the provided cell-specification
         target_grid_cube = _global_stock_cube(
-            target_grid, lat_offset, lon_offset
+            target_grid,
+            lat_offset,
+            lon_offset,
         )
         # Align the target grid coordinate system to the source
         # coordinate system.
@@ -628,7 +642,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
         if scheme not in schemes:
             raise ValueError(
                 f"Regridding scheme '{scheme}' not available for {grid_type} "
-                f"data, expected one of: {', '.join(schemes)}"
+                f"data, expected one of: {', '.join(schemes)}",
             )
         loaded_scheme = schemes[scheme]
 
@@ -645,7 +659,7 @@ def _load_generic_scheme(scheme: dict):
         object_ref = scheme.pop("reference")
     except KeyError as key_err:
         raise ValueError(
-            "No reference specified for generic regridding."
+            "No reference specified for generic regridding.",
         ) from key_err
     module_name, separator, scheme_name = object_ref.partition(":")
     try:
@@ -654,7 +668,7 @@ def _load_generic_scheme(scheme: dict):
         raise ValueError(
             f"Could not import specified generic regridding module "
             f"'{module_name}'. Please double check spelling and that the "
-            f"required module is installed."
+            f"required module is installed.",
         ) from import_err
     if separator:
         for attr in scheme_name.split("."):
@@ -938,7 +952,7 @@ def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
 
     tgt_data = da.empty(tgt_shape, chunks=tgt_chunks, dtype=data.dtype)
     tgt_data = tgt_data.rechunk(
-        {i: "auto" for i in range(tgt_data.ndim - tgt_grid_ndims)}
+        dict.fromkeys(range(tgt_data.ndim - tgt_grid_ndims), "auto"),
     )
 
     # Adjust chunks to source array and rechunk
@@ -1084,7 +1098,11 @@ def _create_cube(src_cube, data, src_levels, levels):
 
 
 def _vertical_interpolate(
-    cube, src_levels, levels, interpolation, extrapolation
+    cube,
+    src_levels,
+    levels,
+    interpolation,
+    extrapolation,
 ):
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
@@ -1196,7 +1214,7 @@ def parse_vertical_scheme(scheme):
     if scheme not in VERTICAL_SCHEMES:
         raise ValueError(
             f"Unknown vertical interpolation scheme, got '{scheme}', possible "
-            f"schemes are {VERTICAL_SCHEMES}"
+            f"schemes are {VERTICAL_SCHEMES}",
         )
 
     # This allows us to put level 0. to load the ocean surface.
@@ -1218,9 +1236,9 @@ def extract_levels(
     cube: iris.cube.Cube,
     levels: np.typing.ArrayLike | da.Array,
     scheme: str,
-    coordinate: Optional[str] = None,
+    coordinate: str | None = None,
     rtol: float = 1e-7,
-    atol: Optional[float] = None,
+    atol: float | None = None,
 ):
     """Perform vertical interpolation.
 
@@ -1317,7 +1335,7 @@ def extract_levels(
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
         coord_values = {
-            name: lambda cell: cell.point in set(levels)  # type: ignore
+            name: lambda cell: cell.point in set(levels),  # type: ignore
         }
         constraint = iris.Constraint(coord_values=coord_values)
         result = cube.extract(constraint)
@@ -1361,12 +1379,12 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
-            f"Level definition cmor_table '{cmor_table}' not available"
+            f"Level definition cmor_table '{cmor_table}' not available",
         )
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
         raise ValueError(
-            f"Coordinate {coordinate} not available for {cmor_table}"
+            f"Coordinate {coordinate} not available for {cmor_table}",
         )
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
@@ -1378,7 +1396,7 @@ def get_cmor_levels(cmor_table, coordinate):
 
     raise ValueError(
         f"Coordinate {coordinate} in {cmor_table} does not have requested "
-        f"values"
+        f"values",
     )
 
 

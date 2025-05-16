@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from functools import partial
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 import dask
 import dask.array as da
@@ -42,7 +42,7 @@ BiasType = Literal["absolute", "relative"]
 
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
-    reference: Optional[Cube] = None,
+    reference: Cube | None = None,
     bias_type: BiasType = "absolute",
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
@@ -116,7 +116,7 @@ def bias(
         if all_cubes_given:
             raise ValueError(
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`"
+                "specify a `reference`",
             )
         (reference, ref_product) = _get_ref(products, "reference_for_bias")
     else:
@@ -172,7 +172,7 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
     if len(ref_products) != 1:
         raise ValueError(
             f"Expected exactly 1 dataset with '{ref_tag}: true', found "
-            f"{len(ref_products):d}"
+            f"{len(ref_products):d}",
         )
     ref_product = ref_products[0]
 
@@ -201,7 +201,7 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
     else:
         raise ValueError(
             f"Expected one of ['absolute', 'relative'] for bias_type, got "
-            f"'{bias_type}'"
+            f"'{bias_type}'",
         )
 
     cube.metadata = cube_metadata
@@ -223,7 +223,7 @@ MetricType = Literal[
 def distance_metric(
     products: set[PreprocessorFile] | Iterable[Cube],
     metric: MetricType,
-    reference: Optional[Cube] = None,
+    reference: Cube | None = None,
     coords: Iterable[Coord] | Iterable[str] | None = None,
     keep_reference_dataset: bool = True,
     **kwargs,
@@ -333,10 +333,11 @@ def distance_metric(
         if all_cubes_given:
             raise ValueError(
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`"
+                "specify a `reference`",
             )
         reference, reference_product = _get_ref(
-            products, "reference_for_metric"
+            products,
+            "reference_for_metric",
         )
 
     # If input is an Iterable of Cube objects, calculate distance metric for
@@ -387,13 +388,13 @@ def _calculate_metric(
         raise ValueError(
             f"Expected identical shapes of cube and reference cube for "
             f"distance metric calculation, got {cube.shape} and "
-            f"{reference.shape}, respectively"
+            f"{reference.shape}, respectively",
         )
     try:
         cube + reference  # dummy operation to check if cubes are compatible
     except Exception as exc:
         raise ValueError(
-            "Cannot calculate distance metric between cube and reference cube "
+            "Cannot calculate distance metric between cube and reference cube ",
         ) from exc
 
     # Perform the actual calculation of the distance metric
@@ -405,14 +406,16 @@ def _calculate_metric(
         "weighted_rmse": partial(_calculate_rmse, weighted=True, **kwargs),
         "pearsonr": partial(_calculate_pearsonr, weighted=False, **kwargs),
         "weighted_pearsonr": partial(
-            _calculate_pearsonr, weighted=True, **kwargs
+            _calculate_pearsonr,
+            weighted=True,
+            **kwargs,
         ),
         "emd": partial(_calculate_emd, weighted=False, **kwargs),
         "weighted_emd": partial(_calculate_emd, weighted=True, **kwargs),
     }
     if metric not in metrics_funcs:
         raise ValueError(
-            f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'"
+            f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'",
         )
     (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 
@@ -475,7 +478,11 @@ def _calculate_pearsonr(
     # Data
     weights = get_weights(cube, coords) if weighted else None
     res_cube = iris.analysis.stats.pearsonr(
-        cube, reference, corr_coords=coords, weights=weights, **kwargs
+        cube,
+        reference,
+        corr_coords=coords,
+        weights=weights,
+        **kwargs,
     )
 
     # Metadata

@@ -35,7 +35,7 @@ def get_frequency(cube):
         if cube.long_name not in acceptable_long_names:
             raise ValueError(
                 "Unable to infer frequency of cube "
-                f"with length 1 time dimension: {cube}"
+                f"with length 1 time dimension: {cube}",
             )
         return "fx"
 
@@ -65,7 +65,7 @@ def fix_accumulated_units(cube):
     elif get_frequency(cube) == "daily":
         raise NotImplementedError(
             f"Fixing of accumulated units of cube "
-            f"{cube.summary(shorten=True)} is not implemented for daily data"
+            f"{cube.summary(shorten=True)} is not implemented for daily data",
         )
     return cube
 
@@ -580,7 +580,7 @@ class AllVars(Fix):
             )
             if "GRIB_PARAM" in cube.attributes:
                 cube.attributes["GRIB_PARAM"] = str(
-                    cube.attributes["GRIB_PARAM"]
+                    cube.attributes["GRIB_PARAM"],
                 )
 
             fixed_cubes.append(cube)

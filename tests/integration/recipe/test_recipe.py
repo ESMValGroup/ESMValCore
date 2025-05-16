@@ -367,7 +367,7 @@ def test_simple_recipe(
     script = tmp_path / script_file
     script.write_text("")
     content = dedent(
-        """
+        f"""
         datasets:
           - dataset: bcc-csm1-1
 
@@ -393,9 +393,9 @@ def test_simple_recipe(
                   - dataset: MPI-ESM-LR
             scripts:
               script_name:
-                script: {}
+                script: {script}
                 custom_setting: 1
-        """.format(script)
+        """,
     )
 
     recipe = get_recipe(tmp_path, content, session)
@@ -403,7 +403,7 @@ def test_simple_recipe(
     assert len(recipe.datasets) == 3
     for dataset in recipe.datasets:
         for key in MANDATORY_DATASET_KEYS:
-            assert key in dataset.facets and dataset.facets[key]
+            assert dataset.facets.get(key)
 
     # Check that the correct tasks have been created
     datasets = recipe.datasets
@@ -438,7 +438,7 @@ def test_simple_recipe(
         assert task.ancestors == list(preproc_tasks)
         assert task.script == str(script)
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
-            assert key in task.settings and task.settings[key]
+            assert task.settings.get(key)
         assert task.settings["custom_setting"] == 1
 
     # Check that NCL interface is enabled for NCL scripts.
@@ -450,7 +450,7 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, session):
     script = tmp_path / "diagnostic.py"
     script.write_text("")
     content = dedent(
-        """
+        f"""
         datasets:
           - dataset: bcc-csm1-1
 
@@ -477,9 +477,9 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, session):
                     timerange: '*/P2Y'
             scripts:
               script_name:
-                script: {}
+                script: {script}
                 custom_setting: 1
-        """.format(script)
+        """,
     )
 
     recipe = get_recipe(tmp_path, content, session)
@@ -567,7 +567,9 @@ def test_default_preprocessor(tmp_path, patched_datafinder, session):
 
 
 def test_default_preprocessor_custom_order(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     """Test if default settings are used when ``custom_order`` is ``True``."""
     content = dedent("""
@@ -757,7 +759,11 @@ TEST_ISO_TIMERANGE = [
 
 @pytest.mark.parametrize("input_time,output_time", TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange(
-    tmp_path, patched_datafinder, session, input_time, output_time
+    tmp_path,
+    patched_datafinder,
+    session,
+    input_time,
+    output_time,
 ):
     """Test recipe with timerange tag."""
     content = dedent(f"""
@@ -801,7 +807,11 @@ def test_recipe_iso_timerange(
 
 @pytest.mark.parametrize("input_time,output_time", TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange_as_dataset(
-    tmp_path, patched_datafinder, session, input_time, output_time
+    tmp_path,
+    patched_datafinder,
+    session,
+    input_time,
+    output_time,
 ):
     """Test recipe with timerange tag in the datasets section."""
     content = dedent(f"""
@@ -845,10 +855,13 @@ def test_recipe_iso_timerange_as_dataset(
 def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     levels = [100]
     get_reference_levels = create_autospec(
-        esmvalcore._recipe.recipe.get_reference_levels, return_value=levels
+        esmvalcore._recipe.recipe.get_reference_levels,
+        return_value=levels,
     )
     monkeypatch.setattr(
-        esmvalcore._recipe.recipe, "get_reference_levels", get_reference_levels
+        esmvalcore._recipe.recipe,
+        "get_reference_levels",
+        get_reference_levels,
     )
 
     content = dedent("""
@@ -1033,17 +1046,17 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
     for task in recipe.tasks:
         if task.name == "diagnostic_name/chl_default":
             assert task.order.index("area_statistics") < task.order.index(
-                "multi_model_statistics"
+                "multi_model_statistics",
             )
         elif task.name == "diagnostic_name/chl_custom":
             assert task.order.index("area_statistics") > task.order.index(
-                "multi_model_statistics"
+                "multi_model_statistics",
             )
         elif task.name == "diagnostic_name/chl_empty_custom":
             assert len(task.products) == 1
             product = list(task.products)[0]
             assert set(product.settings.keys()) == set(
-                DEFAULT_PREPROCESSOR_STEPS
+                DEFAULT_PREPROCESSOR_STEPS,
             )
         elif task.name == "diagnostic_name/chl_with_extract_time":
             assert len(task.products) == 1
@@ -1186,7 +1199,9 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
 
 
 def test_derive_with_fx_ohc_fail(
-    tmp_path, patched_failing_datafinder, session
+    tmp_path,
+    patched_failing_datafinder,
+    session,
 ):
     content = dedent("""
         diagnostics:
@@ -1213,7 +1228,10 @@ def test_derive_with_fx_ohc_fail(
 
 
 def test_derive_with_optional_var(
-    tmp_path, patched_datafinder, patched_tas_derivation, session
+    tmp_path,
+    patched_datafinder,
+    patched_tas_derivation,
+    session,
 ):
     content = dedent("""
         diagnostics:
@@ -1263,7 +1281,10 @@ def test_derive_with_optional_var(
 
 
 def test_derive_with_optional_var_nodata(
-    tmp_path, patched_failing_datafinder, patched_tas_derivation, session
+    tmp_path,
+    patched_failing_datafinder,
+    patched_tas_derivation,
+    session,
 ):
     content = dedent("""
         diagnostics:
@@ -1338,7 +1359,10 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
 
 @pytest.mark.parametrize("force_derivation", [True, False])
 def test_derive_timerange_wildcard(
-    tmp_path, patched_datafinder, session, force_derivation
+    tmp_path,
+    patched_datafinder,
+    session,
+    force_derivation,
 ):
     content = dedent(f"""
         diagnostics:
@@ -1437,7 +1461,7 @@ def test_diagnostic_task_provenance(
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent(
-        """
+        f"""
         diagnostics:
           diagnostic_name:
             themes:
@@ -1460,7 +1484,7 @@ def test_diagnostic_task_provenance(
               script_name2:
                 script: {script}
                 ancestors: [script_name]
-        """.format(script=script)
+        """,
     )
 
     recipe = get_recipe(tmp_path, content, session)
@@ -1513,7 +1537,9 @@ def test_diagnostic_task_provenance(
 
     # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
-        iter(p for p in diagnostic_task.products if p.filename.endswith(".nc"))
+        iter(
+            p for p in diagnostic_task.products if p.filename.endswith(".nc")
+        ),
     )
     cube = iris.load_cube(product.filename)
     assert cube.attributes["software"].startswith("Created with ESMValTool v")
@@ -1568,13 +1594,12 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                     assert dataset["alias"] == "CMIP5_FGOALS-g3_s1960"
                 else:
                     assert dataset["alias"] == "CMIP5_FGOALS-g3_s1961"
+            elif dataset["ensemble"] == "r1i1p1":
+                assert dataset["alias"] == "CMIP5_EC-EARTH_r1i1p1"
+            elif dataset["ensemble"] == "r2i1p1":
+                assert dataset["alias"] == "CMIP5_EC-EARTH_r2i1p1"
             else:
-                if dataset["ensemble"] == "r1i1p1":
-                    assert dataset["alias"] == "CMIP5_EC-EARTH_r1i1p1"
-                elif dataset["ensemble"] == "r2i1p1":
-                    assert dataset["alias"] == "CMIP5_EC-EARTH_r2i1p1"
-                else:
-                    assert dataset["alias"] == "my_alias"
+                assert dataset["alias"] == "my_alias"
         elif dataset["project"] == "CMIP6":
             if dataset["dataset"] == "GF3":
                 assert dataset["alias"] == "CMIP6_CMP_GF3"
@@ -1589,11 +1614,10 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                 assert dataset["alias"] == "CORDEX_ICHEC-EC-EARTH"
             else:
                 assert dataset["alias"] == "CORDEX_MIROC-MIROC5"
+        elif dataset["version"] == 1:
+            assert dataset["alias"] == "OBS_1"
         else:
-            if dataset["version"] == 1:
-                assert dataset["alias"] == "OBS_1"
-            else:
-                assert dataset["alias"] == "OBS_2"
+            assert dataset["alias"] == "OBS_2"
 
 
 def test_concatenation(tmp_path, patched_datafinder, session):
@@ -1696,10 +1720,14 @@ def test_extract_shape(tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize(
-    "invalid_arg", ["shapefile", "method", "crop", "decomposed"]
+    "invalid_arg",
+    ["shapefile", "method", "crop", "decomposed"],
 )
 def test_extract_shape_raises(
-    tmp_path, patched_datafinder, session, invalid_arg
+    tmp_path,
+    patched_datafinder,
+    session,
+    invalid_arg,
 ):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -1803,7 +1831,9 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, session):
 
     products = task.products
     product_out = _test_output_product_consistency(
-        products, preprocessor, statistics
+        products,
+        preprocessor,
+        statistics,
     )
 
     assert len(product_out) == len(datasets) * len(statistics)
@@ -1850,7 +1880,9 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, session):
 
     products = task.products
     product_out = _test_output_product_consistency(
-        products, preprocessor, statistics
+        products,
+        preprocessor,
+        statistics,
     )
 
     assert len(product_out) == len(statistics)
@@ -1901,7 +1933,9 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
 
     products = task.products
     product_out = _test_output_product_consistency(
-        products, preprocessor, statistics
+        products,
+        preprocessor,
+        statistics,
     )
 
     assert len(product_out) == len(statistics)
@@ -1974,7 +2008,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
 
     assert len(ens_products) == len(datasets) * len(ens_statistics)
     assert len(mm_products) == len(mm_statistics) * len(ens_statistics) * len(
-        groupby
+        groupby,
     )
 
 
@@ -2028,7 +2062,9 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
 
 
 def test_weighting_landsea_fraction_no_fx(
-    tmp_path, patched_failing_datafinder, session
+    tmp_path,
+    patched_failing_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -2060,7 +2096,9 @@ def test_weighting_landsea_fraction_no_fx(
 
 
 def test_weighting_landsea_fraction_exclude(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -2109,7 +2147,9 @@ def test_weighting_landsea_fraction_exclude(
 
 
 def test_weighting_landsea_fraction_exclude_fail(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -2393,7 +2433,9 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     session["search_esgf"] = "when_missing"
 
     mocker.patch.object(
-        esmvalcore._recipe.recipe.esgf, "download", create_autospec=True
+        esmvalcore._recipe.recipe.esgf,
+        "download",
+        create_autospec=True,
     )
 
     recipe = get_recipe(tmp_path, content, session)
@@ -2404,10 +2446,11 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.run()
 
     esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
-        set(), session["download_dir"]
+        set(),
+        session["download_dir"],
     )
     recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=session["max_parallel_tasks"]
+        max_parallel_tasks=session["max_parallel_tasks"],
     )
     recipe.write_filled_recipe.assert_called_once()
     recipe.write_html_summary.assert_called_once()
@@ -2437,7 +2480,9 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
 
 @pytest.mark.parametrize("force_derivation", [True, False])
 def test_representative_dataset_derived_var(
-    patched_datafinder, session, force_derivation
+    patched_datafinder,
+    session,
+    force_derivation,
 ):
     """Test ``_representative_dataset`` with derived variable."""
     variable = {
@@ -2594,7 +2639,11 @@ TEST_DIAG_SELECTION = [
 
 @pytest.mark.parametrize("diags_to_run,tasks_run", TEST_DIAG_SELECTION)
 def test_diag_selection(
-    tmp_path, patched_datafinder, session, diags_to_run, tasks_run
+    tmp_path,
+    patched_datafinder,
+    session,
+    diags_to_run,
+    tasks_run,
 ):
     """Test selection of individual diagnostics via --diagnostics option."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
@@ -2652,7 +2701,8 @@ def test_diag_selection(
 
 
 @pytest.mark.parametrize(
-    "preproc", ["multi_model_statistics", "ensemble_statistics"]
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
     content = dedent(f"""
@@ -2683,7 +2733,8 @@ def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize(
-    "preproc", ["multi_model_statistics", "ensemble_statistics"]
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
     content = dedent(f"""
@@ -2711,10 +2762,14 @@ def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize(
-    "preproc", ["multi_model_statistics", "ensemble_statistics"]
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_stats(
-    preproc, tmp_path, patched_datafinder, session
+    preproc,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2758,10 +2813,15 @@ def test_mm_stats_invalid_stats(
     ],
 )
 @pytest.mark.parametrize(
-    "preproc", ["multi_model_statistics", "ensemble_statistics"]
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_stat_kwargs(
-    preproc, statistics, tmp_path, patched_datafinder, session
+    preproc,
+    statistics,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     statistics["operator"] = "wpercentile"
     content = dedent(f"""
@@ -2808,7 +2868,10 @@ def test_mm_stats_invalid_stat_kwargs(
     ],
 )
 def test_statistics_missing_operator_no_default_fail(
-    preproc, tmp_path, patched_datafinder, session
+    preproc,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2848,7 +2911,11 @@ def test_statistics_missing_operator_no_default_fail(
     ],
 )
 def test_statistics_missing_operator_with_default(
-    preproc, option, tmp_path, patched_datafinder, session
+    preproc,
+    option,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2893,7 +2960,11 @@ def test_statistics_missing_operator_with_default(
     ],
 )
 def test_statistics_invalid_kwargs(
-    preproc, preproc_kwargs, tmp_path, patched_datafinder, session
+    preproc,
+    preproc_kwargs,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     preproc_kwargs["operator"] = "wpercentile"
     content = dedent(f"""
@@ -3127,7 +3198,9 @@ def test_invalid_bias_type(tmp_path, patched_datafinder, session):
 
 
 def test_invalid_builtin_regridding_scheme(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3155,7 +3228,9 @@ def test_invalid_builtin_regridding_scheme(
 
 
 def test_generic_regridding_scheme_no_ref(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3187,7 +3262,9 @@ def test_generic_regridding_scheme_no_ref(
 
 
 def test_invalid_generic_regridding_scheme(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3220,7 +3297,9 @@ def test_invalid_generic_regridding_scheme(
 
 
 def test_deprecated_linear_extrapolate_scheme(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3244,7 +3323,9 @@ def test_deprecated_linear_extrapolate_scheme(
 
 
 def test_deprecated_unstructured_nearest_scheme(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3362,7 +3443,9 @@ def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
 
 
 def test_distance_metrics_two_refs_with_mmm(
-    tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3493,7 +3576,9 @@ def test_automatic_regrid_era5_nc(tmp_path, patched_datafinder, session):
 
 
 def test_automatic_regrid_era5_grib(
-    tmp_path, patched_datafinder_grib, session
+    tmp_path,
+    patched_datafinder_grib,
+    session,
 ):
     content = dedent("""
         diagnostics:
@@ -3522,7 +3607,9 @@ def test_automatic_regrid_era5_grib(
 
 
 def test_automatic_no_regrid_era5_grib(
-    tmp_path, patched_datafinder_grib, session
+    tmp_path,
+    patched_datafinder_grib,
+    session,
 ):
     content = dedent("""
         diagnostics:
@@ -3547,7 +3634,9 @@ def test_automatic_no_regrid_era5_grib(
 
 
 def test_automatic_already_regrid_era5_grib(
-    tmp_path, patched_datafinder_grib, session
+    tmp_path,
+    patched_datafinder_grib,
+    session,
 ):
     content = dedent("""
         preprocessors:

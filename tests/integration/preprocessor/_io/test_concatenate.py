@@ -18,7 +18,10 @@ def get_hybrid_pressure_cube():
     """Return cube with hybrid pressure coordinate."""
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name="ap", units="Pa")
     b_coord = AuxCoord(
-        [0.0], bounds=[[-0.5, 1.5]], var_name="b", units=Unit("1")
+        [0.0],
+        bounds=[[-0.5, 1.5]],
+        var_name="b",
+        units=Unit("1"),
     )
     ps_coord = AuxCoord([[[100000]]], var_name="ps", units="Pa")
     x_coord = AuxCoord(
@@ -92,7 +95,8 @@ def test_concatenation_with_aux_factory(real_hybrid_pressure_cube_list):
 
 
 @pytest.mark.parametrize(
-    "check_level", [CheckLevels.RELAXED, CheckLevels.IGNORE]
+    "check_level",
+    [CheckLevels.RELAXED, CheckLevels.IGNORE],
 )
 def test_relax_concatenation(check_level, caplog):
     caplog.set_level("DEBUG")
@@ -128,14 +132,15 @@ class TestConcatenate(unittest.TestCase):
                 data,
                 var_name="sample",
                 dim_coords_and_dims=((self._model_coord.copy(coord), 0),),
-            )
+            ),
         )
 
     def test_concatenate(self):
         """Test concatenation of two cubes."""
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
-            concatenated.coord("time").points, np.array([1, 2, 3, 4, 5, 6])
+            concatenated.coord("time").points,
+            np.array([1, 2, 3, 4, 5, 6]),
         )
 
     def test_concatenate_empty_cubes(self):
@@ -148,7 +153,8 @@ class TestConcatenate(unittest.TestCase):
         """Test concatenation of a single cube."""
         concatenated = _io.concatenate([self.raw_cubes[0]])
         np.testing.assert_array_equal(
-            concatenated.coord("time").points, np.array([1, 2])
+            concatenated.coord("time").points,
+            np.array([1, 2]),
         )
 
     def test_concatenate_with_overlap(
@@ -162,7 +168,8 @@ class TestConcatenate(unittest.TestCase):
             np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
         )
         np.testing.assert_array_equal(
-            concatenated.data, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 7.5])
+            concatenated.data,
+            np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 7.5]),
         )
 
     def test_concatenate_with_overlap_2(self):
@@ -173,7 +180,7 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord("time").points,
             np.array(
-                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0],
             ),
         )
 
@@ -188,7 +195,20 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord("time").points,
             np.array(
-                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0]
+                [
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                    5.0,
+                    6.0,
+                    7.0,
+                    8.0,
+                    9.0,
+                    10.0,
+                    11.0,
+                    12.0,
+                ],
             ),
         )
 
@@ -209,16 +229,18 @@ class TestConcatenate(unittest.TestCase):
                 [33.0, 55.0],
                 var_name="sample",
                 dim_coords_and_dims=((time_coord, 0),),
-            )
+            ),
         )
         concatenated = _io.concatenate(raw_cubes)
         np.testing.assert_array_equal(
-            concatenated.coord("time").points, np.array([1.0, 7.0])
+            concatenated.coord("time").points,
+            np.array([1.0, 7.0]),
         )
         raw_cubes.reverse()
         concatenated = _io.concatenate(raw_cubes)
         np.testing.assert_array_equal(
-            concatenated.coord("time").points, np.array([1.0, 7.0])
+            concatenated.coord("time").points,
+            np.array([1.0, 7.0]),
         )
 
     def test_concatenate_with_iris_exception(self):
@@ -343,7 +365,7 @@ class TestConcatenate(unittest.TestCase):
         ssp585_2 = ssp585_1.copy()
         ssp585_2.coord("time").points = np.arange(5, 7)
         result = _io.concatenate(
-            [historical_1, historical_2, historical_3, ssp585_1, ssp585_2]
+            [historical_1, historical_2, historical_3, ssp585_1, ssp585_2],
         )
         assert_array_equal(result.coord("time").points, np.arange(7))
         assert_array_equal(result.data, np.array([0, 0, 0, 1, 1, 1, 1]))
@@ -358,7 +380,8 @@ class TestConcatenate(unittest.TestCase):
             }
         concatenated = _io.concatenate(cubes)
         np.testing.assert_array_equal(
-            concatenated.coord("time").points, np.array([1, 2, 3, 4, 5, 6])
+            concatenated.coord("time").points,
+            np.array([1, 2, 3, 4, 5, 6]),
         )
         self.assertEqual(
             concatenated.attributes,
@@ -372,7 +395,8 @@ class TestConcatenate(unittest.TestCase):
             var_name="time",
             standard_name="time",
             units=Unit(
-                "days since 1950-01-01", calendar="proleptic_gregorian"
+                "days since 1950-01-01",
+                calendar="proleptic_gregorian",
             ),
         )
         self.raw_cubes.append(
@@ -380,7 +404,7 @@ class TestConcatenate(unittest.TestCase):
                 [33.0, 55.0],
                 var_name="sample",
                 dim_coords_and_dims=((time_coord, 0),),
-            )
+            ),
         )
         concatenated = _io.concatenate(self.raw_cubes)
         assert concatenated.coord("time").units.calendar == "standard"
@@ -398,7 +422,7 @@ class TestConcatenate(unittest.TestCase):
                 [33.0, 55.0],
                 var_name="sample",
                 dim_coords_and_dims=((time_coord, 0),),
-            )
+            ),
         )
         with self.assertRaises(TypeError):
             _io.concatenate(self.raw_cubes)

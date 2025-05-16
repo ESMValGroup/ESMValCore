@@ -29,8 +29,8 @@ AIR_PRESSURE_POINTS = np.array(
             [[1.0, 1.0], [1.0, 1.0]],
             [[2.0, 3.0], [4.0, 5.0]],
             [[5.0, 8.0], [11.0, 14.0]],
-        ]
-    ]
+        ],
+    ],
 )
 AIR_PRESSURE_BOUNDS = np.array(
     [
@@ -38,8 +38,8 @@ AIR_PRESSURE_BOUNDS = np.array(
             [[[0.0, 1.5], [-1.0, 2.0]], [[-2.0, 2.5], [-3.0, 3.0]]],
             [[[1.5, 3.0], [2.0, 5.0]], [[2.5, 7.0], [3.0, 9.0]]],
             [[[3.0, 6.0], [5.0, 11.0]], [[7.0, 16.0], [9.0, 21.0]]],
-        ]
-    ]
+        ],
+    ],
 )
 
 
@@ -68,7 +68,7 @@ def test_cl_fix_metadata(test_data_path):
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer"
+        "cloud_area_fraction_in_atmosphere_layer",
     )
     fixed_air_pressure_coord = fixed_cl_cube.coord("air_pressure")
     assert fixed_air_pressure_coord.points is not None
@@ -76,17 +76,20 @@ def test_cl_fix_metadata(test_data_path):
     assert fixed_air_pressure_coord.points.shape == (1, 3, 2, 2)
     assert fixed_air_pressure_coord.bounds.shape == (1, 3, 2, 2, 2)
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.points, AIR_PRESSURE_POINTS
+        fixed_air_pressure_coord.points,
+        AIR_PRESSURE_POINTS,
     )
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.bounds, AIR_PRESSURE_BOUNDS
+        fixed_air_pressure_coord.bounds,
+        AIR_PRESSURE_BOUNDS,
     )
     lat_coord = fixed_cl_cube.coord("latitude")
     lon_coord = fixed_cl_cube.coord("longitude")
     assert lat_coord.bounds is not None
     assert lon_coord.bounds is not None
     np.testing.assert_allclose(
-        lat_coord.bounds, [[-45.0, -15.0], [-15.0, 15.0]]
+        lat_coord.bounds,
+        [[-45.0, -15.0], [-15.0, 15.0]],
     )
     np.testing.assert_allclose(lon_coord.bounds, [[15.0, 45.0], [45.0, 75.0]])
 
@@ -107,7 +110,9 @@ def clcalipso_cubes():
         dim_coords_and_dims=[(alt_40_coord.copy(), 0)],
     )
     x_cube = iris.cube.Cube(
-        [0.0], var_name="x", dim_coords_and_dims=[(alt_40_coord.copy(), 0)]
+        [0.0],
+        var_name="x",
+        dim_coords_and_dims=[(alt_40_coord.copy(), 0)],
     )
     return iris.cube.CubeList([cube, x_cube])
 

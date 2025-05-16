@@ -27,14 +27,16 @@ def test_taskset_get_dask_config(
     expected_workers: int | None,
 ) -> None:
     mocker.patch.object(
-        _task, "available_cpu_count", return_value=available_cpu_cores
+        _task,
+        "available_cpu_count",
+        return_value=available_cpu_cores,
     )
 
     tasks = _task.TaskSet(
         {
             PreprocessingTask([], name=f"test{i}")
             for i in range(n_preproc_tasks)
-        }
+        },
     )
 
     with dask.config.set({"num_workers": None, "scheduler": scheduler}):

@@ -33,7 +33,8 @@ class AllVars(Fix):
 
         """
         if "_" + self.extra_facets.get(
-            "group", "non-sense"
+            "group",
+            "non-sense",
         ) + ".nc" not in str(filepath):
             # No need to filter the file
             logger.debug("Not filtering for %s", filepath)
@@ -51,7 +52,9 @@ class AllVars(Fix):
         varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
         alt_filepath = str(filepath).replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(
-            output_dir, alt_filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            alt_filepath,
+            add_unique_suffix=add_unique_suffix,
         )
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, filepath)

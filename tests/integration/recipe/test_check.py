@@ -3,7 +3,7 @@
 import os.path
 import subprocess
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 from unittest import mock
 
 import pyesgf.search.results
@@ -127,7 +127,8 @@ DATA_AVAILABILITY_DATA = [
         [FILES[1]] + [FILES[3]],
         dict(VAR),
         ERR_RANGE.format(
-            "2020, 2022, 2024-2025", "\n".join([FILES[1]] + [FILES[3]])
+            "2020, 2022, 2024-2025",
+            "\n".join([FILES[1]] + [FILES[3]]),
         ),
     ),
 ]
@@ -149,7 +150,7 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert dataset.facets == var
 
 
-DATA_AVAILABILITY_NO_DATA: List[Any] = [
+DATA_AVAILABILITY_NO_DATA: list[Any] = [
     ([], [], None),
     ([""], ["a*.nc"], (ERR_ALL, ": a*.nc")),
     ([""], ["a*.nc", "b*.nc"], (ERR_ALL, "\na*.nc\nb*.nc")),
@@ -435,7 +436,7 @@ def test_invalid_multi_model_groupy():
 def test_invalid_multi_model_keep_input():
     with pytest.raises(RecipeError) as rec_err:
         check._verify_keep_input_datasets(
-            INVALID_MM_SETTINGS["keep_input_datasets"]
+            INVALID_MM_SETTINGS["keep_input_datasets"],
         )
     assert str(rec_err.value) == (
         "Invalid value encountered for `keep_input_datasets`."
@@ -446,7 +447,7 @@ def test_invalid_multi_model_keep_input():
 def test_invalid_multi_model_ignore_scalar_coords():
     with pytest.raises(RecipeError) as rec_err:
         check._verify_ignore_scalar_coords(
-            INVALID_MM_SETTINGS["ignore_scalar_coords"]
+            INVALID_MM_SETTINGS["ignore_scalar_coords"],
         )
     assert str(rec_err.value) == (
         "Invalid value encountered for `ignore_scalar_coords`."

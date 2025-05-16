@@ -122,12 +122,14 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
         except iris.exceptions.AncillaryVariableNotFoundError:
             logger.debug(
                 "Ancillary variables land/sea area fraction not found in "
-                "cube. Check fx_file availability."
+                "cube. Check fx_file availability.",
             )
 
     if ancillary_var:
         landsea_mask = _get_fx_mask(
-            ancillary_var.core_data(), mask_out, ancillary_var.var_name
+            ancillary_var.core_data(),
+            mask_out,
+            ancillary_var.var_name,
         )
         cube.data = apply_mask(
             landsea_mask,
@@ -135,18 +137,17 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
             cube.ancillary_variable_dims(ancillary_var),
         )
         logger.debug("Applying land-sea mask: %s", ancillary_var.var_name)
+    elif cube.coord("longitude").points.ndim < 2:
+        cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
+        logger.debug(
+            "Applying land-sea mask from Natural Earth shapefile: \n%s",
+            shapefiles[mask_out],
+        )
     else:
-        if cube.coord("longitude").points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
-            logger.debug(
-                "Applying land-sea mask from Natural Earth shapefile: \n%s",
-                shapefiles[mask_out],
-            )
-        else:
-            raise ValueError(
-                "Use of shapefiles with irregular grids not yet implemented, "
-                "land-sea mask not applied."
-            )
+        raise ValueError(
+            "Use of shapefiles with irregular grids not yet implemented, "
+            "land-sea mask not applied.",
+        )
 
     return cube
 
@@ -190,11 +191,13 @@ def mask_landseaice(cube: Cube, mask_out: Literal["landsea", "ice"]) -> Cube:
     except iris.exceptions.AncillaryVariableNotFoundError:
         logger.debug(
             "Ancillary variable land ice area fraction not found in cube. "
-            "Check fx_file availability."
+            "Check fx_file availability.",
         )
     if ancillary_var:
         landseaice_mask = _get_fx_mask(
-            ancillary_var.core_data(), mask_out, ancillary_var.var_name
+            ancillary_var.core_data(),
+            mask_out,
+            ancillary_var.var_name,
         )
         cube.data = apply_mask(
             landseaice_mask,
@@ -273,7 +276,7 @@ def _get_geometries_from_shp(shapefilename):
     # Index 0 grabs the lowest resolution mask (no zoom)
     geometries = list(reader.geometries())
     if not geometries:
-        msg = "Could not find any geometry in {}".format(shapefilename)
+        msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
 
     # TODO might need this for a later, more enhanced, version
@@ -433,7 +436,8 @@ def mask_above_threshold(cube, threshold):
         thresholded cube.
     """
     cube.data = da.ma.masked_where(
-        cube.core_data() > threshold, cube.core_data()
+        cube.core_data() > threshold,
+        cube.core_data(),
     )
     return cube
 
@@ -457,7 +461,8 @@ def mask_below_threshold(cube, threshold):
         thresholded cube.
     """
     cube.data = da.ma.masked_where(
-        cube.core_data() < threshold, cube.core_data()
+        cube.core_data() < threshold,
+        cube.core_data(),
     )
     return cube
 
@@ -515,7 +520,7 @@ def _get_shape(cubes):
     shapes = {cube.shape for cube in cubes}
     if len(shapes) > 1:
         raise ValueError(
-            f"Expected cubes with identical shapes, got shapes {shapes}"
+            f"Expected cubes with identical shapes, got shapes {shapes}",
         )
     return list(shapes)[0]
 
@@ -600,7 +605,7 @@ def mask_multimodel(products):
     raise TypeError(
         f"Input type for mask_multimodel not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-        f"got {product_types}"
+        f"got {product_types}",
     )
 
 
@@ -668,7 +673,7 @@ def mask_fillvalues(
                 valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
                 raise NotImplementedError(
-                    f"Unable to handle {mask.ndim} dimensional data"
+                    f"Unable to handle {mask.ndim} dimensional data",
                 )
             combined_mask = array_module.where(
                 valid,
@@ -710,7 +715,7 @@ def _get_fillvalues_mask(
     if threshold_fraction < 0 or threshold_fraction > 1.0:
         raise ValueError(
             f"Fraction of missing values {threshold_fraction} should be "
-            f"between 0 and 1.0"
+            f"between 0 and 1.0",
         )
     nr_time_points = len(cube.coord("time").points)
     if time_window > nr_time_points:

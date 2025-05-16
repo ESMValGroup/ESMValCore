@@ -25,10 +25,14 @@ def assert_masked_array_equal(arr_1, arr_2):
 def get_cube(times=None, time_units=None):
     """Create cube."""
     lats = iris.coords.DimCoord(
-        [0.0, 20.0], standard_name="latitude", units="m"
+        [0.0, 20.0],
+        standard_name="latitude",
+        units="m",
     )
     lons = iris.coords.DimCoord(
-        [500.0, 600.0], standard_name="longitude", units="m"
+        [500.0, 600.0],
+        standard_name="longitude",
+        units="m",
     )
     aux_coord = iris.coords.AuxCoord([0.0, 0.0], var_name="aux")
     if times is None:
@@ -99,7 +103,8 @@ def test_linear_trend_1_time(cube_1_time):
     cube_trend = linear_trend(cube_1_time)
     assert cube_trend.shape == (2, 2)
     assert_masked_array_equal(
-        cube_trend.data, np.ma.masked_equal([[0.0, 0.0], [0.0, 0.0]], 0.0)
+        cube_trend.data,
+        np.ma.masked_equal([[0.0, 0.0], [0.0, 0.0]], 0.0),
     )
     assert not cube_trend.coords("time", dim_coords=True)
     assert cube_trend.coords("latitude", dim_coords=True)
@@ -272,7 +277,8 @@ def test_linear_trend_stderr_1_time(cube_1_time):
     cube_stderr = linear_trend_stderr(cube_1_time)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(
-        cube_stderr.data, np.ma.masked_equal([[0.0, 0.0], [0.0, 0.0]], 0.0)
+        cube_stderr.data,
+        np.ma.masked_equal([[0.0, 0.0], [0.0, 0.0]], 0.0),
     )
     assert not cube_stderr.coords("time", dim_coords=True)
     assert cube_stderr.coords("latitude", dim_coords=True)
@@ -290,7 +296,8 @@ def test_linear_trend_stderr_3_time(cube_3_time):
     cube_stderr = linear_trend_stderr(cube_3_time)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(
-        cube_stderr.data, [[0.28867513459482086, 0.0], [0.0, 0.0]]
+        cube_stderr.data,
+        [[0.28867513459482086, 0.0], [0.0, 0.0]],
     )
     assert not cube_stderr.coords("time", dim_coords=True)
     assert cube_stderr.coords("latitude", dim_coords=True)
@@ -309,13 +316,14 @@ def test_linear_trend_stderr_3_time_lazy(cube_3_time):
             [[1.0, 1.0], [2.0, 3.0]],
             [[4.0, 5.0], [6.0, 7.0]],
             [[8.0, 9.0], [10.0, 11.0]],
-        ]
+        ],
     )
     assert cube_3_time.has_lazy_data()
     cube_stderr = linear_trend_stderr(cube_3_time)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(
-        cube_stderr.data, [[0.28867513459482086, 0.0], [0.0, 0.0]]
+        cube_stderr.data,
+        [[0.28867513459482086, 0.0], [0.0, 0.0]],
     )
     assert not cube_stderr.coords("time", dim_coords=True)
     assert cube_stderr.coords("latitude", dim_coords=True)
@@ -391,7 +399,8 @@ def test_linear_trend_stderr_3_time_years(cube_3_time_years):
     cube_stderr = linear_trend_stderr(cube_3_time_years)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(
-        cube_stderr.data, [[0.0, 0.0], [0.0, 3.464101615137754]]
+        cube_stderr.data,
+        [[0.0, 0.0], [0.0, 3.464101615137754]],
     )
     assert cube_stderr.units == "kg yr-1"
     assert (

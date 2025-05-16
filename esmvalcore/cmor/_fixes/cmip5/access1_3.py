@@ -38,7 +38,7 @@ class AllVars(Fix):
                         Unit(
                             "days since 1850-01-01",
                             calendar="proleptic_gregorian",
-                        )
+                        ),
                     )
                     time.units = Unit(time.units.name, "gregorian")
         return cubes

@@ -44,7 +44,7 @@ def _deep_update(dictionary, update):
     return dictionary
 
 
-@lru_cache()
+@lru_cache
 def _load_extra_facets(project, extra_facets_dir):
     config = {}
     config_paths = [
@@ -92,7 +92,8 @@ def get_extra_facets(dataset, extra_facets_dir):
     for dataset_ in pattern_filter(project_details, dataset["dataset"]):
         for mip_ in pattern_filter(project_details[dataset_], dataset["mip"]):
             for var in pattern_filter(
-                project_details[dataset_][mip_], dataset["short_name"]
+                project_details[dataset_][mip_],
+                dataset["short_name"],
             ):
                 facets = project_details[dataset_][mip_][var]
                 extra_facets.update(facets)
@@ -102,7 +103,7 @@ def get_extra_facets(dataset, extra_facets_dir):
 
 def load_config_developer(cfg_file):
     """Read the developer's configuration file."""
-    with open(cfg_file, "r", encoding="utf-8") as file:
+    with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
 
     if "obs4mips" in cfg:

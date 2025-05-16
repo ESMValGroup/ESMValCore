@@ -22,7 +22,7 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes: CubeList) -> Cube:
         """Compute net moisture flux into atmosphere."""
         evspsbl_cube = cubes.extract_cube(
-            Constraint(name="water_evapotranspiration_flux")
+            Constraint(name="water_evapotranspiration_flux"),
         )
         pr_cube = cubes.extract_cube(Constraint(name="precipitation_flux"))
 

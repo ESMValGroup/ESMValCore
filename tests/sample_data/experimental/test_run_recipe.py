@@ -29,8 +29,8 @@ AUTHOR_TAGS = {
             "name": "Doe, John",
             "institute": "Testing",
             "orcid": "https://orcid.org/0000-0000-0000-0000",
-        }
-    }
+        },
+    },
 }
 
 
@@ -59,7 +59,13 @@ def recipe():
 @pytest.mark.parametrize("ssh", (True, False))
 @pytest.mark.parametrize("task", (None, "example/ta"))
 def test_run_recipe(
-    monkeypatch, cfg_default, task, ssh, recipe, tmp_path, caplog
+    monkeypatch,
+    cfg_default,
+    task,
+    ssh,
+    recipe,
+    tmp_path,
+    caplog,
 ):
     """Test running a basic recipe using sample data.
 

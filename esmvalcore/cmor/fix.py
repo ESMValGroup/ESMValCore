@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from iris.cube import Cube, CubeList
 
@@ -31,8 +31,8 @@ def fix_file(
     mip: str,
     output_dir: Path,
     add_unique_suffix: bool = False,
-    session: Optional[Session] = None,
-    frequency: Optional[str] = None,
+    session: Session | None = None,
+    frequency: str | None = None,
     **extra_facets,
 ) -> str | Path:
     """Fix files before ESMValTool can load them.
@@ -81,7 +81,7 @@ def fix_file(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     for fix in Fix.get_fixes(
@@ -94,7 +94,9 @@ def fix_file(
         frequency=frequency,
     ):
         file = fix.fix_file(
-            file, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
     return file
 
@@ -105,8 +107,8 @@ def fix_metadata(
     project: str,
     dataset: str,
     mip: str,
-    frequency: Optional[str] = None,
-    session: Optional[Session] = None,
+    frequency: str | None = None,
+    session: Session | None = None,
     **extra_facets,
 ) -> CubeList:
     """Fix cube metadata if fixes are required.
@@ -149,7 +151,7 @@ def fix_metadata(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     fixes = Fix.get_fixes(
@@ -190,8 +192,8 @@ def fix_data(
     project: str,
     dataset: str,
     mip: str,
-    frequency: Optional[str] = None,
-    session: Optional[Session] = None,
+    frequency: str | None = None,
+    session: Session | None = None,
     **extra_facets,
 ) -> Cube:
     """Fix cube data if fixes are required.
@@ -236,7 +238,7 @@ def fix_data(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     for fix in Fix.get_fixes(

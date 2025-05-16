@@ -42,7 +42,8 @@ class Cl(ClFixHybridPressureCoord):
             bounds_cube = get_bounds_cube(cubes, coord_name)
             bounds = bounds_cube.core_data().reshape(-1, 2)
             new_bounds_cube = iris.cube.Cube(
-                bounds, **bounds_cube.metadata._asdict()
+                bounds,
+                **bounds_cube.metadata._asdict(),
             )
             cubes.remove(bounds_cube)
             cubes.append(new_bounds_cube)

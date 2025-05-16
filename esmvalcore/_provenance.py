@@ -30,7 +30,8 @@ def get_esmvaltool_provenance():
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
     activity = provenance.activity(
-        namespace + ":esmvaltool==" + __version__, other_attributes=attributes
+        namespace + ":esmvaltool==" + __version__,
+        other_attributes=attributes,
     )
 
     return activity
@@ -73,7 +74,7 @@ def get_recipe_provenance(documentation, filename):
         create_namespace(provenance, namespace)
 
     entity = provenance.entity(
-        "recipe:{}".format(filename),
+        f"recipe:{filename}",
         {
             "attribute:description": documentation.get("description", ""),
             "attribute:references": str(documentation.get("references", [])),
@@ -109,7 +110,11 @@ class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(
-        self, filename, attributes=None, ancestors=None, prov_filename=None
+        self,
+        filename,
+        attributes=None,
+        ancestors=None,
+        prov_filename=None,
     ):
         """Create an instance of a file with provenance tracking.
 
@@ -141,7 +146,7 @@ class TrackedFile:
 
     def __str__(self):
         """Return summary string."""
-        return "{}: {}".format(self.__class__.__name__, self.filename)
+        return f"{self.__class__.__name__}: {self.filename}"
 
     def __repr__(self):
         """Return representation string (e.g., used by ``pformat``)."""
@@ -162,7 +167,7 @@ class TrackedFile:
     def copy_provenance(self):
         """Create a copy with identical provenance information."""
         if self.provenance is None:
-            raise ValueError("Provenance of {} not initialized".format(self))
+            raise ValueError(f"Provenance of {self} not initialized")
         new = TrackedFile(self.filename, self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
         new.entity = new.provenance.get_record(self.entity.identifier)[0]
@@ -188,7 +193,7 @@ class TrackedFile:
         """
         if self.provenance is not None:
             raise ValueError(
-                "Provenance of {} already initialized".format(self)
+                f"Provenance of {self} already initialized",
             )
         self.provenance = ProvDocument()
         self._initialize_namespaces()
@@ -221,7 +226,8 @@ class TrackedFile:
             if k not in ("authors", "projects")
         }
         self.entity = self.provenance.entity(
-            f"file:{self.filename}", attributes
+            f"file:{self.filename}",
+            attributes,
         )
 
         attribute_to_authors(self.entity, self.attributes.get("authors", []))
@@ -251,7 +257,7 @@ class TrackedFile:
 
     def _select_for_include(self):
         attributes = {
-            "software": "Created with ESMValTool v{}".format(__version__),
+            "software": f"Created with ESMValTool v{__version__}",
         }
         if "caption" in self.attributes:
             attributes["caption"] = self.attributes["caption"]
@@ -302,7 +308,8 @@ class TrackedFile:
     def restore_provenance(self):
         """Import provenance information from a previously saved file."""
         self.provenance = ProvDocument.deserialize(
-            self.provenance_file, format="xml"
+            self.provenance_file,
+            format="xml",
         )
         entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
         self.entity = self.provenance.get_record(entity_uri)[0]

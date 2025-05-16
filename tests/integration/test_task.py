@@ -25,9 +25,7 @@ class MockBaseTask(BaseTask):
         tmp_path = self._tmp_path
         output_file = tmp_path / self.name
 
-        msg = "running {} in thread {}, using input {}, generating {}".format(
-            self.name, os.getpid(), input_files, output_file
-        )
+        msg = f"running {self.name} in thread {os.getpid()}, using input {input_files}, generating {output_file}"
         print(msg)
 
         # Check that the output is created just once
@@ -173,7 +171,9 @@ def test_run_task(mocker, address):
     task = mocker.create_autospec(DiagnosticTask, instance=True)
     task.products = mocker.Mock()
     output_files, products = _run_task(
-        task, scheduler_address=address, scheduler_lock=scheduler_lock
+        task,
+        scheduler_address=address,
+        scheduler_lock=scheduler_lock,
     )
     assert output_files == task.run.return_value
     assert products == task.products
@@ -268,7 +268,7 @@ def test_py_diagnostic_task_write_settings(tmp_path):
     my_arg_dict = {"b": [1], "a": 3.0, "c": False}
     task.settings.update(my_arg_dict)
     settings = task.write_settings()
-    with open(settings, "r") as stream:
+    with open(settings) as stream:
         settings_data = yaml.safe_load(stream)
 
     assert list(settings_data) == ["run_dir", "b", "a", "c"]
@@ -281,9 +281,7 @@ def test_diagnostic_diag_script_none(tmp_path):
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = "Cannot execute script '{}' ({}): file does not exist.".format(
-        script_file, script_file
-    )
+    ept = f"Cannot execute script '{script_file}' ({script_file}): file does not exist."
     assert ept == str(err_msg.value)
 
 
@@ -319,10 +317,12 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
 
 # skip if no exec
 no_ncl = pytest.mark.skipif(
-    shutil.which("ncl") is None, reason="ncl is not installed"
+    shutil.which("ncl") is None,
+    reason="ncl is not installed",
 )
 no_rscript = pytest.mark.skipif(
-    shutil.which("Rscript") is None, reason="Rscript is not installed"
+    shutil.which("Rscript") is None,
+    reason="Rscript is not installed",
 )
 
 CMD_diag = {
@@ -362,7 +362,10 @@ def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
 @pytest.mark.parametrize("executable,diag_text", CMD_diag_fail.items())
 @no_ncl
 def test_diagnostic_run_task_fail(
-    monkeypatch, executable, diag_text, tmp_path
+    monkeypatch,
+    executable,
+    diag_text,
+    tmp_path,
 ):
     """Run DiagnosticTask that will fail."""
 

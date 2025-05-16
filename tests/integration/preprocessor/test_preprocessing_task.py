@@ -29,7 +29,7 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
                 settings={"save": {"compute": False}},
                 datasets=[dataset],
             ),
-        ]
+        ],
     )
 
     # Create an 'activity' representing a run of the tool

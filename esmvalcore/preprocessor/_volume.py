@@ -7,7 +7,8 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-from typing import Iterable, Literal, Optional, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Literal
 
 import dask
 import dask.array as da
@@ -104,7 +105,7 @@ def extract_volume(
     else:
         raise ValueError(
             'Depth extraction bounds can be set to "open", "closed", '
-            f'"left_closed", or "right_closed". Got "{interval_bounds}".'
+            f'"left_closed", or "right_closed". Got "{interval_bounds}".',
         )
 
     z_constraint = iris.Constraint(coord_values=coord_values)
@@ -152,7 +153,7 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
         raise ValueError(
             f"Z axis bounds shape found {depth.core_bounds().shape}. "
             "Bounds should be 2 in the last dimension to compute the "
-            "thickness."
+            "thickness.",
         )
 
     # Convert units to get the thickness in meters
@@ -160,7 +161,7 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
         depth.convert_units("m")
     except ValueError as err:
         raise ValueError(
-            f"Cannot compute volume using the Z-axis. {err}"
+            f"Cannot compute volume using the Z-axis. {err}",
         ) from err
 
     # Calculate Z-direction thickness
@@ -188,10 +189,16 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
 
     chunks = cube.core_data().chunks if cube.has_lazy_data() else None
     area_arr = broadcast_to_shape(
-        area_array, cube.shape, area_dim, chunks=chunks
+        area_array,
+        cube.shape,
+        area_dim,
+        chunks=chunks,
     )
     thickness_arr = broadcast_to_shape(
-        thickness, cube.shape, z_dim, chunks=chunks
+        thickness,
+        cube.shape,
+        z_dim,
+        chunks=chunks,
     )
     grid_volume = area_arr * thickness_arr
     if cube.has_lazy_data():
@@ -231,7 +238,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 def volume_statistics(
     cube: Cube,
     operator: str,
-    normalize: Optional[Literal["subtract", "divide"]] = None,
+    normalize: Literal["subtract", "divide"] | None = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operation over a volume.
@@ -293,7 +300,7 @@ def volume_statistics(
             f"X and Y axis coordinates depend on {xy_dims} dimensions, "
             f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
             "This may indicate Z axis depending on other dimension than "
-            "space that could provoke invalid aggregation..."
+            "space that could provoke invalid aggregation...",
         )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
@@ -323,7 +330,7 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
-    normalize: Optional[Literal["subtract", "divide"]] = None,
+    normalize: Literal["subtract", "divide"] | None = None,
     **operator_kwargs,
 ) -> Cube:
     """Perform statistics along a given axis.
@@ -369,14 +376,14 @@ def axis_statistics(
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
         raise ValueError(
-            f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
+            f"Axis {axis} not found in cube {cube.summary(shorten=True)}",
         ) from err
 
     # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError(
-            "axis_statistics not implemented for multidimensional coordinates."
+            "axis_statistics not implemented for multidimensional coordinates.",
         )
 
     # For weighted operations, create a dummy weights coordinate using the
@@ -501,17 +508,17 @@ def extract_transect(
     if lats.ndim == 2:
         raise ValueError(
             "extract_transect: Not implemented for irregular arrays!"
-            + "\nTry regridding the data first."
+            + "\nTry regridding the data first.",
         )
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            "extract_transect: Can't slice along lat and lon at the same time"
+            "extract_transect: Can't slice along lat and lon at the same time",
         )
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time"
+            "extract_transect: Can't reduce lat and lon at the same time",
         )
 
     for dim_name, dim_cut, coord in zip(
@@ -541,7 +548,8 @@ def extract_transect(
 
     if second_coord_range is not None:
         slices[coord_dim2] = slice(
-            second_coord_range[0], second_coord_range[1]
+            second_coord_range[0],
+            second_coord_range[1],
         )
     return cube[tuple(slices)]
 
@@ -595,7 +603,7 @@ def extract_trajectory(
 
     if len(latitudes) != len(longitudes):
         raise ValueError(
-            "Longitude & Latitude coordinates have different lengths"
+            "Longitude & Latitude coordinates have different lengths",
         )
 
     if len(latitudes) == len(longitudes) == 2:

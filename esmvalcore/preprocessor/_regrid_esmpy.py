@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Provides regridding for irregular grids."""
 
 try:
@@ -103,7 +102,10 @@ class ESMPyRegridder:
         cube.data  # # noqa: B018 pylint: disable=pointless-statement
         src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
         regridder = build_regridder(
-            src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold
+            src_rep,
+            dst_rep,
+            self.method,
+            mask_threshold=self.mask_threshold,
         )
         result = map_slices(cube, regridder, src_rep, dst_rep)
         return result
@@ -259,10 +261,11 @@ def coords_iris_to_esmpy(lat, lon, circular):
             lon_corners = lon.bounds[:, 0]
         else:
             lon_corners = np.concatenate(
-                [lon.bounds[:, 0], lon.bounds[-1:, 1]]
+                [lon.bounds[:, 0], lon.bounds[-1:, 1]],
             )
         esmpy_lat_corners, esmpy_lon_corners = np.meshgrid(
-            lat_corners, lon_corners
+            lat_corners,
+            lon_corners,
         )
     elif dim == 2:
         esmpy_lat, esmpy_lon = lat.points.T.copy(), lon.points.T.copy()
@@ -270,13 +273,17 @@ def coords_iris_to_esmpy(lat, lon, circular):
         esmpy_lon_corners = cf_2d_bounds_to_esmpy_corners(lon.bounds, circular)
     else:
         raise NotImplementedError(
-            f"Coord dimension is {dim}. Expected 1 or 2."
+            f"Coord dimension is {dim}. Expected 1 or 2.",
         )
     return esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners
 
 
 def get_grid(
-    esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners, circular
+    esmpy_lat,
+    esmpy_lon,
+    esmpy_lat_corners,
+    esmpy_lon_corners,
+    circular,
 ):
     """Build EMSF grid from given coordinate information."""
     if circular:
@@ -293,10 +300,12 @@ def get_grid(
     grid.get_coords(ESMF_LAT)[...] = esmpy_lat
     grid.add_coords([esmpy.StaggerLoc.CORNER])
     grid_lon_corners = grid.get_coords(
-        ESMF_LON, staggerloc=esmpy.StaggerLoc.CORNER
+        ESMF_LON,
+        staggerloc=esmpy.StaggerLoc.CORNER,
     )
     grid_lat_corners = grid.get_coords(
-        ESMF_LAT, staggerloc=esmpy.StaggerLoc.CORNER
+        ESMF_LAT,
+        staggerloc=esmpy.StaggerLoc.CORNER,
     )
     grid_lon_corners[...] = esmpy_lon_corners
     grid_lat_corners[...] = esmpy_lat_corners
@@ -315,12 +324,12 @@ def is_lon_circular(lon):
             seam = lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)]
         else:
             raise NotImplementedError(
-                "AuxCoord longitude is higher dimensional than 2d. Giving up."
+                "AuxCoord longitude is higher dimensional than 2d. Giving up.",
             )
         circular = np.all(abs(seam) % 360.0 < 1.0e-3)
     else:
         raise ValueError(
-            "longitude is neither DimCoord nor AuxCoord. Giving up."
+            "longitude is neither DimCoord nor AuxCoord. Giving up.",
         )
     return circular
 
@@ -333,7 +342,9 @@ def cube_to_empty_field(cube):
     esmpy_coords = coords_iris_to_esmpy(lat, lon, circular)
     grid = get_grid(*esmpy_coords, circular=circular)
     field = esmpy.Field(
-        grid, name=cube.long_name, staggerloc=esmpy.StaggerLoc.CENTER
+        grid,
+        name=cube.long_name,
+        staggerloc=esmpy.StaggerLoc.CENTER,
     )
     return field
 
@@ -356,11 +367,13 @@ def regrid_mask_2d(src_data, regridding_arguments, mask_threshold):
     original_src_mask = np.ma.getmaskarray(src_data)
     src_field.data[...] = ~original_src_mask.T
     src_mask = src_field.grid.get_item(
-        esmpy.GridItem.MASK, esmpy.StaggerLoc.CENTER
+        esmpy.GridItem.MASK,
+        esmpy.StaggerLoc.CENTER,
     )
     src_mask[...] = original_src_mask.T
     center_mask = dst_field.grid.get_item(
-        esmpy.GridItem.MASK, esmpy.StaggerLoc.CENTER
+        esmpy.GridItem.MASK,
+        esmpy.StaggerLoc.CENTER,
     )
     center_mask[...] = 0
     mask_regridder = esmpy.Regrid(
@@ -369,7 +382,7 @@ def regrid_mask_2d(src_data, regridding_arguments, mask_threshold):
         **regridding_arguments,
     )
     regr_field = mask_regridder(src_field, dst_field)
-    dst_mask = regr_field.data[...].T < mask_threshold
+    dst_mask = mask_threshold > regr_field.data[...].T
     center_mask[...] = dst_mask.T
     if not dst_mask.any():
         dst_mask = np.ma.nomask
@@ -388,7 +401,9 @@ def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
         "ignore_degenerate": True,
     }
     dst_mask = regrid_mask_2d(
-        src_rep.data, regridding_arguments, mask_threshold
+        src_rep.data,
+        regridding_arguments,
+        mask_threshold,
     )
     field_regridder = esmpy.Regrid(
         src_mask_values=np.array([1]),
@@ -419,8 +434,11 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
     for level in range(no_levels):
         esmf_regridders.append(
             build_regridder_2d(
-                src_rep[level], dst_rep[level], regrid_method, mask_threshold
-            )
+                src_rep[level],
+                dst_rep[level],
+                regrid_method,
+                mask_threshold,
+            ),
         )
 
     def regridder(src):
@@ -438,11 +456,17 @@ def build_regridder(src_rep, dst_rep, method, mask_threshold=0.99):
     regrid_method = ESMF_REGRID_METHODS[method]
     if src_rep.ndim == 2:
         regridder = build_regridder_2d(
-            src_rep, dst_rep, regrid_method, mask_threshold
+            src_rep,
+            dst_rep,
+            regrid_method,
+            mask_threshold,
         )
     elif src_rep.ndim == 3:
         regridder = build_regridder_3d(
-            src_rep, dst_rep, regrid_method, mask_threshold
+            src_rep,
+            dst_rep,
+            regrid_method,
+            mask_threshold,
         )
     return regridder
 

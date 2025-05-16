@@ -61,6 +61,12 @@ def test_filter_multiple_names(names, mode, output):
     """Test `FilterMultipleNames`."""
     filter = FilterMultipleNames(names, mode)
     record = logging.LogRecord(
-        "a.b.c", "level", "path", "lineno", "msg", [], "exc_info"
+        "a.b.c",
+        "level",
+        "path",
+        "lineno",
+        "msg",
+        [],
+        "exc_info",
     )
     assert filter.filter(record) is output

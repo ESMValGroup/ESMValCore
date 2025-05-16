@@ -60,7 +60,8 @@ class AccessFix(NativeDatasetFix):
         cube.aux_coords[-1].bounds = lon_bounds
 
         cube.aux_coords[-2].points = np.array(
-            cube.aux_coords[-2].points, dtype=np.float64
+            cube.aux_coords[-2].points,
+            dtype=np.float64,
         )
         cube.aux_coords[-2].standard_name = "latitude"
         cube.aux_coords[-2].long_name = "latitude"
@@ -74,7 +75,7 @@ class AccessFix(NativeDatasetFix):
         path = Path(self.extra_facets[facet])
         if not path.is_file():
             raise FileNotFoundError(
-                f"'{path}' given by facet '{facet}' does not exist"
+                f"'{path}' given by facet '{facet}' does not exist",
             )
         return path
 

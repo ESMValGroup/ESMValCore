@@ -51,7 +51,8 @@ def _compare_cubes(cube, loaded_cube):
     np.testing.assert_equal(cube.data, loaded_cube.data)
     for coord in cube.coords():
         np.testing.assert_equal(
-            coord.points, loaded_cube.coord(coord.name()).points
+            coord.points,
+            loaded_cube.coord(coord.name()).points,
         )
 
 

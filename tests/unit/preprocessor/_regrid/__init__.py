@@ -57,7 +57,10 @@ def _make_cube(
 
     # Create the cube.
     cm = CellMethod(
-        method="mean", coords="time", intervals="20 minutes", comments=None
+        method="mean",
+        coords="time",
+        intervals="20 minutes",
+        comments=None,
     )
     kwargs = dict(
         standard_name="air_temperature",

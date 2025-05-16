@@ -71,7 +71,10 @@ def test_update_attributes(product):
     ],
 )
 def test_update_attributes_empty_names(
-    product, name, cube_property, expected_name
+    product,
+    name,
+    cube_property,
+    expected_name,
 ):
     """Test ``_update_attributes``."""
     setattr(product._cubes[0], cube_property, None)
@@ -160,7 +163,9 @@ def test_save(mock_preprocess):
 
     assert mock_preprocess.mock_calls == [
         mock.call(
-            mock.sentinel.cubes, "save", input_files=mock.sentinel.input_files
+            mock.sentinel.cubes,
+            "save",
+            input_files=mock.sentinel.input_files,
         ),
         mock.call().__getitem__(0),
     ]

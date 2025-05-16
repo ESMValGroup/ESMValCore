@@ -34,7 +34,7 @@ def log_to_dir(drc: Path):
     debug_log_file.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         "%(asctime)s UTC [%(process)d] %(levelname)-7s"
-        " %(name)s:%(lineno)s %(message)s"
+        " %(name)s:%(lineno)s %(message)s",
     )
     debug_log_file.setFormatter(formatter)
 

@@ -52,7 +52,7 @@ class DerivedVariable(DerivedVariableBase):
             except iris.exceptions.ConstraintMismatchError as exc:
                 raise RecipeError(
                     "Derivation of siextent failed due to missing variables "
-                    "sic and siconca."
+                    "sic and siconca.",
                 ) from exc
 
         ones = da.ones_like(sic)

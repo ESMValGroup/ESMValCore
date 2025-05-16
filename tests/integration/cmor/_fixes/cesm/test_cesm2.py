@@ -95,7 +95,8 @@ def check_time(cube):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1979-01-01 00:00:00", calendar="365_day"
+        "days since 1979-01-01 00:00:00",
+        calendar="365_day",
     )
     np.testing.assert_allclose(
         time.points,
@@ -219,7 +220,7 @@ def test_only_time(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(time_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -241,7 +242,8 @@ def test_only_time(monkeypatch):
     # Check time data
     np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
     np.testing.assert_allclose(
-        new_time_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]]
+        new_time_coord.bounds,
+        [[-0.5, 0.5], [0.5, 1.5]],
     )
 
 
@@ -259,7 +261,10 @@ def test_only_latitude(monkeypatch):
 
     # Create cube with only a single dimension
     lat_coord = DimCoord(
-        [0.0, 10.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 10.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     cubes = CubeList(
         [
@@ -269,7 +274,7 @@ def test_only_latitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lat_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -291,7 +296,8 @@ def test_only_latitude(monkeypatch):
     # Check latitude data
     np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
     np.testing.assert_allclose(
-        new_lat_coord.bounds, [[-5.0, 5.0], [5.0, 15.0]]
+        new_lat_coord.bounds,
+        [[-5.0, 5.0], [5.0, 15.0]],
     )
 
 
@@ -322,7 +328,7 @@ def test_only_longitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lon_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -344,7 +350,8 @@ def test_only_longitude(monkeypatch):
     # Check longitude data
     np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
     np.testing.assert_allclose(
-        new_lon_coord.bounds, [[-90.0, 90.0], [90.0, 270.0]]
+        new_lon_coord.bounds,
+        [[-90.0, 90.0], [90.0, 270.0]],
     )
 
 

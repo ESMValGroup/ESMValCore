@@ -16,7 +16,7 @@ def cfg_default():
     return cfg
 
 
-@pytest.fixture()
+@pytest.fixture
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
     for key, value in cfg_default.items():
@@ -39,7 +39,9 @@ def ignore_old_config_user(tmp_path, monkeypatch):
     """Ignore potentially existing old config-user.yml file in all tests."""
     nonexistent_config_dir = tmp_path / "nonexistent_config_dir"
     monkeypatch.setattr(
-        Config, "_DEFAULT_USER_CONFIG_DIR", nonexistent_config_dir
+        Config,
+        "_DEFAULT_USER_CONFIG_DIR",
+        nonexistent_config_dir,
     )
 
 
@@ -49,5 +51,7 @@ def ignore_old_dask_config_file(tmp_path, monkeypatch):
     """Ignore potentially existing old dask.yml file in all tests."""
     nonexistent_file = tmp_path / "nonexistent_file.yml"
     monkeypatch.setattr(
-        esmvalcore.config._dask, "CONFIG_FILE", nonexistent_file
+        esmvalcore.config._dask,
+        "CONFIG_FILE",
+        nonexistent_file,
     )

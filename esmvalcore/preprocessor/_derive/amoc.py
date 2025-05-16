@@ -23,7 +23,7 @@ class DerivedVariable(DerivedVariableBase):
             ]
         else:
             raise ValueError(
-                f"Project {project} can not be used for Amoc derivation."
+                f"Project {project} can not be used for Amoc derivation.",
             )
 
         return required
@@ -47,15 +47,17 @@ class DerivedVariable(DerivedVariableBase):
             # msftmyz and msfmz
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name="ocean_meridional_overturning_mass_streamfunction"
-                )
+                    name="ocean_meridional_overturning_mass_streamfunction",
+                ),
             )
             meridional = True
             lats = cube.coord("latitude").points
         except iris.exceptions.ConstraintMismatchError:
             # msftyz
             cube = cubes.extract_cube(
-                iris.Constraint(name="ocean_y_overturning_mass_streamfunction")
+                iris.Constraint(
+                    name="ocean_y_overturning_mass_streamfunction",
+                ),
             )
             meridional = False
             lats = cube.coord("grid_latitude").points
@@ -69,7 +71,7 @@ class DerivedVariable(DerivedVariableBase):
         if cube is None:
             raise ValueError(
                 f"Amoc calculation: {cube_orig} doesn't contain"
-                f" atlantic_arctic_ocean."
+                f" atlantic_arctic_ocean.",
             )
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.

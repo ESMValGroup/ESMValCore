@@ -127,7 +127,7 @@ class Areacello(Fix):
         return iris.cube.CubeList(
             [
                 areacello,
-            ]
+            ],
         )
 
 
@@ -135,7 +135,8 @@ class Pr(Fix):
     """Fixes for pr."""
 
     def fix_metadata(
-        self, cubes: Iterable[iris.cube.Cube]
+        self,
+        cubes: Iterable[iris.cube.Cube],
     ) -> iris.cube.CubeList:
         """Fix time coordinate.
 

@@ -61,7 +61,11 @@ def easy_2d_cube():
     ],
 )
 def test_statistical_operators(
-    operator, kwargs, expected_data, expected_units, easy_2d_cube
+    operator,
+    kwargs,
+    expected_data,
+    expected_units,
+    easy_2d_cube,
 ):
     """Test ``climate_statistics`` with different operators."""
     res = climate_statistics(easy_2d_cube, operator, **kwargs)
@@ -87,16 +91,21 @@ def realistic_4d_cube():
     plev = DimCoord([50000], standard_name="air_pressure", units="Pa")
     lat = DimCoord([0.0, 1.0], standard_name="latitude", units="degrees")
     lon = DimCoord(
-        [0.0, 20.0, 345.0], standard_name="longitude", units="degrees"
+        [0.0, 20.0, 345.0],
+        standard_name="longitude",
+        units="degrees",
     )
 
     aux_2d_data = np.arange(2 * 3).reshape(2, 3)
     aux_2d_bounds = np.stack(
-        (aux_2d_data - 1, aux_2d_data, aux_2d_data + 1), axis=-1
+        (aux_2d_data - 1, aux_2d_data, aux_2d_data + 1),
+        axis=-1,
     )
     aux_2d = AuxCoord(aux_2d_data, var_name="aux_2d")
     aux_2d_with_bnds = AuxCoord(
-        aux_2d_data, bounds=aux_2d_bounds, var_name="aux_2d_with_bnds"
+        aux_2d_data,
+        bounds=aux_2d_bounds,
+        var_name="aux_2d_with_bnds",
     )
     aux_time = AuxCoord(["Jan", "Jan"], var_name="aux_time")
     aux_lon = AuxCoord([0, 1, 2], var_name="aux_lon")
@@ -115,7 +124,9 @@ def realistic_4d_cube():
 
     cube = Cube(
         np.ma.masked_inside(
-            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3), 1, 3
+            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3),
+            1,
+            3,
         ),
         var_name="ta",
         standard_name="air_temperature",
@@ -155,12 +166,14 @@ def test_local_solar_time_regular(realistic_4d_cube):
     assert result.coord("time").var_name is None
     assert result.coord("time").long_name == "Local Solar Time"
     assert result.coord("time").units == Unit(
-        "hours since 1850-01-01", calendar="360_day"
+        "hours since 1850-01-01",
+        calendar="360_day",
     )
     assert result.coord("time").attributes == {}
     np.testing.assert_allclose(result.coord("time").points, [8651.0, 8652.0])
     np.testing.assert_allclose(
-        result.coord("time").bounds, [[8650.5, 8651.5], [8651.5, 8652.5]]
+        result.coord("time").bounds,
+        [[8650.5, 8651.5], [8651.5, 8652.5]],
     )
 
     assert result.coord("aux_time") == input_cube.coord("aux_time")
@@ -218,7 +231,8 @@ def test_local_solar_time_regular(realistic_4d_cube):
     assert_array_equal(
         result.ancillary_variable("type").data,
         np.ma.masked_equal(
-            [["sea", "miss", "land"], ["lake", "land", "miss"]], "miss"
+            [["sea", "miss", "land"], ["lake", "land", "miss"]],
+            "miss",
         ),
     )
 
@@ -254,7 +268,8 @@ def test_local_solar_time_1_time_step(realistic_4d_cube):
     assert result.coord("time").var_name is None
     assert result.coord("time").long_name == "Local Solar Time"
     assert result.coord("time").units == Unit(
-        "hours since 1850-01-01", calendar="360_day"
+        "hours since 1850-01-01",
+        calendar="360_day",
     )
     assert result.coord("time").attributes == {}
     np.testing.assert_allclose(result.coord("time").points, [8651.0])
@@ -267,7 +282,8 @@ def test_local_solar_time_1_time_step(realistic_4d_cube):
     )
     assert not result.coord("aux_2d").has_lazy_points()
     assert_array_equal(
-        result.coord("aux_2d").points, np.ma.masked_equal([[0, 99, 99]], 99)
+        result.coord("aux_2d").points,
+        np.ma.masked_equal([[0, 99, 99]], 99),
     )
     assert not result.coord("aux_2d").has_bounds()
     assert (
@@ -347,7 +363,9 @@ def realistic_unstructured_cube():
     aux_2d_bounds = da.stack((aux_2d_data - 1, aux_2d_data + 1), axis=-1)
     aux_2d = AuxCoord(aux_2d_data, var_name="aux_2d")
     aux_2d_with_bnds = AuxCoord(
-        aux_2d_data, bounds=aux_2d_bounds, var_name="aux_2d_with_bnds"
+        aux_2d_data,
+        bounds=aux_2d_bounds,
+        var_name="aux_2d_with_bnds",
     )
     aux_0d = AuxCoord([0], var_name="aux_0d")
 
@@ -400,7 +418,8 @@ def test_local_solar_time_unstructured(realistic_unstructured_cube):
     assert result.coord("time").units == "hours since 1850-01-01"
     assert result.coord("time").attributes == {}
     np.testing.assert_allclose(
-        result.coord("time").points, [8760.0, 8766.0, 8772.0, 8778.0, 8784.0]
+        result.coord("time").points,
+        [8760.0, 8766.0, 8772.0, 8778.0, 8784.0],
     )
     np.testing.assert_allclose(
         result.coord("time").bounds,

@@ -293,7 +293,10 @@ def test_real_search_many():
     ]
 
     for variable, files, datasets in zip(
-        VARIABLES, expected_files, expected_datasets, strict=False
+        VARIABLES,
+        expected_files,
+        expected_datasets,
+        strict=False,
     ):
         result = find_files(**variable)
         found_files = [file.name for file in result]
@@ -334,7 +337,7 @@ def test_real_download():
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s [%(process)d] %(levelname)-8s "
-        "%(name)s,%(lineno)s\t%(message)s"
+        "%(name)s,%(lineno)s\t%(message)s",
     )
     logging.getLogger().setLevel("info".upper())
 

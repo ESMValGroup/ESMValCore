@@ -35,7 +35,7 @@ def test_tags_manager_setters():
                 "tag1": "value1",
                 "tag2": "value2",
             },
-        }
+        },
     )
 
     assert tags.get_tag_value("section", "tag1") == "value1"

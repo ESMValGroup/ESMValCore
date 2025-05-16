@@ -20,11 +20,13 @@ class AllVars(Fix):
                     coord_names=["latitude"],
                 )
                 if cube.attributes.get(
-                    "experiment_id", ""
+                    "experiment_id",
+                    "",
                 ) == "historical" and cube.coords("time"):
                     time_coord = cube.coord("time")
                     time_coord.units = cf_units.Unit(
-                        time_coord.units.origin, "proleptic_gregorian"
+                        time_coord.units.origin,
+                        "proleptic_gregorian",
                     )
         return cubes
 

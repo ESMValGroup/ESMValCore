@@ -7,7 +7,8 @@ from esmvalcore.cmor._utils import _get_single_cube
 
 
 @pytest.mark.parametrize(
-    "cubes", [[Cube(0)], [Cube(0, var_name="x")], [Cube(0, var_name="y")]]
+    "cubes",
+    [[Cube(0)], [Cube(0, var_name="x")], [Cube(0, var_name="y")]],
 )
 def test_get_single_cube_one_cube(cubes, caplog):
     """Test ``_get_single_cube``."""

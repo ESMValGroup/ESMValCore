@@ -40,7 +40,8 @@ class CalendarFix(Fix):
             if cube.coords("time"):
                 time_coord = cube.coord("time")
                 time_coord.units = cf_units.Unit(
-                    time_coord.units.origin, "proleptic_gregorian"
+                    time_coord.units.origin,
+                    "proleptic_gregorian",
                 )
         return cubes
 

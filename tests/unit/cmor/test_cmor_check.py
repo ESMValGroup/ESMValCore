@@ -163,7 +163,9 @@ class TestCMORCheck(unittest.TestCase):
         self.cube = checker(self.cube).check_data()
 
     def _check_cube_metadata(
-        self, frequency=None, check_level=CheckLevels.DEFAULT
+        self,
+        frequency=None,
+        check_level=CheckLevels.DEFAULT,
     ):
         """Apply checks to self.cube."""
 
@@ -267,7 +269,7 @@ class TestCMORCheck(unittest.TestCase):
     def test_rank_with_scalar_coords(self):
         """Check succeeds even if a required coordinate is a scalar coord."""
         self.cube = self.cube.extract(
-            iris.Constraint(time=self.cube.coord("time").cell(0))
+            iris.Constraint(time=self.cube.coord("time").cell(0)),
         )
         self._check_cube()
 
@@ -285,7 +287,7 @@ class TestCMORCheck(unittest.TestCase):
         depth_coord.name = "depth_coord"
         depth_coord.long_name = "ocean depth coordinate"
         self.var_info.coordinates["depth"].generic_lev_coords = {
-            "depth_coord": depth_coord
+            "depth_coord": depth_coord,
         }
         self.var_info.coordinates["depth"].out_name = ""
         self._check_fails_in_metadata()
@@ -308,7 +310,7 @@ class TestCMORCheck(unittest.TestCase):
         self.var_info.table_type = "CMIP3"
         self._setup_generic_level_var()
         self.var_info.coordinates["zlevel"] = self.var_info.coordinates.pop(
-            "alevel"
+            "alevel",
         )
         self._add_plev_to_cube()
         self._check_warnings_on_metadata()
@@ -417,7 +419,7 @@ class TestCMORCheck(unittest.TestCase):
         With --cmor-check relaxed.
         """
         self.var_info.coordinates.update(
-            {"height2m": CoordinateInfoMock("height2m")}
+            {"height2m": CoordinateInfoMock("height2m")},
         )
         self._check_fails_in_metadata()
 
@@ -499,7 +501,7 @@ class TestCMORCheck(unittest.TestCase):
         For a coordinate other than lat and lon, with --cmor-check relaxed.
         """
         self.var_info.coordinates.update(
-            {"height2m": CoordinateInfoMock("height2m")}
+            {"height2m": CoordinateInfoMock("height2m")},
         )
         self._check_warnings_on_metadata(check_level=CheckLevels.RELAXED)
 
@@ -591,7 +593,7 @@ class TestCMORCheck(unittest.TestCase):
         --cmor-check ignore.
         """
         self.var_info.coordinates.update(
-            {"height2m": CoordinateInfoMock("height2m")}
+            {"height2m": CoordinateInfoMock("height2m")},
         )
         self._check_warnings_on_metadata(check_level=CheckLevels.IGNORE)
 
@@ -624,7 +626,9 @@ class TestCMORCheck(unittest.TestCase):
         self.assertTrue(self.cube.has_lazy_data())
 
     def _check_fails_in_metadata(
-        self, frequency=None, check_level=CheckLevels.DEFAULT
+        self,
+        frequency=None,
+        check_level=CheckLevels.DEFAULT,
     ):
         checker = CMORCheck(
             self.cube,
@@ -706,7 +710,9 @@ class TestCMORCheck(unittest.TestCase):
         """Fail in metadata if increasing coordinate is decreasing."""
         coord = self.cube.coord("latitude")
         values = np.linspace(
-            coord.points[-1], coord.points[0], len(coord.points)
+            coord.points[-1],
+            coord.points[0],
+            len(coord.points),
         )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
@@ -752,7 +758,9 @@ class TestCMORCheck(unittest.TestCase):
         """Fail if coordinate values below valid_min."""
         coord = self.cube.coord("latitude")
         values = np.linspace(
-            coord.points[0] - 1, coord.points[-1], len(coord.points)
+            coord.points[0] - 1,
+            coord.points[-1],
+            len(coord.points),
         )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
@@ -761,7 +769,9 @@ class TestCMORCheck(unittest.TestCase):
         """Fail if coordinate values above valid_max."""
         coord = self.cube.coord("latitude")
         values = np.linspace(
-            coord.points[0], coord.points[-1] + 1, len(coord.points)
+            coord.points[0],
+            coord.points[-1] + 1,
+            len(coord.points),
         )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
@@ -984,7 +994,9 @@ class TestCMORCheck(unittest.TestCase):
             frequency = var_info.frequency
         for dim_spec in var_info.coordinates.values():
             coord = self._create_coord_from_spec(
-                dim_spec, set_time_units, frequency
+                dim_spec,
+                set_time_units,
+                frequency,
             )
             if dim_spec.value:
                 scalar_coords.append(coord)
@@ -1032,7 +1044,7 @@ class TestCMORCheck(unittest.TestCase):
 
         cube = self.get_cube(self.var_info)
         cube = cube.extract(
-            iris.Constraint(latitude=cube.coord("latitude").points[0])
+            iris.Constraint(latitude=cube.coord("latitude").points[0]),
         )
         lat_points = cube.coord("longitude").points
         lat_points = lat_points / 3.0 - 50.0
@@ -1071,7 +1083,7 @@ class TestCMORCheck(unittest.TestCase):
                         coord.bounds[:, 0],
                         0.5 * (coord.bounds[:, 0] + coord.bounds[:, 1]),
                         coord.bounds[:, 1],
-                    )
+                    ),
                 )
                 coord.bounds = np.swapaxes(new_bounds, 0, 1)
 
@@ -1239,11 +1251,15 @@ class TestCMORCheck(unittest.TestCase):
                 values[j] = request
             if decreasing:
                 extra_values = np.linspace(
-                    len(requested), valid_min, 20 - len(requested)
+                    len(requested),
+                    valid_min,
+                    20 - len(requested),
                 )
             else:
                 extra_values = np.linspace(
-                    len(requested), valid_max, 20 - len(requested)
+                    len(requested),
+                    valid_max,
+                    20 - len(requested),
                 )
 
             for j in range(len(requested), 20):
@@ -1267,7 +1283,7 @@ class TestCMORCheck(unittest.TestCase):
                 frequency = "1hr"
             delta = float(frequency[:-2]) / 24
         else:
-            raise Exception("Frequency {} not supported".format(frequency))
+            raise Exception(f"Frequency {frequency} not supported")
         start = 0
         end = start + delta * 20
         return np.arange(start, end, step=delta)

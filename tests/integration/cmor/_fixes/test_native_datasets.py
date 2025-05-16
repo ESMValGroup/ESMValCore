@@ -19,7 +19,7 @@ def cubes():
         [
             Cube(0.0, var_name="pr"),
             Cube(0.0, var_name="tas"),
-        ]
+        ],
     )
     return cubes
 
@@ -120,7 +120,12 @@ def fix():
     ],
 )
 def test_fix_scalar_coords(
-    monkeypatch, empty_cube, fix, scalar_coord, coord_name, val
+    monkeypatch,
+    empty_cube,
+    fix,
+    scalar_coord,
+    coord_name,
+    val,
 ):
     """Test ``fix_scalar_coords``."""
     monkeypatch.setattr(fix.vardef, "dimensions", [scalar_coord])
@@ -179,7 +184,9 @@ def test_fix_var_metadata_raw_units(monkeypatch, empty_cube, fix):
 
 
 def test_fix_var_metadata_raw_units_ignore_invalid_units(
-    monkeypatch, empty_cube, fix
+    monkeypatch,
+    empty_cube,
+    fix,
 ):
     """Test ``fix_var_metadata`` with raw_units and invalid units."""
     monkeypatch.setitem(fix.extra_facets, "raw_units", "km")
@@ -252,7 +259,12 @@ def test_get_cube_fail(cubes, fix):
     ],
 )
 def test_fix_regular_coords_from_cube(
-    monkeypatch, sample_cube, fix, coord, coord_name, func_name
+    monkeypatch,
+    sample_cube,
+    fix,
+    coord,
+    coord_name,
+    func_name,
 ):
     """Test fixing of regular coords from cube."""
     coord_info = CoordinateInfo(coord)
@@ -281,7 +293,12 @@ def test_fix_regular_coords_from_cube(
     ],
 )
 def test_fix_regular_coords_from_str(
-    monkeypatch, sample_cube, fix, coord, coord_name, func_name
+    monkeypatch,
+    sample_cube,
+    fix,
+    coord,
+    coord_name,
+    func_name,
 ):
     """Test fixing of regular coords from string."""
     coord_info = CoordinateInfo(coord)
@@ -307,7 +324,11 @@ def test_fix_regular_coords_from_str(
     ],
 )
 def test_fix_regular_coords_from_coords(
-    empty_cube, fix, func_name, coord_name, units
+    empty_cube,
+    fix,
+    func_name,
+    coord_name,
+    units,
 ):
     """Test fixing of regular coords from coords."""
     coord = AuxCoord([1.570796, 3.141592], units=units)
@@ -330,7 +351,11 @@ def test_fix_regular_coords_from_coords(
     ],
 )
 def test_fix_regular_coords_from_coords_no_bounds(
-    empty_cube, fix, func_name, coord_name, units
+    empty_cube,
+    fix,
+    func_name,
+    coord_name,
+    units,
 ):
     """Test fixing of regular coords from coords."""
     coord = AuxCoord([1.570796, 3.141592], units=units)
