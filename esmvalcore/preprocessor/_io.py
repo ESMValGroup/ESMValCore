@@ -113,13 +113,13 @@ def load(
 
     """
     if isinstance(file, (str, Path)):
-        cubes = _load_from_file(file, ignore_warnings)
+        cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
     elif isinstance(file, Cube):
         cubes = CubeList([file])
     elif isinstance(file, CubeList):
         cubes = file
     elif isinstance(file, (xr.Dataset, ncdata.NcData)):
-        cubes = dataset_to_iris(file)
+        cubes = dataset_to_iris(file, ignore_warnings=ignore_warnings)
     else:
         raise TypeError(
             f"Expected type str, pathlib.Path, iris.cube.Cube, "
