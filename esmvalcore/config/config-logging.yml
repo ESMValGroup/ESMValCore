@@ -19,20 +19,22 @@ filters:
     (): esmvalcore.config._logging.FilterMultipleNames
     names: [esmvalcore.cmor.check, esmvalcore.cmor._fixes.fix.genericfix]
     mode: disallow
+  no_external_warnings:  # no events from external Python warnings
+    (): esmvalcore.config._logging.FilterExternalWarnings
 handlers:
   console:
     class: logging.StreamHandler
     level: INFO
     formatter: console
     stream: ext://sys.stdout
-    filters: [no_cmor]
+    filters: [no_cmor, no_external_warnings]
   simple_log_file:
     class: logging.FileHandler
     level: INFO
     formatter: brief
     filename: main_log.txt
     mode: w
-    filters: [no_cmor]
+    filters: [no_cmor, no_external_warnings]
   debug_log_file:
     class: logging.FileHandler
     level: DEBUG
