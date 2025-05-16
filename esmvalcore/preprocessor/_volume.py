@@ -7,14 +7,12 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import dask.array as da
 import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
-from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
@@ -29,6 +27,11 @@ from esmvalcore.preprocessor._shared import (
 from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -98,9 +101,12 @@ def extract_volume(
     elif interval_bounds == "right_closed":
         coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
     else:
-        raise ValueError(
+        msg = (
             'Depth extraction bounds can be set to "open", "closed", '
-            f'"left_closed", or "right_closed". Got "{interval_bounds}".',
+            f'"left_closed", or "right_closed". Got "{interval_bounds}".'
+        )
+        raise ValueError(
+            msg,
         )
 
     z_constraint = iris.Constraint(coord_values=coord_values)
@@ -139,24 +145,29 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
 
     # Assert z has length > 0
     if not z_dim:
-        raise ValueError("Cannot compute volume with scalar Z-axis")
+        msg = "Cannot compute volume with scalar Z-axis"
+        raise ValueError(msg)
 
     # Guess bounds if missing
     if not depth.has_bounds():
         depth.guess_bounds()
     if depth.core_bounds().shape[-1] != 2:
-        raise ValueError(
+        msg = (
             f"Z axis bounds shape found {depth.core_bounds().shape}. "
             "Bounds should be 2 in the last dimension to compute the "
-            "thickness.",
+            "thickness."
+        )
+        raise ValueError(
+            msg,
         )
 
     # Convert units to get the thickness in meters
     try:
         depth.convert_units("m")
     except ValueError as err:
+        msg = f"Cannot compute volume using the Z-axis. {err}"
         raise ValueError(
-            f"Cannot compute volume using the Z-axis. {err}",
+            msg,
         ) from err
 
     # Calculate Z-direction thickness
@@ -281,7 +292,8 @@ def volume_statistics(
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
     if operator != "mean":
-        raise ValueError(f"Volume operator {operator} not recognised.")
+        msg = f"Volume operator {operator} not recognised."
+        raise ValueError(msg)
     # get z, y, x coords
     z_axis = cube.coord(axis="Z")
     y_axis = cube.coord(axis="Y")
@@ -291,11 +303,14 @@ def volume_statistics(
     xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
     xyz_dims = tuple({*cube.coord_dims(z_axis), *xy_dims})
     if len(xyz_dims) > len(xy_dims) + 1:
-        raise ValueError(
+        msg = (
             f"X and Y axis coordinates depend on {xy_dims} dimensions, "
             f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
             "This may indicate Z axis depending on other dimension than "
-            "space that could provoke invalid aggregation...",
+            "space that could provoke invalid aggregation..."
+        )
+        raise ValueError(
+            msg,
         )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
@@ -370,15 +385,19 @@ def axis_statistics(
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
+        msg = f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
         raise ValueError(
-            f"Axis {axis} not found in cube {cube.summary(shorten=True)}",
+            msg,
         ) from err
 
     # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
+        msg = (
+            "axis_statistics not implemented for multidimensional coordinates."
+        )
         raise NotImplementedError(
-            "axis_statistics not implemented for multidimensional coordinates.",
+            msg,
         )
 
     # For weighted operations, create a dummy weights coordinate using the
@@ -507,13 +526,17 @@ def extract_transect(
         )
 
     if isinstance(latitude, float) and isinstance(longitude, float):
+        msg = (
+            "extract_transect: Can't slice along lat and lon at the same time"
+        )
         raise ValueError(
-            "extract_transect: Can't slice along lat and lon at the same time",
+            msg,
         )
 
     if isinstance(latitude, list) and isinstance(longitude, list):
+        msg = "extract_transect: Can't reduce lat and lon at the same time"
         raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time",
+            msg,
         )
 
     for dim_name, dim_cut, coord in zip(
@@ -597,8 +620,9 @@ def extract_trajectory(
     from iris.analysis.trajectory import interpolate
 
     if len(latitudes) != len(longitudes):
+        msg = "Longitude & Latitude coordinates have different lengths"
         raise ValueError(
-            "Longitude & Latitude coordinates have different lengths",
+            msg,
         )
 
     if len(latitudes) == len(longitudes) == 2:
@@ -609,5 +633,4 @@ def extract_trajectory(
         latitudes = np.linspace(minlat, maxlat, num=number_points)
 
     points = [("latitude", latitudes), ("longitude", longitudes)]
-    interpolated_cube = interpolate(cube, points)  # Very slow!
-    return interpolated_cube
+    return interpolate(cube, points)  # Very slow!

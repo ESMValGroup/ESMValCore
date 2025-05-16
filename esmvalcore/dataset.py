@@ -7,14 +7,11 @@ import pprint
 import re
 import textwrap
 import uuid
-from collections.abc import Iterator, Sequence
 from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Union
-
-from iris.cube import Cube
+from typing import TYPE_CHECKING, Any, Union
 
 from esmvalcore import esgf, local
 from esmvalcore._recipe import check
@@ -34,7 +31,13 @@ from esmvalcore.local import (
     _get_start_end_date,
 )
 from esmvalcore.preprocessor import preprocess
-from esmvalcore.typing import Facets, FacetValue
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    from iris.cube import Cube
+
+    from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
     "Dataset",
@@ -806,8 +809,7 @@ class Dataset:
                 **kwargs,
             )
 
-        cube = result[0]
-        return cube
+        return result[0]
 
     def from_ranges(self) -> list[Dataset]:
         """Create a list of datasets from short notations.
@@ -856,9 +858,12 @@ class Dataset:
         if isinstance(tag, (list, tuple)):
             for elem in tag:
                 if regex.search(elem):
-                    raise RecipeError(
+                    msg = (
                         f"In {self}: {input_tag} expansion "
-                        f"cannot be combined with {input_tag} lists",
+                        f"cannot be combined with {input_tag} lists"
+                    )
+                    raise RecipeError(
+                        msg,
                     )
             expanded.append(tag)
         else:
@@ -881,8 +886,9 @@ class Dataset:
 
         timerange = self.facets["timerange"]
         if not isinstance(timerange, str):
+            msg = f"timerange should be a string, got '{timerange!r}'"
             raise TypeError(
-                f"timerange should be a string, got '{timerange!r}'",
+                msg,
             )
         check.valid_time_selection(timerange)
 

@@ -119,7 +119,7 @@ def cordex_cubes():
 
 
 @pytest.mark.parametrize(
-    "coord, var_name, long_name",
+    ("coord", "var_name", "long_name"),
     [
         ("time", "time", "time"),
         ("latitude", "lat", "latitude"),

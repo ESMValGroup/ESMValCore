@@ -134,12 +134,14 @@ class TagsManager(dict):
         """
         if section not in self:
             postfix = f" in {self.source_file}" if self.source_file else ""
-            raise ValueError(f"Section '{section}' does not exist{postfix}")
+            msg = f"Section '{section}' does not exist{postfix}"
+            raise ValueError(msg)
 
         if tag not in self[section]:
             postfix = f" of {self.source_file}" if self.source_file else ""
+            msg = f"Tag '{tag}' does not exist in section '{section}'{postfix}"
             raise ValueError(
-                f"Tag '{tag}' does not exist in section '{section}'{postfix}",
+                msg,
             )
 
         return self[section][tag]

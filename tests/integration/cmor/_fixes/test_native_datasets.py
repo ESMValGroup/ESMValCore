@@ -15,20 +15,18 @@ from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 @pytest.fixture
 def cubes():
     """List of cubes with different `var_names`."""
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(0.0, var_name="pr"),
             Cube(0.0, var_name="tas"),
         ],
     )
-    return cubes
 
 
 @pytest.fixture
 def empty_cube():
     """Empty cube."""
-    cube = Cube(1.0)
-    return cube
+    return Cube(1.0)
 
 
 @pytest.fixture
@@ -75,7 +73,7 @@ def sample_cube():
         long_name="longitude",
         units="rad",
     )
-    cube = Cube(
+    return Cube(
         [[[[1.0]], [[2.0]]]],
         dim_coords_and_dims=[
             (time_coord, 0),
@@ -90,7 +88,6 @@ def sample_cube():
             (coord_with_bounds, 1),
         ],
     )
-    return cube
 
 
 @pytest.fixture
@@ -106,12 +103,11 @@ def fix():
     """
     vardef = get_var_info("CMIP6", "Amon", "tas")
     extra_facets = {}
-    fix = NativeDatasetFix(vardef, extra_facets=extra_facets)
-    return fix
+    return NativeDatasetFix(vardef, extra_facets=extra_facets)
 
 
 @pytest.mark.parametrize(
-    "scalar_coord,coord_name,val",
+    ("scalar_coord", "coord_name", "val"),
     [
         ("height2m", "height", 2.0),
         ("height10m", "height", 10.0),
@@ -248,7 +244,7 @@ def test_get_cube_fail(cubes, fix):
 
 
 @pytest.mark.parametrize(
-    "coord,coord_name,func_name",
+    ("coord", "coord_name", "func_name"),
     [
         ("time", "time", "fix_regular_time"),
         ("time1", "time", "fix_regular_time"),
@@ -282,7 +278,7 @@ def test_fix_regular_coords_from_cube(
 
 
 @pytest.mark.parametrize(
-    "coord,coord_name,func_name",
+    ("coord", "coord_name", "func_name"),
     [
         ("time", "time", "fix_regular_time"),
         ("time1", "time", "fix_regular_time"),
@@ -316,7 +312,7 @@ def test_fix_regular_coords_from_str(
 
 
 @pytest.mark.parametrize(
-    "func_name,coord_name,units",
+    ("func_name", "coord_name", "units"),
     [
         ("fix_regular_time", "time", "days since 01-01-1990"),
         ("fix_regular_lat", "latitude", "rad"),
@@ -343,7 +339,7 @@ def test_fix_regular_coords_from_coords(
 
 
 @pytest.mark.parametrize(
-    "func_name,coord_name,units",
+    ("func_name", "coord_name", "units"),
     [
         ("fix_regular_time", "time", "days since 01-01-1990"),
         ("fix_regular_lat", "latitude", "rad"),

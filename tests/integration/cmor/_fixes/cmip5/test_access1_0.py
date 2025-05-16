@@ -92,8 +92,7 @@ def cl_cubes():
         long_name="x",
         aux_coords_and_dims=[(b_coord.copy(), 0)],
     )
-    cubes = CubeList([cl_cube, x_cube])
-    return cubes
+    return CubeList([cl_cube, x_cube])
 
 
 @unittest.mock.patch(

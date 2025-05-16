@@ -172,11 +172,12 @@ def test_allvars_fix_metadata(cubes):
         if cube.var_name == "ps":
             assert cube.standard_name == "air_pressure"
             assert cube.long_name == "Air pressure"
-        elif cube.var_name == "tas" or cube.var_name == "ta":
+        elif cube.var_name in {"tas", "ta"}:
             assert cube.standard_name == "air_temperature"
             assert cube.long_name == "Air Temperature"
         else:
-            assert False, "Invalid var_name"
+            msg = "Invalid var_name"
+            raise AssertionError(msg)
         try:
             lat_coord = cube.coord("latitude")
         except iris.exceptions.CoordinateNotFoundError:

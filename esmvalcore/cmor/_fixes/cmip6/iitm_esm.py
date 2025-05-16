@@ -4,10 +4,9 @@ import logging
 
 import numpy as np
 
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.fixes import get_time_bounds
-
-from ..common import OceanFixGrid
-from ..fix import Fix
 
 logger = logging.getLogger(__name__)
 

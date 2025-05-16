@@ -35,8 +35,7 @@ def cube_1d_time():
         long_name="time",
         units="days since 1850-01-01",
     )
-    cube = Cube([0, 0, 0], dim_coords_and_dims=[(time_coord, 0)])
-    return cube
+    return Cube([0, 0, 0], dim_coords_and_dims=[(time_coord, 0)])
 
 
 def _get_fix(mip, frequency, short_name, fix_name):
@@ -51,8 +50,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
     extra_facets["frequency"] = frequency
     vardef = get_var_info(project="CESM", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.cesm.cesm2, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets)
-    return fix
+    return cls(vardef, extra_facets=extra_facets)
 
 
 def get_fix(mip, frequency, short_name):
@@ -71,8 +69,7 @@ def fix_metadata(cubes, mip, frequency, short_name):
     fix = get_fix(mip, frequency, short_name)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, frequency, short_name)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def check_tas_metadata(cubes):

@@ -7,7 +7,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -39,6 +38,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
@@ -82,9 +83,11 @@ def extract_region(
     ancil_vars = cube.ancillary_variables()
 
     if abs(start_latitude) > 90.0:
-        raise ValueError(f"Invalid start_latitude: {start_latitude}")
+        msg = f"Invalid start_latitude: {start_latitude}"
+        raise ValueError(msg)
     if abs(end_latitude) > 90.0:
-        raise ValueError(f"Invalid end_latitude: {end_latitude}")
+        msg = f"Invalid end_latitude: {end_latitude}"
+        raise ValueError(msg)
     if cube.coord("latitude").ndim == 1:
         # Iris check if any point of the cell is inside the region
         # To check only the center, ignore_bounds must be set to
@@ -191,7 +194,8 @@ def _extract_irregular_region(
     # Crop the selection, but keep rectangular shape
     i_range, j_range = selection.nonzero()
     if i_range.size == 0:
-        raise ValueError("No data points available in selected region")
+        msg = "No data points available in selected region"
+        raise ValueError(msg)
     i_min, i_max = i_range.min(), i_range.max()
     j_min, j_max = j_range.min(), j_range.max()
     i_slice, j_slice = slice(i_min, i_max + 1), slice(j_min, j_max + 1)
@@ -243,8 +247,9 @@ def zonal_statistics(
 
     """
     if cube.coord("longitude").points.ndim >= 2:
+        msg = "Zonal statistics on irregular grids not yet implemented"
         raise ValueError(
-            "Zonal statistics on irregular grids not yet implemented",
+            msg,
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
@@ -293,8 +298,9 @@ def meridional_statistics(
 
     """
     if cube.coord("latitude").points.ndim >= 2:
+        msg = "Meridional statistics on irregular grids not yet implemented"
         raise ValueError(
-            "Meridional statistics on irregular grids not yet implemented",
+            msg,
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
@@ -412,20 +418,21 @@ def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
         regions = [regions]
 
     if not isinstance(regions, (list, tuple, set)):
+        msg = f'Regions "{regions}" is not an acceptable format.'
         raise TypeError(
-            f'Regions "{regions}" is not an acceptable format.',
+            msg,
         )
 
     available_regions = set(cube.coord("region").points)
     invalid_regions = set(regions) - available_regions
     if invalid_regions:
+        msg = f'Region(s) "{invalid_regions}" not in cube region(s): {available_regions}'
         raise ValueError(
-            f'Region(s) "{invalid_regions}" not in cube region(s): {available_regions}',
+            msg,
         )
 
     constraints = iris.Constraint(region=lambda r: r in regions)
-    cube = cube.extract(constraint=constraints)
-    return cube
+    return cube.extract(constraint=constraints)
 
 
 def _crop_cube(
@@ -482,8 +489,7 @@ def _select_representative_point(
     )
     nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
     nearest_lon, nearest_lat = nearest_point.coords[0]
-    mask = (lon == nearest_lon) & (lat == nearest_lat)
-    return mask
+    return (lon == nearest_lon) & (lat == nearest_lat)
 
 
 def _correct_coords_from_shapefile(
@@ -520,16 +526,22 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
     # have the requested attribute key
     if isinstance(ids, dict):
         if len(ids) != 1:
-            raise ValueError(
+            msg = (
                 f"If `ids` is given as dict, it needs exactly one entry, got "
-                f"{ids}",
+                f"{ids}"
             )
-        key = list(ids.keys())[0]
+            raise ValueError(
+                msg,
+            )
+        key = next(iter(ids.keys()))
         for geometry in geometries:
             if key not in geometry["properties"]:
-                raise ValueError(
+                msg = (
                     f"Geometry {dict(geometry['properties'])} does not have "
-                    f"requested attribute {key}",
+                    f"requested attribute {key}"
+                )
+                raise ValueError(
+                    msg,
                 )
         id_keys: tuple[str, ...] = (key,)
         ids = ids[key]
@@ -579,9 +591,12 @@ def _get_requested_geometries(
     if ids is not None:
         missing = set(ids) - set(requested_geometries.keys())
         if missing:
-            raise ValueError(
+            msg = (
                 f"Requested shapes {missing} not found in shapefile "
-                f"{shapefile}",
+                f"{shapefile}"
+            )
+            raise ValueError(
+                msg,
             )
 
     return requested_geometries
@@ -596,8 +611,9 @@ def _get_masks_from_geometries(
 ) -> dict[str, np.ndarray]:
     """Get cube masks from requested regions."""
     if method not in {"contains", "representative"}:
+        msg = "Invalid value for `method`. Choose from 'contains', "
         raise ValueError(
-            "Invalid value for `method`. Choose from 'contains', ",
+            msg,
             "'representative'.",
         )
 

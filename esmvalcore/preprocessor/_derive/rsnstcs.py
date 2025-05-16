@@ -16,13 +16,12 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rsdscs"},
             {"short_name": "rsdt"},
             {"short_name": "rsuscs"},
             {"short_name": "rsutcs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -46,6 +45,4 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(name="toa_outgoing_shortwave_flux_assuming_clear_sky"),
         )
 
-        rsnstcs_cube = (rsdt_cube - rsutcs_cube) - (rsdscs_cube - rsuscs_cube)
-
-        return rsnstcs_cube
+        return (rsdt_cube - rsutcs_cube) - (rsdscs_cube - rsuscs_cube)

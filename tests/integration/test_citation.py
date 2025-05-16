@@ -40,7 +40,7 @@ def test_references(tmp_path, monkeypatch):
     _write_citation_files(filename, provenance)
     citation_file = tmp_path / "output_citation.bibtex"
     citation = citation_file.read_text(encoding="utf-8")
-    assert citation == "\n".join([ESMVALTOOL_PAPER, fake_bibtex])
+    assert citation == f"{ESMVALTOOL_PAPER}\n{fake_bibtex}"
 
 
 def mock_get_response(url):
@@ -95,8 +95,9 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
         \tdoi = {{{doi}}},
         }}
         """).lstrip()
-    assert citation_file.read_text(encoding="utf-8") == "\n".join(
-        [ESMVALTOOL_PAPER, fake_bibtex_entry],
+    assert (
+        citation_file.read_text(encoding="utf-8")
+        == f"{ESMVALTOOL_PAPER}\n{fake_bibtex_entry}"
     )
 
 

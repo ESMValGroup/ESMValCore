@@ -3,8 +3,8 @@
 import iris
 import numpy as np
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(ClFixHybridHeightCoord):

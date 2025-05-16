@@ -138,9 +138,7 @@ class RecipeInfo:
         """
         if not template:
             template = get_template(self.__class__.__name__ + ".j2")
-        rendered = template.render(info=self)
-
-        return rendered
+        return template.render(info=self)
 
     def resolve(self) -> None:
         """Force resolve of all tags in recipe.

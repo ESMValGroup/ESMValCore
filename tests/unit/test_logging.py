@@ -8,7 +8,7 @@ import pytest
 from esmvalcore.config._logging import FilterMultipleNames, configure_logging
 
 
-@pytest.mark.parametrize("level", (None, "INFO", "DEBUG"))
+@pytest.mark.parametrize("level", [None, "INFO", "DEBUG"])
 def test_logging_with_level(level):
     """Test log level configuration."""
     ret = configure_logging(console_log_level=level)
@@ -39,7 +39,7 @@ def test_logging_log_level_invalid():
 
 
 @pytest.mark.parametrize(
-    "names,mode,output",
+    ("names", "mode", "output"),
     [
         (["test"], "allow", False),
         (["test"], "disallow", True),

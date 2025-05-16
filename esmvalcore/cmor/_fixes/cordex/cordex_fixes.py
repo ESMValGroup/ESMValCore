@@ -17,14 +17,12 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def _get_domain(data_domain):
-    domain = cx.cordex_domain(data_domain, add_vertices=True)
-    return domain
+    return cx.cordex_domain(data_domain, add_vertices=True)
 
 
 @lru_cache
 def _get_domain_info(data_domain):
-    domain_info = cx.domain_info(data_domain)
-    return domain_info
+    return cx.domain_info(data_domain)
 
 
 class MOHCHadREM3GA705(Fix):
@@ -129,9 +127,12 @@ class AllVars(Fix):
         )
 
         if diff > 10e-4:
-            raise RecipeError(
+            msg = (
                 "Differences between the original grid and the "
-                f"standardised grid are above 10e-4 {new_coord.units}.",
+                f"standardised grid are above 10e-4 {new_coord.units}."
+            )
+            raise RecipeError(
+                msg,
             )
 
     def _fix_rotated_coords(self, cube, domain, domain_info):
@@ -215,10 +216,13 @@ class AllVars(Fix):
                     "functions may fail.",
                 )
             else:
-                raise RecipeError(
+                msg = (
                     f"Coordinate system {coord_system.grid_mapping_name} "
                     "not supported in CORDEX datasets. Must be "
-                    "rotated_latitude_longitude or lambert_conformal_conic.",
+                    "rotated_latitude_longitude or lambert_conformal_conic."
+                )
+                raise RecipeError(
+                    msg,
                 )
 
         return cubes

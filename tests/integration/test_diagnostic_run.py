@@ -139,7 +139,7 @@ def interpreter_not_installed(script):
 
 
 @pytest.mark.parametrize(
-    "script_file, script",
+    ("script_file", "script"),
     [
         pytest.param(
             script_file,
@@ -204,7 +204,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
 
 # TODO: remove in v2.14.0
 @pytest.mark.parametrize(
-    "script_file, script",
+    ("script_file", "script"),
     [
         pytest.param(
             script_file,

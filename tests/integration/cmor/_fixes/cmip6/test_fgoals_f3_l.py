@@ -119,13 +119,12 @@ def test_get_clt_fix():
 @pytest.fixture
 def clt_cube():
     """``clt`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [1.0],
         var_name="clt",
         standard_name="cloud_area_fraction",
         units="%",
     )
-    return cube
 
 
 def test_clt_fix_data(clt_cube):

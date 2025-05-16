@@ -156,14 +156,13 @@ def simple_unstructured_cube():
         long_name="longitude",
         units="degrees_east",
     )
-    cube = Cube(
+    return Cube(
         [[[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]]],
         var_name="ta",
         units="K",
         dim_coords_and_dims=[(time_coord, 0), (height_coord, 1)],
         aux_coords_and_dims=[(lat_coord, 2), (lon_coord, 2)],
     )
-    return cube
 
 
 def _get_fix(mip, short_name, fix_name, session=None):
@@ -179,8 +178,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session=session)
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session=session)
 
 
 def get_fix(mip, short_name, session=None):
@@ -199,8 +197,7 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def fix_data(cube, mip, short_name, session=None):
@@ -208,8 +205,7 @@ def fix_data(cube, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cube = fix.fix_data(cube)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cube = fix.fix_data(cube)
-    return cube
+    return fix.fix_data(cube)
 
 
 def check_ta_metadata(cubes):
@@ -1853,7 +1849,7 @@ def test_subhourly_data_no_shift():
 
 
 @pytest.mark.parametrize(
-    "frequency,dt_in,dt_out,bounds",
+    ("frequency", "dt_in", "dt_out", "bounds"),
     [
         (
             "dec",
@@ -1942,7 +1938,7 @@ def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
 
 
 @pytest.mark.parametrize(
-    "frequency,dt_in",
+    ("frequency", "dt_in"),
     [
         ("dec", [(2000, 1, 15)]),
         ("yr", [(2000, 1, 1), (2001, 1, 1)]),
@@ -2053,7 +2049,7 @@ def test_shift_time_coord_invalid_freq(frequency):
 
 
 @pytest.mark.parametrize(
-    "frequency,datetime_in,datetime_out",
+    ("frequency", "datetime_in", "datetime_out"),
     [
         ("dec", (2000, 1, 1), (1990, 1, 1)),
         ("yr", (2000, 1, 1), (1999, 1, 1)),
@@ -2247,7 +2243,7 @@ def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path,description,output",
+    ("path", "description", "output"),
     [
         ("{tmp_path}/a.nc", None, "{tmp_path}/a.nc"),
         ("b.nc", "Grid file", "{tmp_path}/b.nc"),
@@ -2273,7 +2269,7 @@ def test_get_path_from_facet(path, description, output, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path,description",
+    ("path", "description"),
     [
         ("{tmp_path}/a.nc", None),
         ("b.nc", "Grid file"),

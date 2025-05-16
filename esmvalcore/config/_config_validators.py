@@ -57,8 +57,9 @@ def _make_type_validator(cls, *, allow_none=False):
             return cls(inp)
         except ValueError as err:
             if isinstance(cls, type):
+                msg = f"Could not convert {inp!r} to {cls.__name__}"
                 raise ValidationError(
-                    f"Could not convert {inp!r} to {cls.__name__}",
+                    msg,
                 ) from err
             raise
 
@@ -121,13 +122,17 @@ def _listify_validator(
                 if not isinstance(val, str) or val
             )
         else:
+            msg = f"Expected str or other non-set iterable, but got {inp}"
             raise ValidationError(
-                f"Expected str or other non-set iterable, but got {inp}",
+                msg,
             )
         if n_items is not None and len(inp) != n_items:
-            raise ValidationError(
+            msg = (
                 f"Expected {n_items} values, "
-                f"but there are {len(inp)} values in {inp}",
+                f"but there are {len(inp)} values in {inp}"
+            )
+            raise ValidationError(
+                msg,
             )
         return inp
 
@@ -149,7 +154,8 @@ def validate_bool(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     if not isinstance(value, bool):
-        raise ValidationError(f"Could not convert `{value}` to `bool`")
+        msg = f"Could not convert `{value}` to `bool`"
+        raise ValidationError(msg)
     return value
 
 
@@ -160,7 +166,8 @@ def validate_path(value, allow_none=False):
     try:
         path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
-        raise ValidationError(f"Expected a path, but got {value}") from err
+        msg = f"Expected a path, but got {value}"
+        raise ValidationError(msg) from err
     else:
         return path
 
@@ -168,7 +175,8 @@ def validate_path(value, allow_none=False):
 def validate_positive(value):
     """Check if number is positive."""
     if value is not None and value <= 0:
-        raise ValidationError(f"Expected a positive number, but got {value}")
+        msg = f"Expected a positive number, but got {value}"
+        raise ValidationError(msg)
     return value
 
 
@@ -276,8 +284,9 @@ def validate_check_level(value):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
+            msg = f"`{value}` is not a valid strictness level"
             raise ValidationError(
-                f"`{value}` is not a valid strictness level",
+                msg,
             ) from None
 
     else:
@@ -291,9 +300,12 @@ def validate_search_esgf(value):
     value = validate_string(value)
     value = value.lower()
     if value not in SEARCH_ESGF_OPTIONS:
-        raise ValidationError(
+        msg = (
             f"`{value}` is not a valid option ESGF search option, possible "
-            f"values are {SEARCH_ESGF_OPTIONS}",
+            f"values are {SEARCH_ESGF_OPTIONS}"
+        )
+        raise ValidationError(
+            msg,
         ) from None
     return value
 

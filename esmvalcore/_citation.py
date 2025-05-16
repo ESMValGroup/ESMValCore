@@ -193,7 +193,7 @@ def _json_to_bibtex(data):
         doi = data["identifier"].get("id", "doi not found")
         url = f"https://doi.org/{doi}"
 
-    bibtex_entry = textwrap.dedent(f"""
+    return textwrap.dedent(f"""
         @misc{{{url},
         \turl = {{{url}}},
         \ttitle = {{{title}}},
@@ -203,7 +203,6 @@ def _json_to_bibtex(data):
         \tdoi = {{{doi}}},
         }}
         """).lstrip()
-    return bibtex_entry
 
 
 @lru_cache(maxsize=1024)
@@ -226,11 +225,7 @@ def _collect_bibtex_citation(tag):
 def _collect_cmip_citation(json_url):
     """Collect information from CMIP6 Data Citation Service."""
     json_data = _get_response(json_url)
-    if json_data:
-        bibtex_entry = _json_to_bibtex(json_data)
-    else:
-        bibtex_entry = ""
-    return bibtex_entry
+    return _json_to_bibtex(json_data) if json_data else ""
 
 
 def _make_url_prefix(attribute):
@@ -246,17 +241,14 @@ def _make_url_prefix(attribute):
     for key, value in attribute:
         if key.localpart in localpart:
             localpart[key.localpart] = value
-    url_prefix = ".".join(localpart.values())
-    return url_prefix
+    return ".".join(localpart.values())
 
 
 def _make_json_url(url_prefix):
     """Make json url based on CMIP6 Data Citation Service."""
-    json_url = f"{CMIP6_URL_STEM}/cerarest/exportcmip6?input={url_prefix}"
-    return json_url
+    return f"{CMIP6_URL_STEM}/cerarest/exportcmip6?input={url_prefix}"
 
 
 def _make_info_url(url_prefix):
     """Make info url based on CMIP6 Data Citation Service."""
-    info_url = f"{CMIP6_URL_STEM}/cmip6?input={url_prefix}"
-    return info_url
+    return f"{CMIP6_URL_STEM}/cmip6?input={url_prefix}"

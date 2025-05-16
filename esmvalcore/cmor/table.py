@@ -49,9 +49,12 @@ def _update_cmor_facets(facets):
     else:
         table_entry = None
     if table_entry is None:
-        raise RecipeError(
+        msg = (
             f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'",
+            f"'{short_name}' with mip '{mip}'"
+        )
+        raise RecipeError(
+            msg,
         )
     facets["original_short_name"] = table_entry.short_name
     for key in _CMOR_KEYS:
@@ -70,8 +73,7 @@ def _update_cmor_facets(facets):
 def _get_mips(project: str, short_name: str) -> list[str]:
     """Get all available MIP tables in a project."""
     tables = CMOR_TABLES[project].tables
-    mips = [mip for mip in tables if short_name in tables[mip]]
-    return mips
+    return [mip for mip in tables if short_name in tables[mip]]
 
 
 def get_var_info(
@@ -109,9 +111,12 @@ def get_var_info(
 
     """
     if project not in CMOR_TABLES:
-        raise KeyError(
+        msg = (
             f"No CMOR tables available for project '{project}'. The following "
-            f"tables are available: {', '.join(CMOR_TABLES)}.",
+            f"tables are available: {', '.join(CMOR_TABLES)}."
+        )
+        raise KeyError(
+            msg,
         )
 
     # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
@@ -137,8 +142,9 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
     if cfg_developer is None:
         cfg_developer = Path(__file__).parents[1] / "config-developer.yml"
     elif not isinstance(cfg_developer, Path):
+        msg = "cfg_developer is not a Path-like object, got "
         raise TypeError(
-            "cfg_developer is not a Path-like object, got ",
+            msg,
             cfg_developer,
         )
     mtime = cfg_developer.stat().st_mtime
@@ -226,7 +232,8 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
             default_table_prefix=default_table_prefix,
             alt_names=alt_names,
         )
-    raise ValueError(f"Unsupported CMOR type {cmor_type}")
+    msg = f"Unsupported CMOR type {cmor_type}"
+    raise ValueError(msg)
 
 
 class InfoBase:
@@ -439,8 +446,9 @@ class CMIP6Info(InfoBase):
         cmor_tables_path = os.path.join(cwd, "tables", cmor_tables_path)
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
+        msg = f"CMOR tables not found in {cmor_tables_path}"
         raise ValueError(
-            f"CMOR tables not found in {cmor_tables_path}",
+            msg,
         )
 
     def _load_table(self, json_file):
@@ -499,7 +507,7 @@ class CMIP6Info(InfoBase):
         ):
             with open(json_file, encoding="utf-8") as inf:
                 table_data = json.loads(inf.read())
-                for coord_name in table_data["axis_entry"].keys():
+                for coord_name in table_data["axis_entry"]:
                     coord = CoordinateInfo(coord_name)
                     coord.read_json(table_data["axis_entry"][coord_name])
                     self.coords[coord_name] = coord
@@ -545,15 +553,13 @@ class CMIP6Info(InfoBase):
         try:
             return self.tables[table]
         except KeyError:
-            return self.tables.get("".join((self.default_table_prefix, table)))
+            return self.tables.get(f"{self.default_table_prefix}{table}")
 
     @staticmethod
     def _is_table(table_data):
         if "variable_entry" not in table_data:
             return False
-        if "Header" not in table_data:
-            return False
-        return True
+        return "Header" in table_data
 
 
 @total_ordering
@@ -562,7 +568,7 @@ class TableInfo(dict):
 
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
-        super(TableInfo, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.name = ""
         self.frequency = ""
         self.realm = ""
@@ -644,7 +650,7 @@ class VariableInfo(JsonInfo):
         short_name: str
             Variable's short name.
         """
-        super(VariableInfo, self).__init__()
+        super().__init__()
         self.table_type = table_type
         self.modeling_realm = []
         """Modeling realm"""
@@ -757,7 +763,7 @@ class CoordinateInfo(JsonInfo):
         name: str
             coordinate's name
         """
-        super(CoordinateInfo, self).__init__()
+        super().__init__()
         self.name = name
         self.generic_level = False
         self.generic_lev_coords = {}
@@ -880,8 +886,7 @@ class CMIP5Info(InfoBase):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, "tables", cmor_tables_path)
-        return cmor_tables_path
+        return os.path.join(cwd, "tables", cmor_tables_path)
 
     def _load_table(self, table_file, table_name=""):
         if table_name and table_name in self.tables:
@@ -1054,9 +1059,12 @@ class CustomInfo(CMIP5Info):
         if cmor_tables_path is not None:
             self._user_table_folder = self._get_cmor_path(cmor_tables_path)
             if not os.path.isdir(self._user_table_folder):
-                raise ValueError(
+                msg = (
                     f"Custom CMOR tables path {self._user_table_folder} is "
-                    f"not a directory",
+                    f"not a directory"
+                )
+                raise ValueError(
+                    msg,
                 )
             self._read_table_dir(self._user_table_folder)
         else:

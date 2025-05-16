@@ -3,7 +3,7 @@
 import dask.array as da
 from iris.cube import Cube
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Toz(Fix):

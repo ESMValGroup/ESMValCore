@@ -5,8 +5,8 @@ from cf_units import Unit
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 

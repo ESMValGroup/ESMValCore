@@ -2,7 +2,7 @@
 
 import iris
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 def _get_and_remove(cubes, long_name):

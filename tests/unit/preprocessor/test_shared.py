@@ -180,7 +180,7 @@ def test_get_iris_aggregator_no_weights_allowed():
 
 
 @pytest.mark.parametrize(
-    "aggregator,result",
+    ("aggregator", "result"),
     [
         (iris.analysis.MEAN, True),
         (iris.analysis.SUM, True),
@@ -227,7 +227,7 @@ TEST_PRESERVE_FLOAT_TYPE = [
 ]
 
 
-@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
+@pytest.mark.parametrize(("data", "dtype"), TEST_PRESERVE_FLOAT_TYPE)
 def test_preserve_float_dtype(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
@@ -245,7 +245,7 @@ def test_preserve_float_dtype(data, dtype):
     assert list(signature.parameters) == ["obj", "arg", "kwarg"]
 
 
-@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
+@pytest.mark.parametrize(("data", "dtype"), TEST_PRESERVE_FLOAT_TYPE)
 def test_preserve_float_dtype_kwargs_only(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
@@ -423,7 +423,7 @@ def test_try_adding_calculated_cell_area():
 
 
 @pytest.mark.parametrize(
-    ["mask", "array", "dim_map", "expected"],
+    ("mask", "array", "dim_map", "expected"),
     [
         (
             np.arange(2),
@@ -523,13 +523,12 @@ def test_rechunk_aux_factory_dependencies():
 
 def get_0d_time():
     """Get 0D time coordinate."""
-    time = AuxCoord(
+    return AuxCoord(
         15.0,
         bounds=[0.0, 30.0],
         standard_name="time",
         units="days since 1850-01-01 00:00:00",
     )
-    return time
 
 
 @pytest.mark.parametrize("lazy", [True, False])

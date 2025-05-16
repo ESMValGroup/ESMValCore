@@ -53,23 +53,23 @@ class Test(tests.Test):
         # Check the latitude coordinate creation.
         [args], kwargs = call_lats
         self.assert_array_equal(args, expected_lat_points)
-        expected_lat_kwargs = dict(
-            standard_name="latitude",
-            units="degrees_north",
-            var_name="lat",
-            circular=False,
-        )
+        expected_lat_kwargs = {
+            "standard_name": "latitude",
+            "units": "degrees_north",
+            "var_name": "lat",
+            "circular": False,
+        }
         self.assertEqual(kwargs, expected_lat_kwargs)
 
         # Check the longitude coordinate creation.
         [args], kwargs = call_lons
         self.assert_array_equal(args, expected_lon_points)
-        expected_lon_kwargs = dict(
-            standard_name="longitude",
-            units="degrees_east",
-            var_name="lon",
-            circular=False,
-        )
+        expected_lon_kwargs = {
+            "standard_name": "longitude",
+            "units": "degrees_east",
+            "var_name": "lon",
+            "circular": False,
+        }
         self.assertEqual(kwargs, expected_lon_kwargs)
 
         # Check that the coordinate guess_bounds method has been called.
@@ -80,7 +80,7 @@ class Test(tests.Test):
         self.mock_Cube.assert_called_once()
         _, kwargs = self.mock_Cube.call_args
         spec = [(self.mock_coord, 0), (self.mock_coord, 1)]
-        expected_cube_kwargs = dict(dim_coords_and_dims=spec)
+        expected_cube_kwargs = {"dim_coords_and_dims": spec}
         self.assertEqual(kwargs, expected_cube_kwargs)
 
         # Reset the mocks to enable multiple calls per test-case.

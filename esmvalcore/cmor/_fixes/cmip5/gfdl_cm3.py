@@ -1,7 +1,7 @@
 """Fixes for GFDL CM3 model."""
 
-from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
-from ..fix import Fix
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(BaseAllVars):

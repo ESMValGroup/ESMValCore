@@ -6,13 +6,18 @@ from esmvalcore.preprocessor import PreprocessingTask
 
 
 @pytest.mark.parametrize(
-    "max_parallel_tasks,available_cpu_cores,n_preproc_tasks,scheduler,expected_workers",
+    (
+        "max_parallel_tasks",
+        "available_cpu_cores",
+        "n_preproc_tasks",
+        "scheduler",
+        "expected_workers",
+    ),
     [
         (8, 128, 100, "distributed", None),  # not using threaded scheduler
         (8, 128, 0, "threads", None),  # not running preproc tasks
         (8, 128, 100, "threads", 16),
         (4, 20, 4, "threading", 5),  # alternative name for threaded scheduler
-        (2, 4, 3, "threads", 2),
         (2, 4, 3, "threads", 2),
         (4, 4, 5, "threads", 1),
         (4, 4, 2, "threads", 2),

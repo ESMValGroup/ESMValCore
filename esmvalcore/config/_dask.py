@@ -8,18 +8,20 @@ import warnings
 from collections.abc import Generator, Mapping
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import dask.config
 import yaml
 from distributed import Client
-from distributed.deploy import Cluster
 
 from esmvalcore.config import CFG
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+if TYPE_CHECKING:
+    from distributed.deploy import Cluster
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +58,20 @@ def validate_dask_config(dask_config: Mapping) -> None:
     """Validate dask configuration options."""
     for option in ("profiles", "use"):
         if option not in dask_config:
+            msg = (
+                f"Key '{option}' needs to be defined for 'dask' configuration"
+            )
             raise InvalidConfigParameter(
-                f"Key '{option}' needs to be defined for 'dask' configuration",
+                msg,
             )
     profiles = dask_config["profiles"]
     use = dask_config["use"]
     if not isinstance(profiles, Mapping):
+        msg = (
+            f"Key 'dask.profiles' needs to be a mapping, got {type(profiles)}"
+        )
         raise InvalidConfigParameter(
-            f"Key 'dask.profiles' needs to be a mapping, got {type(profiles)}",
+            msg,
         )
     for profile, profile_cfg in profiles.items():
         has_scheduler_address = any(
@@ -73,26 +81,38 @@ def validate_dask_config(dask_config: Mapping) -> None:
             ],
         )
         if "cluster" in profile_cfg and has_scheduler_address:
-            raise InvalidConfigParameter(
+            msg = (
                 f"Key 'dask.profiles.{profile}' uses 'cluster' and "
-                f"'scheduler_address', can only have one of those",
+                f"'scheduler_address', can only have one of those"
+            )
+            raise InvalidConfigParameter(
+                msg,
             )
         if "cluster" in profile_cfg:
             cluster = profile_cfg["cluster"]
             if not isinstance(cluster, Mapping):
-                raise InvalidConfigParameter(
+                msg = (
                     f"Key 'dask.profiles.{profile}.cluster' needs to be a "
-                    f"mapping, got {type(cluster)}",
+                    f"mapping, got {type(cluster)}"
+                )
+                raise InvalidConfigParameter(
+                    msg,
                 )
             if "type" not in cluster:
-                raise InvalidConfigParameter(
+                msg = (
                     f"Key 'dask.profiles.{profile}.cluster' does not have a "
-                    f"'type'",
+                    f"'type'"
+                )
+                raise InvalidConfigParameter(
+                    msg,
                 )
     if use not in profiles:
-        raise InvalidConfigParameter(
+        msg = (
             f"Key 'dask.use' needs to point to an element of 'dask.profiles'; "
-            f"got '{use}', expected one of {list(profiles.keys())}",
+            f"got '{use}', expected one of {list(profiles.keys())}"
+        )
+        raise InvalidConfigParameter(
+            msg,
         )
 
 

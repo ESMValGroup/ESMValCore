@@ -37,14 +37,13 @@ def annual_cycle_cube():
         * 0.005
         + 0.005 * np.arange(n_times)
     ).reshape(n_times, 1) * np.arange(n_lat)
-    annual_cycle_cube = iris.cube.Cube(
+    return iris.cube.Cube(
         new_data,
         var_name="tas",
         standard_name="air_temperature",
         units="K",
         dim_coords_and_dims=[(time_coord, 0), (lat_coord, 1)],
     )
-    return annual_cycle_cube
 
 
 def test_amplitude_fail_wrong_coord(annual_cycle_cube):
@@ -102,14 +101,13 @@ def diurnal_cycle_cube():
         ),
         axis=None,
     )
-    diurnal_cycle_cube = iris.cube.Cube(
+    return iris.cube.Cube(
         new_data,
         var_name="tas",
         standard_name="air_temperature",
         units="K",
         dim_coords_and_dims=[(time_coord, 0)],
     )
-    return diurnal_cycle_cube
 
 
 DIURNAL_CYCLE_AMPLITUDE = [4.0] * 365 + [10.0] * 365

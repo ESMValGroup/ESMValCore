@@ -307,7 +307,7 @@ TEST_DATES_TO_TIMERANGE = [
 
 
 @pytest.mark.parametrize(
-    "start_date,end_date,expected_timerange",
+    ("start_date", "end_date", "expected_timerange"),
     TEST_DATES_TO_TIMERANGE,
 )
 def test_dates_to_timerange(start_date, end_date, expected_timerange):
@@ -331,7 +331,10 @@ TEST_TRUNCATE_DATES = [
 ]
 
 
-@pytest.mark.parametrize("date,date_file,expected_output", TEST_TRUNCATE_DATES)
+@pytest.mark.parametrize(
+    ("date", "date_file", "expected_output"),
+    TEST_TRUNCATE_DATES,
+)
 def test_truncate_dates(date, date_file, expected_output):
     """Test ``_truncate_dates``."""
     output = _truncate_dates(date, date_file)
