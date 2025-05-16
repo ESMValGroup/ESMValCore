@@ -98,14 +98,16 @@ MASK_REGRIDDING_MASK_VALUE = {
 )
 @mock.patch("esmvalcore.preprocessor._regrid_esmpy.esmpy.Manager", mock.Mock)
 @mock.patch(
-    "esmvalcore.preprocessor._regrid_esmpy.esmpy.GridItem", MockGridItem
+    "esmvalcore.preprocessor._regrid_esmpy.esmpy.GridItem",
+    MockGridItem,
 )
 @mock.patch(
     "esmvalcore.preprocessor._regrid_esmpy.esmpy.RegridMethod",
     MockRegridMethod,
 )
 @mock.patch(
-    "esmvalcore.preprocessor._regrid_esmpy.esmpy.StaggerLoc", MockStaggerLoc
+    "esmvalcore.preprocessor._regrid_esmpy.esmpy.StaggerLoc",
+    MockStaggerLoc,
 )
 @mock.patch(
     "esmvalcore.preprocessor._regrid_esmpy.esmpy.UnmappedAction",
@@ -115,24 +117,28 @@ class TestHelpers(tests.Test):
     """Unit tests for helper functions."""
 
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
-    def setUp(self):
+    def setUp(self):  # noqa: PLR0915
         """Set up fixtures."""
         # pylint: disable=too-many-locals
         lat_1d_pre_bounds = np.linspace(-90, 90, 5)
         lat_1d_bounds = np.stack(
-            [lat_1d_pre_bounds[:-1], lat_1d_pre_bounds[1:]], axis=1
+            [lat_1d_pre_bounds[:-1], lat_1d_pre_bounds[1:]],
+            axis=1,
         )
         lat_1d_points = lat_1d_bounds.mean(axis=1)
         lon_1d_pre_bounds = np.linspace(0, 360, 5)
         lon_1d_bounds = np.stack(
-            [lon_1d_pre_bounds[:-1], lon_1d_pre_bounds[1:]], axis=1
+            [lon_1d_pre_bounds[:-1], lon_1d_pre_bounds[1:]],
+            axis=1,
         )
         lon_1d_points = lon_1d_bounds.mean(axis=1)
         lon_2d_points, lat_2d_points = np.meshgrid(
-            lon_1d_points, lat_1d_points
+            lon_1d_points,
+            lat_1d_points,
         )
         (lon_2d_pre_bounds, lat_2d_pre_bounds) = np.meshgrid(
-            lon_1d_pre_bounds, lat_1d_pre_bounds
+            lon_1d_pre_bounds,
+            lat_1d_pre_bounds,
         )
         lat_2d_bounds = np.stack(
             [
@@ -230,7 +236,8 @@ class TestHelpers(tests.Test):
         )
         depth_pre_bounds = np.linspace(0, 5000, 5)
         depth_bounds = np.stack(
-            [depth_pre_bounds[:-1], depth_pre_bounds[1:]], axis=1
+            [depth_pre_bounds[:-1], depth_pre_bounds[1:]],
+            axis=1,
         )
         depth_points = depth_bounds.mean(axis=1)
         self.depth = mock.Mock(
@@ -244,7 +251,10 @@ class TestHelpers(tests.Test):
             has_bounds=mock.Mock(return_value=True),
         )
         self.scalar_coord = mock.Mock(
-            iris.coords.AuxCoord, long_name="scalar_coord", ndim=1, shape=(1,)
+            iris.coords.AuxCoord,
+            long_name="scalar_coord",
+            ndim=1,
+            shape=(1,),
         )
         data_shape = lon_2d_points.shape
         raw_data = np.arange(np.prod(data_shape)).reshape(data_shape)
@@ -252,7 +262,9 @@ class TestHelpers(tests.Test):
         mask[: data_shape[0] // 2] = True
         self.data = np.ma.masked_array(raw_data, mask)
         self.data_3d = np.repeat(
-            self.data[..., np.newaxis], depth_points.shape[0], axis=-1
+            self.data[..., np.newaxis],
+            depth_points.shape[0],
+            axis=-1,
         )
         self.expected_esmpy_lat = np.array(
             [
@@ -260,7 +272,7 @@ class TestHelpers(tests.Test):
                 [-67.5, -22.5, 22.5, 67.5],
                 [-67.5, -22.5, 22.5, 67.5],
                 [-67.5, -22.5, 22.5, 67.5],
-            ]
+            ],
         )
         self.expected_esmpy_lon = np.array(
             [
@@ -268,7 +280,7 @@ class TestHelpers(tests.Test):
                 [135.0, 135.0, 135.0, 135.0],
                 [225.0, 225.0, 225.0, 225.0],
                 [315.0, 315.0, 315.0, 315.0],
-            ]
+            ],
         )
         self.expected_esmpy_lat_corners = np.array(
             [
@@ -277,7 +289,7 @@ class TestHelpers(tests.Test):
                 [-90.0, -45.0, 0.0, 45.0, 90.0],
                 [-90.0, -45.0, 0.0, 45.0, 90.0],
                 [-90.0, -45.0, 0.0, 45.0, 90.0],
-            ]
+            ],
         )
         self.expected_esmpy_lon_corners = np.array(
             [
@@ -286,7 +298,7 @@ class TestHelpers(tests.Test):
                 [180.0, 180.0, 180.0, 180.0, 180.0],
                 [270.0, 270.0, 270.0, 270.0, 270.0],
                 [360.0, 360.0, 360.0, 360.0, 360.0],
-            ]
+            ],
         )
         self.coords = {
             "latitude": self.lat_2d,
@@ -305,7 +317,7 @@ class TestHelpers(tests.Test):
         def coord(name=None, axis=None):
             """Return selected coordinate for mock cube."""
             if axis == "Z":
-                raise CoordinateNotFoundError()
+                raise CoordinateNotFoundError
             return self.coords[name]
 
         def coords(dim_coords=None, dimensions=None):
@@ -377,7 +389,11 @@ class TestHelpers(tests.Test):
     def test_coords_iris_to_esmpy_mismatched_dimensions(self):
         """Test coord conversion with mismatched dimensions."""
         self.assertRaises(
-            ValueError, coords_iris_to_esmpy, self.lat_1d, self.lon_2d, True
+            ValueError,
+            coords_iris_to_esmpy,
+            self.lat_1d,
+            self.lon_2d,
+            True,
         )
 
     def test_coords_iris_to_esmpy_invalid_dimensions(self):
@@ -403,10 +419,12 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
         self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
         self.assert_array_equal(
-            esmpy_lat_corners, self.expected_esmpy_lat_corners[:-1]
+            esmpy_lat_corners,
+            self.expected_esmpy_lat_corners[:-1],
         )
         self.assert_array_equal(
-            esmpy_lon_corners, self.expected_esmpy_lon_corners[:-1]
+            esmpy_lon_corners,
+            self.expected_esmpy_lon_corners[:-1],
         )
 
     def test_coords_iris_to_esmpy_1d_non_circular(self):
@@ -417,10 +435,12 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
         self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
         self.assert_array_equal(
-            esmpy_lat_corners, self.expected_esmpy_lat_corners
+            esmpy_lat_corners,
+            self.expected_esmpy_lat_corners,
         )
         self.assert_array_equal(
-            esmpy_lon_corners, self.expected_esmpy_lon_corners
+            esmpy_lon_corners,
+            self.expected_esmpy_lon_corners,
         )
 
     def test_coords_iris_to_esmpy_2d_circular(self):
@@ -431,10 +451,12 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
         self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
         self.assert_array_equal(
-            esmpy_lat_corners, self.expected_esmpy_lat_corners[:-1]
+            esmpy_lat_corners,
+            self.expected_esmpy_lat_corners[:-1],
         )
         self.assert_array_equal(
-            esmpy_lon_corners, self.expected_esmpy_lon_corners[:-1]
+            esmpy_lon_corners,
+            self.expected_esmpy_lon_corners[:-1],
         )
 
     def test_coords_iris_to_esmpy_2d_non_circular(self):
@@ -445,10 +467,12 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
         self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
         self.assert_array_equal(
-            esmpy_lat_corners, self.expected_esmpy_lat_corners
+            esmpy_lat_corners,
+            self.expected_esmpy_lat_corners,
         )
         self.assert_array_equal(
-            esmpy_lon_corners, self.expected_esmpy_lon_corners
+            esmpy_lon_corners,
+            self.expected_esmpy_lon_corners,
         )
 
     def test_get_grid_circular(self):
@@ -460,7 +484,8 @@ class TestHelpers(tests.Test):
             mock.call(1, staggerloc=mock.sentinel.sl_corner),
         ]
         with mock.patch(
-            "esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid", MockGrid
+            "esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid",
+            MockGrid,
         ) as mg:
             mg.get_coords.reset_mock()
             mg.add_coords.reset_mock()
@@ -475,7 +500,8 @@ class TestHelpers(tests.Test):
             mg.get_coords.assert_has_calls(expected_get_coords_calls)
             mg.add_coords.assert_called_once_with([mock.sentinel.sl_corner])
             mg.add_item.assert_called_once_with(
-                mock.sentinel.gi_mask, mock.sentinel.sl_center
+                mock.sentinel.gi_mask,
+                mock.sentinel.sl_center,
             )
 
     def test_get_grid_non_circular(self):
@@ -487,7 +513,8 @@ class TestHelpers(tests.Test):
             mock.call(1, staggerloc=mock.sentinel.sl_corner),
         ]
         with mock.patch(
-            "esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid", MockGrid
+            "esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid",
+            MockGrid,
         ) as mg:
             mg.get_coords.reset_mock()
             mg.add_coords.reset_mock()
@@ -502,7 +529,8 @@ class TestHelpers(tests.Test):
             mg.get_coords.assert_has_calls(expected_get_coords_calls)
             mg.add_coords.assert_called_once_with([mock.sentinel.sl_corner])
             mg.add_item.assert_called_once_with(
-                mock.sentinel.gi_mask, mock.sentinel.sl_center
+                mock.sentinel.gi_mask,
+                mock.sentinel.sl_center,
             )
 
     def test_is_lon_circular_dim_coords_true(self):
@@ -527,7 +555,7 @@ class TestHelpers(tests.Test):
 
     def test_is_lon_circular_invalid_argument(self):
         """Test detection of circular longitudes, invalid argument."""
-        self.assertRaises(ValueError, is_lon_circular, None)
+        self.assertRaises(TypeError, is_lon_circular, None)
 
     def test_is_lon_circular_2d_aux_coords(self):
         """Test detection of circular longitudes 2d aux coords."""
@@ -555,7 +583,7 @@ class TestHelpers(tests.Test):
         horizontal_slice = ["latitude", "longitude"]
         get_representant(self.cube, horizontal_slice)
         self.cube.__getitem__.assert_called_once_with(
-            (slice(None, None, None), slice(None, None, None))
+            (slice(None, None, None), slice(None, None, None)),
         )
 
     @mock.patch(
@@ -566,7 +594,7 @@ class TestHelpers(tests.Test):
     def test_build_regridder_2d_masked_data(self, mock_regrid):
         """Test building of 2d regridder for masked data."""
         mock_regrid.return_value = mock.Mock(
-            return_value=mock.Mock(data=self.data.T)
+            return_value=mock.Mock(data=self.data.T),
         )
         regrid_method = mock.sentinel.rm_bilinear
         src_rep = mock.MagicMock(data=self.data)
@@ -597,8 +625,8 @@ class TestHelpers(tests.Test):
         kwargs = mock_regrid.call_args_list[0][-1]
         expected_kwargs = expected_calls[0][-1]
         self.assertEqual(expected_kwargs.keys(), kwargs.keys())
-        array_keys = set(["src_mask_values", "dst_mask_values"])
-        for key in kwargs.keys():
+        array_keys = {"src_mask_values", "dst_mask_values"}
+        for key in kwargs:
             if key in array_keys:
                 self.assertTrue((expected_kwargs[key] == kwargs[key]).all())
             else:
@@ -648,7 +676,10 @@ class TestHelpers(tests.Test):
         dst_rep = mock.Mock(ndim=2)
         build_regridder(src_rep, dst_rep, "nearest")
         mock_regridder_2d.assert_called_once_with(
-            src_rep, dst_rep, mock.sentinel.rm_nearest_stod, 0.99
+            src_rep,
+            dst_rep,
+            mock.sentinel.rm_nearest_stod,
+            0.99,
         )
         mock_regridder_3d.assert_not_called()
 
@@ -661,7 +692,10 @@ class TestHelpers(tests.Test):
         dst_rep = mock.Mock(ndim=3)
         build_regridder(src_rep, dst_rep, "nearest")
         mock_regridder_3d.assert_called_once_with(
-            src_rep, dst_rep, mock.sentinel.rm_nearest_stod, 0.99
+            src_rep,
+            dst_rep,
+            mock.sentinel.rm_nearest_stod,
+            0.99,
         )
         mock_regridder_2d.assert_not_called()
 
@@ -672,7 +706,8 @@ class TestHelpers(tests.Test):
         ret = get_grid_representant(self.cube)
         self.assertEqual(mock.sentinel.ret, ret)
         mock_get_representant.assert_called_once_with(
-            self.cube, ["latitude", "longitude"]
+            self.cube,
+            ["latitude", "longitude"],
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.get_representant")
@@ -682,7 +717,8 @@ class TestHelpers(tests.Test):
         ret = get_grid_representant(self.cube, True)
         self.assertEqual(mock.sentinel.ret, ret)
         mock_get_representant.assert_called_once_with(
-            self.cube, ["latitude", "longitude"]
+            self.cube,
+            ["latitude", "longitude"],
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.get_representant")
@@ -692,7 +728,8 @@ class TestHelpers(tests.Test):
         ret = get_grid_representant(self.cube_3d)
         self.assertEqual(mock.sentinel.ret, ret)
         mock_get_representant.assert_called_once_with(
-            self.cube_3d, [self.depth, "latitude", "longitude"]
+            self.cube_3d,
+            [self.depth, "latitude", "longitude"],
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.get_representant")
@@ -702,7 +739,8 @@ class TestHelpers(tests.Test):
         ret = get_grid_representant(self.cube_3d, True)
         self.assertEqual(mock.sentinel.ret, ret)
         mock_get_representant.assert_called_once_with(
-            self.cube_3d, ["latitude", "longitude"]
+            self.cube_3d,
+            ["latitude", "longitude"],
         )
 
     @mock.patch(
@@ -712,7 +750,9 @@ class TestHelpers(tests.Test):
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.get_empty_data")
     @mock.patch("iris.cube.Cube")
     def test_get_grid_representants_3d_src(
-        self, mock_cube, mock_get_empty_data
+        self,
+        mock_cube,
+        mock_get_empty_data,
     ):
         """Test extraction of grid representants from 3 spatial d cube."""
         src = self.cube_3d
@@ -739,7 +779,9 @@ class TestHelpers(tests.Test):
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.get_empty_data")
     @mock.patch("iris.cube.Cube")
     def test_get_grid_representants_2d_src(
-        self, mock_cube, mock_get_empty_data
+        self,
+        mock_cube,
+        mock_get_empty_data,
     ):
         """Test extraction of grid representants from 2 spatial d cube."""
         src = self.cube
@@ -772,10 +814,16 @@ class TestHelpers(tests.Test):
         regridder = ESMPyNearest().regridder(self.cube_3d, self.cube)
         regridder(self.cube_3d)
         mock_build_regridder.assert_called_once_with(
-            self.cube_3d, self.cube, "nearest", mask_threshold=0.99
+            self.cube_3d,
+            self.cube,
+            "nearest",
+            mask_threshold=0.99,
         )
         mock_map_slices.assert_called_once_with(
-            self.cube_3d, mock.sentinel.regridder, self.cube_3d, self.cube
+            self.cube_3d,
+            mock.sentinel.regridder,
+            self.cube_3d,
+            self.cube,
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.map_slices")
@@ -791,10 +839,16 @@ class TestHelpers(tests.Test):
         regridder = ESMPyLinear().regridder(self.cube_3d, self.cube)
         regridder(self.cube_3d)
         mock_build_regridder.assert_called_once_with(
-            self.cube_3d, self.cube, "linear", mask_threshold=0.99
+            self.cube_3d,
+            self.cube,
+            "linear",
+            mask_threshold=0.99,
         )
         mock_map_slices.assert_called_once_with(
-            self.cube_3d, mock.sentinel.regridder, self.cube_3d, self.cube
+            self.cube_3d,
+            mock.sentinel.regridder,
+            self.cube_3d,
+            self.cube,
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.map_slices")
@@ -810,10 +864,16 @@ class TestHelpers(tests.Test):
         regridder = ESMPyAreaWeighted().regridder(self.cube_3d, self.cube)
         regridder(self.cube_3d)
         mock_build_regridder.assert_called_once_with(
-            self.cube_3d, self.cube, "area_weighted", mask_threshold=0.99
+            self.cube_3d,
+            self.cube,
+            "area_weighted",
+            mask_threshold=0.99,
         )
         mock_map_slices.assert_called_once_with(
-            self.cube_3d, mock.sentinel.regridder, self.cube_3d, self.cube
+            self.cube_3d,
+            mock.sentinel.regridder,
+            self.cube_3d,
+            self.cube,
         )
 
     @mock.patch("esmvalcore.preprocessor._regrid_esmpy.map_slices")
@@ -845,7 +905,7 @@ class TestHelpers(tests.Test):
 
 
 @pytest.mark.parametrize(
-    "scheme,output",
+    ("scheme", "output"),
     [
         (ESMPyAreaWeighted(), "ESMPyAreaWeighted(mask_threshold=0.99)"),
         (ESMPyLinear(), "ESMPyLinear(mask_threshold=0.99)"),

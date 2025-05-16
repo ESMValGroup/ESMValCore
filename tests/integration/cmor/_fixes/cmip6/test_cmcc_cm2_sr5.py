@@ -22,7 +22,9 @@ def test_get_cl_fix():
 def cl_cubes():
     """``cl`` cubes."""
     ps_coord = iris.coords.AuxCoord(
-        [0.0], var_name="ps", standard_name="air_pressure"
+        [0.0],
+        var_name="ps",
+        standard_name="air_pressure",
     )
     cube = iris.cube.Cube(
         [1.0],

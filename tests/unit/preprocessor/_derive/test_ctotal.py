@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-import esmvalcore.preprocessor._derive.ctotal as ctotal
+from esmvalcore.preprocessor._derive import ctotal
 
 
 @pytest.fixture
@@ -42,7 +42,8 @@ def _run_test(cubes):
     derived_var = ctotal.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(
-        out_cube.data, np.array([[11.0, 22.0], [50.0, 120.0]])
+        out_cube.data,
+        np.array([[11.0, 22.0], [50.0, 120.0]]),
     )
     assert out_cube.units == Unit("kg m-2")
 

@@ -14,7 +14,10 @@ from esmvalcore.cmor.table import get_var_info
 @pytest.fixture
 def cubes():
     correct_time_coord = iris.coords.DimCoord(
-        [0.0], var_name="time", standard_name="time", long_name="time"
+        [0.0],
+        var_name="time",
+        standard_name="time",
+        long_name="time",
     )
     correct_height_coord = iris.coords.AuxCoord([2.0], var_name="height")
     wrong_height_coord = iris.coords.AuxCoord([10.0], var_name="height")
@@ -66,7 +69,8 @@ def test_aladin63_height_fix(cubes):
 
 
 @pytest.mark.parametrize(
-    "short_name", ["tasmax", "tasmin", "tas", "hurs", "huss"]
+    "short_name",
+    ["tasmax", "tasmin", "tas", "hurs", "huss"],
 )
 def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
@@ -81,7 +85,10 @@ def test_get_wrf381p_fix(short_name):
 
 def test_wrf381p_height_fix():
     time_coord = iris.coords.DimCoord(
-        [0.0], var_name="time", standard_name="time", long_name="time"
+        [0.0],
+        var_name="time",
+        standard_name="time",
+        long_name="time",
     )
     cube = iris.cube.Cube(
         [10.0],

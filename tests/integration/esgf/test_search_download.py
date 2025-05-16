@@ -167,7 +167,8 @@ def test_mock_search(variable, mocker):
         with expected_results_file.open("w", encoding="utf-8") as file:
             yaml.safe_dump(expected_results, file)
 
-        assert False, "Wrote expected results, please check."
+        msg = "Wrote expected results, please check."
+        raise AssertionError(msg)
 
     assert len(files) == len(expected_files)
     for found_file, expected in zip(files, expected_files, strict=False):
@@ -293,7 +294,10 @@ def test_real_search_many():
     ]
 
     for variable, files, datasets in zip(
-        VARIABLES, expected_files, expected_datasets, strict=False
+        VARIABLES,
+        expected_files,
+        expected_datasets,
+        strict=False,
     ):
         result = find_files(**variable)
         found_files = [file.name for file in result]
@@ -334,7 +338,7 @@ def test_real_download():
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s [%(process)d] %(levelname)-8s "
-        "%(name)s,%(lineno)s\t%(message)s"
+        "%(name)s,%(lineno)s\t%(message)s",
     )
     logging.getLogger().setLevel("info".upper())
 

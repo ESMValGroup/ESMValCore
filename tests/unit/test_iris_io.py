@@ -19,9 +19,7 @@ def create_fully_lazy_cube():
         aux_coords_and_dims=[(aux_coord, 0)],
     )
 
-    cube = cube.collapsed("time", iris.analysis.MEAN)
-
-    return cube
+    return cube.collapsed("time", iris.analysis.MEAN)
 
 
 def create_regular_cube():
@@ -36,9 +34,7 @@ def create_regular_cube():
         aux_coords_and_dims=[(aux_coord, 0)],
     )
 
-    cube = cube.collapsed("time", iris.analysis.MEAN)
-
-    return cube
+    return cube.collapsed("time", iris.analysis.MEAN)
 
 
 def test_iris_save_with_lazy_coordinate(tmp_path):

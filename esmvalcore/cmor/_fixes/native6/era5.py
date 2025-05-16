@@ -33,9 +33,12 @@ def get_frequency(cube):
             "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
         )
         if cube.long_name not in acceptable_long_names:
-            raise ValueError(
+            msg = (
                 "Unable to infer frequency of cube "
                 f"with length 1 time dimension: {cube}"
+            )
+            raise ValueError(
+                msg,
             )
         return "fx"
 
@@ -63,9 +66,12 @@ def fix_accumulated_units(cube):
     elif get_frequency(cube) == "hourly":
         cube.units = cube.units * "h-1"
     elif get_frequency(cube) == "daily":
-        raise NotImplementedError(
+        msg = (
             f"Fixing of accumulated units of cube "
             f"{cube.summary(shorten=True)} is not implemented for daily data"
+        )
+        raise NotImplementedError(
+            msg,
         )
     return cube
 
@@ -491,7 +497,10 @@ class Zg(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def _fix_coordinates(self, cube):
+    def _fix_coordinates(  # noqa: C901
+        self,
+        cube,
+    ):
         """Fix coordinates."""
         # Add scalar height coordinates
         if "height2m" in self.vardef.dimensions:
@@ -580,7 +589,7 @@ class AllVars(Fix):
             )
             if "GRIB_PARAM" in cube.attributes:
                 cube.attributes["GRIB_PARAM"] = str(
-                    cube.attributes["GRIB_PARAM"]
+                    cube.attributes["GRIB_PARAM"],
                 )
 
             fixed_cubes.append(cube)

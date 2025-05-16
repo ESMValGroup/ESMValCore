@@ -38,14 +38,13 @@ from esmvalcore.iris_helpers import (
 @pytest.fixture
 def cubes():
     """Test cubes."""
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(0.0, var_name="a", long_name="a"),
             Cube(0.0, var_name="a", long_name="b"),
             Cube(0.0, var_name="c", long_name="d"),
-        ]
+        ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -139,7 +138,7 @@ def test_add_leading_dim_to_cube_non_1d():
 
 
 @pytest.mark.parametrize(
-    "date, dtype, expected",
+    ("date", "dtype", "expected"),
     [
         (datetime.datetime(1, 1, 1), np.float64, 0.0),
         (datetime.datetime(1, 1, 1), int, 0.0),
@@ -285,10 +284,12 @@ def cube_3d():
 
     # CellMeasures and AncillaryVariables
     cell_measure = CellMeasure(
-        da.ones((3, 4), chunks=(1, 1)), var_name="cell_measure"
+        da.ones((3, 4), chunks=(1, 1)),
+        var_name="cell_measure",
     )
     anc_var = AncillaryVariable(
-        da.ones((3, 4), chunks=(1, 1)), var_name="anc_var"
+        da.ones((3, 4), chunks=(1, 1)),
+        var_name="anc_var",
     )
 
     return Cube(
@@ -489,7 +490,8 @@ def test_has_irregular_grid_1d_lat(lat_coord_1d, lon_coord_2d):
 def test_has_irregular_grid_1d_lat_lon(lat_coord_1d, lon_coord_1d):
     """Test `has_irregular_grid`."""
     cube = Cube(
-        [0, 1], aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)]
+        [0, 1],
+        aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)],
     )
     assert has_irregular_grid(cube) is False
 
@@ -578,7 +580,13 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
 
 
 @pytest.mark.parametrize(
-    "old_units,new_units,old_standard_name,new_standard_name,err_msg",
+    (
+        "old_units",
+        "new_units",
+        "old_standard_name",
+        "new_standard_name",
+        "err_msg",
+    ),
     [
         ("m", "km", "altitude", "altitude", None),
         ("Pa", "hPa", "air_pressure", "air_pressure", None),
@@ -615,7 +623,11 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
     ],
 )
 def test_safe_convert_units(
-    old_units, new_units, old_standard_name, new_standard_name, err_msg
+    old_units,
+    new_units,
+    old_standard_name,
+    new_standard_name,
+    err_msg,
 ):
     """Test ``esmvalcore.preprocessor._units.safe_convert_units``."""
     cube = Cube(0, standard_name=old_standard_name, units=old_units)

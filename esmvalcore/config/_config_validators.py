@@ -8,7 +8,7 @@ import warnings
 from collections.abc import Callable, Iterable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from packaging import version
 
@@ -57,8 +57,9 @@ def _make_type_validator(cls, *, allow_none=False):
             return cls(inp)
         except ValueError as err:
             if isinstance(cls, type):
+                msg = f"Could not convert {inp!r} to {cls.__name__}"
                 raise ValidationError(
-                    f"Could not convert {repr(inp)} to {cls.__name__}"
+                    msg,
                 ) from err
             raise
 
@@ -75,7 +76,7 @@ def _make_type_validator(cls, *, allow_none=False):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-@lru_cache()
+@lru_cache
 def _listify_validator(
     scalar_validator,
     allow_stringlist=False,
@@ -108,7 +109,8 @@ def _listify_validator(
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
         elif isinstance(inp, Iterable) and not isinstance(
-            inp, (set, frozenset)
+            inp,
+            (set, frozenset),
         ):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
@@ -120,20 +122,24 @@ def _listify_validator(
                 if not isinstance(val, str) or val
             )
         else:
+            msg = f"Expected str or other non-set iterable, but got {inp}"
             raise ValidationError(
-                f"Expected str or other non-set iterable, but got {inp}"
+                msg,
             )
         if n_items is not None and len(inp) != n_items:
-            raise ValidationError(
+            msg = (
                 f"Expected {n_items} values, "
                 f"but there are {len(inp)} values in {inp}"
+            )
+            raise ValidationError(
+                msg,
             )
         return inp
 
     try:
-        func.__name__ = "{}list".format(scalar_validator.__name__)
+        func.__name__ = f"{scalar_validator.__name__}list"
     except AttributeError:  # class instance.
-        func.__name__ = "{}List".format(type(scalar_validator).__name__)
+        func.__name__ = f"{type(scalar_validator).__name__}List"
     func.__qualname__ = (
         func.__qualname__.rsplit(".", 1)[0] + "." + func.__name__
     )
@@ -148,7 +154,8 @@ def validate_bool(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     if not isinstance(value, bool):
-        raise ValidationError(f"Could not convert `{value}` to `bool`")
+        msg = f"Could not convert `{value}` to `bool`"
+        raise ValidationError(msg)
     return value
 
 
@@ -159,7 +166,8 @@ def validate_path(value, allow_none=False):
     try:
         path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
-        raise ValidationError(f"Expected a path, but got {value}") from err
+        msg = f"Expected a path, but got {value}"
+        raise ValidationError(msg) from err
     else:
         return path
 
@@ -167,7 +175,8 @@ def validate_path(value, allow_none=False):
 def validate_positive(value):
     """Check if number is positive."""
     if value is not None and value <= 0:
-        raise ValidationError(f"Expected a positive number, but got {value}")
+        msg = f"Expected a positive number, but got {value}"
+        raise ValidationError(msg)
     return value
 
 
@@ -185,7 +194,8 @@ def _chain_validator(*funcs):
 validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(
-    validate_string, docstring="Return a list of strings."
+    validate_string,
+    docstring="Return a list of strings.",
 )
 
 validate_bool_or_none = partial(validate_bool, allow_none=True)
@@ -193,7 +203,8 @@ validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
 validate_floatlist = _listify_validator(
-    validate_float, docstring="Return a list of floats."
+    validate_float,
+    docstring="Return a list of floats.",
 )
 
 validate_dict = _make_type_validator(dict)
@@ -201,12 +212,14 @@ validate_dict = _make_type_validator(dict)
 validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 
 validate_pathlist = _listify_validator(
-    validate_path, docstring="Return a list of paths."
+    validate_path,
+    docstring="Return a list of paths.",
 )
 
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(
-    validate_int_positive, allow_none=True
+    validate_int_positive,
+    allow_none=True,
 )
 
 
@@ -218,7 +231,7 @@ def validate_rootpath(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'rootpath'"
+                "written as 'obs4MIPs' in configured 'rootpath'",
             )
             key = "obs4MIPs"
         if isinstance(paths, Path):
@@ -248,7 +261,7 @@ def validate_drs(value):
         if key == "obs4mips":
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'drs'"
+                "written as 'obs4MIPs' in configured 'drs'",
             )
             key = "obs4MIPs"
         new_mapping[key] = validate_string(drs)
@@ -271,8 +284,9 @@ def validate_check_level(value):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
+            msg = f"`{value}` is not a valid strictness level"
             raise ValidationError(
-                f"`{value}` is not a valid strictness level"
+                msg,
             ) from None
 
     else:
@@ -286,16 +300,19 @@ def validate_search_esgf(value):
     value = validate_string(value)
     value = value.lower()
     if value not in SEARCH_ESGF_OPTIONS:
-        raise ValidationError(
+        msg = (
             f"`{value}` is not a valid option ESGF search option, possible "
             f"values are {SEARCH_ESGF_OPTIONS}"
+        )
+        raise ValidationError(
+            msg,
         ) from None
     return value
 
 
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
-) -> Optional[set[str]]:
+    diagnostics: Iterable[str] | str | None,
+) -> set[str] | None:
     """Validate diagnostic location."""
     if diagnostics is None:
         return None
@@ -395,9 +412,9 @@ def deprecate_config_file(validated_config, value, validated_value):
         Validated value for ``config_file`` option.
 
     """
-    validated_config  # noqa
-    value  # noqa
-    validated_value  # noqa
+    validated_config  # noqa: B018
+    value  # noqa: B018
+    validated_value  # noqa: B018
     option = "config_file"
     deprecated_version = "2.12.0"
     remove_version = "2.14.0"

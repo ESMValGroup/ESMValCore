@@ -17,8 +17,7 @@ from esmvalcore.preprocessor._io import load
 
 def _create_sample_cube():
     coord = DimCoord([1, 2], standard_name="latitude", units="degrees_north")
-    cube = Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
-    return cube
+    return Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
 
 
 class TestLoad(unittest.TestCase):
@@ -51,7 +50,7 @@ class TestLoad(unittest.TestCase):
         self.assertEqual(temp_file, cube.attributes["source_file"])
         self.assertTrue((cube.data == np.array([1, 2])).all())
         self.assertTrue(
-            (cube.coord("latitude").points == np.array([1, 2])).all()
+            (cube.coord("latitude").points == np.array([1, 2])).all(),
         )
 
     def test_load_grib(self):
@@ -85,7 +84,7 @@ class TestLoad(unittest.TestCase):
             self.assertEqual(1, len(cubes))
             self.assertTrue((cube.data == np.array([1, 2])).all())
             self.assertTrue(
-                (cube.coord("latitude").points == np.array([1, 2])).all()
+                (cube.coord("latitude").points == np.array([1, 2])).all(),
             )
             for attr in attributes:
                 self.assertTrue(attr not in cube.attributes)
@@ -105,7 +104,7 @@ class TestLoad(unittest.TestCase):
             self.assertEqual(1, len(cubes))
             self.assertTrue((cube.data == np.array([1, 2])).all())
             self.assertTrue(
-                (cube.coord("latitude").points == np.array([1, 2])).all()
+                (cube.coord("latitude").points == np.array([1, 2])).all(),
             )
             for coord in cube.coords():
                 for attr in attributes:
@@ -121,7 +120,7 @@ class TestLoad(unittest.TestCase):
         self.assertEqual(1, len(cubes))
         self.assertTrue((cube.data == np.array([1, 2])).all())
         self.assertTrue(
-            (cube.coord("latitude").points == np.array([1, 2])).all()
+            (cube.coord("latitude").points == np.array([1, 2])).all(),
         )
         self.assertEqual(cube.coord("latitude").units, "degrees_north")
 

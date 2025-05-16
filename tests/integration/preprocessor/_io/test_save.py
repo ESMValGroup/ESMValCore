@@ -37,21 +37,21 @@ def cube():
         units="days since 2000-1-1",
     )
 
-    cube = Cube(
-        np.random.random_sample([2, 2, 2]),
+    rng = np.random.default_rng(42)
+    return Cube(
+        rng.random((2, 2, 2)),
         var_name="sample",
         units="1",
         dim_coords_and_dims=((lat, 0), (lon, 1), (time, 2)),
     )
-
-    return cube
 
 
 def _compare_cubes(cube, loaded_cube):
     np.testing.assert_equal(cube.data, loaded_cube.data)
     for coord in cube.coords():
         np.testing.assert_equal(
-            coord.points, loaded_cube.coord(coord.name()).points
+            coord.points,
+            loaded_cube.coord(coord.name()).points,
         )
 
 

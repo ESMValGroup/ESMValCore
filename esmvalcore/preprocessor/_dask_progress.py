@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
-import contextlib
 import datetime
 import logging
 import threading
 import time
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import dask.diagnostics
 import distributed
 import rich.progress
-from dask.delayed import Delayed
 
 from esmvalcore.config import CFG
+
+if TYPE_CHECKING:
+    import contextlib
+    from collections.abc import Iterable
+
+    from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +82,7 @@ class RichProgressBar(dask.diagnostics.Callback):
 
 
 class RichDistributedProgressBar(
-    distributed.diagnostics.progressbar.TextProgressBar
+    distributed.diagnostics.progressbar.TextProgressBar,
 ):
     """Progress bar using `rich` for the Dask distributed scheduler."""
 
@@ -98,7 +102,7 @@ class RichDistributedProgressBar(
         self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
 
-    def _draw_bar(self, remaining, all, **kwargs):  # pylint: disable=redefined-builtin
+    def _draw_bar(self, remaining, all, **kwargs):  # noqa: A002 # pylint: disable=redefined-builtin
         completed = all - remaining
         self.progress.update(self.task_id, completed=completed, total=all)
 
@@ -121,7 +125,8 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
     ) -> None:
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
-            log_interval, default="s"
+            log_interval,
+            default="s",
         )
         self._prev_elapsed = 0.0
         interval = dask.utils.parse_timedelta("1s", default="s")
@@ -144,7 +149,7 @@ class ProgressLogger(dask.diagnostics.ProgressBar):
 
 
 class DistributedProgressLogger(
-    distributed.diagnostics.progressbar.TextProgressBar
+    distributed.diagnostics.progressbar.TextProgressBar,
 ):
     """Progress logger for the Dask distributed scheduler."""
 
@@ -159,7 +164,8 @@ class DistributedProgressLogger(
     ) -> None:
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
-            log_interval, default="s"
+            log_interval,
+            default="s",
         )
         self._prev_elapsed = 0.0
         super().__init__(keys, interval="1s")
@@ -167,7 +173,7 @@ class DistributedProgressLogger(
     def _draw_bar(
         self,
         remaining: int,
-        all: int,  # pylint: disable=redefined-builtin
+        all: int,  # noqa: A002 # pylint: disable=redefined-builtin
         **kwargs,
     ) -> None:
         frac = (1 - remaining / all) if all else 1.0
@@ -204,7 +210,7 @@ def _compute_with_progress(
     log_progress_interval = CFG["logging"]["log_progress_interval"]
     if isinstance(log_progress_interval, (str, datetime.timedelta)):
         log_progress_interval = dask.utils.parse_timedelta(
-            log_progress_interval
+            log_progress_interval,
         )
 
     if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:

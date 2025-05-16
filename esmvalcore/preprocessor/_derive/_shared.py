@@ -26,7 +26,8 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     with ignore_iris_vague_metadata_warnings():
         if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
             new_cube = new_cube.collapsed(
-                "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
+                "atmosphere_optical_thickness_due_to_cloud",
+                iris.analysis.SUM,
             )
         if "air_pressure" in coord_names:
             new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
@@ -176,9 +177,7 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 
     # Make surface pressure the first pressure level
     data = ps_cube.data[:, np.newaxis, :, :]
-    pressure_4d = np.concatenate((data, pressure_4d), axis=1)
-
-    return pressure_4d
+    return np.concatenate((data, pressure_4d), axis=1)
 
 
 def _get_pressure_level_widths(array, air_pressure_axis=1):
@@ -190,7 +189,8 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     """
     array = np.copy(array)
     if np.any(np.diff(array, axis=air_pressure_axis) > 0.0):
-        raise ValueError("Pressure level value increased with height")
+        msg = "Pressure level value increased with height"
+        raise ValueError(msg)
 
     # Calculate array of centers between two neighboring pressure levels
     indices = [slice(None)] * array.ndim
@@ -212,12 +212,15 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     dim_map = np.arange(array_centers.ndim)
     dim_map = np.delete(dim_map, air_pressure_axis)
     array_centers_surface = iris.util.broadcast_to_shape(
-        array_centers[tuple(index_0)], array_centers.shape, dim_map
+        array_centers[tuple(index_0)],
+        array_centers.shape,
+        dim_map,
     )
     array_centers = np.where(
-        np.isnan(array_centers), array_centers_surface, array_centers
+        np.isnan(array_centers),
+        array_centers_surface,
+        array_centers,
     )
 
     # Calculate level widths
-    p_level_widths = -np.diff(array_centers, axis=air_pressure_axis)
-    return p_level_widths
+    return -np.diff(array_centers, axis=air_pressure_axis)

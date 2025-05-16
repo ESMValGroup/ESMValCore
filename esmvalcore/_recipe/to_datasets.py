@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Iterator
 from copy import deepcopy
 from numbers import Number
-from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
-from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
@@ -19,10 +18,15 @@ from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
-from esmvalcore.typing import Facets, FacetValue
 
 from . import check
 from ._io import _load_recipe
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from esmvalcore.config import Session
+    from esmvalcore.typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +120,7 @@ def _set_alias(variables):
 
     for info in datasets_info:
         alias[info] = "_".join(
-            [str(value) for value in alias[info] if value is not None]
+            [str(value) for value in alias[info] if value is not None],
         )
         if not alias[info]:
             alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
@@ -124,14 +128,15 @@ def _set_alias(variables):
     for variable in variables:
         for dataset in variable:
             dataset.facets["alias"] = alias.get(
-                dataset.facets["alias"], dataset.facets["alias"]
+                dataset.facets["alias"],
+                dataset.facets["alias"],
             )
 
 
 def _get_next_alias(alias, datasets_info, i):
     if i >= len(_ALIAS_INFO_KEYS):
         return
-    key_values = set(info[i] for info in datasets_info)
+    key_values = {info[i] for info in datasets_info}
     if len(key_values) == 1:
         for info in iter(datasets_info):
             alias[info].append(None)
@@ -150,9 +155,12 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
     """Check that supplementary variables have a short_name."""
     for facets in supplementaries:
         if "short_name" not in facets:
-            raise RecipeError(
+            msg = (
                 "'short_name' is required for supplementary_variables "
                 f"entries, but missing in {facets}"
+            )
+            raise RecipeError(
+                msg,
             )
 
 
@@ -277,7 +285,8 @@ def _get_dataset_facets_from_recipe(
     # after any wildcards have been resolved.
     if "end_year" in facets and session["max_years"]:
         facets["end_year"] = min(
-            facets["end_year"], facets["start_year"] + session["max_years"] - 1
+            facets["end_year"],
+            facets["start_year"] + session["max_years"] - 1,
         )
 
     # Legacy: support start_year and end_year instead of timerange
@@ -287,7 +296,7 @@ def _get_dataset_facets_from_recipe(
     if facets["project"] == "obs4mips":
         logger.warning(
             "Correcting capitalization, project 'obs4mips' "
-            "should be written as 'obs4MIPs'"
+            "should be written as 'obs4MIPs'",
         )
         facets["project"] = "obs4MIPs"
 
@@ -416,7 +425,9 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
+def _dataset_from_files(  # noqa: C901
+    dataset: Dataset,
+) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
     errors: list[str] = []
@@ -440,7 +451,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             for key, value in dataset.facets.items():
                 if _isglob(value):
                     if key in expanded_ds.facets and not _isglob(
-                        expanded_ds[key]
+                        expanded_ds[key],
                     ):
                         updated_facets[key] = expanded_ds.facets[key]
                     else:
@@ -448,7 +459,9 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
 
             if unexpanded_globs:
                 msg = _report_unexpanded_globs(
-                    dataset, expanded_ds, unexpanded_globs
+                    dataset,
+                    expanded_ds,
+                    unexpanded_globs,
                 )
                 errors.append(msg)
                 continue
@@ -508,7 +521,7 @@ def _report_unexpanded_globs(
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        patterns = expanded_ds._file_globs
+        patterns = expanded_ds._file_globs  # noqa: SLF001
         msg = (
             f"{msg}\nNo files found matching:\n"
             + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]

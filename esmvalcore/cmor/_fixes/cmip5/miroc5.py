@@ -2,9 +2,9 @@
 
 from dask import array as da
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 Cl = ClFixHybridPressureCoord
 

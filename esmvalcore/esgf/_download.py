@@ -20,9 +20,9 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
+from esmvalcore.local import LocalFile
 from esmvalcore.typing import Facets
 
-from ..local import LocalFile
 from .facets import DATASET_MAP, FACETS
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,7 @@ class DownloadError(Exception):
 
 def compute_speed(size, duration):
     """Compute download speed in MB/s."""
-    if duration != 0:
-        speed = size / duration / 10**6
-    else:
-        speed = 0
-    return speed
+    return size / duration / 10**6 if duration != 0 else 0
 
 
 def load_speeds():
@@ -55,8 +51,7 @@ def load_speeds():
         content = HOSTS_FILE.read_text(encoding="utf-8")
     except FileNotFoundError:
         content = "{}"
-    speeds = yaml.safe_load(content)
-    return speeds
+    return yaml.safe_load(content)
 
 
 def log_speed(url, size, duration):
@@ -116,10 +111,7 @@ def get_preferred_hosts():
     # Hosts from which no data has been downloaded yet get median speed; if no
     # host with non-zero entries is found assign a value of 0.0
     speeds_list = [speeds[h][SPEED] for h in speeds if speeds[h][SPEED] != 0.0]
-    if not speeds_list:
-        median_speed = 0.0
-    else:
-        median_speed = median(speeds_list)
+    median_speed = 0.0 if not speeds_list else median(speeds_list)
     for host in speeds:
         if speeds[host][SIZE] == 0:
             speeds[host][SPEED] = median_speed
@@ -266,7 +258,8 @@ class ESGFFile:
                 v: k for k, v in DATASET_MAP.get(project, {}).items()
             }
             facets["dataset"] = reverse_dataset_map.get(
-                facets["dataset"], facets["dataset"]
+                facets["dataset"],
+                facets["dataset"],
             )
 
         # Update the facets with information from the dataset_id and filename
@@ -445,7 +438,9 @@ class ESGFFile:
                 requests.exceptions.RequestException,
             ) as error:
                 logger.debug(
-                    "Not able to download %s. Error message: %s", url, error
+                    "Not able to download %s. Error message: %s",
+                    url,
+                    error,
                 )
                 errors[url] = error
                 log_error(url)
@@ -455,7 +450,7 @@ class ESGFFile:
         if not local_file.exists():
             raise DownloadError(
                 f"Failed to download file {local_file}, errors:"
-                "\n" + "\n".join(f"{url}: {errors[url]}" for url in errors)
+                "\n" + "\n".join(f"{url}: {errors[url]}" for url in errors),
             )
 
         return local_file
@@ -470,10 +465,7 @@ class ESGFFile:
         """Download file from a single url."""
         idx = self.urls.index(url)
         checksum_type, checksum = self._checksums[idx]
-        if checksum_type is None:
-            hasher = None
-        else:
-            hasher = hashlib.new(checksum_type)
+        hasher = None if checksum_type is None else hashlib.new(checksum_type)
 
         tmp_file = self._tmp_local_file(local_file)
 
@@ -501,10 +493,13 @@ class ESGFFile:
         else:
             local_checksum = hasher.hexdigest()
             if local_checksum != checksum:
-                raise DownloadError(
+                msg = (
                     f"Wrong {checksum_type} checksum for file {tmp_file},"
                     f" downloaded from {url}: expected {checksum}, but got"
                     f" {local_checksum}. Try downloading the file again."
+                )
+                raise DownloadError(
+                    msg,
                 )
 
         shutil.move(tmp_file, local_file)
@@ -558,7 +553,7 @@ def download(files, dest_folder, n_jobs=4):
     ]
     if not files:
         logger.debug(
-            "All required data is available locally, not downloading anything."
+            "All required data is available locally, not downloading anything.",
         )
         return
 
@@ -585,7 +580,9 @@ def download(files, dest_folder, n_jobs=4):
                 future.result()
             except DownloadError as error:
                 logger.error(
-                    "Failed to download %s, error message %s", file, error
+                    "Failed to download %s, error message %s",
+                    file,
+                    error,
                 )
                 errors.append(error)
             else:
@@ -601,7 +598,7 @@ def download(files, dest_folder, n_jobs=4):
 
     if errors:
         msg = "Failed to download the following files:\n" + "\n".join(
-            sorted(str(error) for error in errors)
+            sorted(str(error) for error in errors),
         )
         raise DownloadError(msg)
 

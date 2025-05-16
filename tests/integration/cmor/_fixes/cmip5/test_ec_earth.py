@@ -154,7 +154,7 @@ class TestAreacello(unittest.TestCase):
                 ),
                 latitude,
                 longitude,
-            ]
+            ],
         )
 
         self.fix = Areacello(None)
@@ -208,13 +208,13 @@ class TestPr(unittest.TestCase):
 
         self.time_coord = correct_time_coord
         self.wrong_cube = CubeList(
-            [Cube(np.ones((5, 1, 1)), var_name="pr", units="kg m-2 s-1")]
+            [Cube(np.ones((5, 1, 1)), var_name="pr", units="kg m-2 s-1")],
         )
         self.wrong_cube[0].add_aux_coord(wrong_time_coord, 0)
         self.wrong_cube[0].add_dim_coord(lat_coord, 1)
         self.wrong_cube[0].add_dim_coord(lon_coord, 2)
         self.correct_cube = CubeList(
-            [Cube(np.ones(3), var_name="pr", units="kg m-2 s-1")]
+            [Cube(np.ones(3), var_name="pr", units="kg m-2 s-1")],
         )
         self.correct_cube[0].add_dim_coord(correct_time_coord, 0)
 

@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.ohc as ohc
+from esmvalcore.preprocessor._derive import ohc
 
 
 @pytest.fixture

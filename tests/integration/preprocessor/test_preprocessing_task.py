@@ -29,7 +29,7 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
                 settings={"save": {"compute": False}},
                 datasets=[dataset],
             ),
-        ]
+        ],
     )
 
     # Create an 'activity' representing a run of the tool
@@ -108,9 +108,10 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
         {"multi_preproc_func"},
     )
     default_order = (
-        esmvalcore.preprocessor.INITIAL_STEPS
-        + ("single_preproc_func", "multi_preproc_func")
-        + esmvalcore.preprocessor.FINAL_STEPS
+        *esmvalcore.preprocessor.INITIAL_STEPS,
+        "single_preproc_func",
+        "multi_preproc_func",
+        *esmvalcore.preprocessor.FINAL_STEPS,
     )
     monkeypatch.setattr(
         esmvalcore.preprocessor,
@@ -161,4 +162,5 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
         elif product.attributes["dataset"] == "dataset2":
             assert out_cube.data.tolist() == [2.0]
         else:
-            assert False, "unexpected product"
+            msg = "unexpected product"
+            raise AssertionError(msg)

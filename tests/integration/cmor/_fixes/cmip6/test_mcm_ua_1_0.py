@@ -114,7 +114,9 @@ def uas_cubes():
 @pytest.fixture
 def cubes_bounds():
     lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
         [0, 356.25],
@@ -144,7 +146,10 @@ def cubes_bounds():
 
 def test_get_allvars_fix():
     fix = Fix.get_fixes(
-        "CMIP6", "MCM-UA-1-0", "Amon", "arbitrary_var_name_and_wrong_lon_bnds"
+        "CMIP6",
+        "MCM-UA-1-0",
+        "Amon",
+        "arbitrary_var_name_and_wrong_lon_bnds",
     )
     assert fix == [AllVars(None), GenericFix(None)]
 
@@ -167,11 +172,12 @@ def test_allvars_fix_metadata(cubes):
         if cube.var_name == "ps":
             assert cube.standard_name == "air_pressure"
             assert cube.long_name == "Air pressure"
-        elif cube.var_name == "tas" or cube.var_name == "ta":
+        elif cube.var_name in {"tas", "ta"}:
             assert cube.standard_name == "air_temperature"
             assert cube.long_name == "Air Temperature"
         else:
-            assert False, "Invalid var_name"
+            msg = "Invalid var_name"
+            raise AssertionError(msg)
         try:
             lat_coord = cube.coord("latitude")
         except iris.exceptions.CoordinateNotFoundError:
@@ -273,7 +279,10 @@ def thetao_cubes():
         units="days since 1850-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
         [-0.9375, 357.1875],
@@ -334,7 +343,8 @@ def test_thetao_fix_metadata(thetao_cubes):
     lon_coord = out_cube.coord("longitude")
     np.testing.assert_allclose(lon_coord.points, [357.1875, 359.0625])
     np.testing.assert_allclose(
-        lon_coord.bounds, [[356.25, 358.125], [358.125, 360.0]]
+        lon_coord.bounds,
+        [[356.25, 358.125], [358.125, 360.0]],
     )
 
     # Check metadata of depth coordinate

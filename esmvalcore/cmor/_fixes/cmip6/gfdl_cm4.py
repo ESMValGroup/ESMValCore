@@ -2,13 +2,17 @@
 
 import iris
 
-from ..common import (
+from esmvalcore.cmor._fixes.common import (
     ClFixHybridPressureCoord,
     OceanFixGrid,
     SiconcFixScalarCoord,
 )
-from ..fix import Fix
-from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_aux_coords_from_cubes,
+    add_scalar_height_coord,
+)
+
 from .gfdl_esm4 import Fgco2 as BaseFgco2
 from .gfdl_esm4 import Omon as BaseOmon
 

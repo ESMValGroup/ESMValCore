@@ -4,10 +4,9 @@ import cftime
 import dask.array as da
 import numpy as np
 
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.iris_helpers import date2num
-
-from ..common import OceanFixGrid
-from ..fix import Fix
 
 Tos = OceanFixGrid
 
@@ -54,7 +53,8 @@ class AllVars(Fix):
                         for c in times
                     ]
                     time.bounds = date2num(
-                        np.stack([starts, ends], -1), time.units
+                        np.stack([starts, ends], -1),
+                        time.units,
                     )
         return cubes
 

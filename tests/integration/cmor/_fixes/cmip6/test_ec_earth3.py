@@ -25,7 +25,10 @@ class TestSiconca(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         assert Siconca(None) in Fix.get_fixes(
-            "CMIP6", "EC-Earth3", "SImon", "siconca"
+            "CMIP6",
+            "EC-Earth3",
+            "SImon",
+            "siconca",
         )
 
     def test_fix_data(self):
@@ -59,7 +62,10 @@ def tas_cubes():
         units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     tas_cube = iris.cube.Cube(
         np.ones((2, 2, 2)),
@@ -116,7 +122,8 @@ def test_allvars_r3i1p1f1_fix_calendar():
 
     fixed_cubes = fix.fix_metadata([cube])
     good_unit = cf_units.Unit(
-        "days since 1850-01-01 00:00:00", "proleptic_gregorian"
+        "days since 1850-01-01 00:00:00",
+        "proleptic_gregorian",
     )
     assert fixed_cubes[0].coord("time").units == good_unit
 

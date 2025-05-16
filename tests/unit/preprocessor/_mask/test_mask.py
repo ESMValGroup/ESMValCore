@@ -44,14 +44,17 @@ class Test(tests.Test):
         coords_spec3 = [(lats2, 0), (lons2, 1)]
         self.arr = iris.cube.Cube(self.data2, dim_coords_and_dims=coords_spec3)
         self.time_cube = iris.cube.Cube(
-            np.arange(1, 25), var_name="co2", units="J"
+            np.arange(1, 25),
+            var_name="co2",
+            units="J",
         )
         self.time_cube.add_dim_coord(
             iris.coords.DimCoord(
                 np.arange(15.0, 720.0, 30.0),
                 standard_name="time",
                 units=Unit(
-                    "days since 1950-01-01 00:00:00", calendar="gregorian"
+                    "days since 1950-01-01 00:00:00",
+                    calendar="gregorian",
                 ),
             ),
             0,
@@ -93,7 +96,8 @@ class Test(tests.Test):
         """Test to mask glaciated (NE mask)."""
         result = mask_glaciated(self.arr, mask_out="glaciated")
         expected = np.ma.masked_array(
-            self.data2, mask=np.array([[True, True], [False, False]])
+            self.data2,
+            mask=np.array([[True, True], [False, False]]),
         )
         self.assert_array_equal(result.data, expected)
 

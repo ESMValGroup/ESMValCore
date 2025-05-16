@@ -12,17 +12,16 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project: str) -> list[dict[str, str]]:
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "evspsbl"},
             {"short_name": "pr"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes: CubeList) -> Cube:
         """Compute net moisture flux into atmosphere."""
         evspsbl_cube = cubes.extract_cube(
-            Constraint(name="water_evapotranspiration_flux")
+            Constraint(name="water_evapotranspiration_flux"),
         )
         pr_cube = cubes.extract_cube(Constraint(name="precipitation_flux"))
 
