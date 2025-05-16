@@ -1,11 +1,11 @@
 """Module for finding files on ESGF."""
 
 import itertools
-import logging
 from functools import lru_cache
 
 import pyesgf.search
 import requests.exceptions
+from loguru import logger
 
 from ..config._esgf_pyclient import get_esgf_config
 from ..local import (
@@ -16,8 +16,6 @@ from ..local import (
 )
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
-
-logger = logging.getLogger(__name__)
 
 
 def get_esgf_facets(variable):
@@ -72,7 +70,7 @@ def select_latest_versions(files, versions):
         result.append(latest_version)
         if len(group) > 1:
             logger.debug(
-                "Only using the latest version %s, not %s",
+                "Only using the latest version {}, not {}",
                 latest_version,
                 group[1:],
             )
@@ -117,7 +115,7 @@ def _search_index_nodes(facets):
             pyesgf.search.context.FileSearchContext,
             **facets,
         )
-        logger.debug("Searching %s for datasets using facets=%s", url, facets)
+        logger.debug("Searching {} for datasets using facets={}", url, facets)
         try:
             results = context.search(
                 batch_size=500,
@@ -130,7 +128,7 @@ def _search_index_nodes(facets):
             requests.exceptions.HTTPError,
             requests.exceptions.Timeout,
         ) as error:
-            logger.debug("Unable to connect to %s due to %s", url, error)
+            logger.debug("Unable to connect to {} due to {}", url, error)
             errors.append(error)
 
     raise FileNotFoundError(
@@ -158,7 +156,7 @@ def esgf_search_files(facets):
 
     msg = "none" if not files else "\n" + "\n".join(str(f) for f in files)
     logger.debug(
-        "Found the following files matching facets %s: %s", facets, msg
+        "Found the following files matching facets {}: {}", facets, msg
     )
 
     return files
@@ -369,6 +367,6 @@ def cached_search(**facets):
     _replace_years_with_timerange(facets)
     if "timerange" in facets:
         files = select_by_time(files, facets["timerange"])
-        logger.debug("Selected files:\n%s", "\n".join(str(f) for f in files))
+        logger.debug("Selected files:\n{}", "\n".join(str(f) for f in files))
 
     return files

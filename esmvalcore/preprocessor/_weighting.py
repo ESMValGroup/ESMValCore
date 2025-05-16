@@ -1,12 +1,8 @@
 """Weighting preprocessor module."""
 
-import logging
-
 import iris
 
 from ._supplementary_vars import register_supplementaries
-
-logger = logging.getLogger(__name__)
 
 
 def _get_land_fraction(cube):

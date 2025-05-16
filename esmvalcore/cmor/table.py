@@ -10,7 +10,6 @@ import copy
 import errno
 import glob
 import json
-import logging
 import os
 from collections import Counter
 from functools import lru_cache, total_ordering
@@ -18,10 +17,9 @@ from pathlib import Path
 from typing import Optional, Union
 
 import yaml
+from loguru import logger
 
 from esmvalcore.exceptions import RecipeError
-
-logger = logging.getLogger(__name__)
 
 CMORTable = Union["CMIP3Info", "CMIP5Info", "CMIP6Info", "CustomInfo"]
 
@@ -61,7 +59,7 @@ def _update_cmor_facets(facets):
                 facets[key] = value
             else:
                 logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table",
+                    "Failed to add key {} to variable {} from CMOR table",
                     key,
                     facets,
                 )
@@ -474,7 +472,7 @@ class CMIP6Info(InfoBase):
                     coord = self.coords[dimension]
                 except KeyError:
                     logger.exception(
-                        "Can not find dimension %s for variable %s",
+                        "Can not find dimension {} for variable {}",
                         dimension,
                         var,
                     )

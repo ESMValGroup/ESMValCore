@@ -2,7 +2,6 @@
 
 import contextlib
 import importlib
-import logging
 import os
 import warnings
 from collections.abc import Generator, Mapping
@@ -14,14 +13,13 @@ import dask.config
 import yaml
 from distributed import Client
 from distributed.deploy import Cluster
+from loguru import logger
 
 from esmvalcore.config import CFG
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
-
-logger = logging.getLogger(__name__)
 
 # TODO: Remove in v2.14.0
 CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
@@ -112,7 +110,7 @@ def _get_old_dask_config() -> dict:
         if "address" in client_kwargs:
             if cluster_kwargs:
                 logger.warning(
-                    "Not using Dask 'cluster' settings from %s because a "
+                    "Not using Dask 'cluster' settings from {} because a "
                     "cluster 'address' is already provided in 'client'.",
                     CONFIG_FILE,
                 )
@@ -167,11 +165,11 @@ def get_distributed_client() -> Generator[None | Client]:
     # Set up cluster and client according to the selected profile
     # Note: we already ensured earlier that the selected profile (via `use`)
     # actually exists in `profiles`, so we don't have to check that again here
-    logger.debug("Using Dask profile '%s'", dask_config["use"])
+    logger.debug("Using Dask profile '{}'", dask_config["use"])
     profile = dask_config["profiles"][dask_config["use"]]
     cluster_kwargs = profile.pop("cluster", None)
 
-    logger.debug("Using additional Dask settings %s", profile)
+    logger.debug("Using additional Dask settings {}", profile)
     dask.config.set(profile)
 
     cluster: None | Cluster
@@ -189,7 +187,7 @@ def get_distributed_client() -> Generator[None | Client]:
         cluster_cls = getattr(cluster_module, cluster_cls_name)
         cluster = cluster_cls(**cluster_kwargs)
         dask.config.set({"scheduler_address": cluster.scheduler_address})
-        logger.debug("Using Dask cluster %s", cluster)
+        logger.debug("Using Dask cluster {}", cluster)
 
     if dask.config.get("scheduler_address", None) is None:
         client = None
@@ -203,8 +201,8 @@ def get_distributed_client() -> Generator[None | Client]:
     else:
         client = Client(**client_kwargs)
         logger.info(
-            "Using Dask distributed scheduler (address: %s, dashboard link: "
-            "%s)",
+            "Using Dask distributed scheduler (address: {}, dashboard link: "
+            "{})",
             dask.config.get("scheduler_address"),
             client.dashboard_link,
         )
@@ -219,7 +217,7 @@ def get_distributed_client() -> Generator[None | Client]:
                 cluster.close()
             except TimeoutError:
                 logger.warning(
-                    "Timeout while trying to shut down the cluster at %s, "
+                    "Timeout while trying to shut down the cluster at {}, "
                     "you may want to check it was stopped.",
                     cluster.scheduler_address,
                 )

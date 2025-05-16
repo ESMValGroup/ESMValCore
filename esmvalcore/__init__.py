@@ -1,12 +1,8 @@
 """ESMValTool core package."""
 
-import logging
 import os
 
 from ._version import __version__
-
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "__version__",

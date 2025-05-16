@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 import dask
 import dask.array as da
 import numpy as np
@@ -20,8 +18,6 @@ from esmvalcore.iris_helpers import (
     rechunk_cube,
 )
 from esmvalcore.preprocessor._shared import preserve_float_dtype
-
-logger = logging.getLogger(__name__)
 
 
 class UnstructuredNearest(IrisUnstructuredNearest):

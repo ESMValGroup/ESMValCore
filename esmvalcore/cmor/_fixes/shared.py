@@ -1,6 +1,5 @@
 """Shared functions for fixes."""
 
-import logging
 import os
 from datetime import datetime, timedelta
 from functools import lru_cache
@@ -12,11 +11,10 @@ import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
 from iris.coords import Coord
+from loguru import logger
 from scipy.interpolate import interp1d
 
 from esmvalcore.iris_helpers import date2num
-
-logger = logging.getLogger(__name__)
 
 
 def add_aux_coords_from_cubes(cube, cubes, coord_dict):
@@ -177,7 +175,7 @@ def add_altitude_from_plev(cube):
 
 def add_scalar_depth_coord(cube, depth=0.0):
     """Add scalar coordinate 'depth' with value of `depth`m."""
-    logger.debug("Adding depth coordinate (%sm)", depth)
+    logger.debug("Adding depth coordinate ({}m)", depth)
     depth_coord = iris.coords.AuxCoord(
         depth,
         var_name="depth",
@@ -195,7 +193,7 @@ def add_scalar_depth_coord(cube, depth=0.0):
 
 def add_scalar_height_coord(cube, height=2.0):
     """Add scalar coordinate 'height' with value of `height`m."""
-    logger.debug("Adding height coordinate (%sm)", height)
+    logger.debug("Adding height coordinate ({}m)", height)
     height_coord = iris.coords.AuxCoord(
         height,
         var_name="height",
@@ -230,7 +228,7 @@ def add_scalar_lambda550nm_coord(cube):
 
 def add_scalar_typeland_coord(cube, value="default"):
     """Add scalar coordinate 'typeland' with value of `value`."""
-    logger.debug("Adding typeland coordinate (%s)", value)
+    logger.debug("Adding typeland coordinate ({})", value)
     typeland_coord = iris.coords.AuxCoord(
         value,
         var_name="type",
@@ -247,7 +245,7 @@ def add_scalar_typeland_coord(cube, value="default"):
 
 def add_scalar_typesea_coord(cube, value="default"):
     """Add scalar coordinate 'typesea' with value of `value`."""
-    logger.debug("Adding typesea coordinate (%s)", value)
+    logger.debug("Adding typesea coordinate ({})", value)
     typesea_coord = iris.coords.AuxCoord(
         value,
         var_name="type",
@@ -264,7 +262,7 @@ def add_scalar_typesea_coord(cube, value="default"):
 
 def add_scalar_typesi_coord(cube, value="sea_ice"):
     """Add scalar coordinate 'typesi' with value of `value`."""
-    logger.debug("Adding typesi coordinate (%s)", value)
+    logger.debug("Adding typesi coordinate ({})", value)
     typesi_coord = iris.coords.AuxCoord(
         value,
         var_name="type",
@@ -396,7 +394,7 @@ def fix_bounds(cube, cubes, coord_var_names):
             continue
         bounds_cube = get_bounds_cube(cubes, coord_var_name)
         cube.coord(var_name=coord_var_name).bounds = bounds_cube.core_data()
-        logger.debug("Fixed bounds of coordinate '%s'", coord_var_name)
+        logger.debug("Fixed bounds of coordinate '{}'", coord_var_name)
 
 
 def round_coordinates(cubes, decimals=5, coord_names=None):

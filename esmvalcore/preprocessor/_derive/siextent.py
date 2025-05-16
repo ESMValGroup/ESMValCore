@@ -1,7 +1,5 @@
 """Derivation of variable `sithick`."""
 
-import logging
-
 import dask.array as da
 import iris
 from iris import Constraint
@@ -9,8 +7,6 @@ from iris import Constraint
 from esmvalcore.exceptions import RecipeError
 
 from ._baseclass import DerivedVariableBase
-
-logger = logging.getLogger(__name__)
 
 
 class DerivedVariable(DerivedVariableBase):

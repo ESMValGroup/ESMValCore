@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import collections.abc
 import fnmatch
-import logging
 import os
 from functools import lru_cache
 from importlib.resources import files as importlib_files
@@ -12,12 +11,11 @@ from pathlib import Path
 
 import iris
 import yaml
+from loguru import logger
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.typing import FacetValue
-
-logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
 
@@ -55,7 +53,7 @@ def _load_extra_facets(project, extra_facets_dir):
     for config_path in config_paths:
         config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
-            logger.debug("Loading extra facets from %s", config_file_path)
+            logger.debug("Loading extra facets from {}", config_file_path)
             with config_file_path.open(encoding="utf-8") as config_file:
                 config_piece = yaml.safe_load(config_file)
             if config_piece:
@@ -108,7 +106,7 @@ def load_config_developer(cfg_file):
     if "obs4mips" in cfg:
         logger.warning(
             "Correcting capitalization, project 'obs4mips'"
-            " should be written as 'obs4MIPs' in %s",
+            " should be written as 'obs4MIPs' in {}",
             cfg_file,
         )
         cfg["obs4MIPs"] = cfg.pop("obs4mips")

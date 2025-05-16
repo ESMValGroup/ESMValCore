@@ -1,12 +1,9 @@
 """Derivation of variable `lwp`."""
 
-import logging
-
 from iris import NameConstraint
+from loguru import logger
 
 from ._baseclass import DerivedVariableBase
-
-logger = logging.getLogger(__name__)
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -86,7 +83,7 @@ class DerivedVariable(DerivedVariableBase):
         affected_projects = ["CMIP5", "CMIP5_ETHZ", "CMIP6"]
         if project in affected_projects and dataset in bad_datasets:
             logger.info(
-                "Assuming that variable clwvi from %s dataset %s "
+                "Assuming that variable clwvi from {} dataset {} "
                 "contains only liquid water",
                 project,
                 dataset,

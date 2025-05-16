@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-import logging
 import os
 import warnings
 from collections import defaultdict
@@ -13,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Sequence
 
 import yaml
+from loguru import logger
 
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
@@ -55,8 +55,6 @@ from .to_datasets import (
     _get_input_datasets,
     _representative_datasets,
 )
-
-logger = logging.getLogger(__name__)
 
 PreprocessorSettings = Dict[str, Any]
 
@@ -180,7 +178,7 @@ def _limit_datasets(datasets, profile):
     if not max_datasets:
         return datasets
 
-    logger.info("Limiting the number of datasets to %s", max_datasets)
+    logger.info("Limiting the number of datasets to {}", max_datasets)
 
     required_datasets = [
         (profile.get("extract_levels") or {}).get("levels"),
@@ -197,7 +195,7 @@ def _limit_datasets(datasets, profile):
             limited.append(dataset)
 
     logger.info(
-        "Only considering %s", ", ".join(d.facets["alias"] for d in limited)
+        "Only considering {}", ", ".join(d.facets["alias"] for d in limited)
     )
 
     return limited
@@ -255,7 +253,7 @@ def _add_dataset_specific_settings(dataset: Dataset, settings: dict) -> None:
         settings["regrid"] = {"target_grid": "0.25x0.25", "scheme": "linear"}
         logger.debug(
             "Automatically regrid native6 ERA5 data in GRIB format with the "
-            "settings %s",
+            "settings {}",
             settings["regrid"],
         )
 
@@ -269,7 +267,7 @@ def _exclude_dataset(settings, facets, step):
     if facets["dataset"] in exclude:
         settings.pop(step)
         logger.debug(
-            "Excluded dataset '%s' from preprocessor step '%s'",
+            "Excluded dataset '{}' from preprocessor step '{}'",
             facets["dataset"],
             step,
         )
@@ -311,7 +309,7 @@ def _log_input_files(datasets: Iterable[Dataset]) -> None:
                 )
 
         logger.debug(
-            "Using input files for variable %s of dataset %s:\n%s%s",
+            "Using input files for variable {} of dataset {}:\n{}{}",
             dataset.facets["short_name"],
             dataset.facets["alias"].replace("_", " "),  # type: ignore
             _get_files_str(dataset),
@@ -586,7 +584,7 @@ def _get_preprocessor_products(
         missing = _check_input_files(input_datasets)
         if missing:
             if _allow_skipping(dataset):
-                logger.info("Skipping: %s", missing)
+                logger.info("Skipping: {}", missing)
             else:
                 missing_vars.update(missing)
             continue
@@ -594,7 +592,7 @@ def _get_preprocessor_products(
         USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)
-        logger.info("Found input files for %s", dataset.summary(shorten=True))
+        logger.info("Found input files for {}", dataset.summary(shorten=True))
 
         filename = _get_output_file(
             dataset.facets,
@@ -737,7 +735,7 @@ def _get_preprocessor_task(datasets, profiles, task_name):
             f"{facets['variable_group']} of diagnostic {facets['diagnostic']}"
         )
     logger.info(
-        "Creating preprocessor '%s' task for variable '%s'",
+        "Creating preprocessor '{}' task for variable '{}'",
         preprocessor,
         facets["variable_group"],
     )
@@ -763,9 +761,9 @@ def _get_preprocessor_task(datasets, profiles, task_name):
         write_ncl_interface=session["write_ncl_interface"],
     )
 
-    logger.info("PreprocessingTask %s created.", task.name)
+    logger.info("PreprocessingTask {} created.", task.name)
     logger.debug(
-        "PreprocessingTask %s will create the files:\n%s",
+        "PreprocessingTask {} will create the files:\n{}",
         task.name,
         "\n".join(str(p.filename) for p in task.products),
     )
@@ -839,7 +837,7 @@ class Recipe:
             )
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, use `search_esgf: when_missing` or "
+                "`download_dir: {}`, use `search_esgf: when_missing` or "
                 "`search_esgf: always` in your configuration file(s), or run "
                 "the recipe with the command line argument "
                 "--search_esgf=when_missing or --search_esgf=always",
@@ -847,7 +845,7 @@ class Recipe:
             )
             logger.info(
                 "Note that automatic download is only available for files"
-                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
+                " that are hosted on the ESGF, i.e. for projects: {}, and {}",
                 ", ".join(list(esgf.facets.FACETS)[:-1]),
                 list(esgf.facets.FACETS)[-1],
             )
@@ -906,7 +904,7 @@ class Recipe:
         if not raw_scripts:
             return {}
 
-        logger.debug("Setting script for diagnostic %s", diagnostic_name)
+        logger.debug("Setting script for diagnostic {}", diagnostic_name)
 
         scripts = {}
 
@@ -960,7 +958,7 @@ class Recipe:
                     tasks[task_id], DiagnosticTask
                 ):
                     logger.debug(
-                        "Linking tasks for diagnostic %s script %s",
+                        "Linking tasks for diagnostic {} script {}",
                         diagnostic_name,
                         script_name,
                     )
@@ -973,7 +971,7 @@ class Recipe:
                                 f"'{id_glob}'."
                             )
                         logger.debug(
-                            "Pattern %s matches %s", id_glob, ancestor_ids
+                            "Pattern {} matches {}", id_glob, ancestor_ids
                         )
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
@@ -1034,11 +1032,11 @@ class Recipe:
                             break
                     else:
                         logger.info(
-                            "Skipping task %s due to filter", task_name
+                            "Skipping task {} due to filter", task_name
                         )
                         continue
 
-                logger.info("Creating diagnostic task %s", task_name)
+                logger.info("Creating diagnostic task {}", task_name)
                 task = DiagnosticTask(
                     script=script_cfg["script"],
                     output_dir=script_cfg["output_dir"],
@@ -1073,7 +1071,7 @@ class Recipe:
                             break
                     else:
                         logger.info(
-                            "Skipping task %s due to filter", task_name
+                            "Skipping task {} due to filter", task_name
                         )
                         continue
 
@@ -1087,7 +1085,7 @@ class Recipe:
                 )
                 if prev_preproc_dir.exists():
                     logger.info(
-                        "Reusing preprocessed files from %s for %s",
+                        "Reusing preprocessed files from {} for {}",
                         prev_preproc_dir,
                         task_name,
                     )
@@ -1100,7 +1098,7 @@ class Recipe:
                     tasks.append(task)
                     break
             else:
-                logger.info("Creating preprocessor task %s", task_name)
+                logger.info("Creating preprocessor task {}", task_name)
                 try:
                     task = _get_preprocessor_task(
                         datasets=list(datasets),
@@ -1125,7 +1123,7 @@ class Recipe:
         failed_tasks = []
 
         for diagnostic_name, diagnostic in self.diagnostics.items():
-            logger.info("Creating tasks for diagnostic %s", diagnostic_name)
+            logger.info("Creating tasks for diagnostic {}", diagnostic_name)
 
             # Create diagnostic tasks
             new_tasks = self._create_diagnostic_tasks(
@@ -1169,7 +1167,7 @@ class Recipe:
         tasks = self._create_tasks()
         tasks = tasks.flatten()
         logger.info(
-            "These tasks will be executed: %s",
+            "These tasks will be executed: {}",
             ", ".join(t.name for t in tasks),
         )
 
@@ -1199,7 +1197,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
-            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://{}",
             filled_recipe,
         )
         self.write_html_summary()
@@ -1236,7 +1234,7 @@ class Recipe:
         with filename.open("w", encoding="utf-8") as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
         logger.info(
-            "Wrote recipe with version numbers and wildcards to:\nfile://%s",
+            "Wrote recipe with version numbers and wildcards to:\nfile://{}",
             filename,
         )
         return filename
@@ -1255,6 +1253,6 @@ class Recipe:
                 output = RecipeOutput.from_core_recipe_output(output)
             except LookupError as error:
                 # See https://github.com/ESMValGroup/ESMValCore/issues/28
-                logger.warning("Could not write HTML report: %s", error)
+                logger.warning("Could not write HTML report: {}", error)
             else:
                 output.write_html()

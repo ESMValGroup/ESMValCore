@@ -90,7 +90,7 @@ def test_ncl_version_broken(mocker):
         check.ncl_version()
 
 
-ERR_ALL = "Looked for files matching%s"
+ERR_ALL = "Looked for files matching{}"
 ERR_RANGE = "No input data available for years {} in files:\n{}"
 VAR = {
     "frequency": "mon",
@@ -177,7 +177,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     dataset._file_globs = [
         os.path.join(d, f) for d in dirnames for f in filenames
     ]
-    error_first = ("No input files found for %s", dataset)
+    error_first = ("No input files found for {}", dataset)
     error_last = ("Set 'log_level' to 'debug' to get more information",)
     with pytest.raises(RecipeError) as rec_err:
         check.data_availability(dataset)

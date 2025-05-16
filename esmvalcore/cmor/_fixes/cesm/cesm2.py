@@ -15,13 +15,9 @@ esmvalcore/cmor/_fixes/emac/emac.py for examples).
 
 """
 
-import logging
-
 from iris.cube import CubeList
 
 from ..native_datasets import NativeDatasetFix
-
-logger = logging.getLogger(__name__)
 
 
 class AllVars(NativeDatasetFix):

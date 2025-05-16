@@ -1,13 +1,10 @@
 """Derivation of variable `sispeed`."""
 
-import logging
-
 from iris import Constraint
+from loguru import logger
 
 from .._regrid import regrid
 from ._baseclass import DerivedVariableBase
-
-logger = logging.getLogger(__name__)
 
 
 class DerivedVariable(DerivedVariableBase):

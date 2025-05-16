@@ -1,6 +1,5 @@
 """Unit tests for the CMORCheck class."""
 
-import logging
 import unittest
 from copy import deepcopy
 
@@ -13,6 +12,7 @@ import iris.util
 import numpy as np
 import pytest
 from cf_units import Unit
+from loguru import logger
 
 from esmvalcore.cmor.check import (
     CheckLevels,
@@ -20,8 +20,6 @@ from esmvalcore.cmor.check import (
     CMORCheckError,
     _get_cmor_checker,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class VariableInfoMock:

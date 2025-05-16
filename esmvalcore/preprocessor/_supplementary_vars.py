@@ -1,13 +1,11 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
-import logging
 from collections.abc import Callable
 from typing import Iterable, Literal
 
 import iris.coords
 from iris.cube import Cube
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 PREPROCESSOR_SUPPLEMENTARIES = {}
 
@@ -95,7 +93,7 @@ def add_cell_measure(
     )
     cube.add_cell_measure(cell_measure, coord_dims)
     logger.debug(
-        "Added %s as cell measure in cube of %s.",
+        "Added {} as cell measure in cube of {}.",
         cell_measure_cube.var_name,
         cube.var_name,
     )
@@ -135,7 +133,7 @@ def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
     )
     cube.add_ancillary_variable(ancillary_var, coord_dims)
     logger.debug(
-        "Added %s as ancillary variable in cube of %s.",
+        "Added {} as ancillary variable in cube of {}.",
         ancillary_cube.var_name,
         cube.var_name,
     )

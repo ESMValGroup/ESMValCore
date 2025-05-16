@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import copy
 import datetime
-import logging
 import warnings
 from functools import partial
 from typing import Iterable, Literal, Optional
@@ -29,6 +28,7 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 from iris.util import broadcast_to_shape
+from loguru import logger
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
@@ -43,8 +43,6 @@ from esmvalcore.preprocessor._shared import (
     preserve_float_dtype,
     update_weights_kwargs,
 )
-
-logger = logging.getLogger(__name__)
 
 # Ignore warnings about missing bounds where those are not required
 for _coord in (
@@ -428,7 +426,7 @@ def _aggregate_time_fx(result_cube, source_cube):
             measure_dims = set(source_cube.cell_measure_dims(measure))
             if time_dim.intersection(measure_dims):
                 logger.debug(
-                    "Averaging time dimension in measure %s.", measure.var_name
+                    "Averaging time dimension in measure {}.", measure.var_name
                 )
                 result_measure = da.mean(
                     measure.core_data(), axis=tuple(time_dim)
@@ -444,7 +442,7 @@ def _aggregate_time_fx(result_cube, source_cube):
             )
             if time_dim.intersection(ancillary_dims):
                 logger.debug(
-                    "Averaging time dimension in ancillary variable %s.",
+                    "Averaging time dimension in ancillary variable {}.",
                     ancillary_var.var_name,
                 )
                 result_ancillary_var = da.mean(
@@ -1283,7 +1281,7 @@ def timeseries_filter(
     try:
         cube.coord("time")
     except CoordinateNotFoundError:
-        logger.error("Cube %s does not have time coordinate", cube)
+        logger.error("Cube {} does not have time coordinate", cube)
         raise
 
     # Construct weights depending on frequency

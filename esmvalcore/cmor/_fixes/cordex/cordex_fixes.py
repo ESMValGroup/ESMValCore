@@ -1,6 +1,5 @@
 """Fixes that are shared between datasets and drivers."""
 
-import logging
 from functools import lru_cache
 
 import cordex as cx
@@ -8,11 +7,10 @@ import iris
 import numpy as np
 from cf_units import Unit
 from iris.coord_systems import LambertConformal, RotatedGeogCS
+from loguru import logger
 
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
-
-logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -116,9 +114,9 @@ class AllVars(Fix):
         """Check differences between coords."""
         diff = np.max(np.abs(old_coord.points - new_coord.points))
         logger.debug(
-            "Maximum difference between original %s"
-            "points and standard %s domain points  "
-            "for dataset %s and driver %s is: %s.",
+            "Maximum difference between original {}"
+            "points and standard {} domain points  "
+            "for dataset {} and driver {} is: {}.",
             new_coord.var_name,
             self.extra_facets["domain"],
             self.extra_facets["dataset"],

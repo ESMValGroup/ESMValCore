@@ -1,13 +1,9 @@
 """On-the-fly CMORizer for ACCESS-ESM."""
 
-import logging
-
 from cf_units import Unit
 from iris.cube import CubeList
 
 from ._base_fix import AccessFix
-
-logger = logging.getLogger(__name__)
 
 
 class AllVars(AccessFix):

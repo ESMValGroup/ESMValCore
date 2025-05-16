@@ -7,7 +7,6 @@ masking with ancillary variables, masking with Natural Earth shapefiles
 
 from __future__ import annotations
 
-import logging
 import os
 from typing import Literal
 
@@ -20,6 +19,7 @@ import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.cube import Cube
 from iris.util import rolling_window
+from loguru import logger
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
@@ -27,8 +27,6 @@ from esmvalcore.preprocessor._shared import (
 )
 
 from ._supplementary_vars import register_supplementaries
-
-logger = logging.getLogger(__name__)
 
 
 def _get_fx_mask(
@@ -134,12 +132,12 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
             cube.core_data(),
             cube.ancillary_variable_dims(ancillary_var),
         )
-        logger.debug("Applying land-sea mask: %s", ancillary_var.var_name)
+        logger.debug("Applying land-sea mask: {}", ancillary_var.var_name)
     else:
         if cube.coord("longitude").points.ndim < 2:
             cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
             logger.debug(
-                "Applying land-sea mask from Natural Earth shapefile: \n%s",
+                "Applying land-sea mask from Natural Earth shapefile: \n{}",
                 shapefiles[mask_out],
             )
         else:
@@ -257,7 +255,7 @@ def mask_glaciated(cube, mask_out: str = "glaciated"):
             ],
         )
         logger.debug(
-            "Applying glaciated areas mask from Natural Earth shapefile: \n%s",
+            "Applying glaciated areas mask from Natural Earth shapefile: \n{}",
             shapefiles[mask_out],
         )
     else:

@@ -4,7 +4,6 @@ import abc
 import contextlib
 import datetime
 import importlib
-import logging
 import multiprocessing
 import numbers
 import os
@@ -23,6 +22,7 @@ import dask
 import psutil
 import yaml
 from distributed import Client
+from loguru import logger
 
 from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
@@ -38,7 +38,6 @@ def path_representer(dumper, data):
 yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
 yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
-logger = logging.getLogger(__name__)
 
 DATASET_KEYS = {
     "mip",
@@ -117,7 +116,7 @@ def _get_resource_usage(process, start_time, children=True):
             round(entry, p)
             for entry, p in zip(entries, precision, strict=False)
         ]
-        entries.insert(0, datetime.datetime.utcnow())
+        entries.insert(0, datetime.datetime.now(datetime.timezone.utc))
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
 
@@ -139,7 +138,8 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
                 time.sleep(interval)
                 if halt.is_set():
                     logger.info(
-                        "Maximum memory used (estimate): %.1f GB", max_mem
+                        "Maximum memory used (estimate): {memory:.1f} GB",
+                        memory=max_mem,
                     )
                     logger.info(
                         "Sampled every second. It may be inaccurate if short "
@@ -191,7 +191,7 @@ def _py2ncl(value, var_name=""):
 
 def write_ncl_settings(settings, filename, mode="wt"):
     """Write a dictionary with generic settings to NCL file."""
-    logger.debug("Writing NCL configuration file %s", filename)
+    logger.debug("Writing NCL configuration file {}", filename)
 
     def _ncl_type(value):
         """Convert some Python types to NCL types."""
@@ -287,13 +287,13 @@ class BaseTask:
             for task in self.ancestors:
                 input_files.extend(task.run())
             logger.info(
-                "Starting task %s in process [%s]", self.name, os.getpid()
+                "Starting task {} in process [{}]", self.name, os.getpid()
             )
             start = datetime.datetime.now()
             self.output_files = self._run(input_files)
             runtime = datetime.datetime.now() - start
             logger.info(
-                "Successfully completed task %s (priority %s) in %s",
+                "Successfully completed task {} (priority {}) in {}",
                 self.name,
                 self.priority,
                 runtime,
@@ -537,12 +537,12 @@ class DiagnosticTask(BaseTask):
             if line.strip() in ignore_warnings:
                 continue
             if "warning:" in line:
-                logger.warning("NCL: %s", line)
+                logger.warning("NCL: {}", line)
                 warned = True
             for error in errors:
                 if error in line:
                     logger.error(msg)
-                    logger.error("NCL: %s", line)
+                    logger.error("NCL: {}", line)
                     try:
                         process.kill()
                     except OSError:  # ignore error if process already exited
@@ -553,21 +553,21 @@ class DiagnosticTask(BaseTask):
 
         if warned:
             logger.warning(
-                "There were warnings during the execution of NCL script %s, "
-                "for details, see the log %s",
+                "There were warnings during the execution of NCL script {}, "
+                "for details, see the log {}",
                 self.script,
                 self.log,
             )
 
     def _start_diagnostic_script(self, cmd, env):
         """Start the diagnostic script."""
-        logger.info("Running command %s", cmd)
-        logger.debug("in environment\n%s", pprint.pformat(env))
+        logger.info("Running command {}", cmd)
+        logger.debug("in environment\n{}", pprint.pformat(env))
         cwd = self.settings["run_dir"]
-        logger.debug("in current working directory: %s", cwd)
-        logger.info("Writing output to %s", self.output_dir)
-        logger.info("Writing plots to %s", self.settings["plot_dir"])
-        logger.info("Writing log to %s", self.log)
+        logger.debug("in current working directory: {}", cwd)
+        logger.info("Writing output to {}", self.output_dir)
+        logger.info("Writing plots to {}", self.settings["plot_dir"])
+        logger.info("Writing log to {}", self.log)
 
         rerun_msg = "cd {}; ".format(cwd)
         if env:
@@ -577,7 +577,7 @@ class DiagnosticTask(BaseTask):
             rerun_msg += " " + " ".join(cmd[:-1]) + script_args
         else:
             rerun_msg += " " + " ".join(cmd)
-        logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
+        logger.info("To re-run this diagnostic script, run:\n{}", rerun_msg)
 
         complete_env = dict(os.environ)
         complete_env.update(env)
@@ -654,7 +654,7 @@ class DiagnosticTask(BaseTask):
                 time.sleep(0.001)
 
         if returncode == 0:
-            logger.debug("Script %s completed successfully", self.script)
+            logger.debug("Script {} completed successfully", self.script)
             self._collect_provenance()
             return [self.output_dir]
 
@@ -670,16 +670,16 @@ class DiagnosticTask(BaseTask):
         )
         if not provenance_file.is_file():
             logger.warning(
-                "No provenance information was written to %s. Unable to "
-                "record provenance for files created by diagnostic script %s "
-                "in task %s",
+                "No provenance information was written to {}. Unable to "
+                "record provenance for files created by diagnostic script {} "
+                "in task {}",
                 provenance_file,
                 self.script,
                 self.name,
             )
             return
 
-        logger.debug("Collecting provenance from %s", provenance_file)
+        logger.debug("Collecting provenance from {}", provenance_file)
         start = time.time()
         table = yaml.safe_load(provenance_file.read_text(encoding="utf-8"))
 
@@ -716,7 +716,7 @@ class DiagnosticTask(BaseTask):
             if not ancestor_files:
                 logger.warning(
                     "No ancestor files specified for recording provenance of "
-                    "%s, created by diagnostic script %s in task %s",
+                    "{}, created by diagnostic script {} in task {}",
                     filename,
                     self.script,
                     self.name,
@@ -725,8 +725,8 @@ class DiagnosticTask(BaseTask):
             ancestors = set()
             if isinstance(ancestor_files, str):
                 logger.warning(
-                    "Ancestor file(s) %s specified for recording provenance "
-                    "of %s, created by diagnostic script %s in task %s is "
+                    "Ancestor file(s) {} specified for recording provenance "
+                    "of {}, created by diagnostic script {} in task {} is "
                     "a string but should be a list of strings",
                     ancestor_files,
                     filename,
@@ -740,9 +740,9 @@ class DiagnosticTask(BaseTask):
                 else:
                     valid = False
                     logger.warning(
-                        "Invalid ancestor file %s specified for recording "
-                        "provenance of %s, created by diagnostic script %s "
-                        "in task %s",
+                        "Invalid ancestor file {} specified for recording "
+                        "provenance of {}, created by diagnostic script {} "
+                        "in task {}",
                         ancestor_file,
                         filename,
                         self.script,
@@ -761,16 +761,16 @@ class DiagnosticTask(BaseTask):
 
         if not valid:
             logger.warning(
-                "Valid ancestor files for diagnostic script %s in task %s "
-                "are:\n%s",
+                "Valid ancestor files for diagnostic script {} in task {} "
+                "are:\n{}",
                 self.script,
                 self.name,
                 "\n".join(ancestor_products),
             )
         logger.debug(
-            "Collecting provenance of task %s took %.1f seconds",
-            self.name,
-            time.time() - start,
+            "Collecting provenance of task {name} took {duration:.1f} seconds",
+            name=self.name,
+            duration=time.time() - start,
         )
 
     def __repr__(self):
@@ -841,7 +841,7 @@ class TaskSet(set):
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
         n_tasks = len(self.flatten())
-        logger.info("Running %s tasks sequentially", n_tasks)
+        logger.info("Running {} tasks sequentially", n_tasks)
 
         tasks = self.get_independent()
         for task in sorted(tasks, key=lambda t: t.priority):
@@ -883,7 +883,7 @@ class TaskSet(set):
             1, round(n_available_cpu_cores / n_threaded_dask_schedulers)
         )
         logger.info(
-            "Using the threaded Dask scheduler with %s worker threads per "
+            "Using the threaded Dask scheduler with {} worker threads per "
             "preprocessing task. "
             "See https://docs.esmvaltool.org/projects/ESMValCore/en/"
             "latest/quickstart/configure.html#f5 for more information.",
@@ -903,7 +903,7 @@ class TaskSet(set):
             max_parallel_tasks = available_cpu_count()
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
         logger.info(
-            "Running %s tasks using %s processes", n_tasks, max_parallel_tasks
+            "Running {} tasks using {} processes", n_tasks, max_parallel_tasks
         )
 
         dask_config = self._get_dask_config(max_parallel_tasks)
@@ -958,8 +958,8 @@ class TaskSet(set):
                         n_scheduled, n_running = len(scheduled), len(running)
                         n_done = n_tasks - n_scheduled - n_running
                         logger.info(
-                            "Progress: %s tasks running, %s tasks waiting for "
-                            "ancestors, %s/%s done",
+                            "Progress: {} tasks running, {} tasks waiting for "
+                            "ancestors, {}/{} done",
                             n_running,
                             n_scheduled,
                             n_done,

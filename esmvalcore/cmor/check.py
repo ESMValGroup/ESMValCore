@@ -18,6 +18,7 @@ import iris.util
 import numpy as np
 from iris.coords import Coord
 from iris.cube import Cube
+from loguru import logger
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -93,7 +94,7 @@ class CMORCheck:
         self._cube = cube
         self._failerr = fail_on_error
         self._check_level = check_level
-        self._logger = logging.getLogger(__name__)
+        self._logger = logger
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()

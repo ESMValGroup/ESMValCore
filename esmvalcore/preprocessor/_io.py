@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import logging
 import os
 from collections.abc import Sequence
 from itertools import groupby
@@ -20,6 +19,7 @@ import yaml
 from cf_units import suppress_errors
 from dask.delayed import Delayed
 from iris.cube import CubeList
+from loguru import logger
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
@@ -27,8 +27,6 @@ from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 from .._task import write_ncl_settings
-
-logger = logging.getLogger(__name__)
 
 GLOBAL_FILL_VALUE = 1e20
 
@@ -100,7 +98,7 @@ def load(
         Cubes are empty.
     """
     file = Path(file)
-    logger.debug("Loading:\n%s", file)
+    logger.debug("Loading:\n{}", file)
 
     if ignore_warnings is None:
         ignore_warnings = []
@@ -148,7 +146,7 @@ def load(
                 raw_cubes = iris.load(file, callback=_load_callback)
             else:
                 raw_cubes = iris.load_raw(file, callback=_load_callback)
-    logger.debug("Done with loading %s", file)
+    logger.debug("Done with loading {}", file)
 
     if not raw_cubes:
         raise ValueError(f"Can not load cubes from {file}")
@@ -232,7 +230,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
     for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
         if new_cube.start > current_cube.end:
             # no overlap, use current cube and start again from new cube
-            logger.debug("Using %s", current_cube.cube)
+            logger.debug("Using {}", current_cube.cube)
             new_cubes.append(current_cube.cube)
             current_cube = new_cube
             continue
@@ -240,8 +238,8 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
         if current_cube.end > new_cube.end:
             # current cube ends after new one, just forget new cube
             logger.debug(
-                "Discarding %s because the time range "
-                "is already covered by %s",
+                "Discarding {} because the time range "
+                "is already covered by {}",
                 new_cube.cube,
                 current_cube.cube,
             )
@@ -251,7 +249,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
             # forget current cube
             current_cube = new_cube
             logger.debug(
-                "Discarding %s because the time range is covered by %s",
+                "Discarding {} because the time range is covered by {}",
                 current_cube.cube,
                 new_cube.cube,
             )
@@ -269,14 +267,14 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
             + 1
         )
         logger.debug(
-            "Using %s shortened to %s due to overlap",
+            "Using {} shortened to {} due to overlap",
             current_cube.cube,
             current_cube.times.cell(cut_index).point,
         )
         new_cubes.append(current_cube.cube[:cut_index])
         current_cube = new_cube
 
-    logger.debug("Using %s", current_cube.cube)
+    logger.debug("Using {}", current_cube.cube)
     new_cubes.append(current_cube.cube)
 
     return new_cubes
@@ -311,12 +309,12 @@ def _get_concatenation_error(cubes):
         iris.cube.CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
-    logger.error("Can not concatenate cubes into a single one: %s", msg)
+    logger.error("Can not concatenate cubes into a single one: {}", msg)
     logger.error("Resulting cubes:")
     for cube in cubes:
         logger.error(cube)
         time = cube.coord("time")
-        logger.error("From %s to %s", time.cell(0), time.cell(-1))
+        logger.error("From {} to {}", time.cell(0), time.cell(-1))
 
     raise ValueError(f"Can not concatenate cubes: {msg}")
 
@@ -486,7 +484,7 @@ def save(
         cube.has_lazy_data() for cube in cubes
     ):
         logger.debug(
-            "Not saving cubes %s to %s to avoid data loss. "
+            "Not saving cubes {} to {} to avoid data loss. "
             "The cube is probably unchanged.",
             cubes,
             filename,
@@ -495,7 +493,7 @@ def save(
 
     for cube in cubes:
         logger.debug(
-            "Saving cube:\n%s\nwith %s data to %s",
+            "Saving cube:\n{}\nwith {} data to {}",
             cube,
             "lazy" if cube.has_lazy_data() else "realized",
             filename,
@@ -524,7 +522,7 @@ def save(
     if alias:
         for cube in cubes:
             logger.debug(
-                "Changing var_name from %s to %s", cube.var_name, alias
+                "Changing var_name from {} to {}", cube.var_name, alias
             )
             cube.var_name = alias
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Literal, Optional
@@ -33,8 +32,6 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from esmvalcore.preprocessor import PreprocessorFile
-
-logger = logging.getLogger(__name__)
 
 
 BiasType = Literal["absolute", "relative"]

@@ -105,8 +105,8 @@ def test_check_units_nounit(mock_cubes):
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
     _derive.logger.warning.assert_called_once_with(
-        "Units of cube after executing derivation script of '%s' are '%s', "
-        "automatically setting them to '%s'. This might lead to incorrect "
+        "Units of cube after executing derivation script of '{}' are '{}', "
+        "automatically setting them to '{}'. This might lead to incorrect "
         "data",
         SHORT_NAME,
         Unit("no_unit"),
@@ -132,8 +132,8 @@ def test_check_units_unknown(mock_cubes):
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
     _derive.logger.warning.assert_called_once_with(
-        "Units of cube after executing derivation script of '%s' are '%s', "
-        "automatically setting them to '%s'. This might lead to incorrect "
+        "Units of cube after executing derivation script of '{}' are '{}', "
+        "automatically setting them to '{}'. This might lead to incorrect "
         "data",
         SHORT_NAME,
         Unit("unknown"),

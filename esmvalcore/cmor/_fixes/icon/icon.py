@@ -1,13 +1,8 @@
 """CMOR-like reformatting of ICON-A (ECHAM physics)."""
 
-import logging
-
 from iris.cube import CubeList
 
 from ._base_fixes import AllVarsBase, IconFix, NegateData
-
-logger = logging.getLogger(__name__)
-
 
 AllVars = AllVarsBase
 

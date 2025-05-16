@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import pprint
 import re
 import textwrap
@@ -41,7 +40,7 @@ __all__ = [
     "datasets_to_recipe",
 ]
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 File = Union[esgf.ESGFFile, local.LocalFile]
 
@@ -239,10 +238,10 @@ class Dataset:
                 else "available on ESGF?"
             )
             if expanded:
-                logger.info("Ignoring %s", msg)
+                logger.info("Ignoring {}", msg)
             else:
                 logger.debug(
-                    "Not updating timerange and supplementaries for %s "
+                    "Not updating timerange and supplementaries for {} "
                     "because it still contains wildcards.",
                     msg,
                 )
@@ -330,8 +329,8 @@ class Dataset:
             ]
             if unexpanded:
                 logger.info(
-                    "For %s: ignoring supplementary variable '%s', "
-                    "unable to expand wildcards %s.",
+                    "For {}: ignoring supplementary variable '{}', "
+                    "unable to expand wildcards {}.",
                     self.summary(shorten=True),
                     supplementary_ds.facets["short_name"],
                     ", ".join(f"'{f}'" for f in unexpanded),
@@ -372,7 +371,7 @@ class Dataset:
 
         if not_used:
             logger.debug(
-                "List of all supplementary datasets found for %s:\n%s",
+                "List of all supplementary datasets found for {}:\n{}",
                 self.summary(shorten=True),
                 "\n".join(
                     sorted(ds.summary(shorten=True) for ds in supplementaries)
@@ -389,8 +388,8 @@ class Dataset:
                     if dataset.files:
                         supplementary_ds.facets["exp"] = exp
                         logger.info(
-                            "Corrected wrong 'exp' from '%s' to '%s' for "
-                            "supplementary variable '%s' of %s",
+                            "Corrected wrong 'exp' from '{}' to '{}' for "
+                            "supplementary variable '{}' of {}",
                             exps,
                             exp,
                             supplementary_ds.facets["short_name"],

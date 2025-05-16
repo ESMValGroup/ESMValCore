@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import os.path
 import warnings
 from collections.abc import Callable, Iterable
@@ -10,6 +9,7 @@ from functools import lru_cache, partial
 from pathlib import Path
 from typing import Any, Optional, Union
 
+from loguru import logger
 from packaging import version
 
 from esmvalcore import __version__ as current_version
@@ -23,9 +23,6 @@ from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
-
-logger = logging.getLogger(__name__)
-
 
 SEARCH_ESGF_OPTIONS = (
     "never",  # Never search ESGF for files

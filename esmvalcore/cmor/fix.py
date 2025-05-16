@@ -7,7 +7,6 @@ variables to be sure that all known errors are fixed.
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
@@ -19,8 +18,6 @@ from esmvalcore.cmor._fixes.fix import Fix
 
 if TYPE_CHECKING:
     from ..config import Session
-
-logger = logging.getLogger(__name__)
 
 
 def fix_file(

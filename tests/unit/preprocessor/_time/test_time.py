@@ -1,6 +1,7 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
+import logging
 import re
 import unittest
 from datetime import datetime
@@ -25,7 +26,6 @@ from numpy.testing import (
     assert_raises,
 )
 
-import tests
 from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
@@ -67,9 +67,10 @@ def add_auxiliary_coordinate(cubelist):
         iris.coord_categorisation.add_day_of_year(cube, cube.coord("time"))
 
 
-class TestExtractMonth(tests.Test):
+class TestExtractMonth:
     """Tests for extract_month."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -97,15 +98,16 @@ class TestExtractMonth(tests.Test):
 
     def test_bad_month_raises(self):
         """Test january extraction."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             extract_month(self.cube, 13)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             extract_month(self.cube, -1)
 
 
-class TestTimeSlice(tests.Test):
+class TestTimeSlice:
     """Tests for extract_time."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -166,13 +168,12 @@ class TestTimeSlice(tests.Test):
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         self.cube.coord("time").guess_bounds()
-        with self.assertRaises(ValueError) as ctx:
-            extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = (
             "Time slice 2200-01-01 to 2200-12-31 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00."
         )
-        assert ctx.exception.args == (msg,)
+        with pytest.raises(ValueError, match=msg):
+            extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
 
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
@@ -211,9 +212,10 @@ class TestTimeSlice(tests.Test):
             extract_time(cube, 1950, 1, 1, None, 2, 1)
 
 
-class TestClipTimerange(tests.Test):
+class TestClipTimerange:
     """Tests for clip_timerange."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -251,9 +253,8 @@ class TestClipTimerange(tests.Test):
             "Time slice 2200-01-01 01:00:00 to 2201-01-01 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00."
         )
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError, match=msg):
             clip_timerange(self.cube, "22000101T010000/2200")
-        assert ctx.exception.args == (msg,)
 
     def test_clip_timerange_one_time(self):
         """Test clip_timerange with one time step."""
@@ -537,9 +538,10 @@ class TestClipTimerange(tests.Test):
         assert mssg in str(exc)
 
 
-class TestExtractSeason(tests.Test):
+class TestExtractSeason:
     """Tests for extract_season."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -631,7 +633,7 @@ class TestExtractSeason(tests.Test):
             self.cube.coord("season_year")
 
 
-class TestClimatology(tests.Test):
+class TestClimatology:
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
 
     @staticmethod
@@ -657,9 +659,9 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="mean")
         expected = np.array([1.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
-        self.assertFalse(cube.coords("_time_weights_"))
-        self.assertFalse(result.coords("_time_weights_"))
+        assert result.units == "kg m-2 s-1"
+        assert not cube.coords("_time_weights_")
+        assert not result.coords("_time_weights_")
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
@@ -671,7 +673,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="mean")
         expected = np.array([4.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
     def test_time_mean_365_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -685,7 +687,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="mean")
         expected = np.array([1.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
     def test_time_sum(self):
         """Test for time sum of a 1D field."""
@@ -697,7 +699,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="sum")
         expected = np.array([120.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "86400 kg m-2")
+        assert result.units == "86400 kg m-2"
 
     def test_time_sum_weighted(self):
         """Test for time sum of a 1D field."""
@@ -709,7 +711,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="sum")
         expected = np.array([74.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "86400 kg m-2")
+        assert result.units == "86400 kg m-2"
 
     def test_time_sum_uneven(self):
         """Test for time sum of a 1D field with uneven time boundaries."""
@@ -721,7 +723,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="sum")
         expected = np.array([16.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "86400 kg m-2")
+        assert result.units == "86400 kg m-2"
 
     def test_time_sum_365_day(self):
         """Test for time sum of a realistic time axis and 365 day calendar."""
@@ -736,7 +738,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="sum")
         expected = np.array([211.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "86400 kg m-2")
+        assert result.units == "86400 kg m-2"
 
     def test_season_climatology(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -751,7 +753,7 @@ class TestClimatology(tests.Test):
             result = climate_statistics(cube, operator="mean", period=period)
             expected = np.array([1.0, 1.0, 1.0], dtype=np.float32)
             assert_array_equal(result.data, expected)
-            self.assertEqual(result.units, "kg m-2 s-1")
+            assert result.units == "kg m-2 s-1"
 
     def test_custom_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar."""
@@ -782,7 +784,7 @@ class TestClimatology(tests.Test):
             )
             expected = np.array([1.0, 1.0], dtype=np.float32)
             assert_array_equal(result.data, expected)
-            self.assertEqual(result.units, "kg m-2 s-1")
+            assert result.units == "kg m-2 s-1"
 
     def test_monthly(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -797,7 +799,7 @@ class TestClimatology(tests.Test):
             result = climate_statistics(cube, operator="mean", period=period)
             expected = np.ones((6,), dtype=np.float32)
             assert_array_equal(result.data, expected)
-            self.assertEqual(result.units, "kg m-2 s-1")
+            assert result.units == "kg m-2 s-1"
 
     def test_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -812,7 +814,7 @@ class TestClimatology(tests.Test):
             result = climate_statistics(cube, operator="mean", period=period)
             expected = np.array([1, 1, 1], dtype=np.float32)
             assert_array_equal(result.data, expected)
-            self.assertEqual(result.units, "kg m-2 s-1")
+            assert result.units == "kg m-2 s-1"
 
     def test_hour(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -828,7 +830,7 @@ class TestClimatology(tests.Test):
             assert_array_equal(result.data, expected)
             expected_hours = [0, 1, 2]
             assert_array_equal(result.coord("hour").points, expected_hours)
-            self.assertEqual(result.units, "kg m-2 s-1")
+            assert result.units == "kg m-2 s-1"
 
     def test_period_not_supported(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -839,7 +841,7 @@ class TestClimatology(tests.Test):
         )
         cube = self._create_cube(data, times, bounds)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             climate_statistics(cube, operator="mean", period="bad")
 
     def test_time_max(self):
@@ -852,7 +854,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="max")
         expected = np.array([2.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
     def test_time_min(self):
         """Test for time min of a 1D field."""
@@ -864,7 +866,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="min")
         expected = np.array([0.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
     def test_time_median(self):
         """Test for time meadian of a 1D field."""
@@ -876,7 +878,7 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="median")
         expected = np.array([1.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
     def test_time_rms(self):
         """Test for time rms of a 1D field."""
@@ -888,9 +890,9 @@ class TestClimatology(tests.Test):
         result = climate_statistics(cube, operator="rms")
         expected = np.array([(5 / 3) ** 0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.units == "kg m-2 s-1"
 
-    def test_time_dependent_fx(self):
+    def test_time_dependent_fx(self, caplog):
         """Test average time dimension in time-dependent fx vars."""
         data = np.ones((3, 3, 3))
         times = np.array([15.0, 45.0, 75.0])
@@ -911,24 +913,22 @@ class TestClimatology(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with self.assertLogs(level="DEBUG") as cm:
+        with caplog.at_level(logging.DEBUG):
             result = climate_statistics(cube, operator="mean", period="mon")
-        self.assertEqual(
-            cm.records[0].getMessage(),
-            "Averaging time dimension in measure volcello.",
+        assert (
+            caplog.records[0].message
+            == "Averaging time dimension in measure volcello."
         )
-        self.assertEqual(
-            cm.records[1].getMessage(),
-            "Averaging time dimension in ancillary variable sftgif.",
+        assert (
+            caplog.records[1].message
+            == "Averaging time dimension in ancillary variable sftgif."
         )
-        self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
-        self.assertEqual(
-            result.ancillary_variable("land_ice_area_fraction").ndim, 2
-        )
-        self.assertEqual(result.units, "kg m-2 s-1")
+        assert result.cell_measure("ocean_volume").ndim == 2
+        assert result.ancillary_variable("land_ice_area_fraction").ndim == 2
+        assert result.units == "kg m-2 s-1"
 
 
-class TestSeasonalStatistics(tests.Test):
+class TestSeasonalStatistics:
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
 
     @staticmethod
@@ -1016,7 +1016,7 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([1])
         assert_array_equal(result.data, expected)
 
-    def test_time_dependent_fx(self):
+    def test_time_dependent_fx(self, caplog):
         """Test average time dimension in time-dependent fx vars."""
         data = np.ones((12, 3, 3))
         times = np.arange(15, 360, 30)
@@ -1036,20 +1036,18 @@ class TestSeasonalStatistics(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with self.assertLogs(level="DEBUG") as cm:
+        with caplog.at_level(logging.DEBUG):
             result = seasonal_statistics(cube, operator="mean")
-        self.assertEqual(
-            cm.records[0].getMessage(),
-            "Averaging time dimension in measure volcello.",
+        assert (
+            caplog.records[0].message
+            == "Averaging time dimension in measure volcello."
         )
-        self.assertEqual(
-            cm.records[1].getMessage(),
-            "Averaging time dimension in ancillary variable sftgif.",
+        assert (
+            caplog.records[1].message
+            == "Averaging time dimension in ancillary variable sftgif."
         )
-        self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
-        self.assertEqual(
-            result.ancillary_variable("land_ice_area_fraction").ndim, 2
-        )
+        assert result.cell_measure("ocean_volume").ndim == 2
+        assert result.ancillary_variable("land_ice_area_fraction").ndim == 2
 
     def test_season_not_available(self):
         """Test that an exception is raised if a season is not available."""
@@ -1070,7 +1068,7 @@ class TestSeasonalStatistics(tests.Test):
             seasonal_statistics(cube, "mean")
 
 
-class TestMonthlyStatistics(tests.Test):
+class TestMonthlyStatistics:
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
 
     @staticmethod
@@ -1138,7 +1136,7 @@ class TestMonthlyStatistics(tests.Test):
         expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
         assert_array_equal(result.data, expected)
 
-    def test_time_dependent_fx(self):
+    def test_time_dependent_fx(self, caplog):
         """Test average time dimension in time-dependent fx vars."""
         data = np.ones((3, 3, 3))
         times = np.array([15.0, 45.0, 75.0])
@@ -1158,23 +1156,21 @@ class TestMonthlyStatistics(tests.Test):
         )
         cube.add_cell_measure(measure, (0, 1, 2))
         cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
-        with self.assertLogs(level="DEBUG") as cm:
+        with caplog.at_level(logging.DEBUG):
             result = monthly_statistics(cube, operator="mean")
-        self.assertEqual(
-            cm.records[0].getMessage(),
-            "Averaging time dimension in measure volcello.",
+        assert (
+            caplog.records[0].message
+            == "Averaging time dimension in measure volcello."
         )
-        self.assertEqual(
-            cm.records[1].getMessage(),
-            "Averaging time dimension in ancillary variable sftgif.",
+        assert (
+            caplog.records[1].message
+            == "Averaging time dimension in ancillary variable sftgif."
         )
-        self.assertEqual(result.cell_measure("ocean_volume").ndim, 2)
-        self.assertEqual(
-            result.ancillary_variable("land_ice_area_fraction").ndim, 2
-        )
+        assert result.cell_measure("ocean_volume").ndim == 2
+        assert result.ancillary_variable("land_ice_area_fraction").ndim == 2
 
 
-class TestHourlyStatistics(tests.Test):
+class TestHourlyStatistics:
     """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
 
     @staticmethod
@@ -1239,7 +1235,7 @@ class TestHourlyStatistics(tests.Test):
         assert_array_equal(result.data, expected)
 
 
-class TestDailyStatistics(tests.Test):
+class TestDailyStatistics:
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
 
     @staticmethod
@@ -2002,7 +1998,7 @@ def test_climate_statistics_complex_cube_mean():
     assert new_cube.units == "kg m-2 s-1"
 
 
-class TestResampleHours(tests.Test):
+class TestResampleHours:
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
 
     @staticmethod
@@ -2062,7 +2058,7 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             resample_hours(cube, 5)
 
     def test_resample_invalid_offset(self):
@@ -2071,7 +2067,7 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             resample_hours(cube, interval=3, offset=6)
 
     def test_resample_shorter_interval(self):
@@ -2080,7 +2076,7 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             resample_hours(cube, interval=3)
 
     def test_resample_same_interval(self):
@@ -2099,7 +2095,7 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 4, 1)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             resample_hours(cube, offset=5, interval=6)
 
     def test_resample_interpolate_linear(self):
@@ -2130,11 +2126,11 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 4, 1)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             resample_hours(cube, interval=1, interpolate="invalid")
 
 
-class TestResampleTime(tests.Test):
+class TestResampleTime:
     """Test :func:`esmvalcore.preprocessor._time.resample_time`."""
 
     @staticmethod

@@ -31,10 +31,9 @@ def _as_list_of_coords(cube, names_or_coords):
         else:
             # Don't know how to handle this type
             msg = (
-                "Don't know how to handle coordinate of type %s. "
-                "Ensure all coordinates are of type str "
-                "or iris.coords.Coord."
-            ) % (type(name_or_coord),)
+                f"Don't know how to handle coordinate of type {type(name_or_coord)}. "
+                "Ensure all coordinates are of type str or iris.coords.Coord."
+            )
             raise TypeError(msg)
     return coords
 

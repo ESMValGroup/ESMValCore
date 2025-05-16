@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import datetime
-import logging
 import threading
 import time
 from collections.abc import Iterable
@@ -13,10 +12,9 @@ import dask.diagnostics
 import distributed
 import rich.progress
 from dask.delayed import Delayed
+from loguru import logger
 
 from esmvalcore.config import CFG
-
-logger = logging.getLogger(__name__)
 
 
 class RichProgressBar(dask.diagnostics.Callback):

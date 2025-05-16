@@ -6,7 +6,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -40,7 +39,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from esmvalcore.config import Session
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 SHAPE_ID_KEYS: tuple[str, ...] = ("name", "NAME", "Name", "id", "ID")
 
@@ -564,7 +563,7 @@ def _get_requested_geometries(
         else:
             geometry_id = str(reading_order)
 
-        logger.debug("Found shape '%s'", geometry_id)
+        logger.debug("Found shape '{}'", geometry_id)
 
         # Select geometry if its ID is requested or all IDs are requested
         # (i.e., ids=None)
@@ -708,20 +707,20 @@ def _update_shapefile_path(
     shapefile_path = Path(shapefile)
 
     # Try absolute path
-    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    logger.debug("extract_shape: Looking for shapefile {}", shapefile_path)
     if shapefile_path.exists():
         return shapefile_path
 
     # Try path relative to auxiliary_data_dir if session is given
     if session is not None:
         shapefile_path = session["auxiliary_data_dir"] / shapefile
-        logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+        logger.debug("extract_shape: Looking for shapefile {}", shapefile_path)
         if shapefile_path.exists():
             return shapefile_path
 
     # Try path relative to esmvalcore/preprocessor/shapefiles/
     shapefile_path = Path(__file__).parent / "shapefiles" / shapefile
-    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    logger.debug("extract_shape: Looking for shapefile {}", shapefile_path)
     if shapefile_path.exists():
         return shapefile_path
 

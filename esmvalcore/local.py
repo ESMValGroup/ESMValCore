@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import logging
 import os
 import re
 from dataclasses import dataclass
@@ -23,7 +22,7 @@ from .typing import Facets, FacetValue
 if TYPE_CHECKING:
     from .esgf import ESGFFile
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def _get_from_pattern(pattern, date_range_pattern, stem, group):
@@ -144,7 +143,7 @@ def _get_start_end_date(
         and isinstance(file, (str, Path))
         and Path(file).exists()
     ):
-        logger.debug("Must load file %s for daterange ", file)
+        logger.debug("Must load file {} for daterange ", file)
         dataset = Dataset(file)
         for variable in dataset.variables.values():
             var_name = _get_var_name(variable)
@@ -449,7 +448,7 @@ class DataSource:
     def find_files(self, **facets) -> list[LocalFile]:
         """Find files."""
         globs = self.get_glob_patterns(**facets)
-        logger.debug("Looking for files matching %s", globs)
+        logger.debug("Looking for files matching {}", globs)
 
         files = []
         for glob_ in globs:
@@ -476,7 +475,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
             nonexistent = tuple(p for p in paths if not os.path.exists(p))
             if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
-                    "Configured '%s' rootpaths '%s' do not exist",
+                    "Configured '{}' rootpaths '{}' do not exist",
                     key,
                     ", ".join(str(p) for p in nonexistent),
                 )

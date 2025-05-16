@@ -1,6 +1,5 @@
 """Auxiliary derivation functions used for multiple variables."""
 
-import logging
 from copy import deepcopy
 
 import iris
@@ -9,8 +8,6 @@ from iris import NameConstraint
 from scipy import constants
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
-
-logger = logging.getLogger(__name__)
 
 
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):

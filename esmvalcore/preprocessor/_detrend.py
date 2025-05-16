@@ -1,11 +1,7 @@
 """Preprocessor functions that remove trends from the data."""
 
-import logging
-
 import dask.array as da
 import scipy.signal
-
-logger = logging.getLogger(__name__)
 
 
 def detrend(cube, dimension="time", method="linear"):

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import logging
 import os
 import subprocess
 from functools import partial
@@ -13,6 +12,7 @@ from typing import Any, Iterable
 
 import isodate
 import yamale
+from loguru import logger
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -30,8 +30,6 @@ from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
 
-logger = logging.getLogger(__name__)
-
 
 def ncl_version():
     """Check the NCL version."""
@@ -44,14 +42,14 @@ def ncl_version():
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
     except subprocess.CalledProcessError as exc:
-        logger.error("Failed to execute '%s'", " ".join(cmd))
+        logger.error("Failed to execute '{}'", " ".join(cmd))
         raise RecipeError(
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
         ) from exc
 
     version = version.strip()
-    logger.info("Found NCL version %s", version)
+    logger.info("Found NCL version {}", version)
 
     major, minor = (int(i) for i in version.split(".")[:2])
     if major < 6 or (major == 6 and minor < 4):
@@ -64,7 +62,7 @@ def ncl_version():
 def recipe_with_schema(filename):
     """Check if the recipe content matches schema."""
     schema_file = os.path.join(os.path.dirname(__file__), "recipe_schema.yml")
-    logger.debug("Checking recipe against schema %s", schema_file)
+    logger.debug("Checking recipe against schema {}", schema_file)
     recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
     yamale.validate(schema, recipe, strict=False)
@@ -140,13 +138,13 @@ def _log_data_availability_errors(dataset):
     input_files = dataset.files
     patterns = dataset._file_globs
     if not input_files:
-        logger.error("No input files found for %s", dataset)
+        logger.error("No input files found for {}", dataset)
         if patterns:
             if len(patterns) == 1:
                 msg = f": {patterns[0]}"
             else:
                 msg = "\n{}".format("\n".join(str(p) for p in patterns))
-            logger.error("Looked for files matching%s", msg)
+            logger.error("Looked for files matching{}", msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
@@ -230,9 +228,9 @@ def preprocessor_supplementaries(dataset, settings):
                 )
             if ancs["required"] == "prefer_at_least_one":
                 logger.warning(
-                    "Preprocessor function %s works best when at least "
-                    "one supplementary variable of %s is defined in the "
-                    "recipe for %s.",
+                    "Preprocessor function {} works best when at least "
+                    "one supplementary variable of {} is defined in the "
+                    "recipe for {}.",
                     step,
                     ancs["variables"],
                     dataset,

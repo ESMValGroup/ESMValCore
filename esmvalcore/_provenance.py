@@ -1,7 +1,6 @@
 """Provenance module."""
 
 import copy
-import logging
 import os
 from functools import total_ordering
 from pathlib import Path
@@ -12,8 +11,6 @@ from PIL.PngImagePlugin import PngInfo
 from prov.model import ProvDerivation, ProvDocument
 
 from ._version import __version__
-
-logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = "https://www.esmvaltool.org/"
 

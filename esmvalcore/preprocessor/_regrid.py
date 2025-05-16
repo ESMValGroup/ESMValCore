@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 import importlib
 import inspect
-import logging
 import os
 import re
 import ssl
@@ -52,7 +51,7 @@ from esmvalcore.preprocessor.regrid_schemes import (
 if TYPE_CHECKING:
     from esmvalcore.dataset import Dataset
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -440,7 +439,7 @@ def extract_location(cube, location, scheme):
     if geolocation is None:
         raise ValueError(f"Requested location {location} can not be found.")
     logger.info(
-        "Extracting data for %s (%s °N, %s °E)",
+        "Extracting data for {} ({} °N, {} °E)",
         geolocation,
         geolocation.latitude,
         geolocation.longitude,
@@ -605,7 +604,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
         warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
         scheme = "linear"
         loaded_scheme = Linear(extrapolation_mode="extrapolate")
-        logger.debug("Loaded regridding scheme %s", loaded_scheme)
+        logger.debug("Loaded regridding scheme {}", loaded_scheme)
         return loaded_scheme
 
     if isinstance(scheme, dict):
@@ -631,7 +630,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
             )
         loaded_scheme = schemes[scheme]
 
-    logger.debug("Loaded regridding scheme %s", loaded_scheme)
+    logger.debug("Loaded regridding scheme {}", loaded_scheme)
 
     return loaded_scheme
 
@@ -1133,8 +1132,8 @@ def _preserve_fx_vars(cube, result):
             measure_dims = set(cube.cell_measure_dims(measure))
             if vertical_dim.intersection(measure_dims):
                 logger.warning(
-                    "Discarding use of z-axis dependent cell measure %s "
-                    "in variable %s, as z-axis has been interpolated",
+                    "Discarding use of z-axis dependent cell measure {} "
+                    "in variable {}, as z-axis has been interpolated",
                     measure.var_name,
                     result.var_name,
                 )
@@ -1145,8 +1144,8 @@ def _preserve_fx_vars(cube, result):
             ancillary_dims = set(cube.ancillary_variable_dims(ancillary_var))
             if vertical_dim.intersection(ancillary_dims):
                 logger.warning(
-                    "Discarding use of z-axis dependent ancillary variable %s "
-                    "in variable %s, as z-axis has been interpolated",
+                    "Discarding use of z-axis dependent ancillary variable {} "
+                    "in variable {}, as z-axis has been interpolated",
                     ancillary_var.var_name,
                     result.var_name,
                 )

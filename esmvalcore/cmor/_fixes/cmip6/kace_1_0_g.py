@@ -1,15 +1,12 @@
 """Fixes for KACE-1-0-G."""
 
-import logging
-
 import numpy as np
+from loguru import logger
 
 from esmvalcore.cmor.fixes import get_time_bounds
 
 from ..common import ClFixHybridHeightCoord, OceanFixGrid
 from ..fix import Fix
-
-logger = logging.getLogger(__name__)
 
 Cl = ClFixHybridHeightCoord
 
@@ -45,7 +42,7 @@ class AllVars(Fix):
                 time.bounds = bounds
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "
-            "for dataset %s causes discontinuities in the longitude "
+            "for dataset {} causes discontinuities in the longitude "
             "coordinate.",
             self.extra_facets["dataset"],
         )

@@ -6,7 +6,6 @@ depth or height regions; constructing volumetric averages;
 
 from __future__ import annotations
 
-import logging
 from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
@@ -15,6 +14,7 @@ import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
+from loguru import logger
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
@@ -28,8 +28,6 @@ from esmvalcore.preprocessor._shared import (
 from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def extract_volume(
@@ -201,7 +199,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
         return
 
     logger.debug(
-        "Found no cell measure 'ocean_volume' in cube %s. Check availability "
+        "Found no cell measure 'ocean_volume' in cube {}. Check availability "
         "of supplementary variables",
         cube.summary(shorten=True),
     )

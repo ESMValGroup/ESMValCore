@@ -22,8 +22,8 @@ def assert_debug_call_ok(mock_logger, items):
     assert mock_logger.debug.call_args[1] == {}
     debug_call_args = mock_logger.debug.call_args[0]
     assert debug_call_args[0] == (
-        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
-        "argument(s)\n%s"
+        "Running preprocessor function '{}' on the data\n{}{}\nwith function "
+        "argument(s)\n{}"
     )
     assert debug_call_args[1] == "failing_function"
     if isinstance(items, (PreprocessorFile, Cube, str)):
@@ -40,8 +40,8 @@ def assert_error_call_ok(mock_logger):
     assert mock_logger.error.call_args[1] == {}
     error_call_args = mock_logger.error.call_args[0]
     assert error_call_args[0] == (
-        "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
-        "function argument(s)\n%s"
+        "Failed to run preprocessor function '{}' on the data\n{}{}\nwith "
+        "function argument(s)\n{}"
     )
     assert error_call_args[1] == "failing_function"
     assert error_call_args[4] == "test = 42,\nlist = ['a', 'b']"

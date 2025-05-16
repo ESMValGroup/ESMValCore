@@ -1,7 +1,6 @@
 """Fixes for ERA5."""
 
 import datetime
-import logging
 
 import iris
 import numpy as np
@@ -15,8 +14,6 @@ from esmvalcore.iris_helpers import (
     has_unstructured_grid,
     safe_convert_units,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def get_frequency(cube):

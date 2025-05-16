@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import sys
 import warnings
 from collections.abc import Iterable, Mapping
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -535,7 +535,9 @@ class Session(ValidatedConfig):
         The `name` is used to name the session directory, e.g.
         `session_20201208_132800/`. The date is suffixed automatically.
         """
-        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        now = datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y%m%d_%H%M%S"
+        )
         self.session_name = f"{name}_{now}"
 
     @property

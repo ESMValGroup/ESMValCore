@@ -10,7 +10,6 @@ grouped execution by passing a groupby keyword.
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from datetime import datetime
 from functools import reduce
@@ -40,7 +39,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from esmvalcore.preprocessor import PreprocessorFile
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 CONCAT_DIM = "multi-model"
 
@@ -349,7 +348,7 @@ def _equalise_coordinate_metadata(cubes):
             if scalar_coord.var_name in scalar_coords_to_always_remove:
                 cube.remove_coord(scalar_coord)
                 logger.debug(
-                    "Removed scalar coordinate '%s' from cube %s",
+                    "Removed scalar coordinate '{}' from cube {}",
                     scalar_coord.var_name,
                     cube.summary(shorten=True),
                 )
@@ -565,7 +564,7 @@ def _multicube_statistics(
             for scalar_coord in cube.coords(dimensions=()):
                 cube.remove_coord(scalar_coord)
                 logger.debug(
-                    "Removed scalar coordinate '%s' from cube %s since "
+                    "Removed scalar coordinate '{}' from cube {} since "
                     "ignore_scalar_coords=True",
                     scalar_coord.var_name,
                     cube.summary(shorten=True),
@@ -591,7 +590,7 @@ def _multicube_statistics(
     combined_cube = None
     for statistic in statistics:
         stat_id = _get_stat_identifier(statistic)
-        logger.debug("Multicube statistics: computing: %s", stat_id)
+        logger.debug("Multicube statistics: computing: {}", stat_id)
 
         (operator, kwargs) = _get_operator_and_kwargs(statistic)
         (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
@@ -636,7 +635,7 @@ def _multiproduct_statistics(
         for product in products:
             statistics_product.wasderivedfrom(product)
 
-        logger.info("Generated %s", statistics_product)
+        logger.info("Generated {}", statistics_product)
         statistics_products.add(statistics_product)
 
     if not keep_input_datasets:

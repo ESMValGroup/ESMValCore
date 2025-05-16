@@ -1,7 +1,5 @@
 """Preprocessor functions calculate trends from data."""
 
-import logging
-
 import dask.array as da
 import iris
 import numpy as np
@@ -11,8 +9,6 @@ from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
     preserve_float_dtype,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def _mask_xy(x_arr, y_arr):

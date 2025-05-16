@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import string
 from collections.abc import Iterable, Sequence
 from typing import Literal
@@ -27,8 +26,6 @@ from esmvalcore.preprocessor._shared import (
     get_weights,
     preserve_float_dtype,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def clip(cube, minimum=None, maximum=None):

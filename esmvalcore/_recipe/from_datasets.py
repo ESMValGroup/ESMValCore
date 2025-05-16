@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import logging
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from functools import partial
@@ -19,7 +18,6 @@ from ._io import _load_recipe
 if TYPE_CHECKING:
     from esmvalcore.dataset import Dataset
 
-logger = logging.getLogger(__name__)
 
 Recipe = Dict[str, Any]
 Facets = Dict[str, Any]

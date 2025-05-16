@@ -1,15 +1,12 @@
 """Fixes for FIO-ESM-2-0 model."""
 
-import logging
-
 import numpy as np
 from iris.util import promote_aux_coord_to_dim_coord
+from loguru import logger
 
 from ..common import OceanFixGrid
 from ..fix import Fix
 from ..shared import round_coordinates
-
-logger = logging.getLogger(__name__)
 
 Tos = OceanFixGrid
 
@@ -34,7 +31,7 @@ class Omon(Fix):
         )
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "
-            "for dataset %s causes discontinuities in the longitude "
+            "for dataset {} causes discontinuities in the longitude "
             "coordinate.",
             self.extra_facets["dataset"],
         )

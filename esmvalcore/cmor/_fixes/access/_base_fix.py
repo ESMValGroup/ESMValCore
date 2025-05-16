@@ -1,6 +1,5 @@
 """Fix base classes for ACCESS-ESM on-the-fly CMORizer."""
 
-import logging
 import warnings
 from pathlib import Path
 
@@ -10,8 +9,6 @@ from cf_units import Unit
 from iris.cube import CubeList
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-
-logger = logging.getLogger(__name__)
 
 
 class AccessFix(NativeDatasetFix):

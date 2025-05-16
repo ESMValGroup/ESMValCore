@@ -5,8 +5,6 @@ Allows for unit conversions.
 
 from __future__ import annotations
 
-import logging
-
 import dask.array as da
 import iris
 import numpy as np
@@ -15,8 +13,6 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 
 from esmvalcore.iris_helpers import _try_special_unit_conversions
-
-logger = logging.getLogger(__name__)
 
 
 def convert_units(cube: Cube, units: str | Unit) -> Cube:

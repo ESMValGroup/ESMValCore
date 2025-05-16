@@ -1,15 +1,13 @@
 """Automatically derive variables."""
 
 import importlib
-import logging
 from copy import deepcopy
 from pathlib import Path
 
 import iris
+from loguru import logger
 
 from esmvalcore.preprocessor._units import convert_units
-
-logger = logging.getLogger(__name__)
 
 
 def _get_all_derived_variables():
@@ -115,8 +113,8 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
         cube.units = units
     elif cube.units.is_no_unit() or cube.units.is_unknown():
         logger.warning(
-            "Units of cube after executing derivation script of '%s' are "
-            "'%s', automatically setting them to '%s'. This might lead to "
+            "Units of cube after executing derivation script of '{}' are "
+            "'{}', automatically setting them to '{}'. This might lead to "
             "incorrect data",
             short_name,
             cube.units,

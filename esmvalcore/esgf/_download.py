@@ -6,7 +6,6 @@ import datetime
 import functools
 import hashlib
 import itertools
-import logging
 import os
 import random
 import re
@@ -19,13 +18,12 @@ from urllib.parse import urlparse
 import requests
 import yaml
 from humanfriendly import format_size, format_timespan
+from loguru import logger
 
 from esmvalcore.typing import Facets
 
 from ..local import LocalFile
 from .facets import DATASET_MAP, FACETS
-
-logger = logging.getLogger(__name__)
 
 TIMEOUT = 5 * 60
 """Timeout (in seconds) for downloads."""
@@ -229,8 +227,8 @@ class ESGFFile:
                 files.append(file)
             else:
                 logger.debug(
-                    "Ignoring file(s) %s containing wrong variable '%s' in"
-                    " found in search for variable '%s'",
+                    "Ignoring file(s) {} containing wrong variable '{}' in"
+                    " found in search for variable '{}'",
                     file.urls,
                     variable,
                     facets.get("variable", facets.get("variable_id", "?")),
@@ -274,7 +272,7 @@ class ESGFFile:
         for facet, value in more_reliable_facets.items():
             if facet not in facets or facets[facet] != value:
                 logger.debug(
-                    "Correcting facet '%s' from '%s' to '%s' for %s.%s",
+                    "Correcting facet '{}' from '{}' to '{}' for {}.{}",
                     facet,
                     facets.get(facet),
                     value,
@@ -331,8 +329,8 @@ class ESGFFile:
                 facets[key] = values[idx]
         else:
             logger.debug(
-                "Wrong dataset_id_template_ %s or facet values containing '.' "
-                "for dataset %s",
+                "Wrong dataset_id_template_ {} or facet values containing '.' "
+                "for dataset {}",
                 template,
                 dataset_id,
             )
@@ -431,7 +429,7 @@ class ESGFFile:
         """
         local_file = self.local_file(dest_folder)
         if local_file.exists():
-            logger.debug("Skipping download of existing file %s", local_file)
+            logger.debug("Skipping download of existing file {}", local_file)
             return local_file
 
         os.makedirs(local_file.parent, exist_ok=True)
@@ -445,7 +443,7 @@ class ESGFFile:
                 requests.exceptions.RequestException,
             ) as error:
                 logger.debug(
-                    "Not able to download %s. Error message: %s", url, error
+                    "Not able to download {}. Error message: {}", url, error
                 )
                 errors[url] = error
                 log_error(url)
@@ -477,7 +475,7 @@ class ESGFFile:
 
         tmp_file = self._tmp_local_file(local_file)
 
-        logger.debug("Downloading %s to %s", url, tmp_file)
+        logger.debug("Downloading {} to {}", url, tmp_file)
         start_time = datetime.datetime.now()
         response = requests.get(url, stream=True, timeout=TIMEOUT)
         response.raise_for_status()
@@ -495,7 +493,7 @@ class ESGFFile:
         if hasher is None:
             logger.warning(
                 "No checksum available, unable to check data"
-                " integrity for %s, ",
+                " integrity for {}, ",
                 url,
             )
         else:
@@ -510,7 +508,7 @@ class ESGFFile:
         shutil.move(tmp_file, local_file)
         log_speed(url, self.size, duration.total_seconds())
         logger.info(
-            "Downloaded %s (%s) in %s (%s/s) from %s",
+            "Downloaded {} ({}) in {} ({}/s) from {}",
             local_file,
             format_size(self.size),
             format_timespan(duration.total_seconds()),
@@ -585,7 +583,7 @@ def download(files, dest_folder, n_jobs=4):
                 future.result()
             except DownloadError as error:
                 logger.error(
-                    "Failed to download %s, error message %s", file, error
+                    "Failed to download {}, error message {}", file, error
                 )
                 errors.append(error)
             else:
@@ -593,7 +591,7 @@ def download(files, dest_folder, n_jobs=4):
 
     duration = datetime.datetime.now() - start_time
     logger.info(
-        "Downloaded %s in %s (%s/s)",
+        "Downloaded {} in {} ({}/s)",
         format_size(total_size),
         format_timespan(duration.total_seconds()),
         format_size(total_size / duration.total_seconds()),

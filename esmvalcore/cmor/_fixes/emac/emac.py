@@ -11,7 +11,6 @@ variable) as single argument.
 
 """
 
-import logging
 import warnings
 from shutil import copyfile
 
@@ -28,8 +27,6 @@ from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
 from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData
-
-logger = logging.getLogger(__name__)
 
 
 class AllVars(EmacFix):

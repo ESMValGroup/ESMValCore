@@ -1,6 +1,5 @@
 """Recipe metadata."""
 
-import logging
 import os
 import pprint
 import shutil
@@ -8,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import yaml
+from loguru import logger
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
 from esmvalcore.config import CFG, Session
@@ -15,8 +15,6 @@ from esmvalcore.config import CFG, Session
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
-
-logger = logging.getLogger(__file__)
 
 
 class Recipe:

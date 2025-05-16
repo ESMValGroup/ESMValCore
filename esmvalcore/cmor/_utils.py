@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Sequence
 from typing import Optional
 
 from iris.coords import Coord
 from iris.cube import Cube
+from loguru import logger
 
 from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
-
-logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
     "alevel": {
@@ -198,11 +196,11 @@ def _get_single_cube(
             f"cubes encountered: {cube_list}"
         )
     logger.warning(
-        "Found variable %s%s, but there were other present in the file. Those "
+        "Found variable {}{}, but there were other present in the file. Those "
         "extra variables are usually metadata (cell area, latitude "
         "descriptions) that was not saved according to CF-conventions. It is "
         "possible that errors appear further on because of this.\nFull list "
-        "of cubes encountered: %s",
+        "of cubes encountered: {}",
         short_name,
         dataset_str,
         cube_list,

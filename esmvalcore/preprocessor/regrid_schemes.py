@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 
 from iris.cube import Cube
@@ -19,8 +18,6 @@ from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinearRegridder,
     UnstructuredNearest,
 )
-
-logger = logging.getLogger(__name__)
 
 __all__ = [
     "ESMPyAreaWeighted",

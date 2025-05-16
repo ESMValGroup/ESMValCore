@@ -25,7 +25,6 @@ Have fun!
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
-import logging
 import os
 import sys
 from importlib.metadata import entry_points
@@ -35,7 +34,7 @@ from typing import Optional
 import fire
 
 # set up logging
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 HEADER = (
     r"""
@@ -87,24 +86,24 @@ def process_recipe(recipe_file: Path, session):
             errno.ENOENT, "Specified recipe file does not exist", recipe_file
         )
 
-    timestamp1 = datetime.datetime.utcnow()
+    timestamp1 = datetime.datetime.now(datetime.timezone.utc)
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
-        "Starting the Earth System Model Evaluation Tool at time: %s UTC",
+        "Starting the Earth System Model Evaluation Tool at time: {} UTC",
         timestamp1.strftime(timestamp_format),
     )
 
     logger.info(70 * "-")
-    logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", session.run_dir)
-    logger.info("WORKDIR    = %s", session.work_dir)
-    logger.info("PREPROCDIR = %s", session.preproc_dir)
-    logger.info("PLOTDIR    = %s", session.plot_dir)
+    logger.info("RECIPE   = {}", recipe_file)
+    logger.info("RUNDIR     = {}", session.run_dir)
+    logger.info("WORKDIR    = {}", session.work_dir)
+    logger.info("PREPROCDIR = {}", session.preproc_dir)
+    logger.info("PLOTDIR    = {}", session.plot_dir)
     logger.info(70 * "-")
 
     n_processes = session["max_parallel_tasks"] or os.cpu_count()
-    logger.info("Running tasks using at most %s processes", n_processes)
+    logger.info("Running tasks using at most {} processes", n_processes)
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
@@ -130,16 +129,16 @@ def process_recipe(recipe_file: Path, session):
 
     # parse recipe
     recipe = read_recipe_file(recipe_file, session)
-    logger.debug("Recipe summary:\n%s", recipe)
+    logger.debug("Recipe summary:\n{}", recipe)
     # run
     recipe.run()
     # End time timing
-    timestamp2 = datetime.datetime.utcnow()
+    timestamp2 = datetime.datetime.now(datetime.timezone.utc)
     logger.info(
-        "Ending the Earth System Model Evaluation Tool at time: %s UTC",
+        "Ending the Earth System Model Evaluation Tool at time: {} UTC",
         timestamp2.strftime(timestamp_format),
     )
-    logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
+    logger.info("Time for running the recipe was: {}", timestamp2 - timestamp1)
 
 
 class Config:
@@ -164,17 +163,17 @@ class Config:
 
         if out_file.is_file():
             if overwrite:
-                logger.info("Overwriting file %s.", out_file)
+                logger.info("Overwriting file {}.", out_file)
             else:
-                logger.info("Copy aborted. File %s already exists.", out_file)
+                logger.info("Copy aborted. File {} already exists.", out_file)
                 return
 
         target_folder = out_file.parent
         if not target_folder.is_dir():
-            logger.info("Creating folder %s", target_folder)
+            logger.info("Creating folder {}", target_folder)
             target_folder.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Copying file %s to path %s.", in_file, out_file)
+        logger.info("Copying file {} to path {}.", in_file, out_file)
         shutil.copy2(in_file, out_file)
         logger.info("Copy finished.")
 
@@ -261,7 +260,7 @@ class Recipes:
 
         configure_logging(console_log_level="info")
         recipes_folder = DIAGNOSTICS.recipes
-        logger.info("Showing recipes installed in %s", recipes_folder)
+        logger.info("Showing recipes installed in {}", recipes_folder)
         print("# Installed recipes")
         for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
@@ -299,7 +298,7 @@ class Recipes:
             )
         logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
-        logger.info("Recipe %s successfully copied", recipe)
+        logger.info("Recipe {} successfully copied", recipe)
 
     @staticmethod
     def show(recipe):
@@ -335,6 +334,7 @@ class ESMValTool:
     __doc__ = __doc__
 
     def __init__(self):
+        logger.remove()
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
@@ -351,7 +351,7 @@ class ESMValTool:
             )
             if hasattr(self, entry_point.name):
                 logger.error(
-                    "Registered command %s already exists", entry_point.name
+                    "Registered command {} already exists", entry_point.name
                 )
                 continue
             self.__setattr__(entry_point.name, entry_point.load()())
@@ -489,7 +489,7 @@ class ESMValTool:
 
         if session.cmor_log.read_text(encoding="utf-8"):
             logger.warning(
-                "Input data is not (fully) CMOR-compliant, see %s for details",
+                "Input data is not (fully) CMOR-compliant, see {} for details",
                 session.cmor_log,
             )
 
@@ -576,15 +576,15 @@ class ESMValTool:
         logger.info(HEADER)
         logger.info("Package versions")
         logger.info("----------------")
-        logger.info("ESMValCore: %s", __version__)
+        logger.info("ESMValCore: {}", __version__)
         for project, version in self._extra_packages.items():
-            logger.info("%s: %s", project, version)
+            logger.info("{}: {}", project, version)
         logger.info("----------------")
         logger.info(
-            "Reading configuration files from:\n%s",
+            "Reading configuration files from:\n{}",
             self._get_config_info(cli_config_dir),
         )
-        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+        logger.info("Writing program log files to:\n{}", "\n".join(log_files))
 
 
 def run():
@@ -605,13 +605,10 @@ def run():
         raise
     except RecipeError as exc:
         # Hide the stack trace for RecipeErrors
-        logger.error("%s", exc)
+        logger.error("{}", exc)
         logger.debug("Stack trace for debugging:", exc_info=True)
         sys.exit(1)
     except Exception:  # noqa
-        if not logger.handlers:
-            # Add a logging handler if main failed to do so.
-            logging.basicConfig()
         logger.exception(
             "Program terminated abnormally, see stack trace "
             "below for more information:",

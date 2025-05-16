@@ -2,7 +2,6 @@
 
 import base64
 import getpass
-import logging
 import os.path
 import sys
 from collections.abc import Mapping, Sequence
@@ -10,13 +9,12 @@ from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
+from loguru import logger
 
 from ..config._config import TASKSEP
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
-
-logger = logging.getLogger(__name__)
 
 
 class TaskOutput:
@@ -250,15 +248,15 @@ class RecipeOutput(Mapping):
         logger.info(
             "It looks like you are connected to a remote machine via SSH. To "
             "show the output html file, you can try the following command on "
-            "your local machine:\n%s\nThen visit http://localhost:%s in your "
+            "your local machine:\n{}\nThen visit http://localhost:{} in your "
             "browser",
             command,
             port,
         )
         logger.info(
-            "If the port %s is already in use, you can replace it with any "
+            "If the port {} is already in use, you can replace it with any "
             "other free one (e.g., 12789). If you are connected through a "
-            "jump host, replace the server IP address %s with your SSH server "
+            "jump host, replace the server IP address {} with your SSH server "
             "name",
             port,
             server_ip,
@@ -277,7 +275,7 @@ class RecipeOutput(Mapping):
         with open(filename, "w", encoding="utf-8") as file:
             file.write(html_dump)
 
-        logger.info("Wrote recipe output to:\nfile://%s", filename)
+        logger.info("Wrote recipe output to:\nfile://{}", filename)
         self._log_ssh_html_info()
 
     def render(self, template=None):
