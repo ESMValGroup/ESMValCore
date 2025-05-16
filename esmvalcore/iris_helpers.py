@@ -523,7 +523,7 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
 
 @contextlib.contextmanager
 def ignore_warnings_context(
-    warnings_to_ignore: Optional[list[dict[str, Any]]] = None,
+    warnings_to_ignore: list[dict[str, Any]] | None = None,
 ) -> Generator[None]:
     """Ignore warnings (context manager).
 

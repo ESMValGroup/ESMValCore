@@ -85,7 +85,7 @@ def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
 
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
-    ignore_warnings: list[dict] | None = None,
+    ignore_warnings: list[dict[str, Any]] | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
@@ -120,7 +120,6 @@ def load(
         cubes = file
     elif isinstance(file, (xr.Dataset, ncdata.NcData)):
         cubes = dataset_to_iris(file)
-        pass
     else:
         raise TypeError(
             f"Expected type str, pathlib.Path, iris.cube.Cube, "
@@ -145,7 +144,8 @@ def load(
 
 
 def _load_from_file(
-    file: str | Path, ignore_warnings: list[dict] | None = None
+    file: str | Path,
+    ignore_warnings: list[dict[str, Any]] | None = None,
 ) -> CubeList:
     """Load data from file."""
     file = Path(file)

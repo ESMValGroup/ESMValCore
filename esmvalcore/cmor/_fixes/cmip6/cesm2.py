@@ -1,5 +1,6 @@
 """Fixes for CESM2 model."""
 
+from pathlib import Path
 from shutil import copyfile
 
 import iris
@@ -20,7 +21,12 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(self, file, output_dir, add_unique_suffix=False):
+    def _fix_formula_terms(
+        self,
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
             output_dir, file, add_unique_suffix=add_unique_suffix
@@ -34,7 +40,12 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
-    def fix_file(self, file, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
