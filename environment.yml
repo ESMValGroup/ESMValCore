@@ -23,6 +23,7 @@ dependencies:
   - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
   - isodate >=0.7.0  # incompatible with very old 0.6.1
   - jinja2
+  - loguru
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
   - nc-time-axis
   - nested-lookup
@@ -55,6 +56,7 @@ dependencies:
   - pytest-cov >=2.10.1
   - pytest-env
   - pytest-html !=2.1.0
+  - pytest-loguru
   - pytest-metadata >=1.5.1
   - pytest-mock
   - pytest-xdist
