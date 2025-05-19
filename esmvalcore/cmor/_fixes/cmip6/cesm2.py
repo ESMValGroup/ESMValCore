@@ -31,12 +31,11 @@ class Cl(Fix):
             output_dir, filepath, add_unique_suffix=add_unique_suffix
         )
         copyfile(filepath, new_path)
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
-        dataset.variables[
-            "lev"
-        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
-        dataset.close()
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
+            dataset.variables[
+                "lev"
+            ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         return new_path
 
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
@@ -69,10 +68,13 @@ class Cl(Fix):
         new_path = self._fix_formula_terms(
             filepath, output_dir, add_unique_suffix=add_unique_suffix
         )
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][::-1, :]
-        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][::-1, :]
-        dataset.close()
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
+                ::-1, :
+            ]
+            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
+                ::-1, :
+            ]
         return new_path
 
     def fix_metadata(self, cubes):
