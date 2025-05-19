@@ -145,20 +145,20 @@ def _get_start_end_date(
         and Path(file).exists()
     ):
         logger.debug("Must load file %s for daterange ", file)
-        dataset = Dataset(file)
-        for variable in dataset.variables.values():
-            var_name = _get_var_name(variable)
-            if var_name == "time" and "units" in variable.ncattrs():
-                time_units = Unit(variable.getncattr("units"))
-                start_date = isodate.date_isoformat(
-                    time_units.num2date(variable[0]),
-                    format=isodate.isostrf.DATE_BAS_COMPLETE,
-                )
-                end_date = isodate.date_isoformat(
-                    time_units.num2date(variable[-1]),
-                    format=isodate.isostrf.DATE_BAS_COMPLETE,
-                )
-                break
+        with Dataset(file) as dataset:
+            for variable in dataset.variables.values():
+                var_name = _get_var_name(variable)
+                if var_name == "time" and "units" in variable.ncattrs():
+                    time_units = Unit(variable.getncattr("units"))
+                    start_date = isodate.date_isoformat(
+                        time_units.num2date(variable[0]),
+                        format=isodate.isostrf.DATE_BAS_COMPLETE,
+                    )
+                    end_date = isodate.date_isoformat(
+                        time_units.num2date(variable[-1]),
+                        format=isodate.isostrf.DATE_BAS_COMPLETE,
+                    )
+                    break
 
     if start_date is None or end_date is None:
         raise ValueError(
