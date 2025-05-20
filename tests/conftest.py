@@ -9,7 +9,7 @@ from esmvalcore.config import CFG, Config
 
 
 @pytest.fixture
-def cfg_default(monkeypatch):
+def cfg_default():
     """Create a configuration object with default values."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
