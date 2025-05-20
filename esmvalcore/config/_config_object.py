@@ -389,7 +389,7 @@ class Config(ValidatedConfig):
         self.clear()
         _deprecated_config_user_path = Config._get_config_user_path()
         if _deprecated_config_user_path.is_file() and not os.environ.get(
-            "ESMVALTOOL_USE_NEW_CONFIG"
+            "ESMVALTOOL_CONFIG_DIR"
         ):
             deprecation_msg = (
                 f"Usage of the single configuration file "
@@ -400,8 +400,9 @@ class Config(ValidatedConfig):
                 f"`mkdir -p ~/.config/esmvaltool && mv "
                 f"{_deprecated_config_user_path} ~/.config/esmvaltool` (or "
                 f"alternatively use a custom `--config_dir`) and omit "
-                f"`--config_file`, or (2) set the environment variable "
-                f"ESMVALTOOL_USE_NEW_CONFIG=1."
+                f"`--config_file`, or (2) use the environment variable "
+                f"ESMVALTOOL_CONFIG_DIR to specify a custom user "
+                f"configuration directory."
             )
             warnings.warn(
                 deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2

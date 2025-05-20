@@ -1,3 +1,4 @@
+import warnings
 from copy import deepcopy
 from pathlib import Path
 
@@ -5,14 +6,19 @@ import pytest
 
 import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
-from esmvalcore.config._config_object import _get_global_config
 
 
 @pytest.fixture
 def cfg_default(monkeypatch):
     """Create a configuration object with default values."""
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_CONFIG", "1")
-    cfg = _get_global_config()
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Do not instantiate `Config` objects directly",
+            category=UserWarning,
+            module="esmvalcore",
+        )
+        cfg = Config()
     cfg.load_from_dirs([])
     return cfg
 

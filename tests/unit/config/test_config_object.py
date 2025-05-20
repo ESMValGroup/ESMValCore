@@ -398,7 +398,7 @@ def test_get_user_config_dir_with_env_fail(tmp_path, monkeypatch):
 # TODO: remove in v2.14.0
 def test_get_global_config_force_new_config(mocker, tmp_path, monkeypatch):
     """Test ``_get_global_config``."""
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_CONFIG", "1")
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", "/path/to/config/file")
 
     # Create invalid old config file to ensure that this is not used
     config_file = tmp_path / "old_config_user.yml"
@@ -410,6 +410,10 @@ def test_get_global_config_force_new_config(mocker, tmp_path, monkeypatch):
     )
 
     # No deprecation message should be raised
+    # Note: _get_global_config will ignore the old config since
+    # ESMVALTOOL_CONFIG_DIR is set, but not actually use its value since
+    # esmvalcore.config._config_object.USER_CONFIG_DIR has already been set to
+    # its default value when loading this module
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         esmvalcore.config._config_object._get_global_config()
@@ -418,7 +422,7 @@ def test_get_global_config_force_new_config(mocker, tmp_path, monkeypatch):
 # TODO: remove in v2.14.0
 def test_get_global_config_deprecated(mocker, tmp_path, monkeypatch):
     """Test ``_get_global_config``."""
-    monkeypatch.delenv("ESMVALTOOL_USE_NEW_CONFIG", raising=False)
+    monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
 
     config_file = tmp_path / "old_config_user.yml"
     config_file.write_text("output_dir: /new/output/dir")
