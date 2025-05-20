@@ -9,8 +9,9 @@ from esmvalcore.config._config_object import _get_global_config
 
 
 @pytest.fixture
-def cfg_default():
+def cfg_default(monkeypatch):
     """Create a configuration object with default values."""
+    monkeypatch.setenv("ESMVALTOOL_USE_NEW_CONFIG", "1")
     cfg = _get_global_config()
     cfg.load_from_dirs([])
     return cfg

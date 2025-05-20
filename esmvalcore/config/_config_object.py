@@ -388,16 +388,20 @@ class Config(ValidatedConfig):
         # TODO: remove in v2.14.0
         self.clear()
         _deprecated_config_user_path = Config._get_config_user_path()
-        if _deprecated_config_user_path.is_file():
+        if _deprecated_config_user_path.is_file() and not os.environ.get(
+            "ESMVALTOOL_USE_NEW_CONFIG"
+        ):
             deprecation_msg = (
                 f"Usage of the single configuration file "
                 f"~/.esmvaltool/config-user.yml or specifying it via CLI "
                 f"argument `--config_file` has been deprecated in ESMValCore "
                 f"version 2.12.0 and is scheduled for removal in version "
-                f"2.14.0. Please run `mkdir -p ~/.config/esmvaltool && mv "
+                f"2.14.0. To switch to the new configuration system, (1) run "
+                f"`mkdir -p ~/.config/esmvaltool && mv "
                 f"{_deprecated_config_user_path} ~/.config/esmvaltool` (or "
                 f"alternatively use a custom `--config_dir`) and omit "
-                f"`--config_file`."
+                f"`--config_file`, or (2) set the environment variable "
+                f"ESMVALTOOL_USE_NEW_CONFIG=1."
             )
             warnings.warn(
                 deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
