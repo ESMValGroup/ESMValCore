@@ -45,7 +45,7 @@ def register_supplementaries(
 
 def add_cell_measure(
     cube: Cube,
-    cell_measure_cube: Cube,
+    cell_measure_cube: Cube | iris.coords.CellMeasure,
     measure: Literal["area", "volume"],
 ) -> None:
     """Add cell measure to cube (in-place).
@@ -60,7 +60,7 @@ def add_cell_measure(
     cube:
         Iris cube with input data.
     cell_measure_cube:
-        Iris cube with cell measure data.
+        Iris cube or cell measure coord with cell measure data.
     measure:
         Name of the measure, can be 'area' or 'volume'.
 
