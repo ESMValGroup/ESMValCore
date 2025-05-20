@@ -399,7 +399,9 @@ class ESMValTool:
         # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
         # has been raised if the file does not exist. Thus, reload the file
         # here with `load_from_file` to make sure a proper error is raised.
-        if "config_file" in kwargs:
+        if "config_file" in kwargs and not os.environ.get(
+            "ESMVALTOOL_USE_NEW_CONFIG"
+        ):
             cli_config_dir = kwargs["config_file"]
             CFG.load_from_file(kwargs["config_file"])
 
