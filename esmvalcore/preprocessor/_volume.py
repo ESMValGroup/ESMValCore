@@ -11,6 +11,7 @@ from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
 import iris
+import iris.util
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
@@ -18,6 +19,7 @@ from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._shared import (
+    get_array_module,
     get_coord_weights,
     get_iris_aggregator,
     get_normalized_cube,
@@ -653,7 +655,7 @@ def extract_surface_from_atm(
 
     # Fill masked data if necessary (interpolation fails with masked data)
     (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
-    npx = get_array_module(array)
+    npx = get_array_module(cube.core_data())
     if iris.util.is_masked(cube.core_data()):
         mask = npx.ma.getmaskarray(cube.core_data())
         first_unmasked_data = _get_first_unmasked_data(
