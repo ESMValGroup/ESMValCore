@@ -607,18 +607,22 @@ def extract_trajectory(
     return interpolated_cube
 
 
-def _get_first_unmasked_data(array: da.Array, axis: int) -> da.Array:
+def _get_first_unmasked_data(
+    array: np.ndarray | da.Array,
+    axis: int,
+) -> np.ndarray | da.Array:
     """Get first unmasked value of an array along an axis."""
-    mask = da.ma.getmaskarray(array)
-    numerical_mask = da.where(mask, -1.0, 1.0)
-    indices_first_positive = da.argmax(numerical_mask, axis=axis)
-    indices = da.meshgrid(
-        *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
+    npx = get_array_module(array)
+    mask = npx.ma.getmaskarray(array)
+    numerical_mask = npx.where(mask, -1.0, 1.0)
+    indices_first_positive = npx.argmax(numerical_mask, axis=axis)
+    indices = npx.meshgrid(
+        *[npx.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
         indexing="ij",
     )
     indices = list(indices)
     indices.insert(axis, indices_first_positive)
-    first_unmasked_data = np.array(array)[tuple(indices)]
+    first_unmasked_data = npx.array(array)[tuple(indices)]
     return first_unmasked_data
 
 
@@ -649,8 +653,9 @@ def extract_surface_from_atm(
 
     # Fill masked data if necessary (interpolation fails with masked data)
     (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
-    mask = da.ma.getmaskarray(cube.core_data())
-    if mask.any():
+    npx = get_array_module(array)
+    if iris.util.is_masked(cube.core_data()):
+        mask = npx.ma.getmaskarray(cube.core_data())
         first_unmasked_data = _get_first_unmasked_data(
             cube.core_data(), axis=z_axis
         )
@@ -658,10 +663,10 @@ def extract_surface_from_atm(
         first_unmasked_data = iris.util.broadcast_to_shape(
             first_unmasked_data, cube.shape, dim_map
         )
-        cube.data = da.where(mask, first_unmasked_data, cube.core_data())
+        cube.data = npx.where(mask, first_unmasked_data, cube.core_data())
 
     # Interpolation
-    target_levels = da.expand_dims(ps_cube.data, axis=z_axis)
+    target_levels = npx.expand_dims(ps_cube.core_data(), axis=z_axis)
     var_cube = extract_levels(
         cube,
         levels=target_levels,

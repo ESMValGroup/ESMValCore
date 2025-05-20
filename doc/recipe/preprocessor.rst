@@ -2407,6 +2407,8 @@ Note that this function uses the expensive ``interpolate`` method from
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
 
+.. _extract_surface_from_atm:
+
 ``extract_surface_from_atm``
 ----------------------------
 
