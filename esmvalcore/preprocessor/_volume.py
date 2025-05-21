@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import Iterable, Literal, Optional, Sequence
 
+import dask
 import dask.array as da
 import iris
 import iris.util
@@ -613,18 +614,35 @@ def _get_first_unmasked_data(
     array: np.ndarray | da.Array,
     axis: int,
 ) -> np.ndarray | da.Array:
-    """Get first unmasked value of an array along an axis."""
+    """Get first unmasked value of an array along an axis.
+    
+    Note: this uses fancy indexing, which is not supported by Dask (yet).
+    
+    """
     npx = get_array_module(array)
-    mask = npx.ma.getmaskarray(array)
-    numerical_mask = npx.where(mask, -1.0, 1.0)
-    indices_first_positive = npx.argmax(numerical_mask, axis=axis)
+    
+    # Use identity indices for axes != axis
     indices = npx.meshgrid(
         *[npx.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
         indexing="ij",
     )
     indices = list(indices)
+    
+    # Use index of first unmasked data for selected axis
+    mask = npx.ma.getmaskarray(array)
+    numerical_mask = npx.where(mask, -1.0, 1.0)
+    indices_first_positive = npx.argmax(numerical_mask, axis=axis)
     indices.insert(axis, indices_first_positive)
-    first_unmasked_data = npx.array(array)[tuple(indices)]
+    
+    # Compute Dask arrays to enable fancy indexing
+    indices, np_array = dask.compute(indices, array)
+    first_unmasked_data = np_array[tuple(indices)]
+    
+    # Ensure that new array uses same chunks as original array
+    if isinstance(array, da.Array):
+        chunks = tuple(array.chunks[i] for i in range(array.ndim) if i != axis)
+        first_unmasked_data = da.array(first_unmasked_data).rechunk(chunks)
+
     return first_unmasked_data
 
 
@@ -663,7 +681,10 @@ def extract_surface_from_atm(
         )
         dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
         first_unmasked_data = iris.util.broadcast_to_shape(
-            first_unmasked_data, cube.shape, dim_map
+            first_unmasked_data,
+            cube.shape,
+            dim_map,
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
         cube.data = npx.where(mask, first_unmasked_data, cube.core_data())
 
