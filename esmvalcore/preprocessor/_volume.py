@@ -615,29 +615,29 @@ def _get_first_unmasked_data(
     axis: int,
 ) -> np.ndarray | da.Array:
     """Get first unmasked value of an array along an axis.
-    
+
     Note: this uses fancy indexing, which is not supported by Dask (yet).
-    
+
     """
     npx = get_array_module(array)
-    
+
     # Use identity indices for axes != axis
     indices = npx.meshgrid(
         *[npx.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
         indexing="ij",
     )
     indices = list(indices)
-    
+
     # Use index of first unmasked data for selected axis
     mask = npx.ma.getmaskarray(array)
     numerical_mask = npx.where(mask, -1.0, 1.0)
     indices_first_positive = npx.argmax(numerical_mask, axis=axis)
     indices.insert(axis, indices_first_positive)
-    
+
     # Compute Dask arrays to enable fancy indexing
     indices, np_array = dask.compute(indices, array)
     first_unmasked_data = np_array[tuple(indices)]
-    
+
     # Ensure that new array uses same chunks as original array
     if isinstance(array, da.Array):
         chunks = tuple(array.chunks[i] for i in range(array.ndim) if i != axis)
