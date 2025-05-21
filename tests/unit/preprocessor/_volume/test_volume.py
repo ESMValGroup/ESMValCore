@@ -810,7 +810,7 @@ class Test(tests.Test):
         result = _get_first_unmasked_data(
             self.grid_4d_2.core_data(), axis=z_axis
         )
-        expected = np.ones((4, 2, 2))
+        expected = np.ma.ones((4, 2, 2))
         self.assert_array_equal(result, expected)
 
     def test_extract_surface_from_atm(self):
