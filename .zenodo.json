@@ -219,6 +219,11 @@
       "affiliation": "ECCC, Canada",
       "name": "Garcia Perdomo, Karen",
       "orcid": "0009-0004-2333-3358"
+    },
+    {
+      "affiliation": "SMHI, Sweden",
+      "name": "Lenhardt, Julien",
+      "orcid": "https://orcid.org/0000-0002-9949-3989"
     }
   ],
   "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",

@@ -45,10 +45,13 @@ class Cl(BaseCl):
         new_path = self._fix_formula_terms(
             filepath, output_dir, add_unique_suffix=add_unique_suffix
         )
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][:, ::-1]
-        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][:, ::-1]
-        dataset.close()
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
+                :, ::-1
+            ]
+            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
+                :, ::-1
+            ]
         return new_path
 
 
