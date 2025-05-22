@@ -252,3 +252,31 @@ class Test:
         cube = remove_supplementary_variables(cube)
         assert cube.cell_measures() == []
         assert cube.ancillary_variables() == []
+
+    def test_add_ancillary_vars_errors(self):
+        """Test errors when adding ancillary variable."""
+        cube = iris.cube.Cube(
+            self.new_cube_3D_data,
+            dim_coords_and_dims=[
+                (self.depth, 0),
+                (self.lats, 1),
+                (self.lons, 2),
+            ],
+        )
+        # Ancillary var not an iris.cube.Cube or iris.coords.AncillaryVariable
+        msg = "ancillary_cube should be either an iris"
+        with pytest.raises(ValueError, match=msg):
+            add_ancillary_variable(cube, np.ones(self.new_cube_3D_data.shape))
+        # Ancillary var as iris.cube.Cube without matching dimensions
+        plev_dim = iris.coords.DimCoord(
+            [0, 1.5, 3],
+            standard_name="air_pressure",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="Pa",
+        )
+        ancillary_cube = iris.cube.Cube(
+            np.ones((3)), dim_coords_and_dims=[(plev_dim, 0)]
+        )
+        msg = "No coordinate associated with ancillary"
+        with pytest.raises(ValueError, match=msg):
+            add_ancillary_variable(cube, ancillary_cube)
