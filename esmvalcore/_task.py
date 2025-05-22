@@ -117,7 +117,7 @@ def _get_resource_usage(process, start_time, children=True):
             round(entry, p)
             for entry, p in zip(entries, precision, strict=False)
         ]
-        entries.insert(0, datetime.datetime.utcnow())
+        entries.insert(0, datetime.datetime.now(datetime.UTC))
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
 
