@@ -66,8 +66,7 @@ locations and merges them together:
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
    this location can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment
-   variable.  If ``~/.config/esmvaltool`` does not exist, this will be silently
-   ignored.
+   variable.
 
 Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
