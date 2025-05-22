@@ -4,7 +4,7 @@ import importlib
 import logging
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Optional
 
 import dask.array as da
 import ibicus
@@ -24,9 +24,28 @@ logger = logging.getLogger(__name__)
 IBICUS_DOCS = "https://ibicus.readthedocs.io/en/latest/reference/"
 
 
+def _create_new_product(product, filename):
+    """Create a new product .
+
+    Returns a new PreprocessorFile with same attributes and settings as the
+    input product but for a different filename.
+    NOTE: There might be a better way to do this. If not, we should such a
+    method to the PreprocessorFile class.
+    """
+    new_product = product.__class__(
+        filename,
+        product.attributes,
+        product.settings,
+        product.datasets,
+    )
+    new_product.cubes = product.cubes
+    new_product.initialize_provenance(product.activity)
+    return new_product
+
+
 def bias_adjust(
     products: set[PreprocessorFile] | Iterable[Cube],
-    method: Literal["QuantileMapping"],
+    method: str,
     reference: Optional[Cube] = None,
     # reference_period: Optional[dict] = None,
     # projection_period: Optional[dict] = None,
@@ -76,7 +95,6 @@ def bias_adjust(
         If ``True``, the original input and reference datasets will be added to
         the output.
         Default is ``False``.
-        NOTE: Not yet implemented.
     **kwargs:
         Additional keyword arguments to customize the bias adjustment.
         Possible parameters are:
@@ -87,14 +105,6 @@ def bias_adjust(
             ``start_month=1``, ``start_day=1``, ``end_month=12`` and ``end_day=31``
             are optional.
             If ``None``, the full period of the reference dataset will be used.
-        projection_period:
-            Dictionary with the projection period to use for bias adjustment.
-            The given time period will be extracted from target datasets.
-            The dict must contain ``start_year`` and ``end_year`` keys.
-            ``start_month=1``, ``start_day=1``, ``end_month=12`` and ``end_day=31``
-            are optional.
-            If ``None``, the period from end of reference_period to the end of
-            the given cube.
         debias_kwargs:
             Dictionary with additional keyword arguments for the debiasing
             method. The keys depend on the method used.
@@ -130,7 +140,7 @@ def bias_adjust(
         )
 
     # If input is an Iterable of Cube objects, calculate distance metric for
-    # each element
+    # each element (usually not via recipe)
     if all_cubes_given:
         cubes = [
             _apply_debiaser(c, reference, method, **kwargs) for c in products
@@ -139,54 +149,37 @@ def bias_adjust(
         return CubeList(cubes)
 
     # Otherwise, iterate over all input products, calculate metric and adapt
-    # metadata and provenance information accordingly
+    # metadata and provenance information accordingly (usually from recipe)
     output_products = set()
     for product in products:
-        # if not keep_reference_dataset and product == reference_product:
-        #     continue
         if keep_original_datasets:
-            fname = Path(product.filename)
-            filename = fname.with_name(fname.stem + "_adjusted" + fname.suffix)
-            # PreprocessorFile is not imported and provides no copy method
-            # probably not the best way to create a new product
-            new_product = product.__class__(
-                filename,
-                product.attributes,
-                product.settings,
-                product.datasets,
-            )
-            new_product.cubes = product.cubes
-            tf_copy = product.copy_provenance()
-            new_product.initialize_provenance(tf_copy.activity)
             output_products.add(product)
-        else:
-            new_product = product
         if product == reference_product:
             continue
-        cube = concatenate(new_product.cubes)
-        logger.error(cube)
-        cube = _apply_debiaser(cube, reference, method, **kwargs)
-
+        # create a new product for the debiased data
+        fname = Path(product.filename)
+        filename = fname.with_name(fname.stem + "_adjusted" + fname.suffix)
+        # TODO: regenerate filename from settings or cube data? correct dates
+        new_product = _create_new_product(product, filename)
+        new_product.wasderivedfrom(reference_product)
+        new_product.wasderivedfrom(product)
         if new_product.attributes is None:
             logger.error("No attributes found in product. Skipping.")
             continue
+        cube = concatenate(new_product.cubes)
         # Adapt metadata and provenance information
+        # TODO: attributes are automatically updated from cube on save (before saving prov)
         new_product.attributes["standard_name"] = cube.standard_name
         new_product.attributes["long_name"] = cube.long_name
         new_product.attributes["short_name"] = cube.var_name
         new_product.attributes["units"] = str(cube.units)
         new_product.attributes["is_bias_adjusted"] = True
-        new_product.wasderivedfrom(reference_product)
 
+        cube = _apply_debiaser(cube, reference, method, **kwargs)
         new_product.cubes = CubeList([cube])
         output_products.add(new_product)
 
     return output_products
-    # if debiaser == "QuantileMapping":
-    #     from ibicus.debias import QuantileMapping
-    #     return set()
-    # else:
-    #     raise ValueError(f"Unknown bias adjustment method: {debiaser}")
 
 
 @preserve_float_dtype

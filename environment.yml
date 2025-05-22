@@ -65,3 +65,4 @@ dependencies:
   # Not on conda forge - vprof
   - pip:
       - ESMValTool_sample_data
+      - ibicus
