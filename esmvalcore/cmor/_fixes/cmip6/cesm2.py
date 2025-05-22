@@ -1,5 +1,6 @@
 """Fixes for CESM2 model."""
 
+from pathlib import Path
 from shutil import copyfile
 
 import iris
@@ -22,15 +23,15 @@ class Cl(Fix):
 
     def _fix_formula_terms(
         self,
-        filepath,
-        output_dir,
-        add_unique_suffix=False,
-    ):
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir, file, add_unique_suffix=add_unique_suffix
         )
-        copyfile(filepath, new_path)
+        copyfile(file, new_path)
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
             dataset.variables[
@@ -38,7 +39,12 @@ class Cl(Fix):
             ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         return new_path
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -52,7 +58,7 @@ class Cl(Fix):
 
         Parameters
         ----------
-        filepath : str
+        file : str
             Path to the original file.
         output_dir: Path
             Output directory for fixed files.
@@ -66,7 +72,7 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            file, output_dir, add_unique_suffix=add_unique_suffix
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
