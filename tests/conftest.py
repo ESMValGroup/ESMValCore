@@ -23,9 +23,11 @@ def cfg_default():
     return cfg
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
+    for key in CFG:
+        monkeypatch.delitem(CFG, key)
     for key, value in cfg_default.items():
         monkeypatch.setitem(CFG, key, deepcopy(value))
 
