@@ -9,6 +9,7 @@ import functools
 import os
 import shutil
 import sys
+import warnings
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -16,9 +17,8 @@ from unittest.mock import patch
 import pytest
 from fire.core import FireExit
 
-import esmvalcore.config._config
 from esmvalcore._main import Config, ESMValTool, Recipes, run
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 
 def wrapper(f):
@@ -65,11 +65,8 @@ def test_run():
         run()
 
 
-def test_empty_run(tmp_path, monkeypatch):
+def test_empty_run(tmp_path):
     """Test real run with no diags."""
-    monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping, "config_file", raising=False
-    )
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
@@ -91,9 +88,110 @@ def test_empty_run(tmp_path, monkeypatch):
     config_file = config_dir / "config.yml"
     config_file.write_text(f"output_dir: {log_dir}")
 
-    with pytest.raises(RecipeError) as exc:
-        ESMValTool().run(recipe_file, config_dir=config_dir)
-    assert str(exc.value) == "The given recipe does not have any diagnostic."
+    msg = "The given recipe does not have any diagnostic."
+    with pytest.raises(RecipeError, match=msg):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            ESMValTool().run(recipe_file, config_dir=config_dir)
+    log_file = os.path.join(
+        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
+    )
+    filled_recipe = os.path.exists(
+        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
+    )
+    shutil.rmtree(log_dir)
+
+    assert log_file
+    assert not filled_recipe
+
+
+# TODO: remove in v2.14.0
+def test_empty_run_old_config(tmp_path):
+    """Test real run with no diags."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        diagnostics: null
+    """)
+    recipe_file.write_text(content)
+    log_dir = f"{tmp_path}/esmvaltool_output"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / "config.yml"
+    config_file.write_text(f"output_dir: {log_dir}")
+
+    err_msg = "The given recipe does not have any diagnostic."
+    warn_msg = "Please use the option `config_dir` instead"
+    with pytest.raises(RecipeError, match=err_msg):
+        with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
+            ESMValTool().run(recipe_file, config_file=config_file)
+    log_file = os.path.join(
+        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
+    )
+    filled_recipe = os.path.exists(
+        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
+    )
+    shutil.rmtree(log_dir)
+
+    assert log_file
+    assert not filled_recipe
+
+
+# TODO: remove in v2.14.0
+def test_empty_run_ignore_old_config(tmp_path, monkeypatch):
+    """Test real run with no diags."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        diagnostics: null
+    """)
+    recipe_file.write_text(content)
+    log_dir = f"{tmp_path}/esmvaltool_output"
+    new_config_dir = tmp_path / "new_config"
+    new_config_dir.mkdir(parents=True, exist_ok=True)
+    new_config_file = new_config_dir / "config.yml"
+    new_config_file.write_text(f"output_dir: {log_dir}")
+    old_config_dir = tmp_path / "old_config"
+    old_config_dir.mkdir(parents=True, exist_ok=True)
+    old_config_file = old_config_dir / "config.yml"
+    old_config_file.write_text("invalid_option: will be ignored")
+
+    # Note: old config file will be ignored since ESMVALTOOL_CONFIG_DIR is set,
+    # but its actual value will be ignored since
+    # esmvalcore.config._config_object.USER_CONFIG_DIR has already been set to
+    # its default value when loading this module
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", "value_does_not_matter")
+
+    err_msg = "The given recipe does not have any diagnostic."
+    warn_msg = "Since the environment variable ESMVALTOOL_CONFIG_DIR is set"
+    with pytest.raises(RecipeError, match=err_msg):
+        warn_msg = (
+            "Since the environment variable ESMVALTOOL_CONFIG_DIR is set"
+        )
+        with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
+            ESMValTool().run(
+                recipe_file,
+                config_file=old_config_file,
+                config_dir=new_config_dir,
+            )
     log_file = os.path.join(
         log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
     )
