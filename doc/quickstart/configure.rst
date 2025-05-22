@@ -34,6 +34,12 @@ Specify configuration for ``esmvaltool`` command line tool
 
 When running recipes via the :ref:`command line <running>`, configuration
 options can be specified via YAML files and command line arguments.
+The options from all YAML files and command line arguments are merged together
+using :func:`dask.config.collect` to create a single configuration object,
+which properly considers nested objects (see :func:`dask.config.update` for
+details).
+Configuration options given via the command line will always be preferred over
+options given via YAML files.
 
 
 .. _config_yaml_files:
@@ -53,18 +59,16 @@ A file could look like this (for example, located at
   search_esgf: when_missing
   download_dir: ~/downloaded_data
 
-These files can live in any of the following locations:
+ESMValCore searches for **all** YAML files in **each** of the following
+locations and merges them together:
 
 1. The directory specified via the ``--config_dir`` command line argument.
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
-   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable.
-   If ``~/.config/esmvaltool`` does not exist, this will be silently ignored.
+   this location can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment
+   variable.  If ``~/.config/esmvaltool`` does not exist, this will be silently
+   ignored.
 
-ESMValCore searches for all YAML files within each of these directories and
-merges them together using :func:`dask.config.collect`.
-This properly considers nested objects; see :func:`dask.config.update` for
-details.
 Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,
