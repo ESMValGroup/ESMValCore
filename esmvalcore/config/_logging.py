@@ -10,9 +10,11 @@ from typing import Literal, Optional, Union
 
 import yaml
 
+from esmvalcore.exceptions import _WARNINGS_SHOWN_IN_MAIN_LOG
+
 
 class FilterMultipleNames:
-    """Only allow/Disallow events from loggers with specific names."""
+    """Only allow/disallow events from loggers with specific names."""
 
     def __init__(
         self,
@@ -21,10 +23,7 @@ class FilterMultipleNames:
     ) -> None:
         """Initialize filter."""
         self.names = names
-        if mode == "allow":
-            self.starts_with_name = True
-        else:
-            self.starts_with_name = False
+        self.starts_with_name = mode == "allow"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
@@ -32,6 +31,19 @@ class FilterMultipleNames:
             if record.name.startswith(name):
                 return self.starts_with_name
         return not self.starts_with_name
+
+
+class FilterExternalWarnings:
+    """Do not show warnings from external packages."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        if record.name != "py.warnings":
+            return True
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG:
+            if f" {warning}: " in record.msg:
+                return True
+        return False
 
 
 def _purge_file_handlers(cfg: dict) -> None:
