@@ -1,7 +1,7 @@
 Welcome to ESMValTool's documentation!
 ======================================
 
-**ESMValTool** is a community diagnostics and performance metrics tool for the evaluation of Earth System Models (ESMs) that allows for 
+**ESMValTool** is a community diagnostics and performance metrics tool for the evaluation of Earth System Models (ESMs) that allows for
 routine comparison of models and observations. It includes a large collection of community recipes and observation data formatters to CMOR standards.
 
 **ESMValCore** is a software package which provides the core functionality for ESMValTool. It is a workflow to find CMIP data, and apply
@@ -16,7 +16,7 @@ and
 
 Basic documentation schema
 --------------------------
-This gives a brief idea of topics in each of the packages to help find information. As ESMValTool encompasses ESMValCore there will be some overlap between them. 
+This gives a brief idea of topics in each of the packages to help find information. As ESMValTool encompasses ESMValCore there will be some overlap between them.
 For more detailed information, see documentation navigation to the left.
 
 .. container::
@@ -45,7 +45,7 @@ Refer to ESMValTool contributing to the community for a guide on contributing re
 
 Refer to ESMValCore :ref:`Contributing <contributing>`  for information on contributing code.
 
-Get in touch! 
+Get in touch!
 -------------
 Contact information is available :ref:`here <Support-and-Contact>`.
 
