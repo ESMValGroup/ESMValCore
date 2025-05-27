@@ -7,12 +7,15 @@ import pprint
 import re
 import textwrap
 import uuid
+from collections.abc import Iterable
 from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Iterator, Sequence, Union
+from typing import Any, Iterator, Sequence, TypeVar, Union
 
+import dask
+from dask.delayed import Delayed
 from iris.cube import Cube
 
 from esmvalcore import esgf, local
@@ -82,6 +85,14 @@ def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
         and isinstance(facet_value, str)
         and fnmatchcase(facet_value, pattern)
     )
+
+
+T = TypeVar("T")
+
+
+def _first(elems: Iterable[T]) -> T:
+    """Return the first element."""
+    return next(iter(elems))
 
 
 class Dataset:
@@ -693,8 +704,18 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def load(self) -> Cube:
+    def load(self, compute: bool = True) -> Cube | Delayed:
         """Load dataset.
+
+        Parameters
+        ----------
+        compute:
+            If :obj:`True`, return the :class:`~iris.cube.Cube` immediately.
+            If :obj:`False`, return a :class:`~dask.delayed.Delayed` object
+            that can be used to load the cube by calling its
+            :meth:`~dask.delayed.Delayed.compute` method. Multiple datasets
+            can be loaded in parallel by passing a list of such delayeds
+            to :func:`dask.compute`.
 
         Raises
         ------
@@ -718,7 +739,7 @@ class Dataset:
             supplementary_cubes.append(supplementary_cube)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
-        cubes = preprocess(
+        cubes = dask.delayed(preprocess)(
             [cube],
             "add_supplementary_variables",
             input_files=input_files,
@@ -727,7 +748,10 @@ class Dataset:
             supplementary_cubes=supplementary_cubes,
         )
 
-        return cubes[0]
+        cube = dask.delayed(_first)(cubes)
+        if compute:
+            return cube.compute()
+        return cube
 
     def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
@@ -742,7 +766,16 @@ class Dataset:
             msg = "\n".join(lines)
             raise InputFilesNotFound(msg)
 
+        input_files = [
+            file.local_file(self.session["download_dir"])
+            if isinstance(file, esgf.ESGFFile)
+            else file
+            for file in self.files
+        ]
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        debug = self.session["save_intermediary_cubes"]
+
+        # Load all input files and concatenate them.
         fix_dir_prefix = Path(
             self.session._fixed_file_dir,
             self._get_joined_summary_facets("_", join_lists=True) + "_",
@@ -765,6 +798,51 @@ class Dataset:
             **self.facets,
         }
         settings["concatenate"] = {"check_level": self.session["check_level"]}
+
+        result = []
+        for input_file in input_files:
+            files = dask.delayed(preprocess)(
+                [input_file],
+                "fix_file",
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings["fix_file"],
+            )
+            # Multiple cubes may be present in a file.
+            cubes = dask.delayed(preprocess)(
+                files,
+                "load",
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings["load"],
+            )
+            # Combine the cubes into a single cube per file.
+            cubes = dask.delayed(preprocess, pure=False)(
+                cubes,
+                "fix_metadata",
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings["fix_metadata"],
+            )
+            cube = dask.delayed(_first)(cubes)
+            result.append(cube)
+
+        # Concatenate the cubes from all files.
+        result = dask.delayed(preprocess, pure=False)(
+            result,
+            "concatenate",
+            input_files=input_files,
+            output_file=output_file,
+            debug=debug,
+            **settings["concatenate"],
+        )
+
+        # At this point `result` is a list containing a single cube. Apply the
+        # remaining preprocessor functions to this cube.
+        settings.clear()
         settings["cmor_check_metadata"] = {
             "check_level": self.session["check_level"],
             "cmor_table": self.facets["project"],
@@ -777,6 +855,7 @@ class Dataset:
                 "timerange": self.facets["timerange"],
             }
         settings["fix_data"] = {
+            "pure": False,
             "session": self.session,
             **self.facets,
         }
@@ -787,24 +866,18 @@ class Dataset:
             "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
         }
-
-        result = [
-            file.local_file(self.session["download_dir"])
-            if isinstance(file, esgf.ESGFFile)
-            else file
-            for file in self.files
-        ]
         for step, kwargs in settings.items():
-            result = preprocess(
+            pure = settings.pop("pure", True)
+            result = dask.delayed(preprocess, pure=pure)(
                 result,
                 step,
-                input_files=self.files,
+                input_files=input_files,
                 output_file=output_file,
-                debug=self.session["save_intermediary_cubes"],
+                debug=debug,
                 **kwargs,
             )
 
-        cube = result[0]
+        cube = dask.delayed(_first)(result)
         return cube
 
     def from_ranges(self) -> list["Dataset"]:
