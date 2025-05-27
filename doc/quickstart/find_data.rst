@@ -511,8 +511,7 @@ the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
 This is useful for diagnostics that act on the native ICON grid and do not
-support input data in UGRID format (yet), like the
-:ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
+support input data in UGRID format (yet).
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
 and/or altitude information to the preprocessed output files.
