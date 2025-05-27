@@ -104,7 +104,8 @@ def add_cell_measure(
 
 
 def add_ancillary_variable(
-    cube: Cube, ancillary_cube: Cube | iris.coords.AncillaryVariable
+    cube: Cube,
+    ancillary_cube: Cube | iris.coords.AncillaryVariable,
 ) -> None:
     """Add ancillary variable to cube (in-place).
 
@@ -154,7 +155,8 @@ def add_ancillary_variable(
                     data_dims[ancillary_dim] = cube_dim
             except iris.exceptions.CoordinateNotFoundError:
                 logger.debug(
-                    "%s from ancillary cube not found in cube coords.", coord
+                    "%s from ancillary cube not found in cube coords.",
+                    coord,
                 )
         if None in data_dims:
             none_dims = ", ".join(

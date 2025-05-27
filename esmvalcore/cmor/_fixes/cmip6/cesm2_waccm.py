@@ -50,10 +50,12 @@ class Cl(BaseCl):
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
-                :, ::-1
+                :,
+                ::-1,
             ]
             dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
-                :, ::-1
+                :,
+                ::-1,
             ]
         return new_path
 

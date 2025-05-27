@@ -822,10 +822,11 @@ class Test(tests.Test):
     def test__get_first_unmasked_data(self):
         """Test to get first unmasked value of an array along an axis."""
         (z_axis,) = self.grid_4d_2.coord_dims(
-            self.grid_4d_2.coord(axis="Z", dim_coords=True)
+            self.grid_4d_2.coord(axis="Z", dim_coords=True),
         )
         result = _get_first_unmasked_data(
-            self.grid_4d_2.core_data(), axis=z_axis
+            self.grid_4d_2.core_data(),
+            axis=z_axis,
         )
         expected = np.ma.ones((4, 2, 2))
         self.assert_array_equal(result, expected)
@@ -843,13 +844,14 @@ class Test(tests.Test):
         with self.assertRaises(ValueError) as err:
             extract_surface_from_atm(self.grid_4d_ps)
         self.assertEqual(
-            "Surface air pressure could not be found", str(err.exception)
+            "Surface air pressure could not be found",
+            str(err.exception),
         )
         # Test with ancillary variable
         self.grid_4d_ps.add_ancillary_variable(ps_ancillary, [0, 2, 3])
         result = extract_surface_from_atm(self.grid_4d_ps)
         expected = np.ma.array(
-            np.broadcast_to([[[0.0]], [[0.0]], [[2.0]], [[3.0]]], (4, 2, 2))
+            np.broadcast_to([[[0.0]], [[0.0]], [[2.0]], [[3.0]]], (4, 2, 2)),
         )
         self.assert_array_equal(result.data, expected)
         assert result.var_name == "vars"

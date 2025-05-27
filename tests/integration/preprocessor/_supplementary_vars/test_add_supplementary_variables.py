@@ -278,7 +278,8 @@ class Test:
             units="Pa",
         )
         ancillary_cube = iris.cube.Cube(
-            np.ones((3)), dim_coords_and_dims=[(plev_dim, 0)]
+            np.ones(3),
+            dim_coords_and_dims=[(plev_dim, 0)],
         )
         msg = "No coordinate associated with ancillary"
         with pytest.raises(ValueError, match=msg):

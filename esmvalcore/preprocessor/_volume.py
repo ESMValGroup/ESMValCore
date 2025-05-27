@@ -18,6 +18,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._regrid import extract_levels
 from esmvalcore.preprocessor._shared import (
     get_array_module,
     get_coord_weights,
@@ -30,7 +31,6 @@ from esmvalcore.preprocessor._shared import (
 from esmvalcore.preprocessor._supplementary_vars import (
     register_supplementaries,
 )
-from esmvalcore.preprocessor._regrid import extract_levels
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -696,7 +696,8 @@ def extract_surface_from_atm(
     try:
         ps_cube = cube.ancillary_variable("surface_air_pressure")
     except iris.exceptions.AncillaryVariableNotFoundError as exc:
-        raise ValueError("Surface air pressure could not be found") from exc
+        msg = "Surface air pressure could not be found"
+        raise ValueError(msg) from exc
 
     # Fill masked data if necessary (interpolation fails with masked data)
     (z_axis,) = cube.coord_dims(cube.coord(axis="Z", dim_coords=True))
@@ -704,7 +705,8 @@ def extract_surface_from_atm(
     if iris.util.is_masked(cube.core_data()):
         mask = npx.ma.getmaskarray(cube.core_data())
         first_unmasked_data = _get_first_unmasked_data(
-            cube.core_data(), axis=z_axis
+            cube.core_data(),
+            axis=z_axis,
         )
         dim_map = [dim for dim in range(cube.ndim) if dim != z_axis]
         first_unmasked_data = iris.util.broadcast_to_shape(
