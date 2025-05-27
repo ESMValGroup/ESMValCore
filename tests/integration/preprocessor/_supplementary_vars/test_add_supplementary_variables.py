@@ -93,7 +93,8 @@ class Test:
         )
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.fx_area = iris.cube.Cube(
-            fx_area_data, dim_coords_and_dims=self.coords_spec
+            fx_area_data,
+            dim_coords_and_dims=self.coords_spec,
         )
         self.fx_volume = iris.cube.Cube(
             fx_volume_data,
@@ -124,7 +125,8 @@ class Test:
         self.fx_area.standard_name = "cell_area"
         self.fx_area.units = "m2"
         cube = iris.cube.Cube(
-            self.new_cube_data, dim_coords_and_dims=self.coords_spec
+            self.new_cube_data,
+            dim_coords_and_dims=self.coords_spec,
         )
 
         cube = add_supplementary_variables(cube, [self.fx_area])
@@ -142,7 +144,7 @@ class Test:
         if lazy:
             self.fx_volume.data = self.fx_volume.lazy_data()
             self.new_cube_3D_data = da.array(self.new_cube_3D_data).rechunk(
-                (1, 2, 3)
+                (1, 2, 3),
             )
         self.fx_volume.var_name = "volcello"
         self.fx_volume.standard_name = "ocean_volume"
@@ -188,7 +190,8 @@ class Test:
         self.fx_area.standard_name = "land_area_fraction"
         self.fx_area.units = "%"
         cube = iris.cube.Cube(
-            self.new_cube_data, dim_coords_and_dims=self.coords_spec
+            self.new_cube_data,
+            dim_coords_and_dims=self.coords_spec,
         )
 
         cube = add_supplementary_variables(cube, [self.fx_area])
@@ -275,7 +278,8 @@ class Test:
             units="Pa",
         )
         ancillary_cube = iris.cube.Cube(
-            np.ones((3)), dim_coords_and_dims=[(plev_dim, 0)]
+            np.ones(3),
+            dim_coords_and_dims=[(plev_dim, 0)],
         )
         msg = "No coordinate associated with ancillary"
         with pytest.raises(ValueError, match=msg):

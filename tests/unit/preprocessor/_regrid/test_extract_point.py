@@ -26,7 +26,8 @@ class Test(tests.Test):
 
     def test_interpolation_schemes(self):
         self.assertEqual(
-            set(POINT_INTERPOLATION_SCHEMES.keys()), set(self.schemes)
+            set(POINT_INTERPOLATION_SCHEMES.keys()),
+            set(self.schemes),
         )
 
     def test_extract_point_interpolation_schemes(self):

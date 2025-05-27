@@ -18,10 +18,16 @@ def cubes():
         units="days since 1950-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [45.0], standard_name="latitude", var_name="lat", units="degrees"
+        [45.0],
+        standard_name="latitude",
+        var_name="lat",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [10.0], standard_name="longitude", var_name="lon", units="degrees"
+        [10.0],
+        standard_name="longitude",
+        var_name="lon",
+        units="degrees",
     )
 
     coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
@@ -64,7 +70,8 @@ def test_hurs_calculate(cubes):
         rtol=0.00005,
     )
     np.testing.assert_allclose(
-        out_cube.coord("time").points, [0.0, 1.0, 2.0, 3.0]
+        out_cube.coord("time").points,
+        [0.0, 1.0, 2.0, 3.0],
     )
     np.testing.assert_allclose(out_cube.coord("latitude").points, [45.0])
     np.testing.assert_allclose(out_cube.coord("longitude").points, [10.0])

@@ -55,7 +55,8 @@ class TestGetCmorLevels(unittest.TestCase):
 
     def test_cmip6_p200(self):
         self.assertListEqual(
-            _regrid.get_cmor_levels("CMIP6", "p200"), [20000.0]
+            _regrid.get_cmor_levels("CMIP6", "p200"),
+            [20000.0],
         )
 
     def test_cmip5_alt40(self):

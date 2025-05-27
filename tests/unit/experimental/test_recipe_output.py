@@ -36,13 +36,16 @@ def test_recipe_output_add_to_filters():
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
 
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: "single value"}
+        filters,
+        {valid_attr: "single value"},
     )
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: ["list value 1", "repeated list value"]}
+        filters,
+        {valid_attr: ["list value 1", "repeated list value"]},
     )
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: ["list value 2", "repeated list value"]}
+        filters,
+        {valid_attr: ["list value 2", "repeated list value"]},
     )
 
     assert len(filters) == 1
@@ -66,10 +69,8 @@ def test_recipe_output_add_to_filters_no_valid_attributes():
     filters = {}
     invalid = "invalid_attribute"
     recipe_output.RecipeOutput._add_to_filters(filters, {invalid: "value"})
-    assert (
-        invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
-        and len(filters) == 0
-    )
+    assert invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
+    assert len(filters) == 0
 
 
 def test_recipe_output_sort_filters():
@@ -78,7 +79,8 @@ def test_recipe_output_sort_filters():
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
     unsorted_attributes = ["1", "2", "4", "value", "3"]
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: unsorted_attributes}
+        filters,
+        {valid_attr: unsorted_attributes},
     )
     filters = recipe_output.RecipeOutput._sort_filters(filters)
     assert filters[valid_attr] == sorted(unsorted_attributes)

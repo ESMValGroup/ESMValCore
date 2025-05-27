@@ -64,7 +64,7 @@ class Test(tests.Test):
                     [[14.0, 15.0], [16.0, 17.0]],
                     [[18.0, 19.0], [20.0, 21.0]],
                 ],
-            ]
+            ],
         )
         self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
@@ -76,7 +76,9 @@ class Test(tests.Test):
         cube = self.cube.copy(self.cube.lazy_data())
         coord_name = "multidimensional_vertical_coord"
         coord_points = cube.coord("air_pressure").core_points().reshape(
-            3, 1, 1
+            3,
+            1,
+            1,
         ) * np.ones((3, 2, 2))
         cube.add_aux_coord(
             iris.coords.AuxCoord(
@@ -98,7 +100,7 @@ class Test(tests.Test):
                     [[14.0, 15.0], [16.0, 17.0]],
                     [[18.0, 19.0], [20.0, 21.0]],
                 ],
-            ]
+            ],
         )
         self.assert_array_equal(result.data, expected)
 
@@ -116,7 +118,7 @@ class Test(tests.Test):
                     [[12.0, 13.0], [14.0, 15.0]],
                     [[20.0, 21.0], [22.0, 23.0]],
                 ],
-            ]
+            ],
         )
         self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
@@ -140,7 +142,7 @@ class Test(tests.Test):
                     [[20.0, 21.0], [22.0, 23.0]],
                     [[_MDI, _MDI], [_MDI, _MDI]],
                 ],
-            ]
+            ],
         )
         expected_mask = np.array(
             [
@@ -156,7 +158,7 @@ class Test(tests.Test):
                     [[False, False], [False, False]],
                     [[True, True], [True, True]],
                 ],
-            ]
+            ],
         )
         expected = np.ma.array(expected, mask=expected_mask)
         self.assert_array_equal(result.data, expected)
@@ -168,7 +170,7 @@ class Test(tests.Test):
         scheme = "nearest"
         result = extract_levels(self.cube, level, scheme)
         expected = np.array(
-            [[[4.0, 5.0], [6.0, 7.0]], [[16.0, 17.0], [18.0, 19.0]]]
+            [[[4.0, 5.0], [6.0, 7.0]], [[16.0, 17.0], [18.0, 19.0]]],
         )
         self.assert_array_equal(result.data, expected)
         del self.shape[self.z_dim]
@@ -178,7 +180,10 @@ class Test(tests.Test):
         assert self.cube.coords("air_pressure")
         assert not self.cube.coords("altitude")
         result = extract_levels(
-            self.cube, [1, 2], "linear_extrapolate", coordinate="altitude"
+            self.cube,
+            [1, 2],
+            "linear_extrapolate",
+            coordinate="altitude",
         )
         assert not result.coords("air_pressure")
         assert result.coords("altitude")
@@ -193,13 +198,17 @@ class Test(tests.Test):
         assert not self.cube.coords("air_pressure")
         assert self.cube.coords("altitude")
         result = extract_levels(
-            self.cube, [1, 2], "linear_extrapolate", coordinate="air_pressure"
+            self.cube,
+            [1, 2],
+            "linear_extrapolate",
+            coordinate="air_pressure",
         )
         assert result.coords("air_pressure")
         assert not result.coords("altitude")
         assert result.shape == (2, 2, 2, 2)
         np.testing.assert_allclose(
-            result.coord("air_pressure").points, [1.0, 2.0]
+            result.coord("air_pressure").points,
+            [1.0, 2.0],
         )
 
 

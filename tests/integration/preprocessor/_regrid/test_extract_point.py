@@ -80,7 +80,10 @@ class Test(tests.Test):
         print([coord.standard_name for coord in coords])
 
         point = extract_point(
-            self.cube, [1, 1.1, 1.5, 2, 4], 2, scheme="linear"
+            self.cube,
+            [1, 1.1, 1.5, 2, 4],
+            2,
+            scheme="linear",
         )
         self.assertEqual(point.shape, (3, 5))
         # Longitude is not a dimension coordinate anymore.
@@ -98,7 +101,10 @@ class Test(tests.Test):
         )
 
         point = extract_point(
-            self.cube, 4, [1, 1.1, 1.5, 2, 4], scheme="linear"
+            self.cube,
+            4,
+            [1, 1.1, 1.5, 2, 4],
+            scheme="linear",
         )
         self.assertEqual(point.shape, (3, 5))
         self.assertEqual(
@@ -130,7 +136,10 @@ class Test(tests.Test):
     def test_extract_point__multiple_nearest(self):
         """Test nearest match for an array of one coordinate."""
         point = extract_point(
-            self.cube, [1, 1.1, 1.5, 1.501, 2, 4], 2, scheme="nearest"
+            self.cube,
+            [1, 1.1, 1.5, 1.501, 2, 4],
+            2,
+            scheme="nearest",
         )
         self.assertEqual(point.shape, (3, 6))
         self.assertEqual(
@@ -146,7 +155,10 @@ class Test(tests.Test):
             ],
         )
         point = extract_point(
-            self.cube, 4, [1, 1.1, 1.5, 1.501, 2, 4], scheme="nearest"
+            self.cube,
+            4,
+            [1, 1.1, 1.5, 1.501, 2, 4],
+            scheme="nearest",
         )
         self.assertEqual(point.shape, (3, 6))
         self.assertEqual(
