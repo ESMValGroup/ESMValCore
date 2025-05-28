@@ -3,7 +3,6 @@
 import warnings
 from importlib.resources import files as importlib_files
 from pathlib import Path
-from unittest import mock
 
 import iris
 import ncdata
@@ -144,10 +143,9 @@ def test_get_attr_from_field_coord_none(mocker):
     assert attr is None
 
 
-@mock.patch("iris.load_raw", autospec=True)
-def test_fail_empty_cubes(mock_load_raw):
+def test_fail_empty_cubes(mocker):
     """Test that ValueError is raised when cubes are empty."""
-    mock_load_raw.return_value = CubeList([])
+    mocker.patch("iris.load_raw", autospec=True, return_value=CubeList([]))
     msg = "myfilename does not contain any data"
     with pytest.raises(ValueError, match=msg):
         load("myfilename")
@@ -163,10 +161,9 @@ def load_with_warning(*_, **__):
     return CubeList([Cube(0)])
 
 
-@mock.patch("iris.load_raw", autospec=True)
-def test_do_not_ignore_warnings(mock_load_raw):
+def test_do_not_ignore_warnings(mocker):
     """Test do not ignore specific warnings."""
-    mock_load_raw.side_effect = load_with_warning
+    mocker.patch("iris.load_raw", autospec=True, side_effect=load_with_warning)
     ignore_warnings = [{"message": "non-relevant warning"}]
 
     # Check that warnings is raised
@@ -177,10 +174,9 @@ def test_do_not_ignore_warnings(mock_load_raw):
     assert cubes[0].attributes.globals["source_file"] == "myfilename"
 
 
-@mock.patch("iris.load_raw", autospec=True)
-def test_ignore_warnings(mock_load_raw):
+def test_ignore_warnings(mocker):
     """Test ignore specific warnings."""
-    mock_load_raw.side_effect = load_with_warning
+    mocker.patch("iris.load_raw", autospec=True, side_effect=load_with_warning)
     ignore_warnings = [{"message": "This is a custom expected warning"}]
 
     # Assert that no warning has been raised
