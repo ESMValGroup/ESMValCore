@@ -25,7 +25,8 @@ def wrapper(f):
     @functools.wraps(f)
     def empty(*args, **kwargs):
         if kwargs:
-            raise ValueError(f"Parameters not supported: {kwargs}")
+            msg = f"Parameters not supported: {kwargs}"
+            raise ValueError(msg)
         return True
 
     return empty
@@ -89,9 +90,9 @@ def test_empty_run(tmp_path):
     config_file.write_text(f"output_dir: {log_dir}")
 
     msg = "The given recipe does not have any diagnostic."
-    with pytest.raises(RecipeError, match=msg):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(RecipeError, match=msg):
             ESMValTool().run(recipe_file, config_dir=config_dir)
     log_file = os.path.join(
         log_dir,
@@ -188,16 +189,15 @@ def test_empty_run_ignore_old_config(tmp_path, monkeypatch):
 
     err_msg = "The given recipe does not have any diagnostic."
     warn_msg = "Since the environment variable ESMVALTOOL_CONFIG_DIR is set"
-    with pytest.raises(RecipeError, match=err_msg):
-        warn_msg = (
-            "Since the environment variable ESMVALTOOL_CONFIG_DIR is set"
+    with (
+        pytest.raises(RecipeError, match=err_msg),
+        pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg),
+    ):
+        ESMValTool().run(
+            recipe_file,
+            config_file=old_config_file,
+            config_dir=new_config_dir,
         )
-        with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
-            ESMValTool().run(
-                recipe_file,
-                config_file=old_config_file,
-                config_dir=new_config_dir,
-            )
     log_file = os.path.join(
         log_dir,
         os.listdir(log_dir)[0],
