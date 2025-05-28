@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from esmvalcore.config._logging import (
+    _WARNINGS_SHOWN_IN_MAIN_LOG,
     FilterExternalWarnings,
     FilterMultipleNames,
     configure_logging,
@@ -102,3 +103,13 @@ def test_filter_external_warnings(name, msg, output):
         "exc_info",
     )
     assert filter_.filter(record) is output
+
+
+def test_warnings_shown_in_main_log():
+    expected_warnings = {
+        "ESMValCoreUserWarning",
+        "ESMValCoreDeprecationWarning",
+        "MissingConfigParameter",
+    }
+    assert len(_WARNINGS_SHOWN_IN_MAIN_LOG) == 3
+    assert set(_WARNINGS_SHOWN_IN_MAIN_LOG) == expected_warnings

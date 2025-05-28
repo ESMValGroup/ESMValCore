@@ -1,5 +1,6 @@
 """Configure logging."""
 
+import inspect
 import logging
 import logging.config
 import os
@@ -10,7 +11,14 @@ from typing import Literal
 
 import yaml
 
-from esmvalcore.exceptions import _WARNINGS_SHOWN_IN_MAIN_LOG
+import esmvalcore.exceptions
+
+_WARNINGS_SHOWN_IN_MAIN_LOG = [
+    cls.__name__
+    for cls in vars(esmvalcore.exceptions).values()
+    if inspect.isclass(cls)
+    and issubclass(cls, esmvalcore.exceptions.ESMValCoreUserWarning)
+]
 
 
 class FilterMultipleNames:
