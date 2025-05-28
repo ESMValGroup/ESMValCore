@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube, CubeList
@@ -19,7 +17,10 @@ from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.local import _get_start_end_date
 
 if TYPE_CHECKING:
-    from ..config import Session
+    from collections.abc import Iterable, Sequence
+    from pathlib import Path
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
