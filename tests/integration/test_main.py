@@ -25,8 +25,7 @@ def wrapper(f):
     @functools.wraps(f)
     def empty(*args, **kwargs):
         if kwargs:
-            msg = f"Parameters not supported: {kwargs}"
-            raise ValueError(msg)
+            raise ValueError(f"Parameters not supported: {kwargs}")
         return True
 
     return empty
@@ -95,10 +94,13 @@ def test_empty_run(tmp_path):
             warnings.simplefilter("error")
             ESMValTool().run(recipe_file, config_dir=config_dir)
     log_file = os.path.join(
-        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
+        log_dir,
+        os.listdir(log_dir)[0],
+        "run",
+        "main_log.txt",
     )
     filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
+        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
     )
     shutil.rmtree(log_dir)
 
@@ -136,10 +138,13 @@ def test_empty_run_old_config(tmp_path):
         with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
             ESMValTool().run(recipe_file, config_file=config_file)
     log_file = os.path.join(
-        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
+        log_dir,
+        os.listdir(log_dir)[0],
+        "run",
+        "main_log.txt",
     )
     filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
+        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
     )
     shutil.rmtree(log_dir)
 

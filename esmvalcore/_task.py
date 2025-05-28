@@ -174,16 +174,14 @@ def _py2ncl(value, var_name=""):
             else:
                 type_ = type(value[0])
             if any(not isinstance(v, type_) for v in value):
-                msg = f"NCL array cannot be mixed type: {value}"
                 raise ValueError(
-                    msg,
+                    f"NCL array cannot be mixed type: {value}",
                 )
             txt += "(/{}/)".format(", ".join(_py2ncl(v) for v in value))
     elif isinstance(value, dict):
         if not var_name:
-            msg = f"NCL does not support nested dicts: {value}"
             raise ValueError(
-                msg,
+                f"NCL does not support nested dicts: {value}",
             )
         txt += "True\n"
         for key in value:
@@ -209,8 +207,7 @@ def write_ncl_settings(settings, filename, mode="wt"):
         for type_ in typemap:
             if isinstance(value, type_):
                 return typemap[type_]
-        msg = f"Unable to map {type(value)} to an NCL type"
-        raise ValueError(msg)
+        raise ValueError(f"Unable to map {type(value)} to an NCL type")
 
     lines = []
 
@@ -269,9 +266,8 @@ class BaseTask:
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
         if self.activity is not None:
-            msg = f"Provenance of {self} already initialized"
             raise ValueError(
-                msg,
+                f"Provenance of {self} already initialized",
             )
         self.activity = get_task_provenance(self, recipe_entity)
 
@@ -320,7 +316,7 @@ class BaseTask:
 
     def print_ancestors(self):
         """Return a nicely formatted description."""
-        return "ancestors:\n{}".format(
+        txt = "ancestors:\n{}".format(
             "\n\n".join(
                 textwrap.indent(str(task), prefix="  ")
                 for task in self.ancestors
@@ -328,6 +324,7 @@ class BaseTask:
             if self.ancestors
             else "None",
         )
+        return txt
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -415,8 +412,7 @@ class DiagnosticTask(BaseTask):
                 diagnostics_root / Path(script).expanduser()
             ).absolute()
         if not script_file.is_file():
-            msg = f"{err_msg}: file does not exist."
-            raise DiagnosticError(msg)
+            raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
 
@@ -440,20 +436,14 @@ class DiagnosticTask(BaseTask):
             else:
                 interpreter = which(interpreters[ext])
             if interpreter is None:
-                msg = (
-                    f"{err_msg}: program '{interpreters[ext]}' not installed."
-                )
                 raise DiagnosticError(
-                    msg,
+                    f"{err_msg}: program '{interpreters[ext]}' not installed.",
                 )
             cmd.append(interpreter)
         elif not os.access(script_file, os.X_OK):
-            msg = (
-                f"{err_msg}: non-executable file with unknown extension "
-                f"'{script_file.suffix}'."
-            )
             raise DiagnosticError(
-                msg,
+                f"{err_msg}: non-executable file with unknown extension "
+                f"'{script_file.suffix}'.",
             )
 
         cmd.extend(args.get(ext, []))
@@ -596,7 +586,7 @@ class DiagnosticTask(BaseTask):
         complete_env = dict(os.environ)
         complete_env.update(env)
 
-        return subprocess.Popen(
+        process = subprocess.Popen(
             cmd,
             bufsize=2**20,  # Use a large buffer to prevent NCL crash
             stdout=subprocess.PIPE,
@@ -605,10 +595,13 @@ class DiagnosticTask(BaseTask):
             env=complete_env,
         )
 
+        return process
+
     def _run(self, input_files):
         """Run the diagnostic script."""
         if self.script is None:  # Run only preprocessor
-            return []
+            output_files = []
+            return output_files
 
         ext = Path(self.script).suffix.lower()
         if ext == ".ncl":
@@ -668,12 +661,9 @@ class DiagnosticTask(BaseTask):
             self._collect_provenance()
             return [self.output_dir]
 
-        msg = (
-            f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
-            f"in {self.log}"
-        )
         raise DiagnosticError(
-            msg,
+            f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
+            f"in {self.log}",
         )
 
     def _collect_provenance(self):
@@ -789,12 +779,13 @@ class DiagnosticTask(BaseTask):
     def __repr__(self):
         """Get human readable description."""
         settings_string = pprint.pformat(self.settings)
-        return (
+        string = (
             f"{self.__class__.__name__}: {self.name}\n"
             f"script: {self.script}\n"
             f"settings:\n{settings_string}\n"
             f"{self.print_ancestors()}\n"
         )
+        return string
 
 
 def available_cpu_count() -> int:

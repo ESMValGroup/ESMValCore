@@ -56,7 +56,7 @@ def session(cfg):
 
 
 @pytest.mark.parametrize(
-    ("argument", "value"),
+    "argument,value",
     [
         ("max_datasets", 2),
         ("max_years", 2),
