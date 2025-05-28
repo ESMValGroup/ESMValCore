@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube, CubeList
 
@@ -19,15 +19,12 @@ from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.local import _get_start_end_date
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from pathlib import Path
-
-    from esmvalcore.config import Session
+    from ..config import Session
 
 logger = logging.getLogger(__name__)
 
 
-def fix_file(  # noqa: PLR0913
+def fix_file(
     file: Path,
     short_name: str,
     project: str,
