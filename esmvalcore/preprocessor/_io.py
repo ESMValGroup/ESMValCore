@@ -129,9 +129,7 @@ def load(
             f"iris.cube.CubeList, xarray.Dataset, or ncdata.NcData for file, "
             f"got type {type(file)}"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     if not cubes:
         msg = f"{file} does not contain any data"
@@ -428,7 +426,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     return result
 
 
-def save(  # # noqa: C901
+def save(  # noqa: C901
     cubes: Sequence[Cube],
     filename: Path | str,
     optimize_access: str = "",
