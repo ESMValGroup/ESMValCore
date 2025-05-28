@@ -400,7 +400,9 @@ def test_append_missing_supplementaries():
     }
 
     to_datasets._append_missing_supplementaries(
-        supplementaries, facets, settings
+        supplementaries,
+        facets,
+        settings,
     )
 
     short_names = {f["short_name"] for f in supplementaries}
@@ -426,7 +428,9 @@ def test_report_unexpanded_globs(mocker):
     unexpanded_globs = {"dataset": "*"}
 
     msg = to_datasets._report_unexpanded_globs(
-        dataset, dataset, unexpanded_globs
+        dataset,
+        dataset,
+        unexpanded_globs,
     )
 
     assert "paths to the" not in msg

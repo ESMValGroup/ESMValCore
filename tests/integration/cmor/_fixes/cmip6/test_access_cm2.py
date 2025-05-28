@@ -191,7 +191,9 @@ B_BOUNDS = [
 def cl_cubes():
     """``cl`` cubes."""
     b_coord = iris.coords.AuxCoord(
-        np.zeros_like(B_POINTS), bounds=np.zeros_like(B_BOUNDS), var_name="b"
+        np.zeros_like(B_POINTS),
+        bounds=np.zeros_like(B_BOUNDS),
+        var_name="b",
     )
     cube = iris.cube.Cube(
         np.ones_like(B_POINTS),

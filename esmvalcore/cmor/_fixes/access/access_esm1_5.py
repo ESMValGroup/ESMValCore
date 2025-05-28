@@ -25,10 +25,7 @@ class AllVars(AccessFix):
         -------
         iris.cube.CubeList
         """
-        if len(cubes) == 1:
-            cube = cubes[0]
-        else:
-            cube = self.get_cube(cubes)
+        cube = cubes[0] if len(cubes) == 1 else self.get_cube(cubes)
 
         # Fix coordinates
         self.fix_scalar_coords(cube)

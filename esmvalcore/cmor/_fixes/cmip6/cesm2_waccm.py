@@ -2,7 +2,8 @@
 
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
@@ -43,14 +44,18 @@ class Cl(BaseCl):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            filepath,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
-                :, ::-1
+                :,
+                ::-1,
             ]
             dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
-                :, ::-1
+                :,
+                ::-1,
             ]
         return new_path
 

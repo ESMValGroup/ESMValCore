@@ -35,10 +35,14 @@ def test_tos_fix_metadata(mock_base_fix_metadata):
 
     # Create test cube
     lat_coord = iris.coords.AuxCoord(
-        [3.14, 1200.0, 6.28], var_name="lat", standard_name="latitude"
+        [3.14, 1200.0, 6.28],
+        var_name="lat",
+        standard_name="latitude",
     )
     lon_coord = iris.coords.AuxCoord(
-        [1.0, 2.0, 1e30], var_name="lon", standard_name="longitude"
+        [1.0, 2.0, 1e30],
+        var_name="lon",
+        standard_name="longitude",
     )
     cube = iris.cube.Cube(
         [1.0, 2.0, 3.0],
@@ -55,10 +59,12 @@ def test_tos_fix_metadata(mock_base_fix_metadata):
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     np.testing.assert_allclose(
-        fixed_cube.coord("latitude").points, [3.14, 0.0, 6.28]
+        fixed_cube.coord("latitude").points,
+        [3.14, 0.0, 6.28],
     )
     np.testing.assert_allclose(
-        fixed_cube.coord("longitude").points, [1.0, 2.0, 0.0]
+        fixed_cube.coord("longitude").points,
+        [1.0, 2.0, 0.0],
     )
     mock_base_fix_metadata.assert_called_once_with(fix, cubes)
 
@@ -86,7 +92,8 @@ def test_mrsos_fix():
 
 
 @mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.fgoals_g3.Fix.fix_metadata", autospec=True
+    "esmvalcore.cmor._fixes.cmip6.fgoals_g3.Fix.fix_metadata",
+    autospec=True,
 )
 def test_mrsos_fix_metadata(mock_base_fix_metadata):
     """Test ``fix_metadata`` for ``mrsos``."""
@@ -94,11 +101,15 @@ def test_mrsos_fix_metadata(mock_base_fix_metadata):
 
     # Create test cube
     lat_coord = iris.coords.AuxCoord(
-        [1.0, 2.0, 3.0], var_name="lat", standard_name="latitude"
+        [1.0, 2.0, 3.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     lat_coord.bounds = [[0.5, 1.5], [-0.5, 0.5], [2.5, 3.5]]
     lon_coord = iris.coords.AuxCoord(
-        [1.0, 2.0, 3.0], var_name="lon", standard_name="longitude"
+        [1.0, 2.0, 3.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     lon_coord.bounds = [[0.5, 1.5], [-0.5, 0.5], [2.5, 3.5]]
     cube = iris.cube.Cube(
@@ -127,7 +138,8 @@ def test_mrsos_fix_metadata(mock_base_fix_metadata):
 
 
 @mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.fgoals_g3.Fix.fix_metadata", autospec=True
+    "esmvalcore.cmor._fixes.cmip6.fgoals_g3.Fix.fix_metadata",
+    autospec=True,
 )
 def test_mrsos_fix_metadata_2(mock_base_fix_metadata):
     """Test ``fix_metadata`` for ``mrsos`` if no fix is necessary."""
@@ -135,11 +147,15 @@ def test_mrsos_fix_metadata_2(mock_base_fix_metadata):
 
     # Create test cube
     lat_coord = iris.coords.AuxCoord(
-        [1.0, 2.0, 3.0], var_name="lat", standard_name="latitude"
+        [1.0, 2.0, 3.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     lat_coord.bounds = [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]]
     lon_coord = iris.coords.AuxCoord(
-        [1.0, 2.0, 3.0], var_name="lon", standard_name="longitude"
+        [1.0, 2.0, 3.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     lon_coord.bounds = [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]]
     cube = iris.cube.Cube(
@@ -177,11 +193,15 @@ def tas_cubes():
     )
 
     lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
 
     lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
 
     correct_coord_specs = [

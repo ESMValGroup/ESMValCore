@@ -77,13 +77,13 @@ def test_get_fix_no_project():
 
 def test_get_fix_no_model():
     assert Fix.get_fixes("CMIP5", "BAD_MODEL", "Amon", "ch4") == [
-        GenericFix(None)
+        GenericFix(None),
     ]
 
 
 def test_get_fix_no_var():
     assert Fix.get_fixes("CMIP5", "BNU-ESM", "Amon", "BAD_VAR") == [
-        GenericFix(None)
+        GenericFix(None),
     ]
 
 
@@ -141,7 +141,9 @@ def test_get_fixed_filepath_unique_suffix_paths(tmp_path):
     filepath = Path("this", "is", "a", "file.nc")
     assert not output_dir.parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, add_unique_suffix=True
+        output_dir,
+        filepath,
+        add_unique_suffix=True,
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)
@@ -165,7 +167,9 @@ def test_get_fixed_filepath_unique_suffix_strs(tmp_path):
     filepath = os.path.join("this", "is", "a", "file.nc")
     assert not Path(output_dir).parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, add_unique_suffix=True
+        output_dir,
+        filepath,
+        add_unique_suffix=True,
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)

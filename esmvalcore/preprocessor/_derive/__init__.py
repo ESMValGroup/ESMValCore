@@ -25,7 +25,7 @@ def _get_all_derived_variables():
     for path in Path(__file__).parent.glob("[a-z]*.py"):
         short_name = path.stem
         module = importlib.import_module(
-            f"esmvalcore.preprocessor._derive.{short_name}"
+            f"esmvalcore.preprocessor._derive.{short_name}",
         )
         derivers[short_name] = module.DerivedVariable
     return derivers
@@ -54,13 +54,15 @@ def get_required(short_name, project):
         List of dictionaries (including at least the key `short_name`).
     """
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
-        raise NotImplementedError(
+        msg = (
             f"Cannot derive variable '{short_name}', no derivation script "
             f"available"
         )
+        raise NotImplementedError(
+            msg,
+        )
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
-    variables = deepcopy(DerivedVariable().required(project))
-    return variables
+    return deepcopy(DerivedVariable().required(project))
 
 
 def derive(cubes, short_name, long_name, units, standard_name=None):
@@ -127,9 +129,12 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
         try:
             convert_units(cube, units)
         except ValueError as exc:
-            raise ValueError(
+            msg = (
                 f"Units '{cube.units}' after executing derivation script of "
                 f"'{short_name}' cannot be converted to target units '{units}'"
+            )
+            raise ValueError(
+                msg,
             ) from exc
 
     return cube

@@ -2,7 +2,7 @@
 
 import dask.array as da
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Co2(Fix):

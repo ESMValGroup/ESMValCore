@@ -14,7 +14,11 @@ from esmvalcore.cmor.fix import Fix
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes(
-        "CMIP6", "IITM-ESM", "Omon", "tos", extra_facets={"frequency": "mon"}
+        "CMIP6",
+        "IITM-ESM",
+        "Omon",
+        "tos",
+        extra_facets={"frequency": "mon"},
     )
     assert fix == [Tos(None), AllVars(None), GenericFix(None)]
 

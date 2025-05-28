@@ -12,8 +12,7 @@ from esmvalcore.preprocessor.regrid_schemes import (
 
 def set_data_to_const(cube, _, const=1.0):
     """Compute something to test ``GenericFuncScheme``."""
-    cube = cube.copy(np.full(cube.shape, const))
-    return cube
+    return cube.copy(np.full(cube.shape, const))
 
 
 @pytest.fixture
@@ -30,8 +29,8 @@ def test_generic_func_scheme_init(generic_func_scheme):
 
 def test_generic_func_scheme_repr(generic_func_scheme):
     """Test ``GenericFuncScheme``."""
-    repr = generic_func_scheme.__repr__()
-    assert repr == "GenericFuncScheme(set_data_to_const, const=2)"
+    repr_ = generic_func_scheme.__repr__()
+    assert repr_ == "GenericFuncScheme(set_data_to_const, const=2)"
 
 
 def test_generic_func_scheme_regridder(generic_func_scheme, mocker):
