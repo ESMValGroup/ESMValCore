@@ -340,10 +340,7 @@ def _sort_cubes_by_time(cubes):
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:
-        msg = (
-            f"One or more cubes {cubes} are missing"
-            + f" time coordinate: {exc!s}"
-        )
+        msg = f"One or more cubes {cubes} are missing time coordinate: {exc!s}"
         raise ValueError(msg) from exc
     except TypeError as error:
         msg = f"Cubes cannot be sorted due to differing time units: {error!s}"
@@ -431,7 +428,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     return result
 
 
-def save(
+def save(  # # noqa: C901
     cubes: Sequence[Cube],
     filename: Path | str,
     optimize_access: str = "",

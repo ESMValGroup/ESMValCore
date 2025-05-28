@@ -144,7 +144,7 @@ def date2num(date, unit, dtype=np.float64):
         return dtype(num)
 
 
-def merge_cube_attributes(
+def merge_cube_attributes(  # noqa: C901
     cubes: Sequence[Cube],
     delimiter: str = " ",
 ) -> None:
