@@ -296,10 +296,10 @@ def _fix_calendars(cubes):
     unique_calendars = np.unique(calendars)
 
     calendar_ocurrences = np.array(
-        [calendars.count(calendar) for calendar in unique_calendars]
+        [calendars.count(calendar) for calendar in unique_calendars],
     )
     calendar_index = int(
-        np.argwhere(calendar_ocurrences == calendar_ocurrences.max())
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()),
     )
 
     for cube in cubes:
@@ -307,7 +307,7 @@ def _fix_calendars(cubes):
         old_calendar = time_coord.units.calendar
         if old_calendar != unique_calendars[calendar_index]:
             new_unit = time_coord.units.change_calendar(
-                unique_calendars[calendar_index]
+                unique_calendars[calendar_index],
             )
             time_coord.units = new_unit
 
@@ -326,7 +326,8 @@ def _get_concatenation_error(cubes):
         time = cube.coord("time")
         logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    raise ValueError(f"Can not concatenate cubes: {msg}")
+    msg = f"Can not concatenate cubes: {msg}"
+    raise ValueError(msg)
 
 
 def _sort_cubes_by_time(cubes):
@@ -334,14 +335,10 @@ def _sort_cubes_by_time(cubes):
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:
-        msg = "One or more cubes {} are missing".format(
-            cubes
-        ) + " time coordinate: {}".format(str(exc))
+        msg = f"One or more cubes {cubes} are missing time coordinate: {exc!s}"
         raise ValueError(msg) from exc
     except TypeError as error:
-        msg = (
-            f"Cubes cannot be sorted due to differing time units: {str(error)}"
-        )
+        msg = f"Cubes cannot be sorted due to differing time units: {error!s}"
         raise TypeError(msg) from error
     return cubes
 
@@ -485,7 +482,8 @@ def save(
         cubes is empty.
     """
     if not cubes:
-        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+        msg = f"Cannot save empty cubes '{cubes}'"
+        raise ValueError(msg)
 
     if Path(filename).suffix.lower() == ".nc":
         kwargs["compute"] = compute
@@ -520,7 +518,7 @@ def save(
         cube = cubes[0]
         if optimize_access == "map":
             dims = set(
-                cube.coord_dims("latitude") + cube.coord_dims("longitude")
+                cube.coord_dims("latitude") + cube.coord_dims("longitude"),
             )
         elif optimize_access == "timeseries":
             dims = set(cube.coord_dims("time"))
@@ -540,7 +538,9 @@ def save(
     if alias:
         for cube in cubes:
             logger.debug(
-                "Changing var_name from %s to %s", cube.var_name, alias
+                "Changing var_name from %s to %s",
+                cube.var_name,
+                alias,
             )
             cube.var_name = alias
 
@@ -565,8 +565,7 @@ def _get_debug_filename(filename, step):
         num = int(sorted(os.listdir(dirname)).pop()[:2]) + 1
     else:
         num = 0
-    filename = os.path.join(dirname, "{:02}_{}.nc".format(num, step))
-    return filename
+    return os.path.join(dirname, f"{num:02}_{step}.nc")
 
 
 def _sort_products(products):
@@ -584,7 +583,8 @@ def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
     for output_dir, prods in groupby(
-        products, lambda p: os.path.dirname(p.filename)
+        products,
+        lambda p: os.path.dirname(p.filename),
     ):
         sorted_products = _sort_products(prods)
         metadata = {}
@@ -633,7 +633,8 @@ def _write_ncl_metadata(output_dir, metadata):
                 variable_info[key] = variable[key]
 
     filename = os.path.join(
-        output_dir, variable_info["short_name"] + "_info.ncl"
+        output_dir,
+        variable_info["short_name"] + "_info.ncl",
     )
     write_ncl_settings(info, filename)
 

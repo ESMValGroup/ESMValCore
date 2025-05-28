@@ -28,19 +28,21 @@ def test_replace_tags():
         VARIABLE,
     )
     input_file = _replace_tags(
-        "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc", VARIABLE
+        "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+        VARIABLE,
     )
     output_file = _replace_tags(
-        "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}", VARIABLE
+        "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}",
+        VARIABLE,
     )
     assert path == [
-        Path("act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/*")
+        Path("act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/*"),
     ]
     assert input_file == [
-        Path("tas_Amon_ACCURATE-MODEL_experiment_r1i1p1f1_gr*.nc")
+        Path("tas_Amon_ACCURATE-MODEL_experiment_r1i1p1f1_gr*.nc"),
     ]
     assert output_file == [
-        Path("CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas")
+        Path("CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas"),
     ]
 
 
@@ -77,21 +79,23 @@ def test_replace_tags_with_subexperiment():
         variable,
     )
     input_file = _replace_tags(
-        "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc", variable
+        "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+        variable,
     )
     output_file = _replace_tags(
-        "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}", variable
+        "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}",
+        variable,
     )
     expected_paths = [
         Path(
-            "act/HMA/ACCURATE-MODEL/experiment/199411-r1i1p1f1/Amon/tas/gr/*"
+            "act/HMA/ACCURATE-MODEL/experiment/199411-r1i1p1f1/Amon/tas/gr/*",
         ),
         Path("act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/*"),
     ]
     assert sorted(paths) == expected_paths
     assert input_file == [
-        Path("tas_Amon_ACCURATE-MODEL_experiment_199411-r1i1p1f1_gr*.nc")
+        Path("tas_Amon_ACCURATE-MODEL_experiment_199411-r1i1p1f1_gr*.nc"),
     ]
     assert output_file == [
-        Path("CMIP6_ACCURATE-MODEL_Amon_experiment_199411-r1i1p1f1_tas")
+        Path("CMIP6_ACCURATE-MODEL_Amon_experiment_199411-r1i1p1f1_tas"),
     ]

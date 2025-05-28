@@ -6,8 +6,8 @@ from scipy import constants
 
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._regrid import extract_levels, regrid
 
-from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
 
@@ -50,10 +50,12 @@ def interpolate_hybrid_plevs(cube):
     # Use CMIP6's plev19 target levels (in Pa)
     target_levels = CMOR_TABLES["CMIP6"].coords["plev19"].requested
     cube.coord("air_pressure").convert_units("Pa")
-    cube = extract_levels(
-        cube, target_levels, "linear", coordinate="air_pressure"
+    return extract_levels(
+        cube,
+        target_levels,
+        "linear",
+        coordinate="air_pressure",
     )
-    return cube
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -87,10 +89,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_ozone_in_air")
+            iris.Constraint(name="mole_fraction_of_ozone_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),

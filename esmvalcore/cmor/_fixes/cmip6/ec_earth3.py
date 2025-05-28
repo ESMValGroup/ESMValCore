@@ -3,8 +3,8 @@
 import cf_units
 import numpy as np
 
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 
 class AllVars(Fix):
@@ -20,11 +20,13 @@ class AllVars(Fix):
                     coord_names=["latitude"],
                 )
                 if cube.attributes.get(
-                    "experiment_id", ""
+                    "experiment_id",
+                    "",
                 ) == "historical" and cube.coords("time"):
                     time_coord = cube.coord("time")
                     time_coord.units = cf_units.Unit(
-                        time_coord.units.origin, "proleptic_gregorian"
+                        time_coord.units.origin,
+                        "proleptic_gregorian",
                     )
         return cubes
 

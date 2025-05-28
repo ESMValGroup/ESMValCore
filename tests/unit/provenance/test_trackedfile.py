@@ -6,21 +6,19 @@ from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX, TrackedFile
 
 @pytest.fixture
 def tracked_file_nc():
-    file = TrackedFile(
+    return TrackedFile(
         filename="/path/to/file.nc",
         attributes={"a": "A"},
         prov_filename="/original/path/to/file.nc",
     )
-    return file
 
 
 @pytest.fixture
 def tracked_file_grb():
-    file = TrackedFile(
+    return TrackedFile(
         filename="/path/to/file.grb",
         prov_filename="/original/path/to/file.grb",
     )
-    return file
 
 
 def test_init_nc(tracked_file_nc):

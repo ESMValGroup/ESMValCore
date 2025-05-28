@@ -23,7 +23,8 @@ def cube():
         1,
     )
     test_cube.add_dim_coord(
-        DimCoord([180], standard_name="longitude", units=Unit("degrees")), 0
+        DimCoord([180], standard_name="longitude", units=Unit("degrees")),
+        0,
     )
     return test_cube
 

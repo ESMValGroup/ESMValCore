@@ -42,18 +42,22 @@ def test_cl_fix():
 
 
 @unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath", autospec=True
+    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath",
+    autospec=True,
 )
 def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / "cesm2_waccm_cl.nc"
     mock_get_filepath.return_value = os.path.join(
-        tmp_path, "fixed_cesm2_waccm_cl.nc"
+        tmp_path,
+        "fixed_cesm2_waccm_cl.nc",
     )
     fix = Cl(None)
     fixed_file = fix.fix_file(nc_path, tmp_path)
     mock_get_filepath.assert_called_once_with(
-        tmp_path, nc_path, add_unique_suffix=False
+        tmp_path,
+        nc_path,
+        add_unique_suffix=False,
     )
     fixed_cube = iris.load_cube(fixed_file)
     lev_coord = fixed_cube.coord(var_name="lev")

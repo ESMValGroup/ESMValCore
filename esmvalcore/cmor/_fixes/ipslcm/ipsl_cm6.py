@@ -4,8 +4,8 @@ import logging
 import subprocess
 import time
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,9 @@ class AllVars(Fix):
         varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
         alt_filepath = str(file).replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(
-            output_dir, alt_filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            alt_filepath,
+            add_unique_suffix=add_unique_suffix,
         )
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, file)

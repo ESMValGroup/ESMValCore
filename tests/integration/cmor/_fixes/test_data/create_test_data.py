@@ -54,10 +54,14 @@ def create_hyb_pres_file_without_ap(dataset, short_name):
 
     # Variable
     dataset.createVariable(
-        short_name, np.float32, dimensions=("time", "lev", "lat", "lon")
+        short_name,
+        np.float32,
+        dimensions=("time", "lev", "lat", "lon"),
     )
     dataset.variables[short_name][:] = np.full(
-        (1, 2, 3, 4), 0.0, dtype=np.float32
+        (1, 2, 3, 4),
+        0.0,
+        dtype=np.float32,
     )
     dataset.variables[
         short_name
@@ -162,10 +166,14 @@ def create_hybrid_height_file(dataset, short_name):
 
     # Variable
     dataset.createVariable(
-        short_name, np.float32, dimensions=("time", "lev", "lat", "lon")
+        short_name,
+        np.float32,
+        dimensions=("time", "lev", "lat", "lon"),
     )
     dataset.variables[short_name][:] = np.full(
-        (1, 2, 1, 2), 0.0, dtype=np.float32
+        (1, 2, 1, 2),
+        0.0,
+        dtype=np.float32,
     )
     dataset.variables[
         short_name
@@ -195,7 +203,9 @@ def save_cnrm_cm6_1_cl_file(save_path):
         dataset.createVariable("time", np.float64, dimensions=("time",))
         dataset.createVariable("lev", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "lev_bnds", np.float64, dimensions=("lev", "bnds")
+            "lev_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("lat", np.float64, dimensions=("lat",))
         dataset.createVariable("lon", np.float64, dimensions=("lon",))
@@ -230,14 +240,20 @@ def save_cnrm_cm6_1_cl_file(save_path):
         # Wrong shape of bounds is intended
         dataset.createVariable("ap", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "ap_bnds", np.float64, dimensions=("bnds", "lev")
+            "ap_bnds",
+            np.float64,
+            dimensions=("bnds", "lev"),
         )
         dataset.createVariable("b", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "b_bnds", np.float64, dimensions=("bnds", "lev")
+            "b_bnds",
+            np.float64,
+            dimensions=("bnds", "lev"),
         )
         dataset.createVariable(
-            "ps", np.float64, dimensions=("time", "lat", "lon")
+            "ps",
+            np.float64,
+            dimensions=("time", "lat", "lon"),
         )
         dataset.variables["ap"][:] = [1.0, 2.0, 5.0]
         dataset.variables["ap_bnds"][:] = [[0.0, 1.5, 1.5], [3.0, 3.0, 6.0]]
@@ -249,10 +265,14 @@ def save_cnrm_cm6_1_cl_file(save_path):
 
         # Cl variable
         dataset.createVariable(
-            "cl", np.float32, dimensions=("time", "lev", "lat", "lon")
+            "cl",
+            np.float32,
+            dimensions=("time", "lev", "lat", "lon"),
         )
         dataset.variables["cl"][:] = np.full(
-            (1, 3, 2, 2), 0.0, dtype=np.float32
+            (1, 3, 2, 2),
+            0.0,
+            dtype=np.float32,
         )
         dataset.variables[
             "cl"
@@ -262,7 +282,7 @@ def save_cnrm_cm6_1_cl_file(save_path):
     print(f"Saved {nc_path}")
 
 
-def save_cesm2_cl_file(save_path):
+def save_cesm2_cl_file(save_path):  # noqa: PLR0915
     """Create netcdf file with similar issues as ``cl``."""
     nc_path = os.path.join(save_path, "cesm2_cl.nc")
     with Dataset(nc_path, mode="w") as dataset:
@@ -276,7 +296,9 @@ def save_cesm2_cl_file(save_path):
         dataset.createVariable("time", np.float64, dimensions=("time",))
         dataset.createVariable("lev", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "lev_bnds", np.float64, dimensions=("lev", "bnds")
+            "lev_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("lat", np.float64, dimensions=("lat",))
         dataset.createVariable("lon", np.float64, dimensions=("lon",))
@@ -304,15 +326,21 @@ def save_cesm2_cl_file(save_path):
         # Coordinates for derivation of pressure coordinate
         dataset.createVariable("a", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "a_bnds", np.float64, dimensions=("lev", "bnds")
+            "a_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("b", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "b_bnds", np.float64, dimensions=("lev", "bnds")
+            "b_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("p0", np.float64, dimensions=())
         dataset.createVariable(
-            "ps", np.float64, dimensions=("time", "lat", "lon")
+            "ps",
+            np.float64,
+            dimensions=("time", "lat", "lon"),
         )
         dataset.variables["a"][:] = [1.0, 2.0]
         dataset.variables["a"].bounds = "a_bnds"
@@ -328,10 +356,14 @@ def save_cesm2_cl_file(save_path):
 
         # Cl variable
         dataset.createVariable(
-            "cl", np.float32, dimensions=("time", "lev", "lat", "lon")
+            "cl",
+            np.float32,
+            dimensions=("time", "lev", "lat", "lon"),
         )
         dataset.variables["cl"][:] = np.full(
-            (1, 2, 3, 4), 0.0, dtype=np.float32
+            (1, 2, 3, 4),
+            0.0,
+            dtype=np.float32,
         )
         dataset.variables[
             "cl"
@@ -351,7 +383,9 @@ def save_cesm2_waccm_cl_file(save_path):
         # Dimensional variables
         dataset.createVariable("lev", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "lev_bnds", np.float64, dimensions=("lev", "bnds")
+            "lev_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.variables["lev"][:] = [1.0, 2.0]
         dataset.variables["lev"].bounds = "lev_bnds"
@@ -368,11 +402,15 @@ def save_cesm2_waccm_cl_file(save_path):
         # Coordinates for derivation of pressure coordinate
         dataset.createVariable("a", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "a_bnds", np.float64, dimensions=("lev", "bnds")
+            "a_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("b", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "b_bnds", np.float64, dimensions=("lev", "bnds")
+            "b_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.variables["a"][:] = [1.0, 2.0]
         dataset.variables["a"].bounds = "a_bnds"
@@ -384,7 +422,9 @@ def save_cesm2_waccm_cl_file(save_path):
         # Cl variable
         dataset.createVariable("cl", np.float32, dimensions=("lev",))
         dataset.variables["cl"][:] = np.full(
-            (2,), [0.0, 1.0], dtype=np.float32
+            (2,),
+            [0.0, 1.0],
+            dtype=np.float32,
         )
         dataset.variables[
             "cl"
@@ -408,7 +448,9 @@ def save_gfdl_cm4_cl_file(save_path):
         dataset.createVariable("time", np.float64, dimensions=("time",))
         dataset.createVariable("lev", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "lev_bnds", np.float64, dimensions=("lev", "bnds")
+            "lev_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("lat", np.float64, dimensions=("lat",))
         dataset.createVariable("lon", np.float64, dimensions=("lon",))
@@ -444,14 +486,20 @@ def save_gfdl_cm4_cl_file(save_path):
         # Coordinates for derivation of pressure coordinate
         dataset.createVariable("ap", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "ap_bnds", np.float64, dimensions=("lev", "bnds")
+            "ap_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable("b", np.float64, dimensions=("lev",))
         dataset.createVariable(
-            "b_bnds", np.float64, dimensions=("lev", "bnds")
+            "b_bnds",
+            np.float64,
+            dimensions=("lev", "bnds"),
         )
         dataset.createVariable(
-            "ps", np.float64, dimensions=("time", "lat", "lon")
+            "ps",
+            np.float64,
+            dimensions=("time", "lat", "lon"),
         )
         dataset.variables["ap"][:] = [1.0, 2.0, 5.0]
         dataset.variables["ap"].units = "Pa"
@@ -464,10 +512,14 @@ def save_gfdl_cm4_cl_file(save_path):
 
         # Cl variable
         dataset.createVariable(
-            "cl", np.float32, dimensions=("time", "lev", "lat", "lon")
+            "cl",
+            np.float32,
+            dimensions=("time", "lev", "lat", "lon"),
         )
         dataset.variables["cl"][:] = np.full(
-            (1, 3, 2, 2), 0.0, dtype=np.float32
+            (1, 3, 2, 2),
+            0.0,
+            dtype=np.float32,
         )
         dataset.variables[
             "cl"
