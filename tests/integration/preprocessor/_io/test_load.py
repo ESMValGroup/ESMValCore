@@ -16,24 +16,24 @@ from iris.cube import Cube, CubeList
 from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 
 
-def _create_sample_cube():
+@pytest.fixture
+def sample_cube():
     coord = DimCoord([1, 2], standard_name="latitude", units="degrees_north")
     return Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
 
 
-def test_load(tmp_path):
+def test_load(tmp_path, sample_cube):
     """Test loading multiple files."""
-    cube = _create_sample_cube()
     temp_file = tmp_path / "cube.nc"
-    iris.save(cube, temp_file)
+    iris.save(sample_cube, temp_file)
 
     cubes = load(temp_file)
 
     assert len(cubes) == 1
-    cube = cubes[0]
-    assert cube.attributes.globals["source_file"] == str(temp_file)
-    np.testing.assert_equal(cube.data, [1, 2])
-    np.testing.assert_equal(cube.coord("latitude").points, [1, 2])
+    sample_cube = cubes[0]
+    assert sample_cube.attributes.globals["source_file"] == str(temp_file)
+    np.testing.assert_equal(sample_cube.data, [1, 2])
+    np.testing.assert_equal(sample_cube.coord("latitude").points, [1, 2])
 
 
 def test_load_grib():
@@ -54,18 +54,16 @@ def test_load_grib():
     assert "source_file" in cube.attributes
 
 
-def test_load_cube():
+def test_load_cube(sample_cube):
     """Test loading an Iris Cube."""
-    cube = _create_sample_cube()
-    cubes = load(cube)
-    assert cubes == CubeList([cube])
+    cubes = load(sample_cube)
+    assert cubes == CubeList([sample_cube])
 
 
-def test_load_cubes():
+def test_load_cubes(sample_cube):
     """Test loading an Iris CubeList."""
-    cube = _create_sample_cube()
-    cubes = load(CubeList([cube]))
-    assert cubes == CubeList([cube])
+    cubes = load(CubeList([sample_cube]))
+    assert cubes == CubeList([sample_cube])
 
 
 def test_load_xarray_dataset(caplog):
@@ -125,20 +123,19 @@ def test_load_invalid_type_fail():
         load(1)
 
 
-def test_callback_fix_lat_units(tmp_path):
+def test_callback_fix_lat_units(tmp_path, sample_cube):
     """Test callback for fixing units."""
-    cube = _create_sample_cube()
     temp_file = tmp_path / "cube.nc"
-    iris.save(cube, temp_file)
+    iris.save(sample_cube, temp_file)
 
     cubes = load(temp_file)
 
     assert len(cubes) == 1
-    cube = cubes[0]
-    assert cube.attributes.globals["source_file"] == str(temp_file)
-    np.testing.assert_equal(cube.data, [1, 2])
-    np.testing.assert_equal(cube.coord("latitude").points, [1, 2])
-    assert str(cube.coord("latitude").units) == "degrees_north"
+    sample_cube = cubes[0]
+    assert sample_cube.attributes.globals["source_file"] == str(temp_file)
+    np.testing.assert_equal(sample_cube.data, [1, 2])
+    np.testing.assert_equal(sample_cube.coord("latitude").points, [1, 2])
+    assert str(sample_cube.coord("latitude").units) == "degrees_north"
 
 
 def test_get_attr_from_field_coord_none(mocker):
