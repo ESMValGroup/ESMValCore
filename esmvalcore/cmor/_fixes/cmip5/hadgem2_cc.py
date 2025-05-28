@@ -1,6 +1,7 @@
 """Fix HadGEM2_CC."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
+
 from .hadgem2_es import AllVars as BaseAllVars
 
 AllVars = BaseAllVars

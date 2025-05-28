@@ -1,6 +1,6 @@
 """Fixes for EC-Earth3-AerChem model."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Oh(Fix):

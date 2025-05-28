@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 import collections.abc
+import contextlib
 import fnmatch
 import logging
 import os
 from functools import lru_cache
 from importlib.resources import files as importlib_files
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import iris
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.typing import FacetValue
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +33,8 @@ for attr, value in {
     "save_split_attrs": True,
     "date_microseconds": True,
 }.items():
-    try:
+    with contextlib.suppress(AttributeError):
         setattr(iris.FUTURE, attr, value)
-    except AttributeError:
-        pass
 
 
 def _deep_update(dictionary, update):
@@ -44,7 +46,7 @@ def _deep_update(dictionary, update):
     return dictionary
 
 
-@lru_cache()
+@lru_cache
 def _load_extra_facets(project, extra_facets_dir):
     config = {}
     config_paths = [
@@ -92,7 +94,8 @@ def get_extra_facets(dataset, extra_facets_dir):
     for dataset_ in pattern_filter(project_details, dataset["dataset"]):
         for mip_ in pattern_filter(project_details[dataset_], dataset["mip"]):
             for var in pattern_filter(
-                project_details[dataset_][mip_], dataset["short_name"]
+                project_details[dataset_][mip_],
+                dataset["short_name"],
             ):
                 facets = project_details[dataset_][mip_][var]
                 extra_facets.update(facets)
@@ -102,7 +105,7 @@ def get_extra_facets(dataset, extra_facets_dir):
 
 def load_config_developer(cfg_file):
     """Read the developer's configuration file."""
-    with open(cfg_file, "r", encoding="utf-8") as file:
+    with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
 
     if "obs4mips" in cfg:
@@ -130,7 +133,8 @@ def get_project_config(project):
     """Get developer-configuration for project."""
     if project in CFG:
         return CFG[project]
-    raise RecipeError(f"Project '{project}' not in config-developer.yml")
+    msg = f"Project '{project}' not in config-developer.yml"
+    raise RecipeError(msg)
 
 
 def get_institutes(variable):

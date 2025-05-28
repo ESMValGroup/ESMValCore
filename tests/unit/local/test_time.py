@@ -166,7 +166,9 @@ def test_read_years_from_cube(tmp_path):
     temp_file = LocalFile(tmp_path / "test.nc")
     cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 100, 200, 366], standard_name="time", units="days since 1990-01-01"
+        [0, 100, 200, 366],
+        standard_name="time",
+        units="days since 1990-01-01",
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -226,9 +228,9 @@ def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
-    with pytest.raises((ValueError)):
+    with pytest.raises(ValueError):
         _get_start_end_date("var_whatever")
-    with pytest.raises((ValueError)):
+    with pytest.raises(ValueError):
         _get_start_end_year("var_whatever")
 
 
@@ -305,7 +307,8 @@ TEST_DATES_TO_TIMERANGE = [
 
 
 @pytest.mark.parametrize(
-    "start_date,end_date,expected_timerange", TEST_DATES_TO_TIMERANGE
+    ("start_date", "end_date", "expected_timerange"),
+    TEST_DATES_TO_TIMERANGE,
 )
 def test_dates_to_timerange(start_date, end_date, expected_timerange):
     """Test ``_dates_to_timerange``."""
@@ -328,7 +331,10 @@ TEST_TRUNCATE_DATES = [
 ]
 
 
-@pytest.mark.parametrize("date,date_file,expected_output", TEST_TRUNCATE_DATES)
+@pytest.mark.parametrize(
+    ("date", "date_file", "expected_output"),
+    TEST_TRUNCATE_DATES,
+)
 def test_truncate_dates(date, date_file, expected_output):
     """Test ``_truncate_dates``."""
     output = _truncate_dates(date, date_file)

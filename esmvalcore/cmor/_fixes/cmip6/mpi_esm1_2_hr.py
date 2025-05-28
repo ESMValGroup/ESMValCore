@@ -1,8 +1,11 @@
 """Fixes for MPI-ESM1-2-HR model."""
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
-from ..shared import add_scalar_height_coord, round_coordinates
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_scalar_height_coord,
+    round_coordinates,
+)
 
 
 class AllVars(Fix):

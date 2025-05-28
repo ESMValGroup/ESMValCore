@@ -1,7 +1,5 @@
 """API for recipe metadata."""
 
-from typing import Optional
-
 import pybtex
 from pybtex.database.input import bibtex
 
@@ -25,7 +23,7 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: Optional[str] = None):
+    def __init__(self, name: str, institute: str, orcid: str | None = None):
         self.name = name
         self.institute = institute
         self.orcid = orcid
@@ -100,8 +98,7 @@ class Project:
 
     def __str__(self) -> str:
         """Return string representation."""
-        string = f"{self.project}"
-        return string
+        return f"{self.project}"
 
     @classmethod
     def from_tag(cls, tag: str) -> "Project":
@@ -135,13 +132,16 @@ class Reference:
         bib_data = parser.parse_file(filename)
 
         if len(bib_data.entries) > 1:
-            raise NotImplementedError(
+            msg = (
                 f"{self.__class__.__name__} cannot handle bibtex files "
                 "with more than 1 entry."
             )
+            raise NotImplementedError(
+                msg,
+            )
 
         self._bib_data = bib_data
-        self._key, self._entry = list(bib_data.entries.items())[0]
+        self._key, self._entry = next(iter(bib_data.entries.items()))
         self._filename = filename
 
     @classmethod
@@ -186,15 +186,17 @@ class Reference:
         style = "plain"  # alpha, plain, unsrt, unsrtalpha
         backend = pybtex.plugin.find_plugin("pybtex.backends", renderer)()
         formatter = pybtex.plugin.find_plugin(
-            "pybtex.style.formatting", style
+            "pybtex.style.formatting",
+            style,
         )()
 
         try:
             formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
+            msg = f"Could not render {self._key!r}: {err}"
             raise RenderError(
-                f"Could not render {self._key!r}: {err}"
+                msg,
             ) from None
 
         return rendered

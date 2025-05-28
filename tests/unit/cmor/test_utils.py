@@ -7,7 +7,8 @@ from esmvalcore.cmor._utils import _get_single_cube
 
 
 @pytest.mark.parametrize(
-    "cubes", [[Cube(0)], [Cube(0, var_name="x")], [Cube(0, var_name="y")]]
+    "cubes",
+    [[Cube(0)], [Cube(0, var_name="x")], [Cube(0, var_name="y")]],
 )
 def test_get_single_cube_one_cube(cubes, caplog):
     """Test ``_get_single_cube``."""
@@ -17,7 +18,7 @@ def test_get_single_cube_one_cube(cubes, caplog):
 
 
 @pytest.mark.parametrize(
-    "dataset_str,msg",
+    ("dataset_str", "msg"),
     [
         (None, "Found variable x, but"),
         ("XYZ", "Found variable x in XYZ, but"),
@@ -43,7 +44,7 @@ def test_get_single_cube_multiple_cubes(cubes, dataset_str, msg, caplog):
 
 
 @pytest.mark.parametrize(
-    "dataset_str,msg",
+    ("dataset_str", "msg"),
     [
         (None, "More than one cube found for variable x but"),
         ("XYZ", "More than one cube found for variable x in XYZ but"),

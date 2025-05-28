@@ -47,7 +47,8 @@ class TestAllVars(unittest.TestCase):
         assert coord.has_lazy_bounds()
         assert_array_equal(coord.points, np.array([90.0, 90]))
         assert_array_equal(
-            coord.bounds, np.array([[89.5, 90.0], [90.0, 90.0]])
+            coord.bounds,
+            np.array([[89.5, 90.0], [90.0, 90.0]]),
         )
 
 

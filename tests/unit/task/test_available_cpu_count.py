@@ -12,7 +12,7 @@ def test_available_cpu_count_linux(mocker):
 
 
 @pytest.mark.parametrize(
-    "cpu_count,expected",
+    ("cpu_count", "expected"),
     [
         (None, 1),
         (2, 2),
