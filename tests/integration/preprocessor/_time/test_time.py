@@ -14,7 +14,7 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from esmvalcore.preprocessor._time import climate_statistics, local_solar_time
-from tests import assert_array_equal, create_realistic_4d_cube
+from tests import assert_array_equal
 
 
 @pytest.fixture
@@ -76,12 +76,6 @@ def test_statistical_operators(
     assert res.coord("latitude") == easy_2d_cube.coord("latitude")
     assert res.coord("time").shape == (1,)
     np.testing.assert_allclose(res.data, expected_data, atol=1e-6, rtol=1e-6)
-
-
-@pytest.fixture
-def realistic_4d_cube():
-    """Create realistic 4D cube."""
-    return create_realistic_4d_cube()
 
 
 def test_local_solar_time_regular(realistic_4d_cube):

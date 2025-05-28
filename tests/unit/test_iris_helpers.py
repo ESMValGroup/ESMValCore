@@ -37,7 +37,6 @@ from esmvalcore.iris_helpers import (
     rechunk_cube,
     safe_convert_units,
 )
-from tests import create_realistic_4d_cube
 
 
 @pytest.fixture
@@ -661,11 +660,12 @@ def test_ignore_iris_vague_metadata_warnings():
 
 
 @pytest.fixture
-def dummy_cubes():
-    cube = create_realistic_4d_cube()
-    cube.remove_ancillary_variable(cube.ancillary_variables()[0])
-    cube.data = cube.lazy_data()
-    return CubeList([cube])
+def dummy_cubes(realistic_4d_cube):
+    realistic_4d_cube.remove_ancillary_variable(
+        realistic_4d_cube.ancillary_variables()[0],
+    )
+    realistic_4d_cube.data = realistic_4d_cube.lazy_data()
+    return CubeList([realistic_4d_cube])
 
 
 @pytest.fixture
