@@ -13,6 +13,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
+from tests import assert_array_equal
 
 
 @pytest.fixture
@@ -31,8 +32,8 @@ def test_load(tmp_path, sample_cube):
     assert len(cubes) == 1
     sample_cube = cubes[0]
     assert sample_cube.attributes.globals["source_file"] == str(temp_file)
-    np.testing.assert_equal(sample_cube.data, [1, 2])
-    np.testing.assert_equal(sample_cube.coord("latitude").points, [1, 2])
+    assert_array_equal(sample_cube.data, np.ma.array([1, 2]))
+    assert_array_equal(sample_cube.coord("latitude").points, [1, 2])
 
 
 def test_load_grib():
@@ -132,8 +133,8 @@ def test_callback_fix_lat_units(tmp_path, sample_cube):
     assert len(cubes) == 1
     sample_cube = cubes[0]
     assert sample_cube.attributes.globals["source_file"] == str(temp_file)
-    np.testing.assert_equal(sample_cube.data, [1, 2])
-    np.testing.assert_equal(sample_cube.coord("latitude").points, [1, 2])
+    assert_array_equal(sample_cube.data, np.ma.array([1, 2]))
+    assert_array_equal(sample_cube.coord("latitude").points, [1, 2])
     assert str(sample_cube.coord("latitude").units) == "degrees_north"
 
 
