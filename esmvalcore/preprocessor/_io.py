@@ -5,10 +5,9 @@ from __future__ import annotations
 import copy
 import logging
 import os
-from collections.abc import Iterable, Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -18,10 +17,7 @@ import ncdata
 import numpy as np
 import xarray as xr
 import yaml
-from dask.delayed import Delayed
-from iris.coords import Coord
 from iris.cube import Cube, CubeList
-from iris.fileformats.cf import CFVariable
 
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.cmor.check import CheckLevels
@@ -32,6 +28,13 @@ from esmvalcore.iris_helpers import (
     merge_cube_attributes,
 )
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from dask.delayed import Delayed
+    from iris.coords import Coord
+    from iris.fileformats.cf import CFVariable
 
 logger = logging.getLogger(__name__)
 
@@ -121,14 +124,18 @@ def load(
     elif isinstance(file, (xr.Dataset, ncdata.NcData)):
         cubes = dataset_to_iris(file, ignore_warnings=ignore_warnings)
     else:
-        raise TypeError(
+        msg = (
             f"Expected type str, pathlib.Path, iris.cube.Cube, "
             f"iris.cube.CubeList, xarray.Dataset, or ncdata.NcData for file, "
-            f"got type {type(file)}",
+            f"got type {type(file)}"
+        )
+        raise TypeError(
+            msg,
         )
 
     if not cubes:
-        raise ValueError(f"{file} does not contain any data")
+        msg = f"{file} does not contain any data"
+        raise ValueError(msg)
 
     for cube in cubes:
         if "source_file" not in cube.attributes:
@@ -184,9 +191,7 @@ def _concatenate_cubes(cubes, check_level):
             "and derived coordinates present in the cubes.",
         )
 
-    concatenated = CubeList(cubes).concatenate(**kwargs)
-
-    return concatenated
+    return CubeList(cubes).concatenate(**kwargs)
 
 
 class _TimesHelper:
@@ -326,7 +331,8 @@ def _get_concatenation_error(cubes):
         time = cube.coord("time")
         logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    raise ValueError(f"Can not concatenate cubes: {msg}")
+    msg = f"Can not concatenate cubes: {msg}"
+    raise ValueError(msg)
 
 
 def _sort_cubes_by_time(cubes):
@@ -485,7 +491,8 @@ def save(
         cubes is empty.
     """
     if not cubes:
-        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+        msg = f"Cannot save empty cubes '{cubes}'"
+        raise ValueError(msg)
 
     if Path(filename).suffix.lower() == ".nc":
         kwargs["compute"] = compute
@@ -567,8 +574,7 @@ def _get_debug_filename(filename, step):
         num = int(sorted(os.listdir(dirname)).pop()[:2]) + 1
     else:
         num = 0
-    filename = os.path.join(dirname, f"{num:02}_{step}.nc")
-    return filename
+    return os.path.join(dirname, f"{num:02}_{step}.nc")
 
 
 def _sort_products(products):

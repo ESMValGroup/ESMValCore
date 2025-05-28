@@ -138,7 +138,7 @@ def create_realistic_4d_cube():
         units="no_unit",
     )
 
-    cube = Cube(
+    return Cube(
         np.ma.masked_inside(
             np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3),
             1,
@@ -160,4 +160,3 @@ def create_realistic_4d_cube():
         ancillary_variables_and_dims=[(type_var, (0, 3))],
         attributes={"test": 1},
     )
-    return cube

@@ -43,14 +43,13 @@ from tests import create_realistic_4d_cube
 @pytest.fixture
 def cubes():
     """Test cubes."""
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(0.0, var_name="a", long_name="a"),
             Cube(0.0, var_name="a", long_name="b"),
             Cube(0.0, var_name="c", long_name="d"),
         ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -144,7 +143,7 @@ def test_add_leading_dim_to_cube_non_1d():
 
 
 @pytest.mark.parametrize(
-    "date, dtype, expected",
+    ("date", "dtype", "expected"),
     [
         (datetime.datetime(1, 1, 1), np.float64, 0.0),
         (datetime.datetime(1, 1, 1), int, 0.0),
@@ -586,7 +585,13 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
 
 
 @pytest.mark.parametrize(
-    "old_units,new_units,old_standard_name,new_standard_name,err_msg",
+    (
+        "old_units",
+        "new_units",
+        "old_standard_name",
+        "new_standard_name",
+        "err_msg",
+    ),
     [
         ("m", "km", "altitude", "altitude", None),
         ("Pa", "hPa", "air_pressure", "air_pressure", None),

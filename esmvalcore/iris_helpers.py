@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import warnings
-from collections.abc import Generator, Iterable, Sequence
-from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask.array as da
 import iris
@@ -19,12 +17,17 @@ import ncdata.threadlock_sharing
 import numpy as np
 import xarray as xr
 from cf_units import Unit, suppress_errors
-from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.warnings import IrisVagueMetadataWarning
 
-from esmvalcore.typing import NetCDFAttr
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Sequence
+    from pathlib import Path
+
+    from iris.coords import Coord, DimCoord
+
+    from esmvalcore.typing import NetCDFAttr
 
 # Enable lock sharing between ncdata and iris/xarray
 ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
@@ -338,9 +341,7 @@ def has_regular_grid(cube: Cube) -> bool:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
         return False
-    if cube.coord_dims(lat) == cube.coord_dims(lon):
-        return False
-    return True
+    return cube.coord_dims(lat) != cube.coord_dims(lon)
 
 
 def has_irregular_grid(cube: Cube) -> bool:
@@ -365,9 +366,7 @@ def has_irregular_grid(cube: Cube) -> bool:
         lon = cube.coord("longitude")
     except CoordinateNotFoundError:
         return False
-    if lat.ndim == 2 and lon.ndim == 2:
-        return True
-    return False
+    return bool(lat.ndim == 2 and lon.ndim == 2)
 
 
 def has_unstructured_grid(cube: Cube) -> bool:
@@ -394,9 +393,7 @@ def has_unstructured_grid(cube: Cube) -> bool:
         return False
     if lat.ndim != 1 or lon.ndim != 1:
         return False
-    if cube.coord_dims(lat) != cube.coord_dims(lon):
-        return False
-    return True
+    return cube.coord_dims(lat) == cube.coord_dims(lon)
 
 
 # List containing special cases for unit conversion. Each list item is another
@@ -521,10 +518,13 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             raise
 
     if cube.standard_name != old_standard_name:
-        raise ValueError(
+        msg = (
             f"Cannot safely convert units from '{old_units}' to '{units}'; "
             f"standard_name changed from '{old_standard_name}' to "
-            f"'{cube.standard_name}'",
+            f"'{cube.standard_name}'"
+        )
+        raise ValueError(
+            msg,
         )
     return cube
 
@@ -626,9 +626,12 @@ def dataset_to_iris(
         conversion_func = ncdata.iris.to_iris
         ds_coords = dataset.variables
     else:
-        raise TypeError(
+        msg = (
             f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
-            f"type {type(dataset)}",
+            f"type {type(dataset)}"
+        )
+        raise TypeError(
+            msg,
         )
 
     with ignore_warnings_context(ignore_warnings):

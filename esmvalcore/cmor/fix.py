@@ -9,18 +9,20 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from collections.abc import Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-import ncdata
-import xarray as xr
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
 
 if TYPE_CHECKING:
-    from ..config import Session
+    from collections.abc import Sequence
+    from pathlib import Path
+
+    import ncdata
+    import xarray as xr
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 

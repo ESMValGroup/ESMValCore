@@ -7,9 +7,9 @@ import iris
 import numpy as np
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import (
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_typeland_coord,
