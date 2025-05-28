@@ -4,8 +4,8 @@ import logging
 import subprocess
 import time
 
-from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
+from ..fix import Fix
+from ..shared import add_scalar_height_coord
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,8 @@ class AllVars(Fix):
 
         """
         if "_" + self.extra_facets.get(
-            "group", "non-sense"
+            "group",
+            "non-sense",
         ) + ".nc" not in str(file):
             # No need to filter the file
             logger.debug("Not filtering for %s", file)

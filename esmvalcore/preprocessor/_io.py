@@ -124,7 +124,7 @@ def load(
         raise TypeError(
             f"Expected type str, pathlib.Path, iris.cube.Cube, "
             f"iris.cube.CubeList, xarray.Dataset, or ncdata.NcData for file, "
-            f"got type {type(file)}"
+            f"got type {type(file)}",
         )
 
     if not cubes:
@@ -326,8 +326,7 @@ def _get_concatenation_error(cubes):
         time = cube.coord("time")
         logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    msg = f"Can not concatenate cubes: {msg}"
-    raise ValueError(msg)
+    raise ValueError(f"Can not concatenate cubes: {msg}")
 
 
 def _sort_cubes_by_time(cubes):
@@ -335,7 +334,10 @@ def _sort_cubes_by_time(cubes):
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:
-        msg = f"One or more cubes {cubes} are missing time coordinate: {exc!s}"
+        msg = (
+            f"One or more cubes {cubes} are missing"
+            + f" time coordinate: {exc!s}"
+        )
         raise ValueError(msg) from exc
     except TypeError as error:
         msg = f"Cubes cannot be sorted due to differing time units: {error!s}"
@@ -399,7 +401,8 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     for cube in cubes:
         # Remove attributes that cause issues with merging and concatenation
         _delete_attributes(
-            cube, ("creation_date", "tracking_id", "history", "comment")
+            cube,
+            ("creation_date", "tracking_id", "history", "comment"),
         )
         for coord in cube.coords():
             # CMOR sometimes adds a history to the coordinates.
@@ -482,8 +485,7 @@ def save(
         cubes is empty.
     """
     if not cubes:
-        msg = f"Cannot save empty cubes '{cubes}'"
-        raise ValueError(msg)
+        raise ValueError(f"Cannot save empty cubes '{cubes}'")
 
     if Path(filename).suffix.lower() == ".nc":
         kwargs["compute"] = compute
@@ -565,7 +567,8 @@ def _get_debug_filename(filename, step):
         num = int(sorted(os.listdir(dirname)).pop()[:2]) + 1
     else:
         num = 0
-    return os.path.join(dirname, f"{num:02}_{step}.nc")
+    filename = os.path.join(dirname, f"{num:02}_{step}.nc")
+    return filename
 
 
 def _sort_products(products):

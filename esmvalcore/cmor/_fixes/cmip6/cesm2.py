@@ -7,9 +7,9 @@ import iris
 import numpy as np
 from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
-from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.cmor._fixes.shared import (
+from ..common import SiconcFixScalarCoord
+from ..fix import Fix
+from ..shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_typeland_coord,
@@ -29,7 +29,9 @@ class Cl(Fix):
     ) -> Path:
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, file, add_unique_suffix=add_unique_suffix
+            output_dir,
+            file,
+            add_unique_suffix=add_unique_suffix,
         )
         copyfile(file, new_path)
         with Dataset(new_path, mode="a") as dataset:
@@ -72,7 +74,9 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            file, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
         with Dataset(new_path, mode="a") as dataset:
             dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][

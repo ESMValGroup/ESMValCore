@@ -14,7 +14,6 @@ variable) as single argument.
 import logging
 import warnings
 from shutil import copyfile
-from typing import ClassVar
 
 import dask.array as da
 import iris.analysis
@@ -25,9 +24,9 @@ from iris.cube import CubeList
 from netCDF4 import Dataset
 from scipy import constants
 
-from esmvalcore.cmor._fixes.shared import add_aux_coords_from_cubes
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
+from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class AllVars(EmacFix):
     """Fixes for all variables."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS: ClassVar[dict[str, str]] = {
+    INVALID_UNITS = {
         "kg/m**2s": "kg m-2 s-1",
     }
 
@@ -56,7 +55,9 @@ class AllVars(EmacFix):
         if "alevel" not in self.vardef.dimensions:
             return file
         new_path = self.get_fixed_filepath(
-            output_dir, file, add_unique_suffix=add_unique_suffix
+            output_dir,
+            file,
+            add_unique_suffix=add_unique_suffix,
         )
         copyfile(file, new_path)
         with Dataset(new_path, mode="a") as dataset:
@@ -110,13 +111,10 @@ class AllVars(EmacFix):
 
             return
 
-        msg = (
+        raise ValueError(
             f"Cannot find requested pressure level coordinate for variable "
             f"'{self.vardef.short_name}', searched for Z-coordinates with "
-            f"units that are convertible to Pa"
-        )
-        raise ValueError(
-            msg,
+            f"units that are convertible to Pa",
         )
 
     @staticmethod

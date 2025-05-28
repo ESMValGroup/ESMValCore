@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 import importlib
 import inspect
 import logging
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -35,8 +35,6 @@ from esmvalcore.iris_helpers import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
 
@@ -171,8 +169,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        msg = f'Cube for variable "{short_name}" not found'
-        raise ValueError(msg)
+        raise ValueError(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
@@ -266,33 +263,37 @@ class Fix:
         if project == "cordex":
             driver = extra_facets["driver"].replace("-", "_").lower()
             extra_facets["dataset"] = dataset
-            with contextlib.suppress(ImportError):
+            try:
                 fixes_modules.append(
                     importlib.import_module(
                         f"esmvalcore.cmor._fixes.{project}.{driver}.{dataset}",
                     ),
                 )
+            except ImportError:
+                pass
             fixes_modules.append(
                 importlib.import_module(
                     "esmvalcore.cmor._fixes.cordex.cordex_fixes",
                 ),
             )
         else:
-            with contextlib.suppress(ImportError):
+            try:
                 fixes_modules.append(
                     importlib.import_module(
                         f"esmvalcore.cmor._fixes.{project}.{dataset}",
                     ),
                 )
+            except ImportError:
+                pass
 
         for fixes_module in fixes_modules:
-            classes = {
-                name.lower(): value
+            classes = dict(
+                (name.lower(), value)
                 for (name, value) in inspect.getmembers(
                     fixes_module,
                     inspect.isclass,
                 )
-            }
+            )
             for fix_name in (short_name, mip.lower(), "allvars"):
                 if fix_name in classes:
                     fixes.append(
@@ -714,7 +715,7 @@ class GenericFix(Fix):
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
         """Fix longitude coordinate to be in [0, 360]."""
-        if cube_coord.standard_name != "longitude":
+        if not cube_coord.standard_name == "longitude":
             return (cube, cube_coord)
 
         points = cube_coord.core_points()
@@ -858,21 +859,25 @@ class GenericFix(Fix):
 
                     branch_parent = "branch_time_in_parent"
                     if branch_parent in attrs:
-                        # Overflow happens when the time is very large.
-                        with contextlib.suppress(OverflowError):
+                        try:
                             attrs[branch_parent] = parent_units.convert(
                                 attrs[branch_parent],
                                 cube_coord.units,
                             )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
                     branch_child = "branch_time_in_child"
                     if branch_child in attrs:
-                        # Overflow happens when the time is very large.
-                        with contextlib.suppress(OverflowError):
+                        try:
                             attrs[branch_child] = old_units.convert(
                                 attrs[branch_child],
                                 cube_coord.units,
                             )
+                        except OverflowError:
+                            # This happens when the time is very large.
+                            pass
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""

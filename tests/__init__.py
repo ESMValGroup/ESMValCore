@@ -107,16 +107,21 @@ def create_realistic_4d_cube():
     plev = DimCoord([50000], standard_name="air_pressure", units="Pa")
     lat = DimCoord([0.0, 1.0], standard_name="latitude", units="degrees_north")
     lon = DimCoord(
-        [0.0, 20.0, 345.0], standard_name="longitude", units="degrees_east"
+        [0.0, 20.0, 345.0],
+        standard_name="longitude",
+        units="degrees_east",
     )
 
     aux_2d_data = np.arange(2 * 3).reshape(2, 3)
     aux_2d_bounds = np.stack(
-        (aux_2d_data - 1, aux_2d_data, aux_2d_data + 1), axis=-1
+        (aux_2d_data - 1, aux_2d_data, aux_2d_data + 1),
+        axis=-1,
     )
     aux_2d = AuxCoord(aux_2d_data, var_name="aux_2d")
     aux_2d_with_bnds = AuxCoord(
-        aux_2d_data, bounds=aux_2d_bounds, var_name="aux_2d_with_bnds"
+        aux_2d_data,
+        bounds=aux_2d_bounds,
+        var_name="aux_2d_with_bnds",
     )
     aux_time = AuxCoord(["Jan", "Jan"], var_name="aux_time")
     aux_lon = AuxCoord([0, 1, 2], var_name="aux_lon")
@@ -135,7 +140,9 @@ def create_realistic_4d_cube():
 
     cube = Cube(
         np.ma.masked_inside(
-            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3), 1, 3
+            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3),
+            1,
+            3,
         ),
         var_name="ta",
         standard_name="air_temperature",

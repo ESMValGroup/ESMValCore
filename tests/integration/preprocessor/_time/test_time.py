@@ -27,16 +27,17 @@ def easy_2d_cube():
         units="days since 2000-01-01",
     )
     lat = DimCoord([0.0, 1.0], standard_name="latitude", units="degrees")
-    return Cube(
+    cube = Cube(
         np.arange(4, dtype=np.float32).reshape(2, 2),
         standard_name="air_temperature",
         units="K",
         dim_coords_and_dims=[(time, 0), (lat, 1)],
     )
+    return cube
 
 
 @pytest.mark.parametrize(
-    ("operator", "kwargs", "expected_data", "expected_units"),
+    "operator,kwargs,expected_data,expected_units",
     [
         ("gmean", {}, [0.0, 1.7320509], "K"),
         ("hmean", {}, [0.0, 1.5], "K"),
@@ -315,7 +316,7 @@ def realistic_unstructured_cube():
         var_name="anc_var",
     )
 
-    return Cube(
+    cube = Cube(
         da.arange(4 * 5).reshape(4, 5),
         var_name="ta",
         standard_name="air_temperature",
@@ -332,6 +333,7 @@ def realistic_unstructured_cube():
         cell_measures_and_dims=[(cell_measure_2d, (0, 1))],
         ancillary_variables_and_dims=[(anc_var_2d, (0, 1))],
     )
+    return cube
 
 
 def test_local_solar_time_unstructured(realistic_unstructured_cube):

@@ -29,7 +29,7 @@ def get_hybrid_pressure_cube():
         var_name="x",
         standard_name="atmosphere_hybrid_sigma_pressure_coordinate",
     )
-    return Cube(
+    cube = Cube(
         [[[[0.0]]]],
         var_name="x",
         aux_coords_and_dims=[
@@ -39,6 +39,7 @@ def get_hybrid_pressure_cube():
             (x_coord, ()),
         ],
     )
+    return cube
 
 
 def get_hybrid_pressure_cube_list():
