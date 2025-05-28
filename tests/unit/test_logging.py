@@ -12,7 +12,7 @@ from esmvalcore.config._logging import (
 )
 
 
-@pytest.mark.parametrize("level", [None, "INFO", "DEBUG"])
+@pytest.mark.parametrize("level", (None, "INFO", "DEBUG"))
 def test_logging_with_level(level):
     """Test log level configuration."""
     ret = configure_logging(console_log_level=level)
@@ -43,7 +43,7 @@ def test_logging_log_level_invalid():
 
 
 @pytest.mark.parametrize(
-    ("names", "mode", "output"),
+    "names,mode,output",
     [
         (["test"], "allow", False),
         (["test"], "disallow", True),
@@ -63,7 +63,7 @@ def test_logging_log_level_invalid():
 )
 def test_filter_multiple_names(names, mode, output):
     """Test `FilterMultipleNames`."""
-    filter_ = FilterMultipleNames(names, mode)
+    filter = FilterMultipleNames(names, mode)
     record = logging.LogRecord(
         "a.b.c",
         "level",
@@ -93,6 +93,12 @@ def test_filter_external_warnings(name, msg, output):
     """Test `FilterMultipleNames`."""
     filter = FilterExternalWarnings()
     record = logging.LogRecord(
-        name, "level", "path", "lineno", msg, [], "exc_info"
+        name,
+        "level",
+        "path",
+        "lineno",
+        msg,
+        [],
+        "exc_info",
     )
     assert filter.filter(record) is output

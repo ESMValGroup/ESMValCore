@@ -77,8 +77,7 @@ def _get_log_files(
 
         if filename:
             if output_dir is None:
-                msg = "`output_dir` must be defined"
-                raise ValueError(msg)
+                raise ValueError("`output_dir` must be defined")
 
             if not os.path.isabs(filename):
                 handler["filename"] = os.path.join(output_dir, filename)
