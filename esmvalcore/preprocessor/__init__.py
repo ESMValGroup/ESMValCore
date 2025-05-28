@@ -86,6 +86,7 @@ from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     axis_statistics,
     depth_integration,
+    extract_surface_from_atm,
     extract_trajectory,
     extract_transect,
     extract_volume,
@@ -122,6 +123,8 @@ __all__ = [
     "resample_time",
     # Level extraction
     "extract_levels",
+    # Extract surface
+    "extract_surface_from_atm",
     # Weighting
     "weighting_landsea_fraction",
     # Mask landsea (fx or Natural Earth)

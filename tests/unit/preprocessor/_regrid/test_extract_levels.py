@@ -26,7 +26,7 @@ class Test(tests.Test):
             self.shape
         )
         self.cube = _make_cube(data, dtype=self.dtype)
-        self.created_cube = mock.Mock(var_name="created_cube")
+        self.created_cube = mock.Mock(var_name="created_cube", shape=())
         self.created_cube.astype.return_value = mock.sentinel.astype_result
         self.mock_create_cube = self.patch(
             "esmvalcore.preprocessor._regrid._create_cube",

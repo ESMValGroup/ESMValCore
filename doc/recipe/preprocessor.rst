@@ -311,6 +311,7 @@ Preprocessor                                                          Variable s
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 :ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
+:ref:`extract_surface_from_atm<extract_surface_from_atm>` [#f3]_      ``ps``                         surface_air_pressure
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -2118,7 +2119,6 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 
 ``zonal_statistics``
 --------------------
-
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate.
 
@@ -2223,6 +2223,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 * ``extract_transect``: Extract data along a line of constant latitude or
   longitude.
 * ``extract_trajectory``: Extract data along a specified trajectory.
+* ``extract_surface_from_atm``: Extract atmospheric data at the surface.
 
 
 ``extract_volume``
@@ -2404,6 +2405,22 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+.. _extract_surface_from_atm:
+
+``extract_surface_from_atm``
+----------------------------
+
+This function extracts data at the surface for an atmospheric variable.
+
+The function returns the interpolated value of an input filed at the corresponding surface pressure
+given by the surface air pressure ``ps``.
+
+The required supplementary surface air pressure ``ps`` is attached to
+the main dataset as described in :ref:`supplementary_variables`.
+
+See also :func:`esmvalcore.preprocessor.extract_surface_from_atm`.
 
 
 .. _cycles:
