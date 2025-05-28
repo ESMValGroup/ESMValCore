@@ -12,7 +12,7 @@ from esmvalcore.config._logging import (
 )
 
 
-@pytest.mark.parametrize("level", (None, "INFO", "DEBUG"))
+@pytest.mark.parametrize("level", [None, "INFO", "DEBUG"])
 def test_logging_with_level(level):
     """Test log level configuration."""
     ret = configure_logging(console_log_level=level)
@@ -43,7 +43,7 @@ def test_logging_log_level_invalid():
 
 
 @pytest.mark.parametrize(
-    "names,mode,output",
+    ("names", "mode", "output"),
     [
         (["test"], "allow", False),
         (["test"], "disallow", True),
@@ -63,7 +63,7 @@ def test_logging_log_level_invalid():
 )
 def test_filter_multiple_names(names, mode, output):
     """Test `FilterMultipleNames`."""
-    filter = FilterMultipleNames(names, mode)
+    filter_ = FilterMultipleNames(names, mode)
     record = logging.LogRecord(
         "a.b.c",
         "level",
@@ -73,11 +73,11 @@ def test_filter_multiple_names(names, mode, output):
         [],
         "exc_info",
     )
-    assert filter.filter(record) is output
+    assert filter_.filter(record) is output
 
 
 @pytest.mark.parametrize(
-    "name,msg,output",
+    ("name", "msg", "output"),
     [
         ("test.module", "warning", True),
         ("test.module", "1: ESMValCoreUserWarning: warning", True),
@@ -91,7 +91,7 @@ def test_filter_multiple_names(names, mode, output):
 )
 def test_filter_external_warnings(name, msg, output):
     """Test `FilterMultipleNames`."""
-    filter = FilterExternalWarnings()
+    filter_ = FilterExternalWarnings()
     record = logging.LogRecord(
         name,
         "level",
@@ -101,4 +101,4 @@ def test_filter_external_warnings(name, msg, output):
         [],
         "exc_info",
     )
-    assert filter.filter(record) is output
+    assert filter_.filter(record) is output
