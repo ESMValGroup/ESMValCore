@@ -11,7 +11,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {
                 "short_name": "sit",
             },
@@ -19,7 +19,6 @@ class DerivedVariable(DerivedVariableBase):
                 "short_name": "sic",
             },
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -43,5 +42,4 @@ class DerivedVariable(DerivedVariableBase):
         siconc = cubes.extract_cube(Constraint(name="sea_ice_area_fraction"))
         siconc.convert_units("1.0")
 
-        sithick = sivol / siconc
-        return sithick
+        return sivol / siconc

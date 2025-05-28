@@ -6,7 +6,7 @@ import os
 import time
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import yaml
 
@@ -53,7 +53,7 @@ def _purge_file_handlers(cfg: dict) -> None:
 
 def _get_log_files(
     cfg: dict,
-    output_dir: Optional[Union[os.PathLike, str]] = None,
+    output_dir: os.PathLike | str | None = None,
 ) -> list:
     """Initialize log files for the file handlers."""
     log_files = []
@@ -65,7 +65,8 @@ def _get_log_files(
 
         if filename:
             if output_dir is None:
-                raise ValueError("`output_dir` must be defined")
+                msg = "`output_dir` must be defined"
+                raise ValueError(msg)
 
             if not os.path.isabs(filename):
                 handler["filename"] = os.path.join(output_dir, filename)
@@ -86,9 +87,9 @@ def _update_stream_level(cfg: dict, level=None):
 
 
 def configure_logging(
-    cfg_file: Optional[Union[os.PathLike, str]] = None,
-    output_dir: Optional[Union[os.PathLike, str]] = None,
-    console_log_level: Optional[str] = None,
+    cfg_file: os.PathLike | str | None = None,
+    output_dir: os.PathLike | str | None = None,
+    console_log_level: str | None = None,
 ) -> list:
     """Configure logging.
 
@@ -111,7 +112,7 @@ def configure_logging(
 
     cfg_file = Path(cfg_file).absolute()
 
-    with open(cfg_file, "r", encoding="utf-8") as file_handler:
+    with open(cfg_file, encoding="utf-8") as file_handler:
         cfg = yaml.safe_load(file_handler)
 
     if output_dir is None:

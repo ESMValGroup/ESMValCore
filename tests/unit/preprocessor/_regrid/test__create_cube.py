@@ -31,7 +31,10 @@ class Test(tests.Test):
         data = np.empty(shape)
         levels = np.array([10, 20])
         result = create_cube(
-            self.cube, data, self.cube.coord(axis="z", dim_coords=True), levels
+            self.cube,
+            data,
+            self.cube.coord(axis="z", dim_coords=True),
+            levels,
         )
         expected = _make_cube(data, aux_coord=False, dim_coord=False)
         vcoord = _make_vcoord(levels)
@@ -43,7 +46,10 @@ class Test(tests.Test):
         data = np.empty(shape)
         levels = np.array([10, 10])
         result = create_cube(
-            self.cube, data, self.cube.coord(axis="z", dim_coords=True), levels
+            self.cube,
+            data,
+            self.cube.coord(axis="z", dim_coords=True),
+            levels,
         )
         expected = _make_cube(data, aux_coord=False, dim_coord=False)
         vcoord = _make_vcoord(levels)
@@ -55,7 +61,10 @@ class Test(tests.Test):
         data = np.empty(shape)
         levels = np.array([123])
         result = create_cube(
-            self.cube, data, self.cube.coord(axis="z", dim_coords=True), levels
+            self.cube,
+            data,
+            self.cube.coord(axis="z", dim_coords=True),
+            levels,
         )
         expected = _make_cube(data, aux_coord=False, dim_coord=False)[0]
         vcoord = _make_vcoord(levels)

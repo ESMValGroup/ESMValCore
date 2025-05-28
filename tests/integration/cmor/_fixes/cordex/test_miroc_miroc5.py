@@ -10,7 +10,10 @@ from esmvalcore.cmor.fix import Fix
 @pytest.fixture
 def cubes():
     correct_time_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="time", standard_name="time", long_name="time"
+        [0.0, 1.0],
+        var_name="time",
+        standard_name="time",
+        long_name="time",
     )
     wrong_height_coord = iris.coords.DimCoord([2.0], var_name="height")
     wrong_cube = iris.cube.Cube(

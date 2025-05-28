@@ -5,10 +5,9 @@ from __future__ import annotations
 import copy
 import logging
 import os
-from collections.abc import Sequence
 from itertools import groupby
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -18,15 +17,18 @@ import iris.exceptions
 import numpy as np
 import yaml
 from cf_units import suppress_errors
-from dask.delayed import Delayed
-from iris.cube import CubeList
 
+from esmvalcore._task import write_ncl_settings
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
-from .._task import write_ncl_settings
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from dask.delayed import Delayed
+    from iris.cube import CubeList
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,8 @@ def _load_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
     _delete_attributes(
-        raw_cube, ("creation_date", "tracking_id", "history", "comment")
+        raw_cube,
+        ("creation_date", "tracking_id", "history", "comment"),
     )
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
@@ -76,7 +79,7 @@ def _delete_attributes(iris_object, atts):
 
 def load(
     file: str | Path,
-    ignore_warnings: Optional[list[dict]] = None,
+    ignore_warnings: list[dict] | None = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
 
@@ -115,21 +118,21 @@ def load(
             "message": "Missing CF-netCDF measure variable .*",
             "category": UserWarning,
             "module": "iris",
-        }
+        },
     )
     ignore_warnings.append(
         {
             "message": "Ignoring netCDF variable '.*' invalid units '.*'",
             "category": UserWarning,
             "module": "iris",
-        }
+        },
     )  # iris < 3.8
     ignore_warnings.append(
         {
             "message": "Ignoring invalid units .* on netCDF variable .*",
             "category": UserWarning,
             "module": "iris",
-        }
+        },
     )  # iris >= 3.8
 
     # Filter warnings
@@ -151,7 +154,8 @@ def load(
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
-        raise ValueError(f"Can not load cubes from {file}")
+        msg = f"Can not load cubes from {file}"
+        raise ValueError(msg)
 
     for cube in raw_cubes:
         cube.attributes["source_file"] = str(file)
@@ -176,9 +180,7 @@ def _concatenate_cubes(cubes, check_level):
             "and derived coordinates present in the cubes.",
         )
 
-    concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
-
-    return concatenated
+    return iris.cube.CubeList(cubes).concatenate(**kwargs)
 
 
 class _TimesHelper:
@@ -288,10 +290,10 @@ def _fix_calendars(cubes):
     unique_calendars = np.unique(calendars)
 
     calendar_ocurrences = np.array(
-        [calendars.count(calendar) for calendar in unique_calendars]
+        [calendars.count(calendar) for calendar in unique_calendars],
     )
     calendar_index = int(
-        np.argwhere(calendar_ocurrences == calendar_ocurrences.max())
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()),
     )
 
     for cube in cubes:
@@ -299,7 +301,7 @@ def _fix_calendars(cubes):
         old_calendar = time_coord.units.calendar
         if old_calendar != unique_calendars[calendar_index]:
             new_unit = time_coord.units.change_calendar(
-                unique_calendars[calendar_index]
+                unique_calendars[calendar_index],
             )
             time_coord.units = new_unit
 
@@ -318,7 +320,8 @@ def _get_concatenation_error(cubes):
         time = cube.coord("time")
         logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    raise ValueError(f"Can not concatenate cubes: {msg}")
+    msg = f"Can not concatenate cubes: {msg}"
+    raise ValueError(msg)
 
 
 def _sort_cubes_by_time(cubes):
@@ -326,14 +329,10 @@ def _sort_cubes_by_time(cubes):
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:
-        msg = "One or more cubes {} are missing".format(
-            cubes
-        ) + " time coordinate: {}".format(str(exc))
+        msg = f"One or more cubes {cubes} are missing time coordinate: {exc!s}"
         raise ValueError(msg) from exc
     except TypeError as error:
-        msg = (
-            f"Cubes cannot be sorted due to differing time units: {str(error)}"
-        )
+        msg = f"Cubes cannot be sorted due to differing time units: {error!s}"
         raise TypeError(msg) from error
     return cubes
 
@@ -410,7 +409,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     return result
 
 
-def save(
+def save(  # noqa: C901
     cubes: Sequence[iris.cube.Cube],
     filename: Path | str,
     optimize_access: str = "",
@@ -469,7 +468,8 @@ def save(
         cubes is empty.
     """
     if not cubes:
-        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+        msg = f"Cannot save empty cubes '{cubes}'"
+        raise ValueError(msg)
 
     if Path(filename).suffix.lower() == ".nc":
         kwargs["compute"] = compute
@@ -504,7 +504,7 @@ def save(
         cube = cubes[0]
         if optimize_access == "map":
             dims = set(
-                cube.coord_dims("latitude") + cube.coord_dims("longitude")
+                cube.coord_dims("latitude") + cube.coord_dims("longitude"),
             )
         elif optimize_access == "timeseries":
             dims = set(cube.coord_dims("time"))
@@ -524,7 +524,9 @@ def save(
     if alias:
         for cube in cubes:
             logger.debug(
-                "Changing var_name from %s to %s", cube.var_name, alias
+                "Changing var_name from %s to %s",
+                cube.var_name,
+                alias,
             )
             cube.var_name = alias
 
@@ -549,8 +551,7 @@ def _get_debug_filename(filename, step):
         num = int(sorted(os.listdir(dirname)).pop()[:2]) + 1
     else:
         num = 0
-    filename = os.path.join(dirname, "{:02}_{}.nc".format(num, step))
-    return filename
+    return os.path.join(dirname, f"{num:02}_{step}.nc")
 
 
 def _sort_products(products):
@@ -568,7 +569,8 @@ def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
     for output_dir, prods in groupby(
-        products, lambda p: os.path.dirname(p.filename)
+        products,
+        lambda p: os.path.dirname(p.filename),
     ):
         sorted_products = _sort_products(prods)
         metadata = {}
@@ -617,7 +619,8 @@ def _write_ncl_metadata(output_dir, metadata):
                 variable_info[key] = variable[key]
 
     filename = os.path.join(
-        output_dir, variable_info["short_name"] + "_info.ncl"
+        output_dir,
+        variable_info["short_name"] + "_info.ncl",
     )
     write_ncl_settings(info, filename)
 

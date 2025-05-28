@@ -2,7 +2,7 @@
 
 import pyesgf.search
 
-from ..config._esgf_pyclient import get_esgf_config
+from esmvalcore.config._esgf_pyclient import get_esgf_config
 
 FACETS = {
     "CMIP3": {
@@ -116,7 +116,7 @@ def create_dataset_map():
         for i, dataset in enumerate(available_datasets, 1):
             print(
                 f"Looking for dataset name of facet name"
-                f" {dataset} ({i} of {n_available})"
+                f" {dataset} ({i} of {n_available})",
             )
             query = {dataset_key: dataset}
             dataset_result = next(iter(ctx.search(batch_size=1, **query)))
@@ -127,7 +127,7 @@ def create_dataset_map():
                 dataset_alias = dataset_id.split(".")[idx]
                 print(
                     f"Found dataset name '{dataset_alias}'"
-                    f" for facet '{dataset}',"
+                    f" for facet '{dataset}',",
                 )
                 dataset_map[project][dataset_alias] = dataset
 

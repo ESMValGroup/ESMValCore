@@ -27,17 +27,16 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{"short_name": "co2"}, {"short_name": "ps"}]
-        return required
+        return [{"short_name": "co2"}, {"short_name": "ps"}]
 
     @staticmethod
     def calculate(cubes):
         """Compute mole fraction of CO2 at surface."""
         co2_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_carbon_dioxide_in_air")
+            iris.Constraint(name="mole_fraction_of_carbon_dioxide_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
         # Add ps as AncillaryVariable in the CO2 cube
         add_ancillary_variable(cube=co2_cube, ancillary_cube=ps_cube)

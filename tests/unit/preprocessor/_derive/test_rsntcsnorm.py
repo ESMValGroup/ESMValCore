@@ -4,7 +4,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.rsnstcsnorm as rsnstcsnorm
+from esmvalcore.preprocessor._derive import rsnstcsnorm
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def cubes():
         attributes=attributes,
     )
     return iris.cube.CubeList(
-        [rsdscs_cube, rsdt_cube, rsuscs_cube, rsutcs_cube]
+        [rsdscs_cube, rsdt_cube, rsuscs_cube, rsutcs_cube],
     )
 
 
@@ -51,7 +51,8 @@ def test_rsntcs_calculation(cubes):
     derived_var = rsnstcsnorm.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(
-        out_cube.data, np.array([[-400.0, 160.0], [60.0, -50.0]])
+        out_cube.data,
+        np.array([[-400.0, 160.0], [60.0, -50.0]]),
     )
     assert out_cube.units == "%"
 

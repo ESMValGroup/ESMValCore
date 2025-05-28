@@ -16,7 +16,9 @@ from esmvalcore.preprocessor._regrid_unstructured import (
 def unstructured_grid_cube_2d():
     """Sample 2D cube with unstructured grid."""
     time = DimCoord(
-        [0.0, 1.0], standard_name="time", units="days since 1950-01-01"
+        [0.0, 1.0],
+        standard_name="time",
+        units="days since 1950-01-01",
     )
     lat = AuxCoord(
         [-50.0, -50.0, 20.0, 20.0],
@@ -30,9 +32,10 @@ def unstructured_grid_cube_2d():
     )
     acoord_0 = AuxCoord([0, 0], var_name="aux0")
     acoord_1 = AuxCoord([0, 0, 0, 0], var_name="aux1")
-    cube = Cube(
+    return Cube(
         np.array(
-            [[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]], dtype=np.float32
+            [[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]],
+            dtype=np.float32,
         ),
         standard_name="air_temperature",
         var_name="ta",
@@ -43,14 +46,15 @@ def unstructured_grid_cube_2d():
         attributes={"test": "1"},
         cell_methods=(CellMethod("test", "time"),),
     )
-    return cube
 
 
 @pytest.fixture
 def unstructured_grid_cube_3d():
     """Sample 3D cube with unstructured grid."""
     time = DimCoord(
-        [0.0, 1.0], standard_name="time", units="days since 1950-01-01"
+        [0.0, 1.0],
+        standard_name="time",
+        units="days since 1950-01-01",
     )
     alt = DimCoord([0.0, 1.0], standard_name="altitude", units="m")
     lat = AuxCoord(
@@ -64,9 +68,10 @@ def unstructured_grid_cube_3d():
         units="degrees_east",
     )
     acoord = AuxCoord([0, 0], var_name="aux")
-    cube = Cube(
+    return Cube(
         np.ma.masked_greater(
-            np.arange(16, dtype=np.float32).reshape(2, 2, 4), 7.5
+            np.arange(16, dtype=np.float32).reshape(2, 2, 4),
+            7.5,
         ),
         standard_name="air_temperature",
         var_name="ta",
@@ -75,7 +80,6 @@ def unstructured_grid_cube_3d():
         dim_coords_and_dims=[(time, 0), (alt, 1)],
         aux_coords_and_dims=[(acoord, 1), (lat, 2), (lon, 2)],
     )
-    return cube
 
 
 @pytest.fixture
@@ -195,7 +199,7 @@ class TestUnstructuredLinear:
                     [0.0, 0.0, 0.0],
                     [np.nan, np.nan, np.nan],
                 ],
-            ]
+            ],
         )
         np.testing.assert_allclose(result.data, expected_data)
         np.testing.assert_array_equal(result.data.mask, expected_data.mask)
@@ -203,7 +207,11 @@ class TestUnstructuredLinear:
     @pytest.mark.parametrize("units", [None, "rad"])
     @pytest.mark.parametrize("lazy", [True, False])
     def test_regridding_mask_and_transposed(
-        self, units, lazy, unstructured_grid_cube_3d, target_grid
+        self,
+        units,
+        lazy,
+        unstructured_grid_cube_3d,
+        target_grid,
     ):
         """Test regridding."""
         # Test that regridding also works if lat/lon are not rightmost
@@ -280,7 +288,8 @@ class TestUnstructuredLinear:
             target_grid.coord("longitude").convert_units(units)
         cube = unstructured_grid_cube_3d.copy()
         regridder = UnstructuredLinear().regridder(
-            unstructured_grid_cube_2d, target_grid
+            unstructured_grid_cube_2d,
+            target_grid,
         )
         result = regridder(cube)
         assert result.shape == (2, 2, 3, 3)
@@ -290,13 +299,17 @@ class TestUnstructuredLinear:
         assert result.coord("longitude") == target_grid.coord("longitude")
 
     def test_regridder_different_grid(
-        self, unstructured_grid_cube_2d, unstructured_grid_cube_3d, target_grid
+        self,
+        unstructured_grid_cube_2d,
+        unstructured_grid_cube_3d,
+        target_grid,
     ):
         """Test regridding."""
         cube = unstructured_grid_cube_3d.copy()
         cube.coord("latitude").points = [0.0, 0.0, 0.0, 0.0]
         regridder = UnstructuredLinear().regridder(
-            unstructured_grid_cube_2d, target_grid
+            unstructured_grid_cube_2d,
+            target_grid,
         )
         msg = (
             "The given cube .* is not defined on the same source grid as this "
@@ -306,11 +319,14 @@ class TestUnstructuredLinear:
             regridder(cube)
 
     def test_regridder_invalid_grid(
-        self, unstructured_grid_cube_2d, target_grid
+        self,
+        unstructured_grid_cube_2d,
+        target_grid,
     ):
         """Test regridding."""
         regridder = UnstructuredLinear().regridder(
-            unstructured_grid_cube_2d, target_grid
+            unstructured_grid_cube_2d,
+            target_grid,
         )
         msg = "Cube .* does not have unstructured grid"
         with pytest.raises(ValueError, match=msg):

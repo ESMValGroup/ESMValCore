@@ -56,7 +56,7 @@ def session(cfg):
 
 
 @pytest.mark.parametrize(
-    "argument,value",
+    ("argument", "value"),
     [
         ("max_datasets", 2),
         ("max_years", 2),
@@ -88,7 +88,9 @@ def test_run_command_line_config(mocker, cfg, argument, value, tmp_path):
     cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
     program._get_recipe.assert_called_with(recipe_file)
     program._run.assert_called_with(
-        program._get_recipe.return_value, session, config_dir
+        program._get_recipe.return_value,
+        session,
+        config_dir,
     )
 
     assert session[argument] == value
@@ -215,14 +217,22 @@ def test_do_not_clean_preproc_dir(session):
 @mock.patch("esmvalcore._main.ESMValTool._get_config_info")
 @mock.patch("esmvalcore._main.entry_points")
 def test_header(
-    mock_entry_points, mock_get_config_info, monkeypatch, tmp_path, caplog
+    mock_entry_points,
+    mock_get_config_info,
+    monkeypatch,
+    tmp_path,
+    caplog,
 ):
     tmp_path.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(
-        esmvalcore.config._config_object, "USER_CONFIG_DIR", tmp_path
+        esmvalcore.config._config_object,
+        "USER_CONFIG_DIR",
+        tmp_path,
     )
     monkeypatch.setattr(
-        esmvalcore.config._config_object, "USER_CONFIG_SOURCE", "SOURCE"
+        esmvalcore.config._config_object,
+        "USER_CONFIG_SOURCE",
+        "SOURCE",
     )
     entry_point = mock.Mock()
     entry_point.dist.name = "MyEntry"
