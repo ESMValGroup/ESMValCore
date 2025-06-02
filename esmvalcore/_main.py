@@ -425,8 +425,8 @@ class ESMValTool:
                     "in version 2.14.0. Since the environment variable "
                     "ESMVALTOOL_CONFIG_DIR is set, old configuration files "
                     "present at ~/.esmvaltool/config-user.yml and/or "
-                    "specified via `--config_file` are ignored. To silence "
-                    "this warning, omit CLI argument `--config_file`."
+                    "specified via `--config_file` are currently ignored. To "
+                    "silence this warning, omit CLI argument `--config_file`."
                 )
                 warnings.warn(
                     deprecation_msg,

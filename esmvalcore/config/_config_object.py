@@ -409,7 +409,9 @@ class Config(ValidatedConfig):
                 f"alternatively use a custom `--config_dir`) and omit "
                 f"`--config_file`, or (2) use the environment variable "
                 f"ESMVALTOOL_CONFIG_DIR to specify a custom user "
-                f"configuration directory."
+                f"configuration directory. New configuration files present at "
+                f"~/.config/esmvaltool or specified via `--config_dir` are "
+                f"currently ignored."
             )
             warnings.warn(
                 deprecation_msg,
