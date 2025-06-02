@@ -95,6 +95,7 @@ Within a directory, files are sorted alphabetically, and later files (e.g.,
   Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
   will also force the usage of the new configuration system regardless of the
   presence of any potential old configuration files.
+  Support for the deprecated configuration will be removed in version 2.14.0.
 
 To get a copy of the default configuration file, you can run
 
