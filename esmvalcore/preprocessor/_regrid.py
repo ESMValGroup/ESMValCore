@@ -9,7 +9,6 @@ import logging
 import os
 import re
 import ssl
-import warnings
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -30,7 +29,6 @@ from esmvalcore.cmor._fixes.shared import (
     add_plev_from_altitude,
 )
 from esmvalcore.cmor.table import CMOR_TABLES
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
     _rechunk_aux_factory_dependencies,
@@ -605,35 +603,6 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
 
-    # Deprecations
-    if scheme == "unstructured_nearest":
-        msg = (
-            "The regridding scheme `unstructured_nearest` has been deprecated "
-            "in ESMValCore version 2.11.0 and is scheduled for removal in "
-            "version 2.13.0. Please use the scheme `nearest` instead. This is "
-            "an exact replacement for data on unstructured grids. Since "
-            "version 2.11.0, ESMValCore is able to determine the most "
-            "suitable regridding scheme based on the input data."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-        scheme = "nearest"
-
-    if scheme == "linear_extrapolate":
-        msg = (
-            "The regridding scheme `linear_extrapolate` has been deprecated "
-            "in ESMValCore version 2.11.0 and is scheduled for removal in "
-            "version 2.13.0. Please use a generic scheme with `reference: "
-            "iris.analysis:Linear` and `extrapolation_mode: extrapolate` "
-            "instead (see https://docs.esmvaltool.org/projects/ESMValCore/en/"
-            "latest/recipe/preprocessor.html#generic-regridding-schemes)."
-            "This is an exact replacement."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-        scheme = "linear"
-        loaded_scheme = Linear(extrapolation_mode="extrapolate")
-        logger.debug("Loaded regridding scheme %s", loaded_scheme)
-        return loaded_scheme
-
     if isinstance(scheme, dict):
         # Scheme is a dict -> assume this describes a generic regridding scheme
         loaded_scheme = _load_generic_scheme(scheme)
@@ -896,7 +865,6 @@ def regrid(
                 if coord.standard_name not in use_src_coords:
                     cube.remove_coord(coord)
 
-    # Load target grid and select appropriate scheme
     target_grid_cube = _get_target_grid_cube(
         cube,
         target_grid,
