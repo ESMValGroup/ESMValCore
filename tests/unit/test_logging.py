@@ -110,6 +110,8 @@ def test_warnings_shown_in_main_log():
         "ESMValCoreUserWarning",
         "ESMValCoreDeprecationWarning",
         "MissingConfigParameter",
+        "ESMValCorePreprocessorWarning",
+        "ESMValCoreLoadWarning",
     }
-    assert len(_WARNINGS_SHOWN_IN_MAIN_LOG) == 3
+    assert len(_WARNINGS_SHOWN_IN_MAIN_LOG) == 5
     assert set(_WARNINGS_SHOWN_IN_MAIN_LOG) == expected_warnings
