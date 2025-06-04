@@ -1849,14 +1849,15 @@ def test_get_extra_facets_cmip3():
 def test_get_extra_facets_cmip5():
     dataset = Dataset(
         project="CMIP5",
-        mip="Amon",
-        short_name="tas",
+        mip="fx",
+        short_name="areacella",
         dataset="ACCESS1-0",
     )
 
     extra_facets = dataset._get_extra_facets()
 
     assert extra_facets == {
+        "ensemble": "r0i0p0",
         "institute": ["CSIRO-BOM"],
         "product": ["output1", "output2"],
     }
