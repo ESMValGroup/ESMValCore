@@ -483,7 +483,8 @@ Extra facets for native datasets
 If necessary, provide a so-called ``extra facets file`` which allows to cope
 e.g. with variable naming issues for finding files or additional information
 that is required for the fixes.
-See :ref:`extra_facets` and :ref:`extra-facets-fixes` for more details on this.
+See :ref:`config-extra-facets` and :ref:`extra-facets-fixes` for more details
+on this.
 An example of such a file for IPSL-CM6 is given :download:`here
 <../../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`.
 
@@ -492,12 +493,12 @@ An example of such a file for IPSL-CM6 is given :download:`here
 
 Use of extra facets in fixes
 ============================
-Extra facets are a mechanism to provide additional information for certain kinds
-of data. The general approach is described in :ref:`extra_facets`. Here, we
-describe how they can be used in fixes to mold data into the form required by
-the applicable standard. For example, if the input data is part of an
-observational product that delivers surface temperature with a variable name of
-`t2m` inside a file named `2m_temperature_1950_monthly.nc`, but the same
+Extra facets are a mechanism to provide additional information for certain
+kinds of data. The general approach is described in :ref:`config-extra-facets`.
+Here, we describe how they can be used in fixes to mold data into the form
+required by the applicable standard. For example, if the input data is part of
+an observational product that delivers surface temperature with a variable name
+of `t2m` inside a file named `2m_temperature_1950_monthly.nc`, but the same
 variable is called `tas` in the applicable standard, a fix can be created that
 reads the original variable from the correct file, and provides a renamed
 variable to the rest of the processing chain.

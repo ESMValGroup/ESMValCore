@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-import collections.abc
 import contextlib
-import fnmatch
 import logging
 import os
-from functools import lru_cache
-from importlib.resources import files as importlib_files
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import iris
@@ -35,72 +30,6 @@ for attr, value in {
 }.items():
     with contextlib.suppress(AttributeError):
         setattr(iris.FUTURE, attr, value)
-
-
-def _deep_update(dictionary, update):
-    for key, value in update.items():
-        if isinstance(value, collections.abc.Mapping):
-            dictionary[key] = _deep_update(dictionary.get(key, {}), value)
-        else:
-            dictionary[key] = value
-    return dictionary
-
-
-@lru_cache
-def _load_extra_facets(project, extra_facets_dir):
-    config = {}
-    config_paths = [
-        importlib_files("esmvalcore.config") / "extra_facets",
-        Path.home() / ".esmvaltool" / "extra_facets",
-    ]
-    config_paths.extend([Path(p) for p in extra_facets_dir])
-    for config_path in config_paths:
-        config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
-        for config_file_path in sorted(config_file_paths):
-            logger.debug("Loading extra facets from %s", config_file_path)
-            with config_file_path.open(encoding="utf-8") as config_file:
-                config_piece = yaml.safe_load(config_file)
-            if config_piece:
-                _deep_update(config, config_piece)
-    return config
-
-
-def get_extra_facets(dataset, extra_facets_dir):
-    """Read files with additional variable information ("extra facets")."""
-    extra_facets_dir = tuple(extra_facets_dir)
-    project_details = _load_extra_facets(
-        dataset.facets["project"],
-        extra_facets_dir,
-    )
-
-    def pattern_filter(patterns, name):
-        """Get the subset of the list `patterns` that `name` matches.
-
-        Parameters
-        ----------
-        patterns : :obj:`list` of :obj:`str`
-            A list of strings that may contain shell-style wildcards.
-        name : str
-            A string describing the dataset, mip, or short_name.
-
-        Returns
-        -------
-        :obj:`list` of :obj:`str`
-            The subset of patterns that `name` matches.
-        """
-        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
-
-    extra_facets = {}
-    for dataset_ in pattern_filter(project_details, dataset["dataset"]):
-        for mip_ in pattern_filter(project_details[dataset_], dataset["mip"]):
-            for var in pattern_filter(
-                project_details[dataset_][mip_],
-                dataset["short_name"],
-            ):
-                facets = project_details[dataset_][mip_][var]
-                extra_facets.update(facets)
-
-    return extra_facets
 
 
 def load_config_developer(cfg_file):

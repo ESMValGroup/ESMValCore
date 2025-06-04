@@ -181,7 +181,7 @@ are
 * input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
 
 All of these facets have reasonable defaults preconfigured in the corresponding
-:ref:`extra facets<extra_facets>` file, which is available here:
+:ref:`extra facets<config-extra-facets>` file, which is available here:
 :download:`native6-era5.yml
 </../esmvalcore/config/extra_facets/native6-era5.yml>`.
 If necessary, these facets can be overwritten in the recipe.
@@ -301,7 +301,7 @@ the extra facets (see next paragraph) for some variables, but this can be
 overwritten in the recipe.
 
 Similar to any other fix, the CESM fix allows the use of :ref:`extra
-facets<extra_facets>`.
+facets<config-extra-facets>`.
 By default, the file :download:`cesm-mappings.yml
 </../esmvalcore/config/extra_facets/cesm-mappings.yml>` is used for that
 purpose.
@@ -372,7 +372,7 @@ facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
-facets<extra_facets>`.
+facets<config-extra-facets>`.
 By default, the file :download:`emac-mappings.yml
 </../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
 purpose.
@@ -546,7 +546,7 @@ The paths to these files can be specified absolute or relative (to the
           coordinate: air_pressure
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`.
+facets<config-extra-facets>`.
 By default, the file :download:`icon-mappings.yml
 </../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
 purpose.
@@ -658,7 +658,7 @@ formats) are supported, and should be configured in recipes as e.g.:
 The ``Output`` format is an example of a case where variables are grouped in
 multi-variable files, which name cannot be computed directly from datasets
 attributes alone but requires to use an extra_facets file, which principles are
-explained in :ref:`extra_facets`, and which content is :download:`available here
+explained in :ref:`config-extra-facets`, and which content is :download:`available here
 </../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
 
@@ -697,7 +697,7 @@ Thus, example dataset entries could look like this:
 
 
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
-facets<extra_facets>`.
+facets<config-extra-facets>`.
 By default, the file :download:`access-mappings.yml
 </../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
 purpose.
@@ -988,10 +988,10 @@ cubes concatenation is performed in one step.
 
 Use of extra facets in the datafinder
 =====================================
-Extra facets are a mechanism to provide additional information for certain kinds
-of data. The general approach is described in :ref:`extra_facets`. Here, we
-describe how they can be used to locate data files within the datafinder
-framework.
+Extra facets are a mechanism to provide additional information for certain
+kinds of data. The general approach is described in :ref:`config-extra-facets`.
+Here, we describe how they can be used to locate data files within the
+datafinder framework.
 This is useful to build paths for directory structures and file names
 that require more information than what is provided in the recipe.
 A common application is the location of variables in multi-variable files as

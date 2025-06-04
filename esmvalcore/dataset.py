@@ -20,10 +20,10 @@ from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
 from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
-    get_extra_facets,
     get_ignored_warnings,
     get_institutes,
 )
+from esmvalcore.config._extra_facets import get_extra_facets
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
@@ -616,7 +616,7 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     def _augment_facets(self):
-        extra_facets = get_extra_facets(self, self.session["extra_facets_dir"])
+        extra_facets = get_extra_facets(self)
         _augment(self.facets, extra_facets)
         if "institute" not in self.facets:
             institute = get_institutes(self.facets)

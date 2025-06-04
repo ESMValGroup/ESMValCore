@@ -1,153 +1,16 @@
-import textwrap
+from importlib.resources import files as importlib_files
 from pathlib import Path
 
+import dask.config
 import pytest
 import yaml
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
-    _deep_update,
-    _load_extra_facets,
-    get_extra_facets,
     get_ignored_warnings,
-    importlib_files,
 )
-from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
-
-TEST_DEEP_UPDATE = [
-    ([{}], {}),
-    ([{"a": 1, "b": 2}, {"a": 3}], {"a": 3, "b": 2}),
-    (
-        [
-            {"a": {"b": 1, "c": {"d": 2}}, "e": {"f": 4, "g": 5}},
-            {"a": {"b": 2, "c": 3}},
-        ],
-        {"a": {"b": 2, "c": 3}, "e": {"f": 4, "g": 5}},
-    ),
-]
-
-
-@pytest.mark.parametrize(("dictionaries", "expected_merged"), TEST_DEEP_UPDATE)
-def test_deep_update(dictionaries, expected_merged):
-    merged = dictionaries[0]
-    for update in dictionaries[1:]:
-        merged = _deep_update(merged, update)
-    assert expected_merged == merged
-
-
-BASE_PATH = importlib_files("tests")
-BASE_PATH /= Path("sample_data") / Path("extra_facets")  # type: ignore
-
-TEST_LOAD_EXTRA_FACETS = [
-    ("test-nonexistent", (), {}),
-    ("test-nonexistent", (BASE_PATH / "simple",), {}),  # type: ignore
-    (
-        "test6",
-        (BASE_PATH / "simple",),  # type: ignore
-        {
-            "PROJECT1": {
-                "Amon": {
-                    "tas": {
-                        "cds_var_name": "2m_temperature",
-                        "source_var_name": "2t",
-                    },
-                    "psl": {
-                        "cds_var_name": "mean_sea_level_pressure",
-                        "source_var_name": "msl",
-                    },
-                },
-            },
-        },
-    ),
-    (
-        "test6",
-        (BASE_PATH / "simple", BASE_PATH / "override"),  # type: ignore
-        {
-            "PROJECT1": {
-                "Amon": {
-                    "tas": {
-                        "cds_var_name": "temperature_2m",
-                        "source_var_name": "t2m",
-                    },
-                    "psl": {
-                        "cds_var_name": "mean_sea_level_pressure",
-                        "source_var_name": "msl",
-                    },
-                    "uas": {
-                        "cds_var_name": "10m_u-component_of_neutral_wind",
-                        "source_var_name": "u10n",
-                    },
-                    "vas": {
-                        "cds_var_name": "v-component_of_neutral_wind_at_10m",
-                        "source_var_name": "10v",
-                    },
-                },
-            },
-        },
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    ("project", "extra_facets_dir", "expected"),
-    TEST_LOAD_EXTRA_FACETS,
-)
-def test_load_extra_facets(project, extra_facets_dir, expected):
-    extra_facets = _load_extra_facets(project, extra_facets_dir)
-    assert extra_facets == expected
-
-
-def test_get_extra_facets(tmp_path):
-    dataset = Dataset(
-        project="test_project",
-        mip="test_mip",
-        dataset="test_dataset",
-        short_name="test_short_name",
-    )
-    extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-            """)
-        .strip()
-        .format(**dataset.facets),
-    )
-
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=(tmp_path,))
-
-    assert extra_facets == {"key": "value"}
-
-
-def test_get_extra_facets_cmip3():
-    dataset = Dataset(
-        project="CMIP3",
-        mip="A1",
-        short_name="tas",
-        dataset="CM3",
-    )
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=())
-
-    assert extra_facets == {"institute": ["CNRM", "INM", "CNRM_CERFACS"]}
-
-
-def test_get_extra_facets_cmip5():
-    dataset = Dataset(
-        project="CMIP5",
-        mip="Amon",
-        short_name="tas",
-        dataset="ACCESS1-0",
-    )
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=())
-
-    assert extra_facets == {
-        "institute": ["CSIRO-BOM"],
-        "product": ["output1", "output2"],
-    }
 
 
 def test_get_project_config(mocker):
@@ -167,7 +30,14 @@ def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
     project_cfg = {}
     monkeypatch.setattr(_config, "CFG", project_cfg)
-    default_dev_file = importlib_files("esmvalcore") / "config-developer.yml"
+    root_path = importlib_files("esmvalcore")
+    print(root_path)
+    default_dev_file = root_path / "config-developer.yml"
+    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_extra_facets = dask.config.collect(
+        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
+        env={},
+    )["extra_facets"]
 
     session = cfg_default.start_session("recipe_example")
 
@@ -202,7 +72,7 @@ def test_load_default_config(cfg_default, monkeypatch):
             "obs4MIPs": "ESGF",
         },
         "exit_on_warning": False,
-        "extra_facets_dir": [],
+        "extra_facets": default_extra_facets,
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},
         "max_datasets": None,
