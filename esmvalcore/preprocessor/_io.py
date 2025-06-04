@@ -5,10 +5,10 @@ from __future__ import annotations
 import copy
 import logging
 import os
+import warnings
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
-from warnings import catch_warnings, filterwarnings
 
 import cftime
 import iris
@@ -22,6 +22,7 @@ from iris.cube import Cube, CubeList
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.esgf.facets import FACETS
+from esmvalcore.exceptions import ESMValCoreLoadWarning
 from esmvalcore.iris_helpers import (
     dataset_to_iris,
     ignore_warnings_context,
@@ -137,13 +138,13 @@ def load(
 
     for cube in cubes:
         if "source_file" not in cube.attributes:
-            logger.warning(
-                "Cube %s loaded from\n%s\ndoes not contain attribute "
-                "'source_file' with original file, please make sure to add it "
-                "during the fix_file step",
-                cube.summary(shorten=True),
-                file,
+            warn_msg = (
+                f"Cube {cube.summary(shorten=True)} loaded from\n{file}\ndoes "
+                f"not contain attribute 'source_file' that points to original "
+                f"file path, please make sure to add it prior to loading "
+                f"(preferably during the preprocessing step 'fix_file')"
             )
+            warnings.warn(warn_msg, ESMValCoreLoadWarning, stacklevel=2)
 
     return cubes
 
@@ -549,8 +550,8 @@ def save(  # noqa: C901
             cube.var_name = alias
 
     # Ignore some warnings when saving
-    with catch_warnings():
-        filterwarnings(
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
             "ignore",
             message=(
                 ".* is being added as CF data variable attribute, but .* "

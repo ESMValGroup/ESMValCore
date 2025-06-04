@@ -12,6 +12,7 @@ import xarray as xr
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.exceptions import ESMValCoreLoadWarning
 from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 from tests import assert_array_equal
 
@@ -27,7 +28,9 @@ def test_load(tmp_path, sample_cube):
     temp_file = tmp_path / "cube.nc"
     iris.save(sample_cube, temp_file)
 
-    cubes = load(temp_file)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = load(temp_file)
 
     assert len(cubes) == 1
     sample_cube = cubes[0]
@@ -44,7 +47,10 @@ def test_load_grib():
         / "iris-sample-data"
         / "polar_stereo.grib2"
     )
-    cubes = load(grib_path)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = load(grib_path)
 
     assert len(cubes) == 1
     cube = cubes[0]
@@ -56,17 +62,22 @@ def test_load_grib():
 
 def test_load_cube(sample_cube):
     """Test loading an Iris Cube."""
-    cubes = load(sample_cube)
+    sample_cube.attributes.globals["source_file"] = "path/to/file.nc"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = load(sample_cube)
     assert cubes == CubeList([sample_cube])
 
 
 def test_load_cubes(sample_cube):
     """Test loading an Iris CubeList."""
-    cubes = load(CubeList([sample_cube]))
+    msg = "does not contain attribute 'source_file'"
+    with pytest.warns(ESMValCoreLoadWarning, match=msg):
+        cubes = load(CubeList([sample_cube]))
     assert cubes == CubeList([sample_cube])
 
 
-def test_load_xarray_dataset(caplog):
+def test_load_xarray_dataset():
     """Test loading an xarray.Dataset."""
     dataset = xr.Dataset(
         data_vars={"tas": ("time", [1, 2])},
@@ -74,7 +85,9 @@ def test_load_xarray_dataset(caplog):
         attrs={"test": 1},
     )
 
-    cubes = load(dataset)
+    msg = "does not contain attribute 'source_file'"
+    with pytest.warns(ESMValCoreLoadWarning, match=msg):
+        cubes = load(dataset)
 
     assert len(cubes) == 1
     cube = cubes[0]
@@ -86,21 +99,17 @@ def test_load_xarray_dataset(caplog):
     assert cube.coords()[0].var_name == "time"
     assert cube.attributes["test"] == 1
 
-    assert len(caplog.records) == 1
-    assert caplog.records[0].levelname == "WARNING"
-    assert (
-        "does not contain attribute 'source_file'" in caplog.records[0].message
-    )
 
-
-def test_load_ncdata(caplog):
+def test_load_ncdata():
     """Test loading an ncdata.NcData."""
     dataset = ncdata.NcData(
         dimensions=(ncdata.NcDimension("time", 2),),
         variables=(ncdata.NcVariable("tas", ("time",), [0, 1]),),
     )
 
-    cubes = load(dataset)
+    msg = "does not contain attribute 'source_file'"
+    with pytest.warns(ESMValCoreLoadWarning, match=msg):
+        cubes = load(dataset)
 
     assert len(cubes) == 1
     cube = cubes[0]
@@ -109,12 +118,6 @@ def test_load_ncdata(caplog):
     assert cube.long_name is None
     assert cube.units == "unknown"
     assert not cube.coords()
-
-    assert len(caplog.records) == 1
-    assert caplog.records[0].levelname == "WARNING"
-    assert (
-        "does not contain attribute 'source_file'" in caplog.records[0].message
-    )
 
 
 def test_load_invalid_type_fail():
