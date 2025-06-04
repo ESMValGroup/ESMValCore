@@ -116,7 +116,6 @@ def test_load_default_config(cfg_default, monkeypatch):
     project_cfg = {}
     monkeypatch.setattr(_config, "CFG", project_cfg)
     root_path = importlib_files("esmvalcore")
-    print(root_path)
     default_dev_file = root_path / "config-developer.yml"
     config_dir = root_path / "config" / "configurations" / "defaults"
     default_extra_facets = dask.config.collect(
