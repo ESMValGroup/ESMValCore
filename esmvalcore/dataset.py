@@ -625,7 +625,7 @@ class Dataset:
         """Get extra facets of dataset."""
         extra_facets: dict[str, str] = {}
 
-        raw_extra_facets = CFG["extra_facets"]
+        raw_extra_facets = self.session["extra_facets"]
         projects = self._pattern_filter(raw_extra_facets, self["project"])
         for project in projects:
             dataset_names = self._pattern_filter(
@@ -652,7 +652,7 @@ class Dataset:
         # TODO: remove in v2.15.0
         project_details = load_extra_facets(
             self.facets["project"],
-            tuple(CFG["extra_facets_dir"]),
+            tuple(self.session["extra_facets_dir"]),
         )
         dataset_names = self._pattern_filter(project_details, self["dataset"])
         for dataset_name in dataset_names:
