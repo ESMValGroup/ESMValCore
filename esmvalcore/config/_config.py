@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import collections.abc
 import contextlib
 import logging
 import os
+from functools import lru_cache
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import iris
@@ -30,6 +33,33 @@ for attr, value in {
 }.items():
     with contextlib.suppress(AttributeError):
         setattr(iris.FUTURE, attr, value)
+
+
+# TODO: remove in v2.15.0
+def _deep_update(dictionary, update):
+    for key, value in update.items():
+        if isinstance(value, collections.abc.Mapping):
+            dictionary[key] = _deep_update(dictionary.get(key, {}), value)
+        else:
+            dictionary[key] = value
+    return dictionary
+
+
+# TODO: remove in v2.15.0
+@lru_cache
+def load_extra_facets(project: str, extra_facets_dir: tuple[Path]) -> dict:
+    config: dict[str, dict] = {}
+    config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
+    config_paths.extend([Path(p) for p in extra_facets_dir])
+    for config_path in config_paths:
+        config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
+        for config_file_path in sorted(config_file_paths):
+            logger.debug("Loading extra facets from %s", config_file_path)
+            with config_file_path.open(encoding="utf-8") as config_file:
+                config_piece = yaml.safe_load(config_file)
+            if config_piece:
+                _deep_update(config, config_piece)
+    return config
 
 
 def load_config_developer(cfg_file):

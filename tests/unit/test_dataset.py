@@ -1805,3 +1805,58 @@ def test_load_fail(session):
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
+
+
+# TODO: Remove in v2.15.0
+def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
+    dataset = Dataset(
+        project="test_project",
+        mip="test_mip",
+        dataset="test_dataset",
+        short_name="test_short_name",
+    )
+    extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+            """)
+        .strip()
+        .format(**dataset.facets),
+    )
+    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {"key": "value"}
+
+
+def test_get_extra_facets_cmip3():
+    dataset = Dataset(
+        project="CMIP3",
+        mip="A1",
+        short_name="tas",
+        dataset="CM3",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {"institute": ["CNRM", "INM", "CNRM_CERFACS"]}
+
+
+def test_get_extra_facets_cmip5():
+    dataset = Dataset(
+        project="CMIP5",
+        mip="Amon",
+        short_name="tas",
+        dataset="ACCESS1-0",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "institute": ["CSIRO-BOM"],
+        "product": ["output1", "output2"],
+    }

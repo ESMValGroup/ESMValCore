@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import logging
 import pprint
 import re
@@ -22,8 +23,8 @@ from esmvalcore.config._config import (
     get_activity,
     get_ignored_warnings,
     get_institutes,
+    load_extra_facets,
 )
-from esmvalcore.config._extra_facets import get_extra_facets
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
@@ -33,7 +34,7 @@ from esmvalcore.local import (
 from esmvalcore.preprocessor import preprocess
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     from iris.cube import Cube
 
@@ -615,8 +616,63 @@ class Dataset:
         for supplementary in self.supplementaries:
             supplementary._augment_facets()  # noqa: SLF001
 
+    @staticmethod
+    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
+        """Get the subset of the list `patterns` that `name` matches."""
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
+
+    def _get_extra_facets(self) -> dict:
+        """Get extra facets of dataset."""
+        extra_facets: dict[str, str] = {}
+
+        raw_extra_facets = CFG["extra_facets"]
+        projects = self._pattern_filter(raw_extra_facets, self["project"])
+        for project in projects:
+            dataset_names = self._pattern_filter(
+                raw_extra_facets[project],
+                self["dataset"],
+            )
+            for dataset_name in dataset_names:
+                mips = self._pattern_filter(
+                    raw_extra_facets[project][dataset_name],
+                    self["mip"],
+                )
+                for mip in mips:
+                    variables = self._pattern_filter(
+                        raw_extra_facets[project][dataset_name][mip],
+                        self["short_name"],
+                    )
+                    for var in variables:
+                        facets = raw_extra_facets[project][dataset_name][mip][
+                            var
+                        ]
+                        extra_facets.update(facets)
+
+        # Add deprecated user-defined extra facets
+        # TODO: remove in v2.15.0
+        project_details = load_extra_facets(
+            self.facets["project"],
+            tuple(CFG["extra_facets_dir"]),
+        )
+        dataset_names = self._pattern_filter(project_details, self["dataset"])
+        for dataset_name in dataset_names:
+            mips = self._pattern_filter(
+                project_details[dataset_name],
+                self["mip"],
+            )
+            for mip in mips:
+                variables = self._pattern_filter(
+                    project_details[dataset_name][mip],
+                    self["short_name"],
+                )
+                for var in variables:
+                    facets = project_details[dataset_name][mip][var]
+                    extra_facets.update(facets)
+
+        return extra_facets
+
     def _augment_facets(self):
-        extra_facets = get_extra_facets(self)
+        extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
         if "institute" not in self.facets:
             institute = get_institutes(self.facets)
