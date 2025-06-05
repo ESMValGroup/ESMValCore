@@ -1,4 +1,4 @@
-# Mapping, for ISPLCM output formats 'Analyse' and 'Output', between a
+# Mapping, for IPSLCM output formats 'Analyse' and 'Output', between a
 # CMOR variable name and the labels to use by ESMValTool to find the
 # corresponding file, and the corresponding variable in the file
 #
@@ -29,7 +29,7 @@
 ---
 
 extra_facets:
-  ISPLCM:
+  IPSLCM:
     IPSL-CM6:
       # Facets for all variables
       '*':

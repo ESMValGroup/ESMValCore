@@ -140,7 +140,7 @@ extra_facets:
         zos: {raw_name: zos, var_type: oce_dbg}
 
         # 3D ocean variables
-        so: {raw_name: so, var_type: oce_def, raw_units: 0.001}
+        so: {raw_name: so, var_type: oce_def, raw_units: "0.001"}
         thetao: {raw_name: to, var_type: oce_def, raw_units: degC}
         uo: {raw_name: u, var_type: oce_def}
         vo: {raw_name: v, var_type: oce_def}

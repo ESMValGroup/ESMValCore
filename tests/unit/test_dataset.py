@@ -1833,6 +1833,42 @@ def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
     assert extra_facets == {"key": "value"}
 
 
+def test_get_extra_facets_access():
+    dataset = Dataset(
+        project="ACCESS",
+        mip="Amon",
+        short_name="tas",
+        dataset="ACCESS-ESM1-5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "fld_s03i236",
+        "modeling_realm": "atm",
+    }
+
+
+def test_get_extra_facets_cesm():
+    dataset = Dataset(
+        project="CESM",
+        mip="Amon",
+        short_name="tas",
+        dataset="CESM2",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "string": "",
+        "tdir": "",
+        "tperiod": "",
+        "raw_name": "TREFHT",
+        "gcomp": "atm",
+        "scomp": "cam",
+    }
+
+
 def test_get_extra_facets_cmip3():
     dataset = Dataset(
         project="CMIP3",
@@ -1860,4 +1896,97 @@ def test_get_extra_facets_cmip5():
         "ensemble": "r0i0p0",
         "institute": ["CSIRO-BOM"],
         "product": ["output1", "output2"],
+    }
+
+
+def test_get_extra_facets_emac():
+    dataset = Dataset(
+        project="EMAC",
+        mip="Amon",
+        short_name="clt",
+        dataset="EMAC",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "postproc_flag": "",
+        "raw_name": ["aclcov_cav", "aclcov_ave", "aclcov"],
+        "raw_units": "1",
+        "channel": "Amon",
+    }
+
+
+def test_get_extra_facets_icon():
+    dataset = Dataset(
+        project="ICON",
+        mip="SImon",
+        short_name="siconc",
+        dataset="ICON",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "sic",
+        "raw_units": "1",
+        "var_type": "atm_2d_ml",
+    }
+
+
+def test_get_extra_facets_icon_xpp():
+    dataset = Dataset(
+        project="ICON",
+        mip="Omon",
+        short_name="so",
+        dataset="ICON-XPP",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "so",
+        "raw_units": "0.001",
+        "var_type": "oce_def",
+    }
+
+
+def test_get_extra_facets_ipslcm():
+    dataset = Dataset(
+        project="IPSLCM",
+        mip="Amon",
+        short_name="ta",
+        dataset="IPSL-CM6",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "model": "IPSLCM6",
+        "use_cdo": False,
+        "ipsl_varname": "ta",
+        "group": "histmthNMC",
+        "dir": "ATM",
+    }
+
+
+def test_get_extra_facets_native6():
+    dataset = Dataset(
+        project="native6",
+        mip="Amon",
+        short_name="ta",
+        dataset="ERA5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "automatic_regrid": True,
+        "family": "E5",
+        "type": "an",
+        "typeid": "00",
+        "version": "v1",
+        "level": "pl",
+        "grib_id": "130",
+        "tres": "1M",
     }
