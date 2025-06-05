@@ -9,7 +9,7 @@ import os
 import warnings
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import iris
 import yaml
@@ -54,10 +54,10 @@ def _deep_update(dictionary, update):
 def load_extra_facets(
     project: str,
     extra_facets_dir: tuple[Path],
-) -> dict[str, dict]:
+) -> dict[str, dict[str, Any]]:
     """Load deprecated extra facets."""
     warn_if_old_extra_facets_exist()
-    config: dict[str, dict] = {}
+    config: dict[str, dict[str, Any]] = {}
     config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
     config_paths.extend([Path(p) for p in extra_facets_dir])
     for config_path in config_paths:
