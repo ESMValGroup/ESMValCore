@@ -1833,6 +1833,93 @@ def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
     assert extra_facets == {"key": "value"}
 
 
+def test_get_extra_facets(monkeypatch):
+    raw_extra_facets = {
+        "*": {
+            "not_TEST-MODEL": {
+                "Amon": {
+                    "tas": {
+                        "a": "*_not_TEST-MODEL_Amon_tas",
+                        "x": "*_not_TEST-MODEL_Amon_tas",
+                    },
+                },
+            },
+            "TEST-MODEL": {
+                "Amon": {
+                    "tas": {
+                        "a": "*_TEST-MODEL_Amon_tas",
+                        "b": "*_TEST-MODEL_Amon_tas",
+                    },
+                },
+            },
+            "TES[ABCT]-MODEL": {
+                "Amon": {
+                    "tas": {
+                        "a": "*_TES[ABCT]-MODEL_Amon_tas",
+                        "c": "*_TES[ABCT]-MODEL_Amon_tas",
+                    },
+                },
+            },
+        },
+        "TES[!A]": {
+            "TEST-MODEL": {
+                "Amon": {
+                    "tas": {
+                        "a": "TES[!A]_TEST-MODEL_Amon_tas",
+                        "d": "TES[!A]_TEST-MODEL_Amon_tas",
+                    },
+                },
+            },
+        },
+        "TEST": {
+            "TEST-MODEL": {
+                "Amon": {
+                    "tas": {
+                        "a": "TEST_TEST-MODEL_Amon_tas",
+                        "e": "TEST_TEST-MODEL_Amon_tas",
+                        "f": "TEST_TEST-MODEL_Amon_tas",
+                    },
+                    "*": {
+                        "a": "TEST_TEST-MODEL_Amon_*",
+                        "e": "TEST_TEST-MODEL_Amon_*",
+                        "f": "TEST_TEST-MODEL_Amon_*",
+                        "g": "TEST_TEST-MODEL_Amon_*",
+                    },
+                },
+                "?mon": {
+                    "tas": {
+                        "a": "TEST_TEST-MODEL_?mon_tas",
+                        "e": "TEST_TEST-MODEL_?mon_tas",
+                    },
+                },
+            },
+        },
+    }
+    monkeypatch.setitem(CFG, "extra_facets", raw_extra_facets)
+    dataset = Dataset(
+        project="TEST",
+        mip="Amon",
+        short_name="tas",
+        dataset="TEST-MODEL",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    from pprint import pprint
+
+    pprint(extra_facets)
+
+    assert extra_facets == {
+        "a": "TEST_TEST-MODEL_?mon_tas",
+        "b": "*_TEST-MODEL_Amon_tas",
+        "c": "*_TES[ABCT]-MODEL_Amon_tas",
+        "d": "TES[!A]_TEST-MODEL_Amon_tas",
+        "e": "TEST_TEST-MODEL_?mon_tas",
+        "f": "TEST_TEST-MODEL_Amon_*",
+        "g": "TEST_TEST-MODEL_Amon_*",
+    }
+
+
 def test_get_extra_facets_access():
     dataset = Dataset(
         project="ACCESS",
