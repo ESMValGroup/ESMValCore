@@ -1810,18 +1810,19 @@ def test_load_fail(session):
 # TODO: Remove in v2.15.0
 def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
     dataset = Dataset(
-        project="test_project",
-        mip="test_mip",
-        dataset="test_dataset",
-        short_name="test_short_name",
+        project="CMIP5",
+        mip="Amon",
+        dataset="ACCESS1-3",
+        short_name="test",
     )
-    extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
+    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
     extra_facets_file.write_text(
         textwrap.dedent("""
             {dataset}:
               {mip}:
                 {short_name}:
                   key: value
+                  institute: new-institute
             """)
         .strip()
         .format(**dataset.facets),
@@ -1830,7 +1831,11 @@ def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
 
     extra_facets = dataset._get_extra_facets()
 
-    assert extra_facets == {"key": "value"}
+    assert extra_facets == {
+        "product": ["output1", "output2"],
+        "key": "value",
+        "institute": "new-institute",
+    }
 
 
 def test_get_extra_facets(monkeypatch):
