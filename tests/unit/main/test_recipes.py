@@ -68,17 +68,27 @@ def test_show_fail():
         Recipes().show("invalid_recipe")
 
 
-def test_get(tmp_path, monkeypatch):
+def test_get(mocker, tmp_path, monkeypatch):
     """Test the command `esmvaltool recipes get`."""
+    recipe_dir = tmp_path / "subdir"
+    recipe = recipe_dir / "recipe_1.yml"
+    recipe.parent.mkdir(parents=True, exist_ok=True)
+    recipe.touch()
+    diagnostics = mocker.patch.object(
+        esmvalcore.config._diagnostics,
+        "DIAGNOSTICS",
+        create_autospec=True,
+    )
+    diagnostics.recipes = recipe_dir
     monkeypatch.chdir(tmp_path)
 
-    recipe = Path("examples/recipe_python.yml")
-    recipe_path = tmp_path / recipe.name
-    assert not recipe_path.is_file()
+    recipe = Path(recipe.name)
+    copied_recipe_path = tmp_path / recipe.name
+    assert not copied_recipe_path.is_file()
 
     Recipes().get(str(recipe))
 
-    assert recipe_path.is_file()
+    assert copied_recipe_path.is_file()
 
 
 def test_get_fail():
