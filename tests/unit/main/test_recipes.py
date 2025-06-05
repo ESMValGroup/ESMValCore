@@ -1,7 +1,6 @@
 """Test the `Recipe` class implementing the `esmvaltool recipes` command."""
 
 import textwrap
-from pathlib import Path
 
 import pytest
 
@@ -82,7 +81,6 @@ def test_get(mocker, tmp_path, monkeypatch):
     diagnostics.recipes = recipe_dir
     monkeypatch.chdir(tmp_path)
 
-    recipe = Path(recipe.name)
     copied_recipe_path = tmp_path / recipe.name
     assert not copied_recipe_path.is_file()
 
