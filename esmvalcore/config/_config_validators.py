@@ -441,7 +441,17 @@ def deprecate_extra_facets_dir(validated_config, value, validated_value):
     option = "extra_facets_dir"
     deprecated_version = "2.13.0"
     remove_version = "2.15.0"
-    more_info = " Please use the option `extra_facets` instead."
+    more_info = (
+        " Please use the option `extra_facets` instead (see "
+        "https://github.com/ESMValGroup/ESMValCore/pull/2747 for details)."
+    )
+    if os.environ.get("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG"):
+        more_info += (
+            " Since the environment variable "
+            "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG is set, "
+            "`extra_facets_dir` is ignored. To silent this warning, omit "
+            "`extra_facets_dir`."
+        )
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
 

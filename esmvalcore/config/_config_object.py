@@ -151,9 +151,7 @@ class Config(ValidatedConfig):
                 f"Failed to parse user configuration file {config_user_path}: "
                 f"{exc!s}"
             )
-            raise InvalidConfigParameter(
-                msg,
-            ) from exc
+            raise InvalidConfigParameter(msg) from exc
 
         return new
 
@@ -422,9 +420,7 @@ class Config(ValidatedConfig):
                 f"Failed to parse configuration directory {USER_CONFIG_DIR} "
                 f"({USER_CONFIG_SOURCE}): {exc!s}"
             )
-            raise InvalidConfigParameter(
-                msg,
-            ) from exc
+            raise InvalidConfigParameter(msg) from exc
 
     def start_session(self, name: str) -> Session:
         """Start a new session from this configuration object.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+import os
 import pprint
 import re
 import textwrap
@@ -650,6 +651,8 @@ class Dataset:
 
         # Add deprecated user-defined extra facets
         # TODO: remove in v2.15.0
+        if os.environ.get("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG"):
+            return extra_facets
         project_details = load_extra_facets(
             self.facets["project"],
             tuple(self.session["extra_facets_dir"]),

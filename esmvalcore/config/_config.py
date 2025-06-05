@@ -6,6 +6,7 @@ import collections.abc
 import contextlib
 import logging
 import os
+import warnings
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,7 +15,7 @@ import iris
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 if TYPE_CHECKING:
     from esmvalcore.typing import FacetValue
@@ -48,6 +49,7 @@ def _deep_update(dictionary, update):
 # TODO: remove in v2.15.0
 @lru_cache
 def load_extra_facets(project: str, extra_facets_dir: tuple[Path]) -> dict:
+    warn_if_old_extra_facets_exist()
     config: dict[str, dict] = {}
     config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
     config_paths.extend([Path(p) for p in extra_facets_dir])
@@ -60,6 +62,30 @@ def load_extra_facets(project: str, extra_facets_dir: tuple[Path]) -> dict:
             if config_piece:
                 _deep_update(config, config_piece)
     return config
+
+
+# TODO: remove in v2.15.0
+def warn_if_old_extra_facets_exist() -> None:
+    """Warn user if deprecated dask configuration file exists."""
+    user_extra_facets = Path.home() / ".esmvaltool" / "extra_facets"
+    if user_extra_facets.exists() and not os.environ.get(
+        "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG",
+    ):
+        deprecation_msg = (
+            "Usage of extra facets located in ~/.esmvaltool/extra_facets has "
+            "been deprecated in ESMValCore version 2.13.0 and is scheduled "
+            "for removal in version 2.15.0. Please use the configuration "
+            "option `extra_facets` instead (see "
+            "https://github.com/ESMValGroup/ESMValCore/pull/2747 for "
+            "details). To silent this warning and ignore deprecated extra "
+            "facets, set the environment variable "
+            "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG=1."
+        )
+        warnings.warn(
+            deprecation_msg,
+            ESMValCoreDeprecationWarning,
+            stacklevel=2,
+        )
 
 
 def load_config_developer(cfg_file):

@@ -33,6 +33,8 @@ from pathlib import Path
 
 import fire
 
+from esmvalcore.config._config import warn_if_old_extra_facets_exist
+
 # set up logging
 logger = logging.getLogger(__name__)
 
