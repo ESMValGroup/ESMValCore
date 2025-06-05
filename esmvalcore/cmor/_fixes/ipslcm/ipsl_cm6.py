@@ -97,7 +97,7 @@ class AllVars(Fix):
 
 
 class Tas(Fix):
-    """Fixes for ISPLCM 2m temperature."""
+    """Fixes for IPSLCM 2m temperature."""
 
     def fix_metadata(self, cubes):
         """Add height2m."""
@@ -108,4 +108,4 @@ class Tas(Fix):
 
 
 class Huss(Tas):
-    """Fixes for ISPLCM 2m specific humidity."""
+    """Fixes for IPSLCM 2m specific humidity."""
