@@ -9,7 +9,7 @@ from collections.abc import Callable, Iterable
 from functools import lru_cache, partial
 from importlib.resources import files as importlib_files
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packaging import version
 
@@ -20,6 +20,9 @@ from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+if TYPE_CHECKING:
+    from esmvalcore.config._validated_config import ValidatedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -398,16 +401,20 @@ def _handle_deprecation(
 
 
 # TODO: remove in v2.14.0
-def deprecate_config_file(validated_config, value, validated_value):
+def deprecate_config_file(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
     """Deprecate ``config_file`` option.
 
     Parameters
     ----------
-    validated_config: ValidatedConfig
+    validated_config:
         ``ValidatedConfig`` instance which will be modified in place.
-    value: Any
+    value:
         Raw input value for ``config_file`` option.
-    validated_value: Any
+    validated_value:
         Validated value for ``config_file`` option.
 
     """
@@ -422,16 +429,20 @@ def deprecate_config_file(validated_config, value, validated_value):
 
 
 # TODO: remove in v2.15.0
-def deprecate_extra_facets_dir(validated_config, value, validated_value):
+def deprecate_extra_facets_dir(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
     """Deprecate ``extra_facets_dir`` option.
 
     Parameters
     ----------
-    validated_config: ValidatedConfig
+    validated_config:
         ``ValidatedConfig`` instance which will be modified in place.
-    value: Any
+    value:
         Raw input value for ``extra_facets_dir`` option.
-    validated_value: Any
+    validated_value:
         Validated value for ``extra_facets_dir`` option.
 
     """

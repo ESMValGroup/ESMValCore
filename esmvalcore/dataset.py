@@ -622,9 +622,9 @@ class Dataset:
         """Get the subset of the list `patterns` that `name` matches."""
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
-    def _get_extra_facets(self) -> dict:
+    def _get_extra_facets(self) -> dict[str, Any]:
         """Get extra facets of dataset."""
-        extra_facets: dict[str, str] = {}
+        extra_facets: dict[str, Any] = {}
 
         raw_extra_facets = self.session["extra_facets"]
         projects = self._pattern_filter(raw_extra_facets, self["project"])

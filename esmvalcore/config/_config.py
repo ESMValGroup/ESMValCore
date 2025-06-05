@@ -51,7 +51,11 @@ def _deep_update(dictionary, update):
 
 # TODO: remove in v2.15.0
 @lru_cache
-def load_extra_facets(project: str, extra_facets_dir: tuple[Path]) -> dict:
+def load_extra_facets(
+    project: str,
+    extra_facets_dir: tuple[Path],
+) -> dict[str, dict]:
+    """Load deprecated extra facets."""
     warn_if_old_extra_facets_exist()
     config: dict[str, dict] = {}
     config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
