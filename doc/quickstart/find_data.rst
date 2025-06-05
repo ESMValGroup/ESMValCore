@@ -296,8 +296,8 @@ Thus, example dataset entries could look like this:
     - {project: CESM, dataset: CESM2, case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001, type: h0, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
     - {project: CESM, dataset: CESM2, case: f.e21.F1850_BGC.f09_f09_mg17.CFMIP-hadsst-piForcing.001, type: h0, gcomp: atm, scomp: cam, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
 
-Variable-specific defaults for the facet ``gcomp`` and ``scomp`` are given in
-the extra facets (see next paragraph) for some variables, but this can be
+Variable-specific defaults for the facet ``gcomp`` and ``scomp`` are given as
+extra facets (see next paragraph) for some variables, but these can be
 overwritten in the recipe.
 
 Similar to any other fix, the CESM fix allows the use of :ref:`extra
@@ -313,7 +313,7 @@ Supported keys for extra facets are:
 Key                  Description                            Default value if not specified
 ==================== ====================================== =================================
 ``gcomp``            Generic component-model name           No default (needs to be specified
-                                                            in extra facets or recipe if
+                                                            as extra facets or in recipe if
                                                             default DRS is used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
@@ -322,7 +322,7 @@ Key                  Description                            Default value if not
                                                             raw input file; otherwise
                                                             ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
-                                                            in extra facets or recipe if
+                                                            as extra facets or in recipe if
                                                             default DRS is used)
 ``string``           Short string which is used to further  ``''`` (empty string)
                      identify the history file type
@@ -384,7 +384,7 @@ Supported keys for extra facets are:
 Key                   Description                            Default value if not specified
 ===================== ====================================== =================================
 ``channel``           Channel in which the desired variable  No default (needs to be specified
-                      is stored                              in extra facets or recipe if
+                      is stored                              as extra facets or in recipe if
                                                              default DRS is used)
 ``postproc_flag``     Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``          Variable name of the variable in the   CMOR variable name of the
@@ -410,7 +410,7 @@ Key                   Description                            Default value if no
 
    For 3D variables defined on pressure levels, only the pressure levels
    defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
-   ``tm1_p19_ave``) are given in the default extra facets file.
+   ``tm1_p19_ave``) are given as default extra facets.
    If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
    explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
    ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
@@ -490,7 +490,7 @@ simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
 This grid file can either be specified as absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``) path with
-the facet ``horizontal_grid`` in the recipe or the extra facets (see below), or
+the facet ``horizontal_grid`` in the recipe or as extra facet (see below), or
 retrieved automatically from the `grid_file_uri` attribute of the input files.
 In the latter case, ESMValCore first searches the input directories specified
 for ICON for a grid file with that name, and if that was not successful, tries
@@ -509,7 +509,7 @@ While the :ref:`built-in regridding schemes <default regridding schemes>`
 `linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
 the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
-the facet ``ugrid: false`` in the recipe or the extra facets (see below).
+the facet ``ugrid: false`` in the recipe or as extra facet (see below).
 This is useful for diagnostics that act on the native ICON grid and do not
 support input data in UGRID format (yet).
 
@@ -517,11 +517,11 @@ For 3D ICON variables, ESMValCore tries to add the pressure level information
 and/or altitude information to the preprocessed output files.
 If the names of these variables differ from the default values, the facets
 ``pfull_var``, ``phalf_var``, ``zg_var``, and ``zghalf_var`` can be specified
-in the recipe or extra facets.
+in the recipe or as extra facets.
 If neither of these variables are available in the input files, it is possible
 to specify the location of files that include the corresponding altitude
 information with the facets ``zg_file`` and/or ``zghalf_file`` in the recipe or
-the extra facets.
+as extra facets.
 The paths to these files can be specified absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
@@ -585,7 +585,7 @@ Key                 Description                      Default value if not specif
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
-                    variable in the raw input        in extra facets or recipe if
+                    variable in the raw input        as extra facets or in recipe if
                     file                             default DRS is used)
 ``zg_file``         Absolute or relative (to         If possible, use geometric height
                     ``auxiliary_data_dir``) path to  at full levels provided by the raw
@@ -712,7 +712,7 @@ Key                  Description                                Default value if
 ``raw_name``         Variable name of the variable in the       CMOR variable name of the
                      raw input file                             corresponding variable
 ``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be
-                     and `oce`                                  specified in extra facets or
+                     and `oce`                                  specified as extra facets or in
                                                                 recipe if default DRS is used)
 ``freq_attribute``   A special attribute in the filename        No default
                      `ACCESS-ESM` raw data, related to the
@@ -1002,18 +1002,26 @@ Another use case is files that use different names for variables in their
 file name than for the netCDF4 variable name.
 
 To apply the extra facets for this purpose, simply use the corresponding tag in
-the applicable DRS inside the `config-developer.yml` file. For example, given
-the extra facets in :ref:`extra-facets-example-1`, one might write the
-following.
-
-.. _extra-facets-example-2:
+the applicable DRS inside the :ref:`config-developer`.
+For example, given the extra facets
 
 .. code-block:: yaml
-   :caption: Example drs use in `config-developer.yml`
+
+  extra_facets:
+    native6:
+      ERA5:
+        Amon:
+          tas:
+            source_var_name: t2m
+
+a corresponding entry in the developer configuration file could look like:
+
+.. code-block:: yaml
+   :caption: Contents of ``config-developer.yml``
 
    native6:
      input_file:
-       default: '{name_in_filename}*.nc'
+       default: '{source_var_name}_*.nc'
 
 The same replacement mechanism can be employed everywhere where tags can be
-used, particularly in `input_dir` and `input_file`.
+used, particularly in ``input_dir``, ``input_file``, and ``output_file``.

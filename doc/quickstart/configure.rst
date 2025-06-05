@@ -599,9 +599,9 @@ configuration.
 They are specified in nested dictionaries with the following levels:
 
 1. Project
-1. Dataset name
-1. MIP table
-1. Variable short name
+2. Dataset name
+3. MIP table
+4. Variable short name
 
 Example:
 
@@ -614,8 +614,9 @@ Example:
           tas:  # variable short name
             a_new_key: a_new_value  # extra facets
 
-The four top levels of keys in this mapping can contain `Unix shell-style
-wildcards <https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
+The four top levels of keys (project, dataset name, MIP table, and variable
+short name) in this mapping can contain `Unix shell-style wildcards
+<https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
 The special characters used in shell-style wildcards are:
 
 +------------+----------------------------------------+
@@ -634,10 +635,21 @@ where ``seq`` can either be a sequence of characters or just a bunch of
 characters, for example ``[A-C]`` matches the characters ``A``, ``B``, and
 ``C``, while ``[AC]`` matches the characters ``A`` and ``C``.
 
-Example:
+Examples:
 
-For example, this is used to automatically add ``product: output1`` to any
-variable of any CMIP5 dataset that does not have a ``product`` key yet:
+.. code-block:: yaml
+
+  extra_facets:
+    CMIP6:  # project
+      CanESM5:  # dataset name
+        "*":  # MIP table
+          "*": # variable short name
+            a_new_key: a_new_value  # extra facets
+
+Here, the extra facet ``a_new_key: a_new_value`` would be added to any *CMIP6*
+data from model *CanESM5*.
+
+If keys are duplicated, later keys will take precedence over earlier keys:
 
 .. code-block:: yaml
 
@@ -645,7 +657,7 @@ variable of any CMIP5 dataset that does not have a ``product`` key yet:
     CMIP6:
       CanESM5:
         "*":
-          tas:
+          "*":
             shared_key: with_wildcard
             unique_key_1: test
         Amon:
@@ -653,17 +665,14 @@ variable of any CMIP5 dataset that does not have a ``product`` key yet:
             shared_key: without_wildcard
             unique_key_2: test
 
-Here, the following extra facets would be added to dataset with project
+Here, the following extra facets would be added to a dataset with project
 *CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
 
 .. code-block:: yaml
 
   unique_key_1: test
-  shared_key: without_wildcard
+  shared_key: without_wildcard  # takes value from later entry
   unique_key_2: test
-
-For duplicated keys, later keys will take precedence over earlier keys (here,
-the ``shared_key`` takes the value ``without_wildcard`` from the lower entry).
 
 .. _config-extra-facets-defaults:
 
