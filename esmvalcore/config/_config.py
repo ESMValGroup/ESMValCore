@@ -26,6 +26,9 @@ TASKSEP = os.sep
 
 CFG = {}
 
+# TODO: remove in v2.15.0
+USER_EXTRA_FACETS = Path.home() / ".esmvaltool" / "extra_facets"
+
 
 # Set iris.FUTURE flags
 for attr, value in {
@@ -67,8 +70,7 @@ def load_extra_facets(project: str, extra_facets_dir: tuple[Path]) -> dict:
 # TODO: remove in v2.15.0
 def warn_if_old_extra_facets_exist() -> None:
     """Warn user if deprecated dask configuration file exists."""
-    user_extra_facets = Path.home() / ".esmvaltool" / "extra_facets"
-    if user_extra_facets.exists() and not os.environ.get(
+    if USER_EXTRA_FACETS.exists() and not os.environ.get(
         "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG",
     ):
         deprecation_msg = (

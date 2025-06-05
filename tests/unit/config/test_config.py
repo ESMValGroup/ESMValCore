@@ -5,6 +5,7 @@ import dask.config
 import pytest
 import yaml
 
+import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
@@ -96,6 +97,21 @@ TEST_LOAD_EXTRA_FACETS = [
 def test_load_extra_facets(project, extra_facets_dir, expected):
     extra_facets = load_extra_facets(project, extra_facets_dir)
     assert extra_facets == expected
+
+
+# TODO: Remove in v2.15.0
+def test_load_extra_facets_deprecation(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        esmvalcore.config._config,
+        "USER_EXTRA_FACETS",
+        tmp_path,
+    )
+    msg = (
+        r"Usage of extra facets located in ~/.esmvaltool/extra_facets has "
+        r"been deprecated"
+    )
+    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
+        load_extra_facets("PROJECT", ())
 
 
 def test_get_project_config(mocker):

@@ -255,7 +255,7 @@ class Recipes:
     """
 
     @staticmethod
-    def list():
+    def list() -> None:
         """List all installed recipes.
 
         Show all installed recipes, grouped by folder.
@@ -278,7 +278,7 @@ class Recipes:
                     print(os.path.join(root, filename))
 
     @staticmethod
-    def get(recipe):
+    def get(recipe: str) -> None:
         """Get a copy of any installed recipe in the current working directory.
 
         Use this command to get a local copy of any installed recipe.
@@ -307,7 +307,7 @@ class Recipes:
         logger.info("Recipe %s successfully copied", recipe)
 
     @staticmethod
-    def show(recipe):
+    def show(recipe: str) -> None:
         """Show the given recipe in console.
 
         Use this command to see the contents of any installed recipe.
