@@ -1905,10 +1905,6 @@ def test_get_extra_facets(monkeypatch):
 
     extra_facets = dataset._get_extra_facets()
 
-    from pprint import pprint
-
-    pprint(extra_facets)
-
     assert extra_facets == {
         "a": "TEST_TEST-MODEL_?mon_tas",
         "b": "*_TEST-MODEL_Amon_tas",
