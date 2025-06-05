@@ -454,8 +454,8 @@ To allow ESMValCore to locate the data files, use the following steps:
      Note that it is possible to predefine facets in an :ref:`extra facets file
      <add_new_fix_native_datasets_extra_facets>`.
      In this ICON example, the facet ``var_type`` is :download:`predefined
-     </../esmvalcore/config/extra_facets/icon-mappings.yml>` for many
-     variables.
+     </../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>`
+     for many variables.
 
 .. _add_new_fix_native_datasets_fix_data:
 
@@ -486,7 +486,7 @@ that is required for the fixes.
 See :ref:`config-extra-facets` and :ref:`extra-facets-fixes` for more details
 on this.
 An example of such a file for IPSL-CM6 is given :download:`here
-<../../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`.
+<../../esmvalcore/config/configurations/defaults/extra_facets_ipslcm.yml>`.
 
 
 .. _extra-facets-fixes:

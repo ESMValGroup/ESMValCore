@@ -181,9 +181,9 @@ are
 * input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
 
 All of these facets have reasonable defaults preconfigured in the corresponding
-:ref:`extra facets<config-extra-facets>` file, which is available here:
-:download:`native6-era5.yml
-</../esmvalcore/config/extra_facets/native6-era5.yml>`.
+:ref:`extra facets<config-extra-facets>` configuration file, which is available
+here: :download:`native6.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_native6.yml>`.
 If necessary, these facets can be overwritten in the recipe.
 
 Thus, example dataset entries could look like this:
@@ -302,9 +302,9 @@ overwritten in the recipe.
 
 Similar to any other fix, the CESM fix allows the use of :ref:`extra
 facets<config-extra-facets>`.
-By default, the file :download:`cesm-mappings.yml
-</../esmvalcore/config/extra_facets/cesm-mappings.yml>` is used for that
-purpose.
+The configuration file :download:`extra_facets_cesm.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_cesm.yml>` contains
+the defaults.
 Currently, this file only contains default facets for a single variable
 (`tas`); for other variables, these entries need to be defined in the recipe.
 Supported keys for extra facets are:
@@ -373,9 +373,9 @@ the recipe.
 
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
 facets<config-extra-facets>`.
-By default, the file :download:`emac-mappings.yml
-</../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
-purpose.
+The configuration file :download:`extra_facets_emac.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_emac.yml>` contains
+the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
@@ -547,9 +547,9 @@ The paths to these files can be specified absolute or relative (to the
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<config-extra-facets>`.
-By default, the file :download:`icon-mappings.yml
-</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
-purpose.
+The configuration file :download:`extra_facets_icon.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>` contains
+the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
@@ -657,10 +657,11 @@ formats) are supported, and should be configured in recipes as e.g.:
 
 The ``Output`` format is an example of a case where variables are grouped in
 multi-variable files, which name cannot be computed directly from datasets
-attributes alone but requires to use an extra_facets file, which principles are
-explained in :ref:`config-extra-facets`, and which content is :download:`available here
-</../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
-files must also undergo some data selection.
+attributes alone but requires the usage :ref:`config-extra-facets`.
+The configuration file :download:`extra_facets_ipslcm.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_ipslcm.yml>`
+contains the default extra facets.
+These multi-variable files must also undergo some data selection.
 
 .. _read_access-esm:
 
@@ -698,9 +699,9 @@ Thus, example dataset entries could look like this:
 
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
 facets<config-extra-facets>`.
-By default, the file :download:`access-mappings.yml
-</../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
-purpose.
+The configuration file :download:`extra_facets_access.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_access.yml>`
+contains the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
