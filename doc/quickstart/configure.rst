@@ -646,7 +646,7 @@ Examples:
           "*": # variable short name
             a_new_key: a_new_value  # extra facets
 
-Here, the extra facet ``a_new_key: a_new_value`` would be added to any *CMIP6*
+Here, the extra facet ``a_new_key: a_new_value`` will be added to any *CMIP6*
 data from model *CanESM5*.
 
 If keys are duplicated, later keys will take precedence over earlier keys:
@@ -665,7 +665,7 @@ If keys are duplicated, later keys will take precedence over earlier keys:
             shared_key: without_wildcard
             unique_key_2: test
 
-Here, the following extra facets would be added to a dataset with project
+Here, the following extra facets will be added to a dataset with project
 *CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
 
 .. code-block:: yaml
