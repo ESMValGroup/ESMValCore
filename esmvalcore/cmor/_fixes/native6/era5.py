@@ -5,6 +5,7 @@ import logging
 
 import iris
 import numpy as np
+from iris.cube import CubeList
 from iris.util import reverse
 
 from esmvalcore.cmor._fixes.fix import Fix
@@ -235,7 +236,7 @@ class Orog(Fix):
             cube = remove_time_coordinate(cube)
             divide_by_gravity(cube)
             fixed_cubes.append(cube)
-        return iris.cube.CubeList(fixed_cubes)
+        return CubeList(fixed_cubes)
 
 
 class Pr(Fix):
@@ -337,6 +338,18 @@ class Rlns(Fix):
         return cubes
 
 
+class Rls(Fix):
+    """Fixes for Rls."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes["positive"] = "down"
+
+        return cubes
+
+
 class Rlus(Fix):
     """Fixes for Rlus."""
 
@@ -350,16 +363,30 @@ class Rlus(Fix):
         return cubes
 
 
-class Rls(Fix):
-    """Fixes for Rls."""
+class Rlut(Fix):
+    """Fixes for Rlut."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        fixed_cubes = CubeList()
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            cube.attributes["positive"] = "down"
+            cube.attributes["positive"] = "up"
+            fixed_cubes.append(-cube)
 
-        return cubes
+        return fixed_cubes
+
+
+class Rlutcs(Fix):
+    """Fixes for Rlutcs."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = CubeList()
+        for cube in cubes:
+            cube.attributes["positive"] = "up"
+            fixed_cubes.append(-cube)
+
+        return fixed_cubes
 
 
 class Rsds(Fix):
@@ -573,7 +600,7 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        fixed_cubes = iris.cube.CubeList()
+        fixed_cubes = CubeList()
         for cube in cubes:
             cube.var_name = self.vardef.short_name
             if self.vardef.standard_name:
