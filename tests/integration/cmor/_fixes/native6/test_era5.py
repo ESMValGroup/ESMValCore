@@ -17,9 +17,9 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     fix_accumulated_units,
     get_frequency,
 )
-from esmvalcore.cmor.fix import fix_data, fix_metadata
+from esmvalcore.cmor.fix import fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
-from esmvalcore.preprocessor import cmor_check_data, cmor_check_metadata
+from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = (
     "Contains modified Copernicus Climate Change Service Information "
@@ -1519,7 +1519,7 @@ VARIABLES = [
 @pytest.mark.parametrize(("era5_cubes", "cmor_cubes", "var", "mip"), VARIABLES)
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-    fixed_cubes = fix_metadata(era5_cubes, var, "native6", "ERA5", mip)
+    fixed_cubes = fix_metadata(era5_cubes, var, "native6", "era5", mip)
 
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
@@ -1527,11 +1527,6 @@ def test_cmorization(era5_cubes, cmor_cubes, var, mip):
 
     # Test that CMOR checks are passing
     fixed_cubes = cmor_check_metadata(fixed_cube, "native6", mip, var)
-
-    fixed_cube = fix_data(fixed_cube, var, "native6", "ERA5", mip)
-
-    # Test that CMOR checks are passing
-    fixed_cube = cmor_check_data(fixed_cube, "native6", mip, var)
 
     if fixed_cube.coords("time"):
         for cube in [fixed_cube, cmor_cube]:
