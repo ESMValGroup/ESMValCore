@@ -55,3 +55,11 @@ class ESMValCoreDeprecationWarning(ESMValCoreUserWarning):
 
 class MissingConfigParameter(ESMValCoreUserWarning):
     """Config parameter is missing."""
+
+
+class ESMValCorePreprocessorWarning(ESMValCoreUserWarning):
+    """Custom preprocessor warning."""
+
+
+class ESMValCoreLoadWarning(ESMValCorePreprocessorWarning):
+    """Custom load warning."""

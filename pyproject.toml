@@ -48,6 +48,7 @@ dependencies = [
     "isodate>=0.7.0",
     "jinja2",
     "nc-time-axis",  # needed by iris.plot
+    "ncdata",
     "nested-lookup",
     "netCDF4",
     "numpy!=1.24.3",

@@ -77,8 +77,8 @@ class ESMPyRegridder:
     ):
         """Initialize class instance."""
         # These regridders are not lazy, so load source and target data once.
-        src_cube.data  # # noqa: B018 pylint: disable=pointless-statement
-        tgt_cube.data  # # noqa: B018 pylint: disable=pointless-statement
+        src_cube.data  # noqa: B018 pylint: disable=pointless-statement
+        tgt_cube.data  # noqa: B018 pylint: disable=pointless-statement
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
         self.method = method
@@ -99,7 +99,7 @@ class ESMPyRegridder:
 
         """
         # These regridders are not lazy, so load source data once.
-        cube.data  # # noqa: B018 pylint: disable=pointless-statement
+        cube.data  # noqa: B018 pylint: disable=pointless-statement
         src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
         regridder = build_regridder(
             src_rep,

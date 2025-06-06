@@ -1735,7 +1735,6 @@ def test_load(mocker, session):
         },
         "fix_file": {
             "add_unique_suffix": True,
-            "session": session,
             "dataset": "CanESM2",
             "ensemble": "r1i1p1",
             "exp": "historical",
@@ -1743,6 +1742,7 @@ def test_load(mocker, session):
             "mip": "Oyr",
             "output_dir": fix_dir_prefix,
             "project": "CMIP5",
+            "session": session,
             "short_name": "chl",
             "timerange": "2000/2005",
         },
