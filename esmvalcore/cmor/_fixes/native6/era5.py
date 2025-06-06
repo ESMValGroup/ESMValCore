@@ -337,6 +337,18 @@ class Rlns(Fix):
         return cubes
 
 
+class Rls(Fix):
+    """Fixes for Rls."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes["positive"] = "down"
+
+        return cubes
+
+
 class Rlus(Fix):
     """Fixes for Rlus."""
 
@@ -350,16 +362,22 @@ class Rlus(Fix):
         return cubes
 
 
-class Rls(Fix):
-    """Fixes for Rls."""
+class Rlut(Fix):
+    """Fixes for Rlut."""
 
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            cube.attributes["positive"] = "down"
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.attributes["positive"] = "up"
+        return -cube
 
-        return cubes
+
+class Rlutcs(Fix):
+    """Fixes for Rlutcs."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.attributes["positive"] = "up"
+        return -cube
 
 
 class Rsds(Fix):
