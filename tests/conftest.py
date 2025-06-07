@@ -1,3 +1,4 @@
+import warnings
 from copy import deepcopy
 from pathlib import Path
 
@@ -15,20 +16,28 @@ from iris.cube import Cube
 
 import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
-from esmvalcore.config._config_object import _get_global_config
 
 
 @pytest.fixture
 def cfg_default():
     """Create a configuration object with default values."""
-    cfg = _get_global_config()
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Do not instantiate `Config` objects directly",
+            category=UserWarning,
+            module="esmvalcore",
+        )
+        cfg = Config()
     cfg.load_from_dirs([])
     return cfg
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
+    for key in CFG:
+        monkeypatch.delitem(CFG, key)
     for key, value in cfg_default.items():
         monkeypatch.setitem(CFG, key, deepcopy(value))
 
