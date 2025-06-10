@@ -369,6 +369,26 @@ class TestConcatenate(unittest.TestCase):
         assert_array_equal(result.coord("time").points, np.arange(7))
         assert_array_equal(result.data, np.array([0, 0, 0, 1, 1, 1, 1]))
 
+    def test_concatenate_remove_unwanted_attributes(self):
+        """Test concatenate removes unwanted attributes."""
+        attributes = ("history", "creation_date", "tracking_id", "comment")
+        for i, cube in enumerate(self.raw_cubes):
+            for attr in attributes:
+                cube.attributes[attr] = f"{attr}-{i}"
+        concatenated = _io.concatenate(self.raw_cubes)
+        assert not set(attributes) & set(concatenated.attributes)
+
+    def test_concatenate_remove_unwanted_attributes_from_coords(self):
+        """Test concatenate removes unwanted attributes from coords."""
+        attributes = ("history",)
+        for i, cube in enumerate(self.raw_cubes):
+            for coord in cube.coords():
+                for attr in attributes:
+                    coord.attributes[attr] = f"{attr}-{i}"
+        concatenated = _io.concatenate(self.raw_cubes)
+        for coord in concatenated.coords():
+            assert not set(attributes) & set(coord.attributes)
+
     def test_concatenate_differing_attributes(self):
         """Test concatenation of cubes with different attributes."""
         cubes = CubeList(self.raw_cubes)

@@ -2,29 +2,38 @@
 
 from __future__ import annotations
 
+import contextlib
 import warnings
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask.array as da
 import iris
 import iris.cube
 import iris.util
+import ncdata
+import ncdata.iris
+import ncdata.iris_xarray
+import ncdata.threadlock_sharing
 import numpy as np
-from cf_units import Unit
+import xarray as xr
+from cf_units import Unit, suppress_errors
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.warnings import IrisVagueMetadataWarning
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
+    from pathlib import Path
 
     from iris.coords import Coord, DimCoord
 
     from esmvalcore.typing import NetCDFAttr
 
+# Enable lock sharing between ncdata and iris/xarray
+ncdata.threadlock_sharing.enable_lockshare(iris=True, xarray=True)
 
-@contextmanager
+
+@contextlib.contextmanager
 def ignore_iris_vague_metadata_warnings() -> Generator[None]:
     """Ignore specific warnings.
 
@@ -518,3 +527,126 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             msg,
         )
     return cube
+
+
+@contextlib.contextmanager
+def ignore_warnings_context(
+    warnings_to_ignore: list[dict[str, Any]] | None = None,
+) -> Generator[None]:
+    """Ignore warnings (context manager).
+
+    Parameters
+    ----------
+    warnings_to_ignore:
+        Additional warnings to ignore (by default, Iris warnings about missing
+        CF-netCDF measure variables and invalid units are ignored).
+
+    """
+    if warnings_to_ignore is None:
+        warnings_to_ignore = []
+
+    default_warnings_to_ignore: list[dict[str, Any]] = [
+        {
+            "message": "Missing CF-netCDF measure variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+        {  # iris >= 3.8
+            "message": "Ignoring invalid units .* on netCDF variable .*",
+            "category": UserWarning,
+            "module": "iris",
+        },
+    ]
+
+    with contextlib.ExitStack() as stack:
+        # Regular warnings
+        stack.enter_context(warnings.catch_warnings())
+        for warning_kwargs in warnings_to_ignore + default_warnings_to_ignore:
+            warning_kwargs.setdefault("action", "ignore")
+            warnings.filterwarnings(**warning_kwargs)
+
+        # Suppress UDUNITS-2 error messages that cannot be ignored with
+        # warnings.filterwarnings
+        # (see https://github.com/SciTools/cf-units/issues/240)
+        stack.enter_context(suppress_errors())
+
+        yield
+
+
+def _get_attribute(
+    data: ncdata.NcData | ncdata.NcVariable | xr.Dataset | xr.DataArray,
+    attribute_name: str,
+) -> Any:
+    """Get attribute from an ncdata or xarray object."""
+    if isinstance(data, ncdata.NcData | ncdata.NcVariable):
+        attribute = data.attributes[attribute_name].value
+    else:  # xr.Dataset | xr.DataArray
+        attribute = data.attrs[attribute_name]
+    return attribute
+
+
+def dataset_to_iris(
+    dataset: xr.Dataset | ncdata.NcData,
+    filepath: str | Path | None = None,
+    ignore_warnings: list[dict[str, Any]] | None = None,
+) -> iris.cube.CubeList:
+    """Convert dataset to :class:`~iris.cube.CubeList`.
+
+    Parameters
+    ----------
+    dataset:
+        The dataset object to convert.
+    filepath:
+        The path that the dataset was loaded from.
+    ignore_warnings:
+        Keyword arguments passed to :func:`warnings.filterwarnings` used to
+        ignore warnings during data loading. Each list element corresponds
+        to one call to :func:`warnings.filterwarnings`.
+
+    Returns
+    -------
+    iris.cube.CubeList
+        :class:`~iris.cube.CubeList` containing the requested cubes.
+
+    Raises
+    ------
+    TypeError
+        Invalid type for ``dataset`` given.
+
+    """
+    if isinstance(dataset, xr.Dataset):
+        conversion_func = ncdata.iris_xarray.cubes_from_xarray
+        ds_coords = dataset.coords
+    elif isinstance(dataset, ncdata.NcData):
+        conversion_func = ncdata.iris.to_iris
+        ds_coords = dataset.variables
+    else:
+        msg = (
+            f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
+            f"type {type(dataset)}"
+        )
+        raise TypeError(
+            msg,
+        )
+
+    with ignore_warnings_context(ignore_warnings):
+        cubes = conversion_func(dataset)
+
+    # Restore the lat/lon coordinate units that iris changes to degrees
+    for coord_name in ["latitude", "longitude"]:
+        for cube in cubes:
+            try:
+                coord = cube.coord(coord_name)
+            except iris.exceptions.CoordinateNotFoundError:
+                pass
+            else:
+                if coord.var_name in ds_coords:
+                    ds_coord = ds_coords[coord.var_name]
+                    coord.units = _get_attribute(ds_coord, "units")
+
+            # If possible, add the source file as an attribute to support
+            # grouping by file when calling fix_metadata.
+            if filepath is not None:
+                cube.attributes.globals["source_file"] = str(filepath)
+
+    return cubes

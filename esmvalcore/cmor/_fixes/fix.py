@@ -27,10 +27,16 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
+from esmvalcore.iris_helpers import (
+    has_unstructured_grid,
+    safe_convert_units,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    import ncdata
+    import xarray as xr
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
@@ -77,34 +83,43 @@ class Fix:
 
     def fix_file(
         self,
-        filepath: Path,
+        file: str | Path | xr.Dataset | ncdata.NcData,
         output_dir: Path,
         add_unique_suffix: bool = False,
-    ) -> str | Path:
-        """Apply fixes to the files prior to creating the cube.
+    ) -> str | Path | xr.Dataset | ncdata.NcData:
+        """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-        Should be used only to fix errors that prevent loading or cannot be
-        fixed in the cube (e.g., those related to `missing_value` or
-        `_FillValue`).
+        This is mainly intended to fix errors that prevent loading the data
+        with Iris (e.g., those related to ``missing_value`` or ``_FillValue``)
+        or operations that are more efficient with other packages (e.g.,
+        loading files with lots of variables is much faster with Xarray than
+        Iris).
+
+        Warning
+        -------
+        A path should only be returned if it points to the original (unchanged)
+        file (i.e., a fix was not necessary). If a fix is necessary, this
+        function should return a :class:`~ncdata.NcData` or
+        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
+        input data should be created (this is very inefficient).
 
         Parameters
         ----------
-        filepath:
-            File to fix.
+        file:
+            Data to fix or path to them. Original files should not be
+            overwritten.
         output_dir:
             Output directory for fixed files.
         add_unique_suffix:
-            Adds a unique suffix to `output_dir` for thread safety.
+            Adds a unique suffix to ``output_dir`` for thread safety.
 
         Returns
         -------
-        str or pathlib.Path
-            Path to the corrected file. It can be different from the original
-            filepath if a fix has been applied, but if not it should be the
-            original filepath.
+        str | pathlib.Path | xr.Dataset | ncdata.NcData:
+            Fixed data or a path to them.
 
         """
-        return filepath
+        return file
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         """Apply fixes to the metadata of the cube.
@@ -120,7 +135,7 @@ class Fix:
 
         Returns
         -------
-        Iterable[iris.cube.Cube]
+        Sequence[iris.cube.Cube]
             Fixed cubes. They can be different instances.
 
         """
