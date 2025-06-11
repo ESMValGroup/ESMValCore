@@ -875,6 +875,84 @@ def rlus_cmor_e1hr():
     return CubeList([cube])
 
 
+def rlut_era5_monthly():
+    freq = "monthly"
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units="W m**-2",
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rlut_cmor_amon():
+    mip = "Amon"
+    short_name = "rlut"
+    cmor_table = CMOR_TABLES["native6"]
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = -_cmor_data(mip)
+    cube = Cube(
+        data.astype("float32"),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_latitude(), 1),
+            (_cmor_longitude(), 2),
+        ],
+        attributes={"comment": COMMENT, "positive": "up"},
+    )
+    return CubeList([cube])
+
+
+def rlutcs_era5_monthly():
+    freq = "monthly"
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units="W m**-2",
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rlutcs_cmor_amon():
+    mip = "Amon"
+    short_name = "rlutcs"
+    cmor_table = CMOR_TABLES["native6"]
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = -_cmor_data(mip)
+    cube = Cube(
+        data.astype("float32"),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_latitude(), 1),
+            (_cmor_longitude(), 2),
+        ],
+        attributes={"comment": COMMENT, "positive": "up"},
+    )
+    return CubeList([cube])
+
+
 def rls_era5_hourly():
     time = _era5_time("hourly")
     cube = Cube(
@@ -1442,6 +1520,8 @@ VARIABLES = [
         (rlds_era5_hourly(), rlds_cmor_e1hr(), "rlds", "E1hr"),
         (rlns_era5_hourly(), rlns_cmor_e1hr(), "rlns", "E1hr"),
         (rlus_era5_hourly(), rlus_cmor_e1hr(), "rlus", "E1hr"),
+        (rlut_era5_monthly(), rlut_cmor_amon(), "rlut", "Amon"),
+        (rlutcs_era5_monthly(), rlutcs_cmor_amon(), "rlutcs", "Amon"),
         (rls_era5_hourly(), rls_cmor_e1hr(), "rls", "E1hr"),
         (rsds_era5_hourly(), rsds_cmor_e1hr(), "rsds", "E1hr"),
         (rsns_era5_hourly(), rsns_cmor_e1hr(), "rsns", "E1hr"),

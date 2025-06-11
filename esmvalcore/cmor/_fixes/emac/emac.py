@@ -41,7 +41,7 @@ class AllVars(EmacFix):
         "kg/m**2s": "kg m-2 s-1",
     }
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Fix file.
 
         Fixes hybrid pressure level coordinate.
@@ -54,13 +54,13 @@ class AllVars(EmacFix):
 
         """
         if "alevel" not in self.vardef.dimensions:
-            return filepath
+            return file
         new_path = self.get_fixed_filepath(
             output_dir,
-            filepath,
+            file,
             add_unique_suffix=add_unique_suffix,
         )
-        copyfile(filepath, new_path)
+        copyfile(file, new_path)
         with Dataset(new_path, mode="a") as dataset:
             if "formula_terms" in dataset.variables["lev"].ncattrs():
                 del dataset.variables["lev"].formula_terms
