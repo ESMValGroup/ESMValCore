@@ -17,7 +17,6 @@ comment:           Positive values correspond to higher partial pressure in sea 
 !----------------------------------
 dimensions:        longitude latitude time
 out_name:          dpn2o
-positive:          up
 type:              real
 !----------------------------------
 !
