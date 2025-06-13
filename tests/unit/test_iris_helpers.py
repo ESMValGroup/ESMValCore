@@ -23,7 +23,7 @@ from iris.coords import (
 )
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, UnitConversionError
-from iris.warnings import IrisUnknownCellMethodWarning
+from iris.warnings import IrisLoadWarning, IrisUnknownCellMethodWarning
 
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
@@ -732,9 +732,20 @@ def test_dataset_to_iris_ignore_warnings(conversion_func, dummy_cubes):
     else:
         dataset.variables["ta"].attributes["units"] = "invalid_units"
 
+    ignore_warnings = [
+        {
+            "message": (
+                r"Not all file objects were parsed correctly. See "
+                r"iris.loading.LOAD_PROBLEMS for details."
+            ),
+            "category": IrisLoadWarning,
+            "module": "iris",
+        },
+    ]
+
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        dataset_to_iris(dataset)
+        dataset_to_iris(dataset, ignore_warnings=ignore_warnings)
 
 
 @pytest.mark.parametrize(
