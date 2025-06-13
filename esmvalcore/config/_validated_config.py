@@ -64,9 +64,7 @@ class ValidatedConfig(MutableMapping):
         """Map key to value."""
         if key not in self._validate:
             msg = f"`{key}` is not a valid config parameter."
-            raise InvalidConfigParameter(
-                msg,
-            )
+            raise InvalidConfigParameter(msg)
         try:
             cval = self._validate[key](val)
         except ValidationError as verr:

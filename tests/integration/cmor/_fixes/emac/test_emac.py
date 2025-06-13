@@ -41,7 +41,6 @@ from esmvalcore.cmor._fixes.emac.emac import (
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 
@@ -195,7 +194,7 @@ def _get_fix(mip, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     vardef = get_var_info(project="EMAC", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.emac.emac, fix_name)
     return cls(vardef, extra_facets=extra_facets)

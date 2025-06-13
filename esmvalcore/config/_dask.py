@@ -61,18 +61,14 @@ def validate_dask_config(dask_config: Mapping) -> None:
             msg = (
                 f"Key '{option}' needs to be defined for 'dask' configuration"
             )
-            raise InvalidConfigParameter(
-                msg,
-            )
+            raise InvalidConfigParameter(msg)
     profiles = dask_config["profiles"]
     use = dask_config["use"]
     if not isinstance(profiles, Mapping):
         msg = (
             f"Key 'dask.profiles' needs to be a mapping, got {type(profiles)}"
         )
-        raise InvalidConfigParameter(
-            msg,
-        )
+        raise InvalidConfigParameter(msg)
     for profile, profile_cfg in profiles.items():
         has_scheduler_address = any(
             [
@@ -85,9 +81,7 @@ def validate_dask_config(dask_config: Mapping) -> None:
                 f"Key 'dask.profiles.{profile}' uses 'cluster' and "
                 f"'scheduler_address', can only have one of those"
             )
-            raise InvalidConfigParameter(
-                msg,
-            )
+            raise InvalidConfigParameter(msg)
         if "cluster" in profile_cfg:
             cluster = profile_cfg["cluster"]
             if not isinstance(cluster, Mapping):
@@ -95,25 +89,19 @@ def validate_dask_config(dask_config: Mapping) -> None:
                     f"Key 'dask.profiles.{profile}.cluster' needs to be a "
                     f"mapping, got {type(cluster)}"
                 )
-                raise InvalidConfigParameter(
-                    msg,
-                )
+                raise InvalidConfigParameter(msg)
             if "type" not in cluster:
                 msg = (
                     f"Key 'dask.profiles.{profile}.cluster' does not have a "
                     f"'type'"
                 )
-                raise InvalidConfigParameter(
-                    msg,
-                )
+                raise InvalidConfigParameter(msg)
     if use not in profiles:
         msg = (
             f"Key 'dask.use' needs to point to an element of 'dask.profiles'; "
             f"got '{use}', expected one of {list(profiles.keys())}"
         )
-        raise InvalidConfigParameter(
-            msg,
-        )
+        raise InvalidConfigParameter(msg)
 
 
 # TODO: Remove in v2.14.0
