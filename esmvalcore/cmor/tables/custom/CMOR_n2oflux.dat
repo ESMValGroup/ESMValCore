@@ -2,7 +2,7 @@ SOURCE: CMIP6
 !============
 variable_entry:    n2oflux
 !============
-modeling_realm:    atmos
+modeling_realm:    ocnBgchem
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
@@ -10,8 +10,8 @@ standard_name:
 units:             mol m-2 s-1
 cell_methods:      area: time: mean
 cell_measures:     area: areacella
-long_name:         Surface Upward Mole Flux of Nitrous Oxide (N2O)
-comment:           This is the ocean to atmosphere N2O flux, i.e., positive flux is into the atmosphere.
+long_name:         Surface Upward Ocean to Atmosphere Mole Flux of Nitrous Oxide (N2O)
+comment:           Positive flux is into the atmosphere.
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

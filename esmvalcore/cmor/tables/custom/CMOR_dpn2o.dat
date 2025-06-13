@@ -2,7 +2,7 @@ SOURCE: CMIP6
 !============
 variable_entry:    dpn2o
 !============
-modeling_realm:    atmos
+modeling_realm:    ocnBgchem
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
