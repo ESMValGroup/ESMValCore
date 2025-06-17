@@ -551,7 +551,7 @@ def ignore_warnings_context(
             "category": UserWarning,
             "module": "iris",
         },
-        {  # iris >= 3.8
+        {
             "message": "Ignoring invalid units .* on netCDF variable .*",
             "category": UserWarning,
             "module": "iris",
