@@ -765,7 +765,37 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20210615",
     }
-    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
+    file3 = esmvalcore.local.LocalFile(
+        rootpath,
+        "CMIP5",
+        "CMIP",
+        "MOHC",
+        "UKESM-0-LL",
+        "piControl",
+        "r1i1p1f1",
+        "fx",
+        "tas",
+        "gn",
+        "v20210615",
+        "areacello_fx_UKESM-0-LL_piControl_r1i1p1f1_gn.nc",
+    )
+    file3.facets = {
+        "activity": "CMIP",
+        "project": "CMIP5",
+        "institute": "MOHC",
+        "dataset": "UKESM-0-LL",
+        "exp": "piControl",
+        "mip": "fx",
+        "ensemble": "r1i1p1f1",
+        "short_name": "areacello",
+        "grid": "gn",
+        "version": "v20210615",
+    }
+    monkeypatch.setattr(
+        Dataset,
+        "find_files",
+        mock_find_files(file1, file2, file3),
+    )
 
     dataset = Dataset(
         short_name="tas",
@@ -776,6 +806,14 @@ def test_from_files_with_supplementary(session, monkeypatch):
     )
     dataset.session = session
     dataset.add_supplementary(short_name="areacella", mip="*", ensemble="*")
+    dataset.add_supplementary(
+        project="CMIP5",
+        dataset="UKESM-0-LL",
+        experiment="piControl",
+        short_name="areacello",
+        mip="*",
+        ensemble="*",
+    )
 
     expected = Dataset(
         short_name="tas",
@@ -787,6 +825,14 @@ def test_from_files_with_supplementary(session, monkeypatch):
     expected.session = session
     expected.add_supplementary(
         short_name="areacella",
+        mip="fx",
+        ensemble="r1i1p1f1",
+    )
+    expected.add_supplementary(
+        project="CMIP5",
+        dataset="UKESM-0-LL",
+        experiment="piControl",
+        short_name="areacello",
         mip="fx",
         ensemble="r1i1p1f1",
     )
