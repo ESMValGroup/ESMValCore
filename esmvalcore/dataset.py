@@ -317,7 +317,11 @@ class Dataset:
         supplementaries: list[Dataset] = []
         for supplementary_ds in self.supplementaries:
             for facet in INHERITED_FACETS:
-                if facet in self.facets:
+                # allow use of facets from supplementary variable dict
+                if (
+                    facet in self.facets
+                    and facet not in supplementary_ds.facets
+                ):
                     supplementary_ds.facets[facet] = self.facets[facet]
             supplementaries.extend(supplementary_ds.from_files())
         self.supplementaries = supplementaries
