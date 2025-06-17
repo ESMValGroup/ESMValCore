@@ -6,8 +6,6 @@ Includes a context manager to temporarily modify sys.argv
 import contextlib
 import copy
 import functools
-import os
-import shutil
 import sys
 import warnings
 from pathlib import Path
@@ -83,30 +81,24 @@ def test_empty_run(tmp_path):
         diagnostics: null
     """)
     recipe_file.write_text(content)
-    log_dir = f"{tmp_path}/esmvaltool_output"
+    out_dir = tmp_path / "esmvaltool_output"
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.yml"
-    config_file.write_text(f"output_dir: {log_dir}")
+    config_file.write_text(f"output_dir: {out_dir}")
 
     msg = "The given recipe does not have any diagnostic."
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         with pytest.raises(RecipeError, match=msg):
             ESMValTool().run(recipe_file, config_dir=config_dir)
-    log_file = os.path.join(
-        log_dir,
-        os.listdir(log_dir)[0],
-        "run",
-        "main_log.txt",
-    )
-    filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
-    )
-    shutil.rmtree(log_dir)
 
-    assert log_file
-    assert not filled_recipe
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
 
 
 # TODO: remove in v2.14.0
@@ -127,30 +119,26 @@ def test_empty_run_old_config(tmp_path):
         diagnostics: null
     """)
     recipe_file.write_text(content)
-    log_dir = f"{tmp_path}/esmvaltool_output"
+    out_dir = tmp_path / "esmvaltool_output"
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.yml"
-    config_file.write_text(f"output_dir: {log_dir}")
+    config_file.write_text(f"output_dir: {out_dir}")
 
     err_msg = "The given recipe does not have any diagnostic."
     warn_msg = "Please use the option `config_dir` instead"
-    with pytest.raises(RecipeError, match=err_msg):
-        with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
-            ESMValTool().run(recipe_file, config_file=config_file)
-    log_file = os.path.join(
-        log_dir,
-        os.listdir(log_dir)[0],
-        "run",
-        "main_log.txt",
-    )
-    filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
-    )
-    shutil.rmtree(log_dir)
+    with (
+        pytest.raises(RecipeError, match=err_msg),
+        pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg),
+    ):
+        ESMValTool().run(recipe_file, config_file=config_file)
 
-    assert log_file
-    assert not filled_recipe
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
 
 
 # TODO: remove in v2.14.0
@@ -171,11 +159,11 @@ def test_empty_run_ignore_old_config(tmp_path, monkeypatch):
         diagnostics: null
     """)
     recipe_file.write_text(content)
-    log_dir = f"{tmp_path}/esmvaltool_output"
+    out_dir = tmp_path / "esmvaltool_output"
     new_config_dir = tmp_path / "new_config"
     new_config_dir.mkdir(parents=True, exist_ok=True)
     new_config_file = new_config_dir / "config.yml"
-    new_config_file.write_text(f"output_dir: {log_dir}")
+    new_config_file.write_text(f"output_dir: {out_dir}")
     old_config_dir = tmp_path / "old_config"
     old_config_dir.mkdir(parents=True, exist_ok=True)
     old_config_file = old_config_dir / "config.yml"
@@ -198,19 +186,13 @@ def test_empty_run_ignore_old_config(tmp_path, monkeypatch):
             config_file=old_config_file,
             config_dir=new_config_dir,
         )
-    log_file = os.path.join(
-        log_dir,
-        os.listdir(log_dir)[0],
-        "run",
-        "main_log.txt",
-    )
-    filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml",
-    )
-    shutil.rmtree(log_dir)
 
-    assert log_file
-    assert not filled_recipe
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
 
 
 def test_recipes_get(tmp_path, monkeypatch):
