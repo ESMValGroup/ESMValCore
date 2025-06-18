@@ -676,7 +676,7 @@ Extra facets allows for the addition of more details per project, dataset, MIP
 table, and variable name.
 
 Format of the extra facets
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+``````````````````````````
 
 Extra facets are configured in the ``extra_facets`` section of the
 project-specific configuration.
@@ -763,7 +763,7 @@ Here, the following extra facets will be added to a dataset with project
 .. _config-extra-facets-defaults:
 
 Default extra facets
-~~~~~~~~~~~~~~~~~~~~
+````````````````````
 
 Default extra facets are specified in ``extra_facets_*.yml`` files located in
 `this
