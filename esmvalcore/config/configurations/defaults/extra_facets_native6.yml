@@ -1,0 +1,198 @@
+# Extra facets for native6 ERA5 data in GRIB format
+#
+# See
+# https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names
+# for details on these facets.
+
+# Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+projects:
+  native6:
+    extra_facets:
+      ERA5:
+        # Settings for all variables of all MIPs
+        '*':
+          '*':
+            automatic_regrid: true
+            family: E5
+            type: an
+            typeid: '00'
+            version: v1
+
+          # Variable-specific settings
+          albsn:
+            level: sf
+            grib_id: '032'
+          cl:
+            level: pl
+            grib_id: '248'
+          cli:
+            level: pl
+            grib_id: '247'
+          clt:
+            level: sf
+            grib_id: '164'
+          clw:
+            level: pl
+            grib_id: '246'
+          hur:
+            level: pl
+            grib_id: '157'
+          hus:
+            level: pl
+            grib_id: '133'
+          o3:
+            level: pl
+            grib_id: '203'
+          prw:
+            level: sf
+            grib_id: '137'
+          ps:
+            level: sf
+            grib_id: '134'
+          psl:
+            level: sf
+            grib_id: '151'
+          rainmxrat27:
+            level: pl
+            grib_id: '075'
+          sftlf:
+            level: sf
+            grib_id: '172'
+          siconc:
+            level: sf
+            grib_id: '031'
+          siconca:
+            level: sf
+            grib_id: '031'
+          snd:
+            level: sf
+            grib_id: '141'
+          snowmxrat27:
+            level: pl
+            grib_id: '076'
+          ta:
+            level: pl
+            grib_id: '130'
+          tas:
+            level: sf
+            grib_id: '167'
+          tdps:
+            level: sf
+            grib_id: '168'
+          tos:
+            level: sf
+            grib_id: '034'
+          toz:
+            level: sf
+            grib_id: '206'
+          ts:
+            level: sf
+            grib_id: '235'
+          ua:
+            level: pl
+            grib_id: '131'
+          uas:
+            level: sf
+            grib_id: '165'
+          va:
+            level: pl
+            grib_id: '132'
+          vas:
+            level: sf
+            grib_id: '166'
+          wap:
+            level: pl
+            grib_id: '135'
+          zg:
+            level: pl
+            grib_id: '129'
+
+        # MIP-specific settings
+        AERday:
+          '*':
+            tres: 1D
+        AERhr:
+          '*':
+            tres: 1H
+        AERmon:
+          '*':
+            tres: 1M
+        AERmonZ:
+          '*':
+            tres: 1M
+        Amon:
+          '*':
+            tres: 1M
+        CFday:
+          '*':
+            tres: 1D
+        CFmon:
+          '*':
+            tres: 1M
+        day:
+          '*':
+            tres: 1D
+        E1hr:
+          '*':
+            tres: 1H
+        E1hrClimMon:
+          '*':
+            tres: 1H
+        Eday:
+          '*':
+            tres: 1D
+        EdayZ:
+          '*':
+            tres: 1D
+        Efx:
+          '*':
+            tres: IV
+        Emon:
+          '*':
+            tres: 1M
+        EmonZ:
+          '*':
+            tres: 1M
+        fx:
+          '*':
+            tres: IV
+        IfxAnt:
+          '*':
+            tres: IV
+        IfxGre:
+          '*':
+            tres: IV
+        ImonAnt:
+          '*':
+            tres: 1M
+        ImonGre:
+          '*':
+            tres: 1M
+        LImon:
+          '*':
+            tres: 1M
+        Lmon:
+          '*':
+            tres: 1M
+        Oday:
+          '*':
+            tres: 1D
+        Ofx:
+          '*':
+            tres: IV
+        Omon:
+          '*':
+            tres: 1M
+        SIday:
+          '*':
+            tres: 1D
+        SImon:
+          '*':
+            tres: 1M

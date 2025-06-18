@@ -14,7 +14,6 @@ import esmvalcore.cmor._fixes.access.access_esm1_5
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 time_coord = DimCoord(
@@ -132,7 +131,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = frequency
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ACCESS", mip=mip, short_name=short_name)

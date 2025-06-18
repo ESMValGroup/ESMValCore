@@ -75,8 +75,7 @@ def fix_file(  # noqa: PLR0913
     frequency:
         Variable's data frequency, if available.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------
@@ -145,8 +144,7 @@ def fix_metadata(
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------
@@ -232,8 +230,7 @@ def fix_data(
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------

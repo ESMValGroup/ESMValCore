@@ -1,6 +1,5 @@
 check_level: default
 diagnostics: null
-extra_facets_dir: []
 max_datasets: null
 max_years: null
 resume_from: []
