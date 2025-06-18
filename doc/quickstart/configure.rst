@@ -639,13 +639,9 @@ Example:
 
   projects:
     CMIP6:
-      extra_facets:
-        CanESM5:
-          Amon:
-            tas:
-              a_new_key: a_new_value
+      ...  # project-specific options
 
-The following options are available for each project:
+The following project-specific options are available:
 
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | Option                        | Description                            | Type                        | Default value                          |
