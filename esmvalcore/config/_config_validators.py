@@ -42,7 +42,7 @@ class ValidationError(ValueError):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-def _make_type_validator(cls, *, allow_none=False):
+def _make_type_validator(cls: Any, *, allow_none: bool = False) -> Any:
     """Construct a type validator for `cls`.
 
     Return a validator that converts inputs to *cls* or raises (and
@@ -343,7 +343,7 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
-def validate_projects(value: Any):
+def validate_projects(value: Any) -> dict[str, dict[str, Any]]:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
