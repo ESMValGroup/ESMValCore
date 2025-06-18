@@ -343,7 +343,7 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
-def validate_projects(value: Any) -> dict[str, dict[str, Any]]:
+def validate_projects(value: Any) -> Any:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
