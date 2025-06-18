@@ -646,9 +646,9 @@ The following project-specific options are available:
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
-| ``extra_facets``              | Extra key-value pairs (*facets*) added | :obj:`dict`                 | See                                    |
-|                               | to datasets in addition to the facets  |                             | :ref:`config-extra-facets-defaults`    |
-|                               | defined in the recipe. See             |                             |                                        |
+| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
+|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
+|                               | facets defined in the recipe. See      |                             |                                        |
 |                               | :ref:`config-extra-facets` for         |                             |                                        |
 |                               | details.                               |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
