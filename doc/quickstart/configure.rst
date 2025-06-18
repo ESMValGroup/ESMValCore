@@ -166,9 +166,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic scripts).                   |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets``              | :ref:`config-extra-facets`.            | :obj:`dict`                 | See                                    |
-|                               |                                        |                             | :ref:`config-extra-facets-defaults`    |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
 |                               | ``info``, ``warning``, ``error``).     |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
@@ -190,6 +187,8 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic run. [#f3]_                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``projects``                  | :ref:`config-projects`.                | :obj:`dict`                 | See table in :ref:`config-projects`    |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
 |                               | the run was successful, see also       |                             |                                        |
