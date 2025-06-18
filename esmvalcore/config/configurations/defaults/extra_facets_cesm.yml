@@ -10,22 +10,22 @@
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
 ---
-
-extra_facets:
+projects:
   CESM:
-    CESM2:
-      '*':
-        # Optional facets for every variable
-        # It is necessary to define them here to allow multiple file/dir name
-        # conventions, see
-        # https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html
+    extra_facets:
+      CESM2:
         '*':
-          string: ''
-          tdir: ''
-          tperiod: ''
+          # Optional facets for every variable
+          # It is necessary to define them here to allow multiple file/dir name
+          # conventions, see
+          # https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html
+          '*':
+            string: ''
+            tdir: ''
+            tperiod: ''
 
-        # Default facets for variables
-        tas:
-          raw_name: TREFHT
-          gcomp: atm
-          scomp: cam
+          # Default facets for variables
+          tas:
+            raw_name: TREFHT
+            gcomp: atm
+            scomp: cam

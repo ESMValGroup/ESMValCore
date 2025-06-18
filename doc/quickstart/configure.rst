@@ -575,116 +575,6 @@ Options for Dask profiles
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 
-.. _config-extra-facets:
-
-Extra Facets
-============
-
-It can be useful to automatically add extra key-value pairs to variables or
-datasets without explicitly specifying them in the recipe.
-These key-value pairs can be used for :ref:`finding data
-<extra-facets-data-finder>` or for providing extra information to the functions
-that :ref:`fix data <extra-facets-fixes>` before passing it on to the
-preprocessor.
-
-To support this, we provide the **extra facets** facilities.
-Facets are the key-value pairs described in :ref:`Datasets`.
-Extra facets allows for the addition of more details per project, dataset, MIP
-table, and variable name.
-
-Format of the extra facets
---------------------------
-Extra facets are configured in the  ``extra_facets`` section of the
-configuration.
-They are specified in nested dictionaries with the following levels:
-
-1. Project
-2. Dataset name
-3. MIP table
-4. Variable short name
-
-Example:
-
-.. code-block:: yaml
-
-  extra_facets:
-    CMIP6:  # project
-      CanESM5:  # dataset name
-        Amon:  # MIP table
-          tas:  # variable short name
-            a_new_key: a_new_value  # extra facets
-
-The four top levels of keys (project, dataset name, MIP table, and variable
-short name) in this mapping can contain `Unix shell-style wildcards
-<https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
-The special characters used in shell-style wildcards are:
-
-+------------+----------------------------------------+
-|Pattern     | Meaning                                |
-+============+========================================+
-| ``*``      |   matches everything                   |
-+------------+----------------------------------------+
-| ``?``      |   matches any single character         |
-+------------+----------------------------------------+
-| ``[seq]``  |   matches any character in ``seq``     |
-+------------+----------------------------------------+
-| ``[!seq]`` |   matches any character not in ``seq`` |
-+------------+----------------------------------------+
-
-where ``seq`` can either be a sequence of characters or just a bunch of
-characters, for example ``[A-C]`` matches the characters ``A``, ``B``, and
-``C``, while ``[AC]`` matches the characters ``A`` and ``C``.
-
-Examples:
-
-.. code-block:: yaml
-
-  extra_facets:
-    CMIP6:  # project
-      CanESM5:  # dataset name
-        "*":  # MIP table
-          "*": # variable short name
-            a_new_key: a_new_value  # extra facets
-
-Here, the extra facet ``a_new_key: a_new_value`` will be added to any *CMIP6*
-data from model *CanESM5*.
-
-If keys are duplicated, later keys will take precedence over earlier keys:
-
-.. code-block:: yaml
-
-  extra_facets:
-    CMIP6:
-      CanESM5:
-        "*":
-          "*":
-            shared_key: with_wildcard
-            unique_key_1: test
-        Amon:
-          tas:
-            shared_key: without_wildcard
-            unique_key_2: test
-
-Here, the following extra facets will be added to a dataset with project
-*CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
-
-.. code-block:: yaml
-
-  unique_key_1: test
-  shared_key: without_wildcard  # takes value from later entry
-  unique_key_2: test
-
-.. _config-extra-facets-defaults:
-
-Default extra facets
---------------------
-
-Default extra facets are specified in ``extra_facets_*.yml`` files located in
-`this
-<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
-directory.
-
-
 .. _config-logging:
 
 Logging configuration
@@ -732,6 +622,154 @@ Available options:
 |                               | reporting. A progress bar is only      |                             |                                        |
 |                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-projects:
+
+Project-specific configuration
+==============================
+
+Configure project-specific settings in the ``projects`` section.
+
+Top-level keys in this section are projects, e.g., ``CMIP6``, ``CORDEX``, or
+``obs4MIPs``.
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:
+          Amon:
+            tas:
+              a_new_key: a_new_value
+
+The following options are available for each project:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``extra_facets``              | Extra key-value pairs (*facets*) added | :obj:`dict`                 | See                                    |
+|                               | to datasets in addition to the facets  |                             | :ref:`config-extra-facets-defaults`    |
+|                               | defined in the recipe. See             |                             |                                        |
+|                               | :ref:`config-extra-facets` for         |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-extra-facets:
+
+Extra Facets
+------------
+
+It can be useful to automatically add extra key-value pairs to variables or
+datasets without explicitly specifying them in the recipe.
+These key-value pairs can be used for :ref:`finding data
+<extra-facets-data-finder>` or for providing extra information to the functions
+that :ref:`fix data <extra-facets-fixes>` before passing it on to the
+preprocessor.
+
+To support this, we provide the **extra facets** facilities.
+Facets are the key-value pairs described in :ref:`Datasets`.
+Extra facets allows for the addition of more details per project, dataset, MIP
+table, and variable name.
+
+Format of the extra facets
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extra facets are configured in the ``extra_facets`` section of the
+project-specific configuration.
+They are specified in nested dictionaries with the following levels:
+
+1. Dataset name
+2. MIP table
+3. Variable short name
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          Amon:  # MIP table
+            tas:  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+The three top levels under ``extra_facets`` (dataset name, MIP table, and
+variable short name) can contain `Unix shell-style wildcards
+<https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
+The special characters used in shell-style wildcards are:
+
++------------+----------------------------------------+
+|Pattern     | Meaning                                |
++============+========================================+
+| ``*``      |   matches everything                   |
++------------+----------------------------------------+
+| ``?``      |   matches any single character         |
++------------+----------------------------------------+
+| ``[seq]``  |   matches any character in ``seq``     |
++------------+----------------------------------------+
+| ``[!seq]`` |   matches any character not in ``seq`` |
++------------+----------------------------------------+
+
+where ``seq`` can either be a sequence of characters or just a bunch of
+characters, for example ``[A-C]`` matches the characters ``A``, ``B``, and
+``C``, while ``[AC]`` matches the characters ``A`` and ``C``.
+
+Examples:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          "*":  # MIP table
+            "*":  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+Here, the extra facet ``a_new_key: a_new_value`` will be added to any *CMIP6*
+data from model *CanESM5*.
+
+If keys are duplicated, later keys will take precedence over earlier keys:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:
+          "*":
+            "*":
+              shared_key: with_wildcard
+              unique_key_1: test
+          Amon:
+            tas:
+              shared_key: without_wildcard
+              unique_key_2: test
+
+Here, the following extra facets will be added to a dataset with project
+*CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
+
+.. code-block:: yaml
+
+  unique_key_1: test
+  shared_key: without_wildcard  # takes value from later entry
+  unique_key_2: test
+
+.. _config-extra-facets-defaults:
+
+Default extra facets
+~~~~~~~~~~~~~~~~~~~~
+
+Default extra facets are specified in ``extra_facets_*.yml`` files located in
+`this
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
+directory.
+
 
 .. _config-esgf:
 

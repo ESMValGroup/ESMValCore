@@ -8,6 +8,7 @@ import esmvalcore
 from esmvalcore import __version__ as current_version
 from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import (
+    ValidationError,
     _handle_deprecation,
     _listify_validator,
     deprecate_extra_facets_dir,
@@ -23,6 +24,7 @@ from esmvalcore.config._config_validators import (
     validate_path,
     validate_path_or_none,
     validate_positive,
+    validate_projects,
     validate_rootpath,
     validate_search_esgf,
     validate_string,
@@ -44,7 +46,7 @@ def generate_validator_testcases(valid):
         {
             "validator": validate_bool,
             "success": ((True, True), (False, False)),
-            "fail": ((_, ValueError) for _ in ("fail", 2, -1, [])),
+            "fail": ("fail", 2, -1, []),
         },
         {
             "validator": validate_check_level,
@@ -54,11 +56,7 @@ def generate_validator_testcases(valid):
                 ("dEBUG", 1),
                 ("default", 3),
             ),
-            "fail": (
-                (6, ValueError),
-                (0, ValueError),
-                ("fail", ValueError),
-            ),
+            "fail": (6, 0, "fail"),
         },
         {
             "validator": validate_diagnostics,
@@ -70,10 +68,7 @@ def generate_validator_testcases(valid):
                 (("/", "a"), {"/", "a/*"}),
                 ([], set()),
             ),
-            "fail": (
-                (1, TypeError),
-                ([1, 2], TypeError),
-            ),
+            "fail": (1, [1, 2]),
         },
         {
             "validator": _listify_validator(validate_float, n_items=2),
@@ -87,7 +82,7 @@ def generate_validator_testcases(valid):
                     np.array((1.5, 2.5)),
                 )
             ),
-            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
+            "fail": ("fail", ("a", 1), (1, 2, 3)),
         },
         {
             "validator": _listify_validator(validate_float, n_items=2),
@@ -101,7 +96,7 @@ def generate_validator_testcases(valid):
                     np.array((1.5, 2.5)),
                 )
             ),
-            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
+            "fail": ("fail", ("a", 1), (1, 2, 3)),
         },
         {
             "validator": _listify_validator(validate_int, n_items=2),
@@ -109,12 +104,12 @@ def generate_validator_testcases(valid):
                 (_, [1, 2])
                 for _ in ("1, 2", [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))
             ),
-            "fail": ((_, ValueError) for _ in ("fail", ("a", 1), (1, 2, 3))),
+            "fail": ("fail", ("a", 1), (1, 2, 3)),
         },
         {
             "validator": validate_bool_or_none,
             "success": ((None, None), (True, True), (False, False)),
-            "fail": (("A", ValueError), (1, ValueError)),
+            "fail": ("A", 1),
         },
         {
             "validator": validate_int_or_none,
@@ -134,12 +129,7 @@ def generate_validator_testcases(valid):
                 ("~/", Path.home()),
                 (Path.home(), Path.home()),
             ),
-            "fail": (
-                (None, ValueError),
-                (123, ValueError),
-                (False, ValueError),
-                ([], ValueError),
-            ),
+            "fail": (None, 123, False, []),
         },
         {
             "validator": validate_path_or_none,
@@ -149,11 +139,7 @@ def generate_validator_testcases(valid):
                 ("~/", Path.home()),
                 (None, None),
             ),
-            "fail": (
-                (123, ValueError),
-                (False, ValueError),
-                ([], ValueError),
-            ),
+            "fail": (123, False, []),
         },
         {
             "validator": validate_rootpath,
@@ -192,11 +178,7 @@ def generate_validator_testcases(valid):
                 (1, 1),
                 (1.5, 1.5),
             ),
-            "fail": (
-                (0, ValueError),
-                (-1, ValueError),
-                ("fail", TypeError),
-            ),
+            "fail": (0, -1, "fail"),
         },
         {
             "validator": _listify_validator(validate_string),
@@ -213,10 +195,7 @@ def generate_validator_testcases(valid):
                 ((1, 2), ["1", "2"]),
                 (np.array([1, 2]), ["1", "2"]),
             ),
-            "fail": (
-                (set(), ValueError),
-                (1, ValueError),
-            ),
+            "fail": (set(), 1),
         },
         {
             "validator": validate_string_or_none,
@@ -233,11 +212,24 @@ def generate_validator_testcases(valid):
                 ("always", "always"),
                 ("Always", "always"),
             ),
+            "fail": (0, 3.14, True, "fail"),
+        },
+        {
+            "validator": validate_projects,
+            "success": (
+                ({"CMIP6": {}}, {"CMIP6": {}}),
+                (
+                    {"CMIP6": {"extra_facets": {}}},
+                    {"CMIP6": {"extra_facets": {}}},
+                ),
+            ),
             "fail": (
-                (0, ValueError),
-                (3.14, ValueError),
-                (True, ValueError),
-                ("fail", ValueError),
+                0,
+                3.14,
+                True,
+                "fail",
+                {"CMIP6": {"extra_facets": 0}},
+                {"CMIP6": {"invalid_option": 0}},
             ),
         },
     )
@@ -248,8 +240,8 @@ def generate_validator_testcases(valid):
             for arg, target in validator_dict["success"]:
                 yield validator, arg, target
         else:
-            for arg, error_type in validator_dict["fail"]:
-                yield validator, arg, error_type
+            for arg in validator_dict["fail"]:
+                yield validator, arg
 
 
 @pytest.mark.parametrize(
@@ -262,11 +254,11 @@ def test_validator_valid(validator, arg, target):
 
 
 @pytest.mark.parametrize(
-    ("validator", "arg", "exception_type"),
+    ("validator", "arg"),
     generate_validator_testcases(False),
 )
-def test_validator_invalid(validator, arg, exception_type):
-    with pytest.raises(exception_type):
+def test_validator_invalid(validator, arg):
+    with pytest.raises(ValidationError):
         validator(arg)
 
 

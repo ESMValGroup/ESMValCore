@@ -135,7 +135,7 @@ def test_session_setter():
                 "units": "m2",
                 "modeling_realm": ["atmos", "land"],
                 "frequency": "fx",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "raw_name": "cell_area",
             },
         ),
@@ -156,7 +156,7 @@ def test_session_setter():
                 "long_name": "Geopotential Height",
                 "standard_name": "geopotential_height",
                 "units": "m",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["BCCR"],
             },
         ),
@@ -178,7 +178,7 @@ def test_session_setter():
                 "modeling_realm": ["atmos"],
                 "standard_name": "precipitation_flux",
                 "units": "kg m-2 s-1",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["CNRM-CERFACS"],
                 "product": ["output1", "output2"],
             },
@@ -1872,67 +1872,47 @@ def test_get_extra_facets_ignore_deprecated_facets(tmp_path, monkeypatch):
 
 def test_get_extra_facets(monkeypatch):
     raw_extra_facets = {
-        "*": {
-            "not_TEST-MODEL": {
-                "Amon": {
-                    "tas": {
-                        "a": "*_not_TEST-MODEL_Amon_tas",
-                        "x": "*_not_TEST-MODEL_Amon_tas",
-                    },
-                },
-            },
-            "TEST-MODEL": {
-                "Amon": {
-                    "tas": {
-                        "a": "*_TEST-MODEL_Amon_tas",
-                        "b": "*_TEST-MODEL_Amon_tas",
-                    },
-                },
-            },
-            "TES[ABCT]-MODEL": {
-                "Amon": {
-                    "tas": {
-                        "a": "*_TES[ABCT]-MODEL_Amon_tas",
-                        "c": "*_TES[ABCT]-MODEL_Amon_tas",
-                    },
+        "not_TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "not_TEST-MODEL_Amon_tas",
+                    "x": "not_TEST-MODEL_Amon_tas",
                 },
             },
         },
-        "TES[!A]": {
-            "TEST-MODEL": {
-                "Amon": {
-                    "tas": {
-                        "a": "TES[!A]_TEST-MODEL_Amon_tas",
-                        "d": "TES[!A]_TEST-MODEL_Amon_tas",
-                    },
+        "TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TEST-MODEL_Amon_tas",
+                    "b": "TEST-MODEL_Amon_tas",
+                },
+                "*": {
+                    "a": "TEST-MODEL_Amon_*",
+                    "c": "TEST-MODEL_Amon_*",
+                },
+                "ta?": {
+                    "a": "TEST-MODEL_Amon_ta?",
+                    "d": "TEST-MODEL_Amon_ta?",
                 },
             },
         },
-        "TEST": {
-            "TEST-MODEL": {
-                "Amon": {
-                    "tas": {
-                        "a": "TEST_TEST-MODEL_Amon_tas",
-                        "e": "TEST_TEST-MODEL_Amon_tas",
-                        "f": "TEST_TEST-MODEL_Amon_tas",
-                    },
-                    "*": {
-                        "a": "TEST_TEST-MODEL_Amon_*",
-                        "e": "TEST_TEST-MODEL_Amon_*",
-                        "f": "TEST_TEST-MODEL_Amon_*",
-                        "g": "TEST_TEST-MODEL_Amon_*",
-                    },
+        "TES[ABCT]-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_Amon_tas",
+                    "e": "TES[ABCT]-MODEL_Amon_tas",
                 },
-                "?mon": {
-                    "tas": {
-                        "a": "TEST_TEST-MODEL_?mon_tas",
-                        "e": "TEST_TEST-MODEL_?mon_tas",
-                    },
+            },
+            "[!X]mon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+                    "f": "TES[ABCT]-MODEL_[!X]mon_tas",
                 },
             },
         },
     }
-    monkeypatch.setitem(CFG, "extra_facets", raw_extra_facets)
+    project_config = {"TEST": {"extra_facets": raw_extra_facets}}
+    monkeypatch.setitem(CFG, "projects", project_config)
     dataset = Dataset(
         project="TEST",
         mip="Amon",
@@ -1943,13 +1923,12 @@ def test_get_extra_facets(monkeypatch):
     extra_facets = dataset._get_extra_facets()
 
     assert extra_facets == {
-        "a": "TEST_TEST-MODEL_?mon_tas",
-        "b": "*_TEST-MODEL_Amon_tas",
-        "c": "*_TES[ABCT]-MODEL_Amon_tas",
-        "d": "TES[!A]_TEST-MODEL_Amon_tas",
-        "e": "TEST_TEST-MODEL_?mon_tas",
-        "f": "TEST_TEST-MODEL_Amon_*",
-        "g": "TEST_TEST-MODEL_Amon_*",
+        "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+        "b": "TEST-MODEL_Amon_tas",
+        "c": "TEST-MODEL_Amon_*",
+        "d": "TEST-MODEL_Amon_ta?",
+        "e": "TES[ABCT]-MODEL_Amon_tas",
+        "f": "TES[ABCT]-MODEL_[!X]mon_tas",
     }
 
 

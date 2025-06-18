@@ -626,28 +626,25 @@ class Dataset:
         """Get extra facets of dataset."""
         extra_facets: dict[str, Any] = {}
 
-        raw_extra_facets = self.session["extra_facets"]
-        projects = self._pattern_filter(raw_extra_facets, self["project"])
-        for project in projects:
-            dataset_names = self._pattern_filter(
-                raw_extra_facets[project],
-                self["dataset"],
+        raw_extra_facets = (
+            self.session["projects"]
+            .get(self["project"], {})
+            .get("extra_facets", {})
+        )
+        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])
+        for dataset_name in dataset_names:
+            mips = self._pattern_filter(
+                raw_extra_facets[dataset_name],
+                self["mip"],
             )
-            for dataset_name in dataset_names:
-                mips = self._pattern_filter(
-                    raw_extra_facets[project][dataset_name],
-                    self["mip"],
+            for mip in mips:
+                variables = self._pattern_filter(
+                    raw_extra_facets[dataset_name][mip],
+                    self["short_name"],
                 )
-                for mip in mips:
-                    variables = self._pattern_filter(
-                        raw_extra_facets[project][dataset_name][mip],
-                        self["short_name"],
-                    )
-                    for var in variables:
-                        facets = raw_extra_facets[project][dataset_name][mip][
-                            var
-                        ]
-                        extra_facets.update(facets)
+                for var in variables:
+                    facets = raw_extra_facets[dataset_name][mip][var]
+                    extra_facets.update(facets)
 
         # Add deprecated user-defined extra facets
         # TODO: remove in v2.15.0

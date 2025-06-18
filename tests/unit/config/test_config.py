@@ -134,10 +134,10 @@ def test_load_default_config(cfg_default, monkeypatch):
     root_path = importlib_files("esmvalcore")
     default_dev_file = root_path / "config-developer.yml"
     config_dir = root_path / "config" / "configurations" / "defaults"
-    default_extra_facets = dask.config.collect(
+    default_project_settings = dask.config.collect(
         paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
         env={},
-    )["extra_facets"]
+    )["projects"]
 
     session = cfg_default.start_session("recipe_example")
 
@@ -172,7 +172,6 @@ def test_load_default_config(cfg_default, monkeypatch):
             "obs4MIPs": "ESGF",
         },
         "exit_on_warning": False,
-        "extra_facets": default_extra_facets,
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},
         "max_datasets": None,
@@ -181,6 +180,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "output_dir": Path.home() / "esmvaltool_output",
         "output_file_type": "png",
         "profile_diagnostic": False,
+        "projects": default_project_settings,
         "remove_preproc_dir": True,
         "resume_from": [],
         "rootpath": {"default": [Path.home() / "climate_data"]},

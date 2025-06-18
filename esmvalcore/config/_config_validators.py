@@ -55,12 +55,10 @@ def _make_type_validator(cls, *, allow_none=False):
             return None
         try:
             return cls(inp)
-        except ValueError as err:
+        except (ValueError, TypeError) as err:
             if isinstance(cls, type):
                 msg = f"Could not convert {inp!r} to {cls.__name__}"
-                raise ValidationError(
-                    msg,
-                ) from err
+                raise ValidationError(msg) from err
             raise
 
     validator.__name__ = f"validate_{cls.__name__}"
@@ -123,17 +121,13 @@ def _listify_validator(
             )
         else:
             msg = f"Expected str or other non-set iterable, but got {inp}"
-            raise ValidationError(
-                msg,
-            )
+            raise ValidationError(msg)
         if n_items is not None and len(inp) != n_items:
             msg = (
                 f"Expected {n_items} values, "
                 f"but there are {len(inp)} values in {inp}"
             )
-            raise ValidationError(
-                msg,
-            )
+            raise ValidationError(msg)
         return inp
 
     try:
@@ -174,9 +168,12 @@ def validate_path(value, allow_none=False):
 
 def validate_positive(value):
     """Check if number is positive."""
-    if value is not None and value <= 0:
-        msg = f"Expected a positive number, but got {value}"
-        raise ValidationError(msg)
+    msg = f"Expected a positive number, but got {value}"
+    try:
+        if value is not None and value <= 0:
+            raise ValidationError(msg)
+    except TypeError as err:
+        raise ValidationError(msg) from err
     return value
 
 
@@ -280,17 +277,19 @@ def validate_config_developer(value):
 
 def validate_check_level(value):
     """Validate CMOR level check."""
+    msg = f"`{value}` is not a valid strictness level"
+
     if isinstance(value, str):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
-            msg = f"`{value}` is not a valid strictness level"
-            raise ValidationError(
-                msg,
-            ) from None
+            raise ValidationError(msg) from None
 
     else:
-        value = CheckLevels(value)
+        try:
+            value = CheckLevels(value)
+        except (ValueError, TypeError) as err:
+            raise ValidationError(msg) from err
 
     return value
 
@@ -304,9 +303,7 @@ def validate_search_esgf(value):
             f"`{value}` is not a valid option ESGF search option, possible "
             f"values are {SEARCH_ESGF_OPTIONS}"
         )
-        raise ValidationError(
-            msg,
-        ) from None
+        raise ValidationError(msg) from None
     return value
 
 
@@ -318,10 +315,18 @@ def validate_diagnostics(
         return None
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(" ")
-    return {
-        pattern if TASKSEP in pattern else pattern + TASKSEP + "*"
-        for pattern in diagnostics or ()
-    }
+    try:
+        validated_diagnostics = {
+            pattern if TASKSEP in pattern else pattern + TASKSEP + "*"
+            for pattern in diagnostics or ()
+        }
+    except TypeError as err:
+        msg = (
+            f"Expected str or Iterable[str] for diagnostics, got "
+            f"`{diagnostics}`"
+        )
+        raise ValidationError(msg) from err
+    return validated_diagnostics
 
 
 # TODO: remove in v2.14.0
@@ -338,6 +343,25 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
+def validate_projects(value: Any) -> dict:
+    """Validate projects mapping."""
+    mapping = validate_dict(value)
+    options_for_project: dict[str, Callable] = {
+        "extra_facets": validate_dict,
+    }
+    for project, project_config in mapping.items():
+        for option, val in project_config.items():
+            if option not in options_for_project:
+                msg = (
+                    f"`{option}` is not a valid option for the `projects` "
+                    f"configuration of project `{project}`, possible options "
+                    f"are {list(options_for_project)}"
+                )
+                raise ValidationError(msg) from None
+            mapping[project][option] = options_for_project[option](val)
+    return mapping
+
+
 _validators = {
     "auxiliary_data_dir": validate_path,
     "check_level": validate_check_level,
@@ -348,7 +372,6 @@ _validators = {
     "download_dir": validate_path,
     "drs": validate_drs,
     "exit_on_warning": validate_bool,
-    "extra_facets": validate_dict,
     "log_level": validate_string,
     "logging": validate_dict,
     "max_datasets": validate_int_positive_or_none,
@@ -357,6 +380,7 @@ _validators = {
     "output_dir": validate_path,
     "output_file_type": validate_string,
     "profile_diagnostic": validate_bool,
+    "projects": validate_projects,
     "remove_preproc_dir": validate_bool,
     "resume_from": validate_pathlist,
     "rootpath": validate_rootpath,

@@ -182,7 +182,7 @@ are
 
 All of these facets have reasonable defaults preconfigured in the corresponding
 :ref:`extra facets<config-extra-facets>` configuration file, which is available
-here: :download:`native6.yml
+here: :download:`extra_facets_native6.yml
 </../esmvalcore/config/configurations/defaults/extra_facets_native6.yml>`.
 If necessary, these facets can be overwritten in the recipe.
 
@@ -1007,12 +1007,13 @@ For example, given the extra facets
 
 .. code-block:: yaml
 
-  extra_facets:
+  projects:
     native6:
-      ERA5:
-        Amon:
-          tas:
-            source_var_name: t2m
+      extra_facets:
+        ERA5:
+          Amon:
+            tas:
+              source_var_name: t2m
 
 a corresponding entry in the developer configuration file could look like:
 
