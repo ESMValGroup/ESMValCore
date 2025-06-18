@@ -343,10 +343,10 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
-def validate_projects(value: Any) -> dict:
+def validate_projects(value: Any):
     """Validate projects mapping."""
     mapping = validate_dict(value)
-    options_for_project: dict[str, Callable] = {
+    options_for_project: dict[str, Callable[[Any], Any]] = {
         "extra_facets": validate_dict,
     }
     for project, project_config in mapping.items():
