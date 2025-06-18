@@ -49,7 +49,19 @@ Get in touch!
 -------------
 Contact information is available :ref:`here <Support-and-Contact>`.
 
-.. include:: _sidebar.rst.inc
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: ESMValCore
+
+    Getting started <quickstart/index>
+    Example notebooks <example-notebooks>
+    The recipe format <recipe/index>
+    Diagnostic script interfaces <interfaces>
+    Development <develop/index>
+    Contributing <contributing>
+    ESMValCore API Reference <api/esmvalcore>
+    Changelog <changelog>
 
 Indices and tables
 ==================
