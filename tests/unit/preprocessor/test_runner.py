@@ -19,14 +19,14 @@ def test_first_argument_name():
     for step in esmvalcore.preprocessor.DEFAULT_ORDER:
         itype = esmvalcore.preprocessor._get_itype(step)
         assert itype in valid_itypes, (
-            "Invalid preprocessor function definition {}, first argument "
-            "should be one of {} but is {}".format(step, valid_itypes, itype)
+            f"Invalid preprocessor function definition {step}, first argument "
+            f"should be one of {valid_itypes} but is {itype}"
         )
 
 
 def test_multi_model_exist():
     assert esmvalcore.preprocessor.MULTI_MODEL_FUNCTIONS.issubset(
-        set(esmvalcore.preprocessor.DEFAULT_ORDER)
+        set(esmvalcore.preprocessor.DEFAULT_ORDER),
     )
 
 
@@ -47,7 +47,8 @@ def test_preprocess_debug(mocker, debug):
     )
     mock_save = mocker.create_autospec(esmvalcore.preprocessor.save)
     mocker.patch(
-        "esmvalcore.preprocessor.annual_statistics", new=mock_annual_statistics
+        "esmvalcore.preprocessor.annual_statistics",
+        new=mock_annual_statistics,
     )
     mocker.patch("esmvalcore.preprocessor.save", new=mock_save)
 
@@ -60,11 +61,13 @@ def test_preprocess_debug(mocker, debug):
         operator="mean",
     )
     esmvalcore.preprocessor.annual_statistics.assert_called_with(
-        in_cube, operator="mean"
+        in_cube,
+        operator="mean",
     )
     if debug:
         esmvalcore.preprocessor.save.assert_called_with(
-            result, "/path/to/output/00_annual_statistics.nc"
+            result,
+            "/path/to/output/00_annual_statistics.nc",
         )
     else:
         esmvalcore.preprocessor.save.assert_not_called()

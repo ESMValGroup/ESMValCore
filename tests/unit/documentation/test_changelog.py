@@ -7,14 +7,16 @@ import re
 
 def test_duplications_in_changelog():
     changelog_path = os.path.join(
-        os.path.dirname(__file__), "../../..", "doc/changelog.rst"
+        os.path.dirname(__file__),
+        "../../..",
+        "doc/changelog.rst",
     )
-    with open(changelog_path, "r", encoding="utf-8") as changelog:
+    with open(changelog_path, encoding="utf-8") as changelog:
         changelog = changelog.read()
 
     # Find all pull requests
     pr_links = re.compile(
-        "<https://github.com/ESMValGroup/ESMValCore/pull/[0-9]+>"
+        "<https://github.com/ESMValGroup/ESMValCore/pull/[0-9]+>",
     )
     links = pr_links.findall(changelog)
 
@@ -27,7 +29,7 @@ def test_duplications_in_changelog():
                     link
                     for link, count in collections.Counter(links).items()
                     if count > 1
-                )
-            )
+                ),
+            ),
         )
-        assert False
+        raise AssertionError

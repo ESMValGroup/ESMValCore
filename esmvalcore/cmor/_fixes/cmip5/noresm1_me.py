@@ -1,7 +1,7 @@
 """Fixes for NorESM1-ME model."""
 
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 
 class Pr(Fix):

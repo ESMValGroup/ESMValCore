@@ -32,10 +32,6 @@ class InvalidConfigParameter(Error, SuppressedError):
     """Config parameter is invalid."""
 
 
-class MissingConfigParameter(UserWarning):
-    """Config parameter is missing."""
-
-
 class RecipeError(Error):
     """Recipe contains an error."""
 
@@ -49,5 +45,21 @@ class InputFilesNotFound(RecipeError):
     """Files that are required to run the recipe have not been found."""
 
 
-class ESMValCoreDeprecationWarning(UserWarning):
+class ESMValCoreUserWarning(UserWarning):
+    """Base class from which other warnings are derived."""
+
+
+class ESMValCoreDeprecationWarning(ESMValCoreUserWarning):
     """Custom deprecation warning."""
+
+
+class MissingConfigParameter(ESMValCoreUserWarning):
+    """Config parameter is missing."""
+
+
+class ESMValCorePreprocessorWarning(ESMValCoreUserWarning):
+    """Custom preprocessor warning."""
+
+
+class ESMValCoreLoadWarning(ESMValCorePreprocessorWarning):
+    """Custom load warning."""

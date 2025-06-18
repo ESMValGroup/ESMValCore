@@ -40,18 +40,18 @@ def test_to_frozen():
                                 {
                                     "c",
                                     "d",
-                                }
+                                },
                             ),
                         ),
                         (
                             "bb",
                             "dc",
                         ),
-                    }
+                    },
                 ),
             ),
             ("abc", "x"),
-        }
+        },
     )
 
     assert result == expected

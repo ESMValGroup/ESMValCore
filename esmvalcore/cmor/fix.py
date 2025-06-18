@@ -9,21 +9,25 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from collections.abc import Sequence
-from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
 
 if TYPE_CHECKING:
-    from ..config import Session
+    from collections.abc import Sequence
+    from pathlib import Path
+
+    import ncdata
+    import xarray as xr
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
 
-def fix_file(
+def fix_file(  # noqa: PLR0913
     file: Path,
     short_name: str,
     project: str,
@@ -31,21 +35,29 @@ def fix_file(
     mip: str,
     output_dir: Path,
     add_unique_suffix: bool = False,
-    session: Optional[Session] = None,
-    frequency: Optional[str] = None,
+    session: Session | None = None,
+    frequency: str | None = None,
     **extra_facets,
-) -> str | Path:
-    """Fix files before ESMValTool can load them.
+) -> str | Path | xr.Dataset | ncdata.NcData:
+    """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-    These fixes are only for issues that prevent iris from loading the cube or
-    that cannot be fixed after the cube is loaded.
+    This is mainly intended to fix errors that prevent loading the data with
+    Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
+    operations that are more efficient with other packages (e.g., loading files
+    with lots of variables is much faster with Xarray than Iris).
 
-    Original files are not overwritten.
+    Warning
+    -------
+    A path should only be returned if it points to the original (unchanged)
+    file (i.e., a fix was not necessary). If a fix is necessary, this function
+    should return a :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object.
+    Under no circumstances a copy of the input data should be created (this is
+    very inefficient).
 
     Parameters
     ----------
     file:
-        Path to the original file.
+        Path to the original file. Original files are not overwritten.
     short_name:
         Variable's short name.
     project:
@@ -57,7 +69,7 @@ def fix_file(
     output_dir:
         Output directory for fixed files.
     add_unique_suffix:
-        Adds a unique suffix to `output_dir` for thread safety.
+        Adds a unique suffix to ``output_dir`` for thread safety.
     session:
         Current session which includes configuration and directory information.
     frequency:
@@ -68,8 +80,8 @@ def fix_file(
 
     Returns
     -------
-    str or pathlib.Path
-        Path to the fixed file.
+    str | pathlib.Path | xr.Dataset | ncdata.NcData:
+        Fixed data or a path to them.
 
     """
     # Update extra_facets with variable information given as regular arguments
@@ -81,7 +93,7 @@ def fix_file(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     for fix in Fix.get_fixes(
@@ -94,7 +106,9 @@ def fix_file(
         frequency=frequency,
     ):
         file = fix.fix_file(
-            file, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
     return file
 
@@ -105,8 +119,8 @@ def fix_metadata(
     project: str,
     dataset: str,
     mip: str,
-    frequency: Optional[str] = None,
-    session: Optional[Session] = None,
+    frequency: str | None = None,
+    session: Session | None = None,
     **extra_facets,
 ) -> CubeList:
     """Fix cube metadata if fixes are required.
@@ -149,7 +163,7 @@ def fix_metadata(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     fixes = Fix.get_fixes(
@@ -190,8 +204,8 @@ def fix_data(
     project: str,
     dataset: str,
     mip: str,
-    frequency: Optional[str] = None,
-    session: Optional[Session] = None,
+    frequency: str | None = None,
+    session: Session | None = None,
     **extra_facets,
 ) -> Cube:
     """Fix cube data if fixes are required.
@@ -236,7 +250,7 @@ def fix_data(
             "dataset": dataset,
             "mip": mip,
             "frequency": frequency,
-        }
+        },
     )
 
     for fix in Fix.get_fixes(

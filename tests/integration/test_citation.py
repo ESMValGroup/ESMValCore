@@ -19,7 +19,8 @@ def test_references(tmp_path, monkeypatch):
     provenance = ProvDocument()
     provenance.add_namespace("file", uri=ESMVALTOOL_URI_PREFIX + "file")
     provenance.add_namespace(
-        "attribute", uri=ESMVALTOOL_URI_PREFIX + "attribute"
+        "attribute",
+        uri=ESMVALTOOL_URI_PREFIX + "attribute",
     )
     filename = str(tmp_path / "output.nc")
     attributes = {
@@ -39,7 +40,7 @@ def test_references(tmp_path, monkeypatch):
     _write_citation_files(filename, provenance)
     citation_file = tmp_path / "output_citation.bibtex"
     citation = citation_file.read_text(encoding="utf-8")
-    assert citation == "\n".join([ESMVALTOOL_PAPER, fake_bibtex])
+    assert citation == f"{ESMVALTOOL_PAPER}\n{fake_bibtex}"
 
 
 def mock_get_response(url):
@@ -56,7 +57,8 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     provenance = ProvDocument()
     provenance.add_namespace("file", uri=ESMVALTOOL_URI_PREFIX + "file")
     provenance.add_namespace(
-        "attribute", uri=ESMVALTOOL_URI_PREFIX + "attribute"
+        "attribute",
+        uri=ESMVALTOOL_URI_PREFIX + "attribute",
     )
     attributes = {
         "attribute:mip_era": "CMIP6",
@@ -69,7 +71,9 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     provenance.entity("file:" + filename, attributes)
 
     monkeypatch.setattr(
-        esmvalcore._citation, "_get_response", mock_get_response
+        esmvalcore._citation,
+        "_get_response",
+        mock_get_response,
     )
     _write_citation_files(filename, provenance)
     citation_file = tmp_path / "output_citation.bibtex"
@@ -91,8 +95,9 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
         \tdoi = {{{doi}}},
         }}
         """).lstrip()
-    assert citation_file.read_text(encoding="utf-8") == "\n".join(
-        [ESMVALTOOL_PAPER, fake_bibtex_entry]
+    assert (
+        citation_file.read_text(encoding="utf-8")
+        == f"{ESMVALTOOL_PAPER}\n{fake_bibtex_entry}"
     )
 
 
@@ -102,7 +107,8 @@ def test_cmip6_data_citation_url(tmp_path):
     provenance = ProvDocument()
     provenance.add_namespace("file", uri=ESMVALTOOL_URI_PREFIX + "file")
     provenance.add_namespace(
-        "attribute", uri=ESMVALTOOL_URI_PREFIX + "attribute"
+        "attribute",
+        uri=ESMVALTOOL_URI_PREFIX + "attribute",
     )
     attributes = {
         "attribute:mip_era": "CMIP6",
@@ -123,6 +129,6 @@ def test_cmip6_data_citation_url(tmp_path):
             "Follow the links below to find more information about CMIP6 data:",
             f"- {CMIP6_URL_STEM}/cmip6?input={fake_url_prefix}",
             "",
-        ]
+        ],
     )
     assert citation_url.read_text(encoding="utf-8") == text

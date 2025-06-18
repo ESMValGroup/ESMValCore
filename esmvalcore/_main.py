@@ -30,7 +30,6 @@ import os
 import sys
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Optional
 
 import fire
 
@@ -66,9 +65,12 @@ def parse_resume(resume, recipe):
     for resume_dir in resume:
         resume_recipe = resume_dir / "run" / recipe.name
         if current_recipe != resume_recipe.read_text(encoding="utf-8"):
-            raise ValueError(
+            msg = (
                 f"Only identical recipes can be resumed, but "
                 f"{resume_recipe} is different from {recipe}"
+            )
+            raise ValueError(
+                msg,
             )
     return resume
 
@@ -84,7 +86,9 @@ def process_recipe(recipe_file: Path, session):
         import errno
 
         raise OSError(
-            errno.ENOENT, "Specified recipe file does not exist", recipe_file
+            errno.ENOENT,
+            "Specified recipe file does not exist",
+            recipe_file,
         )
 
     timestamp1 = datetime.datetime.utcnow()
@@ -108,11 +112,11 @@ def process_recipe(recipe_file: Path, session):
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
-        "memory for keeping this number of tasks in memory."
+        "memory for keeping this number of tasks in memory.",
     )
     logger.info(
         "If you experience memory problems, try reducing "
-        "'max_parallel_tasks' in your configuration."
+        "'max_parallel_tasks' in your configuration.",
     )
 
     if session["compress_netcdf"]:
@@ -122,7 +126,7 @@ def process_recipe(recipe_file: Path, session):
             "their internal pattern. Make sure to specify the expected "
             "access pattern in the recipe as a parameter to the 'save' "
             "preprocessor function. If the problem persists, try disabling "
-            "NetCDF compression."
+            "NetCDF compression.",
         )
 
     # copy recipe to run_dir for future reference
@@ -182,7 +186,7 @@ class Config:
     def get_config_user(
         cls,
         overwrite: bool = False,
-        path: Optional[str | Path] = None,
+        path: str | Path | None = None,
     ) -> None:
         """Copy default configuration to a given path.
 
@@ -215,7 +219,7 @@ class Config:
     def get_config_developer(
         cls,
         overwrite: bool = False,
-        path: Optional[str | Path] = None,
+        path: str | Path | None = None,
     ) -> None:
         """Copy default config-developer.yml file to a given path.
 
@@ -293,9 +297,12 @@ class Recipes:
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            raise RecipeError(
+            msg = (
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
+            )
+            raise RecipeError(
+                msg,
             )
         logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
@@ -319,9 +326,12 @@ class Recipes:
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            raise RecipeError(
+            msg = (
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
+            )
+            raise RecipeError(
+                msg,
             )
         msg = f"Recipe {recipe}"
         logger.info(msg)
@@ -343,7 +353,7 @@ class ESMValTool:
             print(
                 "Running esmvaltool executable from ESMValCore. "
                 "No other command line utilities are available "
-                "until ESMValTool is installed."
+                "until ESMValTool is installed.",
             )
         for entry_point in esmvaltool_commands:
             self._extra_packages[entry_point.dist.name] = (
@@ -351,7 +361,8 @@ class ESMValTool:
             )
             if hasattr(self, entry_point.name):
                 logger.error(
-                    "Registered command %s already exists", entry_point.name
+                    "Registered command %s already exists",
+                    entry_point.name,
                 )
                 continue
             self.__setattr__(entry_point.name, entry_point.load()())
@@ -388,9 +399,12 @@ class ESMValTool:
         if cli_config_dir is not None:
             cli_config_dir = Path(cli_config_dir).expanduser().absolute()
             if not cli_config_dir.is_dir():
-                raise NotADirectoryError(
+                msg = (
                     f"Invalid --config_dir given: {cli_config_dir} is not an "
                     f"existing directory"
+                )
+                raise NotADirectoryError(
+                    msg,
                 )
 
         # TODO: remove in v2.14.0
@@ -414,10 +428,13 @@ class ESMValTool:
             # validated) when importing the module with `from .config import
             # CFG`
             except InvalidConfigParameter as exc:
-                raise InvalidConfigParameter(
+                msg = (
                     f"Failed to parse configuration directory "
                     f"{cli_config_dir} (command line argument): "
-                    f"{str(exc)}"
+                    f"{exc!s}"
+                )
+                raise InvalidConfigParameter(
+                    msg,
                 ) from exc
 
         recipe = self._get_recipe(recipe)
@@ -434,9 +451,8 @@ class ESMValTool:
             CFG.reload()
 
         # New in v2.12.0
-        else:
-            if cli_config_dir is not None:
-                CFG.update_from_dirs([cli_config_dir])
+        elif cli_config_dir is not None:
+            CFG.update_from_dirs([cli_config_dir])
 
         warn_if_old_dask_config_exists()
 
@@ -455,16 +471,19 @@ class ESMValTool:
                 session.session_name = session_dir.name
                 return
 
-        raise RecipeError(
+        msg = (
             f"Output directory '{session.session_dir}' already exists and"
             " unable to find alternative, aborting to prevent data loss."
+        )
+        raise RecipeError(
+            msg,
         )
 
     def _run(
         self,
         recipe: Path,
         session,
-        cli_config_dir: Optional[Path],
+        cli_config_dir: Path | None,
     ) -> None:
         """Run `recipe` using `session`."""
         self._create_session_dir(session)
@@ -474,7 +493,8 @@ class ESMValTool:
         from .config._logging import configure_logging
 
         log_files = configure_logging(
-            output_dir=session.run_dir, console_log_level=session["log_level"]
+            output_dir=session.run_dir,
+            console_log_level=session["log_level"],
         )
         self._log_header(log_files, cli_config_dir)
 
@@ -501,26 +521,26 @@ class ESMValTool:
 
         if (
             not session["save_intermediary_cubes"]
-            and session._fixed_file_dir.exists()
+            and session._fixed_file_dir.exists()  # noqa: SLF001
         ):
             logger.debug(
                 "Removing `preproc/fixed_files` directory containing fixed "
-                "data"
+                "data",
             )
             logger.debug(
                 "If this data is further needed, then set "
                 "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
-                "to `false` in your configuration"
+                "to `false` in your configuration",
             )
-            shutil.rmtree(session._fixed_file_dir)
+            shutil.rmtree(session._fixed_file_dir)  # noqa: SLF001
 
         if session["remove_preproc_dir"] and session.preproc_dir.exists():
             logger.info(
-                "Removing `preproc` directory containing preprocessed data"
+                "Removing `preproc` directory containing preprocessed data",
             )
             logger.info(
                 "If this data is further needed, then set "
-                "`remove_preproc_dir` to `false` in your configuration"
+                "`remove_preproc_dir` to `false` in your configuration",
             )
             shutil.rmtree(session.preproc_dir)
 
@@ -532,8 +552,7 @@ class ESMValTool:
             installed_recipe = DIAGNOSTICS.recipes / recipe
             if os.path.isfile(installed_recipe):
                 recipe = installed_recipe
-        recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
-        return recipe
+        return Path(os.path.expandvars(recipe)).expanduser().absolute()
 
     @staticmethod
     def _get_config_info(cli_config_dir):
@@ -565,7 +584,7 @@ class ESMValTool:
                     config_dirs,
                     _get_all_config_sources(cli_config_dir),
                     strict=False,
-                )
+                ),
             )
 
         return "\n".join(f"{i[0]} ({i[1]})" for i in config_info)
@@ -608,14 +627,13 @@ def run():
         logger.error("%s", exc)
         logger.debug("Stack trace for debugging:", exc_info=True)
         sys.exit(1)
-    except Exception:  # noqa
+    except Exception:
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
             logging.basicConfig()
         logger.exception(
             "Program terminated abnormally, see stack trace "
             "below for more information:",
-            exc_info=True,
         )
         logger.info(
             "\n"
@@ -628,6 +646,6 @@ def run():
             "\n"
             "To make it easier to find out what the problem is, please "
             "consider attaching the files run/recipe_*.yml and "
-            "run/main_log_debug.txt from the output directory."
+            "run/main_log_debug.txt from the output directory.",
         )
         sys.exit(1)

@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.co2s as co2s
+from esmvalcore.preprocessor._derive import co2s
 
 
 def get_coord_spec(include_plev=True):
@@ -57,14 +57,13 @@ def get_ps_cube():
     """Surface air pressure cube."""
     ps_data = [[[105000.0, 50000.0], [95000.0, 60000.0]]]
     coord_spec = get_coord_spec(include_plev=False)
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         ps_data,
         var_name="ps",
         standard_name="surface_air_pressure",
         units="Pa",
         dim_coords_and_dims=coord_spec,
     )
-    return cube
 
 
 @pytest.fixture
@@ -77,7 +76,7 @@ def masked_cubes():
                 [[170.0, -1.0], [-1.0, -1.0]],
                 [[150.0, 100.0], [80.0, -1.0]],
                 [[100.0, 50.0], [30.0, 10.0]],
-            ]
+            ],
         ],
         0.0,
     )
@@ -102,8 +101,8 @@ def unmasked_cubes():
                 [[200.0, 100.0], [80.0, 9.0]],
                 [[150.0, 80.0], [70.0, 5.0]],
                 [[100.0, 50.0], [30.0, 1.0]],
-            ]
-        ]
+            ],
+        ],
     )
     co2_cube = iris.cube.Cube(
         co2_data,
@@ -129,7 +128,8 @@ def test_co2_calculate_masked_cubes(masked_cubes):
     assert plev_coord.long_name == "pressure"
     assert plev_coord.units == "Pa"
     np.testing.assert_allclose(
-        plev_coord.points, [[[105000.0, 50000.0], [95000.0, 60000.0]]]
+        plev_coord.points,
+        [[[105000.0, 50000.0], [95000.0, 60000.0]]],
     )
 
 
@@ -146,5 +146,6 @@ def test_co2_calculate_unmasked_cubes(unmasked_cubes):
     assert plev_coord.long_name == "pressure"
     assert plev_coord.units == "Pa"
     np.testing.assert_allclose(
-        plev_coord.points, [[[105000.0, 50000.0], [95000.0, 60000.0]]]
+        plev_coord.points,
+        [[[105000.0, 50000.0], [95000.0, 60000.0]]],
     )

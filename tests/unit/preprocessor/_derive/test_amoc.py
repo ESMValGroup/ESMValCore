@@ -5,7 +5,7 @@ import iris.fileformats
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.amoc as amoc
+from esmvalcore.preprocessor._derive import amoc
 
 from .test_shared import get_cube
 
@@ -49,30 +49,32 @@ def test_amoc_preamble(cubes):
     derived_var = amoc.DerivedVariable()
 
     cmip5_required = derived_var.required("CMIP5")
-    assert "msftmyz" == cmip5_required[0]["short_name"]
+    assert cmip5_required[0]["short_name"] == "msftmyz"
     cmip6_required = derived_var.required("CMIP6")
-    assert "msftmz" == cmip6_required[0]["short_name"]
-    assert "msftyz" == cmip6_required[1]["short_name"]
+    assert cmip6_required[0]["short_name"] == "msftmz"
+    assert cmip6_required[1]["short_name"] == "msftyz"
 
     # if project s neither CMIP5 nor CMIP6
-    with pytest.raises(ValueError) as verr:
+    with pytest.raises(ValueError, match="Project CMIPX can not be used"):
         derived_var.required("CMIPX")
-        assert "Project CMIPX can not be used" in verr
 
     cmip5_cubes = cubes[0]
     cmip6_cubes = cubes[1]
     rando_cubes = cubes[2]
 
     # other amoc-specific exceptions returned
-    with pytest.raises(ValueError) as verr:
+    with pytest.raises(
+        ValueError,
+        match="doesn't contain atlantic_arctic_ocean",
+    ):
         derived_var.calculate(cmip5_cubes)
-        assert "doesn't contain Atlantic Region" in verr
-    with pytest.raises(ValueError) as verr:
+    with pytest.raises(
+        ValueError,
+        match="doesn't contain atlantic_arctic_ocean",
+    ):
         derived_var.calculate(cmip6_cubes)
-        assert "doesn't contain Atlantic Region" in verr
-    with pytest.raises(iris.exceptions.ConstraintMismatchError) as verr:
+    with pytest.raises(iris.exceptions.ConstraintMismatchError):
         derived_var.calculate(rando_cubes)
-        assert "standard names could not be found" in verr
 
 
 def build_ocean_cube(std_name):
@@ -81,7 +83,7 @@ def build_ocean_cube(std_name):
     coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
     data = np.ones((5, 180, 360, 3), dtype=np.float32)
     lons = iris.coords.DimCoord(
-        range(0, 360),
+        range(360),
         standard_name="longitude",
         bounds=None,
         units="degrees_east",
@@ -109,7 +111,9 @@ def build_ocean_cube(std_name):
     coords_spec = [(depth, 0), (lats, 1), (lons, 2)]
 
     cube = iris.cube.Cube(
-        data, dim_coords_and_dims=coords_spec, standard_name=std_name
+        data,
+        dim_coords_and_dims=coords_spec,
+        standard_name=std_name,
     )
     cube.add_aux_coord(
         basin,

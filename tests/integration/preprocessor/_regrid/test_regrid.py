@@ -6,7 +6,6 @@ import pytest
 from numpy import ma
 
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import regrid
 from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
@@ -87,7 +86,8 @@ class Test:
         )
         coords_spec = [(lats, 0), (lons, 1)]
         self.tgt_grid_for_unstructured = iris.cube.Cube(
-            np.zeros((1, 1)), dim_coords_and_dims=coords_spec
+            np.zeros((1, 1)),
+            dim_coords_and_dims=coords_spec,
         )
 
         lons = self.cube.coord("longitude")
@@ -117,7 +117,8 @@ class Test:
         )
 
         unstructured_data = np.ma.masked_less(
-            self.cube.data.reshape(3, -1).astype(np.float32), 3.5
+            self.cube.data.reshape(3, -1).astype(np.float32),
+            3.5,
         )
 
         self.unstructured_grid_cube = iris.cube.Cube(
@@ -129,10 +130,14 @@ class Test:
 
         # Setup irregular cube and grid
         lons_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="longitude", units="degrees_east"
+            [[0, 1]],
+            standard_name="longitude",
+            units="degrees_east",
         )
         lats_2d = iris.coords.AuxCoord(
-            [[0, 1]], standard_name="latitude", units="degrees_north"
+            [[0, 1]],
+            standard_name="latitude",
+            units="degrees_north",
         )
         self.irregular_grid = iris.cube.Cube(
             [[1, 1]],
@@ -181,7 +186,10 @@ class Test:
             short_name="tas",
         )
         result = regrid(
-            self.cube, dataset, "linear", cache_weights=cache_weights
+            self.cube,
+            dataset,
+            "linear",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         assert_array_equal(result.data, expected)
@@ -332,7 +340,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = np.array([[[3]], [[7]], [[11]]])
         assert_array_equal(result.data, expected)
@@ -357,7 +368,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "nearest", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "nearest",
+            cache_weights=cache_weights,
         )
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
@@ -384,7 +398,10 @@ class Test:
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(
-            self.cube, grid, "area_weighted", cache_weights=cache_weights
+            self.cube,
+            grid,
+            "area_weighted",
+            cache_weights=cache_weights,
         )
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
@@ -490,56 +507,3 @@ class Test:
                 "invalid",
                 cache_weights=cache_weights,
             )
-
-    @pytest.mark.parametrize("cache_weights", [True, False])
-    def test_deprecate_unstrucured_nearest(self, cache_weights):
-        """Test deprecation of `unstructured_nearest` regridding scheme."""
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            result = regrid(
-                self.unstructured_grid_cube,
-                self.tgt_grid_for_unstructured,
-                "unstructured_nearest",
-                cache_weights=cache_weights,
-            )
-        expected = np.ma.array(
-            [[[3.0]], [[7.0]], [[11.0]]],
-            mask=[[[True]], [[False]], [[False]]],
-        )
-        np.testing.assert_array_equal(result.data.mask, expected.mask)
-        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
-
-    @pytest.mark.parametrize("cache_weights", [True, False])
-    def test_deprecate_linear_extrapolate(self, cache_weights):
-        """Test deprecation of `linear_extrapolate` regridding scheme."""
-        data = np.empty((3, 3))
-        lons = iris.coords.DimCoord(
-            [0, 1.5, 3],
-            standard_name="longitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_east",
-            coord_system=self.cs,
-        )
-        lats = iris.coords.DimCoord(
-            [0, 1.5, 3],
-            standard_name="latitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_north",
-            coord_system=self.cs,
-        )
-        coords_spec = [(lats, 0), (lons, 1)]
-        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-
-        with pytest.warns(ESMValCoreDeprecationWarning):
-            result = regrid(
-                self.cube,
-                grid,
-                "linear_extrapolate",
-                cache_weights=cache_weights,
-            )
-
-        expected = [
-            [[-3.0, -1.5, 0.0], [0.0, 1.5, 3.0], [3.0, 4.5, 6.0]],
-            [[1.0, 2.5, 4.0], [4.0, 5.5, 7.0], [7.0, 8.5, 10.0]],
-            [[5.0, 6.5, 8.0], [8.0, 9.5, 11.0], [11.0, 12.5, 14.0]],
-        ]
-        assert_array_equal(result.data, expected)

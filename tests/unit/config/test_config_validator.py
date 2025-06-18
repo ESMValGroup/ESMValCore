@@ -252,7 +252,8 @@ def generate_validator_testcases(valid):
 
 
 @pytest.mark.parametrize(
-    "validator, arg, target", generate_validator_testcases(True)
+    ("validator", "arg", "target"),
+    generate_validator_testcases(True),
 )
 def test_validator_valid(validator, arg, target):
     res = validator(arg)
@@ -260,14 +261,15 @@ def test_validator_valid(validator, arg, target):
 
 
 @pytest.mark.parametrize(
-    "validator, arg, exception_type", generate_validator_testcases(False)
+    ("validator", "arg", "exception_type"),
+    generate_validator_testcases(False),
 )
 def test_validator_invalid(validator, arg, exception_type):
     with pytest.raises(exception_type):
         validator(arg)
 
 
-@pytest.mark.parametrize("remove_version", (current_version, "0.0.1", "9.9.9"))
+@pytest.mark.parametrize("remove_version", [current_version, "0.0.1", "9.9.9"])
 def test_handle_deprecation(remove_version):
     """Test ``_handle_deprecation``."""
     option = "test_var"
@@ -282,7 +284,10 @@ def test_handle_deprecation(remove_version):
         )
         with pytest.raises(InvalidConfigParameter, match=msg):
             _handle_deprecation(
-                option, deprecated_version, remove_version, more_info
+                option,
+                deprecated_version,
+                remove_version,
+                more_info,
             )
     else:
         msg = (
@@ -292,7 +297,10 @@ def test_handle_deprecation(remove_version):
         )
         with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
             _handle_deprecation(
-                option, deprecated_version, remove_version, more_info
+                option,
+                deprecated_version,
+                remove_version,
+                more_info,
             )
 
 
