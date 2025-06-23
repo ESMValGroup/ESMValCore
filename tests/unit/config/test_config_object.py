@@ -1,4 +1,5 @@
 import os
+import warnings
 from collections.abc import MutableMapping
 from pathlib import Path
 from textwrap import dedent
@@ -404,8 +405,34 @@ def test_get_user_config_dir_with_env_fail(tmp_path, monkeypatch):
 
 
 # TODO: remove in v2.14.0
-def test_get_global_config_deprecated(mocker, tmp_path):
+def test_get_global_config_force_new_config(mocker, tmp_path, monkeypatch):
     """Test ``_get_global_config``."""
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", "/path/to/config/file")
+
+    # Create invalid old config file to ensure that this is not used
+    config_file = tmp_path / "old_config_user.yml"
+    config_file.write_text("invalid_option: /new/output/dir")
+    mocker.patch.object(
+        esmvalcore.config._config_object.Config,
+        "_get_config_user_path",
+        return_value=config_file,
+    )
+
+    # No deprecation message should be raised
+    # Note: _get_global_config will ignore the old config since
+    # ESMVALTOOL_CONFIG_DIR is set, but not actually use its value since
+    # esmvalcore.config._config_object.USER_CONFIG_DIR has already been set to
+    # its default value when loading this module
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        esmvalcore.config._config_object._get_global_config()
+
+
+# TODO: remove in v2.14.0
+def test_get_global_config_deprecated(mocker, tmp_path, monkeypatch):
+    """Test ``_get_global_config``."""
+    monkeypatch.delenv("ESMVALTOOL_CONFIG_DIR", raising=False)
+
     config_file = tmp_path / "old_config_user.yml"
     config_file.write_text("output_dir: /new/output/dir")
     mocker.patch.object(
@@ -481,12 +508,7 @@ def _setup_config_dirs(tmp_path):
         ),
     ],
 )
-def test_load_from_dirs_always_default(
-    dirs,
-    output_file_type,
-    rootpath,
-    tmp_path,
-):
+def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     """Test `Config.load_from_dirs`."""
     _setup_config_dirs(tmp_path)
 

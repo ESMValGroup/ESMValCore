@@ -28,10 +28,13 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import warnings
 from importlib.metadata import entry_points
 from pathlib import Path
 
 import fire
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -91,7 +94,7 @@ def process_recipe(recipe_file: Path, session):
             recipe_file,
         )
 
-    timestamp1 = datetime.datetime.utcnow()
+    timestamp1 = datetime.datetime.now(datetime.UTC)
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
@@ -138,7 +141,7 @@ def process_recipe(recipe_file: Path, session):
     # run
     recipe.run()
     # End time timing
-    timestamp2 = datetime.datetime.utcnow()
+    timestamp2 = datetime.datetime.now(datetime.UTC)
     logger.info(
         "Ending the Earth System Model Evaluation Tool at time: %s UTC",
         timestamp2.strftime(timestamp_format),
@@ -414,8 +417,26 @@ class ESMValTool:
         # has been raised if the file does not exist. Thus, reload the file
         # here with `load_from_file` to make sure a proper error is raised.
         if "config_file" in kwargs:
-            cli_config_dir = kwargs["config_file"]
-            CFG.load_from_file(kwargs["config_file"])
+            if os.environ.get("ESMVALTOOL_CONFIG_DIR"):
+                deprecation_msg = (
+                    "Usage of a single configuration file specified via CLI "
+                    "argument `--config_file` has been deprecated in "
+                    "ESMValCore version 2.12.0 and is scheduled for removal "
+                    "in version 2.14.0. Since the environment variable "
+                    "ESMVALTOOL_CONFIG_DIR is set, old configuration files "
+                    "present at ~/.esmvaltool/config-user.yml and/or "
+                    "specified via `--config_file` are currently ignored. To "
+                    "silence this warning, omit CLI argument `--config_file`."
+                )
+                warnings.warn(
+                    deprecation_msg,
+                    ESMValCoreDeprecationWarning,
+                    stacklevel=2,
+                )
+                kwargs.pop("config_file")
+            else:
+                cli_config_dir = kwargs["config_file"]
+                CFG.load_from_file(kwargs["config_file"])
 
         # New in v2.12.0: read additional configuration directory given by CLI
         # argument

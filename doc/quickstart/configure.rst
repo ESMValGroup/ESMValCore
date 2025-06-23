@@ -34,6 +34,12 @@ Specify configuration for ``esmvaltool`` command line tool
 
 When running recipes via the :ref:`command line <running>`, configuration
 options can be specified via YAML files and command line arguments.
+The options from all YAML files and command line arguments are merged together
+using :func:`dask.config.collect` to create a single configuration object,
+which properly considers nested objects (see :func:`dask.config.update` for
+details).
+Configuration options given via the command line will always be preferred over
+options given via YAML files.
 
 
 .. _config_yaml_files:
@@ -53,18 +59,15 @@ A file could look like this (for example, located at
   search_esgf: when_missing
   download_dir: ~/downloaded_data
 
-These files can live in any of the following locations:
+ESMValCore searches for **all** YAML files in **each** of the following
+locations and merges them together:
 
 1. The directory specified via the ``--config_dir`` command line argument.
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
-   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable.
-   If ``~/.config/esmvaltool`` does not exist, this will be silently ignored.
+   this location can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment
+   variable.
 
-ESMValCore searches for all YAML files within each of these directories and
-merges them together using :func:`dask.config.collect`.
-This properly considers nested objects; see :func:`dask.config.update` for
-details.
 Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,
@@ -76,6 +79,23 @@ Within a directory, files are sorted alphabetically, and later files (e.g.,
   Thus, other YAML files in this directory which are not valid configuration
   files (like the old ``config-developer.yml`` files) will lead to errors.
   Make sure to move these files to a different directory.
+
+.. deprecated:: 2.12.0
+
+  If a single configuration file is present at its deprecated location
+  ``~/.esmvaltool/config-user.yml`` or specified via the deprecated command
+  line argument ``--config_file``, all potentially available new configuration
+  files at ``~/.config/esmvaltool/`` and/or the location specified via
+  ``--config_dir`` are ignored.
+  This ensures full backwards-compatibility.
+  To switch to the new configuration system outlined here, move your old
+  configuration file to ``~/.config/esmvaltool/`` or to the location specified
+  via ``--config_dir``, remove ``~/.esmvaltool/config-user.yml``, and omit the
+  command line argument ``--config_file``.
+  Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
+  will also force the usage of the new configuration system regardless of the
+  presence of any potential old configuration files.
+  Support for the deprecated configuration will be removed in version 2.14.0.
 
 To get a copy of the default configuration file, you can run
 
