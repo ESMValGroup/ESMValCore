@@ -10,11 +10,6 @@ on:
     branches:
       - stale
 
-permissions:
-  actions: write
-  issues: write
-  pull-requests: write
-
 jobs:
   stale:
     if: "github.repository == 'ESMValGroup/ESMValCore'"
