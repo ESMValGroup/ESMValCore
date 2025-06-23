@@ -16,8 +16,7 @@ jobs:
           days-before-pr-stale: 180
           days-before-close: 60
           ascending: true
-          operations-per-run: 1000  # TODO: DECREASE; THIS IS JUST FOR TEST PURPOSES
-          debug-only: true  # TODO: REMOVE; THIS IS JUST FOR TEST PURPOSES
+          operations-per-run: 300
           stale-issue-message: |
             In order to maintain a backlog of relevant issues, we automatically label them as stale after 720 days of inactivity.
 
