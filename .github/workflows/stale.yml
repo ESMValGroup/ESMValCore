@@ -35,7 +35,7 @@ jobs:
           stale-pr-message: |
             In order to maintain a backlog of relevant pull requests, we automatically label them as stale after 180 days of inactivity.
 
-            If this pull request is still important to you, please comment below to remove the stale label. Otherwise, this pull request will be automatically closed in 60 days. If this PR only suffers from a lack of reviewers, try tagging the <code>@<span></span>ESMValGroup/technical-lead-development-team</code>.
+            If this pull request is still important to you, please comment below to remove the stale label. Otherwise, this pull request will be automatically closed in 60 days. If this pull request only suffers from a lack of reviewers, please tag the <code>@<span></span>ESMValGroup/technical-lead-development-team</code> so they can help you find a suitable reviewer.
           close-issue-message: |
             This stale issue has been automatically closed due to a lack of community activity.
 
