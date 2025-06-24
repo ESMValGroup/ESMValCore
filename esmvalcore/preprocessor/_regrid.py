@@ -1132,7 +1132,7 @@ def _vertical_interpolate(
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def _preserve_fx_vars(cube, result):
+def _preserve_fx_vars(cube: iris.cube.Cube, result: iris.cube.Cube) -> None:
     vertical_dim = set(cube.coord_dims(cube.coord(axis="z", dim_coords=True)))
     if cube.cell_measures():
         for measure in cube.cell_measures():

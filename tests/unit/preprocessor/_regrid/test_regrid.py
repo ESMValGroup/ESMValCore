@@ -387,7 +387,7 @@ def test_rechunk_on_increased_grid(grids):
         src_grid, tgt_grid = grids
         src_dims = (246, 91, 180)
         if src_grid == "unstructured":
-            src_dims = src_dims[:-2] + (np.prod(src_dims[-2:]),)
+            src_dims = (*src_dims[:-2], np.prod(src_dims[-2:]))
         tgt_grid_dims = (2, 361, 720)
         src_cube = globals()[f"make_test_cube_{src_grid}"](src_dims)
         tgt_grid = globals()[f"make_test_cube_{tgt_grid}"](tgt_grid_dims)
@@ -395,7 +395,7 @@ def test_rechunk_on_increased_grid(grids):
 
         expected = ((123, 123), (91,), (180,))
         if src_grid == "unstructured":
-            expected = expected[:-2] + (np.prod(expected[-2:]),)
+            expected = (*expected[:-2], np.prod(expected[-2:]))
         assert result.core_data().chunks == expected
 
 

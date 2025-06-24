@@ -58,7 +58,7 @@ class Diagnostics:
     def find(cls):
         """Try to find installed diagnostic scripts."""
         try:
-            import esmvaltool
+            import esmvaltool  # noqa: PLC0415
         except ImportError:
             path = Path.cwd()
         else:

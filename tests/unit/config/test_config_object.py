@@ -8,7 +8,7 @@ import pytest
 
 import esmvalcore
 import esmvalcore.config._config_object
-from esmvalcore.config import Config, Session
+from esmvalcore.config import CFG, Config, Session
 from esmvalcore.config._config_object import DEFAULT_CONFIG_DIR
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
@@ -37,9 +37,7 @@ def test_config_class():
     assert isinstance(cfg["output_dir"], Path)
     assert isinstance(cfg["auxiliary_data_dir"], Path)
 
-    from esmvalcore.config._config import CFG as CFG_DEV
-
-    assert CFG_DEV
+    assert CFG
 
 
 def test_config_update():

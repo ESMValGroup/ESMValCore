@@ -22,6 +22,10 @@ any of the reference papers listed at https://esmvaltool.org/references/.
 Have fun!
 """  # noqa: D400
 
+# Imports outside the top level are used here to avoid importing the
+# entire package just to print a help message. This makes the command line
+# much more responsive.
+# ruff: noqa: PLC0415
 # pylint: disable=import-outside-toplevel
 from __future__ import annotations
 
