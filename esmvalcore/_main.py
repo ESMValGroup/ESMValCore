@@ -38,6 +38,7 @@ from pathlib import Path
 
 import fire
 
+from esmvalcore.config._config import warn_if_old_extra_facets_exist
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 # set up logging
@@ -76,9 +77,7 @@ def parse_resume(resume, recipe):
                 f"Only identical recipes can be resumed, but "
                 f"{resume_recipe} is different from {recipe}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
     return resume
 
 
@@ -262,7 +261,7 @@ class Recipes:
     """
 
     @staticmethod
-    def list():
+    def list() -> None:
         """List all installed recipes.
 
         Show all installed recipes, grouped by folder.
@@ -285,7 +284,7 @@ class Recipes:
                     print(os.path.join(root, filename))
 
     @staticmethod
-    def get(recipe):
+    def get(recipe: str) -> None:
         """Get a copy of any installed recipe in the current working directory.
 
         Use this command to get a local copy of any installed recipe.
@@ -308,15 +307,13 @@ class Recipes:
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
         logger.info("Copying installed recipe to the current folder...")
         shutil.copy(installed_recipe, Path(recipe).name)
         logger.info("Recipe %s successfully copied", recipe)
 
     @staticmethod
-    def show(recipe):
+    def show(recipe: str) -> None:
         """Show the given recipe in console.
 
         Use this command to see the contents of any installed recipe.
@@ -337,9 +334,7 @@ class Recipes:
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
         msg = f"Recipe {recipe}"
         logger.info(msg)
         logger.info("=" * len(msg))
@@ -410,9 +405,7 @@ class ESMValTool:
                     f"Invalid --config_dir given: {cli_config_dir} is not an "
                     f"existing directory"
                 )
-                raise NotADirectoryError(
-                    msg,
-                )
+                raise NotADirectoryError(msg)
 
         # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
@@ -447,39 +440,36 @@ class ESMValTool:
         if CFG.get("config_file") is None and cli_config_dir is not None:
             try:
                 CFG.update_from_dirs([cli_config_dir])
-
-            # Potential errors must come from --config_dir (i.e.,
-            # cli_config_dir) since other sources have already been read (and
-            # validated) when importing the module with `from .config import
-            # CFG`
             except InvalidConfigParameter as exc:
                 msg = (
                     f"Failed to parse configuration directory "
                     f"{cli_config_dir} (command line argument): "
                     f"{exc!s}"
                 )
-                raise InvalidConfigParameter(
-                    msg,
-                ) from exc
+                raise InvalidConfigParameter(msg) from exc
 
         recipe = self._get_recipe(recipe)
 
-        CFG.nested_update(kwargs)
+        # Parse command line arguments
+        try:
+            CFG.nested_update(kwargs)
+        except InvalidConfigParameter as exc:
+            msg = f"Invalid command line argument given: {exc!s}"
+            raise InvalidConfigParameter(msg) from exc
+
         CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
 
         self._run(recipe, session, cli_config_dir)
 
         # Print warnings about deprecated configuration options again
-        # TODO: remove in v2.14.0
-        if CFG.get("config_file") is not None:
-            CFG.reload()
-
-        # New in v2.12.0
-        elif cli_config_dir is not None:
+        CFG.reload()
+        if cli_config_dir is not None:
             CFG.update_from_dirs([cli_config_dir])
+        CFG.nested_update(kwargs)
 
         warn_if_old_dask_config_exists()
+        warn_if_old_extra_facets_exist()
 
     @staticmethod
     def _create_session_dir(session):
@@ -500,9 +490,7 @@ class ESMValTool:
             f"Output directory '{session.session_dir}' already exists and"
             " unable to find alternative, aborting to prevent data loss."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
     def _run(
         self,
