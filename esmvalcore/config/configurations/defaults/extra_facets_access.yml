@@ -1,0 +1,137 @@
+# Extra facets for native ACCESS model output
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+projects:
+  ACCESS:
+    extra_facets:
+      ACCESS-ESM1-5:
+        '*':
+          # Atmosphere
+          tas:
+            raw_name: fld_s03i236
+            modeling_realm: atm
+          pr:
+            raw_name: fld_s05i216
+            modeling_realm: atm
+          ps:
+            raw_name: fld_s00i409
+            modeling_realm: atm
+          clt:
+            raw_name: fld_s02i204
+            modeling_realm: atm
+          psl:
+            raw_name: fld_s16i222
+            modeling_realm: atm
+          hus:
+            raw_name: fld_s30i205
+            modeling_realm: atm
+          zg:
+            raw_name: fld_s30i207
+            modeling_realm: atm
+          va:
+            raw_name: fld_s30i202
+            modeling_realm: atm
+          ua:
+            raw_name: fld_s30i201
+            modeling_realm: atm
+          ta:
+            raw_name: fld_s30i204
+            modeling_realm: atm
+          rlus:
+            raw_name:
+              - fld_s02i207
+              - fld_s02i201
+              - fld_s03i332
+              - fld_s02i205
+            modeling_realm: atm
+          rlds:
+            raw_name: fld_s02i207
+            modeling_realm: atm
+          rsus:
+            raw_name:
+              - fld_s01i235
+              - fld_s01i201
+            modeling_realm: atm
+          clivi:
+            raw_name: fld_s30i406
+            modeling_realm: atm
+          evspsbl:
+            raw_name: fld_s03i223
+            modeling_realm: atm
+          hfls:
+            raw_name: fld_s03i234
+            modeling_realm: atm
+          hfss:
+            raw_name: fld_s03i217
+            modeling_realm: atm
+          hur:
+            raw_name: fld_s30i206
+            modeling_realm: atm
+          hurs:
+            raw_name: fld_s03i245
+            modeling_realm: atm
+          huss:
+            raw_name: fld_s03i237
+            modeling_realm: atm
+          prsn:
+            raw_name: fld_s05i215
+            modeling_realm: atm
+          rldscs:
+            raw_name: fld_s02i208
+            modeling_realm: atm
+          rsdt:
+            raw_name: fld_s01i207
+            modeling_realm: atm
+          rsuscs:
+            raw_name: fld_s01i211
+            modeling_realm: atm
+          rsut:
+            raw_name: fld_s01i208
+            modeling_realm: atm
+          rsutcs:
+            raw_name: fld_s01i209
+            modeling_realm: atm
+          sci:
+            raw_name: fld_s05i270
+            modeling_realm: atm
+          sfcWind:
+            raw_name: fld_s03i230
+            modeling_realm: atm
+          sfcWindmax:
+            raw_name: fld_s03i227_max
+            modeling_realm: atm
+          tauu:
+            raw_name: fld_s03i460
+            modeling_realm: atm
+          tauv:
+            raw_name: fld_s03i461
+            modeling_realm: atm
+          ts:
+            raw_name: fld_s00i024
+            modeling_realm: atm
+          uas:
+            raw_name: fld_s03i209
+            modeling_realm: atm
+          vas:
+            raw_name: fld_s03i210
+            modeling_realm: atm
+          wap:
+            raw_name: fld_s30i208
+            modeling_realm: atm
+          rls:
+            raw_name: fld_s02i201
+            modeling_realm: atm
+          rss:
+            raw_name: fld_s01i201
+            modeling_realm: atm
+
+          # Ocean
+          tos:
+            raw_name: sst
+            modeling_realm: ocn
+          so:
+            raw_name: salt
+            modeling_realm: ocn

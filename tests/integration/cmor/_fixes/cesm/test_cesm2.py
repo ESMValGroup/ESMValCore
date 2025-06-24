@@ -11,7 +11,6 @@ import esmvalcore.cmor._fixes.cesm.cesm2
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
@@ -46,7 +45,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = frequency
     vardef = get_var_info(project="CESM", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.cesm.cesm2, fix_name)

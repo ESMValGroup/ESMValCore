@@ -27,7 +27,6 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 
@@ -101,7 +100,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)

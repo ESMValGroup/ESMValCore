@@ -1,0 +1,622 @@
+# Mapping, for IPSLCM output formats 'Analyse' and 'Output', between a
+# CMOR variable name and the labels to use by ESMValTool to find the
+# corresponding file, and the corresponding variable in the file
+#
+# For format 'Analyse', the config-development.yml file tells
+# ESMValTool to use key 'ipsl_varname' for building the filename,
+# while for format 'Output' it specifies to use key 'group'
+#
+# Specifying 'igcm_dir' here allows to avoid having to specify it in
+# datasets definitions
+#
+# Key 'use_cdo' allows to choose whether CDO will be invoked for
+# selecting a variable in a multi-variable file. This generally allows
+# for smaller overall load time. But because CDO has a licence which is
+# not compliant with ESMValtool licence policy, the default
+# configuration is to avoid using it. You may use customized settings
+# by installing a modified version of this file as
+# ~/.esmvatlool/variable_details/ipslcm-*.yml
+# see : https://docs.esmvaltool.org/projects/esmvalcore/en/latest/quickstart/configure.html#location-of-the-extra-facets-files)
+#
+# Key 'positive' allows to tell ESMValTool when the sign convention
+# for a variable is reversed between IPSL-CM6 and CMIP6. In that case,
+# just e.g. put 'positive: down' if the CMIP6 convention is 'positive: up'
+#
+# The main key below, 'IPSL-CM6', is the one to use as a value for
+# attribute 'dataset' in the 'datasets' entry of recipes; it matches
+# the module name 'ipsl_cm6.py' in 'cmor_fixes/ipsl*/ipsl_cm6.py'
+#
+---
+
+projects:
+  IPSLCM:
+    extra_facets:
+      IPSL-CM6:
+        # Facets for all variables
+        '*':
+          '*':
+            model: IPSLCM6
+            use_cdo: false
+
+        Amon:
+          # Variables processed using their CMIP6 short_name
+          # Atmosphere 3D Variables
+          ta:
+            ipsl_varname: ta
+            group: histmthNMC
+            dir: ATM
+          ua:
+            ipsl_varname: ua
+            group: histmthNMC
+            dir: ATM
+          va:
+            ipsl_varname: va
+            group: histmthNMC
+            dir: ATM
+          zg:
+            ipsl_varname: zg
+            group: histmthNMC
+            dir: ATM
+          hus:
+            ipsl_varname: hus
+            group: histmthNMC
+            dir: ATM
+          hur:
+            ipsl_varname: hur
+            group: histmthNMC
+            dir: ATM
+
+          # Atmosphere general variables
+          pr:
+            ipsl_varname: precip
+            group: histmth
+            dir: ATM
+          psl:
+            ipsl_varname: slp
+            group: histmth
+            dir: ATM
+          tas:
+            ipsl_varname: t2m
+            group: histmth
+            dir: ATM
+          ts:
+            ipsl_varname: tsol
+            group: histmth
+            dir: ATM
+          huss:
+            ipsl_varname: q2m
+            group: histmth
+            dir: ATM
+          uas:
+            ipsl_varname: u10m
+            group: histmth
+            dir: ATM
+          vas:
+            ipsl_varname: v10m
+            group: histmth
+            dir: ATM
+          sfcWind:
+            ipsl_varname: wind10m
+            group: histmth
+            dir: ATM
+          hurs:
+            ipsl_varname: rh2m
+            group: histmth
+            dir: ATM
+          prw:
+            ipsl_varname: prw
+            group: histmth
+            dir: ATM
+          t2m:
+            ipsl_varname: t2m
+            group: histmth
+            dir: ATM
+          q2m:
+            ipsl_varname: q2m
+            group: histmth
+            dir: ATM
+          u10m:
+            ipsl_varname: u10m
+            group: histmth
+            dir: ATM
+          v10m:
+            ipsl_varname: v10m
+            group: histmth
+            dir: ATM
+          wind10m:
+            ipsl_varname: wind10m
+            group: histmth
+            dir: ATM
+
+          # Turbulent fluxes
+          hfls:
+            ipsl_varname: flat
+            group: histmth
+            dir: ATM
+            positive: down
+          hfss:
+            ipsl_varname: sens
+            group: histmth
+            dir: ATM
+            positive: down
+          tauu:
+            ipsl_varname: taux
+            group: histmth
+            dir: ATM
+          tauv:
+            ipsl_varname: tauy
+            group: histmth
+            dir: ATM
+
+          # Clouds
+          clt:
+            ipsl_varname: cldt
+            group: histmth
+            dir: ATM
+
+          # Radiative up at TOA
+          rlut:
+            ipsl_varname: topl
+            group: histmth
+            dir: ATM
+          rsut:
+            ipsl_varname: SWupTOA
+            group: histmth
+            dir: ATM
+          rlutcs:
+            ipsl_varname: topl0
+            group: histmth
+            dir: ATM
+          rsutcs:
+            ipsl_varname: SWupTOAclr
+            group: histmth
+            dir: ATM
+
+          # Radiative down at TOA
+          rsdt:
+            ipsl_varname: SWdnTOA
+            group: histmth
+            dir: ATM
+
+          # Radiative up at Surface
+          rlus:
+            ipsl_varname: LWupSFC
+            group: histmth
+            dir: ATM
+          rsus:
+            ipsl_varname: SWupSFC
+            group: histmth
+            dir: ATM
+          rsuscs:
+            ipsl_varname: SWupSFcclr
+            group: histmth
+            dir: ATM
+          rluscs:
+            ipsl_varname: LWupSFcclr
+            group: histmth
+            dir: ATM
+
+          # Radiative down at Surface
+          rlds:
+            ipsl_varname: LWdnSFC
+            group: histmth
+            dir: ATM
+          rsds:
+            ipsl_varname: SWdnSFC
+            group: histmth
+            dir: ATM
+          rldscs:
+            ipsl_varname: LWdnSFcclr
+            group: histmth
+            dir: ATM
+          rsdscs:
+            ipsl_varname: SWdnSFcclr
+            group: histmth
+            dir: ATM
+
+          # Variables processed using their own IPSL short_name
+          # general variables
+          precip:
+            ipsl_varname: precip
+            group: histmth
+            dir: ATM
+          slp:
+            ipsl_varname: slp
+            group: histmth
+            dir: ATM
+
+          # Turbulent fluxes
+          taux:
+            ipsl_varname: taux
+            group: histmth
+            dir: ATM
+          tauy:
+            ipsl_varname: tauy
+            group: histmth
+            dir: ATM
+
+          # Radiative down at TOA
+          SWdnTOA:
+            ipsl_varname: SWdnTOA
+            group: histmth
+            dir: ATM
+
+          # Radiative up at TOA
+          topl:
+            ipsl_varname: topl
+            group: histmth
+            dir: ATM
+          SWupTOA:
+            ipsl_varname: SWupTOA
+            group: histmth
+            dir: ATM
+          topl0:
+            ipsl_varname: topl0
+            group: histmth
+            dir: ATM
+          SWupTOAclr:
+            ipsl_varname: SWupTOAclr
+            group: histmth
+            dir: ATM
+
+          # Radiative up at Surface
+          LWupSFC:
+            ipsl_varname: LWupSFC
+            group: histmth
+            dir: ATM
+          SWupSFC:
+            ipsl_varname: SWupSFC
+            group: histmth
+            dir: ATM
+          SWupSFcclr:
+            ipsl_varname: SWupSFcclr
+            group: histmth
+            dir: ATM
+          LWupSFcclr:
+            ipsl_varname: LWupSFcclr
+            group: histmth
+            dir: ATM
+
+          # Radiative down at Surface
+          LWdnSFC:
+            ipsl_varname: LWdnSFC
+            group: histmth
+            dir: ATM
+          SWdnSFC:
+            ipsl_varname: SWdnSFC
+            group: histmth
+            dir: ATM
+          LWdnSFcclr:
+            ipsl_varname: LWdnSFcclr
+            group: histmth
+            dir: ATM
+          SWdnSFcclr:
+            ipsl_varname: SWdnSFcclr
+            group: histmth
+            dir: ATM
+
+        Lmon:
+          # Land surface (ORCHIDEE) variables processed using their CMIP6
+          # short_name
+          mrrob:
+            ipsl_varname: drainage
+            group: sechiba_history
+            dir: SRF
+          runoff:
+            ipsl_varname: runoff
+            group: sechiba_history
+            dir: SRF
+          mrros:
+            ipsl_varname: runoff
+            group: sechiba_history
+            dir: SRF
+          lai:
+            ipsl_varname: lai
+            group: stomate_ipcc_history
+            dir: SBG
+
+          # Land surface (ORCHIDEE) variables processed using their own IPSL
+          # short_name
+          drainage:
+            ipsl_varname: drainage
+            group: sechiba_history
+            dir: SRF
+          snow:
+            ipsl_varname: snow
+            group: sechiba_history
+            dir: SRF
+          snw_land:
+            ipsl_varname: snow
+            group: sechiba_history
+            dir: SRF
+          fluxlat:
+            ipsl_varname: fluxlat
+            group: sechiba_history
+            dir: SRF
+          fluxsens:
+            ipsl_varname: fluxsens
+            group: sechiba_history
+            dir: SRF
+          albnir:
+            ipsl_varname: alb_nir
+            group: sechiba_history
+            dir: SRF
+          albvis:
+            ipsl_varname: alb_vis
+            group: sechiba_history
+            dir: SRF
+          tair:
+            ipsl_varname: tair
+            group: sechiba_history
+            dir: SRF
+          swdown:
+            ipsl_varname: swdown
+            group: sechiba_history
+            dir: SRF
+          lwdown:
+            ipsl_varname: lwdown
+            group: sechiba_history
+            dir: SRF
+          transpir:
+            ipsl_varname: transpir
+            group: sechiba_history
+            dir: SRF
+          evapnu:
+            ipsl_varname: evapnu
+            group: sechiba_history
+            dir: SRF
+          es:
+            ipsl_varname: evapnu
+            group: sechiba_history
+            dir: SRF
+          inter:
+            ipsl_varname: inter
+            group: sechiba_history
+            dir: SRF
+          subli:
+            ipsl_varname: subli
+            group: sechiba_history
+            dir: SRF
+          evap:
+            ipsl_varname: evap
+            group: sechiba_history
+            dir: SRF
+          Qs:
+            ipsl_varname: Qs
+            group: sechiba_history
+            dir: SRF
+          frac_snow:
+            ipsl_varname: frac_snow
+            group: sechiba_history
+            dir: SRF
+          maint_resp:
+            ipsl_varname: maint_resp
+            group: sechiba_history
+            dir: SRF
+          growth_resp:
+            ipsl_varname: growth_resp
+            group: sechiba_history
+            dir: SRF
+          hetero_resp:
+            ipsl_varname: hetero_resp
+            group: sechiba_history
+            dir: SRF
+          maintresp:
+            ipsl_varname: maint_resp
+            group: sechiba_history
+            dir: SRF
+          growthresp:
+            ipsl_varname: growth_resp
+            group: sechiba_history
+            dir: SRF
+          heteroresp:
+            ipsl_varname: hetero_resp
+            group: sechiba_history
+            dir: SRF
+          nee:
+            ipsl_varname: nee
+            group: sechiba_history
+            dir: SRF
+
+          # SBG
+          total_soil_carb:
+            ipsl_varname: TOTAL_SOIL_CARB
+            group: stomate_history
+            dir: SBG
+          totalsoilcarb:
+            ipsl_varname: TOTAL_SOIL_CARB
+            group: stomate_history
+            dir: SBG
+          maxvegetfrac:
+            ipsl_varname: maxvegetfrac
+            group: sechiba_history
+            dir: SBG
+          vegetfrac:
+            ipsl_varname: vegetfrac
+            group: sechiba_history
+            dir: SBG
+          cfracgpp:
+            ipsl_varname: gpp
+            group: stomate_ipcc_history
+            dir: SBG
+
+          # Alias for the obs
+          gpptot:
+            ipsl_varname: gpp
+            group: stomate_ipcc_history
+            dir: SBG
+          Contfrac:
+            ipsl_varname: Contfrac
+            group: sechiba_history
+            dir: SBG
+
+        Omon:
+          # Ocean variables processed using their CMIP6 short_name
+          tos:
+            ipsl_varname: tos
+            group: grid_T
+            dir: OCE
+          sos:
+            ipsl_varname: sos
+            group: grid_T
+            dir: OCE
+          thetao:
+            ipsl_varname: thetao
+            group: grid_T
+            dir: OCE
+          so:
+            ipsl_varname: so
+            group: grid_T
+            dir: OCE
+          zos:
+            ipsl_varname: zos
+            group: grid_T
+            dir: OCE
+          mlotst:
+            ipsl_varname: mldr10_1
+            group: grid_T
+            dir: OCE
+          wfo:
+            ipsl_varname: wfo
+            group: grid_T
+            dir: OCE
+
+          # Wind stress curl
+          tauuo:
+            ipsl_varname: tauuo
+            group: grid_U
+            dir: OCE
+          tauvo:
+            ipsl_varname: tauvo
+            group: grid_U
+            dir: OCE
+
+          # Ocean variables processed using their own IPSL short_name
+          mlddt02:
+            ipsl_varname: mld_dt02
+            group: grid_T
+            dir: OCE
+
+          # Aliases to the zonal average (computed on the x axis of the ORCA
+          # grid)
+          zotemglo:
+            ipsl_varname: zotemglo
+            group: diaptr
+            dir: OCE
+          zotempac:
+            ipsl_varname: zotempac
+            group: diaptr
+            dir: OCE
+          zotematl:
+            ipsl_varname: zotematl
+            group: diaptr
+            dir: OCE
+          zotemind:
+            ipsl_varname: zotemind
+            group: diaptr
+            dir: OCE
+          zosalglo:
+            ipsl_varname: zosalglo
+            group: diaptr
+            dir: OCE
+          zosalpac:
+            ipsl_varname: zosalpac
+            group: diaptr
+            dir: OCE
+          zosalatl:
+            ipsl_varname: zosalatl
+            group: diaptr
+            dir: OCE
+          zosalind:
+            ipsl_varname: zosalind
+            group: diaptr
+            dir: OCE
+          zomsfglo:
+            ipsl_varname: zomsfglo
+            group: diaptr
+            dir: OCE
+          zomsfpac:
+            ipsl_varname: zomsfpac
+            group: diaptr
+            dir: OCE
+          zomsfatl:
+            ipsl_varname: zomsfatl
+            group: diaptr
+            dir: OCE
+          zomsfind:
+            ipsl_varname: zomsfind
+            group: diaptr
+            dir: OCE
+
+          # Aliases to the old IGCM_OUT names
+          sosstsst:
+            ipsl_varname: sosstsst
+            group: grid_T
+            dir: OCE
+          sosaline:
+            ipsl_varname: sosaline
+            group: grid_T
+            dir: OCE
+          votemper:
+            ipsl_varname: votemper
+            group: grid_T
+            dir: OCE
+          vosaline:
+            ipsl_varname: vosaline
+            group: grid_T
+            dir: OCE
+          mldr10_3:
+            ipsl_varname: mldr10_3
+            group: grid_T
+            dir: OCE
+          somx3010:
+            ipsl_varname: somx3010
+            group: grid_T
+            dir: OCE
+          mld_dt02:
+            ipsl_varname: mld_dt02
+            group: grid_T
+            dir: OCE
+
+          # Biogeochemistry
+          NO3:
+            ipsl_varname: NO3
+            group: ptrc_T
+            dir: BGC
+          PO4:
+            ipsl_varname: PO4
+            group: ptrc_T
+            dir: BGC
+          Si:
+            ipsl_varname: Si
+            group: ptrc_T
+            dir: BGC
+          O2:
+            ipsl_varname: O2
+            group: ptrc_T
+            dir: BGC
+
+        SImon:
+          # Sea ice variables processed using their CMIP6 short_name
+          sivolu:
+            ipsl_varname: sivolu
+            group: icemod
+            dir: ICE
+          siconc:
+            ipsl_varname: siconc
+            group: icemod
+            dir: ICE
+          sithick:
+            ipsl_varname: sithic
+            group: icemod
+            dir: ICE
+
+          # Sea ice variables processed using their own IPSL short_name
+          sic:
+            ipsl_varname: siconc
+            group: icemod
+            dir: ICE
+          sit:
+            ipsl_varname: sithic
+            group: icemod
+            dir: ICE
