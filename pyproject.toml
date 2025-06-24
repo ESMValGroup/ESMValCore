@@ -66,6 +66,7 @@ dependencies = [
     "scitools-iris>=3.12.2",  # github.com/SciTools/iris/issues/6417
     "shapely>=2.0.0",
     "stratify>=0.3",
+    "xarray",
     "yamale",
 ]
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
@@ -202,6 +203,7 @@ ignore = [
     "D105",     # Disable missing docstring in magic method as these are well defined.
     "E501",     # Disable line-too-long as this is taken care of by the formatter.
     "FIX002",   # TODOs can be useful when something cannot be done immediately.
+    "PLW1641",  # Implementing __hash__ on mutable objects may be more confusing than not doing it.
     "S603",     # Uncheckable
     "TD002",    # Missing author in TODO: can be seen from git history
     "TRY003",   # Fixing this would require many exceptions

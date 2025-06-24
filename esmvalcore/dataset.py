@@ -156,7 +156,9 @@ class Dataset:
         list[Dataset]
             A list of datasets.
         """
-        from esmvalcore._recipe.to_datasets import datasets_from_recipe
+        from esmvalcore._recipe.to_datasets import (  # noqa: PLC0415
+            datasets_from_recipe,
+        )
 
         return datasets_from_recipe(recipe, session)
 

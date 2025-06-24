@@ -44,6 +44,7 @@ dependencies:
   - rich
   - scipy >=1.6
   - shapely >=2.0.0
+  - xarray
   - yamale
   # Python packages needed for building docs
   - autodocsumm >=0.2.2

@@ -869,7 +869,7 @@ class TaskSet(set):
         create n_threads = n_cpu_cores / n_processes.
         """
         # pylint: disable=import-outside-toplevel
-        from esmvalcore.preprocessor import PreprocessingTask
+        from esmvalcore.preprocessor import PreprocessingTask  # noqa: PLC0415
 
         if dask.config.get("scheduler", "threads") not in (
             "threads",
