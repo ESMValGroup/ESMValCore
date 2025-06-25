@@ -62,8 +62,7 @@ class Fix:
         vardef:
             CMOR table entry of the variable.
         extra_facets:
-            Extra facets are mainly used for data outside of the big projects
-            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+            Extra facets. For details, see :ref:`config-extra-facets`.
         session:
             Current session which includes configuration and directory
             information.
@@ -237,8 +236,7 @@ class Fix:
         short_name:
             Variable's short name.
         extra_facets:
-            Extra facets are mainly used for data outside of the big projects
-            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+            Extra facets. For details, see :ref:`config-extra-facets`.
         session:
             Current session which includes configuration and directory
             information.

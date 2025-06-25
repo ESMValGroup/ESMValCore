@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import sys
 import warnings
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -151,9 +151,7 @@ class Config(ValidatedConfig):
                 f"Failed to parse user configuration file {config_user_path}: "
                 f"{exc!s}"
             )
-            raise InvalidConfigParameter(
-                msg,
-            ) from exc
+            raise InvalidConfigParameter(msg) from exc
 
         return new
 
@@ -395,16 +393,23 @@ class Config(ValidatedConfig):
         # TODO: remove in v2.14.0
         self.clear()
         _deprecated_config_user_path = Config._get_config_user_path()
-        if _deprecated_config_user_path.is_file():
+        if _deprecated_config_user_path.is_file() and not os.environ.get(
+            "ESMVALTOOL_CONFIG_DIR",
+        ):
             deprecation_msg = (
                 f"Usage of the single configuration file "
                 f"~/.esmvaltool/config-user.yml or specifying it via CLI "
                 f"argument `--config_file` has been deprecated in ESMValCore "
                 f"version 2.12.0 and is scheduled for removal in version "
-                f"2.14.0. Please run `mkdir -p ~/.config/esmvaltool && mv "
+                f"2.14.0. To switch to the new configuration system, (1) run "
+                f"`mkdir -p ~/.config/esmvaltool && mv "
                 f"{_deprecated_config_user_path} ~/.config/esmvaltool` (or "
                 f"alternatively use a custom `--config_dir`) and omit "
-                f"`--config_file`."
+                f"`--config_file`, or (2) use the environment variable "
+                f"ESMVALTOOL_CONFIG_DIR to specify a custom user "
+                f"configuration directory. New configuration files present at "
+                f"~/.config/esmvaltool or specified via `--config_dir` are "
+                f"currently ignored."
             )
             warnings.warn(
                 deprecation_msg,
@@ -422,9 +427,7 @@ class Config(ValidatedConfig):
                 f"Failed to parse configuration directory {USER_CONFIG_DIR} "
                 f"({USER_CONFIG_SOURCE}): {exc!s}"
             )
-            raise InvalidConfigParameter(
-                msg,
-            ) from exc
+            raise InvalidConfigParameter(msg) from exc
 
     def start_session(self, name: str) -> Session:
         """Start a new session from this configuration object.
@@ -546,7 +549,7 @@ class Session(ValidatedConfig):
         The `name` is used to name the session directory, e.g.
         `session_20201208_132800/`. The date is suffixed automatically.
         """
-        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        now = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         self.session_name = f"{name}_{now}"
 
     @property

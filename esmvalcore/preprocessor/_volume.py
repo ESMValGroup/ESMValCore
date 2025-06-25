@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Literal
 import dask
 import dask.array as da
 import iris
+import iris.analysis.trajectory
 import iris.util
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
@@ -618,8 +619,6 @@ def extract_trajectory(
         Latitude and longitude have different dimensions.
 
     """
-    from iris.analysis.trajectory import interpolate
-
     if len(latitudes) != len(longitudes):
         msg = "Longitude & Latitude coordinates have different lengths"
         raise ValueError(
@@ -634,7 +633,7 @@ def extract_trajectory(
         latitudes = np.linspace(minlat, maxlat, num=number_points)
 
     points = [("latitude", latitudes), ("longitude", longitudes)]
-    return interpolate(cube, points)  # Very slow!
+    return iris.analysis.trajectory.interpolate(cube, points)  # Very slow!
 
 
 def _get_first_unmasked_data(
