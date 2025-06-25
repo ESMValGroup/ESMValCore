@@ -105,9 +105,7 @@ def _unify_time_coordinates(cubes):
                 "Multimodel statistics preprocessor currently does not "
                 "support sub-daily data."
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord("time").points = date2num(dates, t_unit, coord.dtype)
@@ -195,9 +193,7 @@ def _map_to_new_time(cube, time_points):
             f"Tried to align cubes in multi-model statistics, but failed for "
             f"cube {cube}\n and time points {time_points}.{additional_info}"
         )
-        raise ValueError(
-            msg,
-        ) from excinfo
+        raise ValueError(msg) from excinfo
 
     # Change the dtype of int_time_coords to their original values
     for coord_name in int_time_coords:
