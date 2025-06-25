@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import iris
+import xarray as xr
 
 from esmvalcore.config._config import TASKSEP
 
@@ -437,9 +438,6 @@ class DataFile(OutputFile):
 
     def load_xarray(self):
         """Load data using xarray."""
-        # local import because `ESMValCore` does not depend on `xarray`
-        import xarray as xr
-
         return xr.load_dataset(self.path)
 
     def load_iris(self):

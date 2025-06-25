@@ -135,7 +135,7 @@ def test_session_setter():
                 "units": "m2",
                 "modeling_realm": ["atmos", "land"],
                 "frequency": "fx",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "raw_name": "cell_area",
             },
         ),
@@ -156,7 +156,7 @@ def test_session_setter():
                 "long_name": "Geopotential Height",
                 "standard_name": "geopotential_height",
                 "units": "m",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["BCCR"],
             },
         ),
@@ -178,7 +178,7 @@ def test_session_setter():
                 "modeling_realm": ["atmos"],
                 "standard_name": "precipitation_flux",
                 "units": "kg m-2 s-1",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["CNRM-CERFACS"],
                 "product": ["output1", "output2"],
             },
@@ -1851,3 +1851,287 @@ def test_load_fail(session):
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
+
+
+# TODO: Remove in v2.15.0
+def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
+    dataset = Dataset(
+        project="CMIP5",
+        mip="Amon",
+        dataset="ACCESS1-3",
+        short_name="test",
+    )
+    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+                  institute: new-institute
+            """)
+        .strip()
+        .format(**dataset.facets),
+    )
+    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "product": ["output1", "output2"],
+        "key": "value",
+        "institute": "new-institute",
+    }
+
+
+# TODO: Remove in v2.15.0
+def test_get_extra_facets_ignore_deprecated_facets(tmp_path, monkeypatch):
+    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
+
+    dataset = Dataset(
+        project="CMIP5",
+        mip="Amon",
+        dataset="ACCESS1-3",
+        short_name="test",
+    )
+    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+                  institute: new-institute
+            """)
+        .strip()
+        .format(**dataset.facets),
+    )
+    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "product": ["output1", "output2"],
+        "institute": ["CSIRO-BOM"],
+    }
+
+
+def test_get_extra_facets(monkeypatch):
+    raw_extra_facets = {
+        "not_TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "not_TEST-MODEL_Amon_tas",
+                    "x": "not_TEST-MODEL_Amon_tas",
+                },
+            },
+        },
+        "TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TEST-MODEL_Amon_tas",
+                    "b": "TEST-MODEL_Amon_tas",
+                },
+                "*": {
+                    "a": "TEST-MODEL_Amon_*",
+                    "c": "TEST-MODEL_Amon_*",
+                },
+                "ta?": {
+                    "a": "TEST-MODEL_Amon_ta?",
+                    "d": "TEST-MODEL_Amon_ta?",
+                },
+            },
+        },
+        "TES[ABCT]-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_Amon_tas",
+                    "e": "TES[ABCT]-MODEL_Amon_tas",
+                },
+            },
+            "[!X]mon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+                    "f": "TES[ABCT]-MODEL_[!X]mon_tas",
+                },
+            },
+        },
+    }
+    project_config = {"TEST": {"extra_facets": raw_extra_facets}}
+    monkeypatch.setitem(CFG, "projects", project_config)
+    dataset = Dataset(
+        project="TEST",
+        mip="Amon",
+        short_name="tas",
+        dataset="TEST-MODEL",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+        "b": "TEST-MODEL_Amon_tas",
+        "c": "TEST-MODEL_Amon_*",
+        "d": "TEST-MODEL_Amon_ta?",
+        "e": "TES[ABCT]-MODEL_Amon_tas",
+        "f": "TES[ABCT]-MODEL_[!X]mon_tas",
+    }
+
+
+def test_get_extra_facets_access():
+    dataset = Dataset(
+        project="ACCESS",
+        mip="Amon",
+        short_name="tas",
+        dataset="ACCESS-ESM1-5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "fld_s03i236",
+        "modeling_realm": "atm",
+    }
+
+
+def test_get_extra_facets_cesm():
+    dataset = Dataset(
+        project="CESM",
+        mip="Amon",
+        short_name="tas",
+        dataset="CESM2",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "string": "",
+        "tdir": "",
+        "tperiod": "",
+        "raw_name": "TREFHT",
+        "gcomp": "atm",
+        "scomp": "cam",
+    }
+
+
+def test_get_extra_facets_cmip3():
+    dataset = Dataset(
+        project="CMIP3",
+        mip="A1",
+        short_name="tas",
+        dataset="CM3",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {"institute": ["CNRM", "INM", "CNRM_CERFACS"]}
+
+
+def test_get_extra_facets_cmip5():
+    dataset = Dataset(
+        project="CMIP5",
+        mip="fx",
+        short_name="areacella",
+        dataset="ACCESS1-0",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "ensemble": "r0i0p0",
+        "institute": ["CSIRO-BOM"],
+        "product": ["output1", "output2"],
+    }
+
+
+def test_get_extra_facets_emac():
+    dataset = Dataset(
+        project="EMAC",
+        mip="Amon",
+        short_name="clt",
+        dataset="EMAC",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "postproc_flag": "",
+        "raw_name": ["aclcov_cav", "aclcov_ave", "aclcov"],
+        "raw_units": "1",
+        "channel": "Amon",
+    }
+
+
+def test_get_extra_facets_icon():
+    dataset = Dataset(
+        project="ICON",
+        mip="SImon",
+        short_name="siconc",
+        dataset="ICON",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "sic",
+        "raw_units": "1",
+        "var_type": "atm_2d_ml",
+    }
+
+
+def test_get_extra_facets_icon_xpp():
+    dataset = Dataset(
+        project="ICON",
+        mip="Omon",
+        short_name="so",
+        dataset="ICON-XPP",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "so",
+        "raw_units": "0.001",
+        "var_type": "oce_def",
+    }
+
+
+def test_get_extra_facets_ipslcm():
+    dataset = Dataset(
+        project="IPSLCM",
+        mip="Amon",
+        short_name="ta",
+        dataset="IPSL-CM6",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "model": "IPSLCM6",
+        "use_cdo": False,
+        "ipsl_varname": "ta",
+        "group": "histmthNMC",
+        "dir": "ATM",
+    }
+
+
+def test_get_extra_facets_native6():
+    dataset = Dataset(
+        project="native6",
+        mip="Amon",
+        short_name="ta",
+        dataset="ERA5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "automatic_regrid": True,
+        "family": "E5",
+        "type": "an",
+        "typeid": "00",
+        "version": "v1",
+        "level": "pl",
+        "grib_id": "130",
+        "tres": "1M",
+    }

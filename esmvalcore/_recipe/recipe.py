@@ -1295,7 +1295,9 @@ class Recipe:
             # ignore import warnings
             warnings.simplefilter("ignore")
             # keep RecipeOutput here to avoid circular import
-            from esmvalcore.experimental.recipe_output import RecipeOutput
+            from esmvalcore.experimental.recipe_output import (  # noqa: PLC0415
+                RecipeOutput,
+            )
 
             output = self.get_output()
 

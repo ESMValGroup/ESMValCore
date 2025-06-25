@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from functools import reduce
+from pprint import pformat
 from typing import TYPE_CHECKING
 
 import cf_units
@@ -104,9 +105,7 @@ def _unify_time_coordinates(cubes):
                 "Multimodel statistics preprocessor currently does not "
                 "support sub-daily data."
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord("time").points = date2num(dates, t_unit, coord.dtype)
@@ -117,7 +116,7 @@ def _unify_time_coordinates(cubes):
 def _guess_time_bounds(cube):
     """Guess time bounds if possible."""
     cube.coord("time").bounds = None
-    if cube.coord("time").shape == (1,):
+    if cube.coord("time").shape[0] < 2:
         logger.debug(
             "Encountered scalar time coordinate in multi_model_statistics: "
             "cannot determine its bounds",
@@ -194,9 +193,7 @@ def _map_to_new_time(cube, time_points):
             f"Tried to align cubes in multi-model statistics, but failed for "
             f"cube {cube}\n and time points {time_points}.{additional_info}"
         )
-        raise ValueError(
-            msg,
-        ) from excinfo
+        raise ValueError(msg) from excinfo
 
     # Change the dtype of int_time_coords to their original values
     for coord_name in int_time_coords:
@@ -228,9 +225,14 @@ def _align_time_coord(cubes, span):
             f"Invalid argument for span: {span!r}"
             "Must be one of 'overlap', 'full'."
         )
-        raise ValueError(
-            msg,
+        raise ValueError(msg)
+
+    if new_time_points.size == 0:
+        msg = (
+            f"Cannot align time coordinates with strategy '{span}', resulting "
+            f"time coordinate is empty. Input cubes:\n{pformat(cubes)}"
         )
+        raise ValueError(msg)
 
     new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
 

@@ -178,13 +178,8 @@ def test_run_missing_config_dir(tmp_path):
         program.run("/recipe_dir/recipe_test.yml", config_dir=config_dir)
 
 
-def test_run_invalid_config_dir(monkeypatch, tmp_path):
+def test_run_invalid_config_dir(tmp_path):
     """Test `ESMValTool.run`."""
-    monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping,
-        "config_file",
-        raising=False,
-    )
     config_path = tmp_path / "config.yml"
     config_path.write_text("invalid: option")
     program = ESMValTool()
@@ -195,6 +190,20 @@ def test_run_invalid_config_dir(monkeypatch, tmp_path):
     )
     with pytest.raises(InvalidConfigParameter, match=msg):
         program.run("/recipe_dir/recipe_test.yml", config_dir=tmp_path)
+
+
+def test_run_invalid_cli_arg(monkeypatch, tmp_path):
+    """Test `ESMValTool.run`."""
+    monkeypatch.delitem(  # TODO: remove in v2.14.0
+        esmvalcore.config.CFG._mapping,
+        "config_file",
+        raising=False,
+    )
+    program = ESMValTool()
+
+    msg = r"Invalid command line argument given:"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        program.run("/recipe_dir/recipe_test.yml", invalid_arg=1)
 
 
 def test_clean_preproc_dir(session):

@@ -1856,41 +1856,37 @@ for period in ("full", "day", "month", "season"):
 
 
 @pytest.mark.parametrize("period", ["full"])
-def test_standardized_anomalies(period, standardize=True):
+def test_standardized_anomalies(period):
     """Test standardized ``anomalies``."""
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period, standardize=standardize)
+    result = anomalies(cube, period, standardize=True)
     if period == "full":
         expected_anomalies = cube.data - np.mean(
             cube.data,
             axis=0,
             keepdims=True,
         )
-        if standardize:
-            # NB: default behaviour for np.std is ddof=0, whereas
-            #     default behaviour for iris.analysis.STD_DEV is ddof=1
-            expected_stdanomalies = expected_anomalies / np.std(
-                expected_anomalies,
-                axis=0,
-                keepdims=True,
-                ddof=1,
-            )
-            expected = np.ma.masked_invalid(expected_stdanomalies)
-            assert_array_equal(result.data, expected)
-            assert result.units == "1"
-        else:
-            expected = np.ma.masked_invalid(expected_anomalies)
-            assert_array_equal(result.data, expected)
+        # NB: default behaviour for np.std is ddof=0, whereas
+        #     default behaviour for iris.analysis.STD_DEV is ddof=1
+        expected_stdanomalies = expected_anomalies / np.std(
+            expected_anomalies,
+            axis=0,
+            keepdims=True,
+            ddof=1,
+        )
+        expected = np.ma.masked_invalid(expected_stdanomalies)
+        assert_array_equal(result.data, expected)
+        assert result.units == "1"
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)
-def test_anomalies_preserve_metadata(period, reference, standardize=False):
+def test_anomalies_preserve_metadata(period, reference):
     """Test that ``anomalies`` preserves metadata."""
     cube = make_map_data(number_years=2)
     cube.var_name = "si"
     cube.units = "m"
     metadata = copy.deepcopy(cube.metadata)
-    result = anomalies(cube, period, reference, standardize=standardize)
+    result = anomalies(cube, period, reference, standardize=False)
     assert result.metadata == metadata
     for coord_cube, coord_res in zip(
         cube.coords(),
@@ -1903,10 +1899,10 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)
-def test_anomalies(period, reference, standardize=False):
+def test_anomalies(period, reference):
     """Test ``anomalies``."""
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period, reference, standardize=standardize)
+    result = anomalies(cube, period, reference, standardize=False)
     if reference is None:
         if period == "full":
             anom = np.arange(-359.5, 360)
