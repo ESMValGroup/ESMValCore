@@ -545,6 +545,19 @@ def test_align_no_overlap():
         mm._align_time_coord(cubes, "overlap")
 
 
+def test_align_invalid_span():
+    """Test _align function."""
+    cubes = [
+        generate_cube_from_dates("monthly"),
+        generate_cube_from_dates("monthly"),
+    ]
+    cubes[0].coord("time").points = cubes[0].coord("time").points + 100.0
+
+    msg = r"Invalid argument for span"
+    with pytest.raises(ValueError, match=msg):
+        mm._align_time_coord(cubes, "invalid_span")
+
+
 @pytest.mark.parametrize("span", SPAN_OPTIONS)
 def test_combine_same_shape(span):
     """Test _combine with same shape of cubes."""
