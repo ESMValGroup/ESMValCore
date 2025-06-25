@@ -531,6 +531,20 @@ def test_align(span):
     assert next(iter(shapes)) == (len_data,)
 
 
+def test_align_no_overlap():
+    """Test _align function."""
+    # Create two cubes that do not overlap in time
+    cubes = [
+        generate_cube_from_dates("monthly"),
+        generate_cube_from_dates("monthly"),
+    ]
+    cubes[0].coord("time").points = cubes[0].coord("time").points + 100.0
+
+    msg = r"Cannot align time coordinates with strategy 'overlap'"
+    with pytest.raises(ValueError, match=msg):
+        mm._align_time_coord(cubes, "overlap")
+
+
 @pytest.mark.parametrize("span", SPAN_OPTIONS)
 def test_combine_same_shape(span):
     """Test _combine with same shape of cubes."""

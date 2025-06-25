@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from functools import reduce
+from pprint import pformat
 from typing import TYPE_CHECKING
 
 import cf_units
@@ -228,9 +229,14 @@ def _align_time_coord(cubes, span):
             f"Invalid argument for span: {span!r}"
             "Must be one of 'overlap', 'full'."
         )
-        raise ValueError(
-            msg,
+        raise ValueError(msg)
+
+    if new_time_points.size == 0:
+        msg = (
+            f"Cannot align time coordinates with strategy '{span}', resulting "
+            f"time coordinate is empty. Input cubes:\n{pformat(cubes)}"
         )
+        raise ValueError(msg)
 
     new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
 
