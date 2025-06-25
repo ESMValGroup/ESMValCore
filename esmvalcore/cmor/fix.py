@@ -9,14 +9,15 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.local import _get_start_end_date
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
     from pathlib import Path
 
     import ncdata
@@ -112,6 +113,27 @@ def fix_file(  # noqa: PLR0913
     return file
 
 
+def _group_cubes(fixes: Iterable[Fix], cubes: CubeList) -> dict[Any, CubeList]:
+    """Group cubes for fix_metadata; each group is processed individually."""
+    grouped_cubes: dict[Any, CubeList] = defaultdict(CubeList)
+
+    # Group by date
+    if any(fix.GROUP_CUBES_BY_DATE for fix in fixes):
+        for cube in cubes:
+            if "source_file" in cube.attributes:
+                dates = _get_start_end_date(cube.attributes["source_file"])
+            else:
+                dates = None
+            grouped_cubes[dates].append(cube)
+
+    # Group by file name
+    else:
+        for cube in cubes:
+            grouped_cubes[cube.attributes.get("source_file", "")].append(cube)
+
+    return grouped_cubes
+
+
 def fix_metadata(
     cubes: Sequence[Cube],
     short_name: str,
@@ -175,14 +197,14 @@ def fix_metadata(
     )
     fixed_cubes = CubeList()
 
-    # Group cubes by input file and apply all fixes to each group element
-    # (i.e., each file) individually
-    by_file = defaultdict(list)
-    for cube in cubes:
-        by_file[cube.attributes.get("source_file", "")].append(cube)
-
-    for cube_list in by_file.values():
-        cube_list = CubeList(cube_list)
+    # Group cubes and apply all fixes to each group element individually. There
+    # are two options for grouping:
+    # (1) By input file name (default).
+    # (2) By time range (can be enabled by setting the attribute
+    #     GROUP_CUBES_BY_DATE=True for the fix class; see
+    #     _fixes.native6.era5.Rsut for an example).
+    grouped_cubes = _group_cubes(fixes, cubes)
+    for cube_list in grouped_cubes.values():
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
