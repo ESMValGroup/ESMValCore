@@ -116,7 +116,7 @@ def _unify_time_coordinates(cubes):
 def _guess_time_bounds(cube):
     """Guess time bounds if possible."""
     cube.coord("time").bounds = None
-    if cube.coord("time").shape == (1,):
+    if cube.coord("time").shape[0] < 2:
         logger.debug(
             "Encountered scalar time coordinate in multi_model_statistics: "
             "cannot determine its bounds",
