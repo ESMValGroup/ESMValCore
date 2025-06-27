@@ -171,7 +171,7 @@ def test_do_not_ignore_warnings(mocker):
     ignore_warnings = [{"message": "non-relevant warning"}]
 
     # Check that warnings is raised
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match="This is a custom expected warning"):
         cubes = load("myfilename", ignore_warnings=ignore_warnings)
 
     assert len(cubes) == 1

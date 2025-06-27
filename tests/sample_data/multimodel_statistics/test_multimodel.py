@@ -359,7 +359,12 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 
@@ -435,7 +440,12 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     cubes[1].coord("time").points = 20.0
     cubes[1].coord("time").bounds = [0.0, 40.0]
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 
