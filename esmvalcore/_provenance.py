@@ -118,8 +118,8 @@ class TrackedFile:
 
         Arguments
         ---------
-        filename: str
-            Path to the file on disk.
+        filename: :obj:`pathlib.Path` or :obj:`esmvalcore.io.protocol.DataElement`
+            Path or data element containing the data described by the provenance.
         attributes: dict
             Dictionary with facets describing the file. If set to None, this
             will be read from the file when provenance is initialized.
@@ -130,11 +130,15 @@ class TrackedFile:
             differ from `filename` if the file was moved before resuming
             processing.
         """
-        self._filename = filename
+        self._filename = (
+            str(filename) if isinstance(filename, Path) else filename.name
+        )
         if prov_filename is None:
-            self.prov_filename = filename
+            self.prov_filename = self._filename
         else:
             self.prov_filename = prov_filename
+        # TODO: ensure global attributes are recorded for input data if they're
+        # not netcdf files.
         self.attributes = copy.deepcopy(attributes)
 
         self.provenance = None
@@ -167,20 +171,21 @@ class TrackedFile:
         if self.provenance is None:
             msg = f"Provenance of {self} not initialized"
             raise ValueError(msg)
-        new = TrackedFile(self.filename, self.attributes)
+        new = TrackedFile(Path(self.filename), self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
         new.entity = new.provenance.get_record(self.entity.identifier)[0]
         new.activity = new.provenance.get_record(self.activity.identifier)[0]
         return new
 
     @property
-    def filename(self):
-        """Filename."""
+    def filename(self) -> str:
+        """Name of data described by this provenance document."""
         return self._filename
 
     @property
     def provenance_file(self):
-        """Filename of provenance."""
+        """Filename of provenance file."""
+        # This may not work well if filename is the instance_id.
         return os.path.splitext(self.filename)[0] + "_provenance.xml"
 
     def initialize_provenance(self, activity):
