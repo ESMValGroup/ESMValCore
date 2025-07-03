@@ -20,6 +20,7 @@ Amon_r1i1p1_historical,rcp85_INM-CM4_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "185001/200512"
       version: v20130207
     local_file: cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
     name: tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
@@ -50,6 +51,7 @@ Amon_r1i1p1_historical,rcp85_INM-CM4_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "200601/210012"
       version: v20130207
     local_file: cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
     name: tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
@@ -81,6 +83,7 @@ Amon_r1i1p1_historical_FIO-ESM_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "185001/200512"
       version: v20121010
     local_file: cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
     name: tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
@@ -108,6 +111,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "205512/208011"
       version: v20120531
     local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
     name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
@@ -132,6 +136,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "208012/209912"
       version: v20120531
     local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
     name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
@@ -156,6 +161,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
       project: CMIP5
       modeling_realm: atmos
       short_name: tas
+      timerange: "210001/210012"
       version: v20120531
     local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
     name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
@@ -180,6 +186,7 @@ EUR-11_MOHC-HadGEM2-ES_r1i1p1_historical_CORDEX_RACMO22E_mon_tas.json:
       project: CORDEX
       rcm_version: v2
       short_name: tas
+      timerange: "195001/195012"
       version: v20160620
     local_file: cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc
     name: tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc
@@ -202,6 +209,7 @@ EUR-11_MOHC-HadGEM2-ES_r1i1p1_historical_CORDEX_RACMO22E_mon_tas.json:
       project: CORDEX
       rcm_version: v2
       short_name: tas
+      timerange: "195101/196012"
       version: v20160620
     local_file: cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc
     name: tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc
@@ -233,6 +241,7 @@ historical_gn_r4i1p1f1_CMIP6_CESM2_Amon_tas.json:
       mip: Amon
       project: CMIP6
       short_name: tas
+      timerange: "185001/201412"
       version: v20190308
     local_file: CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
     name: tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
@@ -256,6 +265,7 @@ obs4MIPs_CERES-EBAF_mon_rsutcs.json:
       project: obs4MIPs
       modeling_realm: atmos
       short_name: rsutcs
+      timerange: "200003/201404"
       version: v20160610
     local_file: obs4MIPs/CERES-EBAF/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
     name: rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
@@ -273,6 +283,7 @@ obs4MIPs_GPCP-V2.3_pr.json:
       institute: NASA-GSFC
       project: obs4MIPs
       short_name: pr
+      timerange: "197901/201710"
       version: v20180519
     local_file: obs4MIPs/GPCP-V2.3/v20180519/pr_GPCP-SG_L3_v2.3_197901-201710.nc
     name: pr_GPCP-SG_L3_v2.3_197901-201710.nc
@@ -293,6 +304,7 @@ run1_historical_cccma_cgcm3_1_CMIP3_mon_tas.json:
       project: CMIP3
       modeling_realm: atmos
       short_name: tas
+      timerange: "1850/2000"
       version: v1
     local_file: cmip3/CCCma/cccma_cgcm3_1/historical/mon/atmos/run1/tas/v1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc
     name: tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc

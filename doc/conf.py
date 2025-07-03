@@ -466,6 +466,7 @@ intersphinx_mapping = {
     'dask': ('https://docs.dask.org/en/stable/', None),
     'distributed': ('https://distributed.dask.org/en/stable/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
+    'intake_esgf': ('https://intake-esgf.readthedocs.io/en/stable/', None),
     'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
     'ncdata': ('https://ncdata.readthedocs.io/en/stable/', None),

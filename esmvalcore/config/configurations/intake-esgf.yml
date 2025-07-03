@@ -1,0 +1,76 @@
+projects:
+  CMIP6:
+    data:
+      intake-esgf:
+        type: "esmvalcore.io.intake_esgf.IntakeESGFDataSource"
+        facets:
+          activity: "activity_drs"
+          dataset: "source_id"
+          ensemble: "member_id"
+          exp: "experiment_id"
+          institute: "institution_id"
+          grid: "grid_label"
+          mip: "table_id"
+          project: "project"
+          short_name: "variable_id"
+  CMIP5:
+    data:
+      intake-esgf:
+        type: "esmvalcore.io.intake_esgf.IntakeESGFDataSource"
+        facets:
+          dataset: "model"
+          ensemble: "ensemble"
+          exp: "experiment"
+          frequency: "time_frequency"
+          institute: "institute"
+          mip: "cmor_table"
+          product: "product"
+          project: "project"
+          short_name: "variable"
+        values:
+          dataset:
+            "ACCESS1-0": "ACCESS1.0"
+            "ACCESS1-3": "ACCESS1.3"
+            "bcc-csm1-1": "BCC-CSM1.1"
+            "bcc-csm1-1-m": "BCC-CSM1.1(m)"
+            "CESM1-BGC": "CESM1(BGC)"
+            "CESM1-CAM5": "CESM1(CAM5)"
+            "CESM1-CAM5-1-FV2": "CESM1(CAM5.1,FV2)"
+            "CESM1-FASTCHEM": "CESM1(FASTCHEM)"
+            "CESM1-WACCM": "CESM1(WACCM)"
+            "CSIRO-Mk3-6-0": "CSIRO-Mk3.6.0"
+            "fio-esm": "FIO-ESM"
+            "GFDL-CM2p1": "GFDL-CM2.1"
+            "inmcm4": "INM-CM4"
+            "MRI-AGCM3-2H": "MRI-AGCM3.2H"
+            "MRI-AGCM3-2S": "MRI-AGCM3.2S"
+  CMIP3:
+    data:
+      intake-esgf:
+        type: "esmvalcore.io.intake_esgf.IntakeESGFDataSource"
+        facets:
+          dataset: "model"
+          ensemble: "ensemble"
+          exp: "experiment"
+          frequency: "time_frequency"
+          project: "project"
+          short_name: "variable"
+  obs4MIPs:
+    data:
+      intake-esgf-v2:
+        type: "esmvalcore.io.intake_esgf.IntakeESGFDataSource"
+        facets:
+          dataset: "source_id"
+          frequency: "frequency"
+          institute: "institution_id"
+          project: "project"
+          short_name: "variable_id"
+      # TODO: Add support for older ODS V1.0 obs4MIPs (CMIP5 style) data to intake-esgf
+      # intake-esgf-v1:
+      #   type: "esmvalcore.io.intake_esgf.IntakeESGFDataSource"
+      #   facets:
+      #     dataset: "source_id"
+      #     frequency: "time_frequency"
+      #     institute: "institute"
+      #     project: "project"
+      #     short_name: "variable"

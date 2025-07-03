@@ -692,7 +692,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         "remove_supplementary_variables": {},
         "save": {
             "compress": False,
-            "filename": product.filename,
+            "filename": Path(product.filename),
             "compute": False,
         },
     }
@@ -1539,7 +1539,7 @@ def test_diagnostic_task_provenance(
     # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
         iter(
-            p for p in diagnostic_task.products if p.filename.endswith(".nc")
+            p for p in diagnostic_task.products if p.filename.suffix == ".nc"
         ),
     )
     cube = iris.load_cube(product.filename)
@@ -2464,8 +2464,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     session["search_esgf"] = "when_missing"
 
     mocker.patch.object(
-        esmvalcore._recipe.recipe.esgf,
-        "download",
+        esmvalcore.io.protocol.DataElement,
+        "prepare",
         create_autospec=True,
     )
 
@@ -2476,10 +2476,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
-        set(),
-        session["download_dir"],
-    )
+    esmvalcore.io.protocol.DataElement.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )
@@ -2506,7 +2503,7 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     assert len(datasets) == 1
     filename = datasets[0].files[0]
     path = Path(filename)
-    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc"
+    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990-1999.nc"
 
 
 @pytest.mark.parametrize("force_derivation", [True, False])

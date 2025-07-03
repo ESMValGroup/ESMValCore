@@ -351,7 +351,7 @@ class ResumeTask(BaseTask):
         for prov_filename, attributes in prev_metadata.items():
             # Update the filename in case the output directory was moved
             # since the original run
-            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            filename = prev_preproc_dir / Path(prov_filename).name
             attributes["filename"] = filename
             product = TrackedFile(
                 filename,
@@ -676,7 +676,7 @@ class DiagnosticTask(BaseTask):
             msg,
         )
 
-    def _collect_provenance(self):
+    def _collect_provenance(self) -> None:
         """Process provenance information provided by the diagnostic script."""
         provenance_file = (
             Path(self.settings["run_dir"]) / "diagnostic_provenance.yml"
@@ -766,7 +766,7 @@ class DiagnosticTask(BaseTask):
 
             TAGS.replace_tags_in_dict(attributes)
 
-            product = TrackedFile(filename, attributes, ancestors)
+            product = TrackedFile(Path(filename), attributes, ancestors)
             product.initialize_provenance(self.activity)
             _write_citation_files(product.filename, product.provenance)
             product.save_provenance()

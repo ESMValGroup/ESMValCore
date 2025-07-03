@@ -1,0 +1,62 @@
+projects:
+  CMIP6:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/CMIP6_DKRZ
+        dirname_template: "{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+  CMIP5:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
+        dirname_template: "{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
+  CMIP3:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/CMIP3
+        dirname_template: "{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}"
+        filename_template: "{short_name}_*.nc"
+  CORDEX:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/ik1017/C3SCORDEX/data/c3s-cordex/output
+        dirname_template: "{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
+  obs4MIPs:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/OBS
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{short_name}_*.nc"
+  native6:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/RAWOBS
+        dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
+        filename_template: "*.nc"
+      era5-archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /pool/data/ERA5
+        dirname_template: "{family}/{level}/{type}/{tres}/{grib_id}"
+        filename_template: "{family}{level}{typeid}_{tres}_*_{grib_id}.grb"
+  OBS6:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/OBS
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+  OBS:
+    data:
+      archive-dkrz:
+        type: "esmvalcore.local.DataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/OBS
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

@@ -27,7 +27,6 @@ def _load_default_config():
             "ignore",
             message="Do not instantiate `Config` objects directly",
             category=UserWarning,
-            module="esmvalcore",
         )
         cfg = Config()
     cfg.load_from_dirs([])
