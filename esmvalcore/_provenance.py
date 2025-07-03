@@ -11,6 +11,8 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 from prov.model import ProvDerivation, ProvDocument
 
+from esmvalcore.io.protocol import DataElement
+
 from ._version import __version__
 
 logger = logging.getLogger(__name__)
@@ -109,7 +111,7 @@ class TrackedFile:
 
     def __init__(
         self,
-        filename,
+        filename: Path | DataElement,
         attributes=None,
         ancestors=None,
         prov_filename=None,
@@ -118,7 +120,7 @@ class TrackedFile:
 
         Arguments
         ---------
-        filename: str
+        filename:
             Path to the file on disk.
         attributes: dict
             Dictionary with facets describing the file. If set to None, this
@@ -130,9 +132,11 @@ class TrackedFile:
             differ from `filename` if the file was moved before resuming
             processing.
         """
-        self._filename = filename
+        self._filename = (
+            str(filename) if isinstance(filename, Path) else filename.name
+        )
         if prov_filename is None:
-            self.prov_filename = filename
+            self.prov_filename = self._filename
         else:
             self.prov_filename = prov_filename
         self.attributes = copy.deepcopy(attributes)

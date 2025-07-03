@@ -15,6 +15,7 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.io.protocol import DataElement
 
 from ._area import (
     area_statistics,
@@ -25,6 +26,7 @@ from ._area import (
     zonal_statistics,
 )
 from ._compare_with_refs import bias, distance_metric
+from ._concatenate import concatenate
 from ._cycles import amplitude
 from ._dask_progress import _compute_with_progress
 from ._derive import derive
@@ -32,7 +34,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    concatenate,
     load,
     save,
     write_metadata,
@@ -466,7 +467,7 @@ def preprocess(
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
+        if isinstance(item, (PreprocessorFile, Cube, DataElement)):
             items.append(item)
         else:
             items.extend(item)
@@ -727,7 +728,7 @@ class PreprocessingTask(BaseTask):
             product for product in self.products if step in product.settings
         ]
 
-    def _initialize_products(self, products):
+    def _initialize_products(self, products: Iterable[PreprocessorFile]):
         """Initialize products."""
         for product in products:
             product.initialize_provenance(self.activity)
