@@ -1,7 +1,9 @@
+"""Module containing :func:`esmvalcore.preprocessor.concatenate`."""
+
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, Self
 
 import cftime
 import iris.exceptions
@@ -14,9 +16,9 @@ from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
-    from iris.coords import Coord
+    from iris.coords import Coord, DimCoord
     from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,10 @@ def _delete_attributes(iris_object: Cube | Coord, atts: Iterable[str]) -> None:
             del iris_object.attributes[att]
 
 
-def _concatenate_cubes(cubes, check_level):
+def _concatenate_cubes(
+    cubes: Iterable[Cube],
+    check_level: CheckLevels,
+) -> CubeList:
     """Concatenate cubes according to the check_level."""
     kwargs = {
         "check_aux_coords": True,
@@ -50,14 +55,14 @@ def _concatenate_cubes(cubes, check_level):
 
 
 class _TimesHelper:
-    def __init__(self, time):
+    def __init__(self, time: DimCoord) -> None:
         self.times = time.core_points()
         self.units = str(time.units)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self.times, name)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.times)
 
     def __getitem__(self, key):
@@ -89,7 +94,7 @@ def _check_time_overlaps(cubes: CubeList) -> CubeList:
         end: float
 
         @classmethod
-        def from_cube(cls, cube):
+        def from_cube(cls, cube: Cube) -> Self:
             """Construct tracked cube."""
             times = cube.coord("time")
             start, end = times.core_points()[[0, -1]]
@@ -150,7 +155,7 @@ def _check_time_overlaps(cubes: CubeList) -> CubeList:
     return new_cubes
 
 
-def _fix_calendars(cubes):
+def _fix_calendars(cubes: Sequence[Cube]) -> None:
     """Check and homogenise calendars, if possible."""
     calendars = [cube.coord("time").units.calendar for cube in cubes]
     unique_calendars = np.unique(calendars)
@@ -172,7 +177,7 @@ def _fix_calendars(cubes):
             time_coord.units = new_unit
 
 
-def _get_concatenation_error(cubes):
+def _get_concatenation_error(cubes: Sequence[Cube]) -> None:
     """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
     try:
@@ -190,7 +195,7 @@ def _get_concatenation_error(cubes):
     raise ValueError(msg)
 
 
-def _sort_cubes_by_time(cubes):
+def _sort_cubes_by_time(cubes: Iterable[Cube]) -> list[Cube]:
     """Sort CubeList by time coordinate."""
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
@@ -203,7 +208,7 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def _concatenate_cubes_by_experiment(cubes: list[Cube]) -> list[Cube]:
+def _concatenate_cubes_by_experiment(cubes: Sequence[Cube]) -> Sequence[Cube]:
     """Concatenate cubes by experiment.
 
     This ensures overlapping (branching) experiments are handled correctly.
@@ -231,7 +236,10 @@ def _concatenate_cubes_by_experiment(cubes: list[Cube]) -> list[Cube]:
     return cubes
 
 
-def concatenate(cubes, check_level=CheckLevels.DEFAULT):
+def concatenate(
+    cubes: Sequence[Cube],
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+) -> Cube:
     """Concatenate all cubes after fixing metadata.
 
     Parameters
