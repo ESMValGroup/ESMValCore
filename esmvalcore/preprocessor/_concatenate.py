@@ -16,9 +16,9 @@ from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable
 
-    from iris.coords import Coord, DimCoord
+    from iris.coords import Coord
     from iris.cube import Cube
 
 logger = logging.getLogger(__name__)

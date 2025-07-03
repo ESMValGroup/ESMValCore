@@ -26,6 +26,7 @@ from esmvalcore.config._config import (
     get_institutes,
     load_extra_facets,
 )
+from esmvalcore.config.data_sources import get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
@@ -39,6 +40,7 @@ if TYPE_CHECKING:
 
     from iris.cube import Cube
 
+    from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
@@ -131,7 +133,7 @@ class Dataset:
         self._persist: set[str] = set()
         self._session: Session | None = None
         self._files: Sequence[File] | None = None
-        self._file_globs: Sequence[Path] | None = None
+        self._file_globs: Sequence[str] = []
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -350,7 +352,7 @@ class Dataset:
                 # allow use of facets from supplementary variable dict
                 if (
                     facet in self.facets
-                    and facet not in supplementary_ds.facets
+                    and supplementary_ds.facets.get(facet, "*") == "*"
                 ):
                     supplementary_ds.facets[facet] = self.facets[facet]
             supplementaries.extend(supplementary_ds.from_files())
@@ -750,45 +752,33 @@ class Dataset:
             supplementary.find_files()
 
     def _find_files(self) -> None:
-        self.files, self._file_globs = local.find_files(
-            debug=True,
-            **self.facets,
-        )
+        def version(file: DataElement) -> str:
+            return str(file.facets.get("version", ""))
 
-        # If project does not support automatic downloads from ESGF, stop here
-        if self.facets["project"] not in esgf.facets.FACETS:
-            return
-
-        # 'never' mode: never download files from ESGF and stop here
-        if self.session["search_esgf"] == "never":
-            return
-
-        # 'when_missing' mode: if files are available locally, do not check
-        # ESGF
-        if self.session["search_esgf"] == "when_missing":
-            try:
-                check.data_availability(self, log=False)
-            except InputFilesNotFound:
-                pass  # search ESGF for files
-            else:
-                return  # use local files
-
-        # Local files are not available in 'when_missing' mode or 'always' mode
-        # is used: check ESGF
-        local_files = {f.name: f for f in self.files}
-        search_result = esgf.find_files(**self.facets)
-        for file in search_result:
-            if file.name not in local_files:
-                # Use ESGF files that are not available locally.
-                self.files.append(file)
-            else:
-                # Use ESGF files that are newer than the locally available
-                # files.
-                local_file = local_files[file.name]
-                if "version" in local_file.facets:
-                    if file.facets["version"] > local_file.facets["version"]:
-                        idx = self.files.index(local_file)
-                        self.files[idx] = file
+        self._file_globs = []
+        files: dict[str, DataElement] = {}
+        for data_source in sorted(
+            get_data_sources(self.session),
+            key=lambda ds: ds.priority,
+        ):
+            if data_source.project == self.facets["project"]:
+                result = data_source.find_data(**self.facets)
+                for file in result:
+                    if file.name not in files:
+                        files[file.name] = file
+                    if version(files[file.name]) < version(file):
+                        files[file.name] = file
+                self.files = list(files.values())
+                self._file_globs.append(data_source.debug_info)
+                # 'when_missing' mode: if files are available from a higher
+                # priority source, do not search lower priority sources.
+                if self.session["search_esgf"] == "when_missing":
+                    try:
+                        check.data_availability(self, log=False)
+                    except InputFilesNotFound:
+                        pass  # continue search for data
+                    else:
+                        return  # use what has been found so far
 
     @property
     def files(self) -> list[File]:

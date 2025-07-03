@@ -15,6 +15,7 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.io.protocol import DataElement
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -470,7 +471,7 @@ def preprocess(
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
+        if isinstance(item, (PreprocessorFile, Cube, DataElement)):
             items.append(item)
         else:
             items.extend(item)
