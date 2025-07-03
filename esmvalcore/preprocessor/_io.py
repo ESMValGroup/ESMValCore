@@ -20,6 +20,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.exceptions import ESMValCoreLoadWarning
+from esmvalcore.io.protocol import DataElement
 from esmvalcore.iris_helpers import (
     dataset_to_iris,
     ignore_warnings_context,
@@ -75,7 +76,13 @@ def _restore_lat_lon_units(
 
 
 def load(
-    file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+    file: str
+    | Path
+    | DataElement
+    | Cube
+    | CubeList
+    | xr.Dataset
+    | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
     backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:
@@ -113,7 +120,7 @@ def load(
         Invalid type for ``file``.
 
     """
-    if hasattr(file, "to_iris"):
+    if isinstance(file, DataElement):
         cubes = file.to_iris(ignore_warnings=ignore_warnings)
     elif isinstance(file, (str, Path)):
         extension = (
@@ -161,7 +168,7 @@ def load(
 
 
 def _load_zarr(
-    file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+    file: str | Path,
     ignore_warnings: list[dict[str, Any]] | None = None,
     backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:
