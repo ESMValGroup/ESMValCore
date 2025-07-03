@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 from functools import partial
+from pathlib import Path
 from pprint import pformat
 from shutil import which
 from typing import TYPE_CHECKING, Any
@@ -15,6 +16,7 @@ import isodate
 import yamale
 
 import esmvalcore.preprocessor
+from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
@@ -227,6 +229,8 @@ def data_availability(dataset, log=True):
     available_years = set()
 
     for file in input_files:
+        if not isinstance(file, Path | ESGFFile):
+            return
         start, end = _get_start_end_year(file)
         available_years.update(range(start, end + 1))
 

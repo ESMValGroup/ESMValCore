@@ -59,6 +59,8 @@ from .to_datasets import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from esmvalcore.io.protocol import DataElement
+
 logger = logging.getLogger(__name__)
 
 PreprocessorSettings = dict[str, Any]
@@ -293,20 +295,12 @@ def _update_weighting_settings(settings, facets):
     _exclude_dataset(settings, facets, "weighting_landsea_fraction")
 
 
-def _add_to_download_list(dataset):
-    """Add the files of `dataset` to `DOWNLOAD_FILES`."""
-    for i, file in enumerate(dataset.files):
-        if isinstance(file, esgf.ESGFFile):
-            DOWNLOAD_FILES.add(file)
-            dataset.files[i] = file.local_file(dataset.session["download_dir"])
-
-
 def _schedule_for_download(datasets):
     """Schedule files for download."""
     for dataset in datasets:
-        _add_to_download_list(dataset)
+        DOWNLOAD_FILES.update(dataset.files)
         for supplementary_ds in dataset.supplementaries:
-            _add_to_download_list(supplementary_ds)
+            DOWNLOAD_FILES.update(supplementary_ds.files)
 
 
 def _log_input_files(datasets: Iterable[Dataset]) -> None:
@@ -332,12 +326,7 @@ def _log_input_files(datasets: Iterable[Dataset]) -> None:
 
 def _get_files_str(dataset: Dataset) -> str:
     """Get nice string representation of all files of a dataset."""
-    return "\n".join(
-        f"  {f}"
-        if f.exists()  # type: ignore
-        else f"  {f} (will be downloaded)"
-        for f in dataset.files
-    )
+    return "\n".join(f"  {f}" for f in dataset.files)
 
 
 def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
@@ -823,7 +812,7 @@ class Recipe:
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
         USED_DATASETS.clear()
-        self._download_files: set[esgf.ESGFFile] = set()
+        self._download_files: set[DataElement] = set()
         self.session = session
         self.session["write_ncl_interface"] = self._need_ncl(
             raw_recipe["diagnostics"],
@@ -1241,8 +1230,8 @@ class Recipe:
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
-        if self.session["search_esgf"] != "never":
-            esgf.download(self._download_files, self.session["download_dir"])
+        for file in self._download_files:
+            file.prepare()
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(
