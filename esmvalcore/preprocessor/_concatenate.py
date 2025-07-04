@@ -69,7 +69,7 @@ class _TimesHelper:
         return self.times[key]
 
 
-def _check_time_overlaps(cubes: CubeList) -> CubeList:
+def _remove_time_overlaps(cubes: CubeList) -> CubeList:
     """Handle time overlaps.
 
     Parameters
@@ -177,22 +177,22 @@ def _fix_calendars(cubes: Sequence[Cube]) -> None:
             time_coord.units = new_unit
 
 
-def _get_concatenation_error(cubes: Sequence[Cube]) -> None:
+def _raise_concatenation_exception(cubes: Sequence[Cube]) -> None:
     """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
     try:
         CubeList(cubes).concatenate_cube()
     except iris.exceptions.ConcatenateError as exc:
         msg = str(exc)
-    logger.error("Can not concatenate cubes into a single one: %s", msg)
-    logger.error("Resulting cubes:")
-    for cube in cubes:
-        logger.error(cube)
-        time = cube.coord("time")
-        logger.error("From %s to %s", time.cell(0), time.cell(-1))
+        logger.error("Can not concatenate cubes into a single one: %s", msg)
+        logger.error("Resulting cubes:")
+        for cube in cubes:
+            logger.error(cube)
+            time = cube.coord("time")
+            logger.error("From %s to %s", time.cell(0), time.cell(-1))
 
-    msg = f"Can not concatenate cubes: {msg}"
-    raise ValueError(msg)
+        msg = f"Can not concatenate cubes: {msg}"
+        raise ValueError(msg) from exc
 
 
 def _sort_cubes_by_time(cubes: Iterable[Cube]) -> list[Cube]:
@@ -279,13 +279,13 @@ def concatenate(
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
     _fix_calendars(cubes)
-    cubes = _check_time_overlaps(cubes)
+    cubes = _remove_time_overlaps(cubes)
     cubes = [_rechunk_aux_factory_dependencies(cube) for cube in cubes]
     result = _concatenate_cubes(cubes, check_level=check_level)
 
     if len(result) == 1:
         result = result[0]
     else:
-        _get_concatenation_error(result)
+        _raise_concatenation_exception(result)
 
     return result

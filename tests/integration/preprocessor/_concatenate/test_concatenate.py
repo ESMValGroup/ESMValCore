@@ -11,6 +11,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import concatenate
+from esmvalcore.preprocessor._concatenate import _remove_time_overlaps
 from tests import assert_array_equal
 
 
@@ -170,6 +171,12 @@ class TestConcatenate(unittest.TestCase):
             concatenated.data,
             np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.5, 7.5]),
         )
+
+    def test_remove_time_overlap_noop(self):
+        """Test time handling of a single cube."""
+        cubes = [self.raw_cubes[0]]
+        result = _remove_time_overlaps(cubes)
+        assert result is cubes
 
     def test_concatenate_with_overlap_2(self):
         """Test a more generic case."""
