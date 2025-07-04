@@ -44,7 +44,10 @@ def cfg_default():
 @pytest.fixture(autouse=True)
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
-    monkeypatch.setattr(esmvalcore.config, "CFG", cfg_default)
+    for key in CFG:
+        monkeypatch.delitem(CFG, key)
+    for key, value in cfg_default.items():
+        monkeypatch.setitem(CFG, key, value)
 
 
 @pytest.fixture
