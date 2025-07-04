@@ -194,11 +194,6 @@ def test_run_invalid_config_dir(tmp_path):
 
 def test_run_invalid_cli_arg(monkeypatch, tmp_path):
     """Test `ESMValTool.run`."""
-    monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping,
-        "config_file",
-        raising=False,
-    )
     program = ESMValTool()
 
     msg = r"Invalid command line argument given:"
