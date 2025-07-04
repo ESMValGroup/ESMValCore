@@ -25,6 +25,7 @@ from ._area import (
     zonal_statistics,
 )
 from ._compare_with_refs import bias, distance_metric
+from ._concatenate import concatenate
 from ._cycles import amplitude
 from ._dask_progress import _compute_with_progress
 from ._derive import derive
@@ -32,7 +33,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    concatenate,
     load,
     save,
     write_metadata,

@@ -20,7 +20,7 @@ from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
 )
-from esmvalcore.preprocessor._io import concatenate
+from esmvalcore.preprocessor._concatenate import concatenate
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
