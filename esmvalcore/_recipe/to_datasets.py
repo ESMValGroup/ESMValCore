@@ -9,7 +9,7 @@ from numbers import Number
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
-from esmvalcore.dataset import Dataset, _isglob
+from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile, _replace_years_with_timerange
@@ -249,7 +249,7 @@ def _append_missing_supplementaries(
             supplementary_facets: Facets = {
                 facet: "*"
                 for facet in FACETS.get(project, ["mip"])
-                if facet not in _CMOR_KEYS
+                if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
             if "version" in facets:
                 supplementary_facets["version"] = "*"
