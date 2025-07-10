@@ -20,11 +20,11 @@ class DerivedVariableBase:
 
         Note
         ----
-        It is possible to declare a required variable as `optional=True`, which
-        allows the skipping of this particular variable during data extraction.
-        For example, this is useful for fx variables which are often not
-        available for observational datasets. Otherwise, the tool will fail if
-        not all required variables are available for all datasets.
+        It is possible to declare a required variable as ``optional=True``,
+        which allows the skipping of this particular variable during data
+        extraction. For example, this is useful for fx variables which are
+        often not available for observational datasets. Otherwise, the tool
+        will fail if not all required variables are available for all datasets.
 
         Parameters
         ----------
@@ -50,8 +50,7 @@ class DerivedVariableBase:
         ----------
         cubes:
             Includes all the needed variables (incl. fx variables) for
-            derivation defined in the static class variable
-            `_required_variables`.
+            derivation defined in ``required``.
 
         Returns
         -------

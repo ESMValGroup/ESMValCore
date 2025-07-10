@@ -10,7 +10,6 @@ from unittest import mock
 import pyesgf.search.results
 import pytest
 
-import esmvalcore._recipe.check
 import esmvalcore.esgf
 from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset

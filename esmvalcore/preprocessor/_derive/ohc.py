@@ -15,16 +15,12 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {"short_name": "thetao"},
-            {"short_name": "volcello", "mip": "fx"},
-        ]
-        if project == "CMIP6":
-            required = [
-                {"short_name": "thetao"},
-                {"short_name": "volcello", "mip": "Ofx"},
-            ]
-        return required
+        volcello = {"short_name": "volcello", "mip": "fx"}
+        if project == "CMIP5":
+            volcello["ensemble"] = "r0i0p0"
+        elif project == "CMIP6":
+            volcello["mip"] = "Ofx"
+        return [{"short_name": "thetao"}, volcello]
 
     @staticmethod
     def calculate(cubes):
