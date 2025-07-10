@@ -33,6 +33,7 @@ from esmvalcore.local import (
     _get_start_end_date,
 )
 from esmvalcore.preprocessor import preprocess
+from esmvalcore.preprocessor._derive import get_required
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -163,6 +164,44 @@ class Dataset:
         )
 
         return datasets_from_recipe(recipe, session)
+
+    def is_derived(self) -> bool:
+        """Return ``True`` for derived variables, ``False`` otherwise."""
+        return bool(self.facets.get("derive", False))
+
+    def _get_derivation_requirements(self) -> list[Dataset]:
+        """Get datasets required for derivation."""
+        if not self.facets.get("derive", False):
+            return []
+
+        required_datasets: list[Dataset] = []
+        required_vars_facets = get_required(
+            self.facets["short_name"],
+            self.facets["project"],
+        )
+        for required_facets in required_vars_facets:
+            required_dataset = self._copy(derive=False)
+            keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
+            required_dataset.facets = {
+                k: v for k, v in required_dataset.facets.items() if k in keep
+            }
+            required_dataset.facets.update(required_facets)
+            required_dataset.augment_facets()
+            required_datasets.append(required_dataset)
+
+        return required_datasets
+
+    def get_input_datasets(self) -> list[Dataset]:
+        """Get input datasets.
+
+        For non-derived variables, this simply returns the dataset itself in a
+        list. For derived variables, this returns the datasets required for
+        derivation.
+
+        """
+        if self.is_derived():
+            return self._get_derivation_requirements()
+        return [self]
 
     def _file_to_dataset(
         self,
@@ -410,6 +449,16 @@ class Dataset:
                         )
                         break
 
+    def _copy(self, **facets: FacetValue) -> Dataset:
+        """Create a copy of the parent dataset without supplementaries."""
+        new = self.__class__()
+        new._session = self._session  # noqa: SLF001
+        for key, value in self.facets.items():
+            new.set_facet(key, deepcopy(value), key in self._persist)
+        for key, value in facets.items():
+            new.set_facet(key, deepcopy(value))
+        return new
+
     def copy(self, **facets: FacetValue) -> Dataset:
         """Create a copy.
 
@@ -425,12 +474,7 @@ class Dataset:
         Dataset
             A copy of the dataset.
         """
-        new = self.__class__()
-        new._session = self._session  # noqa: SLF001
-        for key, value in self.facets.items():
-            new.set_facet(key, deepcopy(value), key in self._persist)
-        for key, value in facets.items():
-            new.set_facet(key, deepcopy(value))
+        new = self._copy(**facets)
         for supplementary in self.supplementaries:
             # The short_name and mip of the supplementary variable are probably
             # different from the main variable, so don't copy those facets.
@@ -440,6 +484,7 @@ class Dataset:
             }
             new_supplementary = supplementary.copy(**supplementary_facets)
             new.supplementaries.append(new_supplementary)
+
         return new
 
     def __eq__(self, other) -> bool:
@@ -477,8 +522,8 @@ class Dataset:
         if self.supplementaries:
             txt.append("supplementaries:")
             txt.extend(
-                textwrap.indent(facets2str(a.facets), "  ")
-                for a in self.supplementaries
+                textwrap.indent(facets2str(s.facets), "  ")
+                for s in self.supplementaries
             )
         if self._session:
             txt.append(f"session: '{self.session.session_name}'")
@@ -532,10 +577,11 @@ class Dataset:
             txt += (
                 ", supplementaries: "
                 + "; ".join(
-                    supplementary_summary(a) for a in self.supplementaries
+                    supplementary_summary(s) for s in self.supplementaries
                 )
                 + ""
             )
+
         return txt
 
     def __getitem__(self, key):
@@ -544,7 +590,7 @@ class Dataset:
 
     def __setitem__(self, key, value):
         """Set a facet value."""
-        self.facets[key] = value
+        self.set_facet(key, value, persist=False)
 
     def set_facet(self, key: str, value: FacetValue, persist: bool = True):
         """Set facet.
@@ -568,15 +614,29 @@ class Dataset:
         """Return a dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
+    @staticmethod
+    def _get_version(dataset: Dataset) -> str | list[str]:
+        """Get available version(s) of dataset."""
+        versions: set[str] = set()
+        for file in dataset.files:
+            if "version" in file.facets:
+                versions.add(str(file.facets["version"]))
+        return versions.pop() if len(versions) == 1 else sorted(versions)
+
     def set_version(self) -> None:
         """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
-        for file in self.files:
-            if "version" in file.facets:
-                versions.add(file.facets["version"])  # type: ignore
+        for input_dataset in self.get_input_datasets():
+            version = self._get_version(input_dataset)
+            if version:
+                if isinstance(version, list):
+                    versions.update(version)
+                else:
+                    versions.add(version)
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         if version:
             self.set_facet("version", version)
+
         for supplementary_ds in self.supplementaries:
             supplementary_ds.set_version()
 
@@ -609,15 +669,16 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
+        facets.setdefault("derive", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)
 
     def augment_facets(self) -> None:
-        """Add extra facets.
+        """Add additional facets.
 
-        This function will update the dataset with additional facets
-        from various sources.
+        This function will update the dataset with additional facets from
+        various sources.
         """
         self._augment_facets()
         for supplementary in self.supplementaries:
@@ -749,7 +810,7 @@ class Dataset:
                         self.files[idx] = file
 
     @property
-    def files(self) -> Sequence[File]:
+    def files(self) -> list[File]:
         """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
@@ -949,9 +1010,7 @@ class Dataset:
         timerange = self.facets["timerange"]
         if not isinstance(timerange, str):
             msg = f"timerange should be a string, got '{timerange!r}'"
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
         check.valid_time_selection(timerange)
 
         if "*" in timerange:

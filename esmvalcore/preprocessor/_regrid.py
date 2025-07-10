@@ -568,7 +568,6 @@ def _get_target_grid_cube(
     if is_dataset(target_grid):
         target_grid = target_grid.copy()  # type: ignore
         target_grid.supplementaries.clear()  # type: ignore
-        target_grid.files = [target_grid.files[0]]  # type: ignore
         target_grid_cube = target_grid.load()  # type: ignore
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
@@ -1412,7 +1411,6 @@ def get_reference_levels(dataset):
     """
     dataset = dataset.copy()
     dataset.supplementaries.clear()
-    dataset.files = [dataset.files[0]]
     cube = dataset.load()
     try:
         coord = cube.coord(axis="Z")

@@ -52,8 +52,6 @@ from . import check
 from .from_datasets import datasets_to_recipe
 from .to_datasets import (
     _derive_needed,
-    _get_input_datasets,
-    _representative_datasets,
 )
 
 if TYPE_CHECKING:
@@ -128,10 +126,9 @@ def _update_target_levels(dataset, datasets, settings):
             del settings["extract_levels"]
         else:
             target_ds = _select_dataset(dataset_name, datasets)
-            representative_ds = _representative_datasets(target_ds)[0]
-            check.data_availability(representative_ds)
+            check.data_availability(target_ds)
             settings["extract_levels"]["levels"] = get_reference_levels(
-                representative_ds,
+                target_ds,
             )
 
 
@@ -146,9 +143,7 @@ def _update_target_grid(dataset, datasets, settings):
     if dataset.facets["dataset"] == grid:
         del settings["regrid"]
     elif any(grid == d.facets["dataset"] for d in datasets):
-        representative_ds = _representative_datasets(
-            _select_dataset(grid, datasets),
-        )[0]
+        representative_ds = _select_dataset(grid, datasets)
         check.data_availability(representative_ds)
         settings["regrid"]["target_grid"] = representative_ds
     else:
@@ -293,29 +288,33 @@ def _update_weighting_settings(settings, facets):
     _exclude_dataset(settings, facets, "weighting_landsea_fraction")
 
 
-def _add_to_download_list(dataset):
+def _add_to_download_list(dataset: Dataset) -> None:
     """Add the files of `dataset` to `DOWNLOAD_FILES`."""
-    for i, file in enumerate(dataset.files):
-        if isinstance(file, esgf.ESGFFile):
-            DOWNLOAD_FILES.add(file)
-            dataset.files[i] = file.local_file(dataset.session["download_dir"])
+    input_datasets = dataset.get_input_datasets()
+    for input_dataset in input_datasets:
+        for i, file in enumerate(input_dataset.files):
+            if isinstance(file, esgf.ESGFFile):
+                DOWNLOAD_FILES.add(file)
+                input_dataset.files[i] = file.local_file(
+                    input_dataset.session["download_dir"],
+                )
 
 
-def _schedule_for_download(datasets):
+def _schedule_for_download(dataset: Dataset) -> None:
     """Schedule files for download."""
-    for dataset in datasets:
-        _add_to_download_list(dataset)
-        for supplementary_ds in dataset.supplementaries:
-            _add_to_download_list(supplementary_ds)
+    _add_to_download_list(dataset)
+    for supplementary_ds in dataset.supplementaries:
+        _add_to_download_list(supplementary_ds)
 
 
-def _log_input_files(datasets: Iterable[Dataset]) -> None:
+def _log_input_files(dataset: Dataset) -> None:
     """Show list of files in log (including supplementaries)."""
-    for dataset in datasets:
+    input_datasets = dataset.get_input_datasets()
+    for input_dataset in input_datasets:
         # Only log supplementary variables if present
         supplementary_files_str = ""
-        if dataset.supplementaries:
-            for sup_ds in dataset.supplementaries:
+        if input_dataset.supplementaries:
+            for sup_ds in input_dataset.supplementaries:
                 supplementary_files_str += (
                     f"\nwith files for supplementary variable "
                     f"{sup_ds['short_name']}:\n{_get_files_str(sup_ds)}"
@@ -323,9 +322,9 @@ def _log_input_files(datasets: Iterable[Dataset]) -> None:
 
         logger.debug(
             "Using input files for variable %s of dataset %s:\n%s%s",
-            dataset.facets["short_name"],
-            dataset.facets["alias"].replace("_", " "),  # type: ignore
-            _get_files_str(dataset),
+            input_dataset.facets["short_name"],
+            input_dataset.facets["alias"].replace("_", " "),  # type: ignore
+            _get_files_str(input_dataset),
             supplementary_files_str,
         )
 
@@ -340,16 +339,15 @@ def _get_files_str(dataset: Dataset) -> str:
     )
 
 
-def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
+def _check_input_files(input_dataset: Dataset) -> set[str]:
     """Check that the required input files are available."""
     missing = set()
 
-    for input_dataset in input_datasets:
-        for dataset in [input_dataset, *input_dataset.supplementaries]:
-            try:
-                check.data_availability(dataset)
-            except RecipeError as exc:
-                missing.add(exc.message)
+    for dataset in [input_dataset, *input_dataset.supplementaries]:
+        try:
+            check.data_availability(dataset)
+        except RecipeError as exc:
+            missing.add(exc.message)
 
     return missing
 
@@ -553,21 +551,26 @@ def _allow_skipping(dataset: Dataset):
     )
 
 
-def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
-    """Set the 'version' facet based on derivation input datasets."""
-    versions = set()
-    for in_dataset in input_datasets:
-        in_dataset.set_version()
-        if version := in_dataset.facets.get("version"):
-            if isinstance(version, list):
-                versions.update(version)
-            else:
-                versions.add(version)
-    if versions:
-        version = versions.pop() if len(versions) == 1 else sorted(versions)
-        dataset.set_facet("version", version)
-    for supplementary_ds in dataset.supplementaries:
-        supplementary_ds.set_version()
+def _fix_cmip5_fx_ensemble(dataset: Dataset):
+    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
+    if (
+        dataset.facets.get("project") == "CMIP5"
+        and dataset.facets.get("mip") == "fx"
+        and dataset.facets.get("ensemble") != "r0i0p0"
+        and not dataset.files
+    ):
+        original_ensemble = dataset["ensemble"]
+        copy = dataset.copy()
+        copy.facets["ensemble"] = "r0i0p0"
+        if copy.files:
+            dataset.facets["ensemble"] = "r0i0p0"
+            logger.info(
+                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                original_ensemble,
+                dataset["ensemble"],
+                dataset.summary(shorten=True),
+            )
+            dataset.find_files()
 
 
 def _get_preprocessor_products(
@@ -593,21 +596,21 @@ def _get_preprocessor_products(
         settings = _get_default_settings(dataset)
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
+        _fix_cmip5_fx_ensemble(dataset)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
-        input_datasets = _get_input_datasets(dataset)
-        missing = _check_input_files(input_datasets)
+        missing = _check_input_files(dataset)
         if missing:
             if _allow_skipping(dataset):
                 logger.info("Skipping: %s", missing)
             else:
                 missing_vars.update(missing)
             continue
-        _set_version(dataset, input_datasets)
+        dataset.set_version()
         USED_DATASETS.append(dataset)
-        _schedule_for_download(input_datasets)
-        _log_input_files(input_datasets)
+        _schedule_for_download(dataset)
+        _log_input_files(dataset)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
 
         filename = _get_output_file(
@@ -618,7 +621,7 @@ def _get_preprocessor_products(
             filename=filename,
             attributes=dataset.facets,
             settings=settings,
-            datasets=input_datasets,
+            datasets=dataset.get_input_datasets(),
         )
 
         products.add(product)
@@ -805,12 +808,8 @@ def _extract_preprocessor_order(profile):
     custom_order = profile.pop("custom_order", False)
     if not custom_order:
         return DEFAULT_ORDER
-    if "derive" not in profile:
-        initial_steps = (*INITIAL_STEPS, "derive")
-    else:
-        initial_steps = INITIAL_STEPS
-    order = tuple(p for p in profile if p not in initial_steps + FINAL_STEPS)
-    return initial_steps + order + FINAL_STEPS
+    order = tuple(p for p in profile if p not in INITIAL_STEPS + FINAL_STEPS)
+    return INITIAL_STEPS + order + FINAL_STEPS
 
 
 class Recipe:
@@ -1005,9 +1004,7 @@ class Recipe:
                                 "Could not find any ancestors matching "
                                 f"'{id_glob}'."
                             )
-                            raise RecipeError(
-                                msg,
-                            )
+                            raise RecipeError(msg)
                         logger.debug(
                             "Pattern %s matches %s",
                             id_glob,

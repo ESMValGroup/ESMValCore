@@ -13,7 +13,6 @@ from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile, _replace_years_with_timerange
-from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
@@ -185,28 +184,6 @@ def _merge_supplementary_dicts(
     return list(merged.values())
 
 
-def _fix_cmip5_fx_ensemble(dataset: Dataset):
-    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
-    if (
-        dataset.facets.get("project") == "CMIP5"
-        and dataset.facets.get("mip") == "fx"
-        and dataset.facets.get("ensemble") != "r0i0p0"
-        and not dataset.files
-    ):
-        original_ensemble = dataset["ensemble"]
-        copy = dataset.copy()
-        copy.facets["ensemble"] = "r0i0p0"
-        if copy.files:
-            dataset.facets["ensemble"] = "r0i0p0"
-            logger.info(
-                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
-                original_ensemble,
-                dataset["ensemble"],
-                dataset.summary(shorten=True),
-            )
-            dataset.find_files()
-
-
 def _get_supplementary_short_names(
     facets: Facets,
     step: str,
@@ -216,7 +193,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number)):
+    if isinstance(realms, (str, Number, bool)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
@@ -425,69 +402,63 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(  # noqa: C901
+def _dataset_from_files(
     dataset: Dataset,
 ) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
-    errors: list[str] = []
+    # errors: list[str] = []
 
-    if any(_isglob(f) for f in dataset.facets.values()):
-        logger.debug(
-            "Expanding dataset globs for dataset %s, this may take a while..",
-            dataset.summary(shorten=True),
-        )
+    # if any(_isglob(f) for f in dataset.facets.values()):
+    #     logger.debug(
+    #         "Expanding dataset globs for dataset %s, this may take a while..",
+    #         dataset.summary(shorten=True),
+    #     )
 
-    representative_datasets = _representative_datasets(dataset)
+    # all_datasets: list[tuple[dict, Dataset]] = []
+    # for expanded_ds in dataset.from_files():
+    #     updated_facets = {}
+    #     unexpanded_globs = {}
+    #     for key, value in dataset.facets.items():
+    #         if _isglob(value):
+    #             if key in expanded_ds.facets and not _isglob(
+    #                 expanded_ds[key],
+    #             ):
+    #                 updated_facets[key] = expanded_ds.facets[key]
+    #             else:
+    #                 unexpanded_globs[key] = value
 
-    # For derived variables, representative_datasets might contain more than
-    # one element
-    all_datasets: list[list[tuple[dict, Dataset]]] = []
-    for representative_dataset in representative_datasets:
-        all_datasets.append([])
-        for expanded_ds in representative_dataset.from_files():
-            updated_facets = {}
-            unexpanded_globs = {}
-            for key, value in dataset.facets.items():
-                if _isglob(value):
-                    if key in expanded_ds.facets and not _isglob(
-                        expanded_ds[key],
-                    ):
-                        updated_facets[key] = expanded_ds.facets[key]
-                    else:
-                        unexpanded_globs[key] = value
+    #     if unexpanded_globs:
+    #         msg = _report_unexpanded_globs(
+    #             dataset,
+    #             expanded_ds,
+    #             unexpanded_globs,
+    #         )
+    #         errors.append(msg)
+    #         continue
 
-            if unexpanded_globs:
-                msg = _report_unexpanded_globs(
-                    dataset,
-                    expanded_ds,
-                    unexpanded_globs,
-                )
-                errors.append(msg)
-                continue
+    #     new_ds = dataset.copy()
+    #     new_ds.facets.update(updated_facets)
+    #     new_ds.supplementaries = expanded_ds.supplementaries
 
-            new_ds = dataset.copy()
-            new_ds.facets.update(updated_facets)
-            new_ds.supplementaries = expanded_ds.supplementaries
+    #     all_datasets.append((updated_facets, new_ds))
 
-            all_datasets[-1].append((updated_facets, new_ds))
+    # # If globs have been expanded, only consider those datasets that contain
+    # # all necessary input variables if derivation is necessary
+    # for updated_facets, new_ds in all_datasets[0]:
+    #     other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
+    #     if all(updated_facets in facets for facets in other_facets):
+    #         result.append(new_ds)
+    #     else:
+    #         logger.debug(
+    #             "Not all necessary input variables to derive '%s' are "
+    #             "available for dataset %s",
+    #             dataset["short_name"],
+    #             updated_facets,
+    #         )
 
-    # If globs have been expanded, only consider those datasets that contain
-    # all necessary input variables if derivation is necessary
-    for updated_facets, new_ds in all_datasets[0]:
-        other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
-        if all(updated_facets in facets for facets in other_facets):
-            result.append(new_ds)
-        else:
-            logger.debug(
-                "Not all necessary input variables to derive '%s' are "
-                "available for dataset %s",
-                dataset["short_name"],
-                updated_facets,
-            )
-
-    if errors:
-        raise RecipeError("\n".join(errors))
+    # if errors:
+    #     raise RecipeError("\n".join(errors))
 
     return result
 
@@ -537,7 +508,7 @@ def _report_unexpanded_globs(
 
 def _derive_needed(dataset: Dataset) -> bool:
     """Check if dataset needs to be derived from other datasets."""
-    if not dataset.facets.get("derive"):
+    if not dataset.is_derived():
         return False
     if dataset.facets.get("force_derivation"):
         return True
@@ -551,50 +522,40 @@ def _derive_needed(dataset: Dataset) -> bool:
     return not copy.files
 
 
-def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
-    """Determine the input datasets needed for deriving `dataset`."""
-    facets = dataset.facets
-    if not _derive_needed(dataset):
-        _fix_cmip5_fx_ensemble(dataset)
-        return [dataset]
+# def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
+#     """Determine the input datasets needed for deriving `dataset`."""
+#     facets = dataset.facets
+#     if not _derive_needed(dataset):
+#         # _fix_cmip5_fx_ensemble(dataset)
+#         return [dataset]
 
-    # Configure input datasets needed to derive variable
-    datasets = []
-    required_vars = get_required(facets["short_name"], facets["project"])
-    # idea: add option to specify facets in list of dicts that is value of
-    # 'derive' in the recipe and use that instead of get_required?
-    for input_facets in required_vars:
-        input_dataset = dataset.copy()
-        keep = {"alias", "recipe_dataset_index", *dataset.minimal_facets}
-        input_dataset.facets = {
-            k: v for k, v in input_dataset.facets.items() if k in keep
-        }
-        input_dataset.facets.update(input_facets)
-        input_dataset.augment_facets()
-        _fix_cmip5_fx_ensemble(input_dataset)
-        if input_facets.get("optional") and not input_dataset.files:
-            logger.info(
-                "Skipping: no data found for %s which is marked as 'optional'",
-                input_dataset,
-            )
-        else:
-            datasets.append(input_dataset)
+#         # Configure input datasets needed to derive variable
+#         # datasets = []
+#         # required_vars = get_required(facets["short_name"], facets["project"])
+#         # # idea: add option to specify facets in list of dicts that is value of
+#         # # 'derive' in the recipe and use that instead of get_required?
+#         # for input_facets in required_vars:
+#         #     input_dataset = dataset.copy()
+#         #     keep = {"alias", "recipe_dataset_index", *dataset.minimal_facets}
+#         #     input_dataset.facets = {
+#         #         k: v for k, v in input_dataset.facets.items() if k in keep
+#         #     }
+#         #     input_dataset.facets.update(input_facets)
+#         #     input_dataset.augment_facets()
+#         #     _fix_cmip5_fx_ensemble(input_dataset)
+#         if input_facets.get("optional") and not input_dataset.files:
+#             logger.info(
+#                 "Skipping: no data found for %s which is marked as 'optional'",
+#                 input_dataset,
+#             )
+#         else:
+#             datasets.append(input_dataset)
 
-    # Check timeranges of available input data.
-    timeranges = set()
-    for input_dataset in datasets:
-        if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
-    check.differing_timeranges(timeranges, required_vars)
+#     # Check timeranges of available input data.
+#     timeranges = set()
+#     for input_dataset in datasets:
+#         if "timerange" in input_dataset.facets:
+#             timeranges.add(input_dataset.facets["timerange"])
+#     check.differing_timeranges(timeranges, required_vars)
 
-    return datasets
-
-
-def _representative_datasets(dataset: Dataset) -> list[Dataset]:
-    """Find representative datasets for all input variables."""
-    copy = dataset.copy()
-    copy.supplementaries = []
-    representative_datasets = _get_input_datasets(copy)
-    for representative_dataset in representative_datasets:
-        representative_dataset.supplementaries = dataset.supplementaries
-    return representative_datasets
+#     return datasets

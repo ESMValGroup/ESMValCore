@@ -99,6 +99,8 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
+    from esmvalcore.dataset import Dataset, File
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -223,9 +225,7 @@ By default, preprocessor functions are applied in this order.
 """
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[
-    : DEFAULT_ORDER.index("add_supplementary_variables") + 1
-]
+INITIAL_STEPS = DEFAULT_ORDER[: DEFAULT_ORDER.index("derive") + 1]
 FINAL_STEPS = DEFAULT_ORDER[
     DEFAULT_ORDER.index("remove_supplementary_variables") :
 ]
@@ -503,11 +503,11 @@ class PreprocessorFile(TrackedFile):
         filename: Path,
         attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
-        datasets: list | None = None,
+        datasets: list[Dataset] | None = None,
     ):
         if datasets is not None:
             # Load data using a Dataset
-            input_files = []
+            input_files: list[File] = []
             for dataset in datasets:
                 input_files.extend(dataset.files)
                 for supplementary in dataset.supplementaries:

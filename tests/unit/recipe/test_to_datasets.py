@@ -278,30 +278,6 @@ def test_merge_supplementaries_missing_short_name_fails(session):
         Dataset.from_recipe(recipe_txt, session)
 
 
-def test_get_input_datasets_derive(session):
-    dataset = Dataset(
-        dataset="ERA5",
-        project="native6",
-        mip="E1hr",
-        short_name="rlus",
-        alias="ERA5",
-        derive=True,
-        force_derivation=True,
-        frequency="1hr",
-        recipe_dataset_index=0,
-        tier="3",
-        type="reanaly",
-        version="v1",
-    )
-    rlds, rlns = to_datasets._get_input_datasets(dataset)
-    assert rlds["short_name"] == "rlds"
-    assert rlds["long_name"] == "Surface Downwelling Longwave Radiation"
-    assert rlds["frequency"] == "1hr"
-    assert rlns["short_name"] == "rlns"
-    assert rlns["long_name"] == "Surface Net downward Longwave Radiation"
-    assert rlns["frequency"] == "1hr"
-
-
 def test_max_years(session):
     recipe_txt = textwrap.dedent("""
     diagnostics:
@@ -345,26 +321,6 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
 
     with pytest.raises(RecipeError, match="Unable to replace dataset.*"):
         to_datasets._dataset_from_files(dataset)
-
-
-def test_fix_cmip5_fx_ensemble(monkeypatch):
-    def find_files(self):
-        if self.facets["ensemble"] == "r0i0p0":
-            self._files = ["file1.nc"]
-
-    monkeypatch.setattr(Dataset, "find_files", find_files)
-
-    dataset = Dataset(
-        dataset="dataset1",
-        short_name="orog",
-        mip="fx",
-        project="CMIP5",
-        ensemble="r1i1p1",
-    )
-
-    to_datasets._fix_cmip5_fx_ensemble(dataset)
-
-    assert dataset["ensemble"] == "r0i0p0"
 
 
 def test_get_supplementary_short_names(monkeypatch):

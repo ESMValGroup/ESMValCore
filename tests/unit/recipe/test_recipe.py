@@ -185,7 +185,7 @@ def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
     dataset.files = list(files[local_availability])
 
     monkeypatch.setattr(_recipe, "DOWNLOAD_FILES", set())
-    _recipe._schedule_for_download([dataset])
+    _recipe._schedule_for_download(dataset)
     print(esgf_files)
     expected = {
         "all": set(),
@@ -912,42 +912,16 @@ def test_get_default_settings(mocker):
     }
 
 
-def test_set_version(mocker):
-    dataset = Dataset(short_name="tas")
-    supplementary = Dataset(short_name="areacella")
-    dataset.supplementaries = [supplementary]
-
-    input_dataset = Dataset(short_name="tas")
-    file1 = mocker.Mock()
-    file1.facets = {"version": "v1"}
-    file2 = mocker.Mock()
-    file2.facets = {"version": "v2"}
-    input_dataset.files = [file1, file2]
-
-    file3 = mocker.Mock()
-    file3.facets = {"version": "v3"}
-    supplementary.files = [file3]
-
-    _recipe._set_version(dataset, [input_dataset])
-    print(dataset)
-    assert dataset.facets["version"] == ["v1", "v2"]
-    assert dataset.supplementaries[0].facets["version"] == "v3"
-
-
 def test_extract_preprocessor_order():
     profile = {
         "custom_order": True,
+        "area_statistics": {"operator": "mean"},
         "regrid": {"target_grid": "1x1"},
-        "derive": {
-            "long_name": "albedo at the surface",
-            "short_name": "alb",
-            "standard_name": "",
-            "units": "1",
-        },
     }
     order = _recipe._extract_preprocessor_order(profile)
     assert any(
-        order[i : i + 2] == ("regrid", "derive") for i in range(len(order) - 1)
+        order[i : i + 2] == ("area_statistics", "regrid")
+        for i in range(len(order) - 1)
     )
 
 
@@ -987,3 +961,23 @@ def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
             / "ar6.shp"
         )
         assert settings["extract_shape"]["shapefile"] == ar6_file
+
+
+def test_fix_cmip5_fx_ensemble(monkeypatch):
+    def find_files(self):
+        if self.facets["ensemble"] == "r0i0p0":
+            self._files = ["file1.nc"]
+
+    monkeypatch.setattr(Dataset, "find_files", find_files)
+
+    dataset = Dataset(
+        dataset="dataset1",
+        short_name="orog",
+        mip="fx",
+        project="CMIP5",
+        ensemble="r1i1p1",
+    )
+
+    _recipe._fix_cmip5_fx_ensemble(dataset)
+
+    assert dataset["ensemble"] == "r0i0p0"

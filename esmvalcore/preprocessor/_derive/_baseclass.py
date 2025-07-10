@@ -2,13 +2,17 @@
 
 from abc import abstractmethod
 
+from iris.cube import Cube, CubeList
+
+from esmvalcore.typing import Facets, FacetValue
+
 
 class DerivedVariableBase:
     """Base class for derived variables."""
 
     @staticmethod
     @abstractmethod
-    def required(project):
+    def required(project: FacetValue) -> list[Facets]:
         """Return required variables for derivation.
 
         This method needs to be overridden in the child class belonging to the
@@ -24,19 +28,19 @@ class DerivedVariableBase:
 
         Parameters
         ----------
-        project : str
+        project:
             Project of the dataset for which the desired variable is derived.
 
         Returns
         -------
-        list of dict
-            List of variable metadata.
+        list[esmvalcore.typing.Facets]
+            List of facets.
 
         """
 
     @staticmethod
     @abstractmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """Compute desired derived variable.
 
         This method needs to be overridden in the child class belonging to the
@@ -44,7 +48,7 @@ class DerivedVariableBase:
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
+        cubes:
             Includes all the needed variables (incl. fx variables) for
             derivation defined in the static class variable
             `_required_variables`.
@@ -53,11 +57,5 @@ class DerivedVariableBase:
         -------
         iris.cube.Cube
             New derived variable.
-
-        Raises
-        ------
-        NotImplementedError
-            If the desired variable derivation is not implemented, i.e. if this
-            method is called from this base class and not a child class.
 
         """

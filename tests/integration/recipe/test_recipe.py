@@ -14,16 +14,11 @@ from PIL import Image
 
 import esmvalcore
 import esmvalcore._task
-from esmvalcore._recipe.recipe import (
-    _get_input_datasets,
-    _representative_datasets,
-    read_recipe_file,
-)
+from esmvalcore._recipe.recipe import read_recipe_file
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.config import Session
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
-from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
@@ -2448,168 +2443,6 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     )
     recipe.write_filled_recipe.assert_called_once()
     recipe.write_html_summary.assert_called_once()
-
-
-def test_representative_dataset_regular_var(patched_datafinder, session):
-    """Test ``_representative_dataset`` with regular variable."""
-    variable = {
-        "dataset": "ICON",
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "frequency": "mon",
-        "mip": "Amon",
-        "original_short_name": "tas",
-        "project": "ICON",
-        "short_name": "tas",
-        "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
-    }
-    dataset = Dataset(**variable)
-    dataset.session = session
-    datasets = _representative_datasets(dataset)
-    assert len(datasets) == 1
-    filename = datasets[0].files[0]
-    path = Path(filename)
-    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc"
-
-
-@pytest.mark.parametrize("force_derivation", [True, False])
-def test_representative_dataset_derived_var(
-    patched_datafinder,
-    session,
-    force_derivation,
-):
-    """Test ``_representative_dataset`` with derived variable."""
-    variable = {
-        "dataset": "ICON",
-        "derive": True,
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": force_derivation,
-        "frequency": "mon",
-        "mip": "Amon",
-        "original_short_name": "alb",
-        "project": "ICON",
-        "short_name": "alb",
-        "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
-    }
-    dataset = Dataset(**variable)
-    dataset.session = session
-    representative_datasets = _representative_datasets(dataset)
-
-    expected_facets = {
-        # Already present in variable
-        "dataset": "ICON",
-        "derive": True,
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": force_derivation,
-        "frequency": "mon",
-        "mip": "Amon",
-        "project": "ICON",
-        "timerange": "1990/2000",
-        # Added by _add_cmor_info
-        "modeling_realm": ["atmos"],
-        "units": "W m-2",
-        # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
-    }
-    if force_derivation:
-        expected_datasets = [
-            Dataset(
-                short_name="rsdscs",
-                long_name="Surface Downwelling Clear-Sky Shortwave Radiation",
-                original_short_name="rsdscs",
-                standard_name=(
-                    "surface_downwelling_shortwave_flux_in_air_assuming_clear_"
-                    "sky"
-                ),
-                **expected_facets,
-            ),
-            Dataset(
-                short_name="rsuscs",
-                long_name="Surface Upwelling Clear-Sky Shortwave Radiation",
-                original_short_name="rsuscs",
-                standard_name=(
-                    "surface_upwelling_shortwave_flux_in_air_assuming_clear_"
-                    "sky"
-                ),
-                **expected_facets,
-            ),
-        ]
-    else:
-        expected_datasets = [dataset]
-    for dataset in expected_datasets:
-        dataset.session = session
-
-    assert representative_datasets == expected_datasets
-
-
-def test_get_derive_input_variables(patched_datafinder, session):
-    """Test ``_get_derive_input_variables``."""
-    alb_facets = {
-        "dataset": "ICON",
-        "derive": True,
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": True,
-        "frequency": "mon",
-        "mip": "Amon",
-        "original_short_name": "alb",
-        "project": "ICON",
-        "short_name": "alb",
-        "timerange": "1990/2000",
-    }
-    alb = Dataset(**alb_facets)
-    alb.session = session
-
-    rsdscs_facets = {
-        # Added by get_required
-        "short_name": "rsdscs",
-        # Already present in variables
-        "dataset": "ICON",
-        "derive": True,
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": True,
-        "frequency": "mon",
-        "mip": "Amon",
-        "project": "ICON",
-        "timerange": "1990/2000",
-        # Added by _add_cmor_info
-        "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
-        "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
-        "modeling_realm": ["atmos"],
-        "original_short_name": "rsdscs",
-        "units": "W m-2",
-        # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
-    }
-    rsdscs = Dataset(**rsdscs_facets)
-    rsdscs.session = session
-
-    rsuscs_facets = {
-        # Added by get_required
-        "short_name": "rsuscs",
-        # Already present in variables
-        "dataset": "ICON",
-        "derive": True,
-        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": True,
-        "frequency": "mon",
-        "mip": "Amon",
-        "project": "ICON",
-        "timerange": "1990/2000",
-        # Added by _add_cmor_info
-        "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
-        "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
-        "modeling_realm": ["atmos"],
-        "original_short_name": "rsuscs",
-        "units": "W m-2",
-        # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
-    }
-    rsuscs = Dataset(**rsuscs_facets)
-    rsuscs.session = session
-
-    alb_derive_input = _get_input_datasets(alb)
-    assert alb_derive_input == [rsdscs, rsuscs]
 
 
 TEST_DIAG_SELECTION = [

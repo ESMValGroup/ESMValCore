@@ -1,5 +1,6 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
+import logging
 import os.path
 import subprocess
 from pathlib import Path
@@ -13,7 +14,8 @@ import esmvalcore._recipe.check
 import esmvalcore.esgf
 from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import LocalFile
 from esmvalcore.preprocessor import PreprocessorFile
 
 
@@ -153,6 +155,36 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert dataset.facets == var
 
 
+def test_data_availability_derived_var_data(caplog, tmp_path, session):
+    """Test check for derived data when data is present."""
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "Amon",
+        "short_name": "asr",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "1980/2000",
+        "derive": True,
+    }
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    rsdt_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsdt_1980-2000.nc")
+    rsdt_file.touch()
+    rsut_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsut_1980-2000.nc")
+    rsut_file.touch()
+
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset.session = session
+
+    check.data_availability(dataset)
+
+    assert not caplog.records
+
+
 DATA_AVAILABILITY_NO_DATA: list[Any] = [
     ([], [], None),
     ([""], ["a*.nc"], (ERR_ALL, ": a*.nc")),
@@ -198,6 +230,111 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     calls = [mock.call(*e) for e in errors]
     assert mock_logger.error.call_args_list == calls
     assert dataset.facets == facets
+
+
+def test_data_availability_derived_var_no_data(caplog, session):
+    """Test check for derived data when no data is present."""
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "Amon",
+        "short_name": "asr",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "1980/2000",
+        "derive": True,
+    }
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset.session = session
+
+    msg = (
+        r"Missing data for Dataset: asr, Amon, OBS6, SAT derived from "
+        r"Dataset: rsdt, Amon, OBS6, SAT; Dataset: rsut, Amon, OBS6, SAT"
+    )
+    with pytest.raises(InputFilesNotFound, match=msg):
+        check.data_availability(dataset)
+
+    logger_errors = [
+        r.message for r in caplog.records if r.levelname == "ERROR"
+    ]
+    msg = (
+        "No input files found for Dataset: asr, Amon, OBS6, SAT derived from "
+        "Dataset: rsdt, Amon, OBS6, SAT; Dataset: rsut, Amon, OBS6, SAT"
+    )
+    assert msg in logger_errors
+
+
+def test_data_availability_derived_var_no_optional_data(
+    caplog,
+    tmp_path,
+    session,
+):
+    """Test check for derived data when optional data is not present."""
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "SImon",
+        "short_name": "siextent",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "1980/2000",
+        "derive": True,
+    }
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    sic_file = LocalFile(
+        input_dir / "OBS6_SAT_sat_1_SImon_siconca_1980-2000.nc",
+    )
+    sic_file.touch()
+
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset.session = session
+
+    with caplog.at_level(logging.INFO):
+        check.data_availability(dataset)
+
+    logger_infos = [r.message for r in caplog.records if r.levelname == "INFO"]
+    assert "which is marked as 'optional'" in logger_infos[-1]
+
+
+def test_data_availability_derived_var_missing_years(
+    caplog,
+    tmp_path,
+    session,
+):
+    """Test check for derived data when years are missing."""
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "Amon",
+        "short_name": "asr",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "1980/2000",
+        "derive": True,
+    }
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    rsdt_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsdt_1980-2000.nc")
+    rsdt_file.touch()
+    rsut_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsut_1980-1999.nc")
+    rsut_file.touch()
+
+    dataset = Dataset(**facets)
+    dataset.files = [rsdt_file]
+    dataset.session = session
+
+    msg = r"No input data available for years 2000 in files:"
+    with pytest.raises(InputFilesNotFound, match=msg):
+        check.data_availability(dataset)
+
+    assert not caplog.records
 
 
 GOOD_TIMERANGES = [

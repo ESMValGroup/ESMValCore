@@ -1609,7 +1609,7 @@ def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
     assert tas._file_globs == mock.sentinel.file_globs
 
 
-def test_set_version():
+def test_set_version_non_derived_var():
     dataset = Dataset(short_name="tas")
     dataset.add_supplementary(short_name="areacella")
     file_v1 = esmvalcore.local.LocalFile("/path/to/v1/tas.nc")
@@ -1623,6 +1623,39 @@ def test_set_version():
     dataset.set_version()
     assert dataset.facets["version"] == ["v1", "v2"]
     assert dataset.supplementaries[0].facets["version"] == "v3"
+
+
+def test_set_version_derive_var(monkeypatch):
+    dataset = Dataset(short_name="asr", project="CMIP6", derive=True)
+    dataset.add_supplementary(short_name="areacella")
+    dataset.files = []
+    areacella_file = esmvalcore.local.LocalFile("/path/to/areacella.nc")
+    areacella_file.facets["version"] = "v4"
+    dataset.supplementaries[0].files = [areacella_file]
+
+    def get_derivation_requirements():
+        rsdt_file = esmvalcore.local.LocalFile("/path/to/rsdt.nc")
+        rsdt_file.facets["version"] = "v1"
+        rsdt_dataset = Dataset(short_name="rsdt", project="CMIP6")
+        rsdt_dataset.files = [rsdt_file]
+        rsut_file_1 = esmvalcore.local.LocalFile("/path/to/rsut.nc")
+        rsut_file_2 = esmvalcore.local.LocalFile("/path/to/rsut.nc")
+        rsut_file_1.facets["version"] = "v2"
+        rsut_file_2.facets["version"] = "v3"
+        rsut_dataset = Dataset(short_name="rsut", project="CMIP6")
+        rsut_dataset.files = [rsut_file_1, rsut_file_2]
+        return [rsdt_dataset, rsut_dataset]
+
+    monkeypatch.setattr(
+        dataset,
+        "_get_derivation_requirements",
+        get_derivation_requirements,
+    )
+
+    dataset.set_version()
+
+    assert dataset.facets["version"] == ["v1", "v2", "v3"]
+    assert dataset.supplementaries[0].facets["version"] == "v4"
 
 
 @pytest.mark.parametrize("timerange", ["*", "185001/*", "*/185112"])
@@ -2135,3 +2168,76 @@ def test_get_extra_facets_native6():
         "grib_id": "130",
         "tres": "1M",
     }
+
+
+def test_get_derivation_requirements():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+
+    derivation_requirements = dataset._get_derivation_requirements()
+
+    expected = [
+        Dataset(
+            dataset="CanESM5",
+            project="CMIP6",
+            mip="Amon",
+            short_name="rlut",
+            derive=False,
+            frequency="mon",
+            institute=["CCCma"],
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            dataset="CanESM5",
+            project="CMIP6",
+            mip="Amon",
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            institute=["CCCma"],
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+    ]
+    for expected_ds in expected:
+        expected_ds.session = dataset.session
+
+    assert derivation_requirements == expected
+
+
+def test_get_derivation_requirements_empty():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="tas",
+    )
+
+    assert dataset._get_derivation_requirements() == []
+
+
+def test_get_derivation_requirements_no_derivation():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="tas",
+        derive=True,
+    )
+
+    msg = r"Cannot derive variable 'tas': no derivation script available"
+    with pytest.raises(NotImplementedError, match=msg):
+        dataset._get_derivation_requirements()

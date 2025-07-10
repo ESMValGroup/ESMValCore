@@ -33,6 +33,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from esmvalcore.dataset import Dataset
+
 logger = logging.getLogger(__name__)
 
 
@@ -164,19 +166,52 @@ def variable(
         )
 
 
-def _log_data_availability_errors(dataset):
+def _data_is_missing(dataset: Dataset, input_datasets: list[Dataset]) -> bool:
+    """Check if data is missing."""
+    if not dataset.is_derived():
+        return not dataset.files
+
+    missing = False
+    for input_dataset in input_datasets:
+        if not input_dataset.files:
+            if input_dataset.facets.get("optional", False):
+                logger.info(
+                    "Skipping: no data found for %s which is marked as "
+                    "'optional'",
+                    input_dataset,
+                )
+            else:
+                missing = True
+
+    return missing
+
+
+def _log_data_availability_errors(
+    dataset: Dataset,
+    input_datasets: list[Dataset],
+) -> None:
     """Check if the required input data is available."""
-    input_files = dataset.files
-    patterns = dataset._file_globs  # noqa: SLF001
-    if not input_files:
+    if not _data_is_missing(dataset, input_datasets):
+        return
+
+    if dataset.is_derived():
+        logger.error(
+            "No input files found for %s derived from %s",
+            dataset.summary(shorten=True),
+            "; ".join(str(d.summary(shorten=True)) for d in input_datasets),
+        )
+    else:
         logger.error("No input files found for %s", dataset)
+
+    for input_dataset in input_datasets:
+        patterns = input_dataset._file_globs  # noqa: SLF001
         if patterns:
             if len(patterns) == 1:
                 msg = f": {patterns[0]}"
             else:
                 msg = "\n{}".format("\n".join(str(p) for p in patterns))
             logger.error("Looked for files matching%s", msg)
-        logger.error("Set 'log_level' to 'debug' to get more information")
+    logger.error("Set 'log_level' to 'debug' to get more information")
 
 
 def _group_years(years):
@@ -207,40 +242,52 @@ def _group_years(years):
 
 def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
-    input_files = dataset.files
-    facets = dataset.facets
+    if dataset.is_derived():
+        input_datasets = dataset.get_derivation_requirements()
+    else:
+        input_datasets = [dataset]
 
     if log:
-        _log_data_availability_errors(dataset)
+        _log_data_availability_errors(dataset, input_datasets)
 
-    if not input_files:
+    if _data_is_missing(dataset, input_datasets):
         msg = f"Missing data for {dataset.summary(True)}"
+        if dataset.is_derived():
+            msg += (
+                f" derived from "
+                f"{'; '.join(d.summary(shorten=True) for d in input_datasets)}"
+            )
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets:
-        return
+    for input_dataset in input_datasets:
+        input_files = input_dataset.files
+        facets = input_dataset.facets
 
-    start_date, end_date = _parse_period(facets["timerange"])
-    start_year = int(start_date[0:4])
-    end_year = int(end_date[0:4])
-    required_years = set(range(start_year, end_year + 1, 1))
-    available_years = set()
+        if not input_files:  # optional derived variables
+            continue
 
-    for file in input_files:
-        start, end = _get_start_end_year(file)
-        available_years.update(range(start, end + 1))
+        if "timerange" not in facets:
+            continue
 
-    missing_years = required_years - available_years
-    if missing_years:
-        missing_txt = _group_years(missing_years)
+        start_date, end_date = _parse_period(facets["timerange"])
+        start_year = int(start_date[0:4])
+        end_year = int(end_date[0:4])
+        required_years = set(range(start_year, end_year + 1, 1))
+        available_years = set()
 
-        msg = "No input data available for years {} in files:\n{}".format(
-            missing_txt,
-            "\n".join(str(f) for f in input_files),
-        )
-        raise InputFilesNotFound(
-            msg,
-        )
+        for file in input_files:
+            start, end = _get_start_end_year(file)
+            available_years.update(range(start, end + 1))
+
+        missing_years = required_years - available_years
+        if missing_years:
+            missing_txt = _group_years(missing_years)
+
+            msg = "No input data available for years {} in files:\n{}".format(
+                missing_txt,
+                "\n".join(str(f) for f in input_files),
+            )
+            raise InputFilesNotFound(msg)
 
 
 def preprocessor_supplementaries(dataset, settings):
@@ -502,9 +549,7 @@ def differing_timeranges(timeranges, required_vars):
             f"found for required variables {required_vars}. "
             "Set `timerange` to a common value."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
 
 def _check_literal(
@@ -523,9 +568,7 @@ def _check_literal(
             f"Expected one of {allowed_values} for option `{option}` of "
             f"preprocessor `{step}`, got '{user_value}'"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 bias_type = partial(
