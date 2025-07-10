@@ -34,7 +34,7 @@ def diagnostic_task(tmp_path):
     mock_script = tmp_path / "script.py"
     mock_script.touch()
     settings = {
-        "run_dir": str("/output/run"),
+        "run_dir": "/output/run",
         "profile_diagnostic": False,
     }
     task = DiagnosticTask(mock_script, settings, output_dir="/output/run")

@@ -1,8 +1,8 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
 import logging
-from collections.abc import Callable
-from typing import Iterable, Literal
+from collections.abc import Callable, Iterable
+from typing import Literal
 
 import iris.coords
 from iris.cube import Cube
@@ -30,7 +30,8 @@ def register_supplementaries(
     """
     valid = ("require_at_least_one", "prefer_at_least_one")
     if required not in valid:
-        raise NotImplementedError(f"`required` should be one of {valid}")
+        msg = f"`required` should be one of {valid}"
+        raise NotImplementedError(msg)
     supplementaries = {
         "variables": variables,
         "required": required,
@@ -45,7 +46,7 @@ def register_supplementaries(
 
 def add_cell_measure(
     cube: Cube,
-    cell_measure_cube: Cube,
+    cell_measure_cube: Cube | iris.coords.CellMeasure,
     measure: Literal["area", "volume"],
 ) -> None:
     """Add cell measure to cube (in-place).
@@ -60,7 +61,7 @@ def add_cell_measure(
     cube:
         Iris cube with input data.
     cell_measure_cube:
-        Iris cube with cell measure data.
+        Iris cube or cell measure coord with cell measure data.
     measure:
         Name of the measure, can be 'area' or 'volume'.
 
@@ -75,11 +76,12 @@ def add_cell_measure(
         If measure name is not 'area' or 'volume'.
     """
     if measure not in ["area", "volume"]:
+        msg = f"measure name must be 'area' or 'volume', got {measure} instead"
         raise ValueError(
-            f"measure name must be 'area' or 'volume', got {measure} instead"
+            msg,
         )
     coord_dims = tuple(
-        range(cube.ndim - len(cell_measure_cube.shape), cube.ndim)
+        range(cube.ndim - len(cell_measure_cube.shape), cube.ndim),
     )
     cell_measure_data = cell_measure_cube.core_data()
     if cell_measure_cube.has_lazy_data():
@@ -101,39 +103,75 @@ def add_cell_measure(
     )
 
 
-def add_ancillary_variable(cube: Cube, ancillary_cube: Cube) -> None:
+def add_ancillary_variable(
+    cube: Cube,
+    ancillary_cube: Cube | iris.coords.AncillaryVariable,
+) -> None:
     """Add ancillary variable to cube (in-place).
-
-    Note
-    ----
-    This assumes that the ancillary variable spans the rightmost dimensions of
-    the cube.
 
     Parameters
     ----------
     cube:
         Iris cube with input data.
     ancillary_cube:
-        Iris cube with ancillary data.
+        Iris cube or AncillaryVariable with ancillary data.
 
     Returns
     -------
     iris.cube.Cube
         Cube with added ancillary variables
     """
-    coord_dims = tuple(range(cube.ndim - len(ancillary_cube.shape), cube.ndim))
-    ancillary_data = ancillary_cube.core_data()
+    try:
+        ancillary_var = iris.coords.AncillaryVariable(
+            ancillary_cube.core_data(),
+            standard_name=ancillary_cube.standard_name,
+            units=ancillary_cube.units,
+            var_name=ancillary_cube.var_name,
+            attributes=ancillary_cube.attributes,
+            long_name=ancillary_cube.long_name,
+        )
+    except AttributeError as err:
+        msg = (
+            f"Failed to add {ancillary_cube} to {cube} as ancillary var."
+            "ancillary_cube should be either an iris.cube.Cube or an "
+            "iris.coords.AncillaryVariable object."
+        )
+        raise ValueError(msg) from err
+    # Match the coordinates of the ancillary cube to coordinates and
+    # dimensions in the input cube before adding the ancillary variable.
+    data_dims: list[int | None] = []
+    if isinstance(ancillary_cube, iris.coords.AncillaryVariable):
+        start_dim = cube.ndim - len(ancillary_var.shape)
+        data_dims = list(range(start_dim, cube.ndim))
+    else:
+        data_dims = [None] * ancillary_cube.ndim
+        for coord in ancillary_cube.coords():
+            try:
+                for ancillary_dim, cube_dim in zip(
+                    ancillary_cube.coord_dims(coord),
+                    cube.coord_dims(coord),
+                    strict=False,
+                ):
+                    data_dims[ancillary_dim] = cube_dim
+            except iris.exceptions.CoordinateNotFoundError:
+                logger.debug(
+                    "%s from ancillary cube not found in cube coords.",
+                    coord,
+                )
+        if None in data_dims:
+            none_dims = ", ".join(
+                str(i) for i, d in enumerate(data_dims) if d is None
+            )
+            msg = (
+                f"Failed to add {ancillary_cube} to {cube} as ancillary var."
+                f"No coordinate associated with ancillary cube dimensions"
+                f"{none_dims}"
+            )
+            raise ValueError(msg)
     if ancillary_cube.has_lazy_data():
-        cube_chunks = tuple(cube.lazy_data().chunks[d] for d in coord_dims)
-        ancillary_data = ancillary_data.rechunk(cube_chunks)
-    ancillary_var = iris.coords.AncillaryVariable(
-        ancillary_data,
-        standard_name=ancillary_cube.standard_name,
-        units=ancillary_cube.units,
-        var_name=ancillary_cube.var_name,
-        attributes=ancillary_cube.attributes,
-    )
-    cube.add_ancillary_variable(ancillary_var, coord_dims)
+        cube_chunks = tuple(cube.lazy_data().chunks[d] for d in data_dims)
+        ancillary_var.data = ancillary_cube.lazy_data().rechunk(cube_chunks)
+    cube.add_ancillary_variable(ancillary_var, data_dims)
     logger.debug(
         "Added %s as ancillary variable in cube of %s.",
         ancillary_cube.var_name,

@@ -1,6 +1,6 @@
 """Fixes for CESM1-CAM5 model."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(Fix):

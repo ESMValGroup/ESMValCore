@@ -6,9 +6,8 @@ Includes a context manager to temporarily modify sys.argv
 import contextlib
 import copy
 import functools
-import os
-import shutil
 import sys
+import warnings
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -16,16 +15,16 @@ from unittest.mock import patch
 import pytest
 from fire.core import FireExit
 
-import esmvalcore.config._config
 from esmvalcore._main import Config, ESMValTool, Recipes, run
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 
 def wrapper(f):
     @functools.wraps(f)
     def empty(*args, **kwargs):
         if kwargs:
-            raise ValueError(f"Parameters not supported: {kwargs}")
+            msg = f"Parameters not supported: {kwargs}"
+            raise ValueError(msg)
         return True
 
     return empty
@@ -65,11 +64,8 @@ def test_run():
         run()
 
 
-def test_empty_run(tmp_path, monkeypatch):
+def test_empty_run(tmp_path):
     """Test real run with no diags."""
-    monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping, "config_file", raising=False
-    )
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
@@ -85,25 +81,118 @@ def test_empty_run(tmp_path, monkeypatch):
         diagnostics: null
     """)
     recipe_file.write_text(content)
-    log_dir = f"{tmp_path}/esmvaltool_output"
+    out_dir = tmp_path / "esmvaltool_output"
     config_dir = tmp_path / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "config.yml"
-    config_file.write_text(f"output_dir: {log_dir}")
+    config_file.write_text(f"output_dir: {out_dir}")
 
-    with pytest.raises(RecipeError) as exc:
-        ESMValTool().run(recipe_file, config_dir=config_dir)
-    assert str(exc.value) == "The given recipe does not have any diagnostic."
-    log_file = os.path.join(
-        log_dir, os.listdir(log_dir)[0], "run", "main_log.txt"
-    )
-    filled_recipe = os.path.exists(
-        log_dir + "/" + os.listdir(log_dir)[0] + "/run/recipe_filled.yml"
-    )
-    shutil.rmtree(log_dir)
+    msg = "The given recipe does not have any diagnostic."
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(RecipeError, match=msg):
+            ESMValTool().run(recipe_file, config_dir=config_dir)
 
-    assert log_file
-    assert not filled_recipe
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
+
+
+# TODO: remove in v2.14.0
+def test_empty_run_old_config(tmp_path):
+    """Test real run with no diags."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        diagnostics: null
+    """)
+    recipe_file.write_text(content)
+    out_dir = tmp_path / "esmvaltool_output"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / "config.yml"
+    config_file.write_text(f"output_dir: {out_dir}")
+
+    err_msg = "The given recipe does not have any diagnostic."
+    warn_msg = "Please use the option `config_dir` instead"
+    with (
+        pytest.raises(RecipeError, match=err_msg),
+        pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg),
+    ):
+        ESMValTool().run(recipe_file, config_file=config_file)
+
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
+
+
+# TODO: remove in v2.14.0
+def test_empty_run_ignore_old_config(tmp_path, monkeypatch):
+    """Test real run with no diags."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        diagnostics: null
+    """)
+    recipe_file.write_text(content)
+    out_dir = tmp_path / "esmvaltool_output"
+    new_config_dir = tmp_path / "new_config"
+    new_config_dir.mkdir(parents=True, exist_ok=True)
+    new_config_file = new_config_dir / "config.yml"
+    new_config_file.write_text(f"output_dir: {out_dir}")
+    old_config_dir = tmp_path / "old_config"
+    old_config_dir.mkdir(parents=True, exist_ok=True)
+    old_config_file = old_config_dir / "config.yml"
+    old_config_file.write_text("invalid_option: will be ignored")
+
+    # Note: old config file will be ignored since ESMVALTOOL_CONFIG_DIR is set,
+    # but its actual value will be ignored since
+    # esmvalcore.config._config_object.USER_CONFIG_DIR has already been set to
+    # its default value when loading this module
+    monkeypatch.setenv("ESMVALTOOL_CONFIG_DIR", "value_does_not_matter")
+
+    err_msg = "The given recipe does not have any diagnostic."
+    warn_msg = "Since the environment variable ESMVALTOOL_CONFIG_DIR is set"
+    with (
+        pytest.raises(RecipeError, match=err_msg),
+        pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg),
+    ):
+        ESMValTool().run(
+            recipe_file,
+            config_file=old_config_file,
+            config_dir=new_config_dir,
+        )
+
+    run_dir = out_dir / next(out_dir.iterdir()) / "run"
+    log_file = run_dir / "main_log.txt"
+    filled_recipe = run_dir / "recipe_filled.yml"
+
+    assert log_file.exists()
+    assert not filled_recipe.exists()
 
 
 def test_recipes_get(tmp_path, monkeypatch):
@@ -155,7 +244,10 @@ def test_get_config_developer_path(tmp_path):
     """Test version command."""
     new_path = tmp_path / "subdir"
     with arguments(
-        "esmvaltool", "config", "get_config_developer", f"--path={new_path}"
+        "esmvaltool",
+        "config",
+        "get_config_developer",
+        f"--path={new_path}",
     ):
         run()
     assert (new_path / "config-developer.yml").is_file()
@@ -197,7 +289,10 @@ def test_get_config_developer_no_overwrite(tmp_path):
 def test_get_config_developer_bad_option_fails():
     """Test version command."""
     with arguments(
-        "esmvaltool", "config", "get_config_developer", "--bad_option=path"
+        "esmvaltool",
+        "config",
+        "get_config_developer",
+        "--bad_option=path",
     ):
         with pytest.raises(FireExit):
             run()
@@ -225,7 +320,10 @@ def test_get_config_user_path(tmp_path):
     """Test version command."""
     new_path = tmp_path / "subdir"
     with arguments(
-        "esmvaltool", "config", "get_config_user", f"--path={new_path}"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        f"--path={new_path}",
     ):
         run()
     assert (new_path / "config-user.yml").is_file()
@@ -251,7 +349,10 @@ def test_get_config_user_no_overwrite(tmp_path):
     config_user = tmp_path / "configuration_file.yml"
     config_user.write_text("old text")
     with arguments(
-        "esmvaltool", "config", "get_config_user", f"--path={config_user}"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        f"--path={config_user}",
     ):
         run()
     assert config_user.read_text() == "old text"
@@ -264,7 +365,10 @@ def test_get_config_user_no_overwrite(tmp_path):
 def test_get_config_user_bad_option_fails():
     """Test version command."""
     with arguments(
-        "esmvaltool", "config", "get_config_user", "--bad_option=path"
+        "esmvaltool",
+        "config",
+        "get_config_user",
+        "--bad_option=path",
     ):
         with pytest.raises(FireExit):
             run()

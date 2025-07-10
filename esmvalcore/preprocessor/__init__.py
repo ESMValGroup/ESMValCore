@@ -7,15 +7,15 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
-from dask.delayed import Delayed
 from iris.cube import Cube
 
-from .._provenance import TrackedFile
-from .._task import BaseTask
-from ..cmor.check import cmor_check_data, cmor_check_metadata
-from ..cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore._provenance import TrackedFile
+from esmvalcore._task import BaseTask
+from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
+from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -25,6 +25,7 @@ from ._area import (
     zonal_statistics,
 )
 from ._compare_with_refs import bias, distance_metric
+from ._concatenate import concatenate
 from ._cycles import amplitude
 from ._dask_progress import _compute_with_progress
 from ._derive import derive
@@ -32,7 +33,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    concatenate,
     load,
     save,
     write_metadata,
@@ -86,12 +86,18 @@ from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     axis_statistics,
     depth_integration,
+    extract_surface_from_atm,
     extract_trajectory,
     extract_transect,
     extract_volume,
     volume_statistics,
 )
 from ._weighting import weighting_landsea_fraction
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from dask.delayed import Delayed
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +128,8 @@ __all__ = [
     "resample_time",
     # Level extraction
     "extract_levels",
+    # Extract surface
+    "extract_surface_from_atm",
     # Weighting
     "weighting_landsea_fraction",
     # Mask landsea (fx or Natural Earth)
@@ -235,17 +243,19 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = list(inspect.signature(function).parameters)[0]
-    return itype
+    return next(iter(inspect.signature(function).parameters))
 
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
     for step in settings:
         if step not in DEFAULT_ORDER:
-            raise ValueError(
+            msg = (
                 f"Unknown preprocessor function '{step}', choose from: "
                 f"{', '.join(DEFAULT_ORDER)}"
+            )
+            raise ValueError(
+                msg,
             )
 
         function = globals()[step]
@@ -272,15 +282,18 @@ def check_preprocessor_settings(settings):
             [
                 inspect.Parameter.VAR_POSITIONAL in var_kinds,
                 inspect.Parameter.VAR_KEYWORD in var_kinds,
-            ]
+            ],
         )
         if check_args:
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
-                raise ValueError(
+                msg = (
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
                     f"Valid arguments are: [{', '.join(args)}]"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Check for missing arguments
@@ -292,9 +305,12 @@ def check_preprocessor_settings(settings):
         end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
-            raise ValueError(
+            msg = (
                 f"Missing required argument(s) {missing_args} for "
                 f"preprocessor function {step}"
+            )
+            raise ValueError(
+                msg,
             )
 
         # Final sanity check in case the above fails to catch a mistake
@@ -324,10 +340,13 @@ def _check_multi_model_settings(products):
             if reference is None:
                 reference = product
             elif reference.settings[step] != settings:
-                raise ValueError(
+                msg = (
                     "Unable to combine differing multi-dataset settings for "
                     f"{reference.filename} and {product.filename}, "
                     f"{reference.settings[step]} and {settings}"
+                )
+                raise ValueError(
+                    msg,
                 )
 
 
@@ -347,7 +366,7 @@ def _get_multi_model_settings(products, step):
 def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
-        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()]
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()],
     )
     if input_files is None:
         file_msg = ""
@@ -405,7 +424,12 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
 
 
 def preprocess(
-    items, step, input_files=None, output_file=None, debug=False, **settings
+    items,
+    step,
+    input_files=None,
+    output_file=None,
+    debug=False,
+    **settings,
 ):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
@@ -420,15 +444,21 @@ def preprocess(
     if itype.endswith("s"):
         result.append(
             _run_preproc_function(
-                function, items, settings, input_files=input_files
-            )
+                function,
+                items,
+                settings,
+                input_files=input_files,
+            ),
         )
     else:
         for item in items:
             result.append(
                 _run_preproc_function(
-                    function, item, settings, input_files=input_files
-                )
+                    function,
+                    item,
+                    settings,
+                    input_files=input_files,
+                ),
             )
 
     if step == "save":
@@ -519,8 +549,9 @@ class PreprocessorFile(TrackedFile):
     def apply(self, step: str, debug: bool = False):
         """Apply preprocessor step to product."""
         if step not in self.settings:
+            msg = f"PreprocessorFile {self} has no settings for step {step}"
             raise ValueError(
-                f"PreprocessorFile {self} has no settings for step {step}"
+                msg,
             )
         self.cubes = preprocess(
             self.cubes,
@@ -701,7 +732,7 @@ class PreprocessingTask(BaseTask):
         for product in products:
             product.initialize_provenance(self.activity)
 
-    def _run(self, _) -> list[str]:
+    def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
         self._initialize_product_provenance()
 
@@ -717,7 +748,9 @@ class PreprocessingTask(BaseTask):
             if block[0] in MULTI_MODEL_FUNCTIONS:
                 for step in block:
                     self.products = _apply_multimodel(
-                        self.products, step, self.debug
+                        self.products,
+                        step,
+                        self.debug,
                     )
             else:
                 for product in _sort_products(self.products):
@@ -754,10 +787,10 @@ class PreprocessingTask(BaseTask):
                 self.scheduler_lock.release()
                 logger.debug("Released save lock for task %s", self.name)
 
-        metadata_files = write_metadata(
-            self.products, self.write_ncl_interface
+        return write_metadata(
+            self.products,
+            self.write_ncl_interface,
         )
-        return metadata_files
 
     def __str__(self):
         """Get human readable description."""
@@ -770,18 +803,17 @@ class PreprocessingTask(BaseTask):
             "\n".join(
                 [
                     str(p),
-                    "input files: " + pformat(p._input_files),
+                    "input files: " + pformat(p._input_files),  # noqa: SLF001
                     "settings: " + pformat(p.settings),
-                ]
+                ],
             )
             for p in self.products
         )
-        txt = "\n".join(
+        return "\n".join(
             [
                 f"{self.__class__.__name__}: {self.name}",
                 f"order: {order}",
                 f"{products}",
                 self.print_ancestors(),
-            ]
+            ],
         )
-        return txt

@@ -23,7 +23,7 @@ def test_register(monkeypatch):
         "test_func": {
             "required": "require_at_least_one",
             "variables": ["areacella"],
-        }
+        },
     }
 
 

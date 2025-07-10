@@ -181,9 +181,9 @@ are
 * input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
 
 All of these facets have reasonable defaults preconfigured in the corresponding
-:ref:`extra facets<extra_facets>` file, which is available here:
-:download:`native6-era5.yml
-</../esmvalcore/config/extra_facets/native6-era5.yml>`.
+:ref:`extra facets<config-extra-facets>` configuration file, which is available
+here: :download:`extra_facets_native6.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_native6.yml>`.
 If necessary, these facets can be overwritten in the recipe.
 
 Thus, example dataset entries could look like this:
@@ -296,15 +296,15 @@ Thus, example dataset entries could look like this:
     - {project: CESM, dataset: CESM2, case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001, type: h0, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
     - {project: CESM, dataset: CESM2, case: f.e21.F1850_BGC.f09_f09_mg17.CFMIP-hadsst-piForcing.001, type: h0, gcomp: atm, scomp: cam, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
 
-Variable-specific defaults for the facet ``gcomp`` and ``scomp`` are given in
-the extra facets (see next paragraph) for some variables, but this can be
+Variable-specific defaults for the facet ``gcomp`` and ``scomp`` are given as
+extra facets (see next paragraph) for some variables, but these can be
 overwritten in the recipe.
 
 Similar to any other fix, the CESM fix allows the use of :ref:`extra
-facets<extra_facets>`.
-By default, the file :download:`cesm-mappings.yml
-</../esmvalcore/config/extra_facets/cesm-mappings.yml>` is used for that
-purpose.
+facets<config-extra-facets>`.
+The configuration file :download:`extra_facets_cesm.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_cesm.yml>` contains
+the defaults.
 Currently, this file only contains default facets for a single variable
 (`tas`); for other variables, these entries need to be defined in the recipe.
 Supported keys for extra facets are:
@@ -313,7 +313,7 @@ Supported keys for extra facets are:
 Key                  Description                            Default value if not specified
 ==================== ====================================== =================================
 ``gcomp``            Generic component-model name           No default (needs to be specified
-                                                            in extra facets or recipe if
+                                                            as extra facets or in recipe if
                                                             default DRS is used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
@@ -322,7 +322,7 @@ Key                  Description                            Default value if not
                                                             raw input file; otherwise
                                                             ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
-                                                            in extra facets or recipe if
+                                                            as extra facets or in recipe if
                                                             default DRS is used)
 ``string``           Short string which is used to further  ``''`` (empty string)
                      identify the history file type
@@ -372,10 +372,10 @@ facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
-facets<extra_facets>`.
-By default, the file :download:`emac-mappings.yml
-</../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
-purpose.
+facets<config-extra-facets>`.
+The configuration file :download:`extra_facets_emac.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_emac.yml>` contains
+the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
@@ -384,7 +384,7 @@ Supported keys for extra facets are:
 Key                   Description                            Default value if not specified
 ===================== ====================================== =================================
 ``channel``           Channel in which the desired variable  No default (needs to be specified
-                      is stored                              in extra facets or recipe if
+                      is stored                              as extra facets or in recipe if
                                                              default DRS is used)
 ``postproc_flag``     Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``          Variable name of the variable in the   CMOR variable name of the
@@ -410,7 +410,7 @@ Key                   Description                            Default value if no
 
    For 3D variables defined on pressure levels, only the pressure levels
    defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
-   ``tm1_p19_ave``) are given in the default extra facets file.
+   ``tm1_p19_ave``) are given as default extra facets.
    If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
    explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
    ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
@@ -420,16 +420,24 @@ Key                   Description                            Default value if no
 ICON
 ^^^^
 
-ESMValCore is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
+ESMValCore is able to read native `ICON <https://www.icon-model.org/>`__ model
+output.
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``{exp}`` or ``{exp}/outdata``
+* input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 :ref:`configuration option <config_options>` ``drs: default``).
+
+Currently, two different versions of ICON are supported:
+
+1. ICON-A, which is based on ECHAM physics (deprecated): select via ``dataset:
+   ICON``.
+2. ICON-XPP, which is based on NWP physics (preferred; model code can be
+   downloaded from `DKRZ's GitLab <https://gitlab.dkrz.de/icon/icon-model>`__):
+   select via ``dataset: ICON-XPP``.
 
 Thus, example dataset entries could look like this:
 
@@ -437,17 +445,20 @@ Thus, example dataset entries could look like this:
 
   datasets:
     - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
-       mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, exp: historical, mip: Amon,
-       short_name: ta, var_type: atm_dyn_3d_ml, start_year: 2000,
-       end_year: 2014}
+       mip: Amon, short_name: tas, timerange: 20010101/20020101}
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, timerange: 20010101/20020101}
 
-Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValCore's data finding and
-CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
-recipe.
+recipe, for example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
+       short_name: ta, var_type: atm_dyn_3d_ml, timerange: 20010101/20020101}
+
 This is necessary if your ICON output is structured in one variable per file.
 For example, if your output is stored in files called
 ``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
@@ -479,7 +490,7 @@ simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
 This grid file can either be specified as absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``) path with
-the facet ``horizontal_grid`` in the recipe or the extra facets (see below), or
+the facet ``horizontal_grid`` in the recipe or as extra facet (see below), or
 retrieved automatically from the `grid_file_uri` attribute of the input files.
 In the latter case, ESMValCore first searches the input directories specified
 for ICON for a grid file with that name, and if that was not successful, tries
@@ -498,18 +509,19 @@ While the :ref:`built-in regridding schemes <default regridding schemes>`
 `linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
 the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
-the facet ``ugrid: false`` in the recipe or the extra facets (see below).
+the facet ``ugrid: false`` in the recipe or as extra facet (see below).
 This is useful for diagnostics that act on the native ICON grid and do not
-support input data in UGRID format (yet), like the
-:ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
+support input data in UGRID format (yet).
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
-(from the variables `pfull` and `phalf`) and/or altitude information (from the
-variables `zg` and `zghalf`) to the preprocessed output files.
+and/or altitude information to the preprocessed output files.
+If the names of these variables differ from the default values, the facets
+``pfull_var``, ``phalf_var``, ``zg_var``, and ``zghalf_var`` can be specified
+in the recipe or as extra facets.
 If neither of these variables are available in the input files, it is possible
-to specify the location of files that include the corresponding `zg` or
-`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
-recipe or the extra facets.
+to specify the location of files that include the corresponding altitude
+information with the facets ``zg_file`` and/or ``zghalf_file`` in the recipe or
+as extra facets.
 The paths to these files can be specified absolute or relative (to the
 :ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
@@ -534,10 +546,10 @@ The paths to these files can be specified absolute or relative (to the
           coordinate: air_pressure
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`.
-By default, the file :download:`icon-mappings.yml
-</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
-purpose.
+facets<config-extra-facets>`.
+The configuration file :download:`extra_facets_icon.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>` contains
+the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
@@ -548,12 +560,18 @@ Key                 Description                      Default value if not specif
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
                     ``auxiliary_data_dir``)          ``grid_file_uri`` to retrieve ICON
                     path to the ICON grid file       grid file (see details above)
-``latitude``        Standard name of the latitude    ``latitude``
+``lat_var``         Variable name of the latitude    ``clat``
                     coordinate in the raw input
+                    file/grid file
+``lon_var``         Variable name of the longitude   ``clon``
+                    coordinate in the raw input
+                    file/grid file
+``pfull_var``       Variable name of the pressure at ``pfull`` (``dataset: ICON``) or
+                    full levels in the raw input     ``pres`` (``dataset: ICON-XPP``)
                     file
-``longitude``       Standard name of the             ``longitude``
-                    longitude coordinate in the
-                    raw input file
+``phalf_var``       Variable name of the pressure at ``phalf``
+                    half levels in the raw input
+                    file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
@@ -567,16 +585,24 @@ Key                 Description                      Default value if not specif
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
-                    variable in the raw input        in extra facets or recipe if
+                    variable in the raw input        as extra facets or in recipe if
                     file                             default DRS is used)
-``zg_file``         Absolute or relative (to         If possible, use `zg` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zg`
-``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
-                    ``auxiliary_data_dir``) path to  provided by the raw input file
-                    the the input file that contains
-                    `zghalf`
+``zg_file``         Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at full levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at full
+                    levels
+``zg_var``          Variable name of the geometric    ``zg``
+                    height at full levels in the raw
+                    input file
+``zghalf_file``     Absolute or relative (to         If possible, use geometric height
+                    ``auxiliary_data_dir``) path to  at half levels provided by the raw
+                    the the input file that contains input file
+                    the geometric height at half
+                    levels
+``zghalf_var``      Variable name of the geometric   ``zghalf``
+                    height at half levels in the raw
+                    input file
 =================== ================================ ===================================
 
 .. hint::
@@ -631,10 +657,11 @@ formats) are supported, and should be configured in recipes as e.g.:
 
 The ``Output`` format is an example of a case where variables are grouped in
 multi-variable files, which name cannot be computed directly from datasets
-attributes alone but requires to use an extra_facets file, which principles are
-explained in :ref:`extra_facets`, and which content is :download:`available here
-</../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
-files must also undergo some data selection.
+attributes alone but requires the usage :ref:`config-extra-facets`.
+The configuration file :download:`extra_facets_ipslcm.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_ipslcm.yml>`
+contains the default extra facets.
+These multi-variable files must also undergo some data selection.
 
 .. _read_access-esm:
 
@@ -671,29 +698,32 @@ Thus, example dataset entries could look like this:
 
 
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
-facets<extra_facets>`.
-By default, the file :download:`access-mappings.yml
-</../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
-purpose.
+facets<config-extra-facets>`.
+The configuration file :download:`extra_facets_access.yml
+</../esmvalcore/config/configurations/defaults/extra_facets_access.yml>`
+contains the defaults.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
-==================== ====================================== =================================
-Key                  Description                            Default value if not specified
-==================== ====================================== =================================
-``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
-                     and `oce`                              specified in extra facets or
-                                                            recipe if default DRS is used)
-```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to
+==================== ========================================== ====================================
+Key                  Description                                Default value if not specified
+==================== ========================================== ====================================
+``raw_name``         Variable name of the variable in the       CMOR variable name of the
+                     raw input file                             corresponding variable
+``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be
+                     and `oce`                                  specified as extra facets or in
+                                                                recipe if default DRS is used)
+``freq_attribute``   A special attribute in the filename        No default
+                     `ACCESS-ESM` raw data, related to the
                      frequency of raw data
-``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
-                     root, need to specify if you want to
-                     use the cmoriser
-==================== ====================================== =================================
+``sub_dataset``      Part of the ACCESS-ESM raw dataset root,   No default
+                     needs to be specified if you want to use
+                     the cmoriser
+``ocean_grid_path``  Path to load the grid data for ACCESS      No default
+                     ocean variables
+==================== ========================================== ====================================
+
 
 .. _data-retrieval:
 
@@ -959,10 +989,10 @@ cubes concatenation is performed in one step.
 
 Use of extra facets in the datafinder
 =====================================
-Extra facets are a mechanism to provide additional information for certain kinds
-of data. The general approach is described in :ref:`extra_facets`. Here, we
-describe how they can be used to locate data files within the datafinder
-framework.
+Extra facets are a mechanism to provide additional information for certain
+kinds of data. The general approach is described in :ref:`config-extra-facets`.
+Here, we describe how they can be used to locate data files within the
+datafinder framework.
 This is useful to build paths for directory structures and file names
 that require more information than what is provided in the recipe.
 A common application is the location of variables in multi-variable files as
@@ -972,18 +1002,27 @@ Another use case is files that use different names for variables in their
 file name than for the netCDF4 variable name.
 
 To apply the extra facets for this purpose, simply use the corresponding tag in
-the applicable DRS inside the `config-developer.yml` file. For example, given
-the extra facets in :ref:`extra-facets-example-1`, one might write the
-following.
-
-.. _extra-facets-example-2:
+the applicable DRS inside the :ref:`config-developer`.
+For example, given the extra facets
 
 .. code-block:: yaml
-   :caption: Example drs use in `config-developer.yml`
+
+  projects:
+    native6:
+      extra_facets:
+        ERA5:
+          Amon:
+            tas:
+              source_var_name: t2m
+
+a corresponding entry in the developer configuration file could look like:
+
+.. code-block:: yaml
+   :caption: Contents of ``config-developer.yml``
 
    native6:
      input_file:
-       default: '{name_in_filename}*.nc'
+       default: '{source_var_name}_*.nc'
 
 The same replacement mechanism can be employed everywhere where tags can be
-used, particularly in `input_dir` and `input_file`.
+used, particularly in ``input_dir``, ``input_file``, and ``output_file``.

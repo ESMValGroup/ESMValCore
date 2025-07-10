@@ -13,16 +13,24 @@ from esmvalcore.cmor.fix import Fix
 def cubes():
     """Cubes to test fix."""
     correct_lat_coord = AuxCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = AuxCoord(
-        [0.0], var_name="latitude", standard_name="latitude"
+        [0.0],
+        var_name="latitude",
+        standard_name="latitude",
     )
     correct_lon_coord = AuxCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = AuxCoord(
-        [0.0], var_name="longitude", standard_name="longitude"
+        [0.0],
+        var_name="longitude",
+        standard_name="longitude",
     )
     correct_cube = Cube(
         [10.0],

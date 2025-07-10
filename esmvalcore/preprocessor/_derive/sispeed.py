@@ -4,7 +4,8 @@ import logging
 
 from iris import Constraint
 
-from .._regrid import regrid
+from esmvalcore.preprocessor._regrid import regrid
+
 from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,8 @@ from numpy.testing import assert_array_almost_equal
 from esmvalcore.preprocessor._detrend import detrend
 
 
-def _create_sample_cube():
+@pytest.fixture
+def sample_cube():
     cube = Cube(
         np.array((np.arange(1, 25), np.arange(25, 49))),
         var_name="co2",
@@ -38,16 +39,14 @@ def _create_sample_cube():
 
 
 @pytest.mark.parametrize("method", ["linear", "constant"])
-def test_decadal_average(method):
+def test_decadal_average(method, sample_cube):
     """Test for decadal average."""
-    cube = _create_sample_cube()
-
-    result = detrend(cube, "time", method)
+    result = detrend(sample_cube, "time", method)
     if method == "linear":
         expected = np.zeros([2, 24])
     else:
         expected = np.array(
-            (np.arange(1, 25) - 12.5, np.arange(25, 49) - 36.5)
+            (np.arange(1, 25) - 12.5, np.arange(25, 49) - 36.5),
         )
     assert_array_almost_equal(result.data, expected)
 

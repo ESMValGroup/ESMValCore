@@ -4,8 +4,8 @@ import logging
 import subprocess
 import time
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ VARNAME_KEY = "ipsl_varname"
 class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Select IPSLCM variable in filepath.
 
         This is done only if input file is a multi-variable one. This
@@ -33,29 +33,32 @@ class AllVars(Fix):
 
         """
         if "_" + self.extra_facets.get(
-            "group", "non-sense"
-        ) + ".nc" not in str(filepath):
+            "group",
+            "non-sense",
+        ) + ".nc" not in str(file):
             # No need to filter the file
-            logger.debug("Not filtering for %s", filepath)
-            return filepath
+            logger.debug("Not filtering for %s", file)
+            return file
 
         if not self.extra_facets.get("use_cdo", False):
             # The configuration developer doesn't provide CDO, while ESMValTool
             # licence policy doesn't allow to include it in dependencies
             # Or he considers that plain Iris load is quick enough for
             # that file
-            logger.debug("In ipsl-cm6.py : CDO not activated for %s", filepath)
-            return filepath
+            logger.debug("In ipsl-cm6.py : CDO not activated for %s", file)
+            return file
 
         # Proceed with CDO selvar
         varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
-        alt_filepath = str(filepath).replace(".nc", "_cdo_selected.nc")
+        alt_filepath = str(file).replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(
-            output_dir, alt_filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            alt_filepath,
+            add_unique_suffix=add_unique_suffix,
         )
         tim1 = time.time()
-        logger.debug("Using CDO for selecting %s in %s", varname, filepath)
-        command = ["cdo", "-selvar,%s" % varname, str(filepath), str(outfile)]
+        logger.debug("Using CDO for selecting %s in %s", varname, file)
+        command = ["cdo", f"-selvar,{varname}", str(file), str(outfile)]
         subprocess.run(command, check=True)
         logger.debug("CDO selection done in %.2f seconds", time.time() - tim1)
         return outfile
@@ -94,7 +97,7 @@ class AllVars(Fix):
 
 
 class Tas(Fix):
-    """Fixes for ISPLCM 2m temperature."""
+    """Fixes for IPSLCM 2m temperature."""
 
     def fix_metadata(self, cubes):
         """Add height2m."""
@@ -105,4 +108,4 @@ class Tas(Fix):
 
 
 class Huss(Tas):
-    """Fixes for ISPLCM 2m specific humidity."""
+    """Fixes for IPSLCM 2m specific humidity."""

@@ -1,7 +1,7 @@
 """Fixes for CMIP6 UKESM1-0-LL."""
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):

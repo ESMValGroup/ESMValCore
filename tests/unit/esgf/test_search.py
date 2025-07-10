@@ -115,7 +115,8 @@ ESGF_FACETS = (
 
 
 @pytest.mark.parametrize(
-    "our_facets, esgf_facets", zip(OUR_FACETS, ESGF_FACETS, strict=False)
+    ("our_facets", "esgf_facets"),
+    zip(OUR_FACETS, ESGF_FACETS, strict=False),
 )
 def test_get_esgf_facets(our_facets, esgf_facets):
     """Test that facet translation by get_esgf_facets works as expected."""
@@ -134,7 +135,7 @@ def get_mock_connection(mocker, search_results):
             "urls": [
                 "https://esgf-index1.example.com/esg-search",
                 "https://esgf-index2.example.com/esg-search",
-            ]
+            ],
         },
     }
     mocker.patch.object(_search, "get_esgf_config", return_value=cfg)
@@ -236,13 +237,14 @@ def test_esgf_search_files(mocker):
     file_results = [file_aims0, file_aims1, file_dkrz]
 
     SearchConnection, context = get_mock_connection(  # noqa: N806
-        mocker, search_results=[file_results]
+        mocker,
+        search_results=[file_results],
     )
 
     files = _search.esgf_search_files(facets)
 
     SearchConnection.assert_called_once_with(
-        url="https://esgf-index1.example.com/esg-search"
+        url="https://esgf-index1.example.com/esg-search",
     )
     connection = SearchConnection.return_value
     connection.new_context.assert_called_with(
@@ -285,13 +287,14 @@ def test_esgf_search_uses_second_index_node(mocker):
         search_result,
     ]
     SearchConnection, context = get_mock_connection(  # noqa: N806
-        mocker, search_results
+        mocker,
+        search_results,
     )
 
     result = _search._search_index_nodes(facets={})
 
     second_index_node = "https://esgf-index2.example.com/esg-search"
-    assert _search.FIRST_ONLINE_INDEX_NODE == second_index_node
+    assert second_index_node == _search.FIRST_ONLINE_INDEX_NODE
     assert result == search_result
 
 
@@ -302,7 +305,8 @@ def test_esgf_search_fails(mocker):
         requests.exceptions.ConnectTimeout("Timeout error message 2"),
     ]
     SearchConnection, context = get_mock_connection(  # noqa: N806
-        mocker, search_results
+        mocker,
+        search_results,
     )
 
     with pytest.raises(FileNotFoundError) as excinfo:
@@ -327,7 +331,7 @@ def test_select_latest_versions_filenotfound(mocker):
 
 
 @pytest.mark.parametrize(
-    "timerange,selection",
+    ("timerange", "selection"),
     [
         ("1851/1852", slice(1, 3)),
         ("1851/P1Y", slice(1, 3)),

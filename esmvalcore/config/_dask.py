@@ -8,18 +8,20 @@ import warnings
 from collections.abc import Generator, Mapping
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import dask.config
 import yaml
 from distributed import Client
-from distributed.deploy import Cluster
 
 from esmvalcore.config import CFG
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+if TYPE_CHECKING:
+    from distributed.deploy import Cluster
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
 def warn_if_old_dask_config_exists() -> None:
     """Warn user if deprecated dask configuration file exists."""
     if CONFIG_FILE.exists() and not os.environ.get(
-        "ESMVALTOOL_USE_NEW_DASK_CONFIG"
+        "ESMVALTOOL_USE_NEW_DASK_CONFIG",
     ):
         deprecation_msg = (
             "Usage of Dask configuration file ~/.esmvaltool/dask.yml "
@@ -46,7 +48,9 @@ def warn_if_old_dask_config_exists() -> None:
             "ESMVALTOOL_USE_NEW_DASK_CONFIG=1."
         )
         warnings.warn(
-            deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
+            deprecation_msg,
+            ESMValCoreDeprecationWarning,
+            stacklevel=2,
         )
 
 
@@ -54,44 +58,50 @@ def validate_dask_config(dask_config: Mapping) -> None:
     """Validate dask configuration options."""
     for option in ("profiles", "use"):
         if option not in dask_config:
-            raise InvalidConfigParameter(
+            msg = (
                 f"Key '{option}' needs to be defined for 'dask' configuration"
             )
+            raise InvalidConfigParameter(msg)
     profiles = dask_config["profiles"]
     use = dask_config["use"]
     if not isinstance(profiles, Mapping):
-        raise InvalidConfigParameter(
+        msg = (
             f"Key 'dask.profiles' needs to be a mapping, got {type(profiles)}"
         )
+        raise InvalidConfigParameter(msg)
     for profile, profile_cfg in profiles.items():
         has_scheduler_address = any(
             [
                 "scheduler_address" in profile_cfg,
                 "scheduler-address" in profile_cfg,
-            ]
+            ],
         )
         if "cluster" in profile_cfg and has_scheduler_address:
-            raise InvalidConfigParameter(
+            msg = (
                 f"Key 'dask.profiles.{profile}' uses 'cluster' and "
                 f"'scheduler_address', can only have one of those"
             )
+            raise InvalidConfigParameter(msg)
         if "cluster" in profile_cfg:
             cluster = profile_cfg["cluster"]
             if not isinstance(cluster, Mapping):
-                raise InvalidConfigParameter(
+                msg = (
                     f"Key 'dask.profiles.{profile}.cluster' needs to be a "
                     f"mapping, got {type(cluster)}"
                 )
+                raise InvalidConfigParameter(msg)
             if "type" not in cluster:
-                raise InvalidConfigParameter(
+                msg = (
                     f"Key 'dask.profiles.{profile}.cluster' does not have a "
                     f"'type'"
                 )
+                raise InvalidConfigParameter(msg)
     if use not in profiles:
-        raise InvalidConfigParameter(
+        msg = (
             f"Key 'dask.use' needs to point to an element of 'dask.profiles'; "
             f"got '{use}', expected one of {list(profiles.keys())}"
         )
+        raise InvalidConfigParameter(msg)
 
 
 # TODO: Remove in v2.14.0
@@ -146,7 +156,7 @@ def _get_old_dask_config() -> dict:
 def _get_dask_config() -> dict:
     """Get Dask configuration dictionary."""
     if CONFIG_FILE.exists() and not os.environ.get(
-        "ESMVALTOOL_USE_NEW_DASK_CONFIG"
+        "ESMVALTOOL_USE_NEW_DASK_CONFIG",
     ):
         dask_config = _get_old_dask_config()
     else:
@@ -198,7 +208,7 @@ def get_distributed_client() -> Generator[None | Client]:
             "recommended, please read https://docs.esmvaltool.org/projects/"
             "ESMValCore/en/latest/quickstart/"
             "configure.html#dask-configuration how to use a distributed "
-            "scheduler."
+            "scheduler.",
         )
     else:
         client = Client(**client_kwargs)

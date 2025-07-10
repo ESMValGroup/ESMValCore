@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    dpn2o
+!============
+modeling_realm:    ocnBgchem
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             Pa
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Surface Nitrous Oxide (N2O) Partial Pressure Difference between Sea Water and Air
+comment:           Positive values correspond to higher partial pressure in sea water than air.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          dpn2o
+type:              real
+!----------------------------------
+!

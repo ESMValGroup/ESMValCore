@@ -34,6 +34,12 @@ Specify configuration for ``esmvaltool`` command line tool
 
 When running recipes via the :ref:`command line <running>`, configuration
 options can be specified via YAML files and command line arguments.
+The options from all YAML files and command line arguments are merged together
+using :func:`dask.config.collect` to create a single configuration object,
+which properly considers nested objects (see :func:`dask.config.update` for
+details).
+Configuration options given via the command line will always be preferred over
+options given via YAML files.
 
 
 .. _config_yaml_files:
@@ -53,21 +59,18 @@ A file could look like this (for example, located at
   search_esgf: when_missing
   download_dir: ~/downloaded_data
 
-These files can live in any of the following locations:
+ESMValCore searches for **all** YAML files in **each** of the following
+locations and merges them together:
 
 1. The directory specified via the ``--config_dir`` command line argument.
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
-   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable.
-   If ``~/.config/esmvaltool`` does not exist, this will be silently ignored.
+   this location can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment
+   variable.
 
-ESMValCore searches for all YAML files within each of these directories and
-merges them together using :func:`dask.config.collect`.
-This properly considers nested objects; see :func:`dask.config.update` for
-details.
 Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
-Within a directory, files are sorted alphabetically, and later files (e.g.,
+Within a directory, files are sorted lexicographically, and later files (e.g.,
 ``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
 
 .. warning::
@@ -76,6 +79,23 @@ Within a directory, files are sorted alphabetically, and later files (e.g.,
   Thus, other YAML files in this directory which are not valid configuration
   files (like the old ``config-developer.yml`` files) will lead to errors.
   Make sure to move these files to a different directory.
+
+.. deprecated:: 2.12.0
+
+  If a single configuration file is present at its deprecated location
+  ``~/.esmvaltool/config-user.yml`` or specified via the deprecated command
+  line argument ``--config_file``, all potentially available new configuration
+  files at ``~/.config/esmvaltool/`` and/or the location specified via
+  ``--config_dir`` are ignored.
+  This ensures full backwards-compatibility.
+  To switch to the new configuration system outlined here, move your old
+  configuration file to ``~/.config/esmvaltool/`` or to the location specified
+  via ``--config_dir``, remove ``~/.esmvaltool/config-user.yml``, and omit the
+  command line argument ``--config_file``.
+  Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
+  will also force the usage of the new configuration system regardless of the
+  presence of any potential old configuration files.
+  Support for the deprecated configuration will be removed in version 2.14.0.
 
 To get a copy of the default configuration file, you can run
 
@@ -166,9 +186,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic scripts).                   |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`   | ``[]``                                 |
-|                               | :ref:`extra_facets`.                   |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
 |                               | ``info``, ``warning``, ``error``).     |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
@@ -190,6 +207,8 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic run. [#f3]_                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``projects``                  | :ref:`config-projects`.                | :obj:`dict`                 | See table in :ref:`config-projects`    |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
 |                               | the run was successful, see also       |                             |                                        |
@@ -282,12 +301,13 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
    See :ref:`config-dask-threaded-scheduler` for information on how to configure
    ``num_workers``.
 
+
 .. _config-dask:
 
 Dask configuration
 ==================
 
-Configure Dask in the  ``dask`` section.
+Configure Dask in the ``dask`` section.
 
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
 :ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
@@ -622,6 +642,150 @@ Available options:
 |                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
+
+.. _config-projects:
+
+Project-specific configuration
+==============================
+
+Configure project-specific settings in the ``projects`` section.
+
+Top-level keys in this section are projects, e.g., ``CMIP6``, ``CORDEX``, or
+``obs4MIPs``.
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      ...  # project-specific options
+
+The following project-specific options are available:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
+|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
+|                               | facets defined in the recipe. See      |                             |                                        |
+|                               | :ref:`config-extra-facets` for         |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-extra-facets:
+
+Extra Facets
+------------
+
+It can be useful to automatically add extra key-value pairs to variables or
+datasets without explicitly specifying them in the recipe.
+These key-value pairs can be used for :ref:`finding data
+<extra-facets-data-finder>` or for providing extra information to the functions
+that :ref:`fix data <extra-facets-fixes>` before passing it on to the
+preprocessor.
+
+To support this, we provide the **extra facets** facilities.
+Facets are the key-value pairs described in :ref:`Datasets`.
+Extra facets allows for the addition of more details per project, dataset, MIP
+table, and variable name.
+
+Format of the extra facets
+``````````````````````````
+
+Extra facets are configured in the ``extra_facets`` section of the
+project-specific configuration.
+They are specified in nested dictionaries with the following levels:
+
+1. Dataset name
+2. MIP table
+3. Variable short name
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          Amon:  # MIP table
+            tas:  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+The three top levels under ``extra_facets`` (dataset name, MIP table, and
+variable short name) can contain `Unix shell-style wildcards
+<https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
+The special characters used in shell-style wildcards are:
+
++------------+----------------------------------------+
+|Pattern     | Meaning                                |
++============+========================================+
+| ``*``      |   matches everything                   |
++------------+----------------------------------------+
+| ``?``      |   matches any single character         |
++------------+----------------------------------------+
+| ``[seq]``  |   matches any character in ``seq``     |
++------------+----------------------------------------+
+| ``[!seq]`` |   matches any character not in ``seq`` |
++------------+----------------------------------------+
+
+where ``seq`` can either be a sequence of characters or just a bunch of
+characters, for example ``[A-C]`` matches the characters ``A``, ``B``, and
+``C``, while ``[AC]`` matches the characters ``A`` and ``C``.
+
+Examples:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          "*":  # MIP table
+            "*":  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+Here, the extra facet ``a_new_key: a_new_value`` will be added to any *CMIP6*
+data from model *CanESM5*.
+
+If keys are duplicated, later keys will take precedence over earlier keys:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:
+          "*":
+            "*":
+              shared_key: with_wildcard
+              unique_key_1: test
+          Amon:
+            tas:
+              shared_key: without_wildcard
+              unique_key_2: test
+
+Here, the following extra facets will be added to a dataset with project
+*CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
+
+.. code-block:: yaml
+
+  unique_key_1: test
+  shared_key: without_wildcard  # takes value from later entry
+  unique_key_2: test
+
+.. _config-extra-facets-defaults:
+
+Default extra facets
+````````````````````
+
+Default extra facets are specified in ``extra_facets_*.yml`` files located in
+`this
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
+directory.
+
+
 .. _config-esgf:
 
 ESGF configuration
@@ -787,7 +951,7 @@ ESMValCore replaces the placeholders ``{item}`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
 ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
-and/or extra_facets_ when reading the recipe.
+and/or :ref:`config-extra-facets` when reading the recipe.
 If this fails for some reason, these values can be provided in the recipe too.
 
 The data directory structure of the CMIP projects is set up differently
@@ -982,6 +1146,7 @@ Example:
        default:
          - '{exp}'
          - '{exp}/outdata'
+         - '{exp}/output'
      input_file:
        default: '{exp}_{var_type}*.nc'
      output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
@@ -1032,102 +1197,3 @@ following documentation section:
 
 These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
-
-.. _extra_facets:
-
-Extra Facets
-============
-
-It can be useful to automatically add extra key-value pairs to variables
-or datasets in the recipe.
-These key-value pairs can be used for :ref:`finding data <findingdata>`
-or for providing extra information to the functions that
-:ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
-
-To support this, we provide the extra facets facilities. Facets are the
-key-value pairs described in :ref:`Datasets`. Extra facets allows for the
-addition of more details per project, dataset, mip table, and variable name.
-
-More precisely, one can provide this information in an extra yaml file, named
-`{project}-something.yml`, where `{project}` corresponds to the project as used
-by ESMValCore in :ref:`Datasets` and "something" is arbitrary.
-
-Format of the extra facets files
---------------------------------
-The extra facets are given in a yaml file, whose file name identifies the
-project. Inside the file there is a hierarchy of nested dictionaries with the
-following levels. At the top there is the `dataset` facet, followed by the `mip`
-table, and finally the `short_name`. The leaf dictionary placed here gives the
-extra facets that will be made available to data finder and the fix
-infrastructure. The following example illustrates the concept.
-
-.. _extra-facets-example-1:
-
-.. code-block:: yaml
-   :caption: Extra facet example file `native6-era5-example.yml`
-
-   ERA5:
-     Amon:
-       tas: {source_var_name: "t2m", cds_var_name: "2m_temperature"}
-
-The three levels of keys in this mapping can contain
-`Unix shell-style wildcards <https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
-The special characters used in shell-style wildcards are:
-
-+------------+----------------------------------------+
-|Pattern     | Meaning                                |
-+============+========================================+
-| ``*``      |   matches everything                   |
-+------------+----------------------------------------+
-| ``?``      |   matches any single character         |
-+------------+----------------------------------------+
-| ``[seq]``  |   matches any character in ``seq``     |
-+------------+----------------------------------------+
-| ``[!seq]`` |   matches any character not in ``seq`` |
-+------------+----------------------------------------+
-
-where ``seq`` can either be a sequence of characters or just a bunch of characters,
-for example ``[A-C]`` matches the characters ``A``, ``B``, and ``C``,
-while ``[AC]`` matches the characters ``A`` and ``C``.
-
-For example, this is used to automatically add ``product: output1`` to any
-variable of any CMIP5 dataset that does not have a ``product`` key yet:
-
-.. code-block:: yaml
-   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/extra_facets/cmip5-product.yml>`_
-
-   '*':
-     '*':
-       '*': {product: output1}
-
-Location of the extra facets files
-----------------------------------
-Extra facets files can be placed in several different places. When we use them
-to support a particular use-case within the ESMValCore project, they will be
-provided in the sub-folder `extra_facets` inside the package
-:mod:`esmvalcore.config`. If they are used from the user side, they can be either
-placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
-choosing. In that case, the configuration option ``extra_facets_dir`` must be
-set, which can take a single directory or a list of directories.
-
-The order in which the directories are searched is
-
-1. The internal directory `esmvalcore.config/extra_facets`
-2. The default user directory `~/.esmvaltool/extra_facets`
-3. The custom user directories given by the configuration option
-   ``extra_facets_dir``
-
-The extra facets files within each of these directories are processed in
-lexicographical order according to their file name.
-
-In all cases it is allowed to supersede information from earlier files in later
-files. This makes it possible for the user to effectively override even internal
-default facets, for example to deal with local particularities in the data
-handling.
-
-Use of extra facets
--------------------
-For extra facets to be useful, the information that they provide must be
-applied. There are fundamentally two places where this comes into play. One is
-:ref:`the datafinder<extra-facets-data-finder>`, the other are
-:ref:`fixes<extra-facets-fixes>`.

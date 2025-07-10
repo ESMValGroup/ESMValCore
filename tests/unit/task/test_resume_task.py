@@ -13,7 +13,7 @@ def test_run(tmp_path):
         f"/original/recipe_output/preproc/{task_name}/file.nc": {
             "filename": f"/original/recipe_output/preproc/{task_name}/file.nc",
             "attribute1": "value1",
-        }
+        },
     }
     prev_metadata_file = prev_preproc_dir / "metadata.yml"
     with prev_metadata_file.open("w", encoding="utf-8") as file:

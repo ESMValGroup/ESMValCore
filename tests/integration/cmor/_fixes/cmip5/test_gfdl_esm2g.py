@@ -30,7 +30,7 @@ CUBES_LISTS = [
 ]
 
 
-@pytest.mark.parametrize("cubes_in,cubes_out", CUBES_LISTS)
+@pytest.mark.parametrize(("cubes_in", "cubes_out"), CUBES_LISTS)
 def test_get_and_remove(cubes_in, cubes_out):
     """Test get and remove helper method."""
     _get_and_remove(cubes_in, "to_be_rm")
@@ -42,7 +42,8 @@ CUBES = iris.cube.CubeList([CUBE_1, CUBE_2])
 
 
 @mock.patch(
-    "esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove", autospec=True
+    "esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove",
+    autospec=True,
 )
 def test_allvars(mock_get_and_remove):
     """Test fixes for all vars."""
@@ -57,7 +58,8 @@ def test_allvars(mock_get_and_remove):
 
 
 @mock.patch(
-    "esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove", autospec=True
+    "esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove",
+    autospec=True,
 )
 def test_fgco2(mock_get_and_remove):
     """Test fgco2 fixes."""

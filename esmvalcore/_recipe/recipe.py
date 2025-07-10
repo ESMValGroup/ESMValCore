@@ -10,7 +10,7 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Dict, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -56,9 +56,12 @@ from .to_datasets import (
     _representative_datasets,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
 logger = logging.getLogger(__name__)
 
-PreprocessorSettings = Dict[str, Any]
+PreprocessorSettings = dict[str, Any]
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
@@ -70,7 +73,7 @@ USED_DATASETS = []
 def read_recipe_file(filename: Path, session):
     """Read a recipe from file."""
     check.recipe_with_schema(filename)
-    with open(filename, "r", encoding="utf-8") as file:
+    with open(filename, encoding="utf-8") as file:
         raw_recipe = yaml.safe_load(file)
 
     return Recipe(raw_recipe, session, recipe_file=filename)
@@ -80,7 +83,7 @@ def _special_name_to_dataset(facets, special_name):
     """Convert special names to dataset names."""
     if special_name in ("reference_dataset", "alternative_dataset"):
         if special_name not in facets:
-            raise RecipeError(
+            msg = (
                 "Preprocessor '{preproc}' uses '{name}', but '{name}' is not "
                 "defined for variable '{variable_group}' of diagnostic "
                 "'{diagnostic}'.".format(
@@ -89,6 +92,9 @@ def _special_name_to_dataset(facets, special_name):
                     variable_group=facets["variable_group"],
                     diagnostic=facets["diagnostic"],
                 )
+            )
+            raise RecipeError(
+                msg,
             )
         special_name = facets[special_name]
 
@@ -113,7 +119,8 @@ def _update_target_levels(dataset, datasets, settings):
 
     if "cmor_table" in levels and "coordinate" in levels:
         settings["extract_levels"]["levels"] = get_cmor_levels(
-            levels["cmor_table"], levels["coordinate"]
+            levels["cmor_table"],
+            levels["coordinate"],
         )
     elif "dataset" in levels:
         dataset_name = levels["dataset"]
@@ -124,7 +131,7 @@ def _update_target_levels(dataset, datasets, settings):
             representative_ds = _representative_datasets(target_ds)[0]
             check.data_availability(representative_ds)
             settings["extract_levels"]["levels"] = get_reference_levels(
-                representative_ds
+                representative_ds,
             )
 
 
@@ -140,7 +147,7 @@ def _update_target_grid(dataset, datasets, settings):
         del settings["regrid"]
     elif any(grid == d.facets["dataset"] for d in datasets):
         representative_ds = _representative_datasets(
-            _select_dataset(grid, datasets)
+            _select_dataset(grid, datasets),
         )[0]
         check.data_availability(representative_ds)
         settings["regrid"]["target_grid"] = representative_ds
@@ -168,9 +175,12 @@ def _select_dataset(dataset_name, datasets):
             return dataset
     diagnostic = datasets[0].facets["diagnostic"]
     variable_group = datasets[0].facets["variable_group"]
-    raise RecipeError(
+    msg = (
         f"Unable to find dataset '{dataset_name}' in the list of datasets"
         f"for variable '{variable_group}' of diagnostic '{diagnostic}'."
+    )
+    raise RecipeError(
+        msg,
     )
 
 
@@ -197,7 +207,8 @@ def _limit_datasets(datasets, profile):
             limited.append(dataset)
 
     logger.info(
-        "Only considering %s", ", ".join(d.facets["alias"] for d in limited)
+        "Only considering %s",
+        ", ".join(d.facets["alias"] for d in limited),
     )
 
     return limited
@@ -248,7 +259,7 @@ def _add_dataset_specific_settings(dataset: Dataset, settings: dict) -> None:
             any(grib_format in file_suffixes for grib_format in GRIB_FORMATS),
             "regrid" not in settings,
             dataset.facets.get("automatic_regrid", True),
-        ]
+        ],
     ):
         # Settings recommended by ECMWF
         # (https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation)
@@ -334,7 +345,7 @@ def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
     missing = set()
 
     for input_dataset in input_datasets:
-        for dataset in [input_dataset] + input_dataset.supplementaries:
+        for dataset in [input_dataset, *input_dataset.supplementaries]:
             try:
                 check.data_availability(dataset)
             except RecipeError as exc:
@@ -461,7 +472,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     if not multiproducts:
         return input_products, {}
 
-    settings = list(multiproducts)[0].settings[step]
+    settings = next(iter(multiproducts)).settings[step]
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
@@ -473,12 +484,13 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     downstream_settings = _get_downstream_settings(step, order, multiproducts)
 
     relevant_settings = {
-        "output_products": defaultdict(dict)
+        "output_products": defaultdict(dict),
     }  # pass to ancestors
 
     output_products = set()
     for identifier, products in _group_products(
-        multiproducts, by_key=grouping
+        multiproducts,
+        by_key=grouping,
     ):
         common_attributes = _get_common_attributes(products, settings)
 
@@ -488,13 +500,16 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
             stat_id = _get_stat_identifier(statistic)
             statistic_attributes[step] = _get_tag(step, identifier, stat_id)
             statistic_attributes.setdefault(
-                "alias", statistic_attributes[step]
+                "alias",
+                statistic_attributes[step],
             )
             statistic_attributes.setdefault(
-                "dataset", statistic_attributes[step]
+                "dataset",
+                statistic_attributes[step],
             )
             filename = _get_multiproduct_filename(
-                statistic_attributes, preproc_dir
+                statistic_attributes,
+                preproc_dir,
             )
             statistic_product = PreprocessorFile(
                 filename=filename,
@@ -529,14 +544,13 @@ def _update_extract_shape(settings, session):
 
 def _allow_skipping(dataset: Dataset):
     """Allow skipping of datasets."""
-    allow_skipping = all(
+    return all(
         [
             dataset.session["skip_nonexistent"],
             dataset.facets["dataset"]
             != dataset.facets.get("reference_dataset"),
-        ]
+        ],
     )
-    return allow_skipping
 
 
 def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
@@ -611,9 +625,12 @@ def _get_preprocessor_products(
 
     if missing_vars:
         separator = "\n- "
-        raise InputFilesNotFound(
+        msg = (
             f"Missing data for preprocessor {name}:{separator}"
             f"{separator.join(sorted(missing_vars))}"
+        )
+        raise InputFilesNotFound(
+            msg,
         )
 
     check.reference_for_bias_preproc(products)
@@ -644,7 +661,10 @@ def _configure_multi_product_preprocessor(
     multi_model_step = "multi_model_statistics"
     if ensemble_step in profile:
         ensemble_products, ensemble_settings = _update_multiproduct(
-            products, order, preproc_dir, ensemble_step
+            products,
+            order,
+            preproc_dir,
+            ensemble_step,
         )
 
         # check for ensemble_settings to bypass tests
@@ -658,7 +678,10 @@ def _configure_multi_product_preprocessor(
 
     if multi_model_step in profile:
         multimodel_products, multimodel_settings = _update_multiproduct(
-            ensemble_products, order, preproc_dir, multi_model_step
+            ensemble_products,
+            order,
+            preproc_dir,
+            multi_model_step,
         )
 
         # check for multi_model_settings to bypass tests
@@ -732,9 +755,12 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     session = datasets[0].session
     preprocessor = facets.get("preprocessor", "default")
     if preprocessor not in profiles:
-        raise RecipeError(
+        msg = (
             f"Unknown preprocessor '{preprocessor}' in variable "
             f"{facets['variable_group']} of diagnostic {facets['diagnostic']}"
+        )
+        raise RecipeError(
+            msg,
         )
     logger.info(
         "Creating preprocessor '%s' task for variable '%s'",
@@ -753,7 +779,8 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     )
 
     if not products:
-        raise RecipeError(f"Did not find any input data for task {task_name}")
+        msg = f"Did not find any input data for task {task_name}"
+        raise RecipeError(msg)
 
     task = PreprocessingTask(
         products=products,
@@ -779,7 +806,7 @@ def _extract_preprocessor_order(profile):
     if not custom_order:
         return DEFAULT_ORDER
     if "derive" not in profile:
-        initial_steps = INITIAL_STEPS + ("derive",)
+        initial_steps = (*INITIAL_STEPS, "derive")
     else:
         initial_steps = INITIAL_STEPS
     order = tuple(p for p in profile if p not in initial_steps + FINAL_STEPS)
@@ -799,7 +826,7 @@ class Recipe:
         self._download_files: set[esgf.ESGFFile] = set()
         self.session = session
         self.session["write_ncl_interface"] = self._need_ncl(
-            raw_recipe["diagnostics"]
+            raw_recipe["diagnostics"],
         )
         self._raw_recipe = raw_recipe
         self._filename = Path(recipe_file.name)
@@ -808,10 +835,10 @@ class Recipe:
             self._preprocessors["default"] = {}
         self.datasets = Dataset.from_recipe(recipe_file, session)
         self.diagnostics = self._initialize_diagnostics(
-            raw_recipe["diagnostics"]
+            raw_recipe["diagnostics"],
         )
         self.entity = self._initialize_provenance(
-            raw_recipe.get("documentation", {})
+            raw_recipe.get("documentation", {}),
         )
         try:
             self.tasks = self.initialize_tasks()
@@ -830,12 +857,12 @@ class Recipe:
         ):
             logger.error(
                 "Not all input files required to run the recipe could be "
-                "found."
+                "found.",
             )
             logger.error(
                 "If the files are available locally, please check "
                 "your `rootpath` and `drs` settings in your configuration "
-                "file(s)"
+                "file(s)",
             )
             logger.error(
                 "To automatically download the required files to "
@@ -889,7 +916,9 @@ class Recipe:
             ]
             variable_names = tuple(raw_diagnostic.get("variables", {}))
             diagnostic["scripts"] = self._initialize_scripts(
-                name, raw_diagnostic.get("scripts"), variable_names
+                name,
+                raw_diagnostic.get("scripts"),
+                variable_names,
             )
             for key in ("themes", "realms"):
                 if key in raw_diagnostic:
@@ -900,7 +929,10 @@ class Recipe:
         return diagnostics
 
     def _initialize_scripts(
-        self, diagnostic_name, raw_scripts, variable_names
+        self,
+        diagnostic_name,
+        raw_scripts,
+        variable_names,
     ):
         """Define script in diagnostic."""
         if not raw_scripts:
@@ -957,7 +989,8 @@ class Recipe:
             for script_name, script_cfg in diagnostic["scripts"].items():
                 task_id = diagnostic_name + TASKSEP + script_name
                 if task_id in tasks and isinstance(
-                    tasks[task_id], DiagnosticTask
+                    tasks[task_id],
+                    DiagnosticTask,
                 ):
                     logger.debug(
                         "Linking tasks for diagnostic %s script %s",
@@ -968,12 +1001,17 @@ class Recipe:
                     for id_glob in script_cfg["ancestors"]:
                         ancestor_ids = fnmatch.filter(tasks, id_glob)
                         if not ancestor_ids:
-                            raise RecipeError(
+                            msg = (
                                 "Could not find any ancestors matching "
                                 f"'{id_glob}'."
                             )
+                            raise RecipeError(
+                                msg,
+                            )
                         logger.debug(
-                            "Pattern %s matches %s", id_glob, ancestor_ids
+                            "Pattern %s matches %s",
+                            id_glob,
+                            ancestor_ids,
                         )
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
@@ -1018,7 +1056,10 @@ class Recipe:
         return num_filters != len(tasknames_to_run)
 
     def _create_diagnostic_tasks(
-        self, diagnostic_name, diagnostic, tasknames_to_run
+        self,
+        diagnostic_name,
+        diagnostic,
+        tasknames_to_run,
     ):
         """Create diagnostic tasks."""
         tasks = []
@@ -1034,7 +1075,8 @@ class Recipe:
                             break
                     else:
                         logger.info(
-                            "Skipping task %s due to filter", task_name
+                            "Skipping task %s due to filter",
+                            task_name,
                         )
                         continue
 
@@ -1060,7 +1102,8 @@ class Recipe:
         tasks = []
         failed_tasks = []
         for variable_group, datasets in groupby(
-            diagnostic["datasets"], key=lambda ds: ds.facets["variable_group"]
+            diagnostic["datasets"],
+            key=lambda ds: ds.facets["variable_group"],
         ):
             task_name = diagnostic_name + TASKSEP + variable_group
 
@@ -1073,7 +1116,8 @@ class Recipe:
                             break
                     else:
                         logger.info(
-                            "Skipping task %s due to filter", task_name
+                            "Skipping task %s due to filter",
+                            task_name,
                         )
                         continue
 
@@ -1129,7 +1173,9 @@ class Recipe:
 
             # Create diagnostic tasks
             new_tasks = self._create_diagnostic_tasks(
-                diagnostic_name, diagnostic, tasknames_to_run
+                diagnostic_name,
+                diagnostic,
+                tasknames_to_run,
             )
             any_diag_script_is_run = bool(new_tasks)
             for task in new_tasks:
@@ -1190,7 +1236,8 @@ class Recipe:
     def run(self):
         """Run all tasks in the recipe."""
         if not self.tasks:
-            raise RecipeError("No tasks to run!")
+            msg = "No tasks to run!"
+            raise RecipeError(msg)
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
@@ -1221,7 +1268,8 @@ class Recipe:
 
         for task in sorted(self.tasks.flatten(), key=lambda t: t.priority):
             if self.session["remove_preproc_dir"] and isinstance(
-                task, PreprocessingTask
+                task,
+                PreprocessingTask,
             ):
                 # Skip preprocessing tasks that are deleted afterwards
                 continue
@@ -1247,7 +1295,9 @@ class Recipe:
             # ignore import warnings
             warnings.simplefilter("ignore")
             # keep RecipeOutput here to avoid circular import
-            from esmvalcore.experimental.recipe_output import RecipeOutput
+            from esmvalcore.experimental.recipe_output import (  # noqa: PLC0415
+                RecipeOutput,
+            )
 
             output = self.get_output()
 

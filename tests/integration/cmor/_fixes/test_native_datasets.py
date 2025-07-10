@@ -15,20 +15,18 @@ from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 @pytest.fixture
 def cubes():
     """List of cubes with different `var_names`."""
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(0.0, var_name="pr"),
             Cube(0.0, var_name="tas"),
-        ]
+        ],
     )
-    return cubes
 
 
 @pytest.fixture
 def empty_cube():
     """Empty cube."""
-    cube = Cube(1.0)
-    return cube
+    return Cube(1.0)
 
 
 @pytest.fixture
@@ -54,6 +52,11 @@ def sample_cube():
         long_name="height",
         units="km",
     )
+    depth_coord = AuxCoord(
+        [2.0, 4.0],
+        long_name="depth",
+        units="km",
+    )
     coord_with_bounds = AuxCoord(
         [2.0, 4.0],
         bounds=[[0.0, 2.5], [2.5, 10.0]],
@@ -70,7 +73,7 @@ def sample_cube():
         long_name="longitude",
         units="rad",
     )
-    cube = Cube(
+    return Cube(
         [[[[1.0]], [[2.0]]]],
         dim_coords_and_dims=[
             (time_coord, 0),
@@ -81,10 +84,10 @@ def sample_cube():
         aux_coords_and_dims=[
             (alt16_coord, 1),
             (height_coord, 1),
+            (depth_coord, 1),
             (coord_with_bounds, 1),
         ],
     )
-    return cube
 
 
 @pytest.fixture
@@ -100,12 +103,11 @@ def fix():
     """
     vardef = get_var_info("CMIP6", "Amon", "tas")
     extra_facets = {}
-    fix = NativeDatasetFix(vardef, extra_facets=extra_facets)
-    return fix
+    return NativeDatasetFix(vardef, extra_facets=extra_facets)
 
 
 @pytest.mark.parametrize(
-    "scalar_coord,coord_name,val",
+    ("scalar_coord", "coord_name", "val"),
     [
         ("height2m", "height", 2.0),
         ("height10m", "height", 10.0),
@@ -114,7 +116,12 @@ def fix():
     ],
 )
 def test_fix_scalar_coords(
-    monkeypatch, empty_cube, fix, scalar_coord, coord_name, val
+    monkeypatch,
+    empty_cube,
+    fix,
+    scalar_coord,
+    coord_name,
+    val,
 ):
     """Test ``fix_scalar_coords``."""
     monkeypatch.setattr(fix.vardef, "dimensions", [scalar_coord])
@@ -173,7 +180,9 @@ def test_fix_var_metadata_raw_units(monkeypatch, empty_cube, fix):
 
 
 def test_fix_var_metadata_raw_units_ignore_invalid_units(
-    monkeypatch, empty_cube, fix
+    monkeypatch,
+    empty_cube,
+    fix,
 ):
     """Test ``fix_var_metadata`` with raw_units and invalid units."""
     monkeypatch.setitem(fix.extra_facets, "raw_units", "km")
@@ -235,7 +244,7 @@ def test_get_cube_fail(cubes, fix):
 
 
 @pytest.mark.parametrize(
-    "coord,coord_name,func_name",
+    ("coord", "coord_name", "func_name"),
     [
         ("time", "time", "fix_regular_time"),
         ("time1", "time", "fix_regular_time"),
@@ -246,7 +255,12 @@ def test_get_cube_fail(cubes, fix):
     ],
 )
 def test_fix_regular_coords_from_cube(
-    monkeypatch, sample_cube, fix, coord, coord_name, func_name
+    monkeypatch,
+    sample_cube,
+    fix,
+    coord,
+    coord_name,
+    func_name,
 ):
     """Test fixing of regular coords from cube."""
     coord_info = CoordinateInfo(coord)
@@ -264,7 +278,7 @@ def test_fix_regular_coords_from_cube(
 
 
 @pytest.mark.parametrize(
-    "coord,coord_name,func_name",
+    ("coord", "coord_name", "func_name"),
     [
         ("time", "time", "fix_regular_time"),
         ("time1", "time", "fix_regular_time"),
@@ -275,7 +289,12 @@ def test_fix_regular_coords_from_cube(
     ],
 )
 def test_fix_regular_coords_from_str(
-    monkeypatch, sample_cube, fix, coord, coord_name, func_name
+    monkeypatch,
+    sample_cube,
+    fix,
+    coord,
+    coord_name,
+    func_name,
 ):
     """Test fixing of regular coords from string."""
     coord_info = CoordinateInfo(coord)
@@ -293,7 +312,7 @@ def test_fix_regular_coords_from_str(
 
 
 @pytest.mark.parametrize(
-    "func_name,coord_name,units",
+    ("func_name", "coord_name", "units"),
     [
         ("fix_regular_time", "time", "days since 01-01-1990"),
         ("fix_regular_lat", "latitude", "rad"),
@@ -301,7 +320,11 @@ def test_fix_regular_coords_from_str(
     ],
 )
 def test_fix_regular_coords_from_coords(
-    empty_cube, fix, func_name, coord_name, units
+    empty_cube,
+    fix,
+    func_name,
+    coord_name,
+    units,
 ):
     """Test fixing of regular coords from coords."""
     coord = AuxCoord([1.570796, 3.141592], units=units)
@@ -316,7 +339,7 @@ def test_fix_regular_coords_from_coords(
 
 
 @pytest.mark.parametrize(
-    "func_name,coord_name,units",
+    ("func_name", "coord_name", "units"),
     [
         ("fix_regular_time", "time", "days since 01-01-1990"),
         ("fix_regular_lat", "latitude", "rad"),
@@ -324,7 +347,11 @@ def test_fix_regular_coords_from_coords(
     ],
 )
 def test_fix_regular_coords_from_coords_no_bounds(
-    empty_cube, fix, func_name, coord_name, units
+    empty_cube,
+    fix,
+    func_name,
+    coord_name,
+    units,
 ):
     """Test fixing of regular coords from coords."""
     coord = AuxCoord([1.570796, 3.141592], units=units)
@@ -611,4 +638,44 @@ def test_fix_lon_metadata_from_coord(sample_cube, fix):
     assert out_coord.long_name == "longitude"
     assert out_coord.units == "degrees_east"
     np.testing.assert_allclose(out_coord.points, [0.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata``."""
+    out_coord = fix.fix_depth_coord_metadata(sample_cube)
+    assert out_coord is sample_cube.coord("depth")
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata_from_str(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata`` from string."""
+    out_coord = fix.fix_depth_coord_metadata(sample_cube, coord="depth")
+    assert out_coord is sample_cube.coord("depth")
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_ocean_depth_metadata_from_coord(sample_cube, fix):
+    """Test ``fix_ocean_depth_metadata`` from string."""
+    coord = AuxCoord([2.0], units="m")
+    out_coord = fix.fix_depth_coord_metadata(sample_cube, coord=coord)
+    assert out_coord is coord
+    assert out_coord.standard_name == "depth"
+    assert out_coord.var_name == "lev"
+    assert out_coord.long_name == "ocean depth coordinate"
+    assert out_coord.units == "m"
+    assert out_coord.attributes["positive"] == "down"
+    np.testing.assert_allclose(out_coord.points, [2.0])
     assert out_coord.bounds is None

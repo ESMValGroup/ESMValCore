@@ -9,18 +9,19 @@ import re
 from dataclasses import dataclass
 from glob import glob
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
-import iris
 import isodate
+from cf_units import Unit
+from netCDF4 import Dataset, Variable
 
 from .config import CFG
 from .config._config import get_project_config
 from .exceptions import RecipeError
-from .typing import Facets, FacetValue
 
 if TYPE_CHECKING:
     from .esgf import ESGFFile
+    from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
 
     if daterange:
         start_point = daterange.group(group)
-        end_group = "_".join([group, "end"])
+        end_group = f"{group}_end"
         end_point = daterange.group(end_group)
     else:
         # Check for single dates in the filename
@@ -63,6 +64,14 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
                 start_point = end_point = end.group(group)
 
     return start_point, end_point
+
+
+def _get_var_name(variable: Variable) -> str:
+    """Get variable name (following Iris' Cube.name())."""
+    for attr in ("standard_name", "long_name"):
+        if attr in variable.ncattrs():
+            return str(variable.getncattr(attr))
+    return str(variable.name)
 
 
 def _get_start_end_date(
@@ -96,9 +105,11 @@ def _get_start_end_date(
     ValueError
         Start or end date cannot be determined.
     """
-    if hasattr(file, "name"):  # Path, LocalFile, ESGFFile
+    if hasattr(file, "name"):  # noqa: SIM108
+        # Path, LocalFile, ESGFFile
         stem = Path(file.name).stem
-    else:  # str
+    else:
+        # str
         stem = Path(file).stem
 
     start_date = end_date = None
@@ -126,7 +137,10 @@ def _get_start_end_date(
 
     # Find dates using the regex
     start_date, end_date = _get_from_pattern(
-        datetime_pattern, date_range_pattern, stem, "datetime"
+        datetime_pattern,
+        date_range_pattern,
+        stem,
+        "datetime",
     )
 
     # As final resort, try to get the dates from the file contents
@@ -136,27 +150,28 @@ def _get_start_end_date(
         and Path(file).exists()
     ):
         logger.debug("Must load file %s for daterange ", file)
-        cubes = iris.load(file)
-
-        for cube in cubes:
-            logger.debug(cube)
-            try:
-                time = cube.coord("time")
-            except iris.exceptions.CoordinateNotFoundError:
-                continue
-            start_date = isodate.date_isoformat(
-                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-
-            end_date = isodate.date_isoformat(
-                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-            break
+        with Dataset(file) as dataset:
+            for variable in dataset.variables.values():
+                var_name = _get_var_name(variable)
+                if var_name == "time" and "units" in variable.ncattrs():
+                    time_units = Unit(variable.getncattr("units"))
+                    start_date = isodate.date_isoformat(
+                        time_units.num2date(variable[0]),
+                        format=isodate.isostrf.DATE_BAS_COMPLETE,
+                    )
+                    end_date = isodate.date_isoformat(
+                        time_units.num2date(variable[-1]),
+                        format=isodate.isostrf.DATE_BAS_COMPLETE,
+                    )
+                    break
 
     if start_date is None or end_date is None:
-        raise ValueError(
+        msg = (
             f"File {file} datetimes do not match a recognized pattern and "
             f"time coordinate can not be read from the file"
+        )
+        raise ValueError(
+            msg,
         )
 
     # Remove potential '-' characters from datetimes
@@ -258,14 +273,14 @@ def _parse_period(timerange):
 
     if time_format == datetime_format:
         start_date = str(
-            isodate.datetime_isoformat(start_date, format=datetime_format)
+            isodate.datetime_isoformat(start_date, format=datetime_format),
         )
         end_date = str(
-            isodate.datetime_isoformat(end_date, format=datetime_format)
+            isodate.datetime_isoformat(end_date, format=datetime_format),
         )
     elif time_format == isodate.DATE_BAS_COMPLETE:
         start_date = str(
-            isodate.date_isoformat(start_date, format=time_format)
+            isodate.date_isoformat(start_date, format=time_format),
         )
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
@@ -328,14 +343,14 @@ def _select_files(filenames, timerange):
 
 
 def _replace_tags(
-    paths: Union[str, list[str]],
+    paths: str | list[str],
     variable: Facets,
 ) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        pathset = set((paths.strip("/"),))
+        pathset = {paths.strip("/")}
     else:
-        pathset = set(path.strip("/") for path in paths)
+        pathset = {path.strip("/") for path in paths}
     tlist: set[str] = set()
     for path in pathset:
         tlist = tlist.union(re.findall(r"{([^}]*)}", path))
@@ -346,7 +361,7 @@ def _replace_tags(
                 (
                     re.sub(r"(\b{ensemble}\b)", r"{sub_experiment}-\1", path),
                     re.sub(r"({ensemble})", r"{sub_experiment}-\1", path),
-                )
+                ),
             )
             tlist.add("sub_experiment")
         pathset = new_paths
@@ -360,9 +375,12 @@ def _replace_tags(
         elif tag == "version":
             replacewith = "*"
         else:
+            msg = (
+                f"Dataset key '{tag}' must be specified for {variable}, check "
+                f"your recipe entry and/or extra facet file(s)"
+            )
             raise RecipeError(
-                f"Dataset key '{tag}' must be specified for "
-                f"{variable}, check your recipe entry"
+                msg,
             )
         pathset = _replace_tag(pathset, original_tag, replacewith)
     return [Path(p) for p in pathset]
@@ -414,20 +432,28 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
             value = [value]
         return value
 
+    msg = f"drs {structure} for {project} project not specified in config-developer file"
     raise KeyError(
-        "drs {} for {} project not specified in config-developer file".format(
-            structure, project
-        )
+        msg,
     )
 
 
-@dataclass(order=True, frozen=True)
+@dataclass(order=True)
 class DataSource:
     """Class for storing a data source and finding the associated files."""
 
     rootpath: Path
     dirname_template: str
     filename_template: str
+
+    def __post_init__(self) -> None:
+        """Set further attributes."""
+        self._regex_pattern = self._templates_to_regex()
+
+    @property
+    def regex_pattern(self) -> str:
+        """Get regex pattern that can be used to extract facets from paths."""
+        return self._regex_pattern
 
     def get_glob_patterns(self, **facets) -> list[Path]:
         """Compose the globs that will be used to look for files."""
@@ -448,13 +474,109 @@ class DataSource:
         for glob_ in globs:
             for filename in glob(str(glob_)):
                 file = LocalFile(filename)
-                file.facets.update(_path2facets(file, self.dirname_template))
+                file.facets.update(self.path2facets(file))
                 files.append(file)
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
             files = _select_files(files, facets["timerange"])
         return files
+
+    def path2facets(self, path: Path) -> dict[str, str]:
+        """Extract facets from path."""
+        facets: dict[str, str] = {}
+        match = re.search(self.regex_pattern, str(path))
+        if match is None:
+            return facets
+        for facet, value in match.groupdict().items():
+            if value:
+                facets[facet] = value
+        return facets
+
+    def _templates_to_regex(self) -> str:
+        r"""Convert template strings to regex pattern.
+
+        The resulting regex pattern can be used to extract facets from paths
+        using :func:`re.search`.
+
+        Note
+        ----
+        Facets must not contain "/" or "_".
+
+        Examples
+        --------
+        - rootpath: "/root"
+          dirname_template: "{f2.upper}"
+          filename_template: "{f3}[._]{f4}*"
+          --> regex_pattern:
+          "/root/(?P<f2>[^_/]*?)/(?P<f3>[^_/]*?)[\._](?P<f4>[^_/]*?).*?"
+        - rootpath: "/root"
+          dirname_template: "{f1}/{f1}-{f2}"
+          filename_template: "*.nc"
+          --> regex_pattern:
+          "/root/(?P<f1>[^_/]*?)/(?P=f1)\-(?P<f2>[^_/]*?)/.*?\.nc"
+        - rootpath: "/root"
+          dirname_template: "{f1}/{f2}{f3}"
+          filename_template: "*.nc"
+          --> regex_pattern:
+          "/root/(?P<f1>[^_/]*?)/(?:[^_/]*?)/.*?\.nc"
+
+        """
+        dirname_template = self.dirname_template
+        filename_template = self.filename_template
+
+        # Templates must not be absolute paths (i.e., start with /), otherwise
+        # the roopath is ignored (see
+        # https://docs.python.org/3/library/pathlib.html#operators)
+        if self.dirname_template.startswith(os.sep):
+            dirname_template = dirname_template[1:]
+        if self.filename_template.startswith(os.sep):
+            filename_template = filename_template[1:]
+
+        pattern = re.escape(
+            str(self.rootpath / dirname_template / filename_template),
+        )
+
+        # Remove all tags that are in between other tags, e.g.,
+        # {tag1}{tag2}{tag3} -> {tag1}{tag2} (there is no way to reliably
+        # extract facets from those)
+        pattern = re.sub(r"(?<=\})\\\{[^\}]+?\\\}(?=\\(?=\{))", "", pattern)
+
+        # Replace consecutive tags, e.g. {tag1}{tag2} with non-capturing groups
+        # (?:[^_/]*?) (there is no way to reliably extract facets from those)
+        # Note: This assumes that facets do NOT contain / or _
+        pattern = re.sub(
+            r"\\\{[^\{]+?\}\\\{[^\}]+?\\\}",
+            rf"(?:[^_{os.sep}]*?)",
+            pattern,
+        )
+
+        # Convert tags {tag} to named capture groups (?P<tag>[^_/]*?); for
+        # duplicates use named backreferences (?P=tag)
+        # Note: This assumes that facets do NOT contain / or _
+        already_used_tags: set[str] = set()
+        for full_tag in re.findall(r"\\\{(.+?)\\\}", pattern):
+            # Ignore .upper and .lower (full_tag: {tag.lower}, tag: {tag})
+            if full_tag.endswith((r"\.upper", r"\.lower")):
+                tag = full_tag[:-7]
+            else:
+                tag = full_tag
+
+            old_str = rf"\{{{full_tag}\}}"
+            if tag in already_used_tags:
+                new_str = rf"(?P={tag})"
+            else:
+                new_str = rf"(?P<{tag}>[^_{os.sep}]*?)"
+                already_used_tags.add(tag)
+
+            pattern = pattern.replace(old_str, new_str, 1)
+
+        # Convert fnmatch wildcards * and [] to regex wildcards
+        pattern = pattern.replace(r"\*", ".*?")
+        for chars in re.findall(r"\\\[(.*?)\\\]", pattern):
+            pattern = pattern.replace(rf"\[{chars}\]", f"[{chars}]")
+
+        return pattern
 
 
 _ROOTPATH_WARNED = set()
@@ -476,7 +598,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
                 structure = CFG["drs"].get(project, "default")
-                paths = {p: structure for p in paths}
+                paths = dict.fromkeys(paths, structure)
             sources: list[DataSource] = []
             for path, structure in paths.items():
                 path = Path(path)
@@ -489,9 +611,12 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 )
             return sources
 
-    raise KeyError(
+    msg = (
         f"No '{project}' or 'default' path specified under 'rootpath' in "
         "the configuration."
+    )
+    raise KeyError(
+        msg,
     )
 
 
@@ -542,46 +667,21 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     # Add time period if possible
     if "timerange" in attributes:
         filename_segments.append(
-            f"{attributes['timerange'].replace('/', '-')}"
+            f"{attributes['timerange'].replace('/', '-')}",
         )
 
     filename = f"{'_'.join(filename_segments)}.nc"
-    outfile = Path(
+    return Path(
         preproc_dir,
         attributes["diagnostic"],
         attributes["variable_group"],
         filename,
     )
 
-    return outfile
-
-
-def _path2facets(path: Path, drs: str) -> dict[str, str]:
-    """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = []
-    for key in re.findall(r"{(.*?)}[^-]", f"{drs} "):
-        key = key.split(".")[0]  # Remove trailing .lower and .upper
-        keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {
-        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
-    }
-
-    if len(facets) != len(keys):
-        # Extract hyphen separated facet: {facet1}-{facet2},
-        # where facet1 is already known.
-        for idx, key in enumerate(keys):
-            if key not in facets:
-                facet1, facet2 = key.split("}-{")
-                facets[facet2] = values[idx].replace(f"{facets[facet1]}-", "")
-
-    return facets
-
 
 def _filter_versions_called_latest(
-    files: list["LocalFile"],
-) -> list["LocalFile"]:
+    files: list[LocalFile],
+) -> list[LocalFile]:
     """Filter out versions called 'latest' if they are duplicates.
 
     On compute clusters it is usual to have a symbolic link to the
@@ -601,7 +701,7 @@ def _filter_versions_called_latest(
     ]
 
 
-def _select_latest_version(files: list["LocalFile"]) -> list["LocalFile"]:
+def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     """Select only the latest version of files."""
 
     def filename(file):
@@ -612,7 +712,8 @@ def _select_latest_version(files: list["LocalFile"]) -> list["LocalFile"]:
 
     result = []
     for _, group in itertools.groupby(
-        sorted(files, key=filename), key=filename
+        sorted(files, key=filename),
+        key=filename,
     ):
         duplicates = sorted(group, key=version)
         latest = duplicates[-1]
@@ -624,7 +725,7 @@ def find_files(
     *,
     debug: bool = False,
     **facets: FacetValue,
-) -> Union[list[LocalFile], tuple[list[LocalFile], list[Path]]]:
+) -> list[LocalFile] | tuple[list[LocalFile], list[Path]]:
     """Find files on the local filesystem.
 
     The directories that are searched for files are defined in

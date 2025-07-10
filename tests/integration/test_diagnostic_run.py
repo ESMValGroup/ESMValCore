@@ -139,7 +139,7 @@ def interpreter_not_installed(script):
 
 
 @pytest.mark.parametrize(
-    "script_file, script",
+    ("script_file", "script"),
     [
         pytest.param(
             script_file,
@@ -167,7 +167,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
 
     # Create recipe
     recipe = dedent(
-        """
+        f"""
         documentation:
           title: Recipe without data
           description: Recipe with no data.
@@ -177,9 +177,9 @@ def test_diagnostic_run(tmp_path, script_file, script):
           diagnostic_name:
             scripts:
               script_name:
-                script: {}
-                setting_name: {}
-        """.format(script_file, result_file)
+                script: {script_file}
+                setting_name: {result_file}
+        """,
     )
     recipe_file.write_text(str(recipe))
 
@@ -204,7 +204,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
 
 # TODO: remove in v2.14.0
 @pytest.mark.parametrize(
-    "script_file, script",
+    ("script_file", "script"),
     [
         pytest.param(
             script_file,
@@ -232,7 +232,7 @@ def test_diagnostic_run_old_config(tmp_path, script_file, script):
 
     # Create recipe
     recipe = dedent(
-        """
+        f"""
         documentation:
           title: Recipe without data
           description: Recipe with no data.
@@ -242,9 +242,9 @@ def test_diagnostic_run_old_config(tmp_path, script_file, script):
           diagnostic_name:
             scripts:
               script_name:
-                script: {}
-                setting_name: {}
-        """.format(script_file, result_file)
+                script: {script_file}
+                setting_name: {result_file}
+        """,
     )
     recipe_file.write_text(str(recipe))
 
