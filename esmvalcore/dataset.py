@@ -169,11 +169,19 @@ class Dataset:
         """Return ``True`` for derived variables, ``False`` otherwise."""
         return bool(self.facets.get("derive", False))
 
-    def _get_derivation_requirements(self) -> list[Dataset]:
-        """Get datasets required for derivation."""
-        if not self.facets.get("derive", False):
-            return []
+    def get_input_datasets(self) -> list[Dataset]:
+        """Get input datasets.
 
+        For non-derived variables, this simply returns the dataset itself in a
+        list. For derived variables, this returns the datasets required for
+        derivation.
+
+        """
+        # Non-derived variable
+        if not self.is_derived():
+            return [self]
+
+        # Derived variable
         required_datasets: list[Dataset] = []
         required_vars_facets = get_required(
             self.facets["short_name"],
@@ -188,20 +196,7 @@ class Dataset:
             required_dataset.facets.update(required_facets)
             required_dataset.augment_facets()
             required_datasets.append(required_dataset)
-
         return required_datasets
-
-    def get_input_datasets(self) -> list[Dataset]:
-        """Get input datasets.
-
-        For non-derived variables, this simply returns the dataset itself in a
-        list. For derived variables, this returns the datasets required for
-        derivation.
-
-        """
-        if self.is_derived():
-            return self._get_derivation_requirements()
-        return [self]
 
     def _file_to_dataset(
         self,

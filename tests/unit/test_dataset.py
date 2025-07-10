@@ -1633,7 +1633,7 @@ def test_set_version_derive_var(monkeypatch):
     areacella_file.facets["version"] = "v4"
     dataset.supplementaries[0].files = [areacella_file]
 
-    def get_derivation_requirements():
+    def get_input_datasets():
         rsdt_file = esmvalcore.local.LocalFile("/path/to/rsdt.nc")
         rsdt_file.facets["version"] = "v1"
         rsdt_dataset = Dataset(short_name="rsdt", project="CMIP6")
@@ -1646,11 +1646,7 @@ def test_set_version_derive_var(monkeypatch):
         rsut_dataset.files = [rsut_file_1, rsut_file_2]
         return [rsdt_dataset, rsut_dataset]
 
-    monkeypatch.setattr(
-        dataset,
-        "_get_derivation_requirements",
-        get_derivation_requirements,
-    )
+    monkeypatch.setattr(dataset, "get_input_datasets", get_input_datasets)
 
     dataset.set_version()
 
@@ -2170,7 +2166,7 @@ def test_get_extra_facets_native6():
     }
 
 
-def test_get_derivation_requirements():
+def test_get_input_datasets_derivation():
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
@@ -2180,9 +2176,9 @@ def test_get_derivation_requirements():
     )
     dataset.add_supplementary(short_name="areacella", mip="fx")
 
-    derivation_requirements = dataset._get_derivation_requirements()
+    input_datasets = dataset.get_input_datasets()
 
-    expected = [
+    expected_datasets = [
         Dataset(
             dataset="CanESM5",
             project="CMIP6",
@@ -2212,13 +2208,13 @@ def test_get_derivation_requirements():
             units="W m-2",
         ),
     ]
-    for expected_ds in expected:
-        expected_ds.session = dataset.session
+    for expected_dataset in expected_datasets:
+        expected_dataset.session = dataset.session
 
-    assert derivation_requirements == expected
+    assert input_datasets == expected_datasets
 
 
-def test_get_derivation_requirements_empty():
+def test_get_input_datasets_no_derivation():
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
@@ -2226,10 +2222,10 @@ def test_get_derivation_requirements_empty():
         short_name="tas",
     )
 
-    assert dataset._get_derivation_requirements() == []
+    assert dataset.get_input_datasets() == [dataset]
 
 
-def test_get_derivation_requirements_no_derivation():
+def test_get_input_datasets_no_derivation_available():
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
@@ -2240,4 +2236,4 @@ def test_get_derivation_requirements_no_derivation():
 
     msg = r"Cannot derive variable 'tas': no derivation script available"
     with pytest.raises(NotImplementedError, match=msg):
-        dataset._get_derivation_requirements()
+        dataset.get_input_datasets()

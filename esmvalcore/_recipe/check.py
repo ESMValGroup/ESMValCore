@@ -166,8 +166,9 @@ def variable(
         )
 
 
-def _data_is_missing(dataset: Dataset, input_datasets: list[Dataset]) -> bool:
+def _data_is_missing(dataset: Dataset) -> bool:
     """Check if data is missing."""
+    input_datasets = dataset.get_input_datasets()
     if not dataset.is_derived():
         return not dataset.files
 
@@ -186,14 +187,12 @@ def _data_is_missing(dataset: Dataset, input_datasets: list[Dataset]) -> bool:
     return missing
 
 
-def _log_data_availability_errors(
-    dataset: Dataset,
-    input_datasets: list[Dataset],
-) -> None:
+def _log_data_availability_errors(dataset: Dataset) -> None:
     """Check if the required input data is available."""
-    if not _data_is_missing(dataset, input_datasets):
+    if not _data_is_missing(dataset):
         return
 
+    input_datasets = dataset.get_input_datasets()
     if dataset.is_derived():
         logger.error(
             "No input files found for %s derived from %s",
@@ -211,6 +210,7 @@ def _log_data_availability_errors(
             else:
                 msg = "\n{}".format("\n".join(str(p) for p in patterns))
             logger.error("Looked for files matching%s", msg)
+
     logger.error("Set 'log_level' to 'debug' to get more information")
 
 
@@ -242,15 +242,11 @@ def _group_years(years):
 
 def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
-    if dataset.is_derived():
-        input_datasets = dataset.get_derivation_requirements()
-    else:
-        input_datasets = [dataset]
-
     if log:
-        _log_data_availability_errors(dataset, input_datasets)
+        _log_data_availability_errors(dataset)
 
-    if _data_is_missing(dataset, input_datasets):
+    input_datasets = dataset.get_input_datasets()
+    if _data_is_missing(dataset):
         msg = f"Missing data for {dataset.summary(True)}"
         if dataset.is_derived():
             msg += (
