@@ -125,10 +125,10 @@ def _update_target_levels(dataset, datasets, settings):
         if dataset.facets["dataset"] == dataset_name:
             del settings["extract_levels"]
         else:
-            target_ds = _select_dataset(dataset_name, datasets)
-            check.data_availability(target_ds)
+            target_levels_ds = _select_dataset(dataset_name, datasets)
+            check.data_availability(target_levels_ds)
             settings["extract_levels"]["levels"] = get_reference_levels(
-                target_ds,
+                target_levels_ds,
             )
 
 
@@ -143,9 +143,9 @@ def _update_target_grid(dataset, datasets, settings):
     if dataset.facets["dataset"] == grid:
         del settings["regrid"]
     elif any(grid == d.facets["dataset"] for d in datasets):
-        representative_ds = _select_dataset(grid, datasets)
-        check.data_availability(representative_ds)
-        settings["regrid"]["target_grid"] = representative_ds
+        target_grid_ds = _select_dataset(grid, datasets)
+        check.data_availability(target_grid_ds)
+        settings["regrid"]["target_grid"] = target_grid_ds
     else:
         # Check that MxN grid spec is correct
         target_grid = settings["regrid"]["target_grid"]

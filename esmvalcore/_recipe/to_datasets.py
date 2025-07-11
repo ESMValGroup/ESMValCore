@@ -402,63 +402,68 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(
+def _dataset_from_files(  # noqa: C901
     dataset: Dataset,
 ) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
-    # errors: list[str] = []
+    errors: list[str] = []
 
-    # if any(_isglob(f) for f in dataset.facets.values()):
-    #     logger.debug(
-    #         "Expanding dataset globs for dataset %s, this may take a while..",
-    #         dataset.summary(shorten=True),
-    #     )
+    if any(_isglob(f) for f in dataset.facets.values()):
+        logger.debug(
+            "Expanding dataset globs for dataset %s, this may take a while..",
+            dataset.summary(shorten=True),
+        )
 
-    # all_datasets: list[tuple[dict, Dataset]] = []
-    # for expanded_ds in dataset.from_files():
-    #     updated_facets = {}
-    #     unexpanded_globs = {}
-    #     for key, value in dataset.facets.items():
-    #         if _isglob(value):
-    #             if key in expanded_ds.facets and not _isglob(
-    #                 expanded_ds[key],
-    #             ):
-    #                 updated_facets[key] = expanded_ds.facets[key]
-    #             else:
-    #                 unexpanded_globs[key] = value
+    input_datasets = dataset.get_input_datasets()
 
-    #     if unexpanded_globs:
-    #         msg = _report_unexpanded_globs(
-    #             dataset,
-    #             expanded_ds,
-    #             unexpanded_globs,
-    #         )
-    #         errors.append(msg)
-    #         continue
+    # For derived variables, input_datasets might contain more than one element
+    all_datasets: list[list[tuple[dict, Dataset]]] = []
+    for input_dataset in input_datasets:
+        all_datasets.append([])
+        for expanded_ds in input_dataset.from_files():
+            updated_facets = {}
+            unexpanded_globs = {}
+            for key, value in dataset.facets.items():
+                if _isglob(value):
+                    if key in expanded_ds.facets and not _isglob(
+                        expanded_ds[key],
+                    ):
+                        updated_facets[key] = expanded_ds.facets[key]
+                    else:
+                        unexpanded_globs[key] = value
 
-    #     new_ds = dataset.copy()
-    #     new_ds.facets.update(updated_facets)
-    #     new_ds.supplementaries = expanded_ds.supplementaries
+            if unexpanded_globs:
+                msg = _report_unexpanded_globs(
+                    dataset,
+                    expanded_ds,
+                    unexpanded_globs,
+                )
+                errors.append(msg)
+                continue
 
-    #     all_datasets.append((updated_facets, new_ds))
+            new_ds = dataset.copy()
+            new_ds.facets.update(updated_facets)
+            new_ds.supplementaries = expanded_ds.supplementaries
 
-    # # If globs have been expanded, only consider those datasets that contain
-    # # all necessary input variables if derivation is necessary
-    # for updated_facets, new_ds in all_datasets[0]:
-    #     other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
-    #     if all(updated_facets in facets for facets in other_facets):
-    #         result.append(new_ds)
-    #     else:
-    #         logger.debug(
-    #             "Not all necessary input variables to derive '%s' are "
-    #             "available for dataset %s",
-    #             dataset["short_name"],
-    #             updated_facets,
-    #         )
+            all_datasets[-1].append((updated_facets, new_ds))
 
-    # if errors:
-    #     raise RecipeError("\n".join(errors))
+    # If globs have been expanded, only consider those datasets that contain
+    # all necessary input variables if derivation is necessary
+    for updated_facets, new_ds in all_datasets[0]:
+        other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
+        if all(updated_facets in facets for facets in other_facets):
+            result.append(new_ds)
+        else:
+            logger.debug(
+                "Not all necessary input variables to derive '%s' are "
+                "available for dataset %s",
+                dataset["short_name"],
+                updated_facets,
+            )
+
+    if errors:
+        raise RecipeError("\n".join(errors))
 
     return result
 
