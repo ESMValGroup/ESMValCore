@@ -234,22 +234,88 @@ class Dataset:
 
         return dataset
 
-    def _get_available_datasets(self) -> Iterator[Dataset]:
+    def _get_all_available_datasets(self) -> Iterator[Dataset]:  # noqa: C901
         """Yield datasets based on the available files.
 
         This function requires that self.facets['mip'] is not a glob pattern.
+
+        Does take variable derivation into account, i.e., datasets available
+        through variable derivation are returned.
+
         """
-        dataset_template = self.copy()
-        dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
+        # For derived variables, iterate over input variables to get available
+        # datasets
+        if self.is_derived():
+            all_datasets: list[list[tuple[dict, Dataset]]] = []
+            for input_dataset in self.get_input_datasets():
+                all_datasets.append([])
+                for expanded_ds in self._get_available_datasets(
+                    input_dataset,
+                ):
+                    updated_facets = {}
+                    has_unexpanded_globs = False
+                    for key, value in self.facets.items():
+                        if _isglob(value):
+                            if key in expanded_ds.facets and not _isglob(
+                                expanded_ds[key],
+                            ):
+                                updated_facets[key] = expanded_ds.facets[key]
+                            else:
+                                has_unexpanded_globs = True
+
+                    if has_unexpanded_globs:
+                        continue
+
+                    new_ds = self.copy()
+                    new_ds.facets.update(updated_facets)
+                    new_ds.supplementaries = expanded_ds.supplementaries
+
+                    all_datasets[-1].append((updated_facets, new_ds))
+
+            # Only consider those datasets that contain all input variables
+            # necessary for derivation
+            for updated_facets, new_ds in all_datasets[0]:
+                other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
+                if all(updated_facets in facets for facets in other_facets):
+                    yield new_ds
+                else:
+                    logger.debug(
+                        "Not all necessary input variables to derive '%s' are "
+                        "available for dataset %s",
+                        self["short_name"],
+                        updated_facets,
+                    )
+
+        # If derivation is forced, stop here
+        if self.facets.get("force_derivation", False):
+            return
+
+        # For non-derived variables and non-forced derived variables, search
+        # datasets based on the files available for self
+        yield from self._get_available_datasets(self)
+
+    def _get_available_datasets(self, dataset: Dataset) -> Iterator[Dataset]:
+        """Yield datasets based on the available files.
+
+        This function requires that self.facets['mip'] is not a glob pattern.
+
+        Does not take variable derivation into account, i.e., datasets
+        potentially available through variable derivation are ignored. To
+        consider derived variables properly, use the function
+        :func:`_get_all_available_datasets`.
+
+        """
+        dataset = dataset.copy()
+        dataset.supplementaries = []
+        if _isglob(dataset.facets.get("timerange")):
             # Remove wildcard `timerange` facet, because data finding cannot
             # handle it
-            dataset_template.facets.pop("timerange")
+            dataset.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
         expanded = False
-        for file in dataset_template.files:
+        for file in dataset.files:
             dataset = self._file_to_dataset(file)
 
             # Filter out identical datasets
@@ -339,7 +405,7 @@ class Dataset:
 
             for mip in mips:
                 dataset_template = self.copy(mip=mip)
-                for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
+                for dataset in dataset_template._get_all_available_datasets():  # noqa: SLF001
                     expanded = True
                     yield dataset
 
