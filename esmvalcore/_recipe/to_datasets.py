@@ -402,9 +402,7 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(  # noqa: C901
-    dataset: Dataset,
-) -> list[Dataset]:
+def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
     errors: list[str] = []
@@ -415,52 +413,32 @@ def _dataset_from_files(  # noqa: C901
             dataset.summary(shorten=True),
         )
 
-    input_datasets = dataset.get_input_datasets()
+    for expanded_ds in dataset.from_files():
+        updated_facets = {}
+        unexpanded_globs = {}
+        for key, value in dataset.facets.items():
+            if _isglob(value):
+                if key in expanded_ds.facets and not _isglob(
+                    expanded_ds[key],
+                ):
+                    updated_facets[key] = expanded_ds.facets[key]
+                else:
+                    unexpanded_globs[key] = value
 
-    # For derived variables, input_datasets might contain more than one element
-    all_datasets: list[list[tuple[dict, Dataset]]] = []
-    for input_dataset in input_datasets:
-        all_datasets.append([])
-        for expanded_ds in input_dataset.from_files():
-            updated_facets = {}
-            unexpanded_globs = {}
-            for key, value in dataset.facets.items():
-                if _isglob(value):
-                    if key in expanded_ds.facets and not _isglob(
-                        expanded_ds[key],
-                    ):
-                        updated_facets[key] = expanded_ds.facets[key]
-                    else:
-                        unexpanded_globs[key] = value
-
-            if unexpanded_globs:
-                msg = _report_unexpanded_globs(
-                    dataset,
-                    expanded_ds,
-                    unexpanded_globs,
-                )
-                errors.append(msg)
-                continue
-
-            new_ds = dataset.copy()
-            new_ds.facets.update(updated_facets)
-            new_ds.supplementaries = expanded_ds.supplementaries
-
-            all_datasets[-1].append((updated_facets, new_ds))
-
-    # If globs have been expanded, only consider those datasets that contain
-    # all necessary input variables if derivation is necessary
-    for updated_facets, new_ds in all_datasets[0]:
-        other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
-        if all(updated_facets in facets for facets in other_facets):
-            result.append(new_ds)
-        else:
-            logger.debug(
-                "Not all necessary input variables to derive '%s' are "
-                "available for dataset %s",
-                dataset["short_name"],
-                updated_facets,
+        if unexpanded_globs:
+            msg = _report_unexpanded_globs(
+                dataset,
+                expanded_ds,
+                unexpanded_globs,
             )
+            errors.append(msg)
+            continue
+
+        new_ds = dataset.copy()
+        new_ds.facets.update(updated_facets)
+        new_ds.supplementaries = expanded_ds.supplementaries
+
+        result.append(new_ds)
 
     if errors:
         raise RecipeError("\n".join(errors))
@@ -509,19 +487,3 @@ def _report_unexpanded_globs(
         )
 
     return msg
-
-
-def _derive_needed(dataset: Dataset) -> bool:
-    """Check if dataset needs to be derived from other datasets."""
-    if not dataset.is_derived():
-        return False
-    if dataset.facets.get("force_derivation"):
-        return True
-    if _isglob(dataset.facets.get("timerange", "")):
-        # Our file finding routines are not able to handle globs.
-        dataset = dataset.copy()
-        dataset.facets.pop("timerange")
-
-    copy = dataset.copy()
-    copy.supplementaries = []
-    return not copy.files

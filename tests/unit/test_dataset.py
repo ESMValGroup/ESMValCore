@@ -1181,6 +1181,494 @@ def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_with_derived_var_no_derivation(tmp_path, session):
+    """Test `from_files` with derived variable and supplementary."""
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="areacella", mip="fx")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == [asr_file]
+    assert datasets[0].supplementaries[0].files == []
+
+    expected_input_dataset = Dataset(
+        dataset="SAT",
+        mip="Amon",
+        project="OBS6",
+        short_name="asr",
+        derive=True,
+        timerange="1980/2000",
+        frequency="mon",
+        long_name="Absorbed shortwave radiation",
+        modeling_realm=["atmos"],
+        original_short_name="asr",
+        standard_name="",
+        units="W m-2",
+        tier=2,
+        type="sat",
+    )
+    expected_input_dataset.supplementaries = [
+        Dataset(
+            dataset="SAT",
+            mip="fx",
+            project="OBS6",
+            short_name="areacella",
+            derive=False,
+            frequency="fx",
+            long_name="Grid-Cell Area for Atmospheric Grid Variables",
+            modeling_realm=["atmos", "land"],
+            original_short_name="areacella",
+            standard_name="cell_area",
+            units="m2",
+            tier=2,
+            type="sat",
+        ),
+    ]
+    expected_input_dataset.session = session
+
+    assert dataset.input_datasets == [expected_input_dataset]
+    assert expected_input_dataset.files == [asr_file]
+
+
+def test_from_files_with_derived_var_no_derivation_glob(tmp_path, session):
+    """Test `from_files` with derived variable and supplementary."""
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file_1 = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file_1.touch()
+    asr_file_2 = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_ground_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file_2.touch()
+    areacella_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_fx_areacella_1980-2000.nc",
+    )
+    areacella_file.touch()
+
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="*",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected_datasets = [
+        Dataset(
+            project="OBS6",
+            dataset="SAT",
+            mip="Amon",
+            short_name="asr",
+            tier=2,
+            type="sat",
+            timerange="1980/2000",
+            derive=True,
+        ),
+        Dataset(
+            project="OBS6",
+            dataset="SAT",
+            mip="Amon",
+            short_name="asr",
+            tier=2,
+            type="ground",
+            timerange="1980/2000",
+            derive=True,
+        ),
+    ]
+    for expected_ds in expected_datasets:
+        expected_ds.add_supplementary(short_name="areacella", mip="fx")
+        expected_ds.supplementaries[0].facets.pop("timerange")
+        expected_ds.session = session
+
+    print(datasets)
+    print()
+    print(expected_datasets)
+
+    assert len(datasets) == len(expected_datasets)
+    for expected_ds in expected_datasets:
+        assert expected_ds in datasets
+
+    expected_input_datasets = [
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="asr",
+            derive=True,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="Absorbed shortwave radiation",
+            modeling_realm=["atmos"],
+            original_short_name="asr",
+            standard_name="",
+            units="W m-2",
+            tier=2,
+            type="sat",
+        ),
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="asr",
+            derive=True,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="Absorbed shortwave radiation",
+            modeling_realm=["atmos"],
+            original_short_name="asr",
+            standard_name="",
+            units="W m-2",
+            tier=2,
+            type="ground",
+        ),
+    ]
+    for expected_ds in expected_input_datasets:
+        expected_ds.supplementaries = [
+            Dataset(
+                dataset="SAT",
+                mip="fx",
+                project="OBS6",
+                short_name="areacella",
+                derive=False,
+                frequency="fx",
+                long_name="Grid-Cell Area for Atmospheric Grid Variables",
+                modeling_realm=["atmos", "land"],
+                original_short_name="areacella",
+                standard_name="cell_area",
+                units="m2",
+                tier=2,
+                type="sat",
+            ),
+        ]
+        expected_ds.session = session
+
+    assert dataset.input_datasets == expected_input_datasets
+    assert expected_input_datasets[0].files == [asr_file_1]
+    assert expected_input_datasets[1].files == [asr_file_2]
+
+
+def test_from_files_with_derive_var(tmp_path, session):
+    """Test `from_files` with derived variable and supplementary."""
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    rsdt_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsdt_1980-2000.nc",
+    )
+    rsdt_file.touch()
+    rsut_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsut_1980-2000.nc",
+    )
+    rsut_file.touch()
+
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="areacella", mip="fx")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+    assert datasets[0].supplementaries[0].files == []
+
+    expected_input_datasets = [
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="rsdt",
+            derive=False,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="TOA Incident Shortwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rsdt",
+            standard_name="toa_incoming_shortwave_flux",
+            units="W m-2",
+            tier=2,
+            type="sat",
+        ),
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="rsut",
+            derive=False,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="TOA Outgoing Shortwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rsut",
+            standard_name="toa_outgoing_shortwave_flux",
+            units="W m-2",
+            tier=2,
+            type="sat",
+        ),
+    ]
+    for expected_ds in expected_input_datasets:
+        expected_ds.session = session
+
+    assert dataset.input_datasets == expected_input_datasets
+    assert expected_input_datasets[0].files == [rsdt_file]
+    assert expected_input_datasets[1].files == [rsut_file]
+
+
+def test_from_files_with_derived_no_force_derivation(tmp_path, session):
+    """Test `from_files` with derived variable and supplementary."""
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    rsdt_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsdt_1980-2000.nc",
+    )
+    rsdt_file.touch()
+    rsut_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsut_1980-2000.nc",
+    )
+    rsut_file.touch()
+
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="areacella", mip="fx")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == [asr_file]
+    assert datasets[0].supplementaries[0].files == []
+
+    expected_input_dataset = Dataset(
+        dataset="SAT",
+        mip="Amon",
+        project="OBS6",
+        short_name="asr",
+        derive=True,
+        timerange="1980/2000",
+        frequency="mon",
+        long_name="Absorbed shortwave radiation",
+        modeling_realm=["atmos"],
+        original_short_name="asr",
+        standard_name="",
+        units="W m-2",
+        tier=2,
+        type="sat",
+    )
+    expected_input_dataset.supplementaries = [
+        Dataset(
+            dataset="SAT",
+            mip="fx",
+            project="OBS6",
+            short_name="areacella",
+            derive=False,
+            frequency="fx",
+            long_name="Grid-Cell Area for Atmospheric Grid Variables",
+            modeling_realm=["atmos", "land"],
+            original_short_name="areacella",
+            standard_name="cell_area",
+            units="m2",
+            tier=2,
+            type="sat",
+        ),
+    ]
+    expected_input_dataset.session = session
+
+    assert dataset.input_datasets == [expected_input_dataset]
+    assert expected_input_dataset.files == [asr_file]
+
+
+def test_from_files_with_derived_force_derivation(tmp_path, session):
+    """Test `from_files` with derived variable and supplementary."""
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    rsdt_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsdt_1980-2000.nc",
+    )
+    rsdt_file.touch()
+    rsut_file = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rsut_1980-2000.nc",
+    )
+    rsut_file.touch()
+
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+        force_derivation=True,
+    )
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+        force_derivation=True,
+    )
+    expected.add_supplementary(short_name="areacella", mip="fx")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == [asr_file]
+    assert datasets[0].supplementaries[0].files == []
+
+    expected_input_datasets = [
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="rsdt",
+            derive=False,
+            force_derivation=False,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="TOA Incident Shortwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rsdt",
+            standard_name="toa_incoming_shortwave_flux",
+            units="W m-2",
+            tier=2,
+            type="sat",
+        ),
+        Dataset(
+            dataset="SAT",
+            mip="Amon",
+            project="OBS6",
+            short_name="rsut",
+            derive=False,
+            force_derivation=False,
+            timerange="1980/2000",
+            frequency="mon",
+            long_name="TOA Outgoing Shortwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rsut",
+            standard_name="toa_outgoing_shortwave_flux",
+            units="W m-2",
+            tier=2,
+            type="sat",
+        ),
+    ]
+    for expected_ds in expected_input_datasets:
+        expected_ds.session = session
+
+    assert dataset.input_datasets == expected_input_datasets
+    assert expected_input_datasets[0].files == [rsdt_file]
+    assert expected_input_datasets[1].files == [rsut_file]
+
+
 def test_match():
     dataset1 = Dataset(
         short_name="areacella",
@@ -1626,27 +2114,51 @@ def test_set_version_non_derived_var():
 
 
 def test_set_version_derive_var(monkeypatch):
-    dataset = Dataset(short_name="asr", project="CMIP6", derive=True)
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        derive=True,
+    )
     dataset.add_supplementary(short_name="areacella")
     dataset.files = []
     areacella_file = esmvalcore.local.LocalFile("/path/to/areacella.nc")
     areacella_file.facets["version"] = "v4"
     dataset.supplementaries[0].files = [areacella_file]
 
-    def get_input_datasets():
+    def _get_input_datasets():
         rsdt_file = esmvalcore.local.LocalFile("/path/to/rsdt.nc")
         rsdt_file.facets["version"] = "v1"
-        rsdt_dataset = Dataset(short_name="rsdt", project="CMIP6")
+        rsdt_dataset = Dataset(
+            project="OBS6",
+            dataset="SAT",
+            mip="Amon",
+            short_name="rsdt",
+            tier=2,
+            type="sat",
+            derive=False,
+        )
         rsdt_dataset.files = [rsdt_file]
         rsut_file_1 = esmvalcore.local.LocalFile("/path/to/rsut.nc")
         rsut_file_2 = esmvalcore.local.LocalFile("/path/to/rsut.nc")
         rsut_file_1.facets["version"] = "v2"
         rsut_file_2.facets["version"] = "v3"
-        rsut_dataset = Dataset(short_name="rsut", project="CMIP6")
+        rsut_dataset = Dataset(
+            project="OBS6",
+            dataset="SAT",
+            mip="Amon",
+            short_name="rsdt",
+            tier=2,
+            type="sat",
+            derive=False,
+        )
         rsut_dataset.files = [rsut_file_1, rsut_file_2]
         return [rsdt_dataset, rsut_dataset]
 
-    monkeypatch.setattr(dataset, "get_input_datasets", get_input_datasets)
+    monkeypatch.setattr(dataset, "_get_input_datasets", _get_input_datasets)
 
     dataset.set_version()
 
@@ -2166,17 +2678,88 @@ def test_get_extra_facets_native6():
     }
 
 
-def test_get_input_datasets_derivation():
+def test_derivation_necessary_no_derivation():
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="tas",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+    )
+    assert not dataset.derivation_necessary()
+
+
+def test_derivation_necessary_no_force_derivation_no_files():
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    assert dataset.derivation_necessary()
+
+
+def test_derivation_necessary_no_force_derivation(tmp_path, session):
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.session = session
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    assert not dataset.derivation_necessary()
+
+
+def test_derivation_necessary_force_derivation(tmp_path, session):
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
         mip="Amon",
         short_name="lwcre",
+        exp="historical",
+        grid="gn",
+        ensemble="r1i1p1f1",
+        derive=True,
+        force_derivation=True,
+    )
+    dataset.session = session
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    assert dataset.derivation_necessary()
+
+
+def test_input_datasets_derivation():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        exp="historical",
+        grid="gn",
+        ensemble="r1i1p1f1",
         derive=True,
     )
     dataset.add_supplementary(short_name="areacella", mip="fx")
-
-    input_datasets = dataset.get_input_datasets()
 
     expected_datasets = [
         Dataset(
@@ -2192,6 +2775,10 @@ def test_get_input_datasets_derivation():
             original_short_name="rlut",
             standard_name="toa_outgoing_longwave_flux",
             units="W m-2",
+            exp="historical",
+            grid="gn",
+            ensemble="r1i1p1f1",
+            activity="CMIP",
         ),
         Dataset(
             dataset="CanESM5",
@@ -2206,34 +2793,120 @@ def test_get_input_datasets_derivation():
             original_short_name="rlutcs",
             standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
             units="W m-2",
+            exp="historical",
+            grid="gn",
+            ensemble="r1i1p1f1",
+            activity="CMIP",
         ),
     ]
     for expected_dataset in expected_datasets:
         expected_dataset.session = dataset.session
 
-    assert input_datasets == expected_datasets
+    assert dataset.input_datasets == expected_datasets
 
 
-def test_get_input_datasets_no_derivation():
+def test_input_datasets_no_derivation():
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
         mip="Amon",
         short_name="tas",
+        exp="historical",
+        grid="gn",
+        ensemble="r1i1p1f1",
     )
 
-    assert dataset.get_input_datasets() == [dataset]
+    assert dataset.input_datasets == [dataset]
 
 
-def test_get_input_datasets_no_derivation_available():
+def test_input_datasets_no_derivation_available():
     dataset = Dataset(
         project="CMIP6",
         dataset="CanESM5",
         mip="Amon",
         short_name="tas",
+        exp="historical",
+        grid="gn",
+        ensemble="r1i1p1f1",
         derive=True,
     )
 
     msg = r"Cannot derive variable 'tas': no derivation script available"
     with pytest.raises(NotImplementedError, match=msg):
-        dataset.get_input_datasets()
+        dataset.input_datasets  # noqa: B018
+
+
+def test_force_derivation_no_derived():
+    msg = (
+        r"Facet `force_derivation=True` can only be used for derived "
+        r"variables"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        Dataset(
+            project="CMIP6",
+            dataset="CanESM5",
+            mip="Amon",
+            short_name="tas",
+            force_derivation=True,
+        )
+
+    with pytest.raises(ValueError, match=msg):
+        Dataset(
+            project="CMIP6",
+            dataset="CanESM5",
+            mip="Amon",
+            short_name="tas",
+            derive=False,
+            force_derivation=True,
+        )
+
+
+def test_add_supplementary_to_derived():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+
+    expected_supplementary = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="fx",
+        short_name="areacella",
+        derive=False,
+        force_derivation=False,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary
+
+
+def test_add_derived_supplementary_to_derived():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(
+        short_name="asr",
+        derive=True,
+        force_derivation=True,
+    )
+
+    expected_supplementary = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="asr",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary

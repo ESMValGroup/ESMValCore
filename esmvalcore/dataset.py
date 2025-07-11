@@ -133,9 +133,20 @@ class Dataset:
         self._session: Session | None = None
         self._files: Sequence[File] | None = None
         self._file_globs: Sequence[Path] | None = None
+        self._input_datasets: list[Dataset] | None = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
+
+        if not self.is_derived() and self.facets.get(
+            "force_derivation",
+            False,
+        ):
+            msg = (
+                "Facet `force_derivation=True` can only be used for derived "
+                "variables (i.e., with facet `derive=True`)"
+            )
+            raise ValueError(msg)
 
     @staticmethod
     def from_recipe(
@@ -169,34 +180,68 @@ class Dataset:
         """Return ``True`` for derived variables, ``False`` otherwise."""
         return bool(self.facets.get("derive", False))
 
-    def get_input_datasets(self) -> list[Dataset]:
-        """Get input datasets.
+    def derivation_necessary(self) -> bool:
+        """Return ``True`` if derivation is necessary, ``False`` otherwise."""
+        # If variable cannot be derived, derivation is not necessary
+        if not self.is_derived():
+            return False
 
-        For non-derived variables, this simply returns the dataset itself in a
-        list. For derived variables, this returns the datasets required for
-        derivation.
+        # If forced derivation is requested, derivation is necessary
+        if self.facets.get("force_derivation", False):
+            return True
 
-        """
-        # Non-derived variable
+        # Otherwise, derivation is necessary of no files for the self dataset
+        # are found
+        ds_copy = self.copy()
+        ds_copy.supplementaries = []
+        return not ds_copy.files
+
+    def _get_input_datasets(self) -> list[Dataset]:
+        """Get input datasets."""
         if not self.is_derived():
             return [self]
 
-        # Derived variable
-        required_datasets: list[Dataset] = []
+        input_datasets: list[Dataset] = []
         required_vars_facets = get_required(
             self.facets["short_name"],
             self.facets["project"],
         )
         for required_facets in required_vars_facets:
-            required_dataset = self._copy(derive=False)
+            input_dataset = self._copy(derive=False, force_derivation=False)
             keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
-            required_dataset.facets = {
-                k: v for k, v in required_dataset.facets.items() if k in keep
+            input_dataset.facets = {
+                k: v for k, v in input_dataset.facets.items() if k in keep
             }
-            required_dataset.facets.update(required_facets)
-            required_dataset.augment_facets()
-            required_datasets.append(required_dataset)
-        return required_datasets
+            input_dataset.facets.update(required_facets)
+            input_dataset.augment_facets()
+            input_datasets.append(input_dataset)
+        return input_datasets
+
+    @property
+    def input_datasets(self) -> list[Dataset]:
+        """Get input datasets.
+
+        For non-derived variables (i.e., those with facet ``derive=False``),
+        this will simply return the dataset itself in a list.
+
+        For derived variables (i.e., those with facet ``derive=True``), this
+        will return the datasets required for derivation if derivation is
+        necessary, and the dataset itself if derivation is not necessary.
+
+        Derivation is necessary if the facet ``force_derivation=True`` is set
+        or no files for the dataset itself are available.
+
+        """
+        if self._input_datasets is not None:
+            return self._input_datasets
+
+        if not self.derivation_necessary():
+            input_datasets = [self]
+        else:
+            input_datasets = self._get_input_datasets()
+
+        self._input_datasets = input_datasets
+        return input_datasets
 
     def _file_to_dataset(
         self,
@@ -243,29 +288,36 @@ class Dataset:
         through variable derivation are returned.
 
         """
-        # For derived variables, iterate over input variables to get available
+        datasets_found = False
+        force_derivation = self.is_derived() and self.facets.get(
+            "force_derivation",
+            False,
+        )
+
+        # First, if no forced derivation is requested, search for datasets
+        # based on files from self
+        if not force_derivation:
+            for dataset in self._get_available_datasets(self):
+                datasets_found = True
+                yield dataset
+
+        # If forced derivation is requested or no datasets based on files from
+        # self have been found, search for datasets based on files from input
         # datasets
-        if self.is_derived():
+        if force_derivation or not datasets_found:
             all_datasets: list[list[tuple[dict, Dataset]]] = []
-            for input_dataset in self.get_input_datasets():
+            for input_dataset in self._get_input_datasets():
                 all_datasets.append([])
                 for expanded_ds in self._get_available_datasets(
                     input_dataset,
                 ):
                     updated_facets = {}
-                    has_unexpanded_globs = False
                     for key, value in self.facets.items():
                         if _isglob(value):
                             if key in expanded_ds.facets and not _isglob(
                                 expanded_ds[key],
                             ):
                                 updated_facets[key] = expanded_ds.facets[key]
-                            else:
-                                has_unexpanded_globs = True
-
-                    if has_unexpanded_globs:
-                        continue
-
                     new_ds = self.copy()
                     new_ds.facets.update(updated_facets)
                     new_ds.supplementaries = expanded_ds.supplementaries
@@ -286,14 +338,6 @@ class Dataset:
                         updated_facets,
                     )
 
-        # If derivation is forced, stop here
-        if self.facets.get("force_derivation", False):
-            return
-
-        # For non-derived variables and non-forced derived variables, search
-        # datasets based on the files available for self
-        yield from self._get_available_datasets(self)
-
     def _get_available_datasets(self, dataset: Dataset) -> Iterator[Dataset]:
         """Yield datasets based on the available files.
 
@@ -305,42 +349,42 @@ class Dataset:
         :func:`_get_all_available_datasets`.
 
         """
-        dataset = dataset.copy()
-        dataset.supplementaries = []
-        if _isglob(dataset.facets.get("timerange")):
+        dataset_template = dataset.copy()
+        dataset_template.supplementaries = []
+        if _isglob(dataset_template.facets.get("timerange")):
             # Remove wildcard `timerange` facet, because data finding cannot
             # handle it
-            dataset.facets.pop("timerange")
+            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
         expanded = False
-        for file in dataset.files:
-            dataset = self._file_to_dataset(file)
+        for file in dataset_template.files:
+            new_dataset = self._file_to_dataset(file)
 
             # Filter out identical datasets
             facetset = frozenset(
                 (f, frozenset(v) if isinstance(v, list) else v)
-                for f, v in dataset.facets.items()
+                for f, v in new_dataset.facets.items()
             )
             if facetset not in seen:
                 seen.add(facetset)
                 if any(
                     _isglob(v)
-                    for f, v in dataset.facets.items()
+                    for f, v in new_dataset.facets.items()
                     if f != "timerange"
                 ):
-                    partially_defined.append((dataset, file))
+                    partially_defined.append((new_dataset, file))
                 else:
-                    dataset._update_timerange()  # noqa: SLF001
-                    dataset._supplementaries_from_files()  # noqa: SLF001
+                    new_dataset._update_timerange()  # noqa: SLF001
+                    new_dataset._supplementaries_from_files()  # noqa: SLF001
                     expanded = True
-                    yield dataset
+                    yield new_dataset
 
         # Only yield datasets with globs if there is no better alternative
-        for dataset, file in partially_defined:
+        for new_dataset, file in partially_defined:
             msg = (
-                f"{dataset} with unexpanded wildcards, created from file "
+                f"{new_dataset} with unexpanded wildcards, created from file "
                 f"{file} with facets {file.facets}. Are the missing facets "
                 "in the path to the file?"
                 if isinstance(file, local.LocalFile)
@@ -354,7 +398,7 @@ class Dataset:
                     "because it still contains wildcards.",
                     msg,
                 )
-                yield dataset
+                yield new_dataset
 
     def from_files(self) -> Iterator[Dataset]:
         """Create datasets based on the available files.
@@ -687,7 +731,7 @@ class Dataset:
     def set_version(self) -> None:
         """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
-        for input_dataset in self.get_input_datasets():
+        for input_dataset in self.input_datasets:
             version = self._get_version(input_dataset)
             if version:
                 if isinstance(version, list):
@@ -730,7 +774,10 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
-        facets.setdefault("derive", False)
+        if self.is_derived():
+            facets.setdefault("derive", False)
+        if self.facets.get("force_derivation", False):
+            facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)

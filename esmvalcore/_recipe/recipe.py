@@ -50,9 +50,6 @@ from esmvalcore.preprocessor._shared import _group_products
 
 from . import check
 from .from_datasets import datasets_to_recipe
-from .to_datasets import (
-    _derive_needed,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -216,13 +213,13 @@ def _get_default_settings(dataset):
 
     settings = {}
 
-    if _derive_needed(dataset):
-        settings["derive"] = {
-            "short_name": facets["short_name"],
-            "standard_name": facets["standard_name"],
-            "long_name": facets["long_name"],
-            "units": facets["units"],
-        }
+    # if _derive_needed(dataset):
+    #     settings["derive"] = {
+    #         "short_name": facets["short_name"],
+    #         "standard_name": facets["standard_name"],
+    #         "long_name": facets["long_name"],
+    #         "units": facets["units"],
+    #     }
 
     # Strip supplementary variables before saving
     settings["remove_supplementary_variables"] = {}
@@ -290,8 +287,7 @@ def _update_weighting_settings(settings, facets):
 
 def _add_to_download_list(dataset: Dataset) -> None:
     """Add the files of `dataset` to `DOWNLOAD_FILES`."""
-    input_datasets = dataset.get_input_datasets()
-    for input_dataset in input_datasets:
+    for input_dataset in dataset.input_datasets:
         for i, file in enumerate(input_dataset.files):
             if isinstance(file, esgf.ESGFFile):
                 DOWNLOAD_FILES.add(file)
@@ -309,8 +305,7 @@ def _schedule_for_download(dataset: Dataset) -> None:
 
 def _log_input_files(dataset: Dataset) -> None:
     """Show list of files in log (including supplementaries)."""
-    input_datasets = dataset.get_input_datasets()
-    for input_dataset in input_datasets:
+    for input_dataset in dataset.input_datasets:
         # Only log supplementary variables if present
         supplementary_files_str = ""
         if input_dataset.supplementaries:

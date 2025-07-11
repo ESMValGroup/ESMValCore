@@ -151,7 +151,7 @@ def variable(
 
 def _data_is_missing(dataset: Dataset) -> bool:
     """Check if data is missing."""
-    input_datasets = dataset.get_input_datasets()
+    input_datasets = dataset.input_datasets
     if not dataset.is_derived():
         return not dataset.files
 
@@ -175,17 +175,18 @@ def _log_data_availability_errors(dataset: Dataset) -> None:
     if not _data_is_missing(dataset):
         return
 
-    input_datasets = dataset.get_input_datasets()
-    if dataset.is_derived():
+    if dataset.derivation_necessary():
         logger.error(
             "No input files found for %s derived from %s",
             dataset.summary(shorten=True),
-            "; ".join(str(d.summary(shorten=True)) for d in input_datasets),
+            "; ".join(
+                str(d.summary(shorten=True)) for d in dataset.input_datasets
+            ),
         )
     else:
         logger.error("No input files found for %s", dataset)
 
-    for input_dataset in input_datasets:
+    for input_dataset in dataset.input_datasets:
         patterns = input_dataset._file_globs  # noqa: SLF001
         if patterns:
             if len(patterns) == 1:
@@ -229,20 +230,19 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         _log_data_availability_errors(dataset)
 
     # Raise error if no data at all is available
-    input_datasets = dataset.get_input_datasets()
     if _data_is_missing(dataset):
         msg = f"Missing data for {dataset.summary(True)}"
-        if dataset.is_derived():
+        if dataset.derivation_necessary():
             msg += (
                 f" derived from "
-                f"{'; '.join(d.summary(shorten=True) for d in input_datasets)}"
+                f"{'; '.join(d.summary(shorten=True) for d in dataset.input_datasets)}"
             )
         raise InputFilesNotFound(msg)
 
     # Raise error if not entire desired timerange is available
     start_dates: dict[FacetValue, str] = {}
     end_dates: dict[FacetValue, str] = {}
-    for input_dataset in input_datasets:
+    for input_dataset in dataset.input_datasets:
         facets = input_dataset.facets
         if "timerange" not in facets:
             continue
