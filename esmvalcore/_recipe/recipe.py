@@ -621,7 +621,7 @@ def _get_preprocessor_products(
             filename=filename,
             attributes=dataset.facets,
             settings=settings,
-            datasets=dataset.get_input_datasets(),
+            dataset=dataset,
         )
 
         products.add(product)

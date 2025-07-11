@@ -27,7 +27,7 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
             PreprocessorFile(
                 filename=tmp_path / "tas_out.nc",
                 settings={"save": {"compute": False}},
-                datasets=[dataset],
+                dataset=[dataset],
             ),
         ],
     )
@@ -125,7 +125,7 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
             PreprocessorFile(
                 filename=tmp_path / "tas_dataset1.nc",
                 settings={},
-                datasets=[dataset1],
+                dataset=[dataset1],
                 attributes={"dataset": "dataset1"},
             ),
             PreprocessorFile(
@@ -134,7 +134,7 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
                     "single_preproc_func": {},
                     "multi_preproc_func": {},
                 },
-                datasets=[dataset2],
+                dataset=[dataset2],
                 attributes={"dataset": "dataset2"},
             ),
         ],

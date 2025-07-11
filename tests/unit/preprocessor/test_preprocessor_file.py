@@ -34,7 +34,7 @@ def product():
         attributes={k: v for k, v in ATTRIBUTES.items() if k != "filename"},
         settings={},
     )
-    product._cubes = CubeList([cube, cube, cube])
+    product._cube = CubeList([cube, cube, cube])
     return product
 
 

@@ -147,7 +147,7 @@ def bias(
     for product in products:
         if product == ref_product:
             continue
-        cube = concatenate(product.cubes)
+        cube = concatenate(product.cube)
 
         # Calculate bias
         cube = _calculate_bias(cube, reference, bias_type)
@@ -157,7 +157,7 @@ def bias(
         if ref_product is not None:
             product.wasderivedfrom(ref_product)
 
-        product.cubes = CubeList([cube])
+        product.cube = CubeList([cube])
         output_products.add(product)
 
     # Add reference dataset to output if desired
@@ -368,7 +368,7 @@ def distance_metric(
     for product in products:
         if not keep_reference_dataset and product == reference_product:
             continue
-        cube = concatenate(product.cubes)
+        cube = concatenate(product.cube)
 
         # Calculate distance metric
         cube = _calculate_metric(cube, reference, metric, coords, **kwargs)
@@ -381,7 +381,7 @@ def distance_metric(
         if product != reference_product:
             product.wasderivedfrom(reference_product)
 
-        product.cubes = CubeList([cube])
+        product.cube = CubeList([cube])
         output_products.add(product)
 
     return output_products

@@ -20,7 +20,7 @@ def preproc_file():
         settings={
             "extract_levels": {"scheme": "linear", "levels": [95000]},
         },
-        datasets=[dataset],
+        dataset=[dataset],
     )
 
 

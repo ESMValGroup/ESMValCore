@@ -99,7 +99,7 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
-    from esmvalcore.dataset import Dataset, File
+    from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -503,15 +503,13 @@ class PreprocessorFile(TrackedFile):
         filename: Path,
         attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
-        datasets: list[Dataset] | None = None,
+        dataset: Dataset | None = None,
     ):
-        if datasets is not None:
+        if dataset is not None:
             # Load data using a Dataset
-            input_files: list[File] = []
-            for dataset in datasets:
-                input_files.extend(dataset.files)
-                for supplementary in dataset.supplementaries:
-                    input_files.extend(supplementary.files)
+            input_files = dataset.files
+            for supplementary in dataset.supplementaries:
+                input_files.extend(supplementary.files)
             ancestors = [TrackedFile(f) for f in input_files]
         else:
             # Multimodel preprocessor functions set ancestors at runtime
@@ -519,8 +517,8 @@ class PreprocessorFile(TrackedFile):
             input_files = []
             ancestors = []
 
-        self.datasets = datasets
-        self._cubes = None
+        self.dataset = dataset
+        self._cube = None
         self._input_files = input_files
 
         # Set some preprocessor settings (move all defaults here?)
@@ -553,8 +551,8 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 msg,
             )
-        self.cubes = preprocess(
-            self.cubes,
+        self.cube = preprocess(
+            self.cube,
             step,
             input_files=self._input_files,
             output_file=self.filename,
@@ -563,20 +561,20 @@ class PreprocessorFile(TrackedFile):
         )
 
     @property
-    def cubes(self):
-        """Cubes."""
-        if self._cubes is None:
-            self._cubes = [ds.load() for ds in self.datasets]
-        return self._cubes
+    def cube(self):
+        """Cube."""
+        if self._cube is None:
+            self._cube = self.dataset.load()
+        return self._cube
 
-    @cubes.setter
-    def cubes(self, value):
-        self._cubes = value
+    @cube.setter
+    def cube(self, value):
+        self._cube = value
 
     def save(self) -> Delayed | None:
         """Save cubes to disk."""
         return preprocess(
-            self._cubes,
+            self._cube,
             "save",
             input_files=self._input_files,
             **self.settings["save"],
@@ -585,18 +583,17 @@ class PreprocessorFile(TrackedFile):
     def close(self) -> Delayed | None:
         """Close the file."""
         result = None
-        if self._cubes is not None:
+        if self._cube is not None:
             self._update_attributes()
             result = self.save()
-            self._cubes = None
+            self._cube = None
             self.save_provenance()
         return result
 
     def _update_attributes(self):
         """Update product attributes from cube metadata."""
-        if not self._cubes:
+        if not self._cube:
             return
-        ref_cube = self._cubes[0]
 
         # Names
         names = {
@@ -605,20 +602,20 @@ class PreprocessorFile(TrackedFile):
             "var_name": "short_name",
         }
         for name_in, name_out in names.items():
-            cube_val = getattr(ref_cube, name_in)
+            cube_val = getattr(self._cube, name_in)
             self.attributes[name_out] = "" if cube_val is None else cube_val
 
         # Units
-        self.attributes["units"] = str(ref_cube.units)
+        self.attributes["units"] = str(self._cube.units)
 
         # Frequency
-        if "frequency" in ref_cube.attributes:
-            self.attributes["frequency"] = ref_cube.attributes["frequency"]
+        if "frequency" in self._cube.attributes:
+            self.attributes["frequency"] = self._cube.attributes["frequency"]
 
     @property
     def is_closed(self):
         """Check if the file is closed."""
-        return self._cubes is None
+        return self._cube is None
 
     def _initialize_entity(self):
         """Initialize the provenance entity representing the file."""
