@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from esmvalcore.dataset import Dataset
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +46,7 @@ def ncl_version():
         msg = (
             "Recipe contains NCL scripts, but cannot find an NCL installation."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
     try:
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
@@ -57,9 +56,7 @@ def ncl_version():
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
         )
-        raise RecipeError(
-            msg,
-        ) from exc
+        raise RecipeError(msg) from exc
 
     version = version.strip()
     logger.info("Found NCL version %s", version)
@@ -70,9 +67,7 @@ def ncl_version():
             "NCL version 6.4 or higher is required to run "
             "a recipe containing NCL scripts."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def recipe_with_schema(filename):
@@ -92,9 +87,7 @@ def diagnostics(diags):
     for name, diagnostic in diags.items():
         if "scripts" not in diagnostic:
             msg = f"Missing scripts section in diagnostic '{name}'."
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
         variable_names = tuple(diagnostic.get("variables", {}))
         scripts = diagnostic.get("scripts")
         if scripts is None:
@@ -106,17 +99,13 @@ def diagnostics(diags):
                     f"in diagnostic '{name}': scripts cannot have the "
                     "same name as variables."
                 )
-                raise RecipeError(
-                    msg,
-                )
+                raise RecipeError(msg)
             if not script.get("script"):
                 msg = (
                     f"No script defined for script '{script_name}' in "
                     f"diagnostic '{name}'."
                 )
-                raise RecipeError(
-                    msg,
-                )
+                raise RecipeError(msg)
 
 
 def duplicate_datasets(
@@ -131,9 +120,7 @@ def duplicate_datasets(
             f"groups for variable '{variable_group}' in diagnostic "
             f"'{diagnostic}'."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
@@ -141,9 +128,7 @@ def duplicate_datasets(
                 f"Duplicate dataset\n{pformat(dataset)}\nfor variable "
                 f"'{variable_group}' in diagnostic '{diagnostic}'."
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
         checked_datasets_.append(dataset)
 
 
@@ -161,9 +146,7 @@ def variable(
             f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
             f"'{variable_group}' in diagnostic '{diagnostic}'."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def _data_is_missing(dataset: Dataset) -> bool:
@@ -240,11 +223,12 @@ def _group_years(years):
     return ", ".join(ranges)
 
 
-def data_availability(dataset, log=True):
+def data_availability(dataset: Dataset, log: bool = True) -> None:
     """Check if input_files cover the required years."""
     if log:
         _log_data_availability_errors(dataset)
 
+    # Raise error if no data at all is available
     input_datasets = dataset.get_input_datasets()
     if _data_is_missing(dataset):
         msg = f"Missing data for {dataset.summary(True)}"
@@ -255,35 +239,42 @@ def data_availability(dataset, log=True):
             )
         raise InputFilesNotFound(msg)
 
+    # Raise error if not entire desired timerange is available
+    start_dates: dict[FacetValue, str] = {}
+    end_dates: dict[FacetValue, str] = {}
     for input_dataset in input_datasets:
-        input_files = input_dataset.files
         facets = input_dataset.facets
-
-        if not input_files:  # optional derived variables
+        if "timerange" not in facets:
             continue
 
-        if "timerange" not in facets:
+        input_files = input_dataset.files
+        if not input_files:  # this only happens for optional derived variables
             continue
 
         start_date, end_date = _parse_period(facets["timerange"])
         start_year = int(start_date[0:4])
         end_year = int(end_date[0:4])
         required_years = set(range(start_year, end_year + 1, 1))
-        available_years = set()
+        available_years: set[int] = set()
 
         for file in input_files:
             start, end = _get_start_end_year(file)
             available_years.update(range(start, end + 1))
-
         missing_years = required_years - available_years
         if missing_years:
             missing_txt = _group_years(missing_years)
-
             msg = "No input data available for years {} in files:\n{}".format(
                 missing_txt,
                 "\n".join(str(f) for f in input_files),
             )
             raise InputFilesNotFound(msg)
+
+        start_dates[facets["short_name"]] = start_date
+        end_dates[facets["short_name"]] = end_date
+
+    # Check if all input variables cover the same years (only relevant for
+    # derived variables)
+    _differing_timeranges(dataset, start_dates, end_dates)
 
 
 def preprocessor_supplementaries(dataset, settings):
@@ -303,9 +294,7 @@ def preprocessor_supplementaries(dataset, settings):
                     f"one supplementary variable of {ancs['variables']} is "
                     f"defined in the recipe for {dataset}."
                 )
-                raise RecipeError(
-                    msg,
-                )
+                raise RecipeError(msg)
             if ancs["required"] == "prefer_at_least_one":
                 logger.warning(
                     "Preprocessor function %s works best when at least "
@@ -341,9 +330,7 @@ def check_for_temporal_preprocs(profile):
             f"Time coordinate preprocessor step(s) {temp_preprocs} not permitted on fx "
             "vars, please remove them from recipe"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def extract_shape(settings):
@@ -354,9 +341,7 @@ def extract_shape(settings):
             "In preprocessor function `extract_shape`: "
             f"Unable to find 'shapefile: {shapefile}'"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
     valid = {
         "method": {"contains", "representative"},
@@ -366,11 +351,12 @@ def extract_shape(settings):
     for key in valid:
         value = settings.get(key)
         if not (value is None or value in valid[key]):
-            raise RecipeError(
+            msg = (
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
                 "{}".format(", ".join(f"'{k}'".lower() for k in valid[key])),
             )
+            raise RecipeError(msg)
 
 
 def _verify_span_value(span):
@@ -395,9 +381,7 @@ def _verify_groupby(groupby):
             "`multi_model_statistics`.`groupby` must be defined as a "
             f"list. Got {groupby}."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def _verify_keep_input_datasets(keep_input_datasets):
@@ -407,9 +391,7 @@ def _verify_keep_input_datasets(keep_input_datasets):
             f"Must be defined as a boolean (true or false). "
             f"Got {keep_input_datasets}."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def _verify_ignore_scalar_coords(ignore_scalar_coords):
@@ -419,9 +401,7 @@ def _verify_ignore_scalar_coords(ignore_scalar_coords):
             f"Must be defined as a boolean (true or false). Got "
             f"{ignore_scalar_coords}."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def multimodel_statistics_preproc(settings):
@@ -458,9 +438,7 @@ def _check_delimiter(timerange):
             "Valid values must be separated by `/`. "
             f"Got {timerange} instead."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def _check_duration_periods(timerange):
@@ -471,9 +449,7 @@ def _check_duration_periods(timerange):
             "Cannot set both the beginning and the end "
             "as duration periods."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
     if timerange[0].startswith("P"):
         try:
@@ -537,15 +513,20 @@ def valid_time_selection(timerange):
             _check_timerange_values(date, timerange)
 
 
-def differing_timeranges(timeranges, required_vars):
-    """Log error if required variables have differing timeranges."""
-    if len(timeranges) > 1:
+def _differing_timeranges(
+    dataset: Dataset,
+    start_dates: dict[FacetValue, str],
+    end_dates: dict[FacetValue, str],
+) -> None:
+    """Log error if input datasets for derivation have differing timeranges."""
+    if len(set(start_dates.values())) > 1 or len(set(end_dates.values())) > 1:
         msg = (
-            f"Differing timeranges with values {timeranges} "
-            f"found for required variables {required_vars}. "
-            "Set `timerange` to a common value."
+            f"Different available dates in input variables necessary for "
+            f"derivation of {dataset.summary(shorten=True)}:\n    Start "
+            f"dates: {start_dates}\n    End dates: {end_dates}\nSet "
+            f"`timerange` to a common value"
         )
-        raise ValueError(msg)
+        raise InputFilesNotFound(msg)
 
 
 def _check_literal(
@@ -634,9 +615,7 @@ def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
             f"ensure that the reference dataset is not excluded with the "
             f"'exclude' option"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 reference_for_bias_preproc = partial(
@@ -747,9 +726,7 @@ def regridding_schemes(settings: dict):
                 f"(see https://docs.esmvaltool.org/projects/ESMValCore/en/"
                 f"latest/recipe/preprocessor.html#generic-regridding-schemes)."
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
 
     # Check generic regridding schemes (given as dict)
     if isinstance(scheme, dict):
@@ -762,6 +739,4 @@ def regridding_schemes(settings: dict):
                 f"/recipe/preprocessor.html#generic-regridding-schemes for "
                 f"details."
             )
-            raise RecipeError(
-                msg,
-            ) from exc
+            raise RecipeError(msg) from exc

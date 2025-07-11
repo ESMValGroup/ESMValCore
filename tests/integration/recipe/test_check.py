@@ -326,10 +326,46 @@ def test_data_availability_derived_var_missing_years(
     rsut_file.touch()
 
     dataset = Dataset(**facets)
-    dataset.files = [rsdt_file]
+    dataset.files = []
     dataset.session = session
 
     msg = r"No input data available for years 2000 in files:"
+    with pytest.raises(InputFilesNotFound, match=msg):
+        check.data_availability(dataset)
+
+    assert not caplog.records
+
+
+def test_data_availability_derived_var_different_years(
+    caplog,
+    tmp_path,
+    session,
+):
+    """Test check for derived data when years are different."""
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "Amon",
+        "short_name": "asr",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "*",
+        "derive": True,
+    }
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    rsdt_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsdt_1979-2000.nc")
+    rsdt_file.touch()
+    rsut_file = LocalFile(input_dir / "OBS6_SAT_sat_1_Amon_rsut_1980-2010.nc")
+    rsut_file.touch()
+
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset.session = session
+
+    msg = r"Different available dates in input variables necessary for"
     with pytest.raises(InputFilesNotFound, match=msg):
         check.data_availability(dataset)
 
@@ -408,27 +444,6 @@ def test_valid_time_selection_rejections(timerange, message):
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)
     assert str(rec_err.value) == message
-
-
-def test_differing_timeranges(caplog):
-    timeranges = set()
-    timeranges.add("1950/1951")
-    timeranges.add("1950/1952")
-    required_variables = [
-        {"short_name": "rsdscs", "timerange": "1950/1951"},
-        {"short_name": "rsuscs", "timerange": "1950/1952"},
-    ]
-    with pytest.raises(ValueError) as exc:
-        check.differing_timeranges(timeranges, required_variables)
-    expected_log = (
-        f"Differing timeranges with values {timeranges} "
-        "found for required variables "
-        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
-        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
-        "Set `timerange` to a common value."
-    )
-
-    assert expected_log in str(exc.value)
 
 
 def test_data_availability_nonexistent(tmp_path):

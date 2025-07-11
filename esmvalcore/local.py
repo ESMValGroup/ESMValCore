@@ -239,15 +239,16 @@ def _replace_years_with_timerange(variable):
     variable.pop("end_year", None)
 
 
-def _parse_period(timerange):
+def _parse_period(timerange: FacetValue) -> tuple[str, str]:
     """Parse `timerange` values given as duration periods.
 
     Sum the duration periods to the `timerange` value given as a
     reference point in order to compute the start and end dates needed
     for file selection.
     """
-    start_date = None
-    end_date = None
+    timerange = str(timerange)
+    start_date: str | None = None
+    end_date: str | None = None
     time_format = None
     datetime_format = (
         isodate.DATE_BAS_COMPLETE + "T" + isodate.TIME_BAS_COMPLETE
@@ -284,8 +285,9 @@ def _parse_period(timerange):
         )
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
-    if start_date is None and end_date is None:
+    if start_date is None:
         start_date = timerange.split("/")[0]
+    if end_date is None:
         end_date = timerange.split("/")[1]
 
     return start_date, end_date
