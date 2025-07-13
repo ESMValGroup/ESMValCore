@@ -67,7 +67,7 @@ the main dataset.
 """
 
 
-def _augment(base: dict, update: dict):
+def _augment(base: dict, update: dict) -> None:
     """Update dict `base` with values from dict `update`."""
     for key in update:
         if key not in base:
@@ -108,7 +108,7 @@ class Dataset:
         Facets describing the dataset.
     """
 
-    _SUMMARY_FACETS = (
+    _SUMMARY_FACETS: tuple[str, ...] = (
         "short_name",
         "mip",
         "project",
@@ -124,7 +124,7 @@ class Dataset:
     )
     """Facets used to create a summary of a Dataset instance."""
 
-    def __init__(self, **facets: FacetValue):
+    def __init__(self, **facets: FacetValue) -> None:
         self.facets: Facets = {}
         self.supplementaries: list[Dataset] = []
 
@@ -478,7 +478,7 @@ class Dataset:
 
         return new
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare with another dataset."""
         return (
             isinstance(other, self.__class__)
@@ -575,15 +575,20 @@ class Dataset:
 
         return txt
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> FacetValue:
         """Get a facet value."""
         return self.facets[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: FacetValue) -> None:
         """Set a facet value."""
         self.set_facet(key, value, persist=False)
 
-    def set_facet(self, key: str, value: FacetValue, persist: bool = True):
+    def set_facet(
+        self,
+        key: str,
+        value: FacetValue,
+        persist: bool = True,
+    ) -> None:
         """Set facet.
 
         Parameters
@@ -665,9 +670,16 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
+    def _pattern_filter(
+        patterns: Iterable[FacetValue],
+        name: FacetValue,
+    ) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
-        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
+        return [
+            str(pat)
+            for pat in patterns
+            if fnmatch.fnmatchcase(str(name), str(pat))
+        ]
 
     def _get_extra_facets(self) -> dict[str, Any]:
         """Get extra facets of dataset."""
@@ -718,7 +730,7 @@ class Dataset:
 
         return extra_facets
 
-    def _augment_facets(self):
+    def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
         if "institute" not in self.facets:
@@ -797,7 +809,7 @@ class Dataset:
         return self._files  # type: ignore
 
     @files.setter
-    def files(self, value):
+    def files(self, value: Sequence[File]) -> None:
         self._files = value
 
     def load(self) -> Cube:
@@ -939,15 +951,15 @@ class Dataset:
                 ]
         return datasets
 
-    def _expand_range(self, input_tag):
+    def _expand_range(self, input_tag: str) -> list[FacetValue]:
         """Expand ranges such as ensemble members or start dates.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
-        expanded = []
+        expanded: list[FacetValue] = []
         regex = re.compile(r"\(\d+:\d+\)")
 
-        def expand_range(input_range):
+        def expand_range(input_range) -> None:
             match = regex.search(input_range)
             if match:
                 start, end = match.group(0)[1:-1].split(":")
@@ -965,16 +977,14 @@ class Dataset:
                         f"In {self}: {input_tag} expansion "
                         f"cannot be combined with {input_tag} lists"
                     )
-                    raise RecipeError(
-                        msg,
-                    )
+                    raise RecipeError(msg)
             expanded.append(tag)
         else:
             expand_range(tag)
 
         return expanded
 
-    def _update_timerange(self):
+    def _update_timerange(self) -> None:
         """Update wildcards in timerange with found datetime values.
 
         If the timerange is given as a year, it ensures it's formatted

@@ -164,9 +164,7 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
                 "'short_name' is required for supplementary_variables "
                 f"entries, but missing in {facets}"
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
 
 
 def _merge_supplementary_dicts(
