@@ -50,6 +50,9 @@ from esmvalcore.preprocessor.regrid_schemes import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from iris.coords import Coord
+    from numpy.typing import ArrayLike
+
     from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -117,7 +120,7 @@ HORIZONTAL_SCHEMES_UNSTRUCTURED = {
 }
 
 # Supported vertical interpolation schemes.
-VERTICAL_SCHEMES = (
+VERTICAL_SCHEMES: tuple[str, ...] = (
     "linear",
     "nearest",
     "linear_extrapolate",
@@ -125,12 +128,12 @@ VERTICAL_SCHEMES = (
 )
 
 
-def parse_cell_spec(spec):
+def parse_cell_spec(spec: str) -> tuple[float, float]:
     """Parse an MxN cell specification string.
 
     Parameters
     ----------
-    spec: str
+    spec:
         ``MxN`` degree cell-specification for the global grid.
 
     Returns
@@ -171,16 +174,20 @@ def parse_cell_spec(spec):
     return dlon, dlat
 
 
-def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
+def _generate_cube_from_dimcoords(
+    latdata: ArrayLike,
+    londata: ArrayLike,
+    circular: bool = False,
+) -> Cube:
     """Generate cube from lat/lon points.
 
     Parameters
     ----------
-    latdata : np.ndarray
+    latdata:
         List of latitudes.
-    londata : np.ndarray
+    londata:
         List of longitudes.
-    circular : bool
+    circular
         Wrap longitudes around the full great circle. Bounds will not be
         generated for circular coordinates.
 
@@ -217,7 +224,11 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
 
 
 @functools.lru_cache
-def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
+def _global_stock_cube(
+    spec: str,
+    lat_offset: bool = True,
+    lon_offset: bool = True,
+) -> Cube:
     """Create a stock cube.
 
     Create a global cube with M degree-east by N degree-north regular grid
@@ -229,13 +240,13 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
 
     Parameters
     ----------
-    spec : str
+    spec
         Specifies the 'MxN' degree cell-specification for the global grid.
-    lat_offset : bool
+    lat_offset
         Offset the grid centers of the latitude coordinate w.r.t. the
         pole by half a grid step. This argument is ignored if `target_grid`
         is a cube or file.
-    lon_offset : bool
+    lon_offset
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step.
         This argument is ignored if `target_grid` is a cube or file.
@@ -282,7 +293,7 @@ def _spec_to_latlonvals(
     start_longitude: float,
     end_longitude: float,
     step_longitude: float,
-) -> tuple:
+) -> tuple[np.ndarray, np.ndarray]:
     """Define lat/lon values from spec.
 
     Create a regional cube starting defined by the target specification.
@@ -292,54 +303,48 @@ def _spec_to_latlonvals(
 
     Parameters
     ----------
-    start_latitude : float
+    start_latitude:
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
-    end_latitude : float
+    end_latitude:
         Latitude value of the last grid cell center (end point). The grid
         includes this value only if it falls on a grid point. Otherwise, it
         cuts off at the previous value.
-    step_latitude : float
+    step_latitude:
         Latitude distance between the centers of two neighbouring cells.
-    start_longitude : float
+    start_longitude:
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
-    end_longitude : float
+    end_longitude:
         Longitude value of the last grid cell center (end point). The grid
         includes this value only if it falls on a grid point. Otherwise, it
         cuts off at the previous value.
-    step_longitude : float
+    step_longitude:
         Longitude distance between the centers of two neighbouring cells.
 
     Returns
     -------
-    xvals : np.array
+    xvals: np.array
         List of longitudes
-    yvals : np.array
+    yvals: np.array
         List of latitudes
     """
     if step_latitude == 0:
         msg = f"Latitude step cannot be 0, got step_latitude={step_latitude}."
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     if step_longitude == 0:
         msg = (
             f"Longitude step cannot be 0, got step_longitude={step_longitude}."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
         msg = (
             f"Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, "
             f"got start_latitude={start_latitude}:end_latitude={end_latitude}."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def get_points(start, stop, step):
         """Calculate grid points."""
@@ -354,7 +359,7 @@ def _spec_to_latlonvals(
     return latitudes, longitudes
 
 
-def _regional_stock_cube(spec: dict):
+def _regional_stock_cube(spec: dict[str, Any]) -> Cube:
     """Create a regional stock cube.
 
     Returns
@@ -369,7 +374,7 @@ def _regional_stock_cube(spec: dict):
         circular=True,
     )
 
-    def add_bounds_from_step(coord, step):
+    def add_bounds_from_step(coord: Coord, step: float) -> np.ndarray:
         """Calculate bounds from the given step."""
         bound = step / 2
         points = coord.points
@@ -381,7 +386,7 @@ def _regional_stock_cube(spec: dict):
     return cube
 
 
-def extract_location(cube, location, scheme):
+def extract_location(cube: Cube, location: str, scheme: str) -> Cube:
     """Extract a point using a location name, with interpolation.
 
     Extracts a single location point from a cube, according
@@ -399,20 +404,19 @@ def extract_location(cube, location, scheme):
 
     Parameters
     ----------
-    cube : cube
+    cube:
         The source cube to extract a point from.
-
-    location : str
+    location:
         The reference location. Examples: 'mount everest',
         'romania','new york, usa'
-
-    scheme : str
+    scheme:
         The interpolation scheme. 'linear' or 'nearest'. No default.
 
     Returns
     -------
-    Returns a cube with the extracted point, and with adjusted
-    latitude and longitude coordinates.
+    iris.cube.Cube
+        Returns a cube with the extracted point, and with adjusted latitude and
+        longitude coordinates.
 
     Raises
     ------
@@ -429,17 +433,13 @@ def extract_location(cube, location, scheme):
             " Examples: 'mount everest', 'romania',"
             " 'new york, usa'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if scheme is None:
         msg = (
             "Interpolation scheme needs to be specified."
             " Use either 'linear' or 'nearest'."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     try:
         # Try to use the default SSL context, see
         # https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
@@ -473,7 +473,12 @@ def extract_location(cube, location, scheme):
     )
 
 
-def extract_point(cube, latitude, longitude, scheme):
+def extract_point(
+    cube: Cube,
+    latitude: ArrayLike,
+    longitude: ArrayLike,
+    scheme: str,
+) -> Cube:
     """Extract a point, with interpolation.
 
     Extracts a single latitude/longitude point from a cube, according
@@ -493,13 +498,13 @@ def extract_point(cube, latitude, longitude, scheme):
 
     Parameters
     ----------
-    cube : cube
+    cube:
         The source cube to extract a point from.
-
-    latitude, longitude : float, or array of float
-        The latitude and longitude of the point.
-
-    scheme : str
+    latitude:
+        The latitude of the point.
+    longitude:
+        The longitude of the point.
+    scheme:
         The interpolation scheme. 'linear' or 'nearest'. No default.
 
     Returns
@@ -544,15 +549,15 @@ def extract_point(cube, latitude, longitude, scheme):
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
     """
     msg = f"Unknown interpolation scheme, got {scheme!r}."
-    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
-    if not scheme:
+    loaded_scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not loaded_scheme:
         raise ValueError(msg)
 
     point = [("latitude", latitude), ("longitude", longitude)]
-    return cube.interpolate(point, scheme=scheme)
+    return cube.interpolate(point, scheme=loaded_scheme)
 
 
-def is_dataset(dataset):
+def is_dataset(dataset: Any) -> bool:
     """Test if something is an `esmvalcore.dataset.Dataset`."""
     # Use this function to avoid circular imports
     return hasattr(dataset, "facets")
@@ -624,9 +629,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
                 f"Regridding scheme '{scheme}' not available for {grid_type} "
                 f"data, expected one of: {', '.join(schemes)}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         loaded_scheme = schemes[scheme]
 
     logger.debug("Loaded regridding scheme %s", loaded_scheme)
@@ -642,9 +645,7 @@ def _load_generic_scheme(scheme: dict):
         object_ref = scheme.pop("reference")
     except KeyError as key_err:
         msg = "No reference specified for generic regridding."
-        raise ValueError(
-            msg,
-        ) from key_err
+        raise ValueError(msg) from key_err
     module_name, separator, scheme_name = object_ref.partition(":")
     try:
         obj: Any = importlib.import_module(module_name)
@@ -654,9 +655,7 @@ def _load_generic_scheme(scheme: dict):
             f"'{module_name}'. Please double check spelling and that the "
             f"required module is installed."
         )
-        raise ValueError(
-            msg,
-        ) from import_err
+        raise ValueError(msg) from import_err
     if separator:
         for attr in scheme_name.split("."):
             obj = getattr(obj, attr)
@@ -720,7 +719,7 @@ def _get_regridder(
     return regridder
 
 
-def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
+def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple[ArrayLike, ...]:
     """Get dict key from coordinates."""
     src_lat = src_cube.coord("latitude")
     src_lon = src_cube.coord("longitude")
@@ -733,7 +732,7 @@ def _get_name_and_shape_key(
     src_cube: Cube,
     tgt_cube: Cube,
     scheme: str | dict,
-) -> tuple:
+) -> tuple[str, tuple[int, ...]]:
     """Get dict key from scheme name and coordinate shapes."""
     name = str(scheme)
     shapes = [c.shape for c in _get_coord_key(src_cube, tgt_cube)]
@@ -984,7 +983,12 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     return True
 
 
-def _create_cube(src_cube, data, src_levels, levels):
+def _create_cube(
+    src_cube: Cube,
+    data: ArrayLike,
+    src_levels: ArrayLike,
+    levels: ArrayLike,
+) -> Cube:
     """Generate a new cube with the interpolated data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
@@ -995,14 +999,14 @@ def _create_cube(src_cube, data, src_levels, levels):
 
     Parameters
     ----------
-    src_cube : cube
+    src_cube
         The source cube that was vertically interpolated.
-    data : array
+    data
         The payload resulting from interpolating the source cube
         over the specified levels.
-    src_levels : array
+    src_levels
         Vertical levels of the source data
-    levels : array
+    levels
         The vertical levels of interpolation.
 
     Returns
@@ -1074,7 +1078,7 @@ def _create_cube(src_cube, data, src_levels, levels):
 
     # Collapse the z-dimension for the scalar case.
     if levels.size == 1:
-        slicer = [slice(None)] * result.ndim
+        slicer: list[slice | int] = [slice(None)] * result.ndim
         slicer[z_dim] = 0
         result = result[tuple(slicer)]
 
@@ -1082,12 +1086,12 @@ def _create_cube(src_cube, data, src_levels, levels):
 
 
 def _vertical_interpolate(
-    cube,
-    src_levels,
-    levels,
-    interpolation,
-    extrapolation,
-):
+    cube: Cube,
+    src_levels: ArrayLike,
+    levels: ArrayLike,
+    interpolation: str,
+    extrapolation: str,
+) -> Cube:
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
     (z_axis,) = cube.coord_dims(cube.coord(axis="z", dim_coords=True))
@@ -1177,12 +1181,12 @@ def _preserve_fx_vars(cube: iris.cube.Cube, result: iris.cube.Cube) -> None:
                 add_ancillary_variable(result, ancillary_cube)
 
 
-def parse_vertical_scheme(scheme):
+def parse_vertical_scheme(scheme: str) -> tuple[str, str]:
     """Parse the scheme provided for level extraction.
 
     Parameters
     ----------
-    scheme : str
+    scheme:
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
@@ -1191,7 +1195,7 @@ def parse_vertical_scheme(scheme):
 
     Returns
     -------
-    (str, str)
+    tuple[str, str]
         A tuple containing the interpolation and extrapolation scheme.
     """
     # Check if valid scheme is given
@@ -1200,9 +1204,7 @@ def parse_vertical_scheme(scheme):
             f"Unknown vertical interpolation scheme, got '{scheme}', possible "
             f"schemes are {VERTICAL_SCHEMES}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # This allows us to put level 0. to load the ocean surface.
     extrap_scheme = "nan"
@@ -1226,7 +1228,7 @@ def extract_levels(
     coordinate: str | None = None,
     rtol: float = 1e-7,
     atol: float | None = None,
-):
+) -> Cube:
     """Perform vertical interpolation.
 
     Parameters
@@ -1344,19 +1346,19 @@ def extract_levels(
     return result
 
 
-def get_cmor_levels(cmor_table, coordinate):
+def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
     """Get level definition from a CMOR coordinate.
 
     Parameters
     ----------
-    cmor_table: str
+    cmor_table:
         CMOR table name
-    coordinate: str
+    coordinate:
         CMOR coordinate name
 
     Returns
     -------
-    list[int]
+    list[float]
 
     Raises
     ------
@@ -1366,15 +1368,11 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         msg = f"Level definition cmor_table '{cmor_table}' not available"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
         msg = f"Coordinate {coordinate} not available for {cmor_table}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
 
@@ -1387,17 +1385,15 @@ def get_cmor_levels(cmor_table, coordinate):
         f"Coordinate {coordinate} in {cmor_table} does not have requested "
         f"values"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
-def get_reference_levels(dataset):
+def get_reference_levels(dataset: Dataset) -> list[float]:
     """Get level definition from a reference dataset.
 
     Parameters
     ----------
-    dataset: esmvalcore.dataset.Dataset
+    dataset:
         Dataset containing the reference files.
 
     Returns
@@ -1423,7 +1419,11 @@ def get_reference_levels(dataset):
 
 
 @preserve_float_dtype
-def extract_coordinate_points(cube, definition, scheme):
+def extract_coordinate_points(
+    cube: Cube,
+    definition: dict[str, ArrayLike],
+    scheme: str,
+) -> Cube:
     """Extract points from any coordinate with interpolation.
 
     Multiple points can also be extracted, by supplying an array of
@@ -1434,11 +1434,11 @@ def extract_coordinate_points(cube, definition, scheme):
 
     Parameters
     ----------
-    cube : cube
+    cube:
         The source cube to extract a point from.
-    definition : dict(str, float or array of float)
+    definition:
         The coordinate - values pairs to extract
-    scheme : str
+    scheme:
         The interpolation scheme. 'linear' or 'nearest'. No default.
 
     Returns
@@ -1455,7 +1455,7 @@ def extract_coordinate_points(cube, definition, scheme):
         If the interpolation scheme is not provided or is not recognised.
     """
     msg = f"Unknown interpolation scheme, got {scheme!r}."
-    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
-    if not scheme:
+    loaded_scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not loaded_scheme:
         raise ValueError(msg)
-    return cube.interpolate(definition.items(), scheme=scheme)
+    return cube.interpolate(definition.items(), scheme=loaded_scheme)
