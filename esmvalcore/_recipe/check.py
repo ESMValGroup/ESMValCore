@@ -149,9 +149,7 @@ def variable(
             f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
             f"'{variable_group}' in diagnostic '{diagnostic}'."
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
 
 
 def _log_data_availability_errors(dataset: Dataset) -> None:
@@ -228,9 +226,7 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
             missing_txt,
             "\n".join(str(f) for f in input_files),
         )
-        raise InputFilesNotFound(
-            msg,
-        )
+        raise InputFilesNotFound(msg)
 
 
 def preprocessor_supplementaries(

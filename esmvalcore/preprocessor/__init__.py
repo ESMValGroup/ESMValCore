@@ -223,14 +223,14 @@ By default, preprocessor functions are applied in this order.
 """
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[
+INITIAL_STEPS: tuple[str, ...] = DEFAULT_ORDER[
     : DEFAULT_ORDER.index("add_supplementary_variables") + 1
 ]
-FINAL_STEPS = DEFAULT_ORDER[
+FINAL_STEPS: tuple[str, ...] = DEFAULT_ORDER[
     DEFAULT_ORDER.index("remove_supplementary_variables") :
 ]
 
-MULTI_MODEL_FUNCTIONS = {
+MULTI_MODEL_FUNCTIONS: set[str] = {
     "bias",
     "distance_metric",
     "ensemble_statistics",
