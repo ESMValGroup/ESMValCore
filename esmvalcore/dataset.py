@@ -136,6 +136,16 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
 
+        if not self.is_derived() and self.facets.get(
+            "force_derivation",
+            False,
+        ):
+            msg = (
+                "Facet `force_derivation=True` can only be used for derived "
+                "variables (i.e., with facet `derive=True`)"
+            )
+            raise ValueError(msg)
+
     @staticmethod
     def from_recipe(
         recipe: Path | str | dict,
