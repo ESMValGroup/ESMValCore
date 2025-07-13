@@ -119,9 +119,7 @@ def bias(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         (reference, ref_product) = _get_ref(products, "reference_for_bias")
     else:
         ref_product = None
@@ -178,9 +176,7 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
             f"Expected exactly 1 dataset with '{ref_tag}: true', found "
             f"{len(ref_products):d}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     ref_product = ref_products[0]
 
     # Extract reference cube
@@ -210,9 +206,7 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
             f"Expected one of ['absolute', 'relative'] for bias_type, got "
             f"'{bias_type}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     cube.metadata = cube_metadata
     cube.units = new_units
@@ -345,9 +339,7 @@ def distance_metric(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         reference, reference_product = _get_ref(
             products,
             "reference_for_metric",
@@ -403,18 +395,14 @@ def _calculate_metric(
             f"distance metric calculation, got {cube.shape} and "
             f"{reference.shape}, respectively"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     try:
         cube + reference  # dummy operation to check if cubes are compatible
     except Exception as exc:
         msg = (
             "Cannot calculate distance metric between cube and reference cube "
         )
-        raise ValueError(
-            msg,
-        ) from exc
+        raise ValueError(msg) from exc
 
     # Perform the actual calculation of the distance metric
     # Note: we work on arrays here instead of cube to stay as flexible as
@@ -436,9 +424,7 @@ def _calculate_metric(
         msg = (
             f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 
     # Get result cube with correct dimensional metadata by using dummy
@@ -589,7 +575,11 @@ def _calculate_emd(
     return (emd, metadata)
 
 
-def _get_emd(arr, ref_arr, bin_centers):
+def _get_emd(
+    arr: np.ndarray,
+    ref_arr: np.ndarray,
+    bin_centers: np.ndarray,
+) -> np.ndarray:
     """Calculate Earth mover's distance (non-lazy)."""
     if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
         return np.ma.masked  # this is safe because PMFs will be masked arrays
