@@ -202,7 +202,7 @@ def test_get_required_with_fx():
 
     reference = [
         {"short_name": "thetao"},
-        {"short_name": "volcello", "mip": "fx"},
+        {"short_name": "volcello", "mip": "fx", "ensemble": "r0i0p0"},
     ]
 
     assert variables == reference
