@@ -99,6 +99,8 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
+    from esmvalcore.dataset import Dataset
+
 logger = logging.getLogger(__name__)
 
 __all__ = [

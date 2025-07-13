@@ -216,7 +216,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number)):
+    if isinstance(realms, (str, Number, bool)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)

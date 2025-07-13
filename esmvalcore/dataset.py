@@ -410,6 +410,16 @@ class Dataset:
                         )
                         break
 
+    def _copy(self, **facets: FacetValue) -> Dataset:
+        """Create a copy of the parent dataset without supplementaries."""
+        new = self.__class__()
+        new._session = self._session  # noqa: SLF001
+        for key, value in self.facets.items():
+            new.set_facet(key, deepcopy(value), key in self._persist)
+        for key, value in facets.items():
+            new.set_facet(key, deepcopy(value))
+        return new
+
     def copy(self, **facets: FacetValue) -> Dataset:
         """Create a copy.
 
@@ -425,12 +435,7 @@ class Dataset:
         Dataset
             A copy of the dataset.
         """
-        new = self.__class__()
-        new._session = self._session  # noqa: SLF001
-        for key, value in self.facets.items():
-            new.set_facet(key, deepcopy(value), key in self._persist)
-        for key, value in facets.items():
-            new.set_facet(key, deepcopy(value))
+        new = self._copy(**facets)
         for supplementary in self.supplementaries:
             # The short_name and mip of the supplementary variable are probably
             # different from the main variable, so don't copy those facets.
@@ -440,6 +445,7 @@ class Dataset:
             }
             new_supplementary = supplementary.copy(**supplementary_facets)
             new.supplementaries.append(new_supplementary)
+
         return new
 
     def __eq__(self, other) -> bool:
@@ -477,8 +483,8 @@ class Dataset:
         if self.supplementaries:
             txt.append("supplementaries:")
             txt.extend(
-                textwrap.indent(facets2str(a.facets), "  ")
-                for a in self.supplementaries
+                textwrap.indent(facets2str(s.facets), "  ")
+                for s in self.supplementaries
             )
         if self._session:
             txt.append(f"session: '{self.session.session_name}'")
@@ -532,10 +538,11 @@ class Dataset:
             txt += (
                 ", supplementaries: "
                 + "; ".join(
-                    supplementary_summary(a) for a in self.supplementaries
+                    supplementary_summary(s) for s in self.supplementaries
                 )
                 + ""
             )
+
         return txt
 
     def __getitem__(self, key):
@@ -544,7 +551,7 @@ class Dataset:
 
     def __setitem__(self, key, value):
         """Set a facet value."""
-        self.facets[key] = value
+        self.set_facet(key, value, persist=False)
 
     def set_facet(self, key: str, value: FacetValue, persist: bool = True):
         """Set facet.
@@ -609,15 +616,19 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
+        if self.is_derived():
+            facets.setdefault("derive", False)
+        if self.facets.get("force_derivation", False):
+            facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)
 
     def augment_facets(self) -> None:
-        """Add extra facets.
+        """Add additional facets.
 
-        This function will update the dataset with additional facets
-        from various sources.
+        This function will update the dataset with additional facets from
+        various sources.
         """
         self._augment_facets()
         for supplementary in self.supplementaries:
@@ -749,7 +760,7 @@ class Dataset:
                         self.files[idx] = file
 
     @property
-    def files(self) -> Sequence[File]:
+    def files(self) -> list[File]:
         """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
@@ -949,9 +960,7 @@ class Dataset:
         timerange = self.facets["timerange"]
         if not isinstance(timerange, str):
             msg = f"timerange should be a string, got '{timerange!r}'"
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
         check.valid_time_selection(timerange)
 
         if "*" in timerange:

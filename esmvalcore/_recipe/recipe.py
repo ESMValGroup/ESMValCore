@@ -1005,9 +1005,7 @@ class Recipe:
                                 "Could not find any ancestors matching "
                                 f"'{id_glob}'."
                             )
-                            raise RecipeError(
-                                msg,
-                            )
+                            raise RecipeError(msg)
                         logger.debug(
                             "Pattern %s matches %s",
                             id_glob,
