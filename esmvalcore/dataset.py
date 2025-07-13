@@ -136,7 +136,7 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
 
-        if not self.is_derived() and self.facets.get(
+        if not self._is_derived() and self.facets.get(
             "force_derivation",
             False,
         ):
@@ -174,14 +174,14 @@ class Dataset:
 
         return datasets_from_recipe(recipe, session)
 
-    def is_derived(self) -> bool:
+    def _is_derived(self) -> bool:
         """Return ``True`` for derived variables, ``False`` otherwise."""
         return bool(self.facets.get("derive", False))
 
-    def derivation_necessary(self) -> bool:
+    def _derivation_necessary(self) -> bool:
         """Return ``True`` if derivation is necessary, ``False`` otherwise."""
         # If variable cannot be derived, derivation is not necessary
-        if not self.is_derived():
+        if not self._is_derived():
             return False
 
         # If forced derivation is requested, derivation is necessary
@@ -651,7 +651,7 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
-        if self.is_derived():
+        if self._is_derived():
             facets.setdefault("derive", False)
         if self.facets.get("force_derivation", False):
             facets.setdefault("force_derivation", False)

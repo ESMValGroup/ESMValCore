@@ -2147,7 +2147,7 @@ def test_derivation_necessary_no_derivation():
         type="sat",
         timerange="1980/2000",
     )
-    assert not dataset.derivation_necessary()
+    assert not dataset._derivation_necessary()
 
 
 def test_derivation_necessary_no_force_derivation_no_files():
@@ -2161,7 +2161,7 @@ def test_derivation_necessary_no_force_derivation_no_files():
         timerange="1980/2000",
         derive=True,
     )
-    assert dataset.derivation_necessary()
+    assert dataset._derivation_necessary()
 
 
 def test_derivation_necessary_no_force_derivation(tmp_path, session):
@@ -2182,7 +2182,7 @@ def test_derivation_necessary_no_force_derivation(tmp_path, session):
         input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
     )
     asr_file.touch()
-    assert not dataset.derivation_necessary()
+    assert not dataset._derivation_necessary()
 
 
 def test_derivation_necessary_force_derivation(tmp_path, session):
@@ -2204,7 +2204,7 @@ def test_derivation_necessary_force_derivation(tmp_path, session):
         input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
     )
     asr_file.touch()
-    assert dataset.derivation_necessary()
+    assert dataset._derivation_necessary()
 
 
 def test_force_derivation_no_derived():
