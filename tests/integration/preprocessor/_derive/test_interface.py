@@ -22,7 +22,10 @@ def mock_cubes():
 @pytest.fixture
 def patched_derive(mocker):
     """Fixture for mocked derivation scripts."""
-    mocker.patch("iris.cube.CubeList", side_effect=lambda x: x)
+    mocker.patch(
+        "esmvalcore.preprocessor._derive.CubeList",
+        side_effect=lambda x: x,
+    )
     mocker.patch.object(_derive, "ALL_DERIVED_VARIABLES", autospec=True)
     mocker.patch.object(_derive, "logger", autospec=True)
 
