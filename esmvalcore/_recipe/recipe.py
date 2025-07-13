@@ -412,10 +412,14 @@ def _get_common_attributes(
         if "timerange" not in product.attributes:
             continue
         timerange = product.attributes["timerange"]
+        start: int | str
+        end: int | str
         start, end = _parse_period(timerange)
         if "timerange" not in attributes:
             attributes["timerange"] = _dates_to_timerange(start, end)
         else:
+            start_date: int | str
+            end_date: int | str
             start_date, end_date = _parse_period(attributes["timerange"])
             start_date, start = _truncate_dates(start_date, start)
             end_date, end = _truncate_dates(end_date, end)

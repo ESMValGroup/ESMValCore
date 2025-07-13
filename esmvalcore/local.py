@@ -20,17 +20,25 @@ from .config._config import get_project_config
 from .exceptions import RecipeError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from .esgf import ESGFFile
     from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
 
-def _get_from_pattern(pattern, date_range_pattern, stem, group):
+def _get_from_pattern(
+    pattern: str,
+    date_range_pattern: str,
+    stem: str,
+    group: str,
+) -> tuple[str | None, str | None]:
     """Get time, date or datetime from date range patterns in file names."""
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
-    start_point = end_point = None
+    start_point: str | None = None
+    end_point: str | None = None
     context = r"(?:^|[-_]|$)"
 
     # First check for a block of two potential dates
@@ -170,9 +178,7 @@ def _get_start_end_date(
             f"File {file} datetimes do not match a recognized pattern and "
             f"time coordinate can not be read from the file"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Remove potential '-' characters from datetimes
     start_date = start_date.replace("-", "")
@@ -192,7 +198,7 @@ def _get_start_end_year(
     return (int(start_date[:4]), int(end_date[:4]))
 
 
-def _dates_to_timerange(start_date, end_date):
+def _dates_to_timerange(start_date: int | str, end_date: int | str) -> str:
     """Convert ``start_date`` and ``end_date`` to ``timerange``.
 
     Note
@@ -203,9 +209,9 @@ def _dates_to_timerange(start_date, end_date):
 
     Parameters
     ----------
-    start_date: int or str
+    start_date:
         Start date.
-    end_date: int or str
+    end_date:
         End date.
 
     Returns
@@ -225,7 +231,7 @@ def _dates_to_timerange(start_date, end_date):
     return f"{start_date}/{end_date}"
 
 
-def _replace_years_with_timerange(variable):
+def _replace_years_with_timerange(variable: dict[str, Any]) -> None:
     """Set `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get("start_year")
     end_year = variable.get("end_year")
@@ -293,7 +299,7 @@ def _parse_period(timerange: FacetValue) -> tuple[str, str]:
     return start_date, end_date
 
 
-def _truncate_dates(date, file_date):
+def _truncate_dates(date: str, file_date: str) -> tuple[int, int]:
     """Truncate dates of different lengths and convert to integers.
 
     This allows to compare the dates chronologically. For example, this allows
@@ -317,7 +323,10 @@ def _truncate_dates(date, file_date):
     return int(date), int(file_date)
 
 
-def _select_files(filenames, timerange):
+def _select_files(
+    filenames: list[LocalFile],
+    timerange: list,
+) -> list[LocalFile]:
     """Select files containing data between a given timerange.
 
     If the timerange is given as a period, the file selection occurs
@@ -333,6 +342,10 @@ def _select_files(filenames, timerange):
     selection = []
 
     for filename in filenames:
+        start: int | str
+        end: int | str
+        start_date: int | str
+        end_date: int | str
         start_date, end_date = _parse_period(timerange)
         start, end = _get_start_end_date(filename)
 
@@ -349,6 +362,7 @@ def _replace_tags(
     variable: Facets,
 ) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
+    pathset: Iterable[str]
     if isinstance(paths, str):
         pathset = {paths.strip("/")}
     else:
@@ -386,10 +400,14 @@ def _replace_tags(
     return [Path(p) for p in pathset]
 
 
-def _replace_tag(paths, tag, replacewith):
+def _replace_tag(
+    paths: Iterable[str],
+    tag: str,
+    replacewith: FacetValue,
+) -> list[str]:
     """Replace tag by replacewith in paths."""
     _, lower, upper = _get_caps_options(tag)
-    result = []
+    result: list[str] = []
     if isinstance(replacewith, (list, tuple)):
         for item in replacewith:
             result.extend(_replace_tag(paths, tag, item))
@@ -399,7 +417,7 @@ def _replace_tag(paths, tag, replacewith):
     return list(set(result))
 
 
-def _get_caps_options(tag):
+def _get_caps_options(tag: str) -> tuple[str, bool, bool]:
     lower = False
     upper = False
     if tag.endswith(".lower"):
@@ -411,7 +429,7 @@ def _get_caps_options(tag):
     return tag, lower, upper
 
 
-def _apply_caps(original, lower, upper):
+def _apply_caps(original: str, lower: bool, upper: bool) -> str:
     if lower:
         return original.lower()
     if upper:
@@ -433,9 +451,7 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
         return value
 
     msg = f"drs {structure} for {project} project not specified in config-developer file"
-    raise KeyError(
-        msg,
-    )
+    raise KeyError(msg)
 
 
 @dataclass(order=True)
@@ -470,7 +486,7 @@ class DataSource:
         globs = self.get_glob_patterns(**facets)
         logger.debug("Looking for files matching %s", globs)
 
-        files = []
+        files: list[LocalFile] = []
         for glob_ in globs:
             for filename in glob(str(glob_)):
                 file = LocalFile(filename)
@@ -579,7 +595,7 @@ class DataSource:
         return pattern
 
 
-_ROOTPATH_WARNED = set()
+_ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
 
 
 def _get_data_sources(project: str) -> list[DataSource]:
@@ -615,9 +631,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
         f"No '{project}' or 'default' path specified under 'rootpath' in "
         "the configuration."
     )
-    raise KeyError(
-        msg,
-    )
+    raise KeyError(msg)
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
@@ -831,5 +845,5 @@ class LocalFile(type(Path())):  # type: ignore
         return self._facets
 
     @facets.setter
-    def facets(self, value: Facets):
+    def facets(self, value: Facets) -> None:
         self._facets = value
