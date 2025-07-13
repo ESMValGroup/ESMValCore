@@ -144,8 +144,6 @@ def derive(
                 f"Units '{cube.units}' after executing derivation script of "
                 f"'{short_name}' cannot be converted to target units '{units}'"
             )
-            raise ValueError(
-                msg,
-            ) from exc
+            raise ValueError(msg) from exc
 
     return cube
