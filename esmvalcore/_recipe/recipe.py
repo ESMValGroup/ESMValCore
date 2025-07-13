@@ -97,9 +97,9 @@ def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
                 )
             )
             raise RecipeError(msg)
-        dataset_name = str(facets[special_name])
+        special_name = str(facets[special_name])
 
-    return dataset_name
+    return special_name
 
 
 def _update_target_levels(
