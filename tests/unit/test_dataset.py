@@ -2135,3 +2135,149 @@ def test_get_extra_facets_native6():
         "grib_id": "130",
         "tres": "1M",
     }
+
+
+def test_derivation_necessary_no_derivation():
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="tas",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+    )
+    assert not dataset.derivation_necessary()
+
+
+def test_derivation_necessary_no_force_derivation_no_files():
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    assert dataset.derivation_necessary()
+
+
+def test_derivation_necessary_no_force_derivation(tmp_path, session):
+    dataset = Dataset(
+        project="OBS6",
+        dataset="SAT",
+        mip="Amon",
+        short_name="asr",
+        tier=2,
+        type="sat",
+        timerange="1980/2000",
+        derive=True,
+    )
+    dataset.session = session
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    assert not dataset.derivation_necessary()
+
+
+def test_derivation_necessary_force_derivation(tmp_path, session):
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        exp="historical",
+        grid="gn",
+        ensemble="r1i1p1f1",
+        derive=True,
+        force_derivation=True,
+    )
+    dataset.session = session
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    asr_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    )
+    asr_file.touch()
+    assert dataset.derivation_necessary()
+
+
+def test_force_derivation_no_derived():
+    msg = (
+        r"Facet `force_derivation=True` can only be used for derived "
+        r"variables"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        Dataset(
+            project="CMIP6",
+            dataset="CanESM5",
+            mip="Amon",
+            short_name="tas",
+            force_derivation=True,
+        )
+
+    with pytest.raises(ValueError, match=msg):
+        Dataset(
+            project="CMIP6",
+            dataset="CanESM5",
+            mip="Amon",
+            short_name="tas",
+            derive=False,
+            force_derivation=True,
+        )
+
+
+def test_add_supplementary_to_derived():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+
+    expected_supplementary = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="fx",
+        short_name="areacella",
+        derive=False,
+        force_derivation=False,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary
+
+
+def test_add_derived_supplementary_to_derived():
+    dataset = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(
+        short_name="asr",
+        derive=True,
+        force_derivation=True,
+    )
+
+    expected_supplementary = Dataset(
+        project="CMIP6",
+        dataset="CanESM5",
+        mip="Amon",
+        short_name="asr",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary
