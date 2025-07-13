@@ -33,8 +33,6 @@ from esmvalcore.preprocessor._supplementary_vars import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from esmvalcore.dataset import Dataset
-    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 

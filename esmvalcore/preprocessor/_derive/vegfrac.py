@@ -15,10 +15,13 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
+        sftlf = {"short_name": "sftlf", "mip": "fx"}
+        if project == "CMIP5":
+            sftlf["ensemble"] = "r0i0p0"
         return [
             {"short_name": "baresoilFrac"},
             {"short_name": "residualFrac"},
-            {"short_name": "sftlf", "mip": "fx"},
+            sftlf,
         ]
 
     @staticmethod

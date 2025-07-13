@@ -164,6 +164,26 @@ class Dataset:
 
         return datasets_from_recipe(recipe, session)
 
+    def is_derived(self) -> bool:
+        """Return ``True`` for derived variables, ``False`` otherwise."""
+        return bool(self.facets.get("derive", False))
+
+    def derivation_necessary(self) -> bool:
+        """Return ``True`` if derivation is necessary, ``False`` otherwise."""
+        # If variable cannot be derived, derivation is not necessary
+        if not self.is_derived():
+            return False
+
+        # If forced derivation is requested, derivation is necessary
+        if self.facets.get("force_derivation", False):
+            return True
+
+        # Otherwise, derivation is necessary of no files for the self dataset
+        # are found
+        ds_copy = self.copy()
+        ds_copy.supplementaries = []
+        return not ds_copy.files
+
     def _file_to_dataset(
         self,
         file: esgf.ESGFFile | local.LocalFile,
