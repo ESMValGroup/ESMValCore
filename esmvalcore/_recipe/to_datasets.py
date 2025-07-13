@@ -581,7 +581,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
             datasets.append(input_dataset)
 
     # Check timeranges of available input data.
-    timeranges = set()
+    timeranges: set[FacetValue] = set()
     for input_dataset in datasets:
         if "timerange" in input_dataset.facets:
             timeranges.add(input_dataset.facets["timerange"])
