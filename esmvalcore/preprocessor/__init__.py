@@ -9,7 +9,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any
 
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 
 from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
@@ -95,9 +95,11 @@ from ._volume import (
 from ._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from dask.delayed import Delayed
+
+    from esmvalcore.dataset import Dataset, File
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +204,7 @@ __all__ = [
     "save",
 ]
 
-TIME_PREPROCESSORS = [
+TIME_PREPROCESSORS: list[str] = [
     "clip_timerange",
     "extract_time",
     "extract_season",
@@ -217,7 +219,7 @@ TIME_PREPROCESSORS = [
     "regrid_time",
 ]
 
-DEFAULT_ORDER = tuple(__all__)
+DEFAULT_ORDER: tuple[str, ...] = tuple(__all__)
 """
 By default, preprocessor functions are applied in this order.
 """
@@ -240,13 +242,13 @@ MULTI_MODEL_FUNCTIONS: set[str] = {
 }
 
 
-def _get_itype(step):
+def _get_itype(step: str) -> str:
     """Get the input type of a preprocessor function."""
     function = globals()[step]
     return next(iter(inspect.signature(function).parameters))
 
 
-def check_preprocessor_settings(settings):
+def check_preprocessor_settings(settings: dict[str, Any]) -> None:
     """Check preprocessor settings."""
     for step in settings:
         if step not in DEFAULT_ORDER:
@@ -254,9 +256,7 @@ def check_preprocessor_settings(settings):
                 f"Unknown preprocessor function '{step}', choose from: "
                 f"{', '.join(DEFAULT_ORDER)}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         function = globals()[step]
 
@@ -292,9 +292,7 @@ def check_preprocessor_settings(settings):
                     f"encountered for preprocessor function {step}. \n"
                     f"Valid arguments are: [{', '.join(args)}]"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
 
         # Check for missing arguments
         defaults = [
@@ -309,9 +307,7 @@ def check_preprocessor_settings(settings):
                 f"Missing required argument(s) {missing_args} for "
                 f"preprocessor function {step}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # Final sanity check in case the above fails to catch a mistake
         try:
@@ -324,7 +320,7 @@ def check_preprocessor_settings(settings):
             raise
 
 
-def _check_multi_model_settings(products):
+def _check_multi_model_settings(products: Iterable[PreprocessorFile]) -> None:
     """Check that multi dataset settings are identical for all products."""
     multi_model_steps = (
         step
@@ -345,16 +341,17 @@ def _check_multi_model_settings(products):
                     f"{reference.filename} and {product.filename}, "
                     f"{reference.settings[step]} and {settings}"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
 
 
-def _get_multi_model_settings(products, step):
+def _get_multi_model_settings(
+    products: set[PreprocessorFile],
+    step: str,
+) -> tuple[dict[str, Any], set[PreprocessorFile]]:
     """Select settings for multi model step."""
     _check_multi_model_settings(products)
     settings = {}
-    exclude = set()
+    exclude: set[PreprocessorFile] = set()
     for product in products:
         if step in product.settings:
             settings = product.settings[step]
@@ -363,7 +360,12 @@ def _get_multi_model_settings(products, step):
     return settings, exclude
 
 
-def _run_preproc_function(function, items, kwargs, input_files=None):
+def _run_preproc_function(
+    function: Callable,
+    items: Any,
+    kwargs: Any,
+    input_files: list[File] | None = None,
+) -> Any:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
         [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()],
@@ -424,13 +426,13 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
 
 
 def preprocess(
-    items,
-    step,
-    input_files=None,
-    output_file=None,
-    debug=False,
-    **settings,
-):
+    items: list[PreprocessorFile | Cube | str | Path],
+    step: str,
+    input_files: list[File] | None = None,
+    output_file: Path | None = None,
+    debug: bool = False,
+    **settings: Any,
+) -> list[PreprocessorFile | Cube | str | Path]:
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -480,15 +482,18 @@ def preprocess(
     return items
 
 
-def get_step_blocks(steps, order):
+def get_step_blocks(
+    steps: Iterable[str],
+    order: list[str],
+) -> list[list[str]]:
     """Group steps into execution blocks."""
-    blocks = []
+    blocks: list[list[str]] = []
     prev_step_type = None
     for step in order[len(INITIAL_STEPS) : -len(FINAL_STEPS)]:
         if step in steps:
             step_type = step in MULTI_MODEL_FUNCTIONS
             if step_type is not prev_step_type:
-                block = []
+                block: list[str] = []
                 blocks.append(block)
             prev_step_type = step_type
             block.append(step)
@@ -504,7 +509,7 @@ class PreprocessorFile(TrackedFile):
         attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
         datasets: list | None = None,
-    ):
+    ) -> None:
         if datasets is not None:
             # Load data using a Dataset
             input_files = []
@@ -519,8 +524,8 @@ class PreprocessorFile(TrackedFile):
             input_files = []
             ancestors = []
 
-        self.datasets = datasets
-        self._cubes = None
+        self.datasets: list[Dataset] | None = datasets
+        self._cubes: CubeList | None = None
         self._input_files = input_files
 
         # Set some preprocessor settings (move all defaults here?)
@@ -542,17 +547,15 @@ class PreprocessorFile(TrackedFile):
             ancestors=ancestors,
         )
 
-    def check(self):
+    def check(self) -> None:
         """Check preprocessor settings."""
         check_preprocessor_settings(self.settings)
 
-    def apply(self, step: str, debug: bool = False):
+    def apply(self, step: str, debug: bool = False) -> None:
         """Apply preprocessor step to product."""
         if step not in self.settings:
             msg = f"PreprocessorFile {self} has no settings for step {step}"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         self.cubes = preprocess(
             self.cubes,
             step,
@@ -563,20 +566,20 @@ class PreprocessorFile(TrackedFile):
         )
 
     @property
-    def cubes(self):
+    def cubes(self) -> CubeList:
         """Cubes."""
         if self._cubes is None:
-            self._cubes = [ds.load() for ds in self.datasets]
+            self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
         return self._cubes
 
     @cubes.setter
-    def cubes(self, value):
+    def cubes(self, value: CubeList) -> None:
         self._cubes = value
 
     def save(self) -> Delayed | None:
         """Save cubes to disk."""
         return preprocess(
-            self._cubes,
+            self._cubes,  # type: ignore
             "save",
             input_files=self._input_files,
             **self.settings["save"],
@@ -592,7 +595,7 @@ class PreprocessorFile(TrackedFile):
             self.save_provenance()
         return result
 
-    def _update_attributes(self):
+    def _update_attributes(self) -> None:
         """Update product attributes from cube metadata."""
         if not self._cubes:
             return
@@ -616,11 +619,11 @@ class PreprocessorFile(TrackedFile):
             self.attributes["frequency"] = ref_cube.attributes["frequency"]
 
     @property
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """Check if the file is closed."""
         return self._cubes is None
 
-    def _initialize_entity(self):
+    def _initialize_entity(self) -> None:
         """Initialize the provenance entity representing the file."""
         super()._initialize_entity()
         settings = {
@@ -651,7 +654,11 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-def _apply_multimodel(products, step, debug):
+def _apply_multimodel(
+    products: set[PreprocessorFile],
+    step: str,
+    debug: bool | None,
+) -> set[PreprocessorFile]:
     """Apply multi model step to products."""
     settings, exclude = _get_multi_model_settings(products, step)
 
@@ -660,7 +667,11 @@ def _apply_multimodel(products, step, debug):
         step,
         "\n".join(str(p) for p in products - exclude),
     )
-    result = preprocess(products - exclude, step, **settings)
+    result: list[PreprocessorFile] = preprocess(  # type: ignore
+        products - exclude,  # type: ignore
+        step,
+        **settings,
+    )
     products = set(result) | exclude
 
     if debug:
@@ -683,7 +694,7 @@ class PreprocessingTask(BaseTask):
         order: Iterable[str] = DEFAULT_ORDER,
         debug: bool | None = None,
         write_ncl_interface: bool = False,
-    ):
+    ) -> None:
         """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(name=name, products=products)
@@ -691,13 +702,13 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _initialize_product_provenance(self):
+    def _initialize_product_provenance(self) -> None:
         """Initialize product provenance."""
         self._initialize_products(self.products)
         self._initialize_multimodel_provenance()
         self._initialize_ensemble_provenance()
 
-    def _initialize_multiproduct_provenance(self, step):
+    def _initialize_multiproduct_provenance(self, step: str) -> None:
         input_products = self._get_input_products(step)
         if input_products:
             statistic_products = set()
@@ -711,23 +722,23 @@ class PreprocessingTask(BaseTask):
 
             self._initialize_products(statistic_products)
 
-    def _initialize_multimodel_provenance(self):
+    def _initialize_multimodel_provenance(self) -> None:
         """Initialize provenance for multi-model statistics."""
         step = "multi_model_statistics"
         self._initialize_multiproduct_provenance(step)
 
-    def _initialize_ensemble_provenance(self):
+    def _initialize_ensemble_provenance(self) -> None:
         """Initialize provenance for ensemble statistics."""
         step = "ensemble_statistics"
         self._initialize_multiproduct_provenance(step)
 
-    def _get_input_products(self, step):
+    def _get_input_products(self, step: str) -> list[PreprocessorFile]:
         """Get input products."""
         return [
             product for product in self.products if step in product.settings
         ]
 
-    def _initialize_products(self, products):
+    def _initialize_products(self, products: set[PreprocessorFile]) -> None:
         """Initialize products."""
         for product in products:
             product.initialize_provenance(self.activity)
@@ -792,7 +803,7 @@ class PreprocessingTask(BaseTask):
             self.write_ncl_interface,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get human readable description."""
         order = [
             step
