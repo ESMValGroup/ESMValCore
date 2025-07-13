@@ -3,6 +3,9 @@
 import iris
 from cf_units import Unit
 from iris import Constraint
+from iris.cube import Cube, CubeList
+
+from esmvalcore.typing import Facets, FacetValue
 
 from ._baseclass import DerivedVariableBase
 
@@ -13,9 +16,9 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
 
     @staticmethod
-    def required(project):
+    def required(project: FacetValue) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        volcello = {"short_name": "volcello", "mip": "fx"}
+        volcello: Facets = {"short_name": "volcello", "mip": "fx"}
         if project == "CMIP5":
             volcello["ensemble"] = "r0i0p0"
         elif project == "CMIP6":
@@ -23,7 +26,7 @@ class DerivedVariable(DerivedVariableBase):
         return [{"short_name": "thetao"}, volcello]
 
     @staticmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """
         Compute ocean heat content.
 
