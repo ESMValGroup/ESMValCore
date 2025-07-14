@@ -1548,8 +1548,10 @@ def test_invalid_diagnostcic_ancestor(
     patched_datafinder,
     session,
 ):
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
     content = dedent(
-        """
+        f"""
         diagnostics:
           diagnostic_name:
             themes:
@@ -1567,9 +1569,9 @@ def test_invalid_diagnostcic_ancestor(
                   - dataset: CanESM2
             scripts:
               script_name:
-                script: examples/diagnostic.py
+                script: {script}
               script_name2:
-                script: examples/diagnostic.py
+                script: {script}
                 ancestors: [invalid_*]
         """,
     )
