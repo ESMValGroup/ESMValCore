@@ -49,6 +49,13 @@ FACETS = {
         "institute": "institute",
         "short_name": "variable",
     },
+    "input4MIPs": {
+        "activity": "activity_id",
+        "dataset": "source_id",
+        "grid": "grid_label",
+        "institute": "institution_id",
+        "short_name": "variable_id",
+    },
 }
 """Mapping between the recipe and ESGF facet names."""
 
