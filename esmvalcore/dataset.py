@@ -697,8 +697,6 @@ class Dataset:
         if self.facets.get("frequency") == "fx":
             self.facets.pop("timerange", None)
 
-        print(self)
-
     def find_files(self) -> None:
         """Find files.
 
