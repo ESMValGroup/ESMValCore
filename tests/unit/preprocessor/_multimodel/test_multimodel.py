@@ -15,7 +15,10 @@ from iris.cube import Cube, CubeList
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
-from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor import (
+    _check_multi_model_settings,
+    multi_model_statistics,
+)
 from esmvalcore.preprocessor._supplementary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ("overlap", "full")
@@ -835,11 +838,21 @@ def test_unify_time_coordinates():
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
 
-    def __init__(self, cube=None, attributes=None):
+    def __init__(
+        self,
+        cube=None,
+        attributes=None,
+        filename=None,
+        settings=None,
+    ):
         if cube:
             self.cubes = [cube]
         if attributes:
             self.attributes = attributes
+        if filename:
+            self.filename = filename
+        if settings:
+            self.settings = settings
 
     def wasderivedfrom(self, product):
         pass
@@ -1698,3 +1711,19 @@ def test_get_operator_and_kwargs_operator_missing(statistic):
 def test_get_stat_identifier(statistic, output):
     """Test ``_get_stat_identifier``."""
     assert mm._get_stat_identifier(statistic) == output
+
+
+def test_differing_multi_model_settings():
+    products = [
+        PreprocessorFile(
+            filename="a",
+            settings={"multi_model_statistics": {"statistics": ["mean"]}},
+        ),
+        PreprocessorFile(
+            filename="b",
+            settings={"multi_model_statistics": {"statistics": ["median"]}},
+        ),
+    ]
+    msg = r"Unable to combine differing multi-dataset settings for a and b"
+    with pytest.raises(ValueError, match=msg):
+        _check_multi_model_settings(products)

@@ -211,6 +211,12 @@ def test_get_required_with_fx():
     assert variables == reference
 
 
+def test_get_required_invalid_var():
+    msg = r"Cannot derive variable '_invalid_var_'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_required("_invalid_var_", "CMIP5")
+
+
 def test_derive_nonstandard_nofx():
     """Test a specific derivation."""
     short_name = "alb"
