@@ -6,6 +6,7 @@ easily available for the other components of ESMValTool
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import errno
 import glob
@@ -23,7 +24,13 @@ from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
-CMORTable = Union["CMIP3Info", "CMIP5Info", "CMIP6Info", "CustomInfo"]
+CMORTable = Union[
+    "CMIP3Info",
+    "CMIP5Info",
+    "CMIP6Info",
+    "Input4MIPsInfo",
+    "CustomInfo",
+]
 
 CMOR_TABLES: dict[str, CMORTable] = {}
 """dict of str, obj: CMOR info objects."""
@@ -229,6 +236,15 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
             default_table_prefix=default_table_prefix,
             alt_names=alt_names,
         )
+    if cmor_type == "input4MIPs":
+        return Input4MIPsInfo(
+            table_path,
+            default=custom,
+            strict=cmor_strict,
+            default_table_prefix=default_table_prefix,
+            alt_names=alt_names,
+        )
+
     msg = f"Unsupported CMOR type {cmor_type}"
     raise ValueError(msg)
 
@@ -1024,6 +1040,66 @@ class CMIP3Info(CMIP5Info):
         var.frequency = None
         var.modeling_realm = None
         return var
+
+
+class Input4MIPsInfo(CMIP6Info):
+    """Class to read Input4MIPs-like data request.
+
+    This uses CMOR 3 JSON format.
+
+    Parameters
+    ----------
+    cmor_tables_path: str
+        Path to the folder containing the ``Tables`` folder with the JSON
+        files.
+    default: object
+        Default table to look variables on if not found.
+    alt_names:
+        List of known alternative names for variables
+    strict: bool
+        If ``False``, will look for a variable in other tables if it can not be
+        found in the requested one.
+    default_table_prefix:
+        Prefix that needs to be added to the ``mip`` to get the name of the
+        file containing the ``mip`` table.  Defaults to the value provided in
+        ``cmor_type``.
+
+    """
+
+    def _load_controlled_vocabulary(self):
+        """Load information from controlled vocabulary."""
+        self.activities = {}
+        self.institutes = {}
+        self.dataset_categories = {}
+
+        for json_file in Path(self._cmor_folder).glob("*_CV.json"):
+            table_data = json.loads(json_file.read_text(encoding="utf-8"))
+            if "CV" not in table_data:
+                logger.warning(
+                    "Controlled vocabulary file %s does not contain top level "
+                    "key 'CV'",
+                    json_file,
+                )
+                continue
+            cv_data = table_data["CV"]
+
+            # Activity: In the current version of the tables, this will always
+            # be ['input4MIPs']
+            if "activity_id" in cv_data:
+                self.activities = cv_data["activity_id"]
+
+            # Institute and dataset category
+            if "source_id" in cv_data:
+                source_ids = cv_data["source_id"]
+                for source_id in source_ids:
+                    with contextlib.suppress(KeyError, AttributeError):
+                        self.institutes[source_id] = source_ids[source_id][
+                            "institution_id"
+                        ]
+                    with contextlib.suppress(KeyError, AttributeError):
+                        self.dataset_categories[source_id] = source_ids[
+                            source_id
+                        ]["dataset_category"]
 
 
 class CustomInfo(CMIP5Info):

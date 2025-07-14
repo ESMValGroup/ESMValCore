@@ -139,15 +139,36 @@ def get_institutes(variable):
 
 
 def get_activity(variable):
-    """Return the activity given the experiment name in CMIP6."""
+    """Return the activity."""
     project = variable["project"]
+
+    # For CMIP6, activity depends on experiment
     try:
         exp = variable["exp"]
         if isinstance(exp, list):
             return [CMOR_TABLES[project].activities[value][0] for value in exp]
         return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
-        return None
+        pass
+
+    # For input4MIPs, activity is fixed
+    try:
+        return CMOR_TABLES[project].activities[0]
+    except (KeyError, AttributeError):
+        pass
+
+    # All other projects
+    return None
+
+
+def get_dataset_category(variable):
+    """Return the dataset category associated with a given the dataset name."""
+    dataset = variable["dataset"]
+    project = variable["project"]
+    try:
+        return CMOR_TABLES[project].dataset_categories[dataset]
+    except (KeyError, AttributeError):
+        return []
 
 
 def get_ignored_warnings(project: FacetValue, step: str) -> None | list:

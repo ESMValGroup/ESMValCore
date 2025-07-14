@@ -54,6 +54,7 @@ FACETS = {
         "dataset": "source_id",
         "grid": "grid_label",
         "institute": "institution_id",
+        "modeling_realm": "realm",
         "short_name": "variable_id",
     },
 }
@@ -81,6 +82,7 @@ DATASET_MAP = {
     "CMIP6": {},
     "CORDEX": {},
     "obs4MIPs": {},
+    "input4MIPs": {},
 }
 """Cache for the mapping between recipe/filesystem and ESGF dataset names."""
 

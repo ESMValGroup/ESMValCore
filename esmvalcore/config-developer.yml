@@ -126,11 +126,10 @@ input4MIPs:
   cmor_strict: true
   input_dir:
     default: '/'
-    ESGF: '{activity}/{mip_era}/{target_mip}/{institute}/{dataset}/{realm}/{frequency}/{short_name}/{grid}/{version}'
+    ESGF: '{activity}/{mip_era}/{target_mip}/{institute}/{dataset}/{modeling_realm}/{frequency}/{short_name}/{grid}/{version}'
   input_file: '{short_name}_{project}_{dataset_category}_{target_mip}_{dataset}_{grid}_*.nc'
   output_file: '{project}_{dataset}_{dataset_category}_{target_mip}_{short_name}_{grid}'
-  cmor_type: 'CMIP6'
-  cmor_path: 'input4mips'
+  cmor_type: 'input4MIPs'
   cmor_default_table_prefix: 'input4MIPs_'
 
 
