@@ -122,6 +122,18 @@ obs4MIPs:
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'
 
+input4MIPs:
+  cmor_strict: true
+  input_dir:
+    default: '/'
+    ESGF: '{activity}/{mip_era}/{target_mip}/{institute}/{dataset}/{realm}/{frequency}/{short_name}/{grid}/{version}'
+  input_file: '{short_name}_{project}_{dataset_category}_{target_mip}_{dataset}_{grid}_*.nc'
+  output_file: '{project}_{dataset}_{dataset_category}_{target_mip}_{short_name}_{grid}'
+  cmor_type: 'CMIP6'
+  cmor_path: 'input4mips'
+  cmor_default_table_prefix: 'input4MIPs_'
+
+
 ana4mips:
   cmor_strict: false
   input_dir:
