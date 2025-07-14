@@ -325,7 +325,7 @@ def _truncate_dates(date: str, file_date: str) -> tuple[int, int]:
 
 def _select_files(
     filenames: list[LocalFile],
-    timerange: list,
+    timerange: FacetValue,
 ) -> list[LocalFile]:
     """Select files containing data between a given timerange.
 
@@ -335,6 +335,7 @@ def _select_files(
     Otherwise, the file selection occurs taking into account the time
     resolution of the file.
     """
+    timerange = str(timerange)
     if "*" in timerange:
         # TODO: support * combined with a period
         return filenames

@@ -498,7 +498,7 @@ class Dataset:
             "short_name",
         )
 
-        def facets2str(facets):
+        def facets2str(facets: Facets) -> str:
             view = {k: facets[k] for k in first_keys if k in facets}
             for key, value in sorted(facets.items()):
                 if key not in first_keys:
@@ -557,7 +557,7 @@ class Dataset:
         title = self.__class__.__name__
         txt = f"{title}: " + self._get_joined_summary_facets(", ")
 
-        def supplementary_summary(dataset):
+        def supplementary_summary(dataset: Dataset) -> str:
             return ", ".join(
                 str(dataset.facets[k])
                 for k in self._SUMMARY_FACETS
