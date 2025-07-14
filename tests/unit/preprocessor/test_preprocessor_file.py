@@ -169,3 +169,20 @@ def test_save(mock_preprocess):
         ),
         mock.call().__getitem__(0),
     ]
+
+
+def test_apply_invalid_settings():
+    product = PreprocessorFile(filename=Path("test"), settings={})
+    msg = r"PreprocessorFile: test has no settings for step invalid_step"
+    with pytest.raises(ValueError, match=msg):
+        product.apply("invalid_step")
+
+
+@pytest.mark.parametrize(
+    ("cubes", "output"),
+    [(None, True), (CubeList([]), False)],
+)
+def test_is_closed(cubes, output):
+    product = PreprocessorFile(filename=Path("test"))
+    product.cubes = cubes
+    assert product.is_closed is output

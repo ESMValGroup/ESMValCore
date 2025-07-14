@@ -554,7 +554,7 @@ class PreprocessorFile(TrackedFile):
     def apply(self, step: str, debug: bool = False) -> None:
         """Apply preprocessor step to product."""
         if step not in self.settings:
-            msg = f"PreprocessorFile {self} has no settings for step {step}"
+            msg = f"{self} has no settings for step {step}"
             raise ValueError(msg)
         self.cubes = preprocess(
             self.cubes,
