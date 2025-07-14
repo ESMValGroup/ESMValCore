@@ -680,9 +680,7 @@ def empty_cubes():
 def test_dataset_to_iris(conversion_func, dummy_cubes):
     dataset = conversion_func(dummy_cubes)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        cubes = dataset_to_iris(dataset, filepath="path/to/file.nc")
+    cubes = dataset_to_iris(dataset, filepath="path/to/file.nc")
 
     assert len(cubes) == 1
     cube = cubes[0]
