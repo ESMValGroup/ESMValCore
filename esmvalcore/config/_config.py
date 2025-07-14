@@ -168,7 +168,7 @@ def get_dataset_category(variable):
     try:
         return CMOR_TABLES[project].dataset_categories[dataset]
     except (KeyError, AttributeError):
-        return []
+        return None
 
 
 def get_ignored_warnings(project: FacetValue, step: str) -> None | list:
