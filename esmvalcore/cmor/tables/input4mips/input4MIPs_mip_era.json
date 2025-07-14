@@ -1,0 +1,12 @@
+{
+    "mip_era":[
+        "AMIP1",
+        "AMIP2",
+        "CMIP1",
+        "CMIP2",
+        "CMIP3",
+        "CMIP5",
+        "CMIP6",
+        "CMIP6Plus"
+    ]
+}

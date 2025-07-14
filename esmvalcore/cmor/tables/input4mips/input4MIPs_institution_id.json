@@ -1,0 +1,25 @@
+{
+    "institution_id":{
+        "CCCma":"Canadian Centre for Climate Modelling and Analysis, Victoria, BC V8P 5C2, Canada",
+        "CNRM-Cerfacs":"CNRM (Centre National de Recherches Meteorologiques, Toulouse 31057, France), CERFACS (Centre Europeen de Recherche et de Formation Avancee en Calcul Scientifique, Toulouse 31100, France)",
+        "IACETH":"Institute for Atmosphere and Climate, ETH Zurich, Zurich 8092, Switzerland",
+        "IAMC":"Integrated Assessment Modeling Consortium (see www.globalchange.umd.edu/iamc/membership for complete membership). Mailing address: International Institute for Applied Systems Analysis (IIASA), Schlossplatz 1, A-2361 Laxenburg, Austria",
+        "ImperialCollege":"Imperial College London, South Kensington Campus, London SW7 2AZ, UK",
+        "MOHC":"Met Office Hadley Centre, Fitzroy Road, Exeter, Devon, EX1 3PB, UK",
+        "MPI-B":"Max Planck Institute for Biogeochemistry, Jena 07745, Germany",
+        "MPI-M":"Max Planck Institute for Meteorology, Hamburg 20146, Germany",
+        "MRI":"Meteorological Research Institute, Tsukuba, Ibaraki 305-0052, Japan",
+        "NASA-GSFC":"NASA Goddard Space Flight Center, Greenbelt, MD 20771, USA",
+        "NCAR":"National Center for Atmospheric Research, Boulder, CO 80307, USA",
+        "NCAS":"National Centre for Atmospheric Science, University of Reading, Reading RG6 6BB, UK",
+        "PCMDI":"Program for Climate Model Diagnosis and Intercomparison, Lawrence Livermore National Laboratory, Livermore, CA 94550, USA",
+        "PNNL-JGCRI":"Pacific Northwest National Laboratory - Joint Global Change Research Institute, College Park, MD 20740, USA",
+        "SOLARIS-HEPPA":"SOLARIS-HEPPA, GEOMAR Helmholtz Centre for Ocean Research, Kiel 24105, Germany",
+        "UCI":"Department of Earth System Science, University of California Irvine, Irvine, CA 92697, USA",
+        "UColorado":"University of Colorado, Boulder, CO 80309, USA",
+        "UReading":"University of Reading, Reading RG6 6UA, UK",
+        "UoM":"Australian-German Climate & Energy College, The University of Melbourne (UoM), Parkville, Victoria 3010, Australia",
+        "UofMD":"University of Maryland (UofMD), College Park, MD 20742, USA",
+        "VUA":"Vrije Universiteit Amsterdam, De Boelelaan 1105, 1081 HV Amsterdam, Netherlands"
+    }
+}
