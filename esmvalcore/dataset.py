@@ -666,16 +666,9 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(
-        patterns: Iterable[FacetValue],
-        name: FacetValue,
-    ) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
-        return [
-            str(pat)
-            for pat in patterns
-            if fnmatch.fnmatchcase(str(name), str(pat))
-        ]
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
     def _get_extra_facets(self) -> dict[str, Any]:
         """Get extra facets of dataset."""
