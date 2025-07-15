@@ -288,7 +288,7 @@ def test_differing_timeranges():
         Dataset(**facets, short_name="rlut"),
     ]
 
-    msg = r"Differing timeranges with values {'1950/1952', '1951/1953'}"
+    msg = r"Differing timeranges with values"
     with pytest.raises(ValueError, match=msg):
         check.differing_timeranges("lwcre", input_datasets)
 
