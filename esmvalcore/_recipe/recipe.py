@@ -64,9 +64,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+Diagnostic = dict[str, Any]
+
 PreprocessorSettings = dict[str, Any]
 
-Diagnostic = dict[str, Any]
+PreprocessorProfile = dict[str, dict[str, Any]]
+
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
@@ -107,7 +110,7 @@ def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
 def _update_target_levels(
     dataset: Dataset,
     datasets: Sequence[Dataset],
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
 ) -> None:
     """Replace the target levels dataset name with a filename if needed."""
     levels = settings.get("extract_levels", {}).get("levels")
@@ -145,7 +148,7 @@ def _update_target_levels(
 def _update_target_grid(
     dataset: Dataset,
     datasets: Sequence[Dataset],
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
 ) -> None:
     """Replace the target grid dataset name with a filename if needed."""
     grid = settings.get("regrid", {}).get("target_grid")
@@ -195,7 +198,7 @@ def _select_dataset(dataset_name: str, datasets: Sequence[Dataset]) -> Dataset:
 
 def _limit_datasets(
     datasets: Sequence[Dataset],
-    profile: dict[str, Any],
+    profile: PreprocessorProfile,
 ) -> list[Dataset]:
     """Try to limit the number of datasets to max_datasets."""
     max_datasets = datasets[0].session["max_datasets"]
@@ -226,7 +229,7 @@ def _limit_datasets(
     return limited
 
 
-def _get_default_settings(dataset: Dataset) -> dict[str, Any]:
+def _get_default_settings(dataset: Dataset) -> PreprocessorSettings:
     """Get default preprocessor settings."""
     session = dataset.session
     facets = dataset.facets
@@ -257,7 +260,7 @@ def _get_default_settings(dataset: Dataset) -> dict[str, Any]:
 
 def _add_dataset_specific_settings(
     dataset: Dataset,
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
 ) -> None:
     """Add dataset-specific settings."""
     project = dataset.facets["project"]
@@ -287,7 +290,7 @@ def _add_dataset_specific_settings(
 
 
 def _exclude_dataset(
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
     facets: Facets,
     step: str,
 ) -> None:
@@ -306,7 +309,7 @@ def _exclude_dataset(
 
 
 def _update_weighting_settings(
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
     facets: Facets,
 ) -> None:
     """Update settings for the weighting preprocessors."""
@@ -377,8 +380,8 @@ def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
 
 
 def _apply_preprocessor_profile(
-    settings: dict[str, Any],
-    profile_settings: dict[str, Any],
+    settings: PreprocessorSettings,
+    profile_settings: PreprocessorProfile,
 ) -> None:
     """Apply settings from preprocessor profile."""
     profile_settings = deepcopy(profile_settings)
@@ -396,7 +399,7 @@ def _apply_preprocessor_profile(
 
 def _get_common_attributes(
     products: set[PreprocessorFile],
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
 ) -> dict[str, Any]:
     """Get common attributes for the output products."""
     attributes: dict[str, Any] = {}
@@ -455,7 +458,7 @@ def _get_downstream_settings(
     step: str,
     order: tuple[str, ...],
     products: set[PreprocessorFile],
-) -> dict[str, Any]:
+) -> PreprocessorSettings:
     """Get downstream preprocessor settings shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1 :]
@@ -471,7 +474,7 @@ def _get_downstream_settings(
 
 def _update_multi_dataset_settings(
     facets: Facets,
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
 ) -> None:
     """Configure multi dataset statistics."""
     for step in MULTI_MODEL_FUNCTIONS:
@@ -500,7 +503,7 @@ def _update_multiproduct(
     order: tuple[str, ...],
     preproc_dir: Path,
     step: str,
-) -> tuple[set[PreprocessorFile], dict[str, Any]]:
+) -> tuple[set[PreprocessorFile], PreprocessorSettings]:
     """Return new products that are aggregated over multiple datasets.
 
     These new products will replace the original products at runtime.
@@ -526,7 +529,7 @@ def _update_multiproduct(
 
     downstream_settings = _get_downstream_settings(step, order, multiproducts)
 
-    relevant_settings: dict[str, Any] = {
+    relevant_settings: PreprocessorSettings = {
         "output_products": defaultdict(dict),
     }  # pass to ancestors
 
@@ -570,7 +573,7 @@ def _update_multiproduct(
 def update_ancestors(
     ancestors: set[PreprocessorFile],
     step: str,
-    downstream_settings: dict[str, Any],
+    downstream_settings: PreprocessorSettings,
 ) -> None:
     """Retroactively add settings to ancestor products."""
     for product in ancestors:
@@ -580,7 +583,10 @@ def update_ancestors(
                 settings[key] = value
 
 
-def _update_extract_shape(settings: dict[str, Any], session: Session) -> None:
+def _update_extract_shape(
+    settings: PreprocessorSettings,
+    session: Session,
+) -> None:
     if "extract_shape" in settings:
         shapefile = settings["extract_shape"].get("shapefile")
         if shapefile:
@@ -619,8 +625,8 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
 
 def _get_preprocessor_products(
     datasets: list[Dataset],
-    profile: dict[str, Any],
-    order: Sequence[str, ...],
+    profile: PreprocessorProfile,
+    order: Sequence[str],
     name: str,
 ) -> set[PreprocessorFile]:
     """Get preprocessor product definitions for a set of datasets.
@@ -764,7 +770,7 @@ def _set_start_end_year(product: PreprocessorFile) -> None:
 
 
 def _update_preproc_functions(
-    settings: dict[str, Any],
+    settings: PreprocessorSettings,
     dataset: Dataset,
     datasets: list[Dataset],
     missing_vars: set[str],
@@ -800,7 +806,7 @@ def _update_preproc_functions(
 
 def _get_preprocessor_task(
     datasets: list[Dataset],
-    profiles: dict[str, Any],
+    profiles: PreprocessorProfile,
     task_name: str,
 ) -> PreprocessingTask:
     """Create preprocessor task(s) for a set of datasets."""
@@ -852,7 +858,9 @@ def _get_preprocessor_task(
     return task
 
 
-def _extract_preprocessor_order(profile: dict[str, Any]) -> tuple[str, ...]:
+def _extract_preprocessor_order(
+    profile: PreprocessorProfile,
+) -> tuple[str, ...]:
     """Extract the order of the preprocessing steps from the profile."""
     custom_order = profile.pop("custom_order", False)
     if not custom_order:
@@ -937,7 +945,7 @@ class Recipe:
             )
 
     @staticmethod
-    def _need_ncl(raw_diagnostics: dict[str, dict[str, Any]]) -> bool:
+    def _need_ncl(raw_diagnostics: Diagnostic) -> bool:
         if not raw_diagnostics:
             return False
         for diagnostic in raw_diagnostics.values():
@@ -960,8 +968,8 @@ class Recipe:
 
     def _initialize_diagnostics(
         self,
-        raw_diagnostics: dict[str, Any],
-    ) -> dict[str, Any]:
+        raw_diagnostics: Diagnostic,
+    ) -> Diagnostic:
         """Define diagnostics in recipe."""
         logger.debug("Retrieving diagnostics from recipe")
         check.diagnostics(raw_diagnostics)
@@ -969,7 +977,7 @@ class Recipe:
         diagnostics = {}
 
         for name, raw_diagnostic in raw_diagnostics.items():
-            diagnostic: dict[str, Any] = {}
+            diagnostic: Diagnostic = {}
             diagnostic["name"] = name
             diagnostic["datasets"] = [
                 ds for ds in self.datasets if ds.facets["diagnostic"] == name
@@ -1155,7 +1163,7 @@ class Recipe:
     def _create_preprocessor_tasks(
         self,
         diagnostic_name: str,
-        diagnostic: dict[str, Any],
+        diagnostic: Diagnostic,
         tasknames_to_run: set[str],
         any_diag_script_is_run: bool,
     ) -> tuple[list[BaseTask], list[RecipeError]]:
@@ -1321,7 +1329,7 @@ class Recipe:
 
         Returns
         -------
-        product_filenames : dict
+        dict
             Lists of products/attributes grouped by task.
         """
         output: dict[str, Any] = {}
