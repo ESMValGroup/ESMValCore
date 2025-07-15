@@ -2184,6 +2184,45 @@ def test_get_extra_facets_native6():
     }
 
 
+def test_is_derived_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_derived() is False
+
+
+def test_is_derived_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_derived() is True
+
+
+def test_is_force_derived_no_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_no_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is True
+
+
 def test_derivation_necessary_no_derivation():
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
     assert dataset._derivation_necessary() is False
@@ -2225,24 +2264,6 @@ def test_derivation_necessary_force_derivation(tmp_path, session):
     lwcre_file.touch()
 
     assert dataset._derivation_necessary() is True
-
-
-def test_force_derivation_no_derived():
-    msg = (
-        r"Facet `force_derivation=True` can only be used for derived "
-        r"variables"
-    )
-
-    with pytest.raises(ValueError, match=msg):
-        Dataset(**OBS6_SAT_FACETS, short_name="tas", force_derivation=True)
-
-    with pytest.raises(ValueError, match=msg):
-        Dataset(
-            **OBS6_SAT_FACETS,
-            short_name="tas",
-            derive=False,
-            force_derivation=True,
-        )
 
 
 def test_add_supplementary_to_derived():

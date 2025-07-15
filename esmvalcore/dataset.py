@@ -138,16 +138,6 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
 
-        if not self._is_derived() and self.facets.get(
-            "force_derivation",
-            False,
-        ):
-            msg = (
-                "Facet `force_derivation=True` can only be used for derived "
-                "variables (i.e., with facet `derive=True`)"
-            )
-            raise ValueError(msg)
-
     @staticmethod
     def from_recipe(
         recipe: Path | str | dict,
@@ -180,6 +170,12 @@ class Dataset:
         """Return ``True`` for derived variables, ``False`` otherwise."""
         return bool(self.facets.get("derive", False))
 
+    def _is_force_derived(self) -> bool:
+        """Return ``True`` for force-derived variables, ``False`` otherwise."""
+        return self._is_derived() and bool(
+            self.facets.get("force_derivation", False),
+        )
+
     def _derivation_necessary(self) -> bool:
         """Return ``True`` if derivation is necessary, ``False`` otherwise."""
         # If variable cannot be derived, derivation is not necessary
@@ -187,7 +183,7 @@ class Dataset:
             return False
 
         # If forced derivation is requested, derivation is necessary
-        if self.facets.get("force_derivation", False):
+        if self._is_force_derived():
             return True
 
         # Otherwise, derivation is necessary of no files for the self dataset
@@ -714,7 +710,7 @@ class Dataset:
         """
         if self._is_derived():
             facets.setdefault("derive", False)
-        if self.facets.get("force_derivation", False):
+        if self._is_force_derived():
             facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
