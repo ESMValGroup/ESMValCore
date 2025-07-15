@@ -102,6 +102,16 @@ def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
                 )
             )
             raise RecipeError(msg)
+
+        if not isinstance(facets[special_name], str):
+            msg = (
+                f"Preprocessor '{facets['preprocessor']}' uses "
+                f"'{special_name}', but '{special_name}' is not a `str` for "
+                f"variable '{facets['variable_group']}' of diagnostic "
+                f"'{facets['diagnostic']}', got '{facets[special_name]}' "
+                f"({type(facets[special_name])})"
+            )
+            raise RecipeError(msg)
         special_name = str(facets[special_name])
 
     return special_name
