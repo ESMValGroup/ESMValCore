@@ -563,7 +563,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 
     # Configure input datasets needed to derive variable
     datasets = []
-    required_vars = get_required(facets["short_name"], facets["project"])
+    required_vars = get_required(facets["short_name"], facets["project"])  # type: ignore
     # idea: add option to specify facets in list of dicts that is value of
     # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
@@ -587,7 +587,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     timeranges: set[str] = set()
     for input_dataset in datasets:
         if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
+            timeranges.add(input_dataset.facets["timerange"])  # type: ignore
     check.differing_timeranges(timeranges, required_vars)
 
     return datasets

@@ -338,9 +338,9 @@ def _select_files(
     timerange = str(timerange)
     if "*" in timerange:
         # TODO: support * combined with a period
-        return filenames
+        return list(filenames)
 
-    selection = []
+    selection: list[LocalFile] = []
 
     for filename in filenames:
         start: int | str

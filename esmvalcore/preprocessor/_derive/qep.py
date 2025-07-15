@@ -3,7 +3,7 @@
 from iris import Constraint
 from iris.cube import Cube, CubeList
 
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
 
@@ -12,7 +12,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project: FacetValue) -> list[Facets]:
+    def required(project: str) -> list[Facets]:
         """Declare the variables needed for derivation."""
         return [
             {"short_name": "evspsbl"},

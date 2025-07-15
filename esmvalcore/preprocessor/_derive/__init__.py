@@ -59,7 +59,6 @@ def get_required(short_name: str, project: str) -> list[Facets]:
         List of facets (including at least the key ``short_name``).
 
     """
-    short_name = str(short_name)
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         msg = (
             f"Cannot derive variable '{short_name}': no derivation script "

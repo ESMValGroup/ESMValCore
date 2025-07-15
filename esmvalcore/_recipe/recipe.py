@@ -203,7 +203,7 @@ def _limit_datasets(
     """Try to limit the number of datasets to max_datasets."""
     max_datasets = datasets[0].session["max_datasets"]
     if not max_datasets:
-        return datasets
+        return list(datasets)
 
     logger.info("Limiting the number of datasets to %s", max_datasets)
 
@@ -626,7 +626,7 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
 def _get_preprocessor_products(
     datasets: list[Dataset],
     profile: PreprocessorProfile,
-    order: Sequence[str],
+    order: tuple[str, ...],
     name: str,
 ) -> set[PreprocessorFile]:
     """Get preprocessor product definitions for a set of datasets.

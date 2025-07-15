@@ -7,7 +7,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from iris.cube import Cube, CubeList
 
@@ -364,10 +364,10 @@ def _get_multi_model_settings(
 
 def _run_preproc_function(
     function: Callable,
-    items: PreprocessorItem | Iterable[PreprocessorItem],
+    items: PreprocessorItem | Sequence[PreprocessorItem],
     kwargs: Any,
     input_files: Sequence[File] | None = None,
-) -> PreprocessorItem | Iterable[PreprocessorItem]:
+) -> PreprocessorItem | Sequence[PreprocessorItem]:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
         [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()],
@@ -656,7 +656,7 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-PreprocessorItem = PreprocessorFile | Cube | str | Path
+PreprocessorItem: TypeAlias = PreprocessorFile | Cube | str | Path
 
 
 def _apply_multimodel(
