@@ -568,7 +568,7 @@ class PreprocessorFile(TrackedFile):
         )
 
     @property
-    def cubes(self) -> CubeList:
+    def cubes(self) -> list[Cube]:
         """Cubes."""
         if self._cubes is None:
             self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
