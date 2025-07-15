@@ -252,7 +252,9 @@ def _parse_period(timerange: FacetValue) -> tuple[str, str]:
     reference point in order to compute the start and end dates needed
     for file selection.
     """
-    timerange = str(timerange)
+    if not isinstance(timerange, str):
+        msg = f"`timerange` should be a `str`, got '{type(timerange)}'"
+        raise TypeError(msg)
     start_date: str | None = None
     end_date: str | None = None
     time_format = None
