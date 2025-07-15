@@ -343,16 +343,12 @@ def _select_files(
     selection: list[LocalFile] = []
 
     for filename in filenames:
-        start: int | str
-        end: int | str
-        start_date: int | str
-        end_date: int | str
         start_date, end_date = _parse_period(timerange)
         start, end = _get_start_end_date(filename)
 
-        start_date, end = _truncate_dates(start_date, end)
-        end_date, start = _truncate_dates(end_date, start)
-        if start <= end_date and end >= start_date:
+        start_date_int, end_int = _truncate_dates(start_date, end)
+        end_date_int, start_int = _truncate_dates(end_date, start)
+        if start_int <= end_date_int and end_int >= start_date_int:
             selection.append(filename)
 
     return selection
