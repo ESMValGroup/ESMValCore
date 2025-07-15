@@ -233,7 +233,7 @@ def _limit_datasets(
 
     logger.info(
         "Only considering %s",
-        ", ".join(str(d.facets["alias"]) for d in limited),
+        ", ".join(d.facets["alias"] for d in limited),  # type: ignore
     )
 
     return limited
