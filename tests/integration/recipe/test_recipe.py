@@ -127,11 +127,6 @@ def patched_tas_derivation(monkeypatch):
         ]
 
     monkeypatch.setattr(
-        esmvalcore._recipe.to_datasets,
-        "get_required",
-        get_required,
-    )
-    monkeypatch.setattr(
         esmvalcore.dataset,
         "get_required",
         get_required,
@@ -2543,9 +2538,7 @@ def test_representative_dataset_derived_var(
     expected_facets = {
         # Already present in variable
         "dataset": "ICON",
-        "derive": True,
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": force_derivation,
         "frequency": "mon",
         "mip": "Amon",
         "project": "ICON",
@@ -2555,6 +2548,9 @@ def test_representative_dataset_derived_var(
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
+        # Added/changed by Dataset._get_input_datasets()
+        "derive": False,
+        "force_derivation": False,
     }
     if force_derivation:
         expected_datasets = [
@@ -2609,9 +2605,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "short_name": "rsdscs",
         # Already present in variables
         "dataset": "ICON",
-        "derive": True,
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": True,
         "frequency": "mon",
         "mip": "Amon",
         "project": "ICON",
@@ -2624,6 +2618,9 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
+        # Added/changed by Dataset._get_input_datasets()
+        "derive": False,
+        "force_derivation": False,
     }
     rsdscs = Dataset(**rsdscs_facets)
     rsdscs.session = session
@@ -2633,9 +2630,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "short_name": "rsuscs",
         # Already present in variables
         "dataset": "ICON",
-        "derive": True,
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
-        "force_derivation": True,
         "frequency": "mon",
         "mip": "Amon",
         "project": "ICON",
@@ -2648,6 +2643,9 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
+        # Added/changed by Dataset._get_input_datasets()
+        "derive": False,
+        "force_derivation": False,
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session

@@ -274,25 +274,23 @@ def test_valid_time_selection_rejections(timerange, message):
     assert str(rec_err.value) == message
 
 
-def test_differing_timeranges(caplog):
-    timeranges = set()
-    timeranges.add("1950/1951")
-    timeranges.add("1950/1952")
-    required_variables = [
-        {"short_name": "rsdscs", "timerange": "1950/1951"},
-        {"short_name": "rsuscs", "timerange": "1950/1952"},
+def test_differing_timeranges():
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "Amon",
+        "tier": 2,
+        "type": "sat",
+    }
+    input_datasets = [
+        Dataset(**facets, short_name="rlut", timerange="1950/1952"),
+        Dataset(**facets, short_name="rlutcs", timerange="1951/1953"),
+        Dataset(**facets, short_name="rlut"),
     ]
-    with pytest.raises(ValueError) as exc:
-        check.differing_timeranges(timeranges, required_variables)
-    expected_log = (
-        f"Differing timeranges with values {timeranges} "
-        "found for required variables "
-        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
-        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
-        "Set `timerange` to a common value."
-    )
 
-    assert expected_log in str(exc.value)
+    msg = r"Differing timeranges with values {'1950/1952', '1951/1953'}"
+    with pytest.raises(ValueError, match=msg):
+        check.differing_timeranges("lwcre", input_datasets)
 
 
 def test_data_availability_nonexistent(tmp_path):

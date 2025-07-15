@@ -13,7 +13,6 @@ from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile, _replace_years_with_timerange
-from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
@@ -495,39 +494,23 @@ def _report_unexpanded_globs(
 
 def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     """Determine the input datasets needed for deriving `dataset`."""
-    facets = dataset.facets
     if not dataset._derivation_necessary():  # noqa: SLF001
-        return [dataset]
+        return dataset.input_datasets
 
-    # Configure input datasets needed to derive variable
-    datasets = []
-    required_vars = get_required(facets["short_name"], facets["project"])
-    # idea: add option to specify facets in list of dicts that is value of
-    # 'derive' in the recipe and use that instead of get_required?
-    for input_facets in required_vars:
-        input_dataset = dataset.copy()
-        keep = {"alias", "recipe_dataset_index", *dataset.minimal_facets}
-        input_dataset.facets = {
-            k: v for k, v in input_dataset.facets.items() if k in keep
-        }
-        input_dataset.facets.update(input_facets)
-        input_dataset.augment_facets()
-        if input_facets.get("optional") and not input_dataset.files:
+    # Skip optional datasets if no data is available
+    input_datasets: list[Dataset] = []
+    for input_dataset in dataset.input_datasets:
+        if input_dataset.facets.get("optional") and not input_dataset.files:
             logger.info(
                 "Skipping: no data found for %s which is marked as 'optional'",
                 input_dataset,
             )
         else:
-            datasets.append(input_dataset)
+            input_datasets.append(input_dataset)
 
-    # Check timeranges of available input data.
-    timeranges: set[FacetValue] = set()
-    for input_dataset in datasets:
-        if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
-    check.differing_timeranges(timeranges, required_vars)
+    check.differing_timeranges(dataset.facets["short_name"], input_datasets)
 
-    return datasets
+    return input_datasets
 
 
 def _representative_datasets(dataset: Dataset) -> list[Dataset]:

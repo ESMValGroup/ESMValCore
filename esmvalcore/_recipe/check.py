@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset
-    from esmvalcore.typing import Facets, FacetValue
+    from esmvalcore.typing import FacetValue
 
 
 logger = logging.getLogger(__name__)
@@ -467,15 +467,22 @@ def valid_time_selection(timerange: str) -> None:
 
 
 def differing_timeranges(
-    timeranges: set[FacetValue],
-    required_vars: list[Facets],
+    var_to_derive: FacetValue,
+    input_datasets: list[Dataset],
 ) -> None:
-    """Log error if required variables have differing timeranges."""
+    """Log error if input datasets have differing timeranges."""
+    timeranges: set[FacetValue] = set()
+    for input_dataset in input_datasets:
+        if "timerange" in input_dataset.facets:
+            timeranges.add(input_dataset.facets["timerange"])
     if len(timeranges) > 1:
+        input_datasets_str = "; ".join(
+            d.summary(shorten=True) for d in input_datasets
+        )
         msg = (
-            f"Differing timeranges with values {timeranges} "
-            f"found for required variables {required_vars}. "
-            "Set `timerange` to a common value."
+            f"Differing timeranges with values {timeranges} found for "
+            f"datasets {input_datasets_str} necessary to derive "
+            f"'{var_to_derive}'. Set `timerange` to a common value."
         )
         raise ValueError(msg)
 
