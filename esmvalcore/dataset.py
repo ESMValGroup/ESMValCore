@@ -577,7 +577,7 @@ class Dataset:
 
     def __setitem__(self, key: str, value: FacetValue) -> None:
         """Set a facet value."""
-        self.set_facet(key, value, persist=False)
+        self.facets[key] = value
 
     def set_facet(
         self,
