@@ -36,7 +36,6 @@ if TYPE_CHECKING:
 
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset
-    from esmvalcore.typing import FacetValue
 
 
 logger = logging.getLogger(__name__)
@@ -464,27 +463,6 @@ def valid_time_selection(timerange: str) -> None:
         for date in timerange_list:
             date = _check_format_years(date)
             _check_timerange_values(date, timerange_list)
-
-
-def differing_timeranges(
-    var_to_derive: FacetValue,
-    input_datasets: list[Dataset],
-) -> None:
-    """Log error if input datasets have differing timeranges."""
-    timeranges: set[FacetValue] = set()
-    for input_dataset in input_datasets:
-        if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
-    if len(timeranges) > 1:
-        input_datasets_str = "; ".join(
-            d.summary(shorten=True) for d in input_datasets
-        )
-        msg = (
-            f"Differing timeranges with values {timeranges} found for "
-            f"datasets {input_datasets_str} necessary to derive "
-            f"'{var_to_derive}'. Set `timerange` to a common value."
-        )
-        raise ValueError(msg)
 
 
 def _check_literal(

@@ -508,8 +508,6 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         else:
             input_datasets.append(input_dataset)
 
-    check.differing_timeranges(dataset.facets["short_name"], input_datasets)
-
     return input_datasets
 
 

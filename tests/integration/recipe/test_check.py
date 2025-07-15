@@ -274,25 +274,6 @@ def test_valid_time_selection_rejections(timerange, message):
     assert str(rec_err.value) == message
 
 
-def test_differing_timeranges():
-    facets = {
-        "project": "OBS6",
-        "dataset": "SAT",
-        "mip": "Amon",
-        "tier": 2,
-        "type": "sat",
-    }
-    input_datasets = [
-        Dataset(**facets, short_name="rlut", timerange="1950/1952"),
-        Dataset(**facets, short_name="rlutcs", timerange="1951/1953"),
-        Dataset(**facets, short_name="rlut"),
-    ]
-
-    msg = r"Differing timeranges with values"
-    with pytest.raises(ValueError, match=msg):
-        check.differing_timeranges("lwcre", input_datasets)
-
-
 def test_data_availability_nonexistent(tmp_path):
     var = {
         "dataset": "ABC",
