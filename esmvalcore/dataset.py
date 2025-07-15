@@ -243,41 +243,42 @@ class Dataset:
         self._input_datasets = input_datasets
         return input_datasets
 
+    @staticmethod
     def _file_to_dataset(
-        self,
+        dataset: Dataset,
         file: esgf.ESGFFile | local.LocalFile,
     ) -> Dataset:
         """Create a dataset from a file with a `facets` attribute."""
         facets = dict(file.facets)
-        if "version" not in self.facets:
+        if "version" not in dataset.facets:
             # Remove version facet if no specific version requested
             facets.pop("version", None)
 
         updated_facets = {
             f: v
             for f, v in facets.items()
-            if f in self.facets
-            and _isglob(self.facets[f])
-            and _ismatch(v, self.facets[f])
+            if f in dataset.facets
+            and _isglob(dataset.facets[f])
+            and _ismatch(v, dataset.facets[f])
         }
-        dataset = self.copy()
-        dataset.facets.update(updated_facets)
+        new_dataset = dataset.copy()
+        new_dataset.facets.update(updated_facets)
 
         # If possible, remove unexpanded facets that can be automatically
         # populated.
-        unexpanded = {f for f, v in dataset.facets.items() if _isglob(v)}
+        unexpanded = {f for f, v in new_dataset.facets.items() if _isglob(v)}
         required_for_augment = {"project", "mip", "short_name", "dataset"}
         if unexpanded and not unexpanded & required_for_augment:
-            copy = dataset.copy()
+            copy = new_dataset.copy()
             copy.supplementaries = []
             for facet in unexpanded:
                 copy.facets.pop(facet)
             copy.augment_facets()
             for facet in unexpanded:
                 if facet in copy.facets:
-                    dataset.facets.pop(facet)
+                    new_dataset.facets.pop(facet)
 
-        return dataset
+        return new_dataset
 
     def _get_all_available_datasets(self) -> Iterator[Dataset]:  # noqa: C901
         """Yield datasets based on the available files.
@@ -320,7 +321,7 @@ class Dataset:
                                 updated_facets[key] = expanded_ds.facets[key]
                     new_ds = self.copy()
                     new_ds.facets.update(updated_facets)
-                    new_ds.supplementaries = expanded_ds.supplementaries
+                    new_ds.supplementaries = self.supplementaries
 
                     all_datasets[-1].append((updated_facets, new_ds))
 
@@ -361,7 +362,7 @@ class Dataset:
         partially_defined = []
         expanded = False
         for file in dataset_template.files:
-            new_dataset = self._file_to_dataset(file)
+            new_dataset = self._file_to_dataset(dataset, file)
 
             # Filter out identical datasets
             facetset = frozenset(
@@ -378,7 +379,6 @@ class Dataset:
                     partially_defined.append((new_dataset, file))
                 else:
                     new_dataset._update_timerange()  # noqa: SLF001
-                    new_dataset._supplementaries_from_files()  # noqa: SLF001
                     expanded = True
                     yield new_dataset
 
@@ -451,6 +451,7 @@ class Dataset:
             for mip in mips:
                 dataset_template = self.copy(mip=mip)
                 for dataset in dataset_template._get_all_available_datasets():  # noqa: SLF001
+                    dataset._supplementaries_from_files()  # noqa: SLF001
                     expanded = True
                     yield dataset
 

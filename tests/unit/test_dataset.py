@@ -1188,9 +1188,10 @@ def test_from_files_no_files_glob(session):
     assert datasets == [dataset]
 
 
-def test_from_files_derived_no_files_glob(session):
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
+def test_from_files_with_derived_no_files_glob(timerange, session):
     dataset = Dataset(
-        **{**OBS6_SAT_FACETS, "type": "*"},
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
         short_name="lwcre",
         derive=True,
     )
@@ -1316,7 +1317,9 @@ def test_from_files_with_derived_no_derivation(lwcre_file, session):
     assert expected_input_dataset.files == [lwcre_file]
 
 
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
 def test_from_files_with_derived_no_derivation_glob(
+    timerange,
     lwcre_file,
     lwcre_file_ground,
     pr_file,
@@ -1324,7 +1327,7 @@ def test_from_files_with_derived_no_derivation_glob(
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
-        **{**OBS6_SAT_FACETS, "type": "*"},
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
         short_name="lwcre",
         derive=True,
     )
@@ -1449,7 +1452,9 @@ def test_from_files_with_derived(rlut_file, rlutcs_file, session):
     assert expected_input_datasets[1].files == [rlutcs_file]
 
 
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
 def test_from_files_with_derived_glob(
+    timerange,
     rlut_file,
     rlut_file_ground,
     rlutcs_file,
@@ -1459,7 +1464,7 @@ def test_from_files_with_derived_glob(
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
-        **{**OBS6_SAT_FACETS, "type": "*"},
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
         short_name="lwcre",
         derive=True,
     )
@@ -1509,12 +1514,12 @@ def test_from_files_with_derived_glob(
     assert expected_input_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = (
-        "Not all necessary input variables to derive 'lwcre' are available "
-        "for Dataset: lwcre, Amon, OBS6, SAT, supplementaries: pr with facets "
-        "{'type': 'ground'}"
-    )
-    assert msg in log_debugs
+    msg = "Not all necessary input variables to derive 'lwcre' are available"
+    for log_debug in log_debugs:
+        if msg in log_debug:
+            break
+    else:
+        pytest.fail(f"No debug message '{msg}'")
 
 
 def test_from_files_with_derived_no_force_derivation(
@@ -1568,7 +1573,9 @@ def test_from_files_with_derived_no_force_derivation(
     assert expected_input_dataset.files == [lwcre_file]
 
 
-def test_from_files_with_derived_no_force_derivation_glob(
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
+def test_from_files_with_derived_no_force_derivation_glob(  # noqa: PLR0913
+    timerange,
     lwcre_file,
     lwcre_file_ground,
     rlut_file,
@@ -1579,7 +1586,7 @@ def test_from_files_with_derived_no_force_derivation_glob(
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
-        **{**OBS6_SAT_FACETS, "type": "*"},
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
         short_name="lwcre",
         derive=True,
     )
@@ -1721,7 +1728,9 @@ def test_from_files_with_derived_force_derivation(
     assert expected_input_datasets[1].files == [rlutcs_file]
 
 
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
 def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
+    timerange,
     lwcre_file,
     lwcre_file_ground,
     rlut_file,
@@ -1733,7 +1742,7 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
-        **{**OBS6_SAT_FACETS, "type": "*"},
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
         short_name="lwcre",
         derive=True,
         force_derivation=True,
@@ -1791,12 +1800,12 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     assert expected_input_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = (
-        "Not all necessary input variables to derive 'lwcre' are available "
-        "for Dataset: lwcre, Amon, OBS6, SAT, supplementaries: pr with facets "
-        "{'type': 'ground'}"
-    )
-    assert msg in log_debugs
+    msg = "Not all necessary input variables to derive 'lwcre' are available"
+    for log_debug in log_debugs:
+        if msg in log_debug:
+            break
+    else:
+        pytest.fail(f"No debug message '{msg}'")
 
 
 def test_match():
