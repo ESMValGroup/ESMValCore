@@ -10,7 +10,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 from esmvalcore.preprocessor._units import convert_units
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 

@@ -57,7 +57,7 @@ from .to_datasets import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from esmvalcore.config import Session
     from esmvalcore.typing import Facets
@@ -65,6 +65,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 PreprocessorSettings = dict[str, Any]
+
+Diagnostic = dict[str, Any]
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""

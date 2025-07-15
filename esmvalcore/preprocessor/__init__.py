@@ -15,8 +15,7 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
-
-from ._area import (
+from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
     extract_region,
@@ -24,20 +23,20 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from ._compare_with_refs import bias, distance_metric
-from ._concatenate import concatenate
-from ._cycles import amplitude
-from ._dask_progress import _compute_with_progress
-from ._derive import derive
-from ._detrend import detrend
-from ._io import (
+from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
+from esmvalcore.preprocessor._concatenate import concatenate
+from esmvalcore.preprocessor._cycles import amplitude
+from esmvalcore.preprocessor._dask_progress import _compute_with_progress
+from esmvalcore.preprocessor._derive import derive
+from esmvalcore.preprocessor._detrend import detrend
+from esmvalcore.preprocessor._io import (
     _get_debug_filename,
     _sort_products,
     load,
     save,
     write_metadata,
 )
-from ._mask import (
+from esmvalcore.preprocessor._mask import (
     mask_above_threshold,
     mask_below_threshold,
     mask_fillvalues,
@@ -48,21 +47,24 @@ from ._mask import (
     mask_multimodel,
     mask_outside_range,
 )
-from ._multimodel import ensemble_statistics, multi_model_statistics
-from ._other import clip, cumulative_sum, histogram
-from ._regrid import (
+from esmvalcore.preprocessor._multimodel import (
+    ensemble_statistics,
+    multi_model_statistics,
+)
+from esmvalcore.preprocessor._other import clip, cumulative_sum, histogram
+from esmvalcore.preprocessor._regrid import (
     extract_coordinate_points,
     extract_levels,
     extract_location,
     extract_point,
     regrid,
 )
-from ._rolling_window import rolling_window_statistics
-from ._supplementary_vars import (
+from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
+from esmvalcore.preprocessor._supplementary_vars import (
     add_supplementary_variables,
     remove_supplementary_variables,
 )
-from ._time import (
+from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
@@ -81,9 +83,9 @@ from ._time import (
     seasonal_statistics,
     timeseries_filter,
 )
-from ._trend import linear_trend, linear_trend_stderr
-from ._units import accumulate_coordinate, convert_units
-from ._volume import (
+from esmvalcore.preprocessor._trend import linear_trend, linear_trend_stderr
+from esmvalcore.preprocessor._units import accumulate_coordinate, convert_units
+from esmvalcore.preprocessor._volume import (
     axis_statistics,
     depth_integration,
     extract_surface_from_atm,
@@ -92,10 +94,10 @@ from ._volume import (
     extract_volume,
     volume_statistics,
 )
-from ._weighting import weighting_landsea_fraction
+from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from dask.delayed import Delayed
 

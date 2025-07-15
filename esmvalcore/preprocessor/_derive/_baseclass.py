@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 from iris.cube import Cube, CubeList
 
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 
 class DerivedVariableBase:

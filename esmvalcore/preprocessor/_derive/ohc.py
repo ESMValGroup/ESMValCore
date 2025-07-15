@@ -5,7 +5,7 @@ from cf_units import Unit
 from iris import Constraint
 from iris.cube import Cube, CubeList
 
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
 

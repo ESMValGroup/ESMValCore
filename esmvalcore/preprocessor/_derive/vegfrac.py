@@ -6,7 +6,7 @@ from iris import NameConstraint
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._regrid import regrid
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
 
