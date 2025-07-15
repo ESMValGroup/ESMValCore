@@ -12,7 +12,7 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask.array as da
 import iris
@@ -79,11 +79,22 @@ _LON_MIN = 0.0
 _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
+NamedPointInterpolationScheme = Literal[
+    "linear",
+    "nearest",
+]
+
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
     "linear": Linear(extrapolation_mode="mask"),
     "nearest": Nearest(extrapolation_mode="mask"),
 }
+
+NamedHorizontalScheme = Literal[
+    "area_weighted",
+    "linear",
+    "nearest",
+]
 
 # Supported horizontal regridding schemes for regular grids (= rectilinear
 # grids; i.e., grids that can be described with 1D latitude and 1D longitude
@@ -119,8 +130,15 @@ HORIZONTAL_SCHEMES_UNSTRUCTURED = {
     "nearest": UnstructuredNearest(),
 }
 
+NamedVerticalScheme = Literal[
+    "linear",
+    "nearest",
+    "linear_extrapolate",
+    "nearest_extrapolate",
+]
+
 # Supported vertical interpolation schemes.
-VERTICAL_SCHEMES: tuple[str, ...] = (
+VERTICAL_SCHEMES: tuple[NamedVerticalScheme, ...] = (
     "linear",
     "nearest",
     "linear_extrapolate",
@@ -386,7 +404,11 @@ def _regional_stock_cube(spec: dict[str, Any]) -> Cube:
     return cube
 
 
-def extract_location(cube: Cube, location: str, scheme: str) -> Cube:
+def extract_location(
+    cube: Cube,
+    location: str,
+    scheme: NamedPointInterpolationScheme,
+) -> Cube:
     """Extract a point using a location name, with interpolation.
 
     Extracts a single location point from a cube, according
@@ -477,7 +499,7 @@ def extract_point(
     cube: Cube,
     latitude: ArrayLike,
     longitude: ArrayLike,
-    scheme: str,
+    scheme: NamedPointInterpolationScheme,
 ) -> Cube:
     """Extract a point, with interpolation.
 
@@ -604,7 +626,11 @@ def _get_target_grid_cube(
     return target_grid_cube
 
 
-def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
+def _load_scheme(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: NamedHorizontalScheme | dict[str, Any],
+):
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
 
@@ -637,7 +663,7 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     return loaded_scheme
 
 
-def _load_generic_scheme(scheme: dict):
+def _load_generic_scheme(scheme: dict[str, Any]):
     """Load generic regridding scheme."""
     scheme = dict(scheme)  # do not overwrite original scheme
 
@@ -677,7 +703,7 @@ _CACHED_REGRIDDERS: dict[tuple, dict] = {}
 def _get_regridder(
     src_cube: Cube,
     tgt_cube: Cube,
-    scheme: str | dict,
+    scheme: NamedHorizontalScheme | dict,
     cache_weights: bool,
 ):
     """Get regridder to actually perform regridding.
@@ -731,7 +757,7 @@ def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple[ArrayLike, ...]:
 def _get_name_and_shape_key(
     src_cube: Cube,
     tgt_cube: Cube,
-    scheme: str | dict,
+    scheme: NamedHorizontalScheme | dict,
 ) -> tuple[str, tuple[int, ...]]:
     """Get dict key from scheme name and coordinate shapes."""
     name = str(scheme)
@@ -743,7 +769,7 @@ def _get_name_and_shape_key(
 def regrid(
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
-    scheme: str | dict,
+    scheme: NamedHorizontalScheme | dict,
     lat_offset: bool = True,
     lon_offset: bool = True,
     cache_weights: bool = False,
@@ -888,7 +914,7 @@ def regrid(
 
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
-        scheme = scheme.lower()
+        scheme = scheme.lower()  # type: ignore
     regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
 
     # Rechunk and actually perform the regridding
@@ -1181,7 +1207,7 @@ def _preserve_fx_vars(cube: iris.cube.Cube, result: iris.cube.Cube) -> None:
                 add_ancillary_variable(result, ancillary_cube)
 
 
-def parse_vertical_scheme(scheme: str) -> tuple[str, str]:
+def parse_vertical_scheme(scheme: NamedVerticalScheme) -> tuple[str, str]:
     """Parse the scheme provided for level extraction.
 
     Parameters
@@ -1224,7 +1250,7 @@ def parse_vertical_scheme(scheme: str) -> tuple[str, str]:
 def extract_levels(
     cube: iris.cube.Cube,
     levels: np.typing.ArrayLike | da.Array,
-    scheme: str,
+    scheme: NamedVerticalScheme,
     coordinate: str | None = None,
     rtol: float = 1e-7,
     atol: float | None = None,
@@ -1422,7 +1448,7 @@ def get_reference_levels(dataset: Dataset) -> list[float]:
 def extract_coordinate_points(
     cube: Cube,
     definition: dict[str, ArrayLike],
-    scheme: str,
+    scheme: NamedPointInterpolationScheme,
 ) -> Cube:
     """Extract points from any coordinate with interpolation.
 
