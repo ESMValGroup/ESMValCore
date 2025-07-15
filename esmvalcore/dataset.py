@@ -323,8 +323,9 @@ class Dataset:
                 else:
                     logger.debug(
                         "Not all necessary input variables to derive '%s' are "
-                        "available for dataset %s",
+                        "available for %s with facets %s",
                         self["short_name"],
+                        new_ds.summary(shorten=True),
                         updated_facets,
                     )
 
