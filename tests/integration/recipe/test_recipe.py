@@ -131,6 +131,11 @@ def patched_tas_derivation(monkeypatch):
         "get_required",
         get_required,
     )
+    monkeypatch.setattr(
+        esmvalcore.dataset,
+        "get_required",
+        get_required,
+    )
 
 
 DEFAULT_DOCUMENTATION = dedent("""

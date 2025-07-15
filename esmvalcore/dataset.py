@@ -657,15 +657,29 @@ class Dataset:
         """Return a dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
+    @staticmethod
+    def _get_version(dataset: Dataset) -> str | list[str]:
+        """Get available version(s) of dataset."""
+        versions: set[str] = set()
+        for file in dataset.files:
+            if "version" in file.facets:
+                versions.add(str(file.facets["version"]))
+        return versions.pop() if len(versions) == 1 else sorted(versions)
+
     def set_version(self) -> None:
         """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
-        for file in self.files:
-            if "version" in file.facets:
-                versions.add(file.facets["version"])  # type: ignore
+        for input_dataset in self.input_datasets:
+            version = self._get_version(input_dataset)
+            if version:
+                if isinstance(version, list):
+                    versions.update(version)
+                else:
+                    versions.add(version)
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         if version:
             self.set_facet("version", version)
+
         for supplementary_ds in self.supplementaries:
             supplementary_ds.set_version()
 

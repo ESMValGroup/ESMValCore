@@ -598,23 +598,6 @@ def _allow_skipping(dataset: Dataset) -> bool:
     )
 
 
-def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
-    """Set the 'version' facet based on derivation input datasets."""
-    versions = set()
-    for in_dataset in input_datasets:
-        in_dataset.set_version()
-        if version := in_dataset.facets.get("version"):
-            if isinstance(version, list):
-                versions.update(version)
-            else:
-                versions.add(version)
-    if versions:
-        version = versions.pop() if len(versions) == 1 else sorted(versions)
-        dataset.set_facet("version", version)
-    for supplementary_ds in dataset.supplementaries:
-        supplementary_ds.set_version()
-
-
 def _get_preprocessor_products(
     datasets: list[Dataset],
     profile: dict[str, Any],
@@ -649,7 +632,7 @@ def _get_preprocessor_products(
             else:
                 missing_vars.update(missing)
             continue
-        _set_version(dataset, input_datasets)
+        dataset.set_version()
         USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)

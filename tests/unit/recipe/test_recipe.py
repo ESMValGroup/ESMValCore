@@ -912,28 +912,6 @@ def test_get_default_settings(mocker):
     }
 
 
-def test_set_version(mocker):
-    dataset = Dataset(short_name="tas")
-    supplementary = Dataset(short_name="areacella")
-    dataset.supplementaries = [supplementary]
-
-    input_dataset = Dataset(short_name="tas")
-    file1 = mocker.Mock()
-    file1.facets = {"version": "v1"}
-    file2 = mocker.Mock()
-    file2.facets = {"version": "v2"}
-    input_dataset.files = [file1, file2]
-
-    file3 = mocker.Mock()
-    file3.facets = {"version": "v3"}
-    supplementary.files = [file3]
-
-    _recipe._set_version(dataset, [input_dataset])
-    print(dataset)
-    assert dataset.facets["version"] == ["v1", "v2"]
-    assert dataset.supplementaries[0].facets["version"] == "v3"
-
-
 def test_extract_preprocessor_order():
     profile = {
         "custom_order": True,

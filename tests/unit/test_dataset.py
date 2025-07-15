@@ -1609,7 +1609,7 @@ def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
     assert tas._file_globs == mock.sentinel.file_globs
 
 
-def test_set_version():
+def test_set_version_non_derived_var():
     dataset = Dataset(short_name="tas")
     dataset.add_supplementary(short_name="areacella")
     file_v1 = esmvalcore.local.LocalFile("/path/to/v1/tas.nc")
@@ -1623,6 +1623,53 @@ def test_set_version():
     dataset.set_version()
     assert dataset.facets["version"] == ["v1", "v2"]
     assert dataset.supplementaries[0].facets["version"] == "v3"
+
+
+OBS6_SAT_FACETS = {
+    "project": "OBS6",
+    "dataset": "SAT",
+    "mip": "Amon",
+    "tier": 2,
+    "type": "sat",
+    "timerange": "1980/2000",
+}
+
+
+def test_set_version_derive_var(monkeypatch):
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.add_supplementary(short_name="areacella")
+    dataset.files = []
+    areacella_file = esmvalcore.local.LocalFile("/path/to/areacella.nc")
+    areacella_file.facets["version"] = "v4"
+    dataset.supplementaries[0].files = [areacella_file]
+
+    def _get_input_datasets():
+        rlut_file = esmvalcore.local.LocalFile("/path/to/rlut.nc")
+        rlut_file.facets["version"] = "v1"
+        rlut_dataset = Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlut",
+            derive=False,
+        )
+        rlut_dataset.files = [rlut_file]
+        rlutcs_file_1 = esmvalcore.local.LocalFile("/path/to/rlutcs_1.nc")
+        rlutcs_file_2 = esmvalcore.local.LocalFile("/path/to/rlutcs_2.nc")
+        rlutcs_file_1.facets["version"] = "v2"
+        rlutcs_file_2.facets["version"] = "v3"
+        rlutcs_dataset = Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlutcs",
+            derive=False,
+        )
+        rlutcs_dataset.files = [rlutcs_file_1, rlutcs_file_2]
+        return [rlut_dataset, rlutcs_dataset]
+
+    monkeypatch.setattr(dataset, "_get_input_datasets", _get_input_datasets)
+
+    dataset.set_version()
+
+    assert dataset.facets["version"] == ["v1", "v2", "v3"]
+    assert dataset.supplementaries[0].facets["version"] == "v4"
 
 
 @pytest.mark.parametrize("timerange", ["*", "185001/*", "*/185112"])
@@ -2135,16 +2182,6 @@ def test_get_extra_facets_native6():
         "grib_id": "130",
         "tres": "1M",
     }
-
-
-OBS6_SAT_FACETS = {
-    "project": "OBS6",
-    "dataset": "SAT",
-    "mip": "Amon",
-    "tier": 2,
-    "type": "sat",
-    "timerange": "1980/2000",
-}
 
 
 def test_derivation_necessary_no_derivation():
