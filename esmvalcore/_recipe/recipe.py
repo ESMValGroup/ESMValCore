@@ -51,7 +51,6 @@ from esmvalcore.preprocessor._shared import _group_products
 from . import check
 from .from_datasets import datasets_to_recipe
 from .to_datasets import (
-    _derive_needed,
     _get_input_datasets,
     _representative_datasets,
 )
@@ -231,7 +230,7 @@ def _get_default_settings(dataset: Dataset) -> dict[str, Any]:
 
     settings = {}
 
-    if _derive_needed(dataset):
+    if dataset._derivation_necessary():  # noqa: SLF001 (will be replaced soon)
         settings["derive"] = {
             "short_name": facets["short_name"],
             "standard_name": facets["standard_name"],
