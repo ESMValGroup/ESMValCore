@@ -190,6 +190,12 @@ class Dataset:
         # are found
         ds_copy = self.copy()
         ds_copy.supplementaries = []
+
+        # Avoid potential errors from missing data during timerange glob
+        # expansion
+        if _isglob(ds_copy.facets.get("timerange", "")):
+            ds_copy.facets.pop("timerange", None)
+
         return not ds_copy.files
 
     def _get_input_datasets(self) -> list[Dataset]:

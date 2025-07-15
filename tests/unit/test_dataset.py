@@ -2835,6 +2835,15 @@ def test_derivation_necessary_no_force_derivation_no_files():
     assert dataset._derivation_necessary() is True
 
 
+def test_derivation_necessary_no_force_derivation_no_files_glob():
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "timerange": "*"},
+        short_name="lwcre",
+        derive=True,
+    )
+    assert dataset._derivation_necessary() is True
+
+
 def test_derivation_necessary_no_force_derivation(tmp_path, session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.session = session
