@@ -427,32 +427,31 @@ def _get_common_attributes(
         if "timerange" not in product.attributes:
             continue
         timerange = product.attributes["timerange"]
-        start: int | str
-        end: int | str
         start, end = _parse_period(timerange)
         if "timerange" not in attributes:
             attributes["timerange"] = _dates_to_timerange(start, end)
         else:
-            start_date: int | str
-            end_date: int | str
             start_date, end_date = _parse_period(attributes["timerange"])
-            start_date, start = _truncate_dates(start_date, start)
-            end_date, end = _truncate_dates(end_date, end)
+            start_date_int, start_int = _truncate_dates(start_date, start)
+            end_date_int, end_int = _truncate_dates(end_date, end)
 
             # If "span=overlap", always use the latest start_date and the
             # earliest end_date
             if span == "overlap":
-                start_date = max([start, start_date])
-                end_date = min([end, end_date])
+                start_date_int = max([start_int, start_date_int])
+                end_date_int = min([end_int, end_date_int])
 
             # If "span=full", always use the earliest start_date and the latest
             # end_date. Note: span can only take the values "overlap" or "full"
             # (this is checked earlier).
             else:
-                start_date = min([start, start_date])
-                end_date = max([end, end_date])
+                start_date_int = min([start_int, start_date_int])
+                end_date_int = max([end_int, end_date_int])
 
-            attributes["timerange"] = _dates_to_timerange(start_date, end_date)
+            attributes["timerange"] = _dates_to_timerange(
+                start_date_int,
+                end_date_int,
+            )
 
     # Ensure that attributes start_year and end_year are always available if at
     # least one of the input datasets defines it
