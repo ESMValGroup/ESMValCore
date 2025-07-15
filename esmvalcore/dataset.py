@@ -679,7 +679,7 @@ class Dataset:
 
         return txt
 
-    def __getitem__(self, key: Any) -> FacetValue:
+    def __getitem__(self, key: str) -> FacetValue:
         """Get a facet value."""
         return self.facets[key]
 
