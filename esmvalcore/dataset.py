@@ -202,8 +202,8 @@ class Dataset:
         """Get input datasets."""
         input_datasets: list[Dataset] = []
         required_vars_facets = get_required(
-            self.facets["short_name"],
-            self.facets["project"],
+            self.facets["short_name"],  # type: ignore
+            self.facets["project"],  # type: ignore
         )
 
         for required_facets in required_vars_facets:
@@ -697,7 +697,7 @@ class Dataset:
 
     def __setitem__(self, key: str, value: FacetValue) -> None:
         """Set a facet value."""
-        self.set_facet(key, value, persist=False)
+        self.facets[key] = value
 
     def set_facet(
         self,
@@ -800,16 +800,9 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(
-        patterns: Iterable[FacetValue],
-        name: FacetValue,
-    ) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
-        return [
-            str(pat)
-            for pat in patterns
-            if fnmatch.fnmatchcase(str(name), str(pat))
-        ]
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
     def _get_extra_facets(self) -> dict[str, Any]:
         """Get extra facets of dataset."""

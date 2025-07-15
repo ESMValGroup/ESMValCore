@@ -10,7 +10,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 from esmvalcore.preprocessor._units import convert_units
-from esmvalcore.typing import Facets, FacetValue
+from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ ALL_DERIVED_VARIABLES: dict[str, type[DerivedVariableBase]] = (
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name: FacetValue, project: FacetValue) -> list[Facets]:
+def get_required(short_name: str, project: str) -> list[Facets]:
     """Return all required variables for derivation.
 
     Get all information (at least ``short_name``) required for derivation.
@@ -59,7 +59,6 @@ def get_required(short_name: FacetValue, project: FacetValue) -> list[Facets]:
         List of facets (including at least the key ``short_name``).
 
     """
-    short_name = str(short_name)
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         msg = (
             f"Cannot derive variable '{short_name}': no derivation script "

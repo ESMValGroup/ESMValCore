@@ -1543,7 +1543,7 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + ".xml")
 
 
-def test_invalid_diagnostcic_ancestor(
+def test_invalid_diagnostic_ancestor(
     tmp_path,
     patched_datafinder,
     session,

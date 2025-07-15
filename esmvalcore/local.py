@@ -252,7 +252,9 @@ def _parse_period(timerange: FacetValue) -> tuple[str, str]:
     reference point in order to compute the start and end dates needed
     for file selection.
     """
-    timerange = str(timerange)
+    if not isinstance(timerange, str):
+        msg = f"`timerange` should be a `str`, got {type(timerange)}"
+        raise TypeError(msg)
     start_date: str | None = None
     end_date: str | None = None
     time_format = None
@@ -324,7 +326,7 @@ def _truncate_dates(date: str, file_date: str) -> tuple[int, int]:
 
 
 def _select_files(
-    filenames: list[LocalFile],
+    filenames: Iterable[LocalFile],
     timerange: FacetValue,
 ) -> list[LocalFile]:
     """Select files containing data between a given timerange.
@@ -335,24 +337,22 @@ def _select_files(
     Otherwise, the file selection occurs taking into account the time
     resolution of the file.
     """
-    timerange = str(timerange)
+    if not isinstance(timerange, str):
+        msg = f"`timerange` should be a `str`, got {type(timerange)}"
+        raise TypeError(msg)
     if "*" in timerange:
         # TODO: support * combined with a period
-        return filenames
+        return list(filenames)
 
-    selection = []
+    selection: list[LocalFile] = []
 
     for filename in filenames:
-        start: int | str
-        end: int | str
-        start_date: int | str
-        end_date: int | str
         start_date, end_date = _parse_period(timerange)
         start, end = _get_start_end_date(filename)
 
-        start_date, end = _truncate_dates(start_date, end)
-        end_date, start = _truncate_dates(end_date, start)
-        if start <= end_date and end >= start_date:
+        start_date_int, end_int = _truncate_dates(start_date, end)
+        end_date_int, start_int = _truncate_dates(end_date, start)
+        if start_int <= end_date_int and end_int >= start_date_int:
             selection.append(filename)
 
     return selection

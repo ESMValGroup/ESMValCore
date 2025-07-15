@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
 from numbers import Number
 from typing import TYPE_CHECKING, Any
@@ -51,7 +51,7 @@ def _facet_to_str(facet_value: FacetValue | None) -> str:
     return str(facet_value)
 
 
-def _set_alias(variables: list[list[Dataset]]) -> None:
+def _set_alias(variables: Sequence[Sequence[Dataset]]) -> None:
     """Add unique alias for datasets.
 
     Generates a unique alias for each dataset that will be shared by all

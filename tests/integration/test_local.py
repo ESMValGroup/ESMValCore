@@ -11,6 +11,7 @@ from esmvalcore.config import CFG
 from esmvalcore.local import (
     LocalFile,
     _get_output_file,
+    _parse_period,
     _select_drs,
     find_files,
 )
@@ -138,3 +139,9 @@ def test_select_invalid_drs_structure():
     )
     with pytest.raises(KeyError, match=msg):
         _select_drs("input_dir", "CMIP6", "_INVALID_STRUCTURE_")
+
+
+def test_parse_period_invalid_timerange_type():
+    msg = r"`timerange` should be a `str`, got <class 'int'>"
+    with pytest.raises(TypeError, match=msg):
+        _parse_period(1)
