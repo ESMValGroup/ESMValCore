@@ -273,12 +273,73 @@ class Dataset:
 
         return dataset
 
-    def _get_available_datasets(self) -> Iterator[Dataset]:
+    def _get_all_available_datasets(self) -> Iterator[Dataset]:  # noqa: C901
         """Yield datasets based on the available files.
 
         This function requires that self.facets['mip'] is not a glob pattern.
+
+        Does take variable derivation into account, i.e., datasets available
+        through variable derivation are returned.
+
         """
-        dataset_template = self.copy()
+        datasets_found = False
+
+        # First, if no forced derivation is requested, search for datasets
+        # based on files from self
+        if not self._is_force_derived():
+            for dataset in self._get_available_datasets(self):
+                datasets_found = True
+                yield dataset
+
+        # If forced derivation is requested or no datasets based on files from
+        # self have been found, search for datasets based on files from input
+        # datasets
+        if self._is_force_derived() or not datasets_found:
+            all_datasets: list[list[tuple[dict, Dataset]]] = []
+            for input_dataset in self._get_input_datasets():
+                all_datasets.append([])
+                for expanded_ds in self._get_available_datasets(
+                    input_dataset,
+                ):
+                    updated_facets = {}
+                    for key, value in self.facets.items():
+                        if _isglob(value):
+                            if key in expanded_ds.facets and not _isglob(
+                                expanded_ds[key],
+                            ):
+                                updated_facets[key] = expanded_ds.facets[key]
+                    new_ds = self.copy()
+                    new_ds.facets.update(updated_facets)
+                    new_ds.supplementaries = expanded_ds.supplementaries
+
+                    all_datasets[-1].append((updated_facets, new_ds))
+
+            # Only consider those datasets that contain all input variables
+            # necessary for derivation
+            for updated_facets, new_ds in all_datasets[0]:
+                other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
+                if all(updated_facets in facets for facets in other_facets):
+                    yield new_ds
+                else:
+                    logger.debug(
+                        "Not all necessary input variables to derive '%s' are "
+                        "available for dataset %s",
+                        self["short_name"],
+                        updated_facets,
+                    )
+
+    def _get_available_datasets(self, dataset: Dataset) -> Iterator[Dataset]:
+        """Yield datasets based on the available files.
+
+        This function requires that self.facets['mip'] is not a glob pattern.
+
+        Does not take variable derivation into account, i.e., datasets
+        potentially available through variable derivation are ignored. To
+        consider derived variables properly, use the function
+        :func:`_get_all_available_datasets`.
+
+        """
+        dataset_template = dataset.copy()
         dataset_template.supplementaries = []
         if _isglob(dataset_template.facets.get("timerange")):
             # Remove wildcard `timerange` facet, because data finding cannot
@@ -289,31 +350,31 @@ class Dataset:
         partially_defined = []
         expanded = False
         for file in dataset_template.files:
-            dataset = self._file_to_dataset(file)
+            new_dataset = self._file_to_dataset(file)
 
             # Filter out identical datasets
             facetset = frozenset(
                 (f, frozenset(v) if isinstance(v, list) else v)
-                for f, v in dataset.facets.items()
+                for f, v in new_dataset.facets.items()
             )
             if facetset not in seen:
                 seen.add(facetset)
                 if any(
                     _isglob(v)
-                    for f, v in dataset.facets.items()
+                    for f, v in new_dataset.facets.items()
                     if f != "timerange"
                 ):
-                    partially_defined.append((dataset, file))
+                    partially_defined.append((new_dataset, file))
                 else:
-                    dataset._update_timerange()  # noqa: SLF001
-                    dataset._supplementaries_from_files()  # noqa: SLF001
+                    new_dataset._update_timerange()  # noqa: SLF001
+                    new_dataset._supplementaries_from_files()  # noqa: SLF001
                     expanded = True
-                    yield dataset
+                    yield new_dataset
 
         # Only yield datasets with globs if there is no better alternative
-        for dataset, file in partially_defined:
+        for new_dataset, file in partially_defined:
             msg = (
-                f"{dataset} with unexpanded wildcards, created from file "
+                f"{new_dataset} with unexpanded wildcards, created from file "
                 f"{file} with facets {file.facets}. Are the missing facets "
                 "in the path to the file?"
                 if isinstance(file, local.LocalFile)
@@ -327,7 +388,7 @@ class Dataset:
                     "because it still contains wildcards.",
                     msg,
                 )
-                yield dataset
+                yield new_dataset
 
     def from_files(self) -> Iterator[Dataset]:
         """Create datasets based on the available files.
@@ -378,7 +439,7 @@ class Dataset:
 
             for mip in mips:
                 dataset_template = self.copy(mip=mip)
-                for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
+                for dataset in dataset_template._get_all_available_datasets():  # noqa: SLF001
                     expanded = True
                     yield dataset
 
