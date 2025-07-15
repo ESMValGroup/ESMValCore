@@ -50,7 +50,6 @@ from esmvalcore.preprocessor.regrid_schemes import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from iris.coords import Coord
     from numpy.typing import ArrayLike
 
     from esmvalcore.dataset import Dataset
@@ -391,7 +390,10 @@ def _regional_stock_cube(spec: dict[str, Any]) -> Cube:
         circular=True,
     )
 
-    def add_bounds_from_step(coord: Coord, step: float) -> np.ndarray:
+    def add_bounds_from_step(
+        coord: iris.coords.DimCoord | iris.coords.AuxCoord,
+        step: float,
+    ) -> np.ndarray:
         """Calculate bounds from the given step."""
         bound = step / 2
         points = coord.points
