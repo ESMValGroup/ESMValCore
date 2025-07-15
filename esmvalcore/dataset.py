@@ -133,7 +133,7 @@ class Dataset:
         self._session: Session | None = None
         self._files: Sequence[File] | None = None
         self._file_globs: Sequence[Path] | None = None
-        self._input_datasets: list[Dataset] | None = None
+        self._input_datasets: list[Dataset] = []
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -230,7 +230,7 @@ class Dataset:
         or no files for the dataset itself are available.
 
         """
-        if self._input_datasets is not None:
+        if self._input_datasets:
             return self._input_datasets
 
         if not self._derivation_necessary():
