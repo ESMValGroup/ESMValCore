@@ -965,3 +965,23 @@ def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
             / "ar6.shp"
         )
         assert settings["extract_shape"]["shapefile"] == ar6_file
+
+
+def test_fix_cmip5_fx_ensemble(monkeypatch):
+    def find_files(self):
+        if self.facets["ensemble"] == "r0i0p0":
+            self._files = ["file1.nc"]
+
+    monkeypatch.setattr(Dataset, "find_files", find_files)
+
+    dataset = Dataset(
+        dataset="dataset1",
+        short_name="orog",
+        mip="fx",
+        project="CMIP5",
+        ensemble="r1i1p1",
+    )
+
+    _recipe._fix_cmip5_fx_ensemble(dataset)
+
+    assert dataset["ensemble"] == "r0i0p0"

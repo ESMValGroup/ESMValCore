@@ -188,28 +188,6 @@ def _merge_supplementary_dicts(
     return list(merged.values())
 
 
-def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
-    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
-    if (
-        dataset.facets.get("project") == "CMIP5"
-        and dataset.facets.get("mip") == "fx"
-        and dataset.facets.get("ensemble") != "r0i0p0"
-        and not dataset.files
-    ):
-        original_ensemble = dataset["ensemble"]
-        copy = dataset.copy()
-        copy.facets["ensemble"] = "r0i0p0"
-        if copy.files:
-            dataset.facets["ensemble"] = "r0i0p0"
-            logger.info(
-                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
-                original_ensemble,
-                dataset["ensemble"],
-                dataset.summary(shorten=True),
-            )
-            dataset.find_files()
-
-
 def _get_supplementary_short_names(
     facets: Facets,
     step: str,
@@ -534,7 +512,6 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         }
         input_dataset.facets.update(input_facets)
         input_dataset.augment_facets()
-        _fix_cmip5_fx_ensemble(input_dataset)
         if input_facets.get("optional") and not input_dataset.files:
             logger.info(
                 "Skipping: no data found for %s which is marked as 'optional'",

@@ -597,6 +597,28 @@ def _allow_skipping(dataset: Dataset) -> bool:
     )
 
 
+def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
+    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
+    if (
+        dataset.facets.get("project") == "CMIP5"
+        and dataset.facets.get("mip") == "fx"
+        and dataset.facets.get("ensemble") != "r0i0p0"
+        and not dataset.files
+    ):
+        original_ensemble = dataset["ensemble"]
+        copy = dataset.copy()
+        copy.facets["ensemble"] = "r0i0p0"
+        if copy.files:
+            dataset.facets["ensemble"] = "r0i0p0"
+            logger.info(
+                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                original_ensemble,
+                dataset["ensemble"],
+                dataset.summary(shorten=True),
+            )
+            dataset.find_files()
+
+
 def _get_preprocessor_products(
     datasets: list[Dataset],
     profile: dict[str, Any],
@@ -620,6 +642,7 @@ def _get_preprocessor_products(
         settings = _get_default_settings(dataset)
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
+        _fix_cmip5_fx_ensemble(dataset)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
