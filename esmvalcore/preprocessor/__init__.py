@@ -364,10 +364,10 @@ def _get_multi_model_settings(
 
 def _run_preproc_function(
     function: Callable,
-    items: Any,
+    items: PreprocessorItem | Iterable[PreprocessorItem],
     kwargs: Any,
     input_files: Sequence[File] | None = None,
-) -> Any:
+) -> PreprocessorItem | Iterable[PreprocessorItem]:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
         [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()],
@@ -428,13 +428,13 @@ def _run_preproc_function(
 
 
 def preprocess(
-    items: Sequence[PreprocessorFile | Cube | str | Path],
+    items: Sequence[PreprocessorItem],
     step: str,
     input_files: list[File] | None = None,
     output_file: Path | None = None,
     debug: bool = False,
     **settings: Any,
-) -> list[PreprocessorFile | Cube | str | Path]:
+) -> list[PreprocessorItem]:
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -654,6 +654,9 @@ class PreprocessorFile(TrackedFile):
                 identifier.append(attribute)
 
         return "_".join(identifier)
+
+
+PreprocessorItem = PreprocessorFile | Cube | str | Path
 
 
 def _apply_multimodel(
