@@ -324,7 +324,7 @@ def _truncate_dates(date: str, file_date: str) -> tuple[int, int]:
 
 
 def _select_files(
-    filenames: list[LocalFile],
+    filenames: Iterable[LocalFile],
     timerange: FacetValue,
 ) -> list[LocalFile]:
     """Select files containing data between a given timerange.

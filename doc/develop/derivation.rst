@@ -26,7 +26,7 @@ A typical example looks like this:
        """Derivation of variable `dummy`."""
 
        @staticmethod
-       def required(project: FacetValue) -> list[Facets]:
+       def required(project: str) -> list[Facets]:
            """Declare the variables needed for derivation."""
            mip = "fx"
            if project == "CMIP6":

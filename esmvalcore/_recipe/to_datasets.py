@@ -52,7 +52,7 @@ def _facet_to_str(facet_value: FacetValue | None) -> str:
     return str(facet_value)
 
 
-def _set_alias(variables: list[list[Dataset]]) -> None:
+def _set_alias(variables: Sequence[Sequence[Dataset]]) -> None:
     """Add unique alias for datasets.
 
     Generates a unique alias for each dataset that will be shared by all
@@ -584,7 +584,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
             datasets.append(input_dataset)
 
     # Check timeranges of available input data.
-    timeranges: set[FacetValue] = set()
+    timeranges: set[str] = set()
     for input_dataset in datasets:
         if "timerange" in input_dataset.facets:
             timeranges.add(input_dataset.facets["timerange"])

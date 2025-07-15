@@ -41,7 +41,7 @@ ALL_DERIVED_VARIABLES: dict[str, type[DerivedVariableBase]] = (
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name: FacetValue, project: FacetValue) -> list[Facets]:
+def get_required(short_name: str, project: str) -> list[Facets]:
     """Return all required variables for derivation.
 
     Get all information (at least ``short_name``) required for derivation.

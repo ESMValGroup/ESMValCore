@@ -364,7 +364,7 @@ def _run_preproc_function(
     function: Callable,
     items: Any,
     kwargs: Any,
-    input_files: list[File] | None = None,
+    input_files: Sequence[File] | None = None,
 ) -> Any:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
@@ -426,7 +426,7 @@ def _run_preproc_function(
 
 
 def preprocess(
-    items: list[PreprocessorFile | Cube | str | Path],
+    items: Sequence[PreprocessorFile | Cube | str | Path],
     step: str,
     input_files: list[File] | None = None,
     output_file: Path | None = None,
@@ -484,7 +484,7 @@ def preprocess(
 
 def get_step_blocks(
     steps: Iterable[str],
-    order: list[str],
+    order: Sequence[str],
 ) -> list[list[str]]:
     """Group steps into execution blocks."""
     blocks: list[list[str]] = []

@@ -104,7 +104,7 @@ def _special_name_to_dataset(facets: Facets, special_name: str) -> str:
 
 def _update_target_levels(
     dataset: Dataset,
-    datasets: list[Dataset],
+    datasets: Sequence[Dataset],
     settings: dict[str, Any],
 ) -> None:
     """Replace the target levels dataset name with a filename if needed."""
@@ -142,7 +142,7 @@ def _update_target_levels(
 
 def _update_target_grid(
     dataset: Dataset,
-    datasets: list[Dataset],
+    datasets: Sequence[Dataset],
     settings: dict[str, Any],
 ) -> None:
     """Replace the target grid dataset name with a filename if needed."""
@@ -178,7 +178,7 @@ def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
         settings["regrid_time"]["frequency"] = dataset.facets["frequency"]
 
 
-def _select_dataset(dataset_name: str, datasets: list[Dataset]) -> Dataset:
+def _select_dataset(dataset_name: str, datasets: Sequence[Dataset]) -> Dataset:
     for dataset in datasets:
         if dataset.facets["dataset"] == dataset_name:
             return dataset
@@ -192,7 +192,7 @@ def _select_dataset(dataset_name: str, datasets: list[Dataset]) -> Dataset:
 
 
 def _limit_datasets(
-    datasets: list[Dataset],
+    datasets: Sequence[Dataset],
     profile: dict[str, Any],
 ) -> list[Dataset]:
     """Try to limit the number of datasets to max_datasets."""
@@ -321,7 +321,7 @@ def _add_to_download_list(dataset: Dataset) -> None:
             dataset.files[i] = file.local_file(dataset.session["download_dir"])
 
 
-def _schedule_for_download(datasets: list[Dataset]) -> None:
+def _schedule_for_download(datasets: Iterable[Dataset]) -> None:
     """Schedule files for download."""
     for dataset in datasets:
         _add_to_download_list(dataset)
@@ -618,7 +618,7 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
 def _get_preprocessor_products(
     datasets: list[Dataset],
     profile: dict[str, Any],
-    order: tuple[str, ...],
+    order: Sequence[str, ...],
     name: str,
 ) -> set[PreprocessorFile]:
     """Get preprocessor product definitions for a set of datasets.
@@ -935,7 +935,7 @@ class Recipe:
             )
 
     @staticmethod
-    def _need_ncl(raw_diagnostics: dict[str, Any]) -> bool:
+    def _need_ncl(raw_diagnostics: dict[str, dict[str, Any]]) -> bool:
         if not raw_diagnostics:
             return False
         for diagnostic in raw_diagnostics.values():
@@ -989,8 +989,8 @@ class Recipe:
     def _initialize_scripts(
         self,
         diagnostic_name: str,
-        raw_scripts: dict[str, Any],
-        variable_names: tuple[str, Any],
+        raw_scripts: dict[str, dict[str, Any]],
+        variable_names: Sequence[str],
     ) -> dict[str, Any]:
         """Define script in diagnostic."""
         if not raw_scripts:
@@ -1042,7 +1042,7 @@ class Recipe:
 
     def _resolve_diagnostic_ancestors(
         self,
-        tasks: Iterable[PreprocessingTask],
+        tasks: Iterable[BaseTask],
     ) -> None:
         """Resolve diagnostic ancestors."""
         tasks = {t.name: t for t in tasks}
@@ -1117,7 +1117,7 @@ class Recipe:
     def _create_diagnostic_tasks(
         self,
         diagnostic_name: str,
-        diagnostic: dict[str, Any],
+        diagnostic: Diagnostic,
         tasknames_to_run: set[str],
     ) -> list[BaseTask]:
         """Create diagnostic tasks."""

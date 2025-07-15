@@ -12,7 +12,7 @@ class DerivedVariableBase:
 
     @staticmethod
     @abstractmethod
-    def required(project: FacetValue) -> list[Facets]:
+    def required(project: str) -> list[Facets]:
         """Return required variables for derivation.
 
         This method needs to be overridden in the child class belonging to the
