@@ -2202,10 +2202,10 @@ def test_derivation_necessary_no_force_derivation(tmp_path, session):
 
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
-    lwcre = esmvalcore.local.LocalFile(
+    lwcre_file = esmvalcore.local.LocalFile(
         input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
     )
-    lwcre.touch()
+    lwcre_file.touch()
 
     assert dataset._derivation_necessary() is False
 
