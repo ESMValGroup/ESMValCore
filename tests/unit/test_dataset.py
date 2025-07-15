@@ -1182,6 +1182,22 @@ def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_no_files_glob(session):
+    dataset = Dataset(**{**OBS6_SAT_FACETS, "type": "*"}, short_name="tas")
+    datasets = list(dataset.from_files())
+    assert datasets == [dataset]
+
+
+def test_from_files_derived_no_files_glob(session):
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "type": "*"},
+        short_name="lwcre",
+        derive=True,
+    )
+    datasets = list(dataset.from_files())
+    assert datasets == [dataset]
+
+
 @pytest.fixture
 def lwcre_file(tmp_path):
     input_dir = tmp_path / "Tier2" / "SAT"

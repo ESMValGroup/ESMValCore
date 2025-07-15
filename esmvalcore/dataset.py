@@ -290,12 +290,16 @@ class Dataset:
         """
         datasets_found = False
 
-        # First, if no forced derivation is requested, search for datasets
-        # based on files from self
+        # If no forced derivation is requested, search for datasets based on
+        # files from self
         if not self._is_force_derived():
             for dataset in self._get_available_datasets(self):
                 datasets_found = True
                 yield dataset
+
+        # For variables that cannot be derived, we are done here
+        if not self._is_derived():
+            return
 
         # If forced derivation is requested or no datasets based on files from
         # self have been found, search for datasets based on files from input
