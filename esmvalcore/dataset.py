@@ -33,6 +33,7 @@ from esmvalcore.local import (
     _get_start_end_date,
 )
 from esmvalcore.preprocessor import preprocess
+from esmvalcore.preprocessor._derive import get_required
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -132,6 +133,7 @@ class Dataset:
         self._session: Session | None = None
         self._files: Sequence[File] | None = None
         self._file_globs: Sequence[Path] | None = None
+        self._input_datasets: list[Dataset] | None = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -193,6 +195,51 @@ class Dataset:
         ds_copy = self.copy()
         ds_copy.supplementaries = []
         return not ds_copy.files
+
+    def _get_input_datasets(self) -> list[Dataset]:
+        """Get input datasets."""
+        input_datasets: list[Dataset] = []
+        required_vars_facets = get_required(
+            self.facets["short_name"],
+            self.facets["project"],
+        )
+
+        for required_facets in required_vars_facets:
+            input_dataset = self._copy(derive=False, force_derivation=False)
+            keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
+            input_dataset.facets = {
+                k: v for k, v in input_dataset.facets.items() if k in keep
+            }
+            input_dataset.facets.update(required_facets)
+            input_dataset.augment_facets()
+            input_datasets.append(input_dataset)
+
+        return input_datasets
+
+    @property
+    def input_datasets(self) -> list[Dataset]:
+        """Get input datasets.
+
+        For non-derived variables (i.e., those with facet ``derive=False``),
+        this will simply return the dataset itself in a list.
+
+        For derived variables (i.e., those with facet ``derive=True``), this
+        will return the datasets required for derivation if derivation is
+        necessary, and the dataset itself if derivation is not necessary.
+        Derivation is necessary if the facet ``force_derivation=True`` is set
+        or no files for the dataset itself are available.
+
+        """
+        if self._input_datasets is not None:
+            return self._input_datasets
+
+        if not self._derivation_necessary():
+            input_datasets = [self]
+        else:
+            input_datasets = self._get_input_datasets()
+
+        self._input_datasets = input_datasets
+        return input_datasets
 
     def _file_to_dataset(
         self,

@@ -2137,74 +2137,57 @@ def test_get_extra_facets_native6():
     }
 
 
+OBS6_SAT_FACETS = {
+    "project": "OBS6",
+    "dataset": "SAT",
+    "mip": "Amon",
+    "tier": 2,
+    "type": "sat",
+    "timerange": "1980/2000",
+}
+
+
 def test_derivation_necessary_no_derivation():
-    dataset = Dataset(
-        project="OBS6",
-        dataset="SAT",
-        mip="Amon",
-        short_name="tas",
-        tier=2,
-        type="sat",
-        timerange="1980/2000",
-    )
-    assert not dataset._derivation_necessary()
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._derivation_necessary() is False
 
 
 def test_derivation_necessary_no_force_derivation_no_files():
-    dataset = Dataset(
-        project="OBS6",
-        dataset="SAT",
-        mip="Amon",
-        short_name="asr",
-        tier=2,
-        type="sat",
-        timerange="1980/2000",
-        derive=True,
-    )
-    assert dataset._derivation_necessary()
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._derivation_necessary() is True
 
 
 def test_derivation_necessary_no_force_derivation(tmp_path, session):
-    dataset = Dataset(
-        project="OBS6",
-        dataset="SAT",
-        mip="Amon",
-        short_name="asr",
-        tier=2,
-        type="sat",
-        timerange="1980/2000",
-        derive=True,
-    )
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.session = session
+
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
-    asr_file = esmvalcore.local.LocalFile(
-        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    lwcre = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
     )
-    asr_file.touch()
-    assert not dataset._derivation_necessary()
+    lwcre.touch()
+
+    assert dataset._derivation_necessary() is False
 
 
 def test_derivation_necessary_force_derivation(tmp_path, session):
     dataset = Dataset(
-        project="CMIP6",
-        dataset="CanESM5",
-        mip="Amon",
+        **OBS6_SAT_FACETS,
         short_name="lwcre",
-        exp="historical",
-        grid="gn",
-        ensemble="r1i1p1f1",
         derive=True,
         force_derivation=True,
     )
     dataset.session = session
+
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
-    asr_file = esmvalcore.local.LocalFile(
-        input_dir / "OBS6_SAT_sat_1_Amon_asr_1980-2000.nc",
+    lwcre_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
     )
-    asr_file.touch()
-    assert dataset._derivation_necessary()
+    lwcre_file.touch()
+
+    assert dataset._derivation_necessary() is True
 
 
 def test_force_derivation_no_derived():
@@ -2214,19 +2197,11 @@ def test_force_derivation_no_derived():
     )
 
     with pytest.raises(ValueError, match=msg):
-        Dataset(
-            project="CMIP6",
-            dataset="CanESM5",
-            mip="Amon",
-            short_name="tas",
-            force_derivation=True,
-        )
+        Dataset(**OBS6_SAT_FACETS, short_name="tas", force_derivation=True)
 
     with pytest.raises(ValueError, match=msg):
         Dataset(
-            project="CMIP6",
-            dataset="CanESM5",
-            mip="Amon",
+            **OBS6_SAT_FACETS,
             short_name="tas",
             derive=False,
             force_derivation=True,
@@ -2235,21 +2210,17 @@ def test_force_derivation_no_derived():
 
 def test_add_supplementary_to_derived():
     dataset = Dataset(
-        project="CMIP6",
-        dataset="CanESM5",
-        mip="Amon",
+        **OBS6_SAT_FACETS,
         short_name="lwcre",
         derive=True,
         force_derivation=True,
     )
 
-    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.add_supplementary(short_name="pr")
 
     expected_supplementary = Dataset(
-        project="CMIP6",
-        dataset="CanESM5",
-        mip="fx",
-        short_name="areacella",
+        **OBS6_SAT_FACETS,
+        short_name="pr",
         derive=False,
         force_derivation=False,
     )
@@ -2258,26 +2229,86 @@ def test_add_supplementary_to_derived():
 
 def test_add_derived_supplementary_to_derived():
     dataset = Dataset(
-        project="CMIP6",
-        dataset="CanESM5",
-        mip="Amon",
+        **OBS6_SAT_FACETS,
         short_name="lwcre",
         derive=True,
         force_derivation=True,
     )
 
     dataset.add_supplementary(
-        short_name="asr",
+        short_name="swcre",
         derive=True,
         force_derivation=True,
     )
 
     expected_supplementary = Dataset(
-        project="CMIP6",
-        dataset="CanESM5",
-        mip="Amon",
-        short_name="asr",
+        **OBS6_SAT_FACETS,
+        short_name="swcre",
         derive=True,
         force_derivation=True,
     )
     assert dataset.supplementaries[0] == expected_supplementary
+
+
+def test_input_datasets_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.add_supplementary(short_name="pr")
+
+    expected_datasets = [
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlut",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+    ]
+    for expected_dataset in expected_datasets:
+        expected_dataset.session = dataset.session
+
+    assert dataset.input_datasets == expected_datasets
+
+
+def test_input_datasets_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    dataset.add_supplementary(short_name="pr")
+
+    assert dataset.input_datasets == [dataset]
+
+
+def test_input_datasets_no_force_derivation(tmp_path, session):
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.add_supplementary(short_name="pr")
+    dataset.session = session
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    lwcre = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
+    )
+    lwcre.touch()
+
+    assert dataset.input_datasets == [dataset]
+
+
+def test_input_datasets_no_derivation_available():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas", derive=True)
+
+    msg = r"Cannot derive variable 'tas': no derivation script available"
+    with pytest.raises(NotImplementedError, match=msg):
+        dataset.input_datasets  # noqa: B018
