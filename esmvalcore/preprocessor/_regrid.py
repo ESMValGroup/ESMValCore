@@ -342,10 +342,9 @@ def _spec_to_latlonvals(
 
     Returns
     -------
-    xvals: np.array
-        List of longitudes
-    yvals: np.array
-        List of latitudes
+    tuple[np.ndarray, np.ndarray]
+        Longitudes, Latitudes.
+
     """
     if step_latitude == 0:
         msg = f"Latitude step cannot be 0, got step_latitude={step_latitude}."
