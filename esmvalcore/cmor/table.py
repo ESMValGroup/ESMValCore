@@ -285,7 +285,7 @@ class InfoBase:
 
         Returns
         -------
-        TableInfo
+        TableInfo | None
             Return the ``TableInfo`` object for the requested table if
             found, ``None`` if not.
 
@@ -581,7 +581,7 @@ class CMIP6Info(InfoBase):
 
         Returns
         -------
-        TableInfo
+        TableInfo | None
             Return the ``TableInfo`` object for the requested table if
             found, ``None`` if not.
 
@@ -1020,7 +1020,7 @@ class CMIP5Info(InfoBase):
 
         Returns
         -------
-        TableInfo
+        TableInfo | None
             Return the TableInfo object for the requested table if
             found, returns None if not
         """
