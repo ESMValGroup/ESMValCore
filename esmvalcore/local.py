@@ -253,7 +253,7 @@ def _parse_period(timerange: FacetValue) -> tuple[str, str]:
     for file selection.
     """
     if not isinstance(timerange, str):
-        msg = f"`timerange` should be a `str`, got '{type(timerange)}'"
+        msg = f"`timerange` should be a `str`, got {type(timerange)}"
         raise TypeError(msg)
     start_date: str | None = None
     end_date: str | None = None
@@ -337,7 +337,9 @@ def _select_files(
     Otherwise, the file selection occurs taking into account the time
     resolution of the file.
     """
-    timerange = str(timerange)
+    if not isinstance(timerange, str):
+        msg = f"`timerange` should be a `str`, got {type(timerange)}"
+        raise TypeError(msg)
     if "*" in timerange:
         # TODO: support * combined with a period
         return list(filenames)
