@@ -231,6 +231,8 @@ class Dataset:
         Derivation is necessary if the facet ``force_derivation=True`` is set
         or no files for the dataset itself are available.
 
+        See also :func:`esmvalcore.preprocessor.derive` for an example usage.
+
         """
         if self._input_datasets:
             return self._input_datasets
@@ -424,7 +426,7 @@ class Dataset:
         dataset for those facets listed in :obj:`INHERITED_FACETS`.
 
         This also works for :ref:`derived variables <Variable derivation>`. The
-        input datasets that are can be used for derivation are available via
+        input datasets that are necessary for derivation can be accessed via
         :attr:`Dataset.input_datasets`.
 
         Examples
