@@ -2,6 +2,7 @@
 
 import importlib
 import logging
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
 
@@ -70,7 +71,7 @@ def get_required(short_name: str, project: str) -> list[Facets]:
 
 
 def derive(
-    cubes: CubeList,
+    cubes: Sequence[Cube],
     short_name: str,
     long_name: str,
     units: str | Unit,
@@ -81,8 +82,7 @@ def derive(
     Parameters
     ----------
     cubes:
-        Includes all the needed variables for derivation defined in
-        :func:`get_required`.
+        Includes all the needed variables for derivation.
     short_name:
         short_name
     long_name:
@@ -96,6 +96,36 @@ def derive(
     -------
     iris.cube.Cube
         The new derived variable.
+
+    Examples
+    --------
+    Input variables for derivation can be obtained via
+    :attr:`Dataset.input_datasets`.
+
+    To derive the longwave cloud radiative effect (LWCRE) for the model CESM2,
+    you can use:
+
+    >>> from esmvalcore.dataset import Dataset
+    from esmv>>> from esmvalcore.preprocessor import derive
+    >>> dataset = Dataset(
+    ...     project="CMIP6",
+    ...     dataset="CESM2",
+    ...     exp="historical",
+    ...     ensemble="r1i1p1f1",
+    ...     grid="gn",
+    ...     timerange="2000/2014",
+    ...     short_name="lwcre",
+    ...     mip="Amon",
+    ...     derive=True,
+    ... )
+    >>> cubes = [d.load() for d in dataset.input_datasets]
+    >>> cube = derive(
+    ...     cubes,
+    ...     short_name="lwcre",
+    ...     long_name="TOA Longwave Cloud Radiative Effect",
+    ...     units="W m-2",
+    ... )  # doctest: +SKIP
+
     """
     if short_name == cubes[0].var_name:
         return cubes[0]

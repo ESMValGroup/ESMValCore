@@ -103,10 +103,12 @@ class Dataset:
 
     Attributes
     ----------
-    supplementaries : list[Dataset]
+    supplementaries: list[Dataset]
         List of supplementary datasets.
     facets: :obj:`esmvalcore.typing.Facets`
         Facets describing the dataset.
+    input_datasets: list[Dataset]
+        Input datasets.
     """
 
     _SUMMARY_FACETS: tuple[str, ...] = (
@@ -406,7 +408,6 @@ class Dataset:
 
         The facet values for local files are retrieved from the directory tree
         where the directories represent the facets values.
-        Reading facet values from file names is not yet supported.
         See :ref:`CMOR-DRS` for more information on this kind of file
         organization.
 
@@ -423,6 +424,10 @@ class Dataset:
 
         Supplementary datasets will in inherit the facet values from the main
         dataset for those facets listed in :obj:`INHERITED_FACETS`.
+
+        This also works for :ref:`derived variables <Variable derivation>`. The
+        input datasets that are can be used for derivation are available via
+        :attr:`Dataset.input_datasets`.
 
         Examples
         --------
