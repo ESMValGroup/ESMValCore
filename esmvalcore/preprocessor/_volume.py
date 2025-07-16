@@ -629,10 +629,10 @@ def extract_trajectory(
         minlat, maxlat = np.min(latitudes), np.max(latitudes)
         minlon, maxlon = np.min(longitudes), np.max(longitudes)
 
-        longitudes = np.linspace(minlon, maxlon, num=number_points)
-        latitudes = np.linspace(minlat, maxlat, num=number_points)
+        longitudes_arr = np.linspace(minlon, maxlon, num=number_points)
+        latitudes_arr = np.linspace(minlat, maxlat, num=number_points)
 
-    points = [("latitude", latitudes), ("longitude", longitudes)]
+    points = [("latitude", latitudes_arr), ("longitude", longitudes_arr)]
     return iris.analysis.trajectory.interpolate(cube, points)  # Very slow!
 
 

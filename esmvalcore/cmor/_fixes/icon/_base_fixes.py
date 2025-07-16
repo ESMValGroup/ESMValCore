@@ -488,7 +488,7 @@ class IconFix(NativeDatasetFix):
         return self._meshes[grid_name]
 
     @staticmethod
-    def _get_start_index(horizontal_grid: CubeList) -> int:
+    def _get_start_index(horizontal_grid: CubeList) -> np.int32:
         """Get start index used to name nodes from horizontal grid.
 
         Extract start index used to name nodes from the the horizontal grid
