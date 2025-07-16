@@ -987,3 +987,19 @@ def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
             / "ar6.shp"
         )
         assert settings["extract_shape"]["shapefile"] == ar6_file
+
+
+def test_special_name_to_dataset_invalid_special_name_type():
+    facets = {
+        "preprocessor": "preproc",
+        "variable_group": "var",
+        "diagnostic": "diag",
+        "reference_dataset": 1,
+    }
+    msg = (
+        r"Preprocessor 'preproc' uses 'reference_dataset', but "
+        r"'reference_dataset' is not a `str` for variable 'var' of diagnostic "
+        r"'diag', got '1' \(<class 'int'>\)"
+    )
+    with pytest.raises(RecipeError, match=msg):
+        _recipe._special_name_to_dataset(facets, "reference_dataset")

@@ -22,7 +22,10 @@ def mock_cubes():
 @pytest.fixture
 def patched_derive(mocker):
     """Fixture for mocked derivation scripts."""
-    mocker.patch("iris.cube.CubeList", side_effect=lambda x: x)
+    mocker.patch(
+        "esmvalcore.preprocessor._derive.CubeList",
+        side_effect=lambda x: x,
+    )
     mocker.patch.object(_derive, "ALL_DERIVED_VARIABLES", autospec=True)
     mocker.patch.object(_derive, "logger", autospec=True)
 
@@ -202,10 +205,16 @@ def test_get_required_with_fx():
 
     reference = [
         {"short_name": "thetao"},
-        {"short_name": "volcello", "mip": "fx"},
+        {"short_name": "volcello", "mip": "fx", "ensemble": "r0i0p0"},
     ]
 
     assert variables == reference
+
+
+def test_get_required_invalid_var():
+    msg = r"Cannot derive variable '_invalid_var_'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_required("_invalid_var_", "CMIP5")
 
 
 def test_derive_nonstandard_nofx():

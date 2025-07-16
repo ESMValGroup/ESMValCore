@@ -9,7 +9,7 @@ import dask.array as da
 import numpy as np
 from iris.cube import Cube
 
-FacetValue = str | Sequence[str] | Number
+FacetValue = str | Sequence[str] | Number | bool
 """Type describing a single facet."""
 
 Facets = dict[str, FacetValue]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
 from numbers import Number
 from typing import TYPE_CHECKING, Any
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_ALIAS_INFO_KEYS = (
+_ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
     "activity",
     "driver",
@@ -43,7 +43,7 @@ _ALIAS_INFO_KEYS = (
 """List of keys to be used to compose the alias, ordered by priority."""
 
 
-def _facet_to_str(facet_value: FacetValue) -> str:
+def _facet_to_str(facet_value: FacetValue | None) -> str:
     """Get a string representation of a facet value."""
     if isinstance(facet_value, str):
         return facet_value
@@ -52,7 +52,7 @@ def _facet_to_str(facet_value: FacetValue) -> str:
     return str(facet_value)
 
 
-def _set_alias(variables):
+def _set_alias(variables: Sequence[Sequence[Dataset]]) -> None:
     """Add unique alias for datasets.
 
     Generates a unique alias for each dataset that will be shared by all
@@ -99,41 +99,46 @@ def _set_alias(variables):
     variables : list
         for each recipe variable, a list of datasets
     """
-    datasets_info = set()
+    datasets_info: set[tuple[str, ...]] = set()
 
     for variable in variables:
         for dataset in variable:
-            alias = tuple(
+            alias_tuple = tuple(
                 _facet_to_str(dataset.facets.get(key, None))
                 for key in _ALIAS_INFO_KEYS
             )
-            datasets_info.add(alias)
+            datasets_info.add(alias_tuple)
             if "alias" not in dataset.facets:
-                dataset.facets["alias"] = alias
+                dataset.facets["alias"] = alias_tuple
 
-    alias = {}
+    alias: dict[tuple[str, ...], list[Any]] = {}
     for info in datasets_info:
         alias[info] = []
 
-    datasets_info = list(datasets_info)
-    _get_next_alias(alias, datasets_info, 0)
+    datasets_info_list: list[tuple[str, ...]] = list(datasets_info)
+    _get_next_alias(alias, datasets_info_list, 0)
 
-    for info in datasets_info:
-        alias[info] = "_".join(
+    final_alias: dict[tuple[str, ...], str] = {}
+    for info in datasets_info_list:
+        final_alias[info] = "_".join(
             [str(value) for value in alias[info] if value is not None],
         )
-        if not alias[info]:
-            alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
+        if not final_alias[info]:
+            final_alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
 
     for variable in variables:
         for dataset in variable:
-            dataset.facets["alias"] = alias.get(
+            dataset.facets["alias"] = final_alias.get(  # type: ignore
                 dataset.facets["alias"],
                 dataset.facets["alias"],
             )
 
 
-def _get_next_alias(alias, datasets_info, i):
+def _get_next_alias(
+    alias: dict[tuple[str, ...], list[Any]],
+    datasets_info: list[tuple[str, ...]],
+    i: int,
+) -> None:
     if i >= len(_ALIAS_INFO_KEYS):
         return
     key_values = {info[i] for info in datasets_info}
@@ -159,9 +164,7 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
                 "'short_name' is required for supplementary_variables "
                 f"entries, but missing in {facets}"
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
 
 
 def _merge_supplementary_dicts(
@@ -185,7 +188,7 @@ def _merge_supplementary_dicts(
     return list(merged.values())
 
 
-def _fix_cmip5_fx_ensemble(dataset: Dataset):
+def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
     """Automatically correct the wrong ensemble for CMIP5 fx variables."""
     if (
         dataset.facets.get("project") == "CMIP5"
@@ -216,7 +219,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number)):
+    if isinstance(realms, (str, Number, bool)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
@@ -560,7 +563,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 
     # Configure input datasets needed to derive variable
     datasets = []
-    required_vars = get_required(facets["short_name"], facets["project"])
+    required_vars = get_required(facets["short_name"], facets["project"])  # type: ignore
     # idea: add option to specify facets in list of dicts that is value of
     # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
@@ -581,10 +584,10 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
             datasets.append(input_dataset)
 
     # Check timeranges of available input data.
-    timeranges = set()
+    timeranges: set[str] = set()
     for input_dataset in datasets:
         if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
+            timeranges.add(input_dataset.facets["timerange"])  # type: ignore
     check.differing_timeranges(timeranges, required_vars)
 
     return datasets

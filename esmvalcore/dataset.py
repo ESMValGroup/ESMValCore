@@ -67,7 +67,7 @@ the main dataset.
 """
 
 
-def _augment(base: dict, update: dict):
+def _augment(base: dict, update: dict) -> None:
     """Update dict `base` with values from dict `update`."""
     for key in update:
         if key not in base:
@@ -108,7 +108,7 @@ class Dataset:
         Facets describing the dataset.
     """
 
-    _SUMMARY_FACETS = (
+    _SUMMARY_FACETS: tuple[str, ...] = (
         "short_name",
         "mip",
         "project",
@@ -124,7 +124,7 @@ class Dataset:
     )
     """Facets used to create a summary of a Dataset instance."""
 
-    def __init__(self, **facets: FacetValue):
+    def __init__(self, **facets: FacetValue) -> None:
         self.facets: Facets = {}
         self.supplementaries: list[Dataset] = []
 
@@ -163,6 +163,32 @@ class Dataset:
         )
 
         return datasets_from_recipe(recipe, session)
+
+    def _is_derived(self) -> bool:
+        """Return ``True`` for derived variables, ``False`` otherwise."""
+        return bool(self.facets.get("derive", False))
+
+    def _is_force_derived(self) -> bool:
+        """Return ``True`` for force-derived variables, ``False`` otherwise."""
+        return self._is_derived() and bool(
+            self.facets.get("force_derivation", False),
+        )
+
+    def _derivation_necessary(self) -> bool:
+        """Return ``True`` if derivation is necessary, ``False`` otherwise."""
+        # If variable cannot be derived, derivation is not necessary
+        if not self._is_derived():
+            return False
+
+        # If forced derivation is requested, derivation is necessary
+        if self._is_force_derived():
+            return True
+
+        # Otherwise, derivation is necessary of no files for the self dataset
+        # are found
+        ds_copy = self.copy()
+        ds_copy.supplementaries = []
+        return not ds_copy.files
 
     def _file_to_dataset(
         self,
@@ -410,6 +436,16 @@ class Dataset:
                         )
                         break
 
+    def _copy(self, **facets: FacetValue) -> Dataset:
+        """Create a copy of the parent dataset without supplementaries."""
+        new = self.__class__()
+        new._session = self._session  # noqa: SLF001
+        for key, value in self.facets.items():
+            new.set_facet(key, deepcopy(value), key in self._persist)
+        for key, value in facets.items():
+            new.set_facet(key, deepcopy(value))
+        return new
+
     def copy(self, **facets: FacetValue) -> Dataset:
         """Create a copy.
 
@@ -425,12 +461,7 @@ class Dataset:
         Dataset
             A copy of the dataset.
         """
-        new = self.__class__()
-        new._session = self._session  # noqa: SLF001
-        for key, value in self.facets.items():
-            new.set_facet(key, deepcopy(value), key in self._persist)
-        for key, value in facets.items():
-            new.set_facet(key, deepcopy(value))
+        new = self._copy(**facets)
         for supplementary in self.supplementaries:
             # The short_name and mip of the supplementary variable are probably
             # different from the main variable, so don't copy those facets.
@@ -440,9 +471,10 @@ class Dataset:
             }
             new_supplementary = supplementary.copy(**supplementary_facets)
             new.supplementaries.append(new_supplementary)
+
         return new
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare with another dataset."""
         return (
             isinstance(other, self.__class__)
@@ -462,7 +494,7 @@ class Dataset:
             "short_name",
         )
 
-        def facets2str(facets):
+        def facets2str(facets: Facets) -> str:
             view = {k: facets[k] for k in first_keys if k in facets}
             for key, value in sorted(facets.items()):
                 if key not in first_keys:
@@ -477,8 +509,8 @@ class Dataset:
         if self.supplementaries:
             txt.append("supplementaries:")
             txt.extend(
-                textwrap.indent(facets2str(a.facets), "  ")
-                for a in self.supplementaries
+                textwrap.indent(facets2str(s.facets), "  ")
+                for s in self.supplementaries
             )
         if self._session:
             txt.append(f"session: '{self.session.session_name}'")
@@ -521,7 +553,7 @@ class Dataset:
         title = self.__class__.__name__
         txt = f"{title}: " + self._get_joined_summary_facets(", ")
 
-        def supplementary_summary(dataset):
+        def supplementary_summary(dataset: Dataset) -> str:
             return ", ".join(
                 str(dataset.facets[k])
                 for k in self._SUMMARY_FACETS
@@ -532,21 +564,27 @@ class Dataset:
             txt += (
                 ", supplementaries: "
                 + "; ".join(
-                    supplementary_summary(a) for a in self.supplementaries
+                    supplementary_summary(s) for s in self.supplementaries
                 )
                 + ""
             )
+
         return txt
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> FacetValue:
         """Get a facet value."""
         return self.facets[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: FacetValue) -> None:
         """Set a facet value."""
         self.facets[key] = value
 
-    def set_facet(self, key: str, value: FacetValue, persist: bool = True):
+    def set_facet(
+        self,
+        key: str,
+        value: FacetValue,
+        persist: bool = True,
+    ) -> None:
         """Set facet.
 
         Parameters
@@ -609,22 +647,26 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
+        if self._is_derived():
+            facets.setdefault("derive", False)
+        if self._is_force_derived():
+            facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)
 
     def augment_facets(self) -> None:
-        """Add extra facets.
+        """Add additional facets.
 
-        This function will update the dataset with additional facets
-        from various sources.
+        This function will update the dataset with additional facets from
+        various sources.
         """
         self._augment_facets()
         for supplementary in self.supplementaries:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
@@ -677,7 +719,7 @@ class Dataset:
 
         return extra_facets
 
-    def _augment_facets(self):
+    def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
         if "institute" not in self.facets:
@@ -749,14 +791,14 @@ class Dataset:
                         self.files[idx] = file
 
     @property
-    def files(self) -> Sequence[File]:
+    def files(self) -> list[File]:
         """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
         return self._files  # type: ignore
 
     @files.setter
-    def files(self, value):
+    def files(self, value: Sequence[File]) -> None:
         self._files = value
 
     def load(self) -> Cube:
@@ -898,15 +940,15 @@ class Dataset:
                 ]
         return datasets
 
-    def _expand_range(self, input_tag):
+    def _expand_range(self, input_tag: str) -> list[FacetValue]:
         """Expand ranges such as ensemble members or start dates.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
-        expanded = []
+        expanded: list[FacetValue] = []
         regex = re.compile(r"\(\d+:\d+\)")
 
-        def expand_range(input_range):
+        def expand_range(input_range) -> None:
             match = regex.search(input_range)
             if match:
                 start, end = match.group(0)[1:-1].split(":")
@@ -924,16 +966,14 @@ class Dataset:
                         f"In {self}: {input_tag} expansion "
                         f"cannot be combined with {input_tag} lists"
                     )
-                    raise RecipeError(
-                        msg,
-                    )
+                    raise RecipeError(msg)
             expanded.append(tag)
         else:
             expand_range(tag)
 
         return expanded
 
-    def _update_timerange(self):
+    def _update_timerange(self) -> None:
         """Update wildcards in timerange with found datetime values.
 
         If the timerange is given as a year, it ensures it's formatted
@@ -949,9 +989,7 @@ class Dataset:
         timerange = self.facets["timerange"]
         if not isinstance(timerange, str):
             msg = f"timerange should be a string, got '{timerange!r}'"
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
         check.valid_time_selection(timerange)
 
         if "*" in timerange:

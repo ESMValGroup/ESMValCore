@@ -35,10 +35,10 @@ class InvalidConfigParameter(Error, SuppressedError):
 class RecipeError(Error):
     """Recipe contains an error."""
 
-    def __init__(self, msg):
+    def __init__(self, msg: str) -> None:
         super().__init__(msg)
         self.message = msg
-        self.failed_tasks = []
+        self.failed_tasks: list[RecipeError] = []
 
 
 class InputFilesNotFound(RecipeError):
