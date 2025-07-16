@@ -1182,6 +1182,16 @@ def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     assert datasets == [expected]
 
 
+OBS6_SAT_FACETS = {
+    "project": "OBS6",
+    "dataset": "SAT",
+    "mip": "Amon",
+    "tier": 2,
+    "type": "sat",
+    "timerange": "1980/2000",
+}
+
+
 def test_from_files_no_files_glob(session):
     dataset = Dataset(**{**OBS6_SAT_FACETS, "type": "*"}, short_name="tas")
     datasets = list(dataset.from_files())
@@ -2250,16 +2260,6 @@ def test_set_version_non_derived_var():
     dataset.set_version()
     assert dataset.facets["version"] == ["v1", "v2"]
     assert dataset.supplementaries[0].facets["version"] == "v3"
-
-
-OBS6_SAT_FACETS = {
-    "project": "OBS6",
-    "dataset": "SAT",
-    "mip": "Amon",
-    "tier": 2,
-    "type": "sat",
-    "timerange": "1980/2000",
-}
 
 
 def test_set_version_derive_var(monkeypatch):

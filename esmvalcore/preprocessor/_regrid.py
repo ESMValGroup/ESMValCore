@@ -192,8 +192,8 @@ def parse_cell_spec(spec: str) -> tuple[float, float]:
 
 
 def _generate_cube_from_dimcoords(
-    latdata: ArrayLike,
-    londata: ArrayLike,
+    latdata: np.ndarray | da.Array,
+    londata: np.ndarray | da.Array,
     circular: bool = False,
 ) -> Cube:
     """Generate cube from lat/lon points.
@@ -393,7 +393,7 @@ def _regional_stock_cube(spec: dict[str, Any]) -> Cube:
     def add_bounds_from_step(
         coord: iris.coords.DimCoord | iris.coords.AuxCoord,
         step: float,
-    ) -> np.ndarray:
+    ) -> None:
         """Calculate bounds from the given step."""
         bound = step / 2
         points = coord.points
@@ -746,7 +746,10 @@ def _get_regridder(
     return regridder
 
 
-def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple[ArrayLike, ...]:
+def _get_coord_key(
+    src_cube: Cube,
+    tgt_cube: Cube,
+) -> tuple[iris.coords.DimCoord | iris.coords.AuxCoord, ...]:
     """Get dict key from coordinates."""
     src_lat = src_cube.coord("latitude")
     src_lon = src_cube.coord("longitude")
@@ -1012,9 +1015,9 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
 
 def _create_cube(
     src_cube: Cube,
-    data: ArrayLike,
-    src_levels: ArrayLike,
-    levels: ArrayLike,
+    data: np.ndarray | da.Array,
+    src_levels: iris.coords.DimCoord | iris.coords.AuxCoord,
+    levels: np.ndarray | da.Array,
 ) -> Cube:
     """Generate a new cube with the interpolated data.
 
@@ -1026,19 +1029,19 @@ def _create_cube(
 
     Parameters
     ----------
-    src_cube
+    src_cube:
         The source cube that was vertically interpolated.
-    data
-        The payload resulting from interpolating the source cube
-        over the specified levels.
-    src_levels
-        Vertical levels of the source data
-    levels
+    data:
+        The payload resulting from interpolating the source cube over the
+        specified levels.
+    src_levels:
+        Vertical levels of the source data.
+    levels:
         The vertical levels of interpolation.
 
     Returns
     -------
-    cube
+    iris.cube.Cube
 
     .. note::
 
@@ -1114,8 +1117,8 @@ def _create_cube(
 
 def _vertical_interpolate(
     cube: Cube,
-    src_levels: ArrayLike,
-    levels: ArrayLike,
+    src_levels: iris.coords.DimCoord | iris.coords.AuxCoord,
+    levels: np.ndarray | da.Array,
     interpolation: str,
     extrapolation: str,
 ) -> Cube:
