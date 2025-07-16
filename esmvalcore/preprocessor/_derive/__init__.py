@@ -100,13 +100,13 @@ def derive(
     Examples
     --------
     Input variables for derivation can be obtained via
-    :attr:`Dataset.input_datasets`.
+    :attr:`esmvalcore.dataset.Dataset.input_datasets`.
 
-    To derive the longwave cloud radiative effect (LWCRE) for the model CESM2,
-    you can use:
+    For example, to derive the longwave cloud radiative effect (LWCRE) for the
+    model CESM2, you can use:
 
     >>> from esmvalcore.dataset import Dataset
-    from esmv>>> from esmvalcore.preprocessor import derive
+    >>> from esmvalcore.preprocessor import derive
     >>> dataset = Dataset(
     ...     project="CMIP6",
     ...     dataset="CESM2",
@@ -124,7 +124,9 @@ def derive(
     ...     short_name="lwcre",
     ...     long_name="TOA Longwave Cloud Radiative Effect",
     ...     units="W m-2",
-    ... )  # doctest: +SKIP
+    ... )
+    >>> print(cube.var_name)
+    lwcre  # doctest: +SKIP
 
     """
     if short_name == cubes[0].var_name:
