@@ -107,8 +107,6 @@ class Dataset:
         List of supplementary datasets.
     facets: :obj:`esmvalcore.typing.Facets`
         Facets describing the dataset.
-    input_datasets: list[Dataset]
-        Input datasets.
     """
 
     _SUMMARY_FACETS: tuple[str, ...] = (
