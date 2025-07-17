@@ -1,4 +1,6 @@
-Welcome to ESMValTool's documentation!
+:html_theme.sidebar_secondary.remove:
+
+Welcome to ESMValCore's documentation!
 ======================================
 
 **ESMValTool** is a community diagnostics and performance metrics tool for the evaluation of Earth System Models (ESMs) that allows for
@@ -17,20 +19,22 @@ and
 Basic documentation schema
 --------------------------
 This gives a brief idea of topics in each of the packages to help find information. As ESMValTool encompasses ESMValCore there will be some overlap between them.
-For more detailed information, see documentation navigation to the left.
+ESMValCore can be used without ESMValTool such as in a Jupyter notebook.
+For more detailed information, see documentation navigation to the left. Please also see
+`ESMValTool documentation <https://docs.esmvaltool.org/en/latest/index.html>`_.
 
 .. container::
    :name: figarch
 
    .. figure:: figures/ESMValSchemaDiagram.png
       :alt: Brief topics for tool and core.
-      :figclass: align-center
+      :class: dark-light
 
 
 Learning resources:
 -------------------
 
-A tutorial is available on https://tutorial.esmvaltool.org.
+A carpentries tutorial is available on https://tutorial.esmvaltool.org.
 
 A series of video lectures has been created by `ACCESS-NRI <https://access-nri.org.au>`_.
 While these are tailored for ACCESS users, they are still very informative.
@@ -64,7 +68,7 @@ Contact information is available :ref:`here <Support-and-Contact>`.
     Changelog <changelog>
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`search`
