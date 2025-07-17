@@ -2135,3 +2135,137 @@ def test_get_extra_facets_native6():
         "grib_id": "130",
         "tres": "1M",
     }
+
+
+OBS6_SAT_FACETS = {
+    "project": "OBS6",
+    "dataset": "SAT",
+    "mip": "Amon",
+    "tier": 2,
+    "type": "sat",
+    "timerange": "1980/2000",
+}
+
+
+def test_is_derived_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_derived() is False
+
+
+def test_is_derived_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_derived() is True
+
+
+def test_is_force_derived_no_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_no_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is True
+
+
+def test_derivation_necessary_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._derivation_necessary() is False
+
+
+def test_derivation_necessary_no_force_derivation_no_files():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._derivation_necessary() is True
+
+
+def test_derivation_necessary_no_force_derivation(tmp_path, session):
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.session = session
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    lwcre_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
+    )
+    lwcre_file.touch()
+
+    assert dataset._derivation_necessary() is False
+
+
+def test_derivation_necessary_force_derivation(tmp_path, session):
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+    dataset.session = session
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    lwcre_file = esmvalcore.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
+    )
+    lwcre_file.touch()
+
+    assert dataset._derivation_necessary() is True
+
+
+def test_add_supplementary_to_derived():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(short_name="pr")
+
+    expected_supplementary = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="pr",
+        derive=False,
+        force_derivation=False,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary
+
+
+def test_add_derived_supplementary_to_derived():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(
+        short_name="swcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    expected_supplementary = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="swcre",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary

@@ -1011,7 +1011,7 @@ related to CMOR table settings available:
   from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
   use variables with a ``mip`` which is different from the MIP table in which
   they are defined. Note that this option is always enabled for
-  :ref:`derived <Variable derivation>` variables.
+  :ref:`derived variables <Variable derivation>`.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
@@ -1026,8 +1026,8 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-For derived variables (the ones with ``derive: true`` in the recipe), the
-custom CMOR tables will always be considered.
+For :ref:`derived variables <Variable derivation>` (the ones with ``derive:
+true`` in the recipe), the custom CMOR tables will always be considered.
 By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the

@@ -1,3 +1,4 @@
+import inspect
 import os
 import re
 from collections import defaultdict
@@ -1542,6 +1543,44 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + ".xml")
 
 
+def test_invalid_diagnostic_ancestor(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
+    content = dedent(
+        f"""
+        diagnostics:
+          diagnostic_name:
+            themes:
+              - phys
+            realms:
+              - atmos
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: 2000/2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - dataset: CanESM2
+            scripts:
+              script_name:
+                script: {script}
+              script_name2:
+                script: {script}
+                ancestors: [invalid_*]
+        """,
+    )
+
+    msg = r"Could not find any ancestors matching"
+    with pytest.raises(RecipeError, match=msg):
+        get_recipe(tmp_path, content, session)
+
+
 def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901, PLR0912
     content = dedent("""
         diagnostics:
@@ -2890,6 +2929,55 @@ def test_statistics_missing_operator_no_default_fail(
     msg = "Missing required argument"
     with pytest.raises(ValueError, match=msg):
         get_recipe(tmp_path, content, session)
+
+
+def test_check_preprocessor_settings_last_resort(
+    mocker,
+    tmp_path,
+    caplog,
+    patched_datafinder,
+    session,
+):
+    # Create mock so that no errors during the regular preprocessor parameter
+    # checks are raised, but only during the last sanity check
+    def raise_exc():
+        msg = "type error"
+        raise TypeError(msg)
+
+    mock_args = mocker.Mock(name="args", kind=inspect.Parameter.VAR_POSITIONAL)
+    mock_bind = mocker.Mock(side_effect=raise_exc)
+    mock_signature = mocker.Mock(
+        parameters={"args": mock_args},
+        bind=mock_bind,
+    )
+    mocker.patch(
+        "inspect.signature",
+        autospec=True,
+        return_value=mock_signature,
+    )
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    with pytest.raises(TypeError):
+        get_recipe(tmp_path, content, session)
+    log_errors = [r.message for r in caplog.records if r.levelname == "ERROR"]
+    msg = (
+        "Wrong preprocessor function arguments in function "
+        "'remove_supplementary_variables'"
+    )
+    assert msg in log_errors
 
 
 @pytest.mark.parametrize(

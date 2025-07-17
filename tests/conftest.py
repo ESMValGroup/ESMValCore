@@ -1,5 +1,6 @@
 import warnings
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -18,8 +19,8 @@ import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
 
 
-@pytest.fixture
-def cfg_default():
+@lru_cache
+def _load_default_config():
     """Create a configuration object with default values."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -33,20 +34,22 @@ def cfg_default():
     return cfg
 
 
+@pytest.fixture
+def cfg_default():
+    """Create a configuration object with default values."""
+    cfg = _load_default_config()
+    return deepcopy(cfg)
+
+
 @pytest.fixture(autouse=True)
 def ignore_existing_user_config(monkeypatch, cfg_default):
     """Ignore user's configuration when running tests."""
-    for key in CFG:
-        monkeypatch.delitem(CFG, key)
-    for key, value in cfg_default.items():
-        monkeypatch.setitem(CFG, key, deepcopy(value))
+    monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
 
 
 @pytest.fixture
-def session(tmp_path: Path, cfg_default, monkeypatch):
+def session(tmp_path: Path, ignore_existing_user_config, monkeypatch):
     """Session object with default settings."""
-    for key, value in cfg_default.items():
-        monkeypatch.setitem(CFG, key, deepcopy(value))
     monkeypatch.setitem(CFG, "rootpath", {"default": {tmp_path: "default"}})
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
     return CFG.start_session("recipe_test")

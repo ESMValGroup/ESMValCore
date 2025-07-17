@@ -3,8 +3,10 @@
 import dask.array as da
 import iris
 from iris import NameConstraint
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._regrid import regrid
+from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
 
@@ -13,16 +15,19 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
     @staticmethod
-    def required(project):
+    def required(project: str) -> list[Facets]:
         """Declare the variables needed for derivation."""
+        sftlf: Facets = {"short_name": "sftlf", "mip": "fx"}
+        if project == "CMIP5":
+            sftlf["ensemble"] = "r0i0p0"
         return [
             {"short_name": "baresoilFrac"},
             {"short_name": "residualFrac"},
-            {"short_name": "sftlf", "mip": "fx"},
+            sftlf,
         ]
 
     @staticmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """Compute vegetation fraction from bare soil fraction."""
         baresoilfrac_cube = cubes.extract_cube(
             NameConstraint(var_name="baresoilFrac"),

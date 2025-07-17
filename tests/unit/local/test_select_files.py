@@ -170,3 +170,9 @@ def test_select_files_varying_format():
     assert result_yearly == files
     assert result_monthly == files[0:2]
     assert result_daily == [files[0]]
+
+
+def test_select_files_invalid_timerange_type():
+    msg = r"`timerange` should be a `str`, got <class 'int'>"
+    with pytest.raises(TypeError, match=msg):
+        _select_files([], 1)

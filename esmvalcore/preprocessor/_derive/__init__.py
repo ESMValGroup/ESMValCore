@@ -5,14 +5,17 @@ import logging
 from copy import deepcopy
 from pathlib import Path
 
-import iris
+from cf_units import Unit
+from iris.cube import Cube, CubeList
 
+from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 from esmvalcore.preprocessor._units import convert_units
+from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
 
-def _get_all_derived_variables():
+def _get_all_derived_variables() -> dict[str, type[DerivedVariableBase]]:
     """Get all possible derived variables.
 
     Returns
@@ -31,55 +34,62 @@ def _get_all_derived_variables():
     return derivers
 
 
-ALL_DERIVED_VARIABLES = _get_all_derived_variables()
+ALL_DERIVED_VARIABLES: dict[str, type[DerivedVariableBase]] = (
+    _get_all_derived_variables()
+)
 
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name, project):
+def get_required(short_name: str, project: str) -> list[Facets]:
     """Return all required variables for derivation.
 
-    Get all information (at least `short_name`) required for derivation.
+    Get all information (at least ``short_name``) required for derivation.
 
     Parameters
     ----------
-    short_name : str
-        `short_name` of the variable to derive.
-    project : str
-        `project` of the variable to derive.
+    short_name:
+        Short name of the variable to derive.
+    project:
+        Project of the variable to derive.
 
     Returns
     -------
-    list
-        List of dictionaries (including at least the key `short_name`).
+    list[esmvalcore.typing.Facets]
+        List of facets (including at least the key ``short_name``).
+
     """
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         msg = (
-            f"Cannot derive variable '{short_name}', no derivation script "
+            f"Cannot derive variable '{short_name}': no derivation script "
             f"available"
         )
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
     return deepcopy(DerivedVariable().required(project))
 
 
-def derive(cubes, short_name, long_name, units, standard_name=None):
+def derive(
+    cubes: CubeList,
+    short_name: str,
+    long_name: str,
+    units: str | Unit,
+    standard_name: str | None = None,
+) -> Cube:
     """Derive variable.
 
     Parameters
     ----------
-    cubes: iris.cube.CubeList
+    cubes:
         Includes all the needed variables for derivation defined in
         :func:`get_required`.
-    short_name: str
+    short_name:
         short_name
-    long_name: str
+    long_name:
         long_name
-    units: str
+    units:
         units
-    standard_name: str, optional
+    standard_name:
         standard_name
 
     Returns
@@ -90,7 +100,7 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     if short_name == cubes[0].var_name:
         return cubes[0]
 
-    cubes = iris.cube.CubeList(cubes)
+    cubes = CubeList(cubes)
 
     # Derive variable
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
@@ -133,8 +143,6 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
                 f"Units '{cube.units}' after executing derivation script of "
                 f"'{short_name}' cannot be converted to target units '{units}'"
             )
-            raise ValueError(
-                msg,
-            ) from exc
+            raise ValueError(msg) from exc
 
     return cube

@@ -196,17 +196,11 @@ case of this operation is the evaluation of a variable which is only available
 in an observational dataset but not in the models. In this case a derivation
 function is provided by the ESMValCore in order to calculate the variable and
 perform the comparison. For example, several observational datasets deliver
-total column ozone as observed variable (`toz`), but CMIP models only provide
+total column ozone as observed variable (``toz``), but CMIP models only provide
 the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-The tool will also look in other ``mip`` tables for the same ``project`` to find
-the definition of derived variables. To contribute a completely new derived
-variable, it is necessary to define a name for it and to provide the
-corresponding CMOR table. This is to guarantee the proper metadata definition
-is attached to the derived data. Such custom CMOR tables are collected as part
-of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 By default, the variable derivation will be applied only if the variable is not
 already available in the input data, but the derivation can be forced by
 setting the ``force_derivation`` flag.
