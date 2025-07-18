@@ -58,7 +58,7 @@ class ValidatedConfig(MutableMapping):
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self._mapping = {}
+        self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
@@ -127,12 +127,12 @@ class ValidatedConfig(MutableMapping):
                     stacklevel=1,
                 )
 
-    def copy(self):
+    def copy(self) -> dict[str, Any]:
         """Copy the keys/values of this object to a dict."""
         return {k: self._mapping[k] for k in self}
 
-    def clear(self):
-        """Clear Config."""
+    def clear(self) -> None:
+        """Clear contents of configuration object."""
         self._mapping.clear()
 
     @contextmanager
