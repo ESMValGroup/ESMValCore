@@ -141,7 +141,7 @@ class ValidatedConfig(MutableMapping):
         mapping: Mapping | None = None,
         **kwargs: Any,
     ) -> Generator[None, None, None]:
-        """Set configuration temporarily inside a ``with`` statement.
+        """Set configuration options temporarily inside a ``with`` statement.
 
         Parameters
         ----------
