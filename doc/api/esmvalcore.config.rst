@@ -163,5 +163,5 @@ API reference
 *************
 
 .. automodule:: esmvalcore.config
-    :inherited-members:
+    :no-inherited-members:
     :no-show-inheritance:

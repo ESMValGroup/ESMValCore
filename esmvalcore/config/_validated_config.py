@@ -143,6 +143,8 @@ class ValidatedConfig(MutableMapping):
     ) -> Generator[None, None, None]:
         """Set configuration options temporarily inside a ``with`` statement.
 
+        This configuration will only be effective inside the context manager.
+
         Parameters
         ----------
         mapping:
