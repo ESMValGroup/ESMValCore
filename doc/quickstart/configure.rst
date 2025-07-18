@@ -139,6 +139,11 @@ For example:
   >>> CFG['output_dir'] = '~/esmvaltool_output'
   >>> CFG['output_dir']
   PosixPath('/home/user/esmvaltool_output')
+
+Or, alternatively, via a context manager:
+
+.. code-block:: python
+
   >>> with CFG.context(log_level="debug"):
   ...     print(CFG["log_level"])
   debug
