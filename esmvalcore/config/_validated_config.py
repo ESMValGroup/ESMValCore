@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, MutableMapping
+from collections.abc import Callable, Generator, Mapping, MutableMapping
+from contextlib import contextmanager
 from typing import Any, ClassVar
 
 from esmvalcore.exceptions import (
@@ -57,7 +58,7 @@ class ValidatedConfig(MutableMapping):
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self._mapping = {}
+        self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
@@ -126,10 +127,35 @@ class ValidatedConfig(MutableMapping):
                     stacklevel=1,
                 )
 
-    def copy(self):
+    def copy(self) -> dict[str, Any]:
         """Copy the keys/values of this object to a dict."""
         return {k: self._mapping[k] for k in self}
 
-    def clear(self):
-        """Clear Config."""
+    def clear(self) -> None:
+        """Clear contents of configuration object."""
         self._mapping.clear()
+
+    @contextmanager
+    def context(
+        self,
+        mapping: Mapping | None = None,
+        **kwargs: Any,
+    ) -> Generator[None, None, None]:
+        """Set configuration options temporarily inside a ``with`` statement.
+
+        This configuration will only be effective inside the context manager.
+
+        Parameters
+        ----------
+        mapping:
+            Mapping with temporary configuration options.
+        **kwargs:
+            Temporary configuration options.
+
+        """
+        original_mapping = dict(self._mapping)
+        if mapping is not None:
+            self.update(mapping)
+        self.update(kwargs)
+        yield
+        self._mapping = original_mapping
