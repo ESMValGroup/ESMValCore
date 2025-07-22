@@ -153,7 +153,8 @@ class ValidatedConfig(MutableMapping):
             Temporary configuration options.
 
         """
-        original_mapping = dict(self._mapping)
+        original_mapping = self._mapping
+        self._mapping = copy.deepcopy(self._mapping)
         if mapping is not None:
             self.update(mapping)
         self.update(kwargs)
