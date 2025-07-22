@@ -26,7 +26,7 @@ from esmvalcore.config._config import (
     get_institutes,
     load_extra_facets,
 )
-from esmvalcore.config.data_sources import get_data_sources
+from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
@@ -756,7 +756,7 @@ class Dataset:
         self._file_globs = []
         files: dict[str, DataElement] = {}
         for data_source in sorted(
-            get_data_sources(self.session),
+            _get_data_sources(self.session),
             key=lambda ds: ds.priority,
         ):
             if data_source.project == self.facets["project"]:

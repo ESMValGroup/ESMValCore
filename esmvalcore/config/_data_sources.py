@@ -1,3 +1,5 @@
+"""Module for configuring data sources."""
+
 import importlib
 import logging
 
@@ -9,7 +11,20 @@ from esmvalcore.io.protocol import DataSource
 logger = logging.getLogger(__name__)
 
 
-def get_data_sources(session: Session) -> list[DataSource]:
+def _get_data_sources(session: Session) -> list[DataSource]:
+    """Get the list of available data sources.
+
+    Arguments
+    ---------
+    session:
+        The configuration.
+
+    Returns
+    -------
+    :obj:`list` of :obj:`DataSource`:
+        A list of available data sources.
+
+    """
     data_sources: list[DataSource] = []
     for project, project_settings in session["projects"].items():
         if "data" not in project_settings:

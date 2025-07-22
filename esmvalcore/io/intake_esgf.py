@@ -1,3 +1,12 @@
+"""Access data using `intake-esgf <https://intake-esgf.readthedocs.io>`_.
+
+The default :ref:`configuration <config_overview>` is
+
+.. literalinclude:: ../configurations/intake-esgf.yml
+   :language: yaml
+
+"""
+
 from dataclasses import dataclass, field
 from numbers import Number
 
@@ -9,9 +18,16 @@ from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 from esmvalcore.typing import Facets, FacetValue
 
+__all__ = [
+    "IntakeESGFDataSource",
+    "IntakeESGFDataset",
+]
+
 
 @dataclass
 class IntakeESGFDataset(DataElement):
+    """A dataset that can be used to load data found using intake-esgf_."""
+
     name: str
     """A unique name identifying the data."""
 
@@ -32,7 +48,7 @@ class IntakeESGFDataset(DataElement):
 
         Returns
         -------
-        iris.cube.CubeList
+        :
             The loaded data.
         """
         dataset = self.catalog.to_dataset_dict(
@@ -45,6 +61,8 @@ class IntakeESGFDataset(DataElement):
 
 @dataclass
 class IntakeESGFDataSource(DataSource):
+    """Data source that can be used to find data using intake-esgf."""
+
     name: str
     """A name identifying the data source."""
 
@@ -54,16 +72,20 @@ class IntakeESGFDataSource(DataSource):
     priority: int
     """The priority of the data source. Lower values have priority."""
 
-    facets: dict[str, str | list[str]]
+    facets: dict[str, str]
+    """Mapping between the ESMValCore and ESGF facet names."""
 
     values: dict[str, dict[str, str]] = field(default_factory=dict)
+    """Mapping between the ESMValCore and ESGF facet values."""
 
-    debug_info: str = ""
+    debug_info: str = field(init=False, default="")
     """A string containing debug information when no data is found."""
 
     catalog: intake_esgf.ESGFCatalog = field(
-        default_factory=intake_esgf.ESGFCatalog
+        init=False,
+        default_factory=intake_esgf.ESGFCatalog,
     )
+    """The intake-esgf catalog used to find data."""
 
     def __post_init__(self):
         self.catalog.project = intake_esgf.projects.projects[
@@ -80,7 +102,7 @@ class IntakeESGFDataSource(DataSource):
 
         Returns
         -------
-        :obj:`list` of :obj:`esmvalcore.io.intake_esgf.IntakeESGFDataset`
+        :
             A list of data elements that have been found.
         """
         # Normalize facets so all values are `list[str]`.
@@ -145,19 +167,19 @@ class IntakeESGFDataSource(DataSource):
                     for v in our_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
-            their_facets = {k: [v] if isinstance(v, str) else v for k, v in row.items()}
-            dataset_facets = {
-                our_facet: [
-                    inverse_values.get(our_facet, {}).get(v, v)
-                    for v in their_facets[their_facet]
-                ]
-                for our_facet, their_facet in self.facets.items()
-                if their_facet in their_facets
-            }
-            dataset_facets = {
-                f: v[0] if len(v) == 1 else v
-                for f, v in dataset_facets.items()
-            }
+            dataset_facets = {}
+            for our_facet, esgf_facet in self.facets.items():
+                if esgf_facet in row:
+                    esgf_values = row[esgf_facet]
+                    if isinstance(esgf_values, str):
+                        esgf_values = [esgf_values]
+                    our_values = [
+                        inverse_values.get(our_facet, {}).get(v, v)
+                        for v in esgf_values
+                    ]
+                    if len(our_values) == 1:
+                        our_values = our_values[0]
+                    dataset_facets[our_facet] = our_values
             dataset = IntakeESGFDataset(
                 name=dataset_id,
                 facets=dataset_facets,  # type: ignore[arg-type]
