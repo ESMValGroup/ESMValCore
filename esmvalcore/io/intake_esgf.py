@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
 from numbers import Number
 
-import intake_esgf.projects
+import intake_esgf
+import intake_esgf.exceptions
 import iris.cube
-from intake_esgf import ESGFCatalog
-from intake_esgf.exceptions import NoSearchResults
 
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
@@ -19,7 +18,7 @@ class IntakeESGFDataset(DataElement):
     facets: Facets
     """Facets are key-value pairs describing the data."""
 
-    catalog: ESGFCatalog
+    catalog: intake_esgf.ESGFCatalog
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -62,7 +61,9 @@ class IntakeESGFDataSource(DataSource):
     debug_info: str = ""
     """A string containing debug information when no data is found."""
 
-    catalog: ESGFCatalog = field(default_factory=ESGFCatalog)
+    catalog: intake_esgf.ESGFCatalog = field(
+        default_factory=intake_esgf.ESGFCatalog
+    )
 
     def __post_init__(self):
         self.catalog.project = intake_esgf.projects.projects[
@@ -101,7 +102,7 @@ class IntakeESGFDataSource(DataSource):
         # TODO: filter by timerange
         try:
             self.catalog.search(**esgf_facets, quiet=True)
-        except NoSearchResults:
+        except intake_esgf.exceptions.NoSearchResults:
             self.debug_info = ", ".join(
                 [
                     f"{k}={v if isinstance(v, list) else [v]}"
@@ -144,13 +145,14 @@ class IntakeESGFDataSource(DataSource):
                     for v in our_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
+            their_facets = {k: [v] if isinstance(v, str) else v for k, v in row.items()}
             dataset_facets = {
                 our_facet: [
                     inverse_values.get(our_facet, {}).get(v, v)
-                    for v in row[their_facet]
+                    for v in their_facets[their_facet]
                 ]
                 for our_facet, their_facet in self.facets.items()
-                if their_facet in row
+                if their_facet in their_facets
             }
             dataset_facets = {
                 f: v[0] if len(v) == 1 else v
