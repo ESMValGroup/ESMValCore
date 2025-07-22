@@ -26,7 +26,7 @@ class AllVars(Fix):
             try:
                 if cube.attributes[parent_units] == bad_value:
                     cube.attributes[parent_units] = "days since 1850-01-01"
-            except AttributeError:
+            except (KeyError, AttributeError):
                 pass
         return cubes
 
