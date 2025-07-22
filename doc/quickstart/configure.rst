@@ -856,14 +856,18 @@ Note that by default the tool will try searching the
 `ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
 in the order provided in the configuration file and use the first one that is
 online.
-ESGF is currently
-`transitioning to new server technology <https://github.com/ESGF/esgf-roadmap/blob/main/status/README.md>`__
-and all of the above indices are expected to go offline except the first one.
-Issues with https://esgf-node.ornl.gov/esgf-1-5-bridge can be reported
-`here <https://github.com/esgf2-us/esg_fastapi/issues>`__.
 Some ESGF index nodes may return search results faster than others, so you may
 be able to speed up the search for files by experimenting with placing different
 index nodes at the top of the list.
+
+.. warning::
+
+   ESGF is currently
+   `transitioning to new server technology <https://github.com/ESGF/esgf-roadmap/blob/main/status/README.md>`__
+   and all of the above indices are expected to go offline except the first one.
+
+Issues with https://esgf-node.ornl.gov/esgf-1-5-bridge can be reported
+`here <https://github.com/esgf2-us/esg_fastapi/issues>`__.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.
