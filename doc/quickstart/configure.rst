@@ -140,6 +140,16 @@ For example:
   >>> CFG['output_dir']
   PosixPath('/home/user/esmvaltool_output')
 
+Or, alternatively, via a context manager:
+
+.. code-block:: python
+
+  >>> with CFG.context(log_level="debug"):
+  ...     print(CFG["log_level"])
+  debug
+  >>> print(CFG["log_level"])
+  info
+
 This will also consider YAML configuration files in the user configuration
 directory (by default ``~/.config/esmvaltool``, but this can be changed with
 the ``ESMVALTOOL_CONFIG_DIR`` environment variable).

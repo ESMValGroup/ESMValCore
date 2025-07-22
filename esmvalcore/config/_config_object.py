@@ -503,6 +503,12 @@ class Config(ValidatedConfig):
         self.update(merged_config_dict)
         self.check_missing()
 
+    clear = ValidatedConfig.clear  # to show this is in API doc
+
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
+
 
 class Session(ValidatedConfig):
     """Container class for session configuration and directory information.
@@ -616,6 +622,12 @@ class Session(ValidatedConfig):
     def _fixed_file_dir(self):
         """Return fixed file directory."""
         return self.session_dir / self._relative_fixed_file_dir
+
+    clear = ValidatedConfig.clear  # to show this is in API doc
+
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
 
 
 def _get_all_config_dirs(cli_config_dir: Path | None) -> list[Path]:
