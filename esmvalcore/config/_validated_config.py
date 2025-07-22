@@ -6,6 +6,7 @@ import pprint
 import warnings
 from collections.abc import Callable, Generator, Mapping, MutableMapping
 from contextlib import contextmanager
+from copy import deepcopy
 from typing import Any, ClassVar
 
 from esmvalcore.exceptions import (
@@ -154,7 +155,7 @@ class ValidatedConfig(MutableMapping):
 
         """
         original_mapping = self._mapping
-        self._mapping = copy.deepcopy(self._mapping)
+        self._mapping = deepcopy(self._mapping)
         if mapping is not None:
             self.update(mapping)
         self.update(kwargs)
