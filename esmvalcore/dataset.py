@@ -350,7 +350,7 @@ class Dataset:
                 # allow use of facets from supplementary variable dict
                 if (
                     facet in self.facets
-                    and supplementary_ds.facets.get(facet, "*") == "*"
+                    and facet not in supplementary_ds.facets
                 ):
                     supplementary_ds.facets[facet] = self.facets[facet]
             supplementaries.extend(supplementary_ds.from_files())
