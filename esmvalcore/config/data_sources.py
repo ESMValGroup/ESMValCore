@@ -15,7 +15,7 @@ def get_data_sources(session: Session) -> list[DataSource]:
         if "data" not in project_settings:
             logger.info("Using legacy data sources for project '%s'", project)
             # Use legacy data sources from config-user.yml.
-            legacy_local_sources = esmvalcore.local._get_data_sources(project)
+            legacy_local_sources = esmvalcore.local._get_data_sources(project)  # noqa: SLF001
             data_sources.extend(legacy_local_sources)
             if (
                 session["search_esgf"] != "never"

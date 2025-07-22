@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from numbers import Number
 
 import intake_esgf.projects
 import iris.cube
@@ -81,11 +82,21 @@ class IntakeESGFDataSource(DataSource):
         :obj:`list` of :obj:`esmvalcore.io.intake_esgf.IntakeESGFDataset`
             A list of data elements that have been found.
         """
-        # Translate "our" facets to ESGF facets
+        # Normalize facets so all values are `list[str]`.
+        facets = {
+            facet: [str(values)]
+            if isinstance(values, str | Number | bool)
+            else values
+            for facet, values in facets.items()
+        }
+        # Translate "our" facets to ESGF facets and "our" values to ESGF values.
         esgf_facets = {
-            self.values.get(k, {}).get(v, v): facets[k]
-            for k, v in self.facets.items()
-            if k in facets and facets[k] != "*"
+            their_facet: [
+                self.values.get(our_facet, {}).get(v, v)
+                for v in facets[our_facet]
+            ]
+            for our_facet, their_facet in self.facets.items()
+            if our_facet in facets
         }
         # TODO: filter by timerange
         try:
@@ -99,6 +110,12 @@ class IntakeESGFDataSource(DataSource):
             )
             return []
 
+        # Return a list of datasets, with one IntakeESGFDataset per dataset_id.
+        result: list[IntakeESGFDataset] = []
+
+        # These are the keys in the dict[str, xarray.Dataset] returned by
+        # `intake_esgf.ESGFCatalog.to_dataset_dict`. Taken from:
+        # https://github.com/esgf2-us/intake-esgf/blob/c34124e54078e70ef271709a6d158edb22bcdb96/intake_esgf/catalog.py#L523-L528
         self.catalog.df["key"] = self.catalog.df.apply(
             lambda row: ".".join(
                 [row[f] for f in self.catalog.project.master_id_facets()],
@@ -106,25 +123,41 @@ class IntakeESGFDataSource(DataSource):
             axis=1,
         )
         inverse_values = {
-            facet: {v: k}
-            for facet in self.values
-            for k, v in self.values[facet].items()
+            our_facet: {
+                their_value: our_value
+                for our_value, their_value in self.values[our_facet].items()
+            }
+            for our_facet in self.values
         }
-        datasets = []
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
             # Subset the catalog to a single dataset.
             cat = self.catalog.clone()
-            cat.project = self.catalog.project
             cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
-            facets = {
-                k: inverse_values.get(k, {}).get(row[v], row[v])
-                for k, v in self.facets.items()
+            # Discard all but the latest version. It is not clear how/if
+            # `intake_esgf.ESGFCatalog.to_dataset_dict` supports multiple versions.
+            cat.df = cat.df[cat.df.version == cat.df.version.max()]
+            cat.project = self.catalog.project
+            if "short_name" in facets:
+                cat.last_search[self.facets["short_name"]] = facets[
+                    "short_name"
+                ]
+            # Retrieve "our" facets associated with the dataset_id.
+            dataset_facets = {
+                our_facet: [
+                    inverse_values.get(our_facet, {}).get(v, v)
+                    for v in row[their_facet]
+                ]
+                for our_facet, their_facet in self.facets.items()
+                if their_facet in row
+            }
+            dataset_facets = {
+                f: v[0] if len(v) == 1 else v for f, v in facets.items()
             }
             dataset = IntakeESGFDataset(
                 name=dataset_id,
-                facets=facets,
+                facets=dataset_facets,
                 catalog=cat,
             )
-            datasets.append(dataset)
-        return datasets
+            result.append(dataset)
+        return result
