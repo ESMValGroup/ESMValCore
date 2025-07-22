@@ -34,7 +34,6 @@ from esmvalcore.preprocessor._supplementary_vars import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-    from pathlib import Path
 
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset

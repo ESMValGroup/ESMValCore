@@ -24,6 +24,7 @@ from .exceptions import RecipeError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
     import iris.cube
 
     from .esgf import ESGFFile

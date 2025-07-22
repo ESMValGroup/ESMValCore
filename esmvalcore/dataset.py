@@ -51,8 +51,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-File = esgf.ESGFFile | local.LocalFile
-
 INHERITED_FACETS: list[str] = [
     "dataset",
     "domain",
@@ -132,7 +130,7 @@ class Dataset:
 
         self._persist: set[str] = set()
         self._session: Session | None = None
-        self._files: Sequence[File] | None = None
+        self._files: Sequence[DataElement] | None = None
         self._file_globs: Sequence[str] = []
 
         for key, value in facets.items():
@@ -194,7 +192,7 @@ class Dataset:
 
     def _file_to_dataset(
         self,
-        file: esgf.ESGFFile | local.LocalFile,
+        file: DataElement,
     ) -> Dataset:
         """Create a dataset from a file with a `facets` attribute."""
         facets = dict(file.facets)
@@ -781,14 +779,14 @@ class Dataset:
                         return  # use what has been found so far
 
     @property
-    def files(self) -> list[File]:
+    def files(self) -> list[DataElement]:
         """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
         return self._files  # type: ignore
 
     @files.setter
-    def files(self, value: Sequence[File]) -> None:
+    def files(self, value: Sequence[DataElement]) -> None:
         self._files = value
 
     def load(self) -> Cube:

@@ -8,7 +8,7 @@ from intake_esgf.exceptions import NoSearchResults
 
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.typing import FacetValue
+from esmvalcore.typing import Facets, FacetValue
 
 
 @dataclass
@@ -16,7 +16,7 @@ class IntakeESGFDataset(DataElement):
     name: str
     """A unique name identifying the data."""
 
-    facets: dict[str, FacetValue]
+    facets: Facets
     """Facets are key-value pairs describing the data."""
 
     catalog: ESGFCatalog
@@ -55,7 +55,7 @@ class IntakeESGFDataSource(DataSource):
     priority: int
     """The priority of the data source. Lower values have priority."""
 
-    facets: dict[str, str]
+    facets: dict[str, str | list[str]]
 
     values: dict[str, dict[str, str]] = field(default_factory=dict)
 
@@ -83,7 +83,7 @@ class IntakeESGFDataSource(DataSource):
             A list of data elements that have been found.
         """
         # Normalize facets so all values are `list[str]`.
-        facets = {
+        our_facets = {
             facet: [str(values)]
             if isinstance(values, str | Number | bool)
             else values
@@ -93,10 +93,10 @@ class IntakeESGFDataSource(DataSource):
         esgf_facets = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
-                for v in facets[our_facet]
+                for v in our_facets[our_facet]
             ]
             for our_facet, their_facet in self.facets.items()
-            if our_facet in facets
+            if our_facet in our_facets
         }
         # TODO: filter by timerange
         try:
@@ -138,9 +138,10 @@ class IntakeESGFDataSource(DataSource):
             # `intake_esgf.ESGFCatalog.to_dataset_dict` supports multiple versions.
             cat.df = cat.df[cat.df.version == cat.df.version.max()]
             cat.project = self.catalog.project
-            if "short_name" in facets:
-                cat.last_search[self.facets["short_name"]] = facets[
-                    "short_name"
+            if "short_name" in our_facets:
+                cat.last_search[self.facets["short_name"]] = [
+                    self.values.get("short_name", {}).get(v, v)
+                    for v in our_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
             dataset_facets = {
@@ -152,11 +153,12 @@ class IntakeESGFDataSource(DataSource):
                 if their_facet in row
             }
             dataset_facets = {
-                f: v[0] if len(v) == 1 else v for f, v in facets.items()
+                f: v[0] if len(v) == 1 else v
+                for f, v in dataset_facets.items()
             }
             dataset = IntakeESGFDataset(
                 name=dataset_id,
-                facets=dataset_facets,
+                facets=dataset_facets,  # type: ignore[arg-type]
                 catalog=cat,
             )
             result.append(dataset)

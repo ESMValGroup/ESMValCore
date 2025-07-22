@@ -102,7 +102,7 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
-    from esmvalcore.dataset import Dataset, File
+    from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +367,7 @@ def _run_preproc_function(
     function: Callable,
     items: PreprocessorItem | Sequence[PreprocessorItem],
     kwargs: Any,
-    input_files: Sequence[File] | None = None,
+    input_files: Sequence[DataElement] | None = None,
 ) -> PreprocessorItem | Sequence[PreprocessorItem]:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
@@ -431,7 +431,7 @@ def _run_preproc_function(
 def preprocess(
     items: Sequence[PreprocessorItem],
     step: str,
-    input_files: list[File] | None = None,
+    input_files: list[DataElement] | None = None,
     output_file: Path | None = None,
     debug: bool = False,
     **settings: Any,
@@ -657,7 +657,7 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-PreprocessorItem: TypeAlias = PreprocessorFile | Cube | str | Path
+PreprocessorItem: TypeAlias = PreprocessorFile | Cube | DataElement
 
 
 def _apply_multimodel(

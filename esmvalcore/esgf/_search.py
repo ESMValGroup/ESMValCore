@@ -2,7 +2,6 @@
 
 import itertools
 import logging
-from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -18,6 +17,7 @@ from esmvalcore.local import (
     _replace_years_with_timerange,
     _truncate_dates,
 )
+from esmvalcore.typing import FacetValue
 
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -404,7 +404,7 @@ class ESGFDataSource(DataSource):
     def __post__init__(self):
         self.debug_info = ""
 
-    def find_data(self, **facets: str | Iterable[str]) -> list[ESGFFile]:
+    def find_data(self, **facets: FacetValue) -> list[ESGFFile]:
         """Find data.
 
         Parameters
