@@ -1,4 +1,5 @@
 """Tests for fixes of NorESM1-ME (CMIP5)."""
+
 import iris
 import pytest
 from iris.cube import CubeList
@@ -10,7 +11,7 @@ from esmvalcore.cmor.fix import Fix
 DIM_COORD_SHORT = iris.coords.DimCoord(
     [1.0, 2.0, 3.0],
     bounds=[[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]],
-    var_name='dim_coord',
+    var_name="dim_coord",
 )
 DIM_COORD_LONG = iris.coords.DimCoord(
     [1.1234567891011, 2.1234567891011, 3.1234567891011],
@@ -19,7 +20,7 @@ DIM_COORD_LONG = iris.coords.DimCoord(
         [1.51234567891011, 2.51234567891011],
         [2.51234567891011, 3.51234567891011],
     ],
-    var_name='dim_coord',
+    var_name="dim_coord",
 )
 DIM_COORD_ROUNDED = iris.coords.DimCoord(
     [1.123456789101, 2.123456789101, 3.123456789101],
@@ -28,11 +29,11 @@ DIM_COORD_ROUNDED = iris.coords.DimCoord(
         [1.512345678910, 2.512345678910],
         [2.512345678910, 3.512345678910],
     ],
-    var_name='dim_coord',
+    var_name="dim_coord",
 )
 AUX_COORD = iris.coords.AuxCoord(
     [1.1284712947128749498712, 2.12421841274128947982, 3.12787129852141124214],
-    var_name='aux_coord',
+    var_name="aux_coord",
 )
 
 CUBE_IN_SHORT = iris.cube.Cube(
@@ -54,12 +55,14 @@ CUBE_OUT_LONG = iris.cube.Cube(
 CUBES_TO_FIX = [
     (CubeList([CUBE_IN_SHORT]), CubeList([CUBE_IN_SHORT])),
     (CubeList([CUBE_IN_LONG]), CubeList([CUBE_OUT_LONG])),
-    (CubeList([CUBE_IN_LONG,
-               CUBE_IN_SHORT]), CubeList([CUBE_OUT_LONG, CUBE_IN_SHORT])),
+    (
+        CubeList([CUBE_IN_LONG, CUBE_IN_SHORT]),
+        CubeList([CUBE_OUT_LONG, CUBE_IN_SHORT]),
+    ),
 ]
 
 
-@pytest.mark.parametrize('cubes_in,cubes_out', CUBES_TO_FIX)
+@pytest.mark.parametrize(("cubes_in", "cubes_out"), CUBES_TO_FIX)
 def test_tas(cubes_in, cubes_out):
     """Test tas fixes."""
     fix = Tas(None)
@@ -69,7 +72,8 @@ def test_tas(cubes_in, cubes_out):
 
 
 def test_get():
-    """Test fix get"""
-    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'Amon', 'tas') == [
-        Tas(None), GenericFix(None)
+    """Test fix get."""
+    assert Fix.get_fixes("CMIP5", "NORESM1-ME", "Amon", "tas") == [
+        Tas(None),
+        GenericFix(None),
     ]

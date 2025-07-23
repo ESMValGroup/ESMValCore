@@ -11,21 +11,12 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {
-                'short_name': 'rlut'
-            },
-            {
-                'short_name': 'rlutcs'
-            },
-            {
-                'short_name': 'rsut'
-            },
-            {
-                'short_name': 'rsutcs'
-            },
+        return [
+            {"short_name": "rlut"},
+            {"short_name": "rlutcs"},
+            {"short_name": "rsut"},
+            {"short_name": "rsutcs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -43,6 +34,6 @@ class DerivedVariable(DerivedVariableBase):
 
         netcre_cube = lwcre_cube + swcre_cube
         netcre_cube.units = lwcre_cube.units
-        netcre_cube.attributes['positive'] = 'down'
+        netcre_cube.attributes["positive"] = "down"
 
         return netcre_cube

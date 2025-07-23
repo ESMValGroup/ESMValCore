@@ -1,12 +1,12 @@
 """Fixes for IITM-ESM model."""
+
 import logging
 
 import numpy as np
 
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.fixes import get_time_bounds
-
-from ..common import OceanFixGrid
-from ..fix import Fix
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,6 @@ class AllVars(Fix):
             "Using 'area_weighted' regridder scheme in Omon variables "
             "for dataset %s causes discontinuities in the longitude "
             "coordinate.",
-            self.extra_facets['dataset'],
+            self.extra_facets["dataset"],
         )
         return cubes

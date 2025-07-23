@@ -1,12 +1,15 @@
 """Fixes for CESM2 model."""
+
+from pathlib import Path
 from shutil import copyfile
 
+import iris
 import numpy as np
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import (
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_typeland_coord,
@@ -20,23 +23,30 @@ class Cl(Fix):
 
     def _fix_formula_terms(
         self,
-        filepath,
-        output_dir,
-        add_unique_suffix=False,
-    ):
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            file,
+            add_unique_suffix=add_unique_suffix,
         )
-        copyfile(filepath, new_path)
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
-        dataset.variables['lev'].standard_name = (
-            'atmosphere_hybrid_sigma_pressure_coordinate')
-        dataset.close()
+        copyfile(file, new_path)
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
+            dataset.variables[
+                "lev"
+            ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         return new_path
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -50,7 +60,7 @@ class Cl(Fix):
 
         Parameters
         ----------
-        filepath : str
+        file : str
             Path to the original file.
         output_dir: Path
             Output directory for fixed files.
@@ -64,12 +74,19 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1, :]
-        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1, :]
-        dataset.close()
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
+                ::-1,
+                :,
+            ]
+            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
+                ::-1,
+                :,
+            ]
         return new_path
 
     def fix_metadata(self, cubes):
@@ -88,12 +105,12 @@ class Cl(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name='lev')
-        a_coord = cube.coord(var_name='a')
-        b_coord = cube.coord(var_name='b')
+        lev_coord = cube.coord(var_name="lev")
+        a_coord = cube.coord(var_name="a")
+        b_coord = cube.coord(var_name="b")
         lev_coord.points = a_coord.core_points() + b_coord.core_points()
         lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = '1'
+        lev_coord.units = "1"
         return cubes
 
 
@@ -142,12 +159,14 @@ class Prw(Fix):
 
         """
         for cube in cubes:
-            for coord_name in ['latitude', 'longitude']:
+            for coord_name in ["latitude", "longitude"]:
                 coord = cube.coord(coord_name)
                 if not coord.has_bounds():
                     coord.guess_bounds()
-                coord.bounds = np.round(coord.core_bounds().astype(np.float64),
-                                        4)
+                coord.bounds = np.round(
+                    coord.core_bounds().astype(np.float64),
+                    4,
+                )
 
         return cubes
 
@@ -157,7 +176,7 @@ class Tas(Prw):
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
+        Add height (2m) coordinate and time coordinate.
 
         Fix also done for prw.
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
@@ -169,15 +188,73 @@ class Tas(Prw):
 
         Returns
         -------
-        iris.cube.CubeList
+        iris.cube.CubeList, iris.cube.CubeList
 
         """
         super().fix_metadata(cubes)
         # Specific code for tas
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
+        new_list = iris.cube.CubeList()
+        for cube in cubes:
+            try:
+                old_time = cube.coord("time")
+            except iris.exceptions.CoordinateNotFoundError:
+                new_list.append(cube)
+            else:
+                if old_time.is_monotonic():
+                    new_list.append(cube)
+                else:
+                    time_units = old_time.units
+                    time_data = old_time.points
 
-        return cubes
+                    # erase erroneously copy-pasted points
+                    time_diff = np.diff(time_data)
+                    idx_neg = np.where(time_diff <= 0.0)[0]
+                    while len(idx_neg) > 0:
+                        time_data = np.delete(time_data, idx_neg[0] + 1)
+                        time_diff = np.diff(time_data)
+                        idx_neg = np.where(time_diff <= 0.0)[0]
+
+                    # create the new time coord
+                    new_time = iris.coords.DimCoord(
+                        time_data,
+                        standard_name="time",
+                        var_name="time",
+                        units=time_units,
+                    )
+
+                    # create a new cube with the right shape
+                    dims = (
+                        time_data.shape[0],
+                        cube.coord("latitude").shape[0],
+                        cube.coord("longitude").shape[0],
+                    )
+                    data = cube.data
+                    new_data = np.ma.append(
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
+                    )
+                    new_data = new_data.reshape(dims)
+
+                    tmp_cube = iris.cube.Cube(
+                        new_data,
+                        standard_name=cube.standard_name,
+                        long_name=cube.long_name,
+                        var_name=cube.var_name,
+                        units=cube.units,
+                        attributes=cube.attributes,
+                        cell_methods=cube.cell_methods,
+                        dim_coords_and_dims=[
+                            (new_time, 0),
+                            (cube.coord("latitude"), 1),
+                            (cube.coord("longitude"), 2),
+                        ],
+                    )
+
+                    new_list.append(tmp_cube)
+
+        return new_list
 
 
 class Sftlf(Fix):
@@ -247,9 +324,11 @@ class Tos(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            if cube.attributes['mipTable'] == 'Omon':
-                cube.coord('time').points = \
-                    np.round(cube.coord('time').points, 1)
+            if cube.attributes["mipTable"] == "Omon":
+                cube.coord("time").points = np.round(
+                    cube.coord("time").points,
+                    1,
+                )
         return cubes
 
 
@@ -270,15 +349,137 @@ class Omon(Fix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
 
                 # Only points need to be fixed, not bounds
-                if z_coord.units == 'cm':
+                if z_coord.units == "cm":
                     z_coord.points = z_coord.core_points() / 100.0
-                    z_coord.units = 'm'
+                    z_coord.units = "m"
 
                 # Fix depth metadata
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
+        return cubes
+
+
+class Pr(Fix):
+    """Fixes for pr."""
+
+    def fix_metadata(self, cubes):
+        """Fix time coordinates.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        new_list = iris.cube.CubeList()
+        for cube in cubes:
+            try:
+                old_time = cube.coord("time")
+            except iris.exceptions.CoordinateNotFoundError:
+                new_list.append(cube)
+            else:
+                if old_time.is_monotonic():
+                    new_list.append(cube)
+                else:
+                    time_units = old_time.units
+                    time_data = old_time.points
+
+                    # erase erroneously copy-pasted points
+                    time_diff = np.diff(time_data)
+                    idx_neg = np.where(time_diff <= 0.0)[0]
+                    while len(idx_neg) > 0:
+                        time_data = np.delete(time_data, idx_neg[0] + 1)
+                        time_diff = np.diff(time_data)
+                        idx_neg = np.where(time_diff <= 0.0)[0]
+
+                    # create the new time coord
+                    new_time = iris.coords.DimCoord(
+                        time_data,
+                        standard_name="time",
+                        var_name="time",
+                        units=time_units,
+                    )
+
+                    # create a new cube with the right shape
+                    dims = (
+                        time_data.shape[0],
+                        cube.coord("latitude").shape[0],
+                        cube.coord("longitude").shape[0],
+                    )
+                    data = cube.data
+                    new_data = np.ma.append(
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
+                    )
+                    new_data = new_data.reshape(dims)
+
+                    tmp_cube = iris.cube.Cube(
+                        new_data,
+                        standard_name=cube.standard_name,
+                        long_name=cube.long_name,
+                        var_name=cube.var_name,
+                        units=cube.units,
+                        attributes=cube.attributes,
+                        cell_methods=cube.cell_methods,
+                        dim_coords_and_dims=[
+                            (new_time, 0),
+                            (cube.coord("latitude"), 1),
+                            (cube.coord("longitude"), 2),
+                        ],
+                    )
+
+                    new_list.append(tmp_cube)
+        return new_list
+
+
+class Tasmin(Pr):
+    """Fixes for tasmin."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
+        return cubes
+
+
+class Tasmax(Pr):
+    """Fixes for tasmax."""
+
+    def fix_metadata(self, cubes):
+        """Fix time and height 2m coordinates.
+
+        Fix for time coming from Pr.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+                Cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=2.0)
         return cubes

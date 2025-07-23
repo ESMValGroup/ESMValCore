@@ -3,8 +3,8 @@
 Overview
 ********
 
-After ``config-user.yml``, the ``recipe.yml`` is the second file the user needs
-to pass to ``esmvaltool`` as command line option, at each run time point.
+The recipe is the main control file of ESMValTool.
+It is the only required argument for the  ``esmvaltool`` command line program.
 Recipes contain the data and data analysis information and instructions needed
 to run the diagnostic(s), as well as specific diagnostic-related instructions.
 
@@ -130,9 +130,9 @@ See :ref:`CMOR-DRS` for more information on this kind of file organization.
 
 When (some) files are available locally, the tool will not automatically look
 for more files on ESGF.
-To populate a recipe with all available datasets from ESGF, ``search_esgf``
-should be set to ``always`` in the :ref:`user configuration file<user
-configuration file>`.
+To populate a recipe with all available datasets from ESGF, the
+:ref:`configuration option <config_options>` ``search_esgf`` should be set to
+``always``.
 
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
@@ -544,11 +544,14 @@ script will receive the preprocessed air temperature data
 script will receive the results of diagnostic_a.py and the preprocessed precipitation
 data (has ancestors ``diagnostic_1/script_a`` and ``diagnostic_2/precip``).
 
+.. _task_priority:
+
 Task priority
 -------------
 Tasks are assigned a priority, with tasks appearing earlier on in the recipe
 getting higher priority. The tasks will be executed sequentially or in parallel,
-depending on the setting of ``max_parallel_tasks`` in the :ref:`user configuration file`.
+depending on the :ref:`configuration option <config_options>`
+``max_parallel_tasks``.
 When there are fewer than ``max_parallel_tasks`` running, tasks will be started
 according to their priority. For obvious reasons, only tasks that are not waiting for
 ancestor tasks can be started. This feature makes it possible to
@@ -692,8 +695,8 @@ the absolute path to the diagnostic:
 This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
-Re-using parameters from one ``script`` to another
---------------------------------------------------
+Reusing parameters from one ``script`` to another
+-------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
 for use with other diagnostics. Here is an example:
 

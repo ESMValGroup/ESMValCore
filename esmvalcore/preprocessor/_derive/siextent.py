@@ -1,4 +1,5 @@
 """Derivation of variable `sithick`."""
+
 import logging
 
 import dask.array as da
@@ -6,6 +7,7 @@ import iris
 from iris import Constraint
 
 from esmvalcore.exceptions import RecipeError
+
 from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)
@@ -17,16 +19,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {
-                'short_name': 'sic',
-                'optional': 'true'
-            },
-            {
-                'short_name': 'siconca',
-                'optional': 'true'
-            }]
-        return required
+        return [
+            {"short_name": "sic", "optional": "true"},
+            {"short_name": "siconca", "optional": "true"},
+        ]
 
     @staticmethod
     def calculate(cubes):
@@ -48,18 +44,22 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice extent.
         """
         try:
-            sic = cubes.extract_cube(Constraint(name='sic'))
+            sic = cubes.extract_cube(Constraint(name="sic"))
         except iris.exceptions.ConstraintMismatchError:
             try:
-                sic = cubes.extract_cube(Constraint(name='siconca'))
+                sic = cubes.extract_cube(Constraint(name="siconca"))
             except iris.exceptions.ConstraintMismatchError as exc:
+                msg = (
+                    "Derivation of siextent failed due to missing variables "
+                    "sic and siconca."
+                )
                 raise RecipeError(
-                    'Derivation of siextent failed due to missing variables '
-                    'sic and siconca.') from exc
+                    msg,
+                ) from exc
 
         ones = da.ones_like(sic)
-        siextent_data = da.ma.masked_where(sic.lazy_data() < 15., ones)
+        siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)
         siextent = sic.copy(siextent_data)
-        siextent.units = 'm2'
+        siextent.units = "m2"
 
         return siextent

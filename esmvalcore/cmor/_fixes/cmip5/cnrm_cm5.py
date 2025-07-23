@@ -1,6 +1,6 @@
-
 """Fixes for CNRM-CM5 model."""
-from ..fix import Fix
+
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Msftmyz(Fix):

@@ -1,13 +1,14 @@
 """Fixes for GFDL CM2p1 model."""
+
 from copy import deepcopy
 
 import cftime
 import numpy as np
 
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.iris_helpers import date2num
 
-from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
-from ..fix import Fix
 from .cesm1_cam5 import Cl as BaseCl
 
 Cl = BaseCl
@@ -34,7 +35,7 @@ class Areacello(Fix):
         iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
-        cube.units = 'm2'
+        cube.units = "m2"
         return cubes
 
 
@@ -77,13 +78,10 @@ class Sit(Fix):
         iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
-        time = cube.coord('time')
+        time = cube.coord("time")
         if self._fix_required(time):
             times = time.units.num2date(time.points)
-            starts = [
-                cftime.DatetimeJulian(c.year, c.month, 1)
-                for c in times
-            ]
+            starts = [cftime.DatetimeJulian(c.year, c.month, 1) for c in times]
             ends = [
                 cftime.DatetimeJulian(c.year, c.month + 1, 1)
                 if c.month < 12
@@ -94,9 +92,8 @@ class Sit(Fix):
         return cubes
 
     def _fix_required(self, time):
-        return (
-            self.vardef.frequency == 'mon' and
-            not (time.bounds[-1, 0] < time.points[-1] < time.bounds[-1, 1])
+        return self.vardef.frequency == "mon" and not (
+            time.bounds[-1, 0] < time.points[-1] < time.bounds[-1, 1]
         )
 
 
@@ -135,5 +132,5 @@ class Tos(Fix):
         iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_surface_temperature'
+        cube.standard_name = "sea_surface_temperature"
         return cubes

@@ -1,8 +1,7 @@
-
 """Fixes for GFDL ESM2M."""
 
-from ..fix import Fix
-from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(BaseAllVars):
@@ -10,7 +9,7 @@ class AllVars(BaseAllVars):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
         """
@@ -28,7 +27,7 @@ class Areacello(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        cube.units = 'm2'
+        cube.units = "m2"
         return cubes
 
 
@@ -99,5 +98,5 @@ class Tos(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_surface_temperature'
+        cube.standard_name = "sea_surface_temperature"
         return cubes

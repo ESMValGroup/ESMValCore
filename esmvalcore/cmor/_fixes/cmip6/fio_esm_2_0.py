@@ -1,11 +1,13 @@
 """Fixes for FIO-ESM-2-0 model."""
+
 import logging
 
 import numpy as np
+from iris.util import promote_aux_coord_to_dim_coord
 
-from ..common import OceanFixGrid
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +29,16 @@ class Omon(Fix):
         -------
         iris.cube.CubeList
         """
-        round_coordinates(cubes,
-                          decimals=6,
-                          coord_names=["longitude", "latitude"])
+        round_coordinates(
+            cubes,
+            decimals=6,
+            coord_names=["longitude", "latitude"],
+        )
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "
             "for dataset %s causes discontinuities in the longitude "
             "coordinate.",
-            self.extra_facets['dataset'],
+            self.extra_facets["dataset"],
         )
         return cubes
 
@@ -63,12 +67,24 @@ class Amon(Fix):
                 if np.any(latitude.bounds[1:, 0] != latitude.bounds[:-1, 1]):
                     latitude.bounds = None
                     latitude.guess_bounds()
+                if np.any(latitude.bounds[:, 0] == latitude.bounds[:, 1]):
+                    latitude.bounds = None
+                    latitude.guess_bounds()
 
             longitude = cube.coord("longitude")
             if longitude.has_bounds():
                 if np.any(longitude.bounds[1:, 0] != longitude.bounds[:-1, 1]):
                     longitude.bounds = None
                     longitude.guess_bounds()
+                if np.any(longitude.bounds[:, 0] == longitude.bounds[:, 1]):
+                    longitude.bounds = None
+                    longitude.guess_bounds()
+
+            if not cube.coords("latitude", dim_coords=True):
+                promote_aux_coord_to_dim_coord(cube, latitude)
+            if not cube.coords("longitude", dim_coords=True):
+                promote_aux_coord_to_dim_coord(cube, longitude)
+
         return cubes
 
 
@@ -90,6 +106,6 @@ class Clt(Fix):
         iris.cube.Cube
         """
         if cube.core_data().max() <= 1.0:
-            cube.units = '1'
-            cube.convert_units('%')
+            cube.units = "1"
+            cube.convert_units("%")
         return cube

@@ -4,6 +4,8 @@ import cf_units
 import iris
 import numpy as np
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 
 # Constants (Southern hemisphere at 850 hPa)
@@ -17,23 +19,26 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{'short_name': 'ua'}]
-        return required
+        return [{"short_name": "ua"}]
 
     @staticmethod
     def calculate(cubes):
         """Compute latitude of maximum meridional wind speed."""
         # Load cube, extract correct region and perform zonal mean
-        ua_cube = cubes.extract_cube(iris.Constraint(name='eastward_wind'))
-        ua_cube = ua_cube.interpolate([('air_pressure', PLEV)],
-                                      scheme=iris.analysis.Linear())
+        ua_cube = cubes.extract_cube(iris.Constraint(name="eastward_wind"))
+        ua_cube = ua_cube.interpolate(
+            [("air_pressure", PLEV)],
+            scheme=iris.analysis.Linear(),
+        )
         ua_cube = ua_cube.extract(
-            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1]))
-        ua_cube = ua_cube.collapsed('longitude', iris.analysis.MEAN)
+            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1]),
+        )
+        with ignore_iris_vague_metadata_warnings():
+            ua_cube = ua_cube.collapsed("longitude", iris.analysis.MEAN)
 
         # Calculate maximum jet position
         uajet_vals = []
-        for time_slice in ua_cube.slices(['latitude']):
+        for time_slice in ua_cube.slices(["latitude"]):
             ua_data = time_slice.data
 
             # Get maximum ua and corresponding index
@@ -42,20 +47,18 @@ class DerivedVariable(DerivedVariableBase):
 
             # Perform 2nd degree polynomial fit to get maximum jet position
             x_vals = ua_data[slc]
-            y_vals = time_slice.coord('latitude').points[slc]
+            y_vals = time_slice.coord("latitude").points[slc]
             polyfit = np.polyfit(x_vals, y_vals, 2)
             polynom = np.poly1d(polyfit)
             uajet_vals.append(polynom(np.max(ua_data)))
 
-        uajet_cube = iris.cube.Cube(uajet_vals,
-                                    units=cf_units.Unit('degrees_north'),
-                                    dim_coords_and_dims=[
-                                        (ua_cube.coord('time'), 0)
-                                    ],
-                                    attributes={
-                                        'plev': PLEV,
-                                        'lat_range_0': LAT[0],
-                                        'lat_range_1': LAT[1]
-                                    })
-
-        return uajet_cube
+        return iris.cube.Cube(
+            uajet_vals,
+            units=cf_units.Unit("degrees_north"),
+            dim_coords_and_dims=[(ua_cube.coord("time"), 0)],
+            attributes={
+                "plev": PLEV,
+                "lat_range_0": LAT[0],
+                "lat_range_1": LAT[1],
+            },
+        )

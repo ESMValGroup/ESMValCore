@@ -35,9 +35,10 @@ defaults:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -50,7 +51,6 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
@@ -72,9 +72,10 @@ jobs:
 
   osx:
     runs-on: "macos-latest"
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
         architecture: ["x64"]  # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
@@ -89,7 +90,6 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p source_install_osx_artifacts_python_${{ matrix.python-version }}
       - name: Record versions

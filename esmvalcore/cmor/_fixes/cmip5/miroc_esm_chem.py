@@ -1,6 +1,6 @@
-
 """Fixes for MIROC ESM CHEM model."""
-from ..fix import Fix
+
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Tro3(Fix):

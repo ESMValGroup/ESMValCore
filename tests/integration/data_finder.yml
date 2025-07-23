@@ -452,7 +452,7 @@ get_input_filelist:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
-  
+
   - drs: NCI
     variable:
       <<: *variable
@@ -472,7 +472,7 @@ get_input_filelist:
     found_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
-  
+
   - drs: NCI
     variable:
       <<: *variable
@@ -593,7 +593,7 @@ get_input_filelist:
     found_files:
       - historical/atmos/mon/ta/HADGEM1/r1i1p1/ta_HADGEM1_195001-199912.nc
       - historical/atmos/mon/ta/HADGEM1/r1i1p1/ta_HADGEM1_200001-200112.nc
-  
+
   - drs: NCI
     variable:
       variable_group: test
@@ -1155,6 +1155,7 @@ get_input_filelist:
     dirs:
       - amip
       - amip/outdata
+      - amip/output
     file_patterns:
       - amip_atm_2d_ml*.nc
     found_files:
@@ -1185,6 +1186,7 @@ get_input_filelist:
     dirs:
       - amip
       - amip/outdata
+      - amip/output
     file_patterns:
       - amip_var*.nc
     found_files:

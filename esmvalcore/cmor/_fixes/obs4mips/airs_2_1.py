@@ -1,7 +1,8 @@
 """Fixes for obs4MIPs dataset AIRS-2-1."""
+
 from iris.exceptions import CoordinateNotFoundError
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -26,10 +27,10 @@ class AllVars(Fix):
         """
         for cube in cubes:
             try:
-                plev = cube.coord('air_pressure')
+                plev = cube.coord("air_pressure")
             except CoordinateNotFoundError:
                 continue
             else:
                 if plev.points[0] > 10000.0:
-                    plev.units = 'Pa'
+                    plev.units = "Pa"
         return cubes

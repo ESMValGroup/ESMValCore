@@ -1,6 +1,7 @@
 """Fixes for GISS-E2-1-G model."""
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
@@ -19,8 +20,10 @@ class Tos(Fix):
         units in the files are 'degC', but the values are in 'K'.
         """
         for cube in cubes:
-            if (cube.units == 'degC'
-                    and cube.core_data().ravel()[:1000].max() > 100.):
-                cube.units = 'K'
+            if (
+                cube.units == "degC"
+                and cube.core_data().ravel()[:1000].max() > 100.0
+            ):
+                cube.units = "K"
                 cube.convert_units(self.vardef.units)
         return cubes

@@ -2,18 +2,21 @@
 
 .. data:: CFG
 
-    ESMValCore configuration.
+    Global ESMValCore configuration object of type
+    :class:`esmvalcore.config.Config`.
 
-    By default, this will be loaded from the file
-    ``~/.esmvaltool/config-user.yml``. If used within the ``esmvaltool``
-    program, this will respect the ``--config_file`` argument.
+    By default, this will be loaded from YAML files in the user configuration
+    directory (by default ``~/.config/esmvaltool``, but this can be changed
+    with the ``ESMVALTOOL_CONFIG_DIR`` environment variable) similar to the way
+    `Dask handles configuration
+    <https://docs.dask.org/en/stable/configuration.html>`__.
 
 """
 
 from ._config_object import CFG, Config, Session
 
 __all__ = (
-    'CFG',
-    'Config',
-    'Session',
+    "CFG",
+    "Config",
+    "Session",
 )

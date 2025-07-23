@@ -1,307 +1,455 @@
 .. _config:
 
-*******************
-Configuration files
-*******************
+*************
+Configuration
+*************
+
+.. _config_overview:
 
 Overview
 ========
 
-There are several configuration files in ESMValCore:
-
-* ``config-user.yml``: sets a number of user-specific options like desired
-  graphical output format, root paths to data, etc.;
-* ``config-developer.yml``: sets a number of standardized file-naming and paths
-  to data formatting;
-
-and one configuration file which is distributed with ESMValTool:
-
-* ``config-references.yml``: stores information on diagnostic and recipe authors and
-  scientific journals references;
-
-.. _user configuration file:
-
-User configuration file
-=======================
-
-
-The ``config-user.yml`` configuration file contains all the global level
-information needed by ESMValCore. It can be reused as many times the user needs
-to before changing any of the options stored in it. This file is essentially
-the gateway between the user and the machine-specific instructions to
-``esmvaltool``. By default, esmvaltool looks for it in the home directory,
-inside the ``.esmvaltool`` folder.
-
-Users can get a copy of this file with default values by running
-
-.. code-block:: bash
-
-  esmvaltool config get-config-user --path=${TARGET_FOLDER}
-
-If the option ``--path`` is omitted, the file will be created in
-``${HOME}/.esmvaltool``
-
-The following shows the default settings from the ``config-user.yml`` file
-with explanations in a commented line above each option. If only certain values
-are allowed for an option, these are listed after ``---``. The option in square
-brackets is the default value, i.e., the one that is used if this option is
-omitted in the file.
-
-.. code-block:: yaml
-
-  # Destination directory where all output will be written
-  # Includes log files and performance stats.
-  output_dir: ~/esmvaltool_output
-
-  # Auxiliary data directory
-  # Used by some recipes to look for additional datasets.
-  auxiliary_data_dir: ~/auxiliary_data
-
-  # Automatic data download from ESGF --- [never]/when_missing/always
-  # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
-  # data from ESGF. ``never`` disables this feature, which is useful if you are
-  # working on a computer without an internet connection, or if you have limited
-  # disk space. ``when_missing`` enables the automatic download for files that
-  # are not available locally. ``always`` will always check ESGF for the latest
-  # version of a file, and will only use local files if they correspond to that
-  # latest version.
-  search_esgf: never
-
-  # Directory for storing downloaded climate data
-  # Make sure to use a directory where you can store multiple GBs of data. Your
-  # home directory on a HPC is usually not suited for this purpose, so please
-  # change the default value in this case!
-  download_dir: ~/climate_data
-
-  # Rootpaths to the data from different projects
-  # This default setting will work if files have been downloaded by ESMValTool
-  # via ``search_esgf``. Lists are also possible. For site-specific entries,
-  # see the default ``config-user.yml`` file that can be installed with the
-  # command ``esmvaltool config get_config_user``. For each project, this can
-  # be either a single path or a list of paths. Comment out these when using a
-  # site-specific path.
-  rootpath:
-    default: ~/climate_data
-
-  # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if files have been downloaded by ESMValTool
-  # via ``search_esgf``. See ``config-developer.yml`` for definitions. Comment
-  # out/replace as per needed.
-  drs:
-    CMIP3: ESGF
-    CMIP5: ESGF
-    CMIP6: ESGF
-    CORDEX: ESGF
-    obs4MIPs: ESGF
-
-  # Run at most this many tasks in parallel --- [null]/1/2/3/4/...
-  # Set to ``null`` to use the number of available CPUs. If you run out of
-  # memory, try setting max_parallel_tasks to ``1`` and check the amount of
-  # memory you need for that by inspecting the file ``run/resource_usage.txt`` in
-  # the output directory. Using the number there you can increase the number of
-  # parallel tasks again to a reasonable number for the amount of memory
-  # available in your system.
-  max_parallel_tasks: null
-
-  # Log level of the console --- debug/[info]/warning/error
-  # For much more information printed to screen set log_level to ``debug``.
-  log_level: info
-
-  # Exit on warning --- true/[false]
-  # Only used in NCL diagnostic scripts.
-  exit_on_warning: false
-
-  # Plot file format --- [png]/pdf/ps/eps/epsi
-  output_file_type: png
-
-  # Remove the ``preproc`` directory if the run was successful --- [true]/false
-  # By default this option is set to ``true``, so all preprocessor output files
-  # will be removed after a successful run. Set to ``false`` if you need those files.
-  remove_preproc_dir: true
-
-  # Use netCDF compression --- true/[false]
-  compress_netcdf: false
-
-  # Save intermediary cubes in the preprocessor --- true/[false]
-  # Setting this to ``true`` will save the output cube from each preprocessing
-  # step. These files are numbered according to the preprocessing order.
-  save_intermediary_cubes: false
-
-  # Use a profiling tool for the diagnostic run --- [false]/true
-  # A profiler tells you which functions in your code take most time to run.
-  # For this purpose we use ``vprof``, see below for notes. Only available for
-  # Python diagnostics.
-  profile_diagnostic: false
-
-  # Path to custom ``config-developer.yml`` file
-  # This can be used to customise project configurations. See
-  # ``config-developer.yml`` for an example. Set to ``null`` to use the default.
-  config_developer_file: null
-
-The ``search_esgf`` setting can be used to disable or enable automatic
-downloads from ESGF.
-If ``search_esgf`` is set to ``never``, the tool does not download any data
-from the ESGF.
-If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
-CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
-not available locally and store it in ``download_dir`` using the ``ESGF``
-directory structure defined in the :ref:`config-developer`.
-If ``search_esgf`` is set to ``always``, the tool will first check the ESGF for
-the needed data, regardless of any local data availability; if the data found
-on ESGF is newer than the local data (if any) or the user specifies a version
-of the data that is available only from the ESGF, then that data will be
-downloaded; otherwise, local data will be used.
-
-The ``auxiliary_data_dir`` setting is the path to place any required
-additional auxiliary data files. This is necessary because certain
-Python toolkits, such as cartopy, will attempt to download data files at run
-time, typically geographic data files such as coastlines or land surface maps.
-This can fail if the machine does not have access to the wider internet. This
-location allows the user to specify where to find such files if they can not be
-downloaded at runtime. The example user configuration file already contains two valid
-locations for ``auxiliary_data_dir`` directories on CEDA-JASMIN and DKRZ, and a number
-of such maps and shapefiles (used by current diagnostics) are already there. You will
-need ``esmeval`` group workspace membership to access the JASMIN one (see
-`instructions <https://help.jasmin.ac.uk/article/199-introduction-to-group-workspaces>`_
-how to gain access to the group workspace.
-
-.. warning::
-
-   This setting is not for model or observational datasets, rather it is for
-   extra data files such as shapefiles or other data sources needed by the diagnostics.
-
-The ``profile_diagnostic`` setting triggers profiling of Python diagnostics,
-this will tell you which functions in the diagnostic took most time to run.
-For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
-For each diagnostic script in the recipe, the profiler writes a ``.json`` file
-that can be used to plot a
-`flame graph <https://queue.acm.org/detail.cfm?id=2927301>`__
-of the profiling information by running
-
-.. code-block:: bash
-
-  vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
-
-Note that it is also possible to use vprof to understand other resources used
-while running the diagnostic, including execution time of different code blocks
-and memory usage.
-
-A detailed explanation of the data finding-related sections of the
-``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
-:ref:`data-retrieval` section. This section relates directly to the data
-finding capabilities of ESMValCore and are very important to be understood by
-the user.
+Similar to `Dask <https://docs.dask.org/en/stable/configuration.html>`__,
+ESMValCore provides one single configuration object that consists of a single
+nested dictionary for its configuration.
 
 .. note::
 
-   You can choose your ``config-user.yml`` file at run time, so you could have several of
-   them available with different purposes. One for a formalised run, another for
-   debugging, etc. You can even provide any config user value as a run flag
-   ``--argument_name argument_value``
+  In v2.12.0, a redesign process of ESMValTool/Core's configuration started.
+  Its main aim is to simplify the configuration by moving from many different
+  configuration files for individual components to one configuration object
+  that consists of a single nested dictionary (similar to `Dask's configuration
+  <https://docs.dask.org/en/stable/configuration.html>`__).
+  This change will not be implemented in one large pull request but rather in a
+  step-by-step procedure.
+  Thus, the configuration might appear inconsistent until this redesign is
+  finished.
+  A detailed plan for this new configuration is outlined in :issue:`2371`.
+
+
+.. _config_for_cli:
+
+Specify configuration for ``esmvaltool`` command line tool
+==========================================================
+
+When running recipes via the :ref:`command line <running>`, configuration
+options can be specified via YAML files and command line arguments.
+The options from all YAML files and command line arguments are merged together
+using :func:`dask.config.collect` to create a single configuration object,
+which properly considers nested objects (see :func:`dask.config.update` for
+details).
+Configuration options given via the command line will always be preferred over
+options given via YAML files.
+
+
+.. _config_yaml_files:
+
+YAML files
+----------
+
+:ref:`Configuration options <config_options>` can be specified via YAML files
+(i.e., ``*.yaml`` and ``*.yml``).
+
+A file could look like this (for example, located at
+``~/.config/esmvaltool/config.yml``):
+
+.. code-block:: yaml
+
+  output_dir: ~/esmvaltool_output
+  search_esgf: when_missing
+  download_dir: ~/downloaded_data
+
+ESMValCore searches for **all** YAML files in **each** of the following
+locations and merges them together:
+
+1. The directory specified via the ``--config_dir`` command line argument.
+
+2. The user configuration directory: by default ``~/.config/esmvaltool``, but
+   this location can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment
+   variable.
+
+Preference follows the order in the list above (i.e., the directory specified
+via command line argument is preferred over the user configuration directory).
+Within a directory, files are sorted lexicographically, and later files (e.g.,
+``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
+
+.. warning::
+
+  ESMValCore will read **all** YAML files in these configuration directories.
+  Thus, other YAML files in this directory which are not valid configuration
+  files (like the old ``config-developer.yml`` files) will lead to errors.
+  Make sure to move these files to a different directory.
+
+.. deprecated:: 2.12.0
+
+  If a single configuration file is present at its deprecated location
+  ``~/.esmvaltool/config-user.yml`` or specified via the deprecated command
+  line argument ``--config_file``, all potentially available new configuration
+  files at ``~/.config/esmvaltool/`` and/or the location specified via
+  ``--config_dir`` are ignored.
+  This ensures full backwards-compatibility.
+  To switch to the new configuration system outlined here, move your old
+  configuration file to ``~/.config/esmvaltool/`` or to the location specified
+  via ``--config_dir``, remove ``~/.esmvaltool/config-user.yml``, and omit the
+  command line argument ``--config_file``.
+  Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
+  will also force the usage of the new configuration system regardless of the
+  presence of any potential old configuration files.
+  Support for the deprecated configuration will be removed in version 2.14.0.
+
+To get a copy of the default configuration file, you can run
+
+.. code-block:: bash
+
+  esmvaltool config get_config_user --path=/target/file.yml
+
+If the option ``--path`` is omitted, the file will be copied to
+``~/.config/esmvaltool/config-user.yml``.
+
+
+Command line arguments
+----------------------
+
+All :ref:`configuration options <config_options>` can also be given as command
+line arguments to the ``esmvaltool`` executable.
+
+Example:
+
+.. code-block:: bash
+
+  esmvaltool run --search_esgf=when_missing --max_parallel_tasks=2 /path/to/recipe.yml
+
+Options given via command line arguments will always take precedence over
+options specified via YAML files.
+
+
+.. _config_for_api:
+
+Specify/access configuration for Python API
+===========================================
+
+When running recipes with the :ref:`experimental Python API
+<experimental_api>`, configuration options can be specified and accessed via
+the :py:data:`~esmvalcore.config.CFG` object.
+For example:
+
+.. code-block:: python
+
+  >>> from esmvalcore.config import CFG
+  >>> CFG['output_dir'] = '~/esmvaltool_output'
+  >>> CFG['output_dir']
+  PosixPath('/home/user/esmvaltool_output')
+
+Or, alternatively, via a context manager:
+
+.. code-block:: python
+
+  >>> with CFG.context(log_level="debug"):
+  ...     print(CFG["log_level"])
+  debug
+  >>> print(CFG["log_level"])
+  info
+
+This will also consider YAML configuration files in the user configuration
+directory (by default ``~/.config/esmvaltool``, but this can be changed with
+the ``ESMVALTOOL_CONFIG_DIR`` environment variable).
+
+More information about this can be found :ref:`here <api_configuration>`.
+
+
+.. _config_options:
+
+Top level configuration options
+===============================
+
+Note: the following entries use Python syntax.
+For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
+``true``, and Python's ``False`` is YAML's ``false``.
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
+|                               | stored. [#f1]_                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
+|                               | (``debug``, ``strict``, ``default``    |                             |                                        |
+|                               | ``relaxed``, ``ignore``), see          |                             |                                        |
+|                               | :ref:`cmor_check_strictness`.          |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``compress_netcdf``           | Use netCDF compression.                | :obj:`bool`                 | ``False``                              |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``config_developer_file``     | Path to custom                         | :obj:`str`                  | ``None`` (default file)                |
+|                               | :ref:`config-developer`.               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``dask``                      | :ref:`config-dask`.                    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``diagnostics``               | Only run the selected diagnostics from | :obj:`list` or :obj:`str`   | ``None`` (all diagnostics)             |
+|                               | the recipe, see :ref:`running`.        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
+|                               | be stored. [#f4]_                      |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``drs``                       | Directory structure for input data.    | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
+|                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
+|                               | diagnostic scripts).                   |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
+|                               | ``info``, ``warning``, ``error``).     |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``logging``                   | :ref:`config-logging`.                 | :obj:`dict`                 | See :ref:`config-logging`              |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
+|                               | :ref:`running`.                        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
+|                               | see :ref:`task_priority`. [#f5]_       |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
+|                               | :ref:`running`.                        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``output_dir``                | Directory where all output will be     | :obj:`str`                  | ``~/esmvaltool_output``                |
+|                               | written, see :ref:`outputdata`.        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``output_file_type``          | Plot file type.                        | :obj:`str`                  | ``png``                                |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
+|                               | diagnostic run. [#f3]_                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``projects``                  | :ref:`config-projects`.                | :obj:`dict`                 | See table in :ref:`config-projects`    |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
+|                               | the run was successful, see also       |                             |                                        |
+|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``resume_from``               | Resume previous run(s) by using        | :obj:`list` of :obj:`str`   | ``[]``                                 |
+|                               | preprocessor output files from these   |                             |                                        |
+|                               | output directories, see                |                             |                                        |
+|                               | ref:`running`.                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
+|                               | projects. [#f2]_                       |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
+|                               | :ref:`running`.                        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``save_intermediary_cubes``   | Save intermediary cubes from the       | :obj:`bool`                 | ``False``                              |
+|                               | preprocessor, see also                 |                             |                                        |
+|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
+|                               | (``never``, ``when_missing``,          |                             |                                        |
+|                               | ``always``). [#f4]_                    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
+|                               | :ref:`running`.                        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
+    additional auxiliary data files.
+    This is necessary because certain Python toolkits, such as cartopy, will
+    attempt to download data files at run time, typically geographic data files
+    such as coastlines or land surface maps.
+    This can fail if the machine does not have access to the wider internet.
+    This location allows the user to specify where to find such files if they
+    can not be downloaded at runtime.
+    The example configuration file already contains two valid locations for
+    ``auxiliary_data_dir`` directories on CEDA-JASMIN and DKRZ, and a number of
+    such maps and shapefiles (used by current diagnostics) are already there.
+    You will need ``esmeval`` group workspace membership to access the JASMIN
+    one (see `instructions
+    <https://help.jasmin.ac.uk/article/199-introduction-to-group-workspaces>`_
+    how to gain access to the group workspace.
+
+    .. warning::
+
+       This setting is not for model or observational datasets, rather it is
+       for extra data files such as shapefiles or other data sources needed by
+       the diagnostics.
+.. [#f2] A detailed explanation of the data finding-related options ``drs``
+    and ``rootpath`` is presented in the :ref:`data-retrieval` section.
+    These sections relate directly to the data finding capabilities of
+    ESMValCore and are very important to be understood by the user.
+.. [#f3] The ``profile_diagnostic`` setting triggers profiling of Python
+    diagnostics, this will tell you which functions in the diagnostic took most
+    time to run.
+    For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
+    For each diagnostic script in the recipe, the profiler writes a ``.json``
+    file that can be used to plot a `flame graph
+    <https://queue.acm.org/detail.cfm?id=2927301>`__ of the profiling
+    information by running
+
+    .. code-block:: bash
+
+      vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
+
+    Note that it is also possible to use vprof to understand other resources
+    used while running the diagnostic, including execution time of different
+    code blocks and memory usage.
+.. [#f4] The ``search_esgf`` setting can be used to disable or enable automatic
+   downloads from ESGF.
+   If ``search_esgf`` is set to ``never``, the tool does not download any data
+   from the ESGF.
+   If ``search_esgf`` is set to ``when_missing``, the tool will download any
+   CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a
+   recipe but not available locally and store it in ``download_dir`` using the
+   ``ESGF`` directory structure defined in the :ref:`config-developer`.
+   If ``search_esgf`` is set to ``always``, the tool will first check the ESGF
+   for the needed data, regardless of any local data availability; if the data
+   found on ESGF is newer than the local data (if any) or the user specifies a
+   version of the data that is available only from the ESGF, then that data
+   will be downloaded; otherwise, local data will be used.
+.. [#f5] When using ``max_parallel_tasks`` with a value larger than 1 with the
+   Dask threaded scheduler, every task will start ``num_workers`` threads.
+   To avoid running out of memory or slowing down computations due to competition
+   for resources, it is recommended to set ``num_workers`` such that
+   ``max_parallel_tasks * num_workers`` approximately equals the number of CPU cores.
+   The number of available CPU cores can be found by running
+   ``python -c 'import os; print(len(os.sched_getaffinity(0)))'``.
+   See :ref:`config-dask-threaded-scheduler` for information on how to configure
+   ``num_workers``.
+
 
 .. _config-dask:
 
 Dask configuration
 ==================
 
+Configure Dask in the ``dask`` section.
+
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
 :ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
 :ref:`Iris <iris:iris_docs>` library to work with the data.
 In Iris, data can be either :ref:`real or lazy <iris:real_and_lazy_data>`.
-Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`_.
+Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`__.
 Dask arrays consist of many small
-`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`_
+`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`__
 (called chunks) and if possible, computations are run on those small arrays in
 parallel.
 In order to figure out what needs to be computed when, Dask makes use of a
-'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`_'.
-The default scheduler in Dask is rather basic, so it can only run on a single
-computer and it may not always find the optimal task scheduling solution,
-resulting in excessive memory use when using e.g. the
+'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`__'.
+The default (thread-based) scheduler in Dask is rather basic, so it can only
+run on a single computer and it may not always find the optimal task scheduling
+solution, resulting in excessive memory use when using e.g. the
 :func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
 Therefore it is recommended that you take a moment to configure the
-`Dask distributed <https://distributed.dask.org>`_ scheduler.
+`Dask distributed <https://distributed.dask.org>`__ scheduler.
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-Dask distributed configuration
-------------------------------
+Dask profiles
+-------------
 
-In ESMValCore, the Dask Distributed cluster can configured by creating a file called
-``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
-In this file, under the ``client`` keyword, the arguments to
-:obj:`distributed.Client` can be provided.
-Under the ``cluster`` keyword, the type of cluster (e.g.
-:obj:`distributed.LocalCluster`), as well as any arguments required to start
-the cluster can be provided.
-Extensive documentation on setting up Dask Clusters is available
-`here <https://docs.dask.org/en/latest/deploying.html>`__.
+Because some recipes require more computational resources than others,
+ESMValCore provides the option to define "Dask profiles".
+These profiles can be used to update the `Dask user configuration
+<https://docs.dask.org/en/stable/configuration.html>`__ per recipe run.
+The Dask profile can be selected in a YAML configuration file via
 
-.. warning::
+.. code:: yaml
 
-  The format of the ``~/.esmvaltool/dask.yml`` configuration file is not yet
-  fixed and may change in the next release of ESMValCore.
+  dask:
+    use: <NAME_OF_PROFILE>
+
+or alternatively in the command line via
+
+.. code:: bash
+
+  esmvaltool run --dask='{"use": "<NAME_OF_PROFILE>"}' recipe_example.yml
+
+Available predefined Dask profiles:
+
+- ``local_threaded`` (selected by default): use `threaded scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#local-threads>`__ without
+  any further options.
+- ``local_distributed``: use `local distributed scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local>`__
+  without any further options.
+- ``debug``: use `synchronous Dask scheduler
+  <https://docs.dask.org/en/stable/scheduling.html#single-thread>`__ for
+  debugging purposes.
+  Best used with ``max_parallel_tasks: 1``.
+
+Dask distributed scheduler configuration
+----------------------------------------
+
+Here, some examples are provided on how to use a custom Dask distributed
+scheduler.
+Extensive documentation on setting up Dask Clusters is available `here
+<https://docs.dask.org/en/latest/deploying.html>`__.
 
 .. note::
 
   If not all preprocessor functions support lazy data, computational
-  performance may be best with the :ref:`default scheduler <config-dask-default-scheduler>`.
+  performance may be best with the :ref:`threaded scheduler
+  <config-dask-threaded-scheduler>`.
   See :issue:`674` for progress on making all preprocessor functions lazy.
-
-**Example configurations**
 
 *Personal computer*
 
-Create a Dask distributed cluster on the computer running ESMValCore using
-all available resources:
+Create a :class:`distributed.LocalCluster` on the computer running ESMValCore
+using all available resources:
 
 .. code:: yaml
 
-  cluster:
-    type: distributed.LocalCluster
+  dask:
+    use: local_cluster  # use "local_cluster" defined below
+    profiles:
+      local_cluster:
+        cluster:
+          type: distributed.LocalCluster
 
-this should work well for most personal computers.
+This should work well for most personal computers.
 
 .. note::
 
-   Note that, if running this configuration on a shared node of an HPC cluster,
-   Dask will try and use as many resources it can find available, and this may
-   lead to overcrowding the node by a single user (you)!
+   If running this configuration on a shared node of an HPC cluster, Dask will
+   try and use as many resources it can find available, and this may lead to
+   overcrowding the node by a single user (you)!
 
 *Shared computer*
 
-Create a Dask distributed cluster on the computer running ESMValCore, with
-2 workers with 4 threads/4 GiB of memory each (8 GiB in total):
+Create a :class:`distributed.LocalCluster` on the computer running ESMValCore,
+with 2 workers with 2 threads/4 GiB of memory each (8 GiB in total):
 
 .. code:: yaml
 
-  cluster:
-    type: distributed.LocalCluster
-    n_workers: 2
-    threads_per_worker: 4
-    memory_limit: 4 GiB
+  dask:
+    use: local_cluster  # use "local_cluster" defined below
+    profiles:
+      local_cluster:
+        cluster:
+          type: distributed.LocalCluster
+          n_workers: 2
+          threads_per_worker: 2
+          memory_limit: 4GiB
 
 this should work well for shared computers.
 
 *Computer cluster*
 
-Create a Dask distributed cluster on the
-`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
-supercomputer using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`_
-package:
+Create a Dask distributed cluster on the `Levante
+<https://docs.dkrz.de/doc/levante/running-jobs/index.html>`__ supercomputer
+using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`__ package:
 
 .. code:: yaml
 
-  cluster:
-    type: dask_jobqueue.SLURMCluster
-    queue: shared
-    account: bk1088
-    cores: 8
-    memory: 7680MiB
-    processes: 2
-    interface: ib0
-    local_directory: "/scratch/b/b381141/dask-tmp"
-    n_workers: 24
+  dask:
+    use: slurm_cluster  # use "slurm_cluster" defined below
+    profiles:
+      slurm_cluster:
+        cluster:
+          type: dask_jobqueue.SLURMCluster
+          queue: shared
+          account: <YOUR_SLURM_ACCOUNT>
+          cores: 8
+          memory: 7680MiB
+          processes: 2
+          interface: ib0
+          local_directory: "/scratch/b/<YOUR_DKRZ_ACCOUNT>/dask-tmp"
+          n_workers: 24
 
 This will start 24 workers with ``cores / processes = 4`` threads each,
 resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
@@ -309,34 +457,38 @@ will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
 workers.
 This example will use the fast infiniband network connection (called ``ib0``
 on Levante) for communication between workers running on different nodes.
-It is
-`important to set the right location for temporary storage <https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__,
-in this case the ``/scratch`` space is used.
+It is `important to set the right location for temporary storage
+<https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__, in this
+case the ``/scratch`` space is used.
 It is also possible to use environmental variables to configure the temporary
 storage location, if you cluster provides these.
 
 A configuration like this should work well for larger computations where it is
 advantageous to use multiple nodes in a compute cluster.
-See
-`Deploying Dask Clusters on High Performance Computers <https://docs.dask.org/en/latest/deploying-hpc.html>`_
-for more information.
+See `Deploying Dask Clusters on High Performance Computers
+<https://docs.dask.org/en/latest/deploying-hpc.html>`__ for more information.
 
 *Externally managed Dask cluster*
 
-Use an externally managed cluster, e.g. a cluster that you started using the
-`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
+To use an externally managed cluster, specify an ``scheduler_address`` for the
+selected profile.
+Such a cluster can e.g. be started using the `Dask Jupyterlab extension
+<https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`__:
 
 .. code:: yaml
 
-  client:
-    address: '127.0.0.1:8786'
+  dask:
+    use: external  # Use the `external` profile defined below
+    profiles:
+      external:
+        scheduler_address: "tcp://127.0.0.1:43605"
 
-See `here <https://jobqueue.dask.org/en/latest/interactive.html>`_
+See `here <https://jobqueue.dask.org/en/latest/interactive.html>`__
 for an example of how to configure this on a remote system.
 
 For debugging purposes, it can be useful to start the cluster outside of
 ESMValCore because then
-`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`_ remains
+`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`__ remains
 available after ESMValCore has finished running.
 
 **Advice on choosing performant configurations**
@@ -357,60 +509,292 @@ Therefore, it may be beneficial to use fewer threads per worker if the
 computation is very simple and the runtime is determined by the
 speed with which the data can be read from and/or written to disk.
 
-.. _config-dask-default-scheduler:
+.. _config-dask-threaded-scheduler:
 
-Dask default scheduler configuration
-------------------------------------
+Custom Dask threaded scheduler configuration
+--------------------------------------------
 
-The Dask default scheduler can be a good choice for recipes using a small
+The Dask threaded scheduler can be a good choice for recipes using a small
 amount of data or when running a recipe where not all preprocessor functions
-are lazy yet (see :issue:`674` for the current status). To use the the Dask
-default scheduler, comment out or remove all content of ``~/.esmvaltool/dask.yml``.
+are lazy yet (see :issue:`674` for the current status).
 
 To avoid running out of memory, it is important to set the number of workers
-(threads) used by Dask to run its computations to a reasonable number. By
-default the number of CPU cores in the machine will be used, but this may be
-too many on shared machines or laptops with a large number of CPU cores
+(threads) used by Dask to run its computations to a reasonable number.
+By default, the number of CPU cores in the machine will be used, but this may
+be too many on shared machines or laptops with a large number of CPU cores
 compared to the amount of memory they have available.
 
-Typically, Dask requires about 2GB of RAM per worker, but this may be more
+Typically, Dask requires about 2 GiB of RAM per worker, but this may be more
 depending on the computation.
 
-To set the number of workers used by the Dask default scheduler, create a file
-called ``~/.config/dask/dask.yml`` and add the following
-content:
+To set the number of workers used by the Dask threaded scheduler, use the
+following configuration:
 
 .. code:: yaml
 
-  scheduler: threads
-  num_workers: 4  # this example sets the number of workers to 4
+  dask:
+    use: local_threaded  # This can be omitted
+    profiles:
+      local_threaded:
+        num_workers: 4
 
+.. _config-dask-defaults:
 
-Note that the file name is arbitrary, only the directory it is in matters, as
-explained in more detail
-`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
-See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#configuration>`__
-for more information.
+Default options
+---------------
 
-Configuring Dask for debugging
-------------------------------
-
-For debugging purposes, it can be useful to disable all parallelism, as this
-will often result in more clear error messages. This can be achieved by
-settings ``max_parallel_tasks: 1`` in config-user.yml,
-commenting out or removing all content of ``~/.esmvaltool/dask.yml``, and
-creating a file called ``~/.config/dask/dask.yml`` with the following
-content:
+By default, the following Dask configuration is used:
 
 .. code:: yaml
 
-  scheduler: synchronous
+  dask:
+    use: local_threaded  # use the `local_threaded` profile defined below
+    profiles:
+      local_threaded:
+        scheduler: threads
+      local_distributed:
+        cluster:
+          type: distributed.LocalCluster
+      debug:
+        scheduler: synchronous
 
-Note that the file name is arbitrary, only the directory it is in matters, as
-explained in more detail
-`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
-See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#single-thread>`__
-for more information.
+All available options
+---------------------
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``profiles``                  | Different Dask profiles that can be    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
+|                               | selected via the ``use`` option. Each  |                             |                                        |
+|                               | profile has a name (:obj:`dict` keys)  |                             |                                        |
+|                               | and corresponding options (:obj:`dict` |                             |                                        |
+|                               | values). See                           |                             |                                        |
+|                               | :ref:`config-dask-profiles` for        |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``use``                       | Dask profile that is used; must be     | :obj:`str`                  | ``local_threaded``                     |
+|                               | defined in the option ``profiles``.    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-dask-profiles:
+
+Options for Dask profiles
+-------------------------
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``cluster``                   | Keyword arguments to initialize a Dask | :obj:`dict`                 | If omitted, use externally managed     |
+|                               | distributed cluster. Needs the option  |                             | cluster if ``scheduler_address`` is    |
+|                               | ``type``, which specifies the class of |                             | given or a :ref:`Dask threaded         |
+|                               | the cluster. The remaining options are |                             | scheduler                              |
+|                               | passed as keyword arguments to         |                             | <config-dask-threaded-scheduler>`      |
+|                               | initialize that class. Cannot be used  |                             | otherwise.                             |
+|                               | in combination with                    |                             |                                        |
+|                               | ``scheduler_address``.                 |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``scheduler_address``         | Scheduler address of an externally     | :obj:`str`                  | If omitted, use a Dask distributed     |
+|                               | managed cluster. Will be passed to     |                             | cluster if ``cluster`` is given or a   |
+|                               | :class:`distributed.Client`. Cannot be |                             | :ref:`Dask threaded scheduler          |
+|                               | used in combination with ``cluster``.  |                             | <config-dask-threaded-scheduler>`      |
+|                               |                                        |                             | otherwise.                             |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| All other options             | Passed as keyword arguments to         | Any                         | No defaults.                           |
+|                               | :func:`dask.config.set`.               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-logging:
+
+Logging configuration
+=====================
+
+Configure what information is logged and how it is presented in the ``logging``
+section.
+
+.. note::
+
+   Not all logging configuration is available here yet, see :issue:`2596`.
+
+Configuration file example:
+
+.. code:: yaml
+
+   logging:
+     log_progress_interval: 10s
+
+will log progress of Dask computations every 10 seconds instead of showing a
+progress bar.
+
+Command line example:
+
+.. code:: bash
+
+   esmvaltool run --logging='{"log_progress_interval": "1m"}' recipe_example.yml
+
+
+will log progress of Dask computations every minute instead of showing a
+progress bar.
+
+Available options:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``log_progress_interval``     | When running computations with Dask,   | :obj:`str` or :obj:`float`  | 0                                      |
+|                               | log progress every                     |                             |                                        |
+|                               | ``log_progress_interval`` instead of   |                             |                                        |
+|                               | showing a progress bar. The value can  |                             |                                        |
+|                               | be specified in the format accepted by |                             |                                        |
+|                               | :func:`dask.utils.parse_timedelta`. A  |                             |                                        |
+|                               | negative value disables any progress   |                             |                                        |
+|                               | reporting. A progress bar is only      |                             |                                        |
+|                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-projects:
+
+Project-specific configuration
+==============================
+
+Configure project-specific settings in the ``projects`` section.
+
+Top-level keys in this section are projects, e.g., ``CMIP6``, ``CORDEX``, or
+``obs4MIPs``.
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      ...  # project-specific options
+
+The following project-specific options are available:
+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
+|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
+|                               | facets defined in the recipe. See      |                             |                                        |
+|                               | :ref:`config-extra-facets` for         |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+.. _config-extra-facets:
+
+Extra Facets
+------------
+
+It can be useful to automatically add extra key-value pairs to variables or
+datasets without explicitly specifying them in the recipe.
+These key-value pairs can be used for :ref:`finding data
+<extra-facets-data-finder>` or for providing extra information to the functions
+that :ref:`fix data <extra-facets-fixes>` before passing it on to the
+preprocessor.
+
+To support this, we provide the **extra facets** facilities.
+Facets are the key-value pairs described in :ref:`Datasets`.
+Extra facets allows for the addition of more details per project, dataset, MIP
+table, and variable name.
+
+Format of the extra facets
+``````````````````````````
+
+Extra facets are configured in the ``extra_facets`` section of the
+project-specific configuration.
+They are specified in nested dictionaries with the following levels:
+
+1. Dataset name
+2. MIP table
+3. Variable short name
+
+Example:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          Amon:  # MIP table
+            tas:  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+The three top levels under ``extra_facets`` (dataset name, MIP table, and
+variable short name) can contain `Unix shell-style wildcards
+<https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
+The special characters used in shell-style wildcards are:
+
++------------+----------------------------------------+
+|Pattern     | Meaning                                |
++============+========================================+
+| ``*``      |   matches everything                   |
++------------+----------------------------------------+
+| ``?``      |   matches any single character         |
++------------+----------------------------------------+
+| ``[seq]``  |   matches any character in ``seq``     |
++------------+----------------------------------------+
+| ``[!seq]`` |   matches any character not in ``seq`` |
++------------+----------------------------------------+
+
+where ``seq`` can either be a sequence of characters or just a bunch of
+characters, for example ``[A-C]`` matches the characters ``A``, ``B``, and
+``C``, while ``[AC]`` matches the characters ``A`` and ``C``.
+
+Examples:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:  # dataset name
+          "*":  # MIP table
+            "*":  # variable short name
+              a_new_key: a_new_value  # extra facets
+
+Here, the extra facet ``a_new_key: a_new_value`` will be added to any *CMIP6*
+data from model *CanESM5*.
+
+If keys are duplicated, later keys will take precedence over earlier keys:
+
+.. code-block:: yaml
+
+  projects:
+    CMIP6:
+      extra_facets:
+        CanESM5:
+          "*":
+            "*":
+              shared_key: with_wildcard
+              unique_key_1: test
+          Amon:
+            tas:
+              shared_key: without_wildcard
+              unique_key_2: test
+
+Here, the following extra facets will be added to a dataset with project
+*CMIP6*, name *CanESM5*, MIP table *Amon*, and variable short name *tas*:
+
+.. code-block:: yaml
+
+  unique_key_1: test
+  shared_key: without_wildcard  # takes value from later entry
+  unique_key_2: test
+
+.. _config-extra-facets-defaults:
+
+Default extra facets
+````````````````````
+
+Default extra facets are specified in ``extra_facets_*.yml`` files located in
+`this
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
+directory.
+
 
 .. _config-esgf:
 
@@ -419,12 +803,10 @@ ESGF configuration
 
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
-The downloaded files will be stored in the ``download_dir`` specified in the
-:ref:`user configuration file`.
-To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` or
-``search_esgf: always`` in the :ref:`user configuration file`, or provide the
-corresponding command line arguments ``--search_esgf=when_missing`` or
-``--search_esgf=always`` when running the recipe.
+The downloaded files will be stored in the directory specified via the
+:ref:`configuration option <config_options>` ``download_dir``.
+To enable automatic downloads from ESGF, use the :ref:`configuration options
+<config_options>` ``search_esgf: when_missing`` or ``search_esgf: always``.
 
 .. note::
 
@@ -440,71 +822,6 @@ corresponding command line arguments ``--search_esgf=when_missing`` or
    tool by pressing the ``Ctrl`` and ``C`` keys on your keyboard simultaneously
    several times, edit the recipe so it contains fewer datasets and try again.
 
-For downloading some files, you may need to log in to be able to download the
-data.
-
-See the
-`ESGF user guide <https://esgf.github.io/esgf-user-support/user_guide.html>`_
-for instructions on how to create an ESGF OpenID account if you do not have
-one yet.
-Note that the OpenID account consists of 3 components instead of the usual
-two, in addition a username and password you also need the hostname of the
-provider of the ID; for example
-`esgf-data.dkrz.de <https://esgf-data.dkrz.de/user/add/?next=http://esgf-data.dkrz.de/projects/esgf-dkrz/>`_.
-Even though the account is issued by a particular host, the same OpenID
-account can be used to download data from all hosts in the ESGF.
-
-Next, configure your system so the ``esmvaltool`` can use your credentials.
-This can be done using the keyring_ package or they can be stored in a
-:ref:`configuration file <config_esgf_pyclient>`.
-
-.. _keyring:
-
-Storing credentials in keyring
-------------------------------
-First install the keyring package. Note that this requires a supported
-backend that may not be available on compute clusters, see the
-`keyring documentation <https://pypi.org/project/keyring>`__ for more
-information.
-
-.. code-block:: bash
-
-    pip install keyring
-
-Next, set your username and password by running the commands:
-
-.. code-block:: bash
-
-    keyring set ESGF hostname
-    keyring set ESGF username
-    keyring set ESGF password
-
-for example, if you created an account on the host `esgf-data.dkrz.de`_ with username
-'cookiemonster' and password 'Welcome01', run the command
-
-.. code-block:: bash
-
-    keyring set ESGF hostname
-
-this will display the text
-
-.. code-block:: bash
-
-    Password for 'hostname' in 'ESGF':
-
-type ``esgf-data.dkrz.de`` (the characters will not be shown) and press ``Enter``.
-Repeat the same procedure with ``keyring set ESGF username``, type ``cookiemonster``
-and press ``Enter`` and ``keyring set ESGF password``, type ``Welcome01`` and
-press ``Enter``.
-
-To check that you entered your credentials correctly, run:
-
-.. code-block:: bash
-
-    keyring get ESGF hostname
-    keyring get ESGF username
-    keyring get ESGF password
-
 .. _config_esgf_pyclient:
 
 Configuration file
@@ -513,49 +830,6 @@ An optional configuration file can be created for configuring how the tool uses
 `esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
-
-Logon
-`````
-In the ``logon`` section you can provide arguments that will be passed on to
-:py:meth:`pyesgf.logon.LogonManager.logon`.
-For example, you can store the hostname, username, and password or your OpenID
-account in the file like this:
-
-.. code-block:: yaml
-
-    logon:
-      hostname: "your-hostname"
-      username: "your-username"
-      password: "your-password"
-
-for example
-
-.. code-block:: yaml
-
-    logon:
-      hostname: "esgf-data.dkrz.de"
-      username: "cookiemonster"
-      password: "Welcome01"
-
-if you created an account on the host `esgf-data.dkrz.de`_ with username
-'cookiemonster' and password 'Welcome01'.
-Alternatively, you can configure an interactive log in:
-
-.. code-block:: yaml
-
-    logon:
-      interactive: true
-
-Note that storing your password in plain text in the configuration
-file is less secure.
-On shared systems, make sure the permissions of the file are set so
-only you and administrators can read it, i.e.
-
-.. code-block:: bash
-
-    ls -l ~/.esmvaltool/esgf-pyclient.yml
-
-shows permissions ``-rw-------``.
 
 Search
 ``````
@@ -642,22 +916,27 @@ out by CMOR and DRS. For a detailed description of these standards and their
 adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
 relate these standards to the data retrieval mechanism of the ESMValCore.
 
-By default, esmvaltool looks for it in the home directory,
-inside the '.esmvaltool' folder.
-
 Users can get a copy of this file with default values by running
 
 .. code-block:: bash
 
-  esmvaltool config get-config-developer --path=${TARGET_FOLDER}
+  esmvaltool config get_config_developer --path=${TARGET_FOLDER}
 
 If the option ``--path`` is omitted, the file will be created in
-```${HOME}/.esmvaltool``.
+``~/.esmvaltool``.
 
 .. note::
 
-  Remember to change your config-user file if you want to use a custom
-  config-developer.
+  Remember to change the configuration option ``config_developer_file`` if you
+  want to use a custom config developer file.
+
+.. warning::
+
+  For now, make sure that the custom ``config-developer.yml`` is **not** saved
+  in the ESMValTool/Core configuration directories (see
+  :ref:`config_yaml_files` for details).
+  This will change in the future due to the :ref:`redesign of ESMValTool/Core's
+  configuration <config_overview>`.
 
 Example of the CMIP6 project configuration:
 
@@ -682,7 +961,7 @@ ESMValCore replaces the placeholders ``{item}`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
 ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
-and/or extra_facets_ when reading the recipe.
+and/or :ref:`config-extra-facets` when reading the recipe.
 If this fails for some reason, these values can be provided in the recipe too.
 
 The data directory structure of the CMIP projects is set up differently
@@ -698,7 +977,7 @@ The resulting directory path would look something like this:
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
-Please, bear in mind that ``input_dirs`` can also be a list for those  cases in
+Please, bear in mind that ``input_dirs`` can also be a list for those cases in
 which may be needed:
 
 .. code-block:: yaml
@@ -742,7 +1021,7 @@ related to CMOR table settings available:
   from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
   use variables with a ``mip`` which is different from the MIP table in which
   they are defined. Note that this option is always enabled for
-  :ref:`derived <Variable derivation>` variables.
+  :ref:`derived variables <Variable derivation>`.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
@@ -757,8 +1036,8 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-For derived variables (the ones with ``derive: true`` in the recipe), the
-custom CMOR tables will always be considered.
+For :ref:`derived variables <Variable derivation>` (the ones with ``derive:
+true`` in the recipe), the custom CMOR tables will always be considered.
 By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the
@@ -877,6 +1156,7 @@ Example:
        default:
          - '{exp}'
          - '{exp}/outdata'
+         - '{exp}/output'
      input_file:
        default: '{exp}_{var_type}*.nc'
      output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
@@ -927,103 +1207,3 @@ following documentation section:
 
 These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
-
-.. _extra_facets:
-
-Extra Facets
-============
-
-It can be useful to automatically add extra key-value pairs to variables
-or datasets in the recipe.
-These key-value pairs can be used for :ref:`finding data <findingdata>`
-or for providing extra information to the functions that
-:ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
-
-To support this, we provide the extra facets facilities. Facets are the
-key-value pairs described in :ref:`Datasets`. Extra facets allows for the
-addition of more details per project, dataset, mip table, and variable name.
-
-More precisely, one can provide this information in an extra yaml file, named
-`{project}-something.yml`, where `{project}` corresponds to the project as used
-by ESMValCore in :ref:`Datasets` and "something" is arbitrary.
-
-Format of the extra facets files
---------------------------------
-The extra facets are given in a yaml file, whose file name identifies the
-project. Inside the file there is a hierarchy of nested dictionaries with the
-following levels. At the top there is the `dataset` facet, followed by the `mip`
-table, and finally the `short_name`. The leaf dictionary placed here gives the
-extra facets that will be made available to data finder and the fix
-infrastructure. The following example illustrates the concept.
-
-.. _extra-facets-example-1:
-
-.. code-block:: yaml
-   :caption: Extra facet example file `native6-era5.yml`
-
-   ERA5:
-     Amon:
-       tas: {source_var_name: "t2m", cds_var_name: "2m_temperature"}
-
-The three levels of keys in this mapping can contain
-`Unix shell-style wildcards <https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
-The special characters used in shell-style wildcards are:
-
-+------------+----------------------------------------+
-|Pattern     | Meaning                                |
-+============+========================================+
-| ``*``      |   matches everything                   |
-+------------+----------------------------------------+
-| ``?``      |   matches any single character         |
-+------------+----------------------------------------+
-| ``[seq]``  |   matches any character in ``seq``     |
-+------------+----------------------------------------+
-| ``[!seq]`` |   matches any character not in ``seq`` |
-+------------+----------------------------------------+
-
-where ``seq`` can either be a sequence of characters or just a bunch of characters,
-for example ``[A-C]`` matches the characters ``A``, ``B``, and ``C``,
-while ``[AC]`` matches the characters ``A`` and ``C``.
-
-For example, this is used to automatically add ``product: output1`` to any
-variable of any CMIP5 dataset that does not have a ``product`` key yet:
-
-.. code-block:: yaml
-   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/extra_facets/cmip5-product.yml>`_
-
-   '*':
-     '*':
-       '*': {product: output1}
-
-Location of the extra facets files
-----------------------------------
-Extra facets files can be placed in several different places. When we use them
-to support a particular use-case within the ESMValCore project, they will be
-provided in the sub-folder `extra_facets` inside the package
-:mod:`esmvalcore.config`. If they are used from the user side, they can be either
-placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
-choosing. In that case this directory must be added to the `config-user.yml`
-file under the `extra_facets_dir` setting, which can take a single directory or
-a list of directories.
-
-The order in which the directories are searched is
-
-1. The internal directory `esmvalcore.config/extra_facets`
-2. The default user directory `~/.esmvaltool/extra_facets`
-3. The custom user directories in the order in which they are given in
-   `config-user.yml`.
-
-The extra facets files within each of these directories are processed in
-lexicographical order according to their file name.
-
-In all cases it is allowed to supersede information from earlier files in later
-files. This makes it possible for the user to effectively override even internal
-default facets, for example to deal with local particularities in the data
-handling.
-
-Use of extra facets
--------------------
-For extra facets to be useful, the information that they provide must be
-applied. There are fundamentally two places where this comes into play. One is
-:ref:`the datafinder<extra-facets-data-finder>`, the other are
-:ref:`fixes<extra-facets-fixes>`.

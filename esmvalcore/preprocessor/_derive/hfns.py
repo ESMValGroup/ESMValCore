@@ -11,21 +11,20 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {
-                'short_name': 'hfls',
+                "short_name": "hfls",
             },
             {
-                'short_name': 'hfss',
+                "short_name": "hfss",
             },
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
         """Compute surface net heat flux."""
-        hfls_cube = cubes.extract_cube(NameConstraint(var_name='hfls'))
-        hfss_cube = cubes.extract_cube(NameConstraint(var_name='hfss'))
+        hfls_cube = cubes.extract_cube(NameConstraint(var_name="hfls"))
+        hfss_cube = cubes.extract_cube(NameConstraint(var_name="hfss"))
 
         hfns_cube = hfls_cube + hfss_cube
         hfns_cube.units = hfls_cube.units

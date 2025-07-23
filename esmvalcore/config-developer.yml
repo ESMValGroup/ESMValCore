@@ -99,8 +99,10 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
+    DKRZ-ERA5-GRIB: '{family}/{level}/{type}/{tres}/{grib_id}'
   input_file:
     default: '*.nc'
+    DKRZ-ERA5-GRIB: '{family}{level}{typeid}_{tres}_*_{grib_id}.grb'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
@@ -176,6 +178,7 @@ ICON:
     default:
       - '{exp}'
       - '{exp}/outdata'
+      - '{exp}/output'
   input_file:
     default: '{exp}_{var_type}*.nc'
   output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
@@ -192,5 +195,18 @@ CESM:
   input_file:
     default: '{case}.{scomp}.{type}.{string}*nc'
   output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
+ACCESS:
+  cmor_strict: false
+  input_dir:
+    default:
+      - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
+  input_file:
+    default:
+      - '{sub_dataset}.{freq_attribute}-*.nc'
+      - 'ocean_{freq_attribute}.nc-*'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{freq_attribute}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

@@ -30,17 +30,18 @@ def log_to_dir(drc: Path):
     drc.mkdir(parents=True, exist_ok=True)
 
     # create file handler which logs even debug messages
-    debug_log_file = logging.FileHandler(drc / 'main_log_debug.txt')
+    debug_log_file = logging.FileHandler(drc / "main_log_debug.txt")
     debug_log_file.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        '%(asctime)s UTC [%(process)d] %(levelname)-7s'
-        ' %(name)s:%(lineno)s %(message)s')
+        "%(asctime)s UTC [%(process)d] %(levelname)-7s"
+        " %(name)s:%(lineno)s %(message)s",
+    )
     debug_log_file.setFormatter(formatter)
 
     # create file handler which logs simple info messages
-    simple_log_file = logging.FileHandler(drc / 'main_log.txt')
+    simple_log_file = logging.FileHandler(drc / "main_log.txt")
     simple_log_file.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(levelname)-7s [%(process)d] %(message)s')
+    formatter = logging.Formatter("%(levelname)-7s [%(process)d] %(message)s")
     simple_log_file.setFormatter(formatter)
 
     # add the handlers to root logger

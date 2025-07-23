@@ -1,4 +1,5 @@
 """Test diagnostic script runs."""
+
 import contextlib
 import shutil
 import sys
@@ -23,24 +24,24 @@ def get_mock_distributed_client(monkeypatch):
 
     monkeypatch.setattr(
         esmvalcore._task,
-        'get_distributed_client',
+        "get_distributed_client",
         get_distributed_client,
     )
 
 
 def write_config_user_file(dirname):
-    config_file = dirname / 'config-user.yml'
+    config_file = dirname / "config-user.yml"
     cfg = {
-        'output_dir': str(dirname / 'output_dir'),
-        'auxiliary_data_dir': str(dirname / 'extra_data'),
-        'rootpath': {
-            'default': str(dirname / 'input_dir'),
+        "output_dir": str(dirname / "output_dir"),
+        "auxiliary_data_dir": str(dirname / "extra_data"),
+        "rootpath": {
+            "default": str(dirname / "input_dir"),
         },
-        'drs': {
-            'CMIP5': 'BADC',
+        "drs": {
+            "CMIP5": "BADC",
         },
-        'log_level': 'debug',
-        'profile_diagnostic': False,
+        "log_level": "debug",
+        "profile_diagnostic": False,
     }
     config_file.write_text(yaml.safe_dump(cfg, encoding=None))
     return str(config_file)
@@ -56,27 +57,26 @@ def arguments(*args):
 
 def check(result_file):
     """Check the results."""
-    result = yaml.safe_load(result_file.read_text(encoding='utf-8'))
+    result = yaml.safe_load(result_file.read_text(encoding="utf-8"))
 
     required_keys = {
-        'input_files',
-        'log_level',
-        'plot_dir',
-        'run_dir',
-        'work_dir',
+        "input_files",
+        "log_level",
+        "plot_dir",
+        "run_dir",
+        "work_dir",
     }
     missing = required_keys - set(result)
     assert not missing
     unwanted_keys = [
-        'profile_diagnostic',
+        "profile_diagnostic",
     ]
     for unwanted_key in unwanted_keys:
         assert unwanted_key not in result
 
 
 SCRIPTS = {
-    'diagnostic.py':
-    dedent("""
+    "diagnostic.py": dedent("""
         import yaml
         import shutil
 
@@ -85,8 +85,7 @@ SCRIPTS = {
 
         shutil.copy("settings.yml", settings["setting_name"])
         """),
-    'diagnostic.ncl':
-    dedent("""
+    "diagnostic.ncl": dedent("""
         begin
             print("INFO    Loading settings from " + getenv("settings"))
             loadscript("$settings")
@@ -101,8 +100,7 @@ SCRIPTS = {
 
         system("echo '" + result + "' > " + diag_script_info@setting_name)
         """),
-    'diagnostic.R':
-    dedent("""
+    "diagnostic.R": dedent("""
         library(yaml)
 
         args <- commandArgs(trailingOnly = TRUE)
@@ -130,39 +128,46 @@ SCRIPTS = {
 def interpreter_not_installed(script):
     """Check if an interpreter is installed for script."""
     interpreters = {
-        '.jl': 'julia',
-        '.ncl': 'ncl',
-        '.py': 'python',
-        '.R': 'Rscript',
+        ".jl": "julia",
+        ".ncl": "ncl",
+        ".py": "python",
+        ".R": "Rscript",
     }
     ext = Path(script).suffix
     interpreter = interpreters[ext]
     return shutil.which(interpreter) is None
 
 
-@pytest.mark.parametrize('script_file, script', [
-    pytest.param(
-        script_file,
-        script,
-        marks=[
-            pytest.mark.installation,
-            pytest.mark.xfail(interpreter_not_installed(script_file),
-                              run=False,
-                              reason="Interpreter not available"),
-        ],
-    ) for script_file, script in SCRIPTS.items() if script_file != 'null'
-])
+@pytest.mark.parametrize(
+    ("script_file", "script"),
+    [
+        pytest.param(
+            script_file,
+            script,
+            marks=[
+                pytest.mark.installation,
+                pytest.mark.xfail(
+                    interpreter_not_installed(script_file),
+                    run=False,
+                    reason="Interpreter not available",
+                ),
+            ],
+        )
+        for script_file, script in SCRIPTS.items()
+        if script_file != "null"
+    ],
+)
 def test_diagnostic_run(tmp_path, script_file, script):
-
-    recipe_file = tmp_path / 'recipe_test.yml'
+    recipe_file = tmp_path / "recipe_test.yml"
     script_file = tmp_path / script_file
-    result_file = tmp_path / 'result.yml'
+    result_file = tmp_path / "result.yml"
 
     # Write script to file
     script_file.write_text(str(script))
 
     # Create recipe
-    recipe = dedent("""
+    recipe = dedent(
+        f"""
         documentation:
           title: Recipe without data
           description: Recipe with no data.
@@ -172,21 +177,90 @@ def test_diagnostic_run(tmp_path, script_file, script):
           diagnostic_name:
             scripts:
               script_name:
-                script: {}
-                setting_name: {}
-        """.format(script_file, result_file))
+                script: {script_file}
+                setting_name: {result_file}
+        """,
+    )
     recipe_file.write_text(str(recipe))
 
     # ensure that tags are cleared
     TAGS.clear()
 
-    config_user_file = write_config_user_file(tmp_path)
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    write_config_user_file(config_dir)
+
     with arguments(
-            'esmvaltool',
-            'run',
-            '--config_file',
-            config_user_file,
-            str(recipe_file),
+        "esmvaltool",
+        "run",
+        "--config_dir",
+        str(config_dir),
+        str(recipe_file),
+    ):
+        run()
+
+    check(result_file)
+
+
+# TODO: remove in v2.14.0
+@pytest.mark.parametrize(
+    ("script_file", "script"),
+    [
+        pytest.param(
+            script_file,
+            script,
+            marks=[
+                pytest.mark.installation,
+                pytest.mark.xfail(
+                    interpreter_not_installed(script_file),
+                    run=False,
+                    reason="Interpreter not available",
+                ),
+            ],
+        )
+        for script_file, script in SCRIPTS.items()
+        if script_file != "null"
+    ],
+)
+def test_diagnostic_run_old_config(tmp_path, script_file, script):
+    recipe_file = tmp_path / "recipe_test.yml"
+    script_file = tmp_path / script_file
+    result_file = tmp_path / "result.yml"
+
+    # Write script to file
+    script_file.write_text(str(script))
+
+    # Create recipe
+    recipe = dedent(
+        f"""
+        documentation:
+          title: Recipe without data
+          description: Recipe with no data.
+          authors: [andela_bouwe]
+
+        diagnostics:
+          diagnostic_name:
+            scripts:
+              script_name:
+                script: {script_file}
+                setting_name: {result_file}
+        """,
+    )
+    recipe_file.write_text(str(recipe))
+
+    # ensure that tags are cleared
+    TAGS.clear()
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = write_config_user_file(config_dir)
+
+    with arguments(
+        "esmvaltool",
+        "run",
+        "--config_file",
+        str(config_file),
+        str(recipe_file),
     ):
         run()
 

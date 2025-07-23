@@ -1,4 +1,5 @@
 """Test HADGEM2-ES fixes."""
+
 import unittest
 
 import dask.array as da
@@ -19,8 +20,9 @@ class TestAllVars(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'HADGEM2-ES', 'Amon', 'tas'),
-            [AllVars(None), GenericFix(None)])
+            Fix.get_fixes("CMIP5", "HADGEM2-ES", "Amon", "tas"),
+            [AllVars(None), GenericFix(None)],
+        )
 
     @staticmethod
     def test_clip_latitude():
@@ -29,9 +31,9 @@ class TestAllVars(unittest.TestCase):
             aux_coords_and_dims=[
                 (
                     iris.coords.AuxCoord(
-                        da.asarray([90., 91.]),
+                        da.asarray([90.0, 91.0]),
                         bounds=da.asarray([[89.5, 90.5], [90.5, 91.5]]),
-                        standard_name='latitude',
+                        standard_name="latitude",
                     ),
                     0,
                 ),
@@ -40,11 +42,14 @@ class TestAllVars(unittest.TestCase):
         fix = AllVars(None)
         cubes = fix.fix_metadata([cube])
         assert len(cubes) == 1
-        coord = cubes[0].coord('latitude')
+        coord = cubes[0].coord("latitude")
         assert coord.has_lazy_points()
         assert coord.has_lazy_bounds()
-        assert_array_equal(coord.points, np.array([90., 90]))
-        assert_array_equal(coord.bounds, np.array([[89.5, 90.], [90., 90.]]))
+        assert_array_equal(coord.points, np.array([90.0, 90]))
+        assert_array_equal(
+            coord.bounds,
+            np.array([[89.5, 90.0], [90.0, 90.0]]),
+        )
 
 
 class TestO2(unittest.TestCase):
@@ -53,13 +58,14 @@ class TestO2(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'HADGEM2-ES', 'Amon', 'o2'),
-            [O2(None), AllVars(None), GenericFix(None)])
+            Fix.get_fixes("CMIP5", "HADGEM2-ES", "Amon", "o2"),
+            [O2(None), AllVars(None), GenericFix(None)],
+        )
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP5', 'HadGEM2-ES', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP5", "HadGEM2-ES", "Amon", "cl")
     assert fix == [Cl(None), AllVars(None), GenericFix(None)]
 
 

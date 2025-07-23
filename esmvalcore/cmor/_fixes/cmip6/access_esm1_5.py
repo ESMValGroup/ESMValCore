@@ -1,9 +1,10 @@
 """Fixes for ACCESS-ESM1-5."""
+
 import iris
 import numpy as np
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(ClFixHybridHeightCoord):
@@ -20,25 +21,51 @@ class Cl(ClFixHybridHeightCoord):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             try:
-                bcoeff = cube.coord(var_name='b')
+                bcoeff = cube.coord(var_name="b")
                 # values taken from HadGEM2-ES model (CMIP5), which uses the
                 # same atmospheric component as ACCESS-ESM1-5 (HadGAM2, N96L38)
                 bcoeff.points = [
-                    0.99771648645401, 0.990881502628326, 0.979542553424835,
-                    0.9637770652771, 0.943695485591888, 0.919438362121582,
-                    0.891178011894226, 0.859118342399597, 0.823493480682373,
-                    0.784570515155792, 0.742646217346191, 0.698050200939178,
-                    0.651142716407776, 0.602314412593842, 0.55198872089386,
-                    0.500619947910309, 0.44869339466095, 0.39672577381134,
-                    0.34526526927948, 0.294891387224197, 0.24621507525444,
-                    0.199878215789795, 0.156554222106934, 0.116947874426842,
-                    0.0817952379584312, 0.0518637150526047, 0.0279368180781603,
-                    0.0107164792716503, 0.00130179093685001,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0.99771648645401,
+                    0.990881502628326,
+                    0.979542553424835,
+                    0.9637770652771,
+                    0.943695485591888,
+                    0.919438362121582,
+                    0.891178011894226,
+                    0.859118342399597,
+                    0.823493480682373,
+                    0.784570515155792,
+                    0.742646217346191,
+                    0.698050200939178,
+                    0.651142716407776,
+                    0.602314412593842,
+                    0.55198872089386,
+                    0.500619947910309,
+                    0.44869339466095,
+                    0.39672577381134,
+                    0.34526526927948,
+                    0.294891387224197,
+                    0.24621507525444,
+                    0.199878215789795,
+                    0.156554222106934,
+                    0.116947874426842,
+                    0.0817952379584312,
+                    0.0518637150526047,
+                    0.0279368180781603,
+                    0.0107164792716503,
+                    0.00130179093685001,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
                 ]
                 bcoeff.bounds = [
                     [1, 0.994296252727509],
@@ -70,8 +97,15 @@ class Cl(ClFixHybridHeightCoord):
                     [0.0389823913574219, 0.0183146875351667],
                     [0.0183146875351667, 0.00487210927531123],
                     [0.00487210927531123, 0],
-                    [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0],
-                    [0, 0], [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
+                    [0, 0],
                 ]
             except iris.exceptions.CoordinateNotFoundError:
                 pass
@@ -79,7 +113,6 @@ class Cl(ClFixHybridHeightCoord):
 
 
 Cli = Cl
-
 
 Clw = Cl
 
@@ -98,13 +131,16 @@ class Hus(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('air_pressure').points = \
-            np.round(cube.coord('air_pressure').core_points(), 0)
-        cube.coord('air_pressure').bounds = \
-            np.round(cube.coord('air_pressure').core_bounds(), 0)
+        cube.coord("air_pressure").points = np.round(
+            cube.coord("air_pressure").core_points(),
+            0,
+        )
+        cube.coord("air_pressure").bounds = np.round(
+            cube.coord("air_pressure").core_bounds(),
+            0,
+        )
         return cubes
 
 
@@ -122,11 +158,14 @@ class Zg(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('air_pressure').points = \
-            np.round(cube.coord('air_pressure').points, 0)
-        cube.coord('air_pressure').bounds = \
-            np.round(cube.coord('air_pressure').bounds, 0)
+        cube.coord("air_pressure").points = np.round(
+            cube.coord("air_pressure").core_points(),
+            0,
+        )
+        cube.coord("air_pressure").bounds = np.round(
+            cube.coord("air_pressure").core_bounds(),
+            0,
+        )
         return cubes

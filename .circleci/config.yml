@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@13.16.5
-  codecov: codecov/codecov@3.2.5
+  coverage-reporter: codacy/coverage-reporter@14.0.0
+  codecov: codecov/codecov@4.1.0
 
 commands:
   check_changes:
@@ -21,6 +21,10 @@ commands:
               circleci step halt
             fi
   test_and_report:
+    parameters:
+      args:
+        type: string
+        default: ""
     steps:
       - run:
           name: Run tests
@@ -28,8 +32,7 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            flake8 -j 4
-            pytest -n 4 --junitxml=test-reports/report.xml
+            pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
       - store_test_results:
           path: test-reports/report.xml
@@ -48,8 +51,15 @@ commands:
   test_installation_from_source:
     parameters:
       extra:
+        description: pip "extra"s to install
         type: string
+        default: "test"
       flags:
+        description: pip install flags
+        type: string
+        default: ""
+      upstream_packages:
+        description: List of packages that will be installed with pip.
         type: string
         default: ""
     steps:
@@ -74,20 +84,25 @@ commands:
               - r-yaml
               - ncl
             " >> environment.yml
+            # Installation of development version of packages requires compilers
+            if [[ "<< parameters.upstream_packages >>" ]]; then
+                echo "  - compilers" >> environment.yml
+            fi
             # Install
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
-            mamba env create >> /logs/conda.txt 2>&1
+            mamba env create -n esmvaltool -f environment.yml |& tee /logs/conda.txt
+            git stash  # Restore repository state to get clean version number.
             conda activate esmvaltool
-            pip install << parameters.flags >> ".[<<parameters.extra>>]"> /logs/install.txt 2>&1
+            pip install --no-deps << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
       - run:
           name: Log versions
           command: |
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
+            dpkg -l | tee /logs/versions.txt
+            conda env export | tee /logs/environment.yml
+            pip freeze | tee /logs/requirements.txt
       - test_and_report
       - save_cache:
           key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
@@ -117,7 +132,8 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install .[test] > /logs/install.txt 2>&1
-      - test_and_report
+      - test_and_report:
+          args: --cov
       - save_cache:
           key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
@@ -138,27 +154,45 @@ jobs:
   test_installation_from_source_test_mode:
     # Test installation from source
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: large
     steps:
-      - test_installation_from_source:
-          extra: test
+      - test_installation_from_source
 
   test_installation_from_source_develop_mode:
     # Test development installation
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: large
     steps:
       - test_installation_from_source:
           extra: develop
           flags: "--editable"
 
+  test_with_upstream_developments:
+    # Test with development versions of upstream packages
+    docker:
+      - image: condaforge/miniforge3
+    resource_class: large
+    steps:
+      - test_installation_from_source:
+          upstream_packages: >-
+            git+https://github.com/esgf/esgf-pyclient
+            git+https://github.com/euro-cordex/py-cordex
+            git+https://github.com/SciTools/cartopy
+            git+https://github.com/SciTools/cf-units
+            git+https://github.com/SciTools/iris
+            git+https://github.com/SciTools/iris-grib
+            git+https://github.com/SciTools/nc-time-axis
+            git+https://github.com/SciTools-incubator/iris-esmf-regrid
+            git+https://github.com/SciTools-incubator/python-stratify
+            git+https://github.com/Toblerity/Fiona
+
   test_installation_from_conda:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: medium
     steps:
       - run:
@@ -167,21 +201,20 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
             mamba create -y --name esmvaltool 'python=3.11'
             set +x; conda activate esmvaltool; set -x
             # Install
             mamba install -y esmvalcore
             # Log versions
-            conda env export > /logs/environment.yml
+            conda env export | tee /logs/environment.yml
             # Test installation
             esmvaltool version
 
   build_documentation:
     # Test building documentation
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: medium
     steps:
       - checkout
@@ -190,13 +223,13 @@ jobs:
             mkdir /logs
             . /opt/conda/etc/profile.d/conda.sh
             # Install
-            mamba env create
+            mamba env create -n esmvaltool -f environment.yml
             conda activate esmvaltool
             pip install .[doc]
             # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
+            dpkg -l | tee /logs/versions.txt
+            conda env export | tee /logs/environment.yml
+            pip freeze | tee /logs/requirements.txt
             # Test building documentation
             MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
@@ -206,8 +239,8 @@ workflows:
   commit:
     jobs:
       - run_tests
-      - test_installation_from_source_test_mode
       - test_installation_from_source_develop_mode
+      - test_installation_from_source_test_mode
 
   nightly:
     triggers:
@@ -218,8 +251,9 @@ workflows:
               only:
                 - main
     jobs:
-      - run_tests
-      - test_installation_from_source_test_mode
       - build_documentation
-      - test_installation_from_source_develop_mode
+      - run_tests
       - test_installation_from_conda
+      - test_installation_from_source_develop_mode
+      - test_installation_from_source_test_mode
+      - test_with_upstream_developments

@@ -4,13 +4,13 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387139.svg)](https://doi.org/10.5281/zenodo.3387139)
 [![Chat on Matrix](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/#ESMValGroup_Lobby:gitter.im)
 [![CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main.svg?style=svg)](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main)
-[![codecov](https://codecov.io/gh/ESMValGroup/ESMValCore/branch/main/graph/badge.svg?token=wQnDzguwq6)](https://codecov.io/gh/ESMValGroup/ESMValCore)
+[![codecov](https://codecov.io/gh/ESMValGroup/ESMValCore/graph/badge.svg?token=wQnDzguwq6)](https://codecov.io/gh/ESMValGroup/ESMValCore)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://app.codacy.com/gh/ESMValGroup/ESMValCore/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Docker Build Status](https://img.shields.io/docker/cloud/build/esmvalgroup/esmvalcore)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
 [![Anaconda-Server Badge](https://img.shields.io/conda/vn/conda-forge/ESMValCore?color=blue&label=conda-forge&logo=conda-forge&logoColor=white)](https://anaconda.org/conda-forge/esmvalcore)
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ESMValGroup/ESMValCore/main.svg)](https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main)
 
-![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2.png)
+![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2-glow.png)
 
 ESMValCore: core functionalities for the ESMValTool, a community diagnostic
 and performance metrics tool for routine evaluation of Earth System Models

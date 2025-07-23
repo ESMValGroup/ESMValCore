@@ -1,9 +1,9 @@
 """Fixes for inmcm4 model."""
+
 import iris
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
-
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
@@ -76,8 +76,8 @@ class Nbp(Fix):
 
         """
         cubes[0].standard_name = (
-            'surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_'
-            'carbon_due_to_all_land_processes'
+            "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_"
+            "carbon_due_to_all_land_processes"
         )
         return cubes
 
@@ -100,12 +100,13 @@ class BaresoilFrac(Fix):
 
         """
         typebare = iris.coords.AuxCoord(
-            'bare_ground',
-            standard_name='area_type',
-            long_name='surface type',
-            var_name='type',
-            units='1',
-            bounds=None)
+            "bare_ground",
+            standard_name="area_type",
+            long_name="surface type",
+            var_name="type",
+            units="1",
+            bounds=None,
+        )
         for cube in cubes:
             cube.add_aux_coord(typebare)
         return cubes

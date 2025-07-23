@@ -1,9 +1,10 @@
 """Fixes for BNU-ESM model."""
+
 from cf_units import Unit
 from dask import array as da
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -50,7 +51,7 @@ class FgCo2(Fix):
         iris.cube.CubeList
 
         """
-        self.get_cube_from_list(cubes).units = Unit('kg m-2 s-1')
+        self.get_cube_from_list(cubes).units = Unit("kg m-2 s-1")
         return cubes
 
     def fix_data(self, cube):
@@ -94,7 +95,7 @@ class Ch4(Fix):
         iris.cube.CubeList
 
         """
-        self.get_cube_from_list(cubes).units = Unit('1e-9')
+        self.get_cube_from_list(cubes).units = Unit("1e-9")
         return cubes
 
     def fix_data(self, cube):
@@ -115,7 +116,7 @@ class Ch4(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 29.0 / 16.0 * 1.e9
+        cube *= 29.0 / 16.0 * 1.0e9
         cube.metadata = metadata
         return cube
 
@@ -139,7 +140,7 @@ class Co2(Fix):
         iris.cube.CubeList
 
         """
-        self.get_cube_from_list(cubes).units = Unit('1e-6')
+        self.get_cube_from_list(cubes).units = Unit("1e-6")
         return cubes
 
     def fix_data(self, cube):
@@ -159,7 +160,7 @@ class Co2(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 29.0 / 44.0 * 1.e6
+        cube *= 29.0 / 44.0 * 1.0e6
         cube.metadata = metadata
         return cube
 
@@ -184,7 +185,7 @@ class SpCo2(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 1.e6
+        cube *= 1.0e6
         cube.metadata = metadata
         return cube
 
@@ -208,7 +209,7 @@ class Od550Aer(Fix):
         iris.cube.Cube
 
         """
-        data = da.ma.masked_equal(cube.core_data(), 1.e36)
+        data = da.ma.masked_equal(cube.core_data(), 1.0e36)
         return cube.copy(data)
 
 

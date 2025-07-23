@@ -1,13 +1,13 @@
 """Fixes for MSWEP."""
+
 from datetime import datetime
 
 import cf_units
 import numpy as np
 from cf_units import Unit
 
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.iris_helpers import date2num
-
-from ..fix import Fix
 
 
 def fix_time_month(cube):
@@ -16,11 +16,11 @@ def fix_time_month(cube):
     Convert from months since 1899-12 to days since 1850 as per CMOR
     standard.
     """
-    time_coord = cube.coord('time')
+    time_coord = cube.coord("time")
     origin = time_coord.units.origin
 
     origin_year, origin_month = [
-        int(val) for val in origin.split()[2].split('-')
+        int(val) for val in origin.split()[2].split("-")
     ]
 
     dates = []
@@ -32,8 +32,8 @@ def fix_time_month(cube):
 
     t_unit = cf_units.Unit("days since 1850-01-01", calendar="standard")
 
-    cube.coord('time').points = date2num(dates, t_unit)
-    cube.coord('time').units = t_unit
+    cube.coord("time").points = date2num(dates, t_unit)
+    cube.coord("time").units = t_unit
 
 
 def fix_time_day(cube):
@@ -42,17 +42,18 @@ def fix_time_day(cube):
     Convert from days since 1899-12-31 to days since 1850 as per CMOR
     standard.
     """
-    time_coord = cube.coord('time')
-    time_coord.convert_units('days since 1850-1-1 00:00:00.0')
+    time_coord = cube.coord("time")
+    time_coord.convert_units("days since 1850-1-1 00:00:00.0")
 
 
 def fix_longitude(cube):
     """Fix longitude coordinate from -180:180 to 0:360."""
-    lon_axis = cube.coord_dims('longitude')
-    lon = cube.coord(axis='X')
+    lon_axis = cube.coord_dims("longitude")
+    lon = cube.coord(axis="X")
 
     if not lon.is_monotonic():
-        raise ValueError("Data must be monotonic to fix longitude.")
+        msg = "Data must be monotonic to fix longitude."
+        raise ValueError(msg)
 
     # roll data because iris forces `lon.points` to be strictly monotonic.
     shift = np.sum(lon.points < 0)
@@ -80,12 +81,13 @@ class Pr(Fix):
         """Fix time."""
         frequency = self.vardef.frequency
 
-        if frequency in ('day', '3hr'):
+        if frequency in ("day", "3hr"):
             fix_time_day(cube)
-        elif frequency == 'mon':
+        elif frequency == "mon":
             fix_time_month(cube)
         else:
-            raise ValueError(f'Cannot fix time for frequency: {frequency!r}')
+            msg = f"Cannot fix time for frequency: {frequency!r}"
+            raise ValueError(msg)
 
     def _fix_units(self, cube):
         """Convert units from mm/[t] to kg m-2 s-1 units."""
@@ -93,22 +95,24 @@ class Pr(Fix):
 
         cube.units = Unit(self.vardef.units)
 
-        if frequency in ('day', '3hr'):
+        if frequency in ("day", "3hr"):
             # divide by number of seconds in a day
             cube.data = cube.core_data() / (60 * 60 * 24)
-        elif frequency == 'mon':
+        elif frequency == "mon":
             # divide by number of seconds in a month
             cube.data = cube.core_data() / (60 * 60 * 24 * 30)
         else:
-            raise ValueError(f'Cannot fix units for frequency: {frequency!r}')
+            msg = f"Cannot fix units for frequency: {frequency!r}"
+            raise ValueError(msg)
 
     def _fix_bounds(self, cube):
         """Add bounds to coords."""
-        coord_defs = tuple(coord_def
-                           for coord_def in self.vardef.coordinates.values())
+        coord_defs = tuple(
+            coord_def for coord_def in self.vardef.coordinates.values()
+        )
 
         for coord_def in coord_defs:
-            if not coord_def.must_have_bounds == 'yes':
+            if coord_def.must_have_bounds != "yes":
                 continue
 
             coord = cube.coord(axis=coord_def.axis)
@@ -122,8 +126,9 @@ class Pr(Fix):
         cube.standard_name = self.vardef.standard_name
         cube.long_name = self.vardef.long_name
 
-        coord_defs = tuple(coord_def
-                           for coord_def in self.vardef.coordinates.values())
+        coord_defs = tuple(
+            coord_def for coord_def in self.vardef.coordinates.values()
+        )
 
         for coord_def in coord_defs:
             coord = cube.coord(axis=coord_def.axis)

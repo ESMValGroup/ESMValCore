@@ -1,4 +1,5 @@
 """Fixes that are shared between datasets and drivers."""
+
 import logging
 from functools import lru_cache
 
@@ -16,14 +17,12 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def _get_domain(data_domain):
-    domain = cx.cordex_domain(data_domain, add_vertices=True)
-    return domain
+    return cx.cordex_domain(data_domain, add_vertices=True)
 
 
 @lru_cache
 def _get_domain_info(data_domain):
-    domain_info = cx.domain_info(data_domain)
-    return domain_info
+    return cx.domain_info(data_domain)
 
 
 class MOHCHadREM3GA705(Fix):
@@ -42,9 +41,9 @@ class MOHCHadREM3GA705(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            cube.coord('latitude').var_name = 'lat'
-            cube.coord('longitude').var_name = 'lon'
-            cube.coord('time').long_name = 'time'
+            cube.coord("latitude").var_name = "lat"
+            cube.coord("longitude").var_name = "lon"
+            cube.coord("time").long_name = "time"
 
         return cubes
 
@@ -65,7 +64,7 @@ class TimeLongName(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            cube.coord('time').long_name = 'time'
+            cube.coord("time").long_name = "time"
 
         return cubes
 
@@ -92,17 +91,21 @@ class CLMcomCCLM4817(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            time_unit = cube.coord('time').units
-            if time_unit.calendar == 'standard':
-                new_unit = time_unit.change_calendar('proleptic_gregorian')
-                cube.coord('time').units = new_unit
+            time_unit = cube.coord("time").units
+            if time_unit.calendar == "standard":
+                new_unit = time_unit.change_calendar("proleptic_gregorian")
+                cube.coord("time").units = new_unit
             for coord in cube.coords():
-                if coord.dtype in ['>f8', '>f4']:
+                if coord.dtype in [">f8", ">f4"]:
                     coord.points = coord.core_points().astype(
-                        np.float64, casting='same_kind')
+                        np.float64,
+                        casting="same_kind",
+                    )
                     if coord.has_bounds():
                         coord.bounds = coord.core_bounds().astype(
-                            np.float64, casting='same_kind')
+                            np.float64,
+                            casting="same_kind",
+                        )
         return cubes
 
 
@@ -115,30 +118,39 @@ class AllVars(Fix):
         logger.debug(
             "Maximum difference between original %s"
             "points and standard %s domain points  "
-            "for dataset %s and driver %s is: %s.", new_coord.var_name,
-            self.extra_facets['domain'], self.extra_facets['dataset'],
-            self.extra_facets['driver'], str(diff))
+            "for dataset %s and driver %s is: %s.",
+            new_coord.var_name,
+            self.extra_facets["domain"],
+            self.extra_facets["dataset"],
+            self.extra_facets["driver"],
+            str(diff),
+        )
 
         if diff > 10e-4:
-            raise RecipeError(
+            msg = (
                 "Differences between the original grid and the "
-                f"standardised grid are above 10e-4 {new_coord.units}.")
+                f"standardised grid are above 10e-4 {new_coord.units}."
+            )
+            raise RecipeError(
+                msg,
+            )
 
     def _fix_rotated_coords(self, cube, domain, domain_info):
         """Fix rotated coordinates."""
-        for dim_coord in ['rlat', 'rlon']:
+        for dim_coord in ["rlat", "rlon"]:
             old_coord = cube.coord(domain[dim_coord].standard_name)
             old_coord_dims = old_coord.cube_dims(cube)
             points = domain[dim_coord].data
             coord_system = iris.coord_systems.RotatedGeogCS(
-                grid_north_pole_latitude=domain_info['pollat'],
-                grid_north_pole_longitude=domain_info['pollon'])
+                grid_north_pole_latitude=domain_info["pollat"],
+                grid_north_pole_longitude=domain_info["pollon"],
+            )
             new_coord = iris.coords.DimCoord(
                 points,
                 var_name=dim_coord,
                 standard_name=domain[dim_coord].standard_name,
                 long_name=domain[dim_coord].long_name,
-                units=Unit('degrees'),
+                units=Unit("degrees"),
                 coord_system=coord_system,
             )
             self._check_grid_differences(old_coord, new_coord)
@@ -148,11 +160,11 @@ class AllVars(Fix):
 
     def _fix_geographical_coords(self, cube, domain):
         """Fix geographical coordinates."""
-        for aux_coord in ['lat', 'lon']:
+        for aux_coord in ["lat", "lon"]:
             old_coord = cube.coord(domain[aux_coord].standard_name)
             cube.remove_coord(old_coord)
             points = domain[aux_coord].data
-            bounds = domain[f'{aux_coord}_vertices'].data
+            bounds = domain[f"{aux_coord}_vertices"].data
             new_coord = iris.coords.AuxCoord(
                 points,
                 var_name=aux_coord,
@@ -161,13 +173,14 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds,
             )
-            if aux_coord == 'lon' and new_coord.points.min() < 0.:
-                lon_inds = (new_coord.points < 0.) & (old_coord.points > 0.)
-                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.
+            if aux_coord == "lon" and new_coord.points.min() < 0.0:
+                lon_inds = (new_coord.points < 0.0) & (old_coord.points > 0.0)
+                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.0
 
             self._check_grid_differences(old_coord, new_coord)
-            aux_coord_dims = (cube.coord(var_name='rlat').cube_dims(cube) +
-                              cube.coord(var_name='rlon').cube_dims(cube))
+            aux_coord_dims = cube.coord(var_name="rlat").cube_dims(
+                cube,
+            ) + cube.coord(var_name="rlon").cube_dims(cube)
             cube.add_aux_coord(new_coord, aux_coord_dims)
 
     def fix_metadata(self, cubes):
@@ -188,7 +201,7 @@ class AllVars(Fix):
         -------
         iris.cube.CubeList
         """
-        data_domain = self.extra_facets['domain']
+        data_domain = self.extra_facets["domain"]
         domain = _get_domain(data_domain)
         domain_info = _get_domain_info(data_domain)
         for cube in cubes:
@@ -200,11 +213,16 @@ class AllVars(Fix):
                 logger.warning(
                     "Support for CORDEX datasets in a Lambert Conformal "
                     "coordinate system is ongoing. Certain preprocessor "
-                    "functions may fail.")
+                    "functions may fail.",
+                )
             else:
-                raise RecipeError(
+                msg = (
                     f"Coordinate system {coord_system.grid_mapping_name} "
                     "not supported in CORDEX datasets. Must be "
-                    "rotated_latitude_longitude or lambert_conformal_conic.")
+                    "rotated_latitude_longitude or lambert_conformal_conic."
+                )
+                raise RecipeError(
+                    msg,
+                )
 
         return cubes

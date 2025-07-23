@@ -58,71 +58,71 @@ def test_from_recipe(session):
 
     reference = [
         Dataset(
-            alias='CMIP3',
-            dataset='cccma_cgcm3_1',
-            diagnostic='diagnostic1',
-            ensemble='run1',
-            exp='historical',
-            frequency='mon',
-            mip='A1',
-            preprocessor='preprocessor1',
-            project='CMIP3',
+            alias="CMIP3",
+            dataset="cccma_cgcm3_1",
+            diagnostic="diagnostic1",
+            ensemble="run1",
+            exp="historical",
+            frequency="mon",
+            mip="A1",
+            preprocessor="preprocessor1",
+            project="CMIP3",
             recipe_dataset_index=0,
-            short_name='ta',
-            variable_group='ta850',
+            short_name="ta",
+            variable_group="ta850",
         ),
         Dataset(
-            alias='CMIP5',
-            dataset='EC-EARTH',
-            diagnostic='diagnostic1',
-            ensemble='r1i1p1',
-            exp='historical',
-            mip='Amon',
-            preprocessor='preprocessor1',
-            project='CMIP5',
+            alias="CMIP5",
+            dataset="EC-EARTH",
+            diagnostic="diagnostic1",
+            ensemble="r1i1p1",
+            exp="historical",
+            mip="Amon",
+            preprocessor="preprocessor1",
+            project="CMIP5",
             recipe_dataset_index=1,
-            short_name='ta',
-            variable_group='ta850',
+            short_name="ta",
+            variable_group="ta850",
         ),
         Dataset(
-            alias='CMIP6',
-            dataset='AWI-ESM-1-1-LR',
-            diagnostic='diagnostic1',
-            ensemble='r1i1p1f1',
-            exp='historical',
-            grid='gn',
-            mip='Amon',
-            preprocessor='preprocessor1',
-            project='CMIP6',
+            alias="CMIP6",
+            dataset="AWI-ESM-1-1-LR",
+            diagnostic="diagnostic1",
+            ensemble="r1i1p1f1",
+            exp="historical",
+            grid="gn",
+            mip="Amon",
+            preprocessor="preprocessor1",
+            project="CMIP6",
             recipe_dataset_index=2,
-            short_name='ta',
-            variable_group='ta850',
+            short_name="ta",
+            variable_group="ta850",
         ),
         Dataset(
-            alias='CORDEX',
-            dataset='RACMO22E',
-            diagnostic='diagnostic1',
-            driver='MOHC-HadGEM2-ES',
-            domain='EUR-11',
-            ensemble='r1i1p1',
-            exp='historical',
-            mip='mon',
-            preprocessor='preprocessor1',
-            project='CORDEX',
+            alias="CORDEX",
+            dataset="RACMO22E",
+            diagnostic="diagnostic1",
+            driver="MOHC-HadGEM2-ES",
+            domain="EUR-11",
+            ensemble="r1i1p1",
+            exp="historical",
+            mip="mon",
+            preprocessor="preprocessor1",
+            project="CORDEX",
             recipe_dataset_index=3,
-            short_name='ta',
-            variable_group='ta850',
+            short_name="ta",
+            variable_group="ta850",
         ),
         Dataset(
-            alias='obs4MIPs',
-            dataset='CERES-EBAF',
-            diagnostic='diagnostic1',
-            mip='Amon',
-            preprocessor='preprocessor1',
-            project='obs4MIPs',
+            alias="obs4MIPs",
+            dataset="CERES-EBAF",
+            diagnostic="diagnostic1",
+            mip="Amon",
+            preprocessor="preprocessor1",
+            project="obs4MIPs",
             recipe_dataset_index=4,
-            short_name='ta',
-            variable_group='ta850',
+            short_name="ta",
+            variable_group="ta850",
         ),
     ]
     for ref_ds in reference:
@@ -131,9 +131,9 @@ def test_from_recipe(session):
     assert datasets == reference
 
 
-@pytest.mark.parametrize('path_type', [str, Path])
+@pytest.mark.parametrize("path_type", [str, Path])
 def test_from_recipe_file(tmp_path, session, path_type):
-    recipe_file = tmp_path / 'recipe_test.yml'
+    recipe_file = tmp_path / "recipe_test.yml"
     recipe_txt = textwrap.dedent("""
     datasets:
       - dataset: AWI-ESM-1-1-LR
@@ -149,7 +149,7 @@ def test_from_recipe_file(tmp_path, session, path_type):
             project: CMIP6
 
     """)
-    recipe_file.write_text(recipe_txt, encoding='utf-8')
+    recipe_file.write_text(recipe_txt, encoding="utf-8")
     datasets = Dataset.from_recipe(
         path_type(recipe_file),
         session,
@@ -213,8 +213,8 @@ def test_merge_supplementaries_dataset_takes_priority(session):
     print(datasets)
     assert len(datasets) == 2
     assert all(len(ds.supplementaries) == 1 for ds in datasets)
-    assert datasets[0].supplementaries[0].facets['exp'] == 'historical'
-    assert datasets[1].supplementaries[0].facets['exp'] == '1pctCO2'
+    assert datasets[0].supplementaries[0].facets["exp"] == "historical"
+    assert datasets[1].supplementaries[0].facets["exp"] == "1pctCO2"
 
 
 def test_merge_supplementaries_combine_dataset_with_variable(session):
@@ -252,8 +252,9 @@ def test_merge_supplementaries_combine_dataset_with_variable(session):
     print(datasets)
     assert len(datasets) == 1
     assert len(datasets[0].supplementaries) == 2
-    assert datasets[0].supplementaries[0].facets['short_name'] == 'areacella'
-    assert datasets[0].supplementaries[1].facets['short_name'] == 'sftlf'
+    assert datasets[0].supplementaries[0].facets["short_name"] == "areacella"
+    assert datasets[0].supplementaries[0].facets["dataset"] == "AWI-ESM-1-1-LR"
+    assert datasets[0].supplementaries[1].facets["short_name"] == "sftlf"
 
 
 def test_merge_supplementaries_missing_short_name_fails(session):
@@ -279,26 +280,26 @@ def test_merge_supplementaries_missing_short_name_fails(session):
 
 def test_get_input_datasets_derive(session):
     dataset = Dataset(
-        dataset='ERA5',
-        project='native6',
-        mip='E1hr',
-        short_name='rlus',
-        alias='ERA5',
+        dataset="ERA5",
+        project="native6",
+        mip="E1hr",
+        short_name="rlus",
+        alias="ERA5",
         derive=True,
         force_derivation=True,
-        frequency='1hr',
+        frequency="1hr",
         recipe_dataset_index=0,
-        tier='3',
-        type='reanaly',
-        version='v1',
+        tier="3",
+        type="reanaly",
+        version="v1",
     )
     rlds, rlns = to_datasets._get_input_datasets(dataset)
-    assert rlds['short_name'] == 'rlds'
-    assert rlds['long_name'] == 'Surface Downwelling Longwave Radiation'
-    assert rlds['frequency'] == '1hr'
-    assert rlns['short_name'] == 'rlns'
-    assert rlns['long_name'] == 'Surface Net downward Longwave Radiation'
-    assert rlns['frequency'] == '1hr'
+    assert rlds["short_name"] == "rlds"
+    assert rlds["long_name"] == "Surface Downwelling Longwave Radiation"
+    assert rlds["frequency"] == "1hr"
+    assert rlns["short_name"] == "rlns"
+    assert rlns["long_name"] == "Surface Net downward Longwave Radiation"
+    assert rlns["frequency"] == "1hr"
 
 
 def test_max_years(session):
@@ -317,30 +318,29 @@ def test_max_years(session):
               - dataset: AWI-ESM-1-1-LR
                 grid: gn
     """)
-    session['max_years'] = 2
+    session["max_years"] = 2
     datasets = Dataset.from_recipe(recipe_txt, session)
-    assert datasets[0].facets['timerange'] == '2000/2001'
+    assert datasets[0].facets["timerange"] == "2000/2001"
 
 
-@pytest.mark.parametrize('found_files', [True, False])
+@pytest.mark.parametrize("found_files", [True, False])
 def test_dataset_from_files_fails(monkeypatch, found_files):
-
     def from_files(_):
-        file = LocalFile('/path/to/file')
-        file.facets = {'facets1': 'value1'}
+        file = LocalFile("/path/to/file")
+        file.facets = {"facets1": "value1"}
         dataset = Dataset(
-            dataset='*',
-            short_name='tas',
+            dataset="*",
+            short_name="tas",
         )
         dataset.files = [file] if found_files else []
-        dataset._file_globs = ['/path/to/tas_*.nc']
+        dataset._file_globs = ["/path/to/tas_*.nc"]
         return [dataset]
 
-    monkeypatch.setattr(Dataset, 'from_files', from_files)
+    monkeypatch.setattr(Dataset, "from_files", from_files)
 
     dataset = Dataset(
-        dataset='*',
-        short_name='tas',
+        dataset="*",
+        short_name="tas",
     )
 
     with pytest.raises(RecipeError, match="Unable to replace dataset.*"):
@@ -348,91 +348,93 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
 
 
 def test_fix_cmip5_fx_ensemble(monkeypatch):
-
     def find_files(self):
-        if self.facets['ensemble'] == 'r0i0p0':
-            self._files = ['file1.nc']
+        if self.facets["ensemble"] == "r0i0p0":
+            self._files = ["file1.nc"]
 
-    monkeypatch.setattr(Dataset, 'find_files', find_files)
+    monkeypatch.setattr(Dataset, "find_files", find_files)
 
     dataset = Dataset(
-        dataset='dataset1',
-        short_name='orog',
-        mip='fx',
-        project='CMIP5',
-        ensemble='r1i1p1',
+        dataset="dataset1",
+        short_name="orog",
+        mip="fx",
+        project="CMIP5",
+        ensemble="r1i1p1",
     )
 
     to_datasets._fix_cmip5_fx_ensemble(dataset)
 
-    assert dataset['ensemble'] == 'r0i0p0'
+    assert dataset["ensemble"] == "r0i0p0"
 
 
 def test_get_supplementary_short_names(monkeypatch):
-
     def _update_cmor_facets(facets):
-        facets['modeling_realm'] = 'atmos'
+        facets["modeling_realm"] = "atmos"
 
     monkeypatch.setattr(
         to_datasets,
-        '_update_cmor_facets',
+        "_update_cmor_facets",
         _update_cmor_facets,
     )
     facets = {
-        'short_name': 'tas',
+        "short_name": "tas",
     }
-    result = to_datasets._get_supplementary_short_names(facets, 'mask_landsea')
-    assert result == ['sftlf']
+    result = to_datasets._get_supplementary_short_names(facets, "mask_landsea")
+    assert result == ["sftlf"]
 
 
 def test_append_missing_supplementaries():
     supplementaries = [
         {
-            'short_name': 'areacella',
+            "short_name": "areacella",
         },
     ]
     facets = {
-        'short_name': 'tas',
-        'project': 'CMIP6',
-        'mip': 'Amon',
+        "short_name": "tas",
+        "project": "CMIP6",
+        "mip": "Amon",
     }
 
     settings = {
-        'mask_landsea': {
-            'mask_out': 'land'
-        },
-        'area_statistics': {
-            'operator': 'mean'
-        },
+        "mask_landsea": {"mask_out": "land"},
+        "area_statistics": {"operator": "mean"},
     }
 
-    to_datasets._append_missing_supplementaries(supplementaries, facets,
-                                                settings)
-
-    short_names = {f['short_name'] for f in supplementaries}
-    assert short_names == {'areacella', 'sftlf'}
+    to_datasets._append_missing_supplementaries(
+        supplementaries,
+        facets,
+        settings,
+    )
+    short_names = {f["short_name"] for f in supplementaries}
+    assert short_names == {"areacella", "sftlf"}
+    sftlf = supplementaries[1]
+    assert (
+        "dataset" not in sftlf
+    )  # dataset will be inherited from the main variable
 
 
 def test_report_unexpanded_globs(mocker):
     dataset = Dataset(
-        alias='CMIP5',
-        dataset='*',
-        diagnostic='diagnostic1',
-        ensemble='r1i1p1',
-        exp='historical',
-        mip='Amon',
-        preprocessor='preprocessor1',
-        project='CMIP5',
+        alias="CMIP5",
+        dataset="*",
+        diagnostic="diagnostic1",
+        ensemble="r1i1p1",
+        exp="historical",
+        mip="Amon",
+        preprocessor="preprocessor1",
+        project="CMIP5",
         recipe_dataset_index=1,
-        short_name='ta',
-        variable_group='ta850',
+        short_name="ta",
+        variable_group="ta850",
     )
-    file = mocker.Mock(facets={'dataset': '*'})
+    file = mocker.Mock(facets={"dataset": "*"})
     dataset.files = [file]
-    unexpanded_globs = {'dataset': '*'}
+    unexpanded_globs = {"dataset": "*"}
 
     msg = to_datasets._report_unexpanded_globs(
-        dataset, dataset, unexpanded_globs
+        dataset,
+        dataset,
+        unexpanded_globs,
     )
 
-    assert 'paths to the' not in msg
+    assert "paths to the" not in msg

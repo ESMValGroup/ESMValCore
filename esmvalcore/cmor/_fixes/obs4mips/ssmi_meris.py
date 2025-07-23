@@ -1,8 +1,8 @@
-
 """Fixes for CCSM4 model."""
+
 from iris.cube import CubeList
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Prw(Fix):

@@ -1,7 +1,8 @@
 """Fixes for CanESM5 model."""
+
 import dask.array as da
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Co2(Fix):
@@ -21,7 +22,7 @@ class Co2(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 1.e-6
+        cube *= 1.0e-6
         cube.metadata = metadata
         return cube
 

@@ -1,8 +1,9 @@
 """Fixes for IPSL-CM6A-LR model."""
+
 from iris.cube import CubeList
 
-from ..fix import Fix
-from ..shared import fix_ocean_depth_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import fix_ocean_depth_coord
 
 
 class AllVars(Fix):
@@ -23,10 +24,10 @@ class AllVars(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        if cube.coords('latitude'):
-            cube.coord('latitude').var_name = 'lat'
-        if cube.coords('longitude'):
-            cube.coord('longitude').var_name = 'lon'
+        if cube.coords("latitude"):
+            cube.coord("latitude").var_name = "lat"
+        if cube.coords("longitude"):
+            cube.coord("longitude").var_name = "lon"
         return CubeList([cube])
 
 
@@ -47,10 +48,10 @@ class Clcalipso(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        alt_40_coord = cube.coord('height')
-        alt_40_coord.long_name = 'altitude'
-        alt_40_coord.standard_name = 'altitude'
-        alt_40_coord.var_name = 'alt40'
+        alt_40_coord = cube.coord("height")
+        alt_40_coord.long_name = "altitude"
+        alt_40_coord.standard_name = "altitude"
+        alt_40_coord.var_name = "alt40"
         return CubeList([cube])
 
 
@@ -71,8 +72,8 @@ class Omon(Fix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.var_name == 'olevel':
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
+                if z_coord.var_name == "olevel":
                     fix_ocean_depth_coord(cube)
         return cubes

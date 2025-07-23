@@ -1,8 +1,8 @@
 """Handles recipe metadata (under 'documentation' section)."""
+
 import os
 import textwrap
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 import yaml
 
@@ -10,7 +10,7 @@ from .recipe_metadata import Contributor, Project, Reference
 from .templates import get_template
 
 
-class RecipeInfo():
+class RecipeInfo:
     """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
@@ -21,47 +21,47 @@ class RecipeInfo():
         Name of recipe file
     """
 
-    def __init__(self, data, filename: Union[os.PathLike, str]):
+    def __init__(self, data, filename: os.PathLike | str):
         self.filename = Path(filename).name
         self.data = data
-        self._authors: Optional[Tuple[Contributor, ...]] = None
-        self._maintainers: Optional[Tuple[Contributor, ...]] = None
-        self._projects: Optional[Tuple[Project, ...]] = None
-        self._references: Optional[Tuple[Reference, ...]] = None
-        self._title: Optional[str] = None
-        self._description: Optional[str] = None
+        self._authors: tuple[Contributor, ...] | None = None
+        self._maintainers: tuple[Contributor, ...] | None = None
+        self._projects: tuple[Project, ...] | None = None
+        self._references: tuple[Reference, ...] | None = None
+        self._title: str | None = None
+        self._description: str | None = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self.name!r})'
+        return f"{self.__class__.__name__}({self.name!r})"
 
     def __str__(self) -> str:
         """Return string representation."""
-        bullet = '\n - '
-        string = f'## {self.title}'
+        bullet = "\n - "
+        string = f"## {self.title}"
 
-        string += '\n\n'
-        string += f'{self.description}'
+        string += "\n\n"
+        string += f"{self.description}"
 
-        string += '\n\n### Authors'
+        string += "\n\n### Authors"
         for author in self.authors:
-            string += f'{bullet}{author}'
+            string += f"{bullet}{author}"
 
-        string += '\n\n### Maintainers'
+        string += "\n\n### Maintainers"
         for maintainer in self.maintainers:
-            string += f'{bullet}{maintainer}'
+            string += f"{bullet}{maintainer}"
 
         if self.projects:
-            string += '\n\n### Projects'
+            string += "\n\n### Projects"
             for project in self.projects:
-                string += f'{bullet}{project}'
+                string += f"{bullet}{project}"
 
         if self.references:
-            string += '\n\n### References'
+            string += "\n\n### References"
             for reference in self.references:
-                string += bullet + reference.render('plaintext')
+                string += bullet + reference.render("plaintext")
 
-        string += '\n'
+        string += "\n"
 
         return string
 
@@ -72,34 +72,34 @@ class RecipeInfo():
     @classmethod
     def from_yaml(cls, path: str):
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
-        data = yaml.safe_load(Path(path).read_text(encoding='utf-8'))
+        data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         return cls(data, filename=path)
 
     @property
     def name(self) -> str:
         """Name of the recipe."""
-        return Path(self.filename).stem.replace('_', ' ').capitalize()
+        return Path(self.filename).stem.replace("_", " ").capitalize()
 
     @property
     def title(self) -> str:
         """Title of the recipe."""
         if self._title is None:
-            self._title = self.data['documentation']['title']
+            self._title = self.data["documentation"]["title"]
         return self._title
 
     @property
     def description(self) -> str:
         """Recipe description."""
         if self._description is None:
-            description = self.data['documentation']['description']
-            self._description = '\n'.join(textwrap.wrap(description))
+            description = self.data["documentation"]["description"]
+            self._description = "\n".join(textwrap.wrap(description))
         return self._description
 
     @property
     def authors(self) -> tuple:
         """List of recipe authors."""
         if self._authors is None:
-            tags = self.data['documentation'].get('authors', ())
+            tags = self.data["documentation"].get("authors", ())
             self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
         return self._authors
 
@@ -107,16 +107,17 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.data['documentation'].get('maintainer', ())
+            tags = self.data["documentation"].get("maintainer", ())
             self._maintainers = tuple(
-                Contributor.from_tag(tag) for tag in tags)
+                Contributor.from_tag(tag) for tag in tags
+            )
         return self._maintainers
 
     @property
     def projects(self) -> tuple:
         """List of recipe projects."""
         if self._projects is None:
-            tags = self.data['documentation'].get('projects', [])
+            tags = self.data["documentation"].get("projects", [])
             self._projects = tuple(Project.from_tag(tag) for tag in tags)
         return self._projects
 
@@ -124,7 +125,7 @@ class RecipeInfo():
     def references(self) -> tuple:
         """List of project references."""
         if self._references is None:
-            tags = self.data['documentation'].get('references', [])
+            tags = self.data["documentation"].get("references", [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
@@ -136,10 +137,8 @@ class RecipeInfo():
             customize the output.
         """
         if not template:
-            template = get_template(self.__class__.__name__ + '.j2')
-        rendered = template.render(info=self)
-
-        return rendered
+            template = get_template(self.__class__.__name__ + ".j2")
+        return template.render(info=self)
 
     def resolve(self) -> None:
         """Force resolve of all tags in recipe.

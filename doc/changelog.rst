@@ -3,27 +3,322 @@
 Changelog
 =========
 
-.. _changelog-v2-11-0:
 
-v2.11.0
+.. _changelog-v2-12-0:
+
+v2.12.0
 -------
-Highlights
 
-TODO: add highlights
+Highlights
+~~~~~~~~~~
+
+-  Preprocessor :func:`esmvalcore.preprocessor.extract_time` now allows to
+   extract time blocks in each year by making parameters ``start_year`` and
+   ``end_year`` optional.
+-  A new way of :ref:`configuring the tool <config>` has been developed.
+-  Performance improvements:
+
+    -  An iris-esmf-regrid scheme has been added to
+       preprocessor :func:`esmvalcore.preprocessor.regrid`, which improves
+       the regridding of 2D grids and adds the capability to regrid UGRID meshes
+       out of the box.
+    -  Data is now saved from one preprocessing task at the time when using the
+       distributed scheduler, in order to avoid running out of memory.
+    -  A better default ``num_workers`` has been set when using more than one
+       ``max_parallel_tasks`` with an unconfigured threaded scheduler.
+
+-  An on-the-fly cmorizer for ACCESS native data is now available.
 
 This release includes
 
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
+-  Make derivation of total column ozone (`toz`) more flexible and add derivation of stratospheric and tropospheric column ozone (:pull:`2509`) by :user:`schlunma`
+
+   - The units of `toz` have been changed from ``DU`` to ``m`` to be consistent with the CMIP6 CMOR table.
+     To restore the old behaviour, preprocessor :func:`esmvalcore.preprocessor.convert_units` can be used
+     to set the units back to ``DU``.
+
+-  Remove deprecated CMOR fix/check code (:pull:`2552`) by :user:`schlunma`
+
+   - CMOR fixes and checks have been clearly separated in v2.10.0, and the old code has now been removed.
+     Use functions :func:`esmvalcore.preprocessors.fix_metadata`, :func:`esmvalcore.preprocessors.fix_data`,
+     or :func:`esmvalcore.dataset.Dataset.load` to fix data.
+     Use functions :func:`esmvalcore.preprocessor.cmor_check_metadata`, :func:`esmvalcore.preprocessor.cmor_check_data`,
+     or :func:`esmvalcore.preprocessor.cmor_check` to check data.
+
+-  Remove deprecated statistical operators (:pull:`2553`) by :user:`schlunma`
+
+   - Old statistical operators that have been deprecated in v2.10.0 have now been removed.
+     Please refer to :ref:`stat_preprocs` for a detailed description on how to use the operators.
+
+-  Save all files in a task at the same time to avoid recomputing intermediate results (:pull:`2522`) by :user:`bouweandela`
+
+   - The signature of the preprocessor function :func:`~esmvalcore.preprocessor.save`
+     has changed. The function now accepts a ``compute`` argument that can be :obj:`True`,
+     in which case the return value will be :obj:`None` or :obj:`False`, in which case
+     the return value will be a :class:`~dask.delayed.Delayed` object that can be used
+     to compute and save the data of the cube.
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Merge configuration object from multiple files (instead of one single file) (:pull:`2448`) by :user:`schlunma`
+
+   - The single configuration file ``config-user.yml`` has been deprecated in favour of configuration directories.
+     By default, the directory ``~/.config/esmvaltool`` will be considered.
+     To switch to the new format run:
+
+       .. code-block:: bash
+
+          mkdir -p ~/.config/esmvaltool && mv ~/.esmvaltool/config-user.yml ~/.config/esmvaltool
+
+     You can also specify the location of the configuration directory with the ``--config_dir`` flag.
+     Please refer to :ref:`config` for a detailed description on how to configure the tool.
+
+-  Make Dask configurable in our configuration (:pull:`2616`) by :user:`schlunma`
+
+   - The old Dask configuration file that needed to be located at ``~/.esmvaltool/dask.yml`` is now deprecated.
+     Please refer to :ref:`config-dask` for a detailed description on how to configure Dask.
+
+Bug fixes
+~~~~~~~~~
+
+-  Concatenate by experiment before concatenating all input files (:pull:`2343`) by :user:`dhohn`
+-  Update `CFG` with configuration options given via command line (:pull:`2595`) by :user:`schlunma`
+-  Avoid a crash when there is a timeout when shutting down the Dask cluster (:pull:`2580`) by :user:`bouweandela`
+-  More reliable datasets to recipe conversion (:pull:`2472`) by :user:`bouweandela`
+-  Avoid mutating the input cubes when building the combined cube in preprocessor function ``multi_model_statistics`` (:pull:`2564`) by :user:`bouweandela`
+-  Do not change function argument names when decorator `preserve_float_dtype` is used (:pull:`2645`) by :user:`schlunma`
+-  Always write target coordinates to source cube after regridding (:pull:`2673`) by :user:`schlunma`
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  New custom variable for tos uncertainty (:pull:`2470`) by :user:`LisaBock`
+-  Add `prc` fix for native6 ERA5 CMORization (:pull:`2550`) by :user:`malininae`
+-  Added more variables to EMAC extra facets (:pull:`2617`) by :user:`schlunma`
+-  Adding custom tables for ETCCDI indices (:pull:`2442`) by :user:`malininae`
+
+Configuration
+~~~~~~~~~~~~~
+
+-  Add public `Config.update_from_dirs()` method (:pull:`2538`) by :user:`schlunma`
+-  Do not use `Path` objects as configuration dictionary keys to avoid errors in `dask.config.merge` (:pull:`2578`) by :user:`schlunma`
+-  Revise the `user-config.yml` to support updated MO user config requirements (:pull:`2658`) by :user:`ehogan`
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Add an iris-esmf-regrid based regridding scheme (:pull:`2457`) by :user:`bouweandela`
+-  Miscellaneous lazy preprocessor improvements (:pull:`2520`) by :user:`bouweandela`
+-  Only save data from one preprocessing task at a time with the Distributed scheduler (:pull:`2610`) by :user:`bouweandela`
+-  Use better defaults when using ``max_parallel_tasks`` with an unconfigured threaded scheduler (:pull:`2626`) by :user:`bouweandela`
+-  Fix OSX compatibility (:pull:`2636`) by :user:`bouweandela`
+-  Make sure that supplementary variables and weights have same chunks as parent cube (:pull:`2637`) by :user:`schlunma`
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Ignore autosummary warning in documentation build (:pull:`2480`) by :user:`bouweandela`
+-  Fix documentation build and broken link (:pull:`2519`) by :user:`bouweandela`
+-  Dark mode compatible logo (:pull:`2532`) by :user:`lukruh`
+-  Add a pre-commit badge to README (:pull:`2534`) by :user:`valeriupredoi`
+-  Retire Mambaforge (:pull:`2556`) by :user:`valeriupredoi`
+-  Readthedocs configuration: temporary revert to miniconda before miniforge3 becomes available (remove Mambaforge) (:pull:`2562`) by :user:`valeriupredoi`
+-  Remove Docker build badge in README (:pull:`2565`) by :user:`valeriupredoi`
+-  Optimize documentation about Earth mover distance in distance_metric preprocessor (:pull:`2423`) by :user:`schlunma`
+-  Update the `esmvaltool` command welcome message (:pull:`2635`) by :user:`bouweandela`
+-  Pin sphinx to < 8.2 (:pull:`2671`) by :user:`bouweandela`
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Extra facets added for EMAC to map o3, tro3 and aps (:pull:`2501`) by :user:`FranziskaWinterstein`
+-  Fix for CMIP6 AWI-ESM-1-1-LR parent time units (:pull:`2507`) by :user:`brittaGrusdt`
+-  Use our own unit conversion function in our fixes (:pull:`2560`) by :user:`schlunma`
+-  Missing 2m height coordinate and monotonicity for tasmin in CESM2 and CESM2-WACCM  (:pull:`2574`) by :user:`Karen-A-Garcia`
+-  Monotonicity fixes for Fgoals (:pull:`2603`) by :user:`Karen-A-Garcia`
+-  Expand Amon fix of FIO-ESM-2-0 (CMIP6) (:pull:`2619`) by :user:`schlunma`
+-  Added fixes for some 3D atmospheric variables of E3SM-1-1 (CMIP6) (:pull:`2620`) by :user:`schlunma`
+-  Correct incorrect time bounds in EMAC data (:pull:`2621`) by :user:`FranziskaWinterstein`
+-  Do not copy ICON horizontal grid every time it is used (:pull:`2633`) by :user:`schlunma`
+-  Fix `oh` for model: EC-Earth3-AerChem mip: AERMonZ (:pull:`2634`) by :user:`valeriupredoi`
+-  Update CMIP5 EC-EARTH pr fix (:pull:`2666`) by :user:`bouweandela`
+-  Add a fix for differing index coord long names in NorESM2-MM and EC-Earth3-Veg-LR (:pull:`2667`) by :user:`bouweandela`
+
+Installation
+~~~~~~~~~~~~
+
+-  Free esmpy of ` >=8.6.0` pin and pin `iris-grib >=0.20.0` (:pull:`2542`) by :user:`valeriupredoi`
+-  Use pyproject.toml instead of setup.py/setup.cfg (:pull:`2540`) by :user:`bouweandela`
+-  Use `miniforge3` for our docker builds instead of `mambaforge` (:pull:`2558`) by :user:`valeriupredoi`
+-  Support Python 3.13 (:pull:`2566`) by :user:`valeriupredoi`
+-  Pin dask (:pull:`2654`) by :user:`sloosvel`
+
+Iris
+~~~~
+
+-  Set iris.FUTURE flags in one place (:pull:`2622`) by :user:`bouweandela`
+-  Silence Iris warnings in ``area_statistics`` preprocessor function (:pull:`2625`) by :user:`bouweandela`
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Merge input cubes only once when computing lazy multimodel statistics (:pull:`2518`) by :user:`bouweandela`
+-  Make `start_year`, `end_year` in `extract_time` optional to obtain time blocks in each year (:pull:`2490`) by :user:`malininae`
+-  Adding hurs (relative humidity) derivation script (:pull:`2397`) by :user:`malininae`
+-  Added cumulative sum preprocessor (:pull:`2642`) by :user:`schlunma`
+-  Unified ignoring of `iris.warnings.IrisVagueMetadataWarning` in preprocessors (:pull:`2646`) by :user:`schlunma`
+-  Raise error if weights are used with unweighted aggregator (:pull:`2640`) by :user:`schlunma`
+-  Allow using multi model statistics preprocessor on datasets without `timerange` (:pull:`2644`) by :user:`schlunma`
+-  Allow using output from `multi_model_statistics` or `ensemble_statistics` as reference for `bias` or `distance_metric` (:pull:`2652`) by :user:`schlunma`
+-  Add option to ignore horizontal coordinates if there are multiple when regridding (:pull:`2672`) by :user:`bouweandela`
+
+Observational and re-analysis dataset support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Add support for native ERA5 data in GRIB format (:pull:`2178`) by :user:`schlunma`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Run a nightly test with the development version of dependencies (:pull:`2478`) by :user:`bouweandela`
+-  Use ruff formatter and pre-commit (:pull:`2524`) by :user:`bouweandela`
+-  Fix tests if deprecated `~/.esmvaltool/config-user.yml` file is available (:pull:`2543`) by :user:`schlunma`
+-  Disable upstream tests on commits (:pull:`2548`) by :user:`bouweandela`
+-  Disable collecting test coverage by default (:pull:`2456`) by :user:`bouweandela`
+-  Enable ruff flake8-bugbear rule (:pull:`2536`) by :user:`bouweandela`
+-  Pin mamba in conda lock creation github action (:pull:`2561`) by :user:`valeriupredoi`
+-  [Numpy2] Support for `numpy==2.0.0` (and pin `iris >=3.11`) (:pull:`2395`) by :user:`valeriupredoi`
+-  Switch back to Python 3.12 for conda lock file creation due to mamba<2 pin (:pull:`2606`) by :user:`valeriupredoi`
+-  Always ignore user's configuration when running Dask tests (:pull:`2624`) by :user:`schlunma`
+-  Restrict runs of cron Github Actions on forks (:pull:`2649`) by :user:`valeriupredoi`
+-  Fix test that loads realistic GRIB file (:pull:`2665`) by :user:`schlunma`
+-  Fix failing test with Dask 2025.2: ours issue not theirs (:pull:`2663`) by :user:`valeriupredoi`
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Introduction of the variable prodlnox for EMAC (:pull:`2499`) by :user:`FranziskaWinterstein`
+
+Improvements
+~~~~~~~~~~~~
+
+-  On-the-fly cmoriser for ACCESS native data (:pull:`2430`) by :user:`rhaegar325`
+-  Fix CFF file (:pull:`2476`) by :user:`rbeucher`
+-  Write settings.yml parameters in original order (:pull:`2352`) by :user:`enekomartinmartinez`
+-  Fix `access-mapping.yml` extra_facets title (:pull:`2485`) by :user:`rhaegar325`
+-  Remove ability to log on to ESGF (:pull:`2508`) by :user:`bouweandela`
+-  Disable automatic fixes by pre-commit.ci (:pull:`2527`) by :user:`bouweandela`
+-  Ignore reformatting when viewing git blame (:pull:`2539`) by :user:`bouweandela`
+-  Enable ruff pydocstyle linter rule (:pull:`2547`) by :user:`bouweandela`
+-  Allows relative paths for diagnostic scripts. (:pull:`2329`) by :user:`rbeucher`
+-  Fix 2593 Change log INFO to DEBUG (:pull:`2600`) by :user:`rbeucher`
+
+
+.. _changelog-v2-11-1:
+
+v2.11.1
+-------
+
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release which enables lazy computations in more preprocessors
+and allows installing the latests version of various dependencies, including
+Iris (`v3.11.0 <https://github.com/SciTools/iris/releases/tag/v3.11.0>`__).
+
+This release includes
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Optimize functions ``mask_landsea()``, ``mask_landseaice()`` and ``calculate_volume()`` for lazy input (:pull:`2515`) by :user:`schlunma`
+
+Installation
+~~~~~~~~~~~~
+
+-  Remove support for Python 3.9 (:pull:`2447`) by :user:`valeriupredoi`
+-  Switch to new iris >= 3.10.0 API (:pull:`2500`) by :user:`schlunma`
+-  Pin dask to avoid 2024.8.0 - problems with masked fill/missing values (:pull:`2504`) by :user:`valeriupredoi`
+-  Fix rounding of Pandas datetimes in ICON CMORizer to allow installing latest Pandas version (:pull:`2529`) by :user:`valeriupredoi`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Fix type hint for new mypy version (:pull:`2497`) by :user:`schlunma`
+-  Reformat datetime strings be in line with new ``isodate==0.7.0`` and actual ISO8601 and pin ``isodate>=0.7.0`` (:pull:`2546`) by :user:`valeriupredoi`
+
+.. _changelog-v2-11-0:
+
+v2.11.0
+-------
+
+Highlights
+~~~~~~~~~~
+
+- Performance improvements have been made to many preprocessors:
+
+  - Preprocessors :func:`esmvalcore.preprocessor.mask_landsea`,
+    :func:`esmvalcore.preprocessor.mask_landseaice`,
+    :func:`esmvalcore.preprocessor.mask_glaciated`,
+    :func:`esmvalcore.preprocessor.extract_levels` are now lazy
+
+- Several new preprocessors have been added:
+
+  - :func:`esmvalcore.preprocessor.local_solar_time`
+  - :func:`esmvalcore.preprocessor.distance_metrics`
+  - :func:`esmvalcore.preprocessor.histogram`
+
+- NEW TREND: First time release manager shout-outs!
+
+  - This is the first ESMValTool release managed by the Met Office! We want to
+    shout this out - and for all future first time release managers to
+    shout-out - to celebrate the growing, thriving ESMValTool community.
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
+
+   - The preprocessor function :func:`esmvalcore.preprocessor.extract_region`
+     no longer automatically maps the extracted :class:`iris.cube.Cube` to the
+     0-360 degrees longitude domain. If you need this behaviour, use
+     ``cube.intersection(longitude=(0., 360.))`` in your Python code after
+     extracting the region. There is no possibility to restore the previous
+     behaviour from a recipe.
+
+-  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
+
+   - Since `v3.8.0`_, Iris explicitly distinguishes between local and global
+     netCDF attributes. ESMValCore adopted this behavior with v2.11.0. With
+     this change, attributes are written as local attributes by default, unless
+     they already existed as global attributes or belong to a special list of
+     global attributes (in which case attributes are written as global
+     attributes). See :class:`iris.cube.CubeAttrsDict` for details.
+
+.. _v3.8.0: https://scitools-iris.readthedocs.io/en/stable/whatsnew/3.8.html#v3-8-29-feb-2024
 
 Deprecations
 ~~~~~~~~~~~~
 
 -  Refactor regridding (:pull:`2231`) by :user:`schlunma`
+
+   - This PR deprecated two regridding schemes, which will be removed with
+     ESMValCore v2.13.0:
+
+     - ``unstructured_nearest``: Please use the scheme ``nearest`` instead.
+       This is an exact replacement for data on unstructured grids. ESMValCore
+       is now able to determine the most suitable regridding scheme based on
+       the input data.
+     - ``linear_extrapolate``: Please use a generic scheme with
+       ``reference: iris.analysis:Linear`` and
+       ``extrapolation_mode: extrapolate`` instead.
+
 -  Allow deprecated regridding scheme ``linear_extrapolate`` in recipe checks (:pull:`2324`) by :user:`schlunma`
 -  Allow deprecated regridding scheme ``unstructured_nearest`` in recipe checks (:pull:`2336`) by :user:`schlunma`
 
@@ -33,6 +328,9 @@ Bug fixes
 -  Do not overwrite facets from recipe with CMOR table facets for derived variables (:pull:`2255`) by :user:`bouweandela`
 -  Fix error message in variable definition check (:pull:`2313`) by :user:`enekomartinmartinez`
 -  Unify dtype handling of preprocessors (:pull:`2393`) by :user:`schlunma`
+-  Fix bug in ``_rechunk_aux_factory_dependencies`` (:pull:`2428`) by :user:`ehogan`
+-  Avoid loading entire files into memory when downloading from ESGF (:pull:`2434`) by :user:`bouweandela`
+-  Preserve cube attribute global vs local when concatenating (:pull:`2449`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -55,6 +353,7 @@ Computational performance improvements
 -  Cache regridding weights if possible (:pull:`2344`) by :user:`schlunma`
 -  Implement lazy area weights (:pull:`2354`) by :user:`schlunma`
 -  Avoid large chunks in :func:`esmvalcore.preprocessor.climate_statistics` preprocessor function with `period='full'` (:pull:`2404`) by :user:`bouweandela`
+-  Load data only once for ESMPy regridders (:pull:`2418`) by :user:`bouweandela`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -84,10 +383,11 @@ Fixes for datasets
 Installation
 ~~~~~~~~~~~~
 
--  Updated iris pin to ``iris>=3.6.1`` (:pull:`2286`) by :user:`schlunma`
 -  Pin pandas yet again avoid new ``2.2.1`` as well (:pull:`2353`) by :user:`valeriupredoi`
 -  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 -  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
+-  Pin numpy<2.0.0 to avoid pulling 2.0.0rcX (:pull:`2415`) by :user:`valeriupredoi`
+-  Add support for Python=3.12 (:pull:`2228`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
@@ -132,15 +432,16 @@ Improvements
 -  Handle warnings about invalid units for iris>=3.8 (:pull:`2378`) by :user:`schlunma`
 -  Added note on how to access ``index.html`` on remote server (:pull:`2276`) by :user:`schlunma`
 -  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
--  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 -  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
+-  Add native6, OBS6 and RAWOBS rootpaths to metoffice config-user.yml template, and remove temporary dir (:pull:`2432`) by :user:`alistairsellar`
 
 .. _changelog-v2-10-0:
 
-
 v2.10.0
 -------
+
 Highlights
+~~~~~~~~~~
 
 -  All statistics preprocessors support the same operators and have a common
    :ref:`documentation <stat_preprocs>`. In addition, arbitrary keyword arguments
@@ -296,8 +597,10 @@ Improvements
 
 v2.9.0
 ------
+
 Highlights
 ~~~~~~~~~~
+
 It is now possible to use the
 `Dask distributed scheduler <https://docs.dask.org/en/latest/deploying.html>`__,
 which can
@@ -378,8 +681,10 @@ Preprocessor
 
 v2.8.1
 ------
+
 Highlights
 ~~~~~~~~~~
+
 This release adds support for Python 3.11 and includes several bugfixes.
 
 This release includes:
@@ -425,6 +730,7 @@ Automatic testing
 
 v2.8.0
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -625,6 +931,7 @@ Variable Derivation
 
 v2.7.1
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -653,6 +960,7 @@ Automatic testing
 
 v2.7.0
 ------
+
 Highlights
 ~~~~~~~~~~
 
@@ -975,7 +1283,7 @@ Highlights
 ~~~~~~~~~~
 
 - ESMValCore now has the ability to automatically download missing data from ESGF. For details, see :ref:`Data Retrieval<data-retrieval>`.
-- ESMValCore now also can resume an earlier run. This is useful to re-use expensive preprocessor results. For details, see :ref:`Running<running>`.
+- ESMValCore now also can resume an earlier run. This is useful to reuse expensive preprocessor results. For details, see :ref:`Running<running>`.
 
 This release includes
 
@@ -1079,7 +1387,7 @@ Improvements
 -  Speed up provenance recording (:pull:`1327`) by :user:`bouweandela`
 -  Improve results web page (:pull:`1332`) by :user:`bouweandela`
 -  Move institutes from config-developer.yml to default extra facets config and add wildcard support for extra facets (:pull:`1259`) by :user:`bouweandela`
--  Add support for re-using preprocessor output from previous runs (:pull:`1321`) by :user:`bouweandela`
+-  Add support for reusing preprocessor output from previous runs (:pull:`1321`) by :user:`bouweandela`
 -  Log fewer messages to screen and hide stack trace for known recipe errors (:pull:`1296`) by :user:`bouweandela`
 -  Log ESMValCore and ESMValTool versions when running (:pull:`1263`) by :user:`jvegreg`
 -  Add "grid" as a tag to the output file template for CMIP6 (:pull:`1356`) by :user:`zklaus`

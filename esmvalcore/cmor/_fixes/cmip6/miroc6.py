@@ -1,8 +1,9 @@
 """Fixes for MIROC6 model."""
+
 import numpy as np
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
@@ -28,12 +29,14 @@ class Tos(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            for coord_name in ['latitude', 'longitude']:
+            for coord_name in ["latitude", "longitude"]:
                 coord = cube.coord(coord_name)
-                coord.points = coord.core_points().astype(np.float32).astype(
-                    np.float64)
+                coord.points = (
+                    coord.core_points().astype(np.float32).astype(np.float64)
+                )
                 if not coord.has_bounds():
                     coord.guess_bounds()
-                coord.bounds = coord.core_bounds().astype(np.float32).astype(
-                    np.float64)
+                coord.bounds = (
+                    coord.core_bounds().astype(np.float32).astype(np.float64)
+                )
         return cubes

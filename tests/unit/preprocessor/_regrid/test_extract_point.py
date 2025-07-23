@@ -1,8 +1,4 @@
-"""
-Unit tests for the
-:func:`esmvalcore.preprocessor.regrid.extract_point` function.
-
-"""
+"""Unit tests for :func:`esmvalcore.preprocessor.extract_point`."""
 
 import unittest
 from unittest import mock
@@ -15,7 +11,6 @@ from esmvalcore.preprocessor._regrid import POINT_INTERPOLATION_SCHEMES
 
 
 class Test(tests.Test):
-
     def setUp(self):
         # Use an Iris test cube with coordinates that have a coordinate
         # system, see the following issue for more details:
@@ -27,22 +22,24 @@ class Test(tests.Test):
         dummy = mock.sentinel.dummy
         emsg = "Unknown interpolation scheme, got 'non-existent'"
         with self.assertRaisesRegex(ValueError, emsg):
-            extract_point(dummy, dummy, dummy, 'non-existent')
+            extract_point(dummy, dummy, dummy, "non-existent")
 
     def test_interpolation_schemes(self):
-        self.assertEqual(set(POINT_INTERPOLATION_SCHEMES.keys()),
-                         set(self.schemes))
+        self.assertEqual(
+            set(POINT_INTERPOLATION_SCHEMES.keys()),
+            set(self.schemes),
+        )
 
     def test_extract_point_interpolation_schemes(self):
-        latitude = -90.
-        longitude = 0.
+        latitude = -90.0
+        longitude = 0.0
         for scheme in self.schemes:
             result = extract_point(self.src_cube, latitude, longitude, scheme)
             self._assert_coords(result, latitude, longitude)
 
     def test_extract_point(self):
-        latitude = 90.
-        longitude = -180.
+        latitude = 90.0
+        longitude = -180.0
         for scheme in self.schemes:
             result = extract_point(self.src_cube, latitude, longitude, scheme)
             self._assert_coords(result, latitude, longitude)
@@ -56,5 +53,5 @@ class Test(tests.Test):
         self.assertEqual(lon_points[0], ref_lon)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

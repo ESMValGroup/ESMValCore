@@ -8,72 +8,63 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - dask
+  - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy >=8.6.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
+  - esmpy
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
-  - importlib_metadata  # required for Python < 3.10
-  - iris >=3.9.0
-  - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
-  - iris-grib
-  - isodate
+  - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
+  - iris-esmf-regrid >=0.11.0
+  - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
+  - isodate >=0.7.0  # incompatible with very old 0.6.1
   - jinja2
-  - libnetcdf !=4.9.1  # to avoid hdf5 warnings
+  - libnetcdf !=4.9.1  # to avoid hdf5 warnings; only on conda-forge
   - nc-time-axis
+  - ncdata
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
+  - numpy !=1.24.3
   - packaging
-  - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
+  - pandas
   - pillow
   - pip !=21.3
   - prov
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9
+  - python >=3.11
   - python-stratify >=0.3
   - pyyaml
   - requests
+  - rich
   - scipy >=1.6
   - shapely >=2.0.0
+  - xarray
   - yamale
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
-  - ipython
-  - nbsphinx
+  - ipython <9.0  # github.com/ESMValGroup/ESMValCore/issues/2680
+  - nbsphinx >=0.9.7  # github.com/ESMValGroup/ESMValCore/issues/2669
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
-  - mypy >=0.990
-  - pytest >=3.9,!=6.0.0rc1,!=6.0.0
+  - pytest >6.0.0
   - pytest-cov >=2.10.1
   - pytest-env
   - pytest-html !=2.1.0
   - pytest-metadata >=1.5.1
   - pytest-mock
-  - pytest-mypy
   - pytest-xdist
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
-  # Still for testing, MyPy library stubs
-  - types-requests
-  - types-PyYAML
   # Python packages needed for installing in development mode
-  - codespell
-  - docformatter
-  - isort
   - pre-commit
-  - pylint
-  - flake8 >= 7
   - pydocstyle
+  - pylint
   # Not on conda forge - vprof
-  - yamllint
-  - yapf
   - pip:
-    - ESMValTool_sample_data
+      - ESMValTool_sample_data

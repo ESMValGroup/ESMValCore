@@ -12,6 +12,8 @@ engines:
         enabled: true
     duplication:
         enabled: true
+    ruff:
+        enabled: true
     prospector:
         enabled: true
     pylint:
