@@ -5,7 +5,6 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
-from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any, TypeAlias
 
@@ -15,6 +14,7 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.io.protocol import DataElement
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -98,10 +98,11 @@ from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
+    from pathlib import Path
 
     from dask.delayed import Delayed
 
-    from esmvalcore.dataset import Dataset, File
+    from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -366,7 +367,7 @@ def _run_preproc_function(
     function: Callable,
     items: PreprocessorItem | Sequence[PreprocessorItem],
     kwargs: Any,
-    input_files: Sequence[File] | None = None,
+    input_files: Sequence[DataElement] | None = None,
 ) -> PreprocessorItem | Sequence[PreprocessorItem]:
     """Run preprocessor function."""
     kwargs_str = ",\n".join(
@@ -402,7 +403,7 @@ def _run_preproc_function(
             )
 
         # Make sure that the arguments are indexable
-        if isinstance(items, (PreprocessorFile, Cube, str, Path)):
+        if isinstance(items, (PreprocessorFile, Cube, DataElement)):
             items = [items]
         if isinstance(items, set):
             items = list(items)
@@ -430,7 +431,7 @@ def _run_preproc_function(
 def preprocess(
     items: Sequence[PreprocessorItem],
     step: str,
-    input_files: list[File] | None = None,
+    input_files: list[DataElement] | None = None,
     output_file: Path | None = None,
     debug: bool = False,
     **settings: Any,
@@ -470,7 +471,7 @@ def preprocess(
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
+        if isinstance(item, (PreprocessorFile, Cube, DataElement)):
             items.append(item)
         else:
             items.extend(item)
@@ -656,7 +657,7 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-PreprocessorItem: TypeAlias = PreprocessorFile | Cube | str | Path
+PreprocessorItem: TypeAlias = PreprocessorFile | Cube | DataElement
 
 
 def _apply_multimodel(
