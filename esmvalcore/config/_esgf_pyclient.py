@@ -50,11 +50,10 @@ def load_esgf_pyclient_config():
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         "search_connection": {
-            # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
             "urls": [
+                "https://esgf-node.ornl.gov/esgf-1-5-bridge",  # Report any issues here: https://github.com/esgf2-us/esg_fastapi/issues
                 "https://esgf.ceda.ac.uk/esg-search",
-                "https://esgf-node.llnl.gov/esg-search",
                 "https://esgf-data.dkrz.de/esg-search",
                 "https://esgf-node.ipsl.upmc.fr/esg-search",
                 "https://esg-dn1.nsc.liu.se/esg-search",
