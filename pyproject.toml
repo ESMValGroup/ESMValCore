@@ -44,6 +44,7 @@ dependencies = [
     "fire",
     "geopy",
     "humanfriendly",
+    "intake-esm",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",
     "jinja2",
