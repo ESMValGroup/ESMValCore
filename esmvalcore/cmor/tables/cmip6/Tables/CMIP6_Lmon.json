@@ -599,7 +599,7 @@
             "cell_measures": "area: areacella", 
             "long_name": "Moisture in Upper Portion of Soil Column", 
             "comment": "The mass of water in all phases in the upper 10cm of the  soil layer.", 
-            "dimensions": "longitude latitude time sdepth1", 
+            "dimensions": "longitude latitude time", 
             "out_name": "mrsos", 
             "type": "real", 
             "positive": "", 
