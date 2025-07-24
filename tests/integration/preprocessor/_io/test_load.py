@@ -5,7 +5,6 @@ from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import cf_units
-import intake
 import iris
 import ncdata
 import numpy as np
