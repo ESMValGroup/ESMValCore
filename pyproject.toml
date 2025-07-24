@@ -32,6 +32,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
+    "aiohttp",
     "cartopy",
     "cf-units",
     "dask[array,distributed]>=2025",  # Core/issues/2503

@@ -5,6 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
+  - aiohttp
   - cartopy
   - cf-units
   - cftime
