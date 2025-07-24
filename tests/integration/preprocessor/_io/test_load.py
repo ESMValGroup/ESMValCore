@@ -5,6 +5,7 @@ from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import cf_units
+import intake
 import iris
 import ncdata
 import numpy as np
@@ -16,6 +17,33 @@ from iris.cube import Cube, CubeList
 from esmvalcore.exceptions import ESMValCoreLoadWarning
 from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 from tests import assert_array_equal
+
+
+def filter_intake_catalog():
+    """Take an eg CEDA Intake catalog and filter for Zarr objects."""
+    # One such object store looks like this:
+    # http://cmip6-zarr-o.s3.jc.rl.ac.uk/CMIP6.CMIP.MOHC.UKESM1-0-LL/
+    # historical.r12i1p1f2.Amon.tas.gn.v20191210.zarr
+    col_url = (
+        "https://raw.githubusercontent.com/cedadev/"
+        "cmip6-object-store/master/catalogs/ceda-zarr-cmip6-jasmin.json"
+    )
+    col = intake.open_esm_datastore(col_url)
+    cat = col.search(
+        source_id="UKESM1-0-LL",
+        experiment_id=["historical", "ssp585-bgc"],
+        member_id=["r4i1p1f2", "r12i1p1f2"],
+        table_id="Amon",
+        variable_id="tas",
+    )
+
+    # Extract the single record subsets for historical and future experiments
+    hist_cat = cat.search(experiment_id="historical")
+    ssp_cat = cat.search(experiment_id="ssp585-bgc")
+    zarr_path = cat.df["zarr_path"][0]
+    print(zarr_path)
+
+    return zarr_path
 
 
 @pytest.fixture
@@ -121,7 +149,7 @@ def test_load_ncdata():
     assert not cube.coords()
 
 
-def test_load_zarr():
+def test_load_zarr_local():
     """Test loading a Zarr store as ncdata.NcData via Xarray."""
     zarr_path = (
         Path(importlib_files("tests"))
@@ -142,6 +170,17 @@ def test_load_zarr():
     coord_names = [coord.standard_name for coord in coords]
     assert "longitude" in coord_names
     assert "latitude" in coord_names
+
+
+def test_load_zarr_remote():
+    """Test loading a Zarr store from a https Object Store."""
+    # zarr_path = filter_intake_catalog()  # we do want args for more datasets
+    zarr_path = (
+        "http://cmip6-zarr-o.s3.jc.rl.ac.uk/CMIP6.CMIP.MOHC.UKESM1-0-LL/"
+        "historical.r12i1p1f2.Amon.tas.gn.v20191210.zarr"
+    )
+    cubes = load(zarr_path)
+    print(cubes)
 
 
 def test_load_invalid_type_fail():
