@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-import fsspec
 import iris
 import ncdata
 import xarray as xr
@@ -108,16 +107,7 @@ def load(
         if "zarr" not in str(file):
             cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
         else:
-            if isinstance(file, Path):
-                zarr_xr = xr.open_zarr(file, consolidated=False)
-            elif urlparse(file):
-                fsmap = fsspec.get_mapper(file)
-                zarr_xr = xr.open_dataset(
-                    fsmap,
-                    consolidated=True,
-                    use_cftime=True,
-                    engine="zarr",
-                )
+            zarr_xr = _load_zarr(file)
             cubes = dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
     elif isinstance(file, Cube):
         cubes = CubeList([file])
@@ -148,6 +138,20 @@ def load(
             warnings.warn(warn_msg, ESMValCoreLoadWarning, stacklevel=2)
 
     return cubes
+
+
+def _load_zarr(file):
+    if isinstance(file, Path):
+        zarr_xr = xr.open_zarr(file, consolidated=False)
+    elif urlparse(file):
+        zarr_xr = xr.open_dataset(
+            file,
+            consolidated=True,
+            use_cftime=True,
+            engine="zarr",
+        )
+
+    return zarr_xr
 
 
 def _load_from_file(
