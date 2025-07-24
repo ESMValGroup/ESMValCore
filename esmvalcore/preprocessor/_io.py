@@ -83,6 +83,7 @@ def load(
     file:
         File to be loaded. If ``file`` is already a loaded dataset, return it
         as a :class:`~iris.cube.CubeList`.
+        File as ``Path`` object could be a Zarr store.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -102,7 +103,11 @@ def load(
 
     """
     if isinstance(file, (str, Path)):
-        cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        if "zarr" not in str(file):
+            cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        else:
+            zarr_xr = xr.open_zarr(file, consolidated=False)
+            cubes = dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
     elif isinstance(file, Cube):
         cubes = CubeList([file])
     elif isinstance(file, CubeList):
