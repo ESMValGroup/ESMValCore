@@ -20,39 +20,6 @@ from tests import assert_array_equal
 
 
 @pytest.fixture
-def _filter_intake_catalog():
-    """
-    Take an eg CEDA Intake catalog and filter it.
-
-    This utilitybreturns the catalog filtered on some facets.
-    Then, one can extract various zarr stores eg:
-
-    >>> cat = _filter_intake_catalog()  # add args
-    >>> hist_cat = cat.search(experiment_id="historical")
-    >>> ssp_cat = cat.search(experiment_id="ssp585-bgc")
-    >>> zarr_path = cat.df["zarr_path"][0]
-
-    One such object store looks like this:
-    http://cmip6-zarr-o.s3.jc.rl.ac.uk/CMIP6.CMIP.MOHC.UKESM1-0-LL/
-    historical.r12i1p1f2.Amon.tas.gn.v20191210.zarr
-
-    Currently this catalog doesn't work; we need an updated one!
-    """
-    col_url = (
-        "https://raw.githubusercontent.com/cedadev/"
-        "cmip6-object-store/master/catalogs/ceda-zarr-cmip6-jasmin.json"
-    )
-    col = intake.open_esm_datastore(col_url)
-    return col.search(
-        source_id="UKESM1-0-LL",
-        experiment_id=["historical", "ssp585-bgc"],
-        member_id=["r4i1p1f2", "r12i1p1f2"],
-        table_id="Amon",
-        variable_id="tas",
-    )
-
-
-@pytest.fixture
 def sample_cube():
     coord = DimCoord([1, 2], standard_name="latitude", units="degrees_north")
     return Cube([1, 2], var_name="sample", dim_coords_and_dims=((coord, 0),))
