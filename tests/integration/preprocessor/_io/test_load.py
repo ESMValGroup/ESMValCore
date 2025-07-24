@@ -4,6 +4,7 @@ import warnings
 from importlib.resources import files as importlib_files
 from pathlib import Path
 
+import cf_units
 import iris
 import ncdata
 import numpy as np
@@ -118,6 +119,29 @@ def test_load_ncdata():
     assert cube.long_name is None
     assert cube.units == "unknown"
     assert not cube.coords()
+
+
+def test_load_zarr():
+    """Test loading a Zarr store as ncdata.NcData via Xarray."""
+    zarr_path = (
+        Path(importlib_files("tests"))
+        / "sample_data"
+        / "zarr-sample-data"
+        / "example_field_0.zarr2"
+    )
+
+    cubes = load(zarr_path)
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "q"
+    assert cube.standard_name == "specific_humidity"
+    assert cube.long_name is None
+    assert cube.units == cf_units.Unit("1")
+    coords = cube.coords()
+    coord_names = [coord.standard_name for coord in coords]
+    assert "longitude" in coord_names
+    assert "latitude" in coord_names
 
 
 def test_load_invalid_type_fail():
