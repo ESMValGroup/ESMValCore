@@ -19,6 +19,7 @@ from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
 from tests import assert_array_equal
 
 
+@pytest.fixture
 def _filter_intake_catalog():
     """
     Take an eg CEDA Intake catalog and filter it.
