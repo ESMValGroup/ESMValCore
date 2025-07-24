@@ -46,6 +46,7 @@ dependencies:
   - shapely >=2.0.0
   - xarray
   - yamale
+  - zarr >3
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
   - ipython <9.0  # github.com/ESMValGroup/ESMValCore/issues/2680
