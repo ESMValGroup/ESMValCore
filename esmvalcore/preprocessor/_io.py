@@ -76,6 +76,7 @@ def _restore_lat_lon_units(
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
+    storage_options: dict | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
@@ -140,15 +141,15 @@ def load(
     return cubes
 
 
-def _load_zarr(file):
+def _load_zarr(file, storage_options=None):
     if isinstance(file, Path):
         zarr_xr = xr.open_zarr(file, consolidated=False)
     elif urlparse(file):
-        zarr_xr = xr.open_dataset(
+        zarr_xr = xr.open_zarr(
             file,
             consolidated=True,
             use_cftime=True,
-            engine="zarr",
+            storage_options=storage_options,
         )
 
     return zarr_xr
