@@ -9,6 +9,7 @@ import warnings
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from urllib.parse import urlparse
 
 import iris
 import ncdata
@@ -75,6 +76,7 @@ def _restore_lat_lon_units(
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
+    storage_options: dict | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
@@ -83,6 +85,7 @@ def load(
     file:
         File to be loaded. If ``file`` is already a loaded dataset, return it
         as a :class:`~iris.cube.CubeList`.
+        File as ``Path`` object could be a Zarr store.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -102,7 +105,11 @@ def load(
 
     """
     if isinstance(file, (str, Path)):
-        cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        if "zarr" not in str(file):
+            cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        else:
+            zarr_xr = _load_zarr(file)
+            cubes = dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
     elif isinstance(file, Cube):
         cubes = CubeList([file])
     elif isinstance(file, CubeList):
@@ -132,6 +139,20 @@ def load(
             warnings.warn(warn_msg, ESMValCoreLoadWarning, stacklevel=2)
 
     return cubes
+
+
+def _load_zarr(file, storage_options=None):
+    if isinstance(file, Path):
+        zarr_xr = xr.open_zarr(file, consolidated=False)
+    elif urlparse(file):
+        zarr_xr = xr.open_zarr(
+            file,
+            consolidated=True,
+            use_cftime=True,
+            storage_options=storage_options,
+        )
+
+    return zarr_xr
 
 
 def _load_from_file(
