@@ -76,7 +76,7 @@ def _restore_lat_lon_units(
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
-    storage_options: dict | None = None,
+    backend_kwargs: dict | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
@@ -90,18 +90,10 @@ def load(
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
-    storage_options:
-        Dict to hold crdentials needed to access a PRIVATE S3 bucket
-        containing object stores (e.g. Zarr stores); it is a typical ``s3fs``
-        keyword argument, and has typical key-value pairs of the type
-
-        storage_options = {
-            "key": "f2d55c6dcfc7618b2c34e00b58df3cef",
-            "secret": "sdfgg4saagyj!d",
-            "client_kwargs": {
-                "endpoint_url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
-            },
-        }
+    backend_kwargs:
+        Dict to hold info needed by storage e.g. to access a PRIVATE S3 bucket
+        containing object stores (e.g. Zarr stores);
+        usually needed by ``s3fs``, so ``storage_options``.
 
     Returns
     -------
@@ -125,7 +117,11 @@ def load(
         if "zarr" not in extension:
             cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
         else:
-            cubes = _load_zarr(file)
+            cubes = _load_zarr(
+                file,
+                ignore_warnings=ignore_warnings,
+                backend_kwargs=backend_kwargs,
+            )
     elif isinstance(file, Cube):
         cubes = CubeList([file])
     elif isinstance(file, CubeList):
@@ -160,7 +156,7 @@ def load(
 def _load_zarr(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
-    storage_options: dict | None = None,
+    backend_kwargs: dict | None = None,
 ) -> CubeList:
     if isinstance(file, Path):
         zarr_xr = xr.open_dataset(
@@ -174,7 +170,7 @@ def _load_zarr(
             consolidated=True,
             use_cftime=True,
             engine="zarr",
-            storage_options=storage_options,
+            backend_kwargs=backend_kwargs,
         )
 
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
