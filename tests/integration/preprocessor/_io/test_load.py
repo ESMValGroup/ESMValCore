@@ -245,6 +245,24 @@ def test_load_zarr_remote_permanent_test_bucket():
     assert "latitude" in coord_names
 
 
+def test_load_zarr_remote_permanent_test_bucket_fail():
+    """
+    Test loading a Zarr store from a https Object Store.
+
+    This fails due to not being a file.
+    We have a permanent bucket: esmvaltool-zarr at CEDA's object store
+    "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
+    where will host a number of test files.
+    """
+    zarr_path = (
+        "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/example_field_0.zarr17"
+    )
+
+    with pytest.raises(ValueError):
+        load(zarr_path)
+
+
 def test_load_invalid_type_fail():
     """Test loading an invalid type."""
     with pytest.raises(TypeError):
