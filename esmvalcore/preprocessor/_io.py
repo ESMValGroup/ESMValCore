@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
+import fsspec
 import iris
 import ncdata
 import xarray as xr
@@ -91,9 +92,12 @@ def load(
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
     backend_kwargs:
-        Dict to hold info needed by storage e.g. to access a PRIVATE S3 bucket
-        containing object stores (e.g. Zarr stores);
-        usually needed by ``s3fs``, so ``storage_options``.
+        Dict to hold info needed by storage backend e.g. to access
+        a PRIVATE S3 bucket containing object stores (e.g. netCDF4 files);
+        needed by ``fsspec`` and its extensions e.g. ``s3fs``, so
+        most of the times it is a ``storage_options`` dict. Note that Zarr
+        files are opened via ``http`` extension of ``fsspec``, so no need
+        for ``storage_options`` in that case (ie anon/anon).
 
     Returns
     -------
@@ -165,6 +169,15 @@ def _load_zarr(
             engine="zarr",
         )
     elif urlparse(file):
+        # basic test that opens the Zarr/.zmetadata file
+        fs = fsspec.filesystem("http")
+        try:
+            fs.open(file + "/.zmetadata", "rb")
+        # we don't want to catch any specific aiohttp/fsspec exception
+        # bottom line is that file has issues
+        except:  # noqa: E722
+            msg = f"File '{file}' can not be open as Zarr file."
+            raise ValueError(msg) from None
         zarr_xr = xr.open_dataset(
             file,
             consolidated=True,
