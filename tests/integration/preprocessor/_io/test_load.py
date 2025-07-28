@@ -173,8 +173,8 @@ def test_load_zarr_remote_simdata_permanent_test_bucket():
     only this time the Zarr file has been moved to CEDA test bucket; that
     operation uses MinIO:
 
-    >>> mc cp -r pier/sim-data/dev/v5/glm.n2560_RAL3p3/um.PT1H.hp_z2.zarr .
-    >>> mc cp -r um.PT1H.hp_z2.zarr/ bryan/esmvaltool-zarr
+    mc cp -r pier/sim-data/dev/v5/glm.n2560_RAL3p3/um.PT1H.hp_z2.zarr .
+    mc cp -r um.PT1H.hp_z2.zarr/ bryan/esmvaltool-zarr
 
     where ``pier`` is the remote bucket and ``bryan`` is the test bucket.
     """
