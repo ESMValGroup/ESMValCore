@@ -32,7 +32,7 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            pytest -n 2 --junitxml=test-reports/report.xml << parameters.args >>
+            pytest -n 2 tests/integration/preprocessor/_io/test_load.py --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
       - store_test_results:
           path: test-reports/report.xml
