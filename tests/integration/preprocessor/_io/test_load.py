@@ -167,16 +167,13 @@ def test_load_zarr_remote_permanent_test_bucket():
     """
     Test loading a Zarr store from a https Object Store.
 
-    We have a permanent bucket: valeriu at CEDA's object store
+    We have a permanent bucket: esmvaltool-zarr at CEDA's object store
     "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
     where will host a number of test files.
     """
-    # TODO add more Zarr files in "valeriu" bucket;
-    # TODO add identical netCDF4 files to some Zarr files, so we can
-    # test performance differences between the two
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
-        "esmvaltool/example_field_0.zarr2"
+        "esmvaltool-zarr/example_field_0.zarr2"
     )
 
     # these are storage options for a PUBLIC bucket
@@ -184,12 +181,28 @@ def test_load_zarr_remote_permanent_test_bucket():
     # functionality for PRIVATE buckets is thus tested this way too
     storage_options = {
         "key": "f2d55c6dcfc7618b2c34e00b58df3cef",
-        "secret": "$/'#M{0{/4rVhp%n^(XeX$q@y#&(NM3W1->~N.Q6VP.5[@bLpi='nt]AfH)>78pT",
+        "secret": "cow",
         "client_kwargs": {
             "endpoint_url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
         },
     }
+
+    # with "dummy" storage options
     cubes = load(zarr_path, storage_options=storage_options)
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "q"
+    assert cube.standard_name == "specific_humidity"
+    assert cube.long_name is None
+    assert cube.units == cf_units.Unit("1")
+    coords = cube.coords()
+    coord_names = [coord.standard_name for coord in coords]
+    assert "longitude" in coord_names
+    assert "latitude" in coord_names
+
+    # without storage_options
+    cubes = load(zarr_path)
 
     assert len(cubes) == 1
     cube = cubes[0]
