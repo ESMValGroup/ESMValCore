@@ -155,7 +155,12 @@ def test_load_zarr_remote_simdata_bucket():
         "https://hackathon-o.s3-ext.jc.rl.ac.uk/sim-data/dev/v5/"
         "glm.n2560_RAL3p3/um.PT1H.hp_z2.zarr"
     )
-    cubes = load(zarr_path)
+    ignore_warnings = [
+        {"message": "does not contain attribute"},
+        {"message": "Missing CF-netCDF grid mapping variable"},
+    ]
+
+    cubes = load(zarr_path, ignore_warnings=ignore_warnings)
     for cube in cubes:
         if cube.standard_name == "air_temperature":
             coords = cube.coords()
@@ -182,7 +187,11 @@ def test_load_zarr_remote_simdata_permanent_test_bucket():
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
         "esmvaltool-zarr/um.PT1H.hp_z2.zarr"
     )
-    cubes = load(zarr_path)
+    ignore_warnings = [
+        {"message": "does not contain attribute"},
+        {"message": "Missing CF-netCDF grid mapping variable"},
+    ]
+    cubes = load(zarr_path, ignore_warnings=ignore_warnings)
     for cube in cubes:
         if cube.standard_name == "air_temperature":
             coords = cube.coords()
@@ -203,19 +212,12 @@ def test_load_zarr_remote_permanent_test_bucket():
         "esmvaltool-zarr/example_field_0.zarr2"
     )
 
-    # these are storage options for a PUBLIC bucket
-    # normally, for public buckets, they are not needed, but
-    # functionality for PRIVATE buckets is thus tested this way too
-    storage_options = {
-        "key": "f2d55c6dcfc7618b2c34e00b58df3cef",
-        "secret": "cow",
-        "client_kwargs": {
-            "endpoint_url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
-        },
-    }
-
     # with "dummy" storage options
-    cubes = load(zarr_path, storage_options=storage_options)
+    cubes = load(
+        zarr_path,
+        ignore_warnings=None,
+        backend_kwargs={"storage_options": {}},
+    )
 
     assert len(cubes) == 1
     cube = cubes[0]
