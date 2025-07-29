@@ -144,13 +144,15 @@ def test_load_zarr_local():
     assert "latitude" in coord_names
 
 
-@pytest.mark.skip(reason="See if this is the test that CircleCI hates")
+@pytest.mark.skip(reason="CircleCI hangs reading it sometimes.")
 def test_load_zarr_remote_simdata_bucket():
     """
     Test loading a Zarr store from a https Object Store.
 
     This is a good example of a production test dataset; on HEALPIX grid
     so not much we can do with it for now, but it's actual model data.
+
+    Possible limit on number of GETs from storage, so test is Skipped.
     """
     zarr_path = (
         "https://hackathon-o.s3-ext.jc.rl.ac.uk/sim-data/dev/v5/"
