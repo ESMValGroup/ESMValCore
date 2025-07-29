@@ -9,6 +9,7 @@ import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
+import iris.cube
 import iris.exceptions
 import iris.fileformats
 import isodate
@@ -664,6 +665,15 @@ class TestExtractSeason(tests.Test):
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord("season_year")
 
+    def test_invalid_month_combination_fail(self):
+        """Test function for custom seasons."""
+        msg = (
+            r"Unable to extract Season 'FJ': combination of months not "
+            r"possible"
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_season(self.cube, "FJ")
+
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
@@ -1129,6 +1139,14 @@ class TestSeasonalStatistics(tests.Test):
         )
         with pytest.raises(ValueError, match=re.escape(msg)):
             seasonal_statistics(cube, "mean")
+
+    def test_invalid_season_fail(self):
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        msg = "Minimum of 2 months is required per season in ('J', 'F')"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            seasonal_statistics(cube, "mean", seasons=["J", "F"])
 
 
 class TestMonthlyStatistics(tests.Test):
@@ -1997,6 +2015,21 @@ def test_standardized_anomalies(period):
         expected = np.ma.masked_invalid(expected_stdanomalies)
         assert_array_equal(result.data, expected)
         assert result.units == "1"
+
+
+def test_standardized_anomalies_invalid_period():
+    time_coord = iris.coords.DimCoord(
+        [15, 100, 380],
+        standard_name="time",
+        units="days since 2000-01-01",
+    )
+    cube = iris.cube.Cube([1, 2, 3], dim_coords_and_dims=[(time_coord, 0)])
+    msg = (
+        r"Cannot safely apply preprocessor to this dataset since the full "
+        r"time period of this dataset is not a multiple of the period 'month'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        anomalies(cube, period="month", standardize=True)
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)

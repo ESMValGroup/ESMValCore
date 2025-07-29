@@ -370,8 +370,8 @@ def extract_season(cube: Cube, season: str) -> Cube:
     allmonths = "JFMAMJJASOND" * 2
     if season not in allmonths:
         msg = (
-            f"Unable to extract Season {season} "
-            f"combination of months not possible."
+            f"Unable to extract Season '{season}': combination of months not "
+            f"possible"
         )
         raise ValueError(msg)
     sstart = allmonths.index(season)
@@ -685,7 +685,7 @@ def seasonal_statistics(
     seasons = tuple(sea.upper() for sea in seasons)
 
     if any(len(sea) < 2 for sea in seasons):
-        msg = f"Minimum of 2 month is required per Seasons: {seasons}."
+        msg = f"Minimum of 2 months is required per season in {seasons}"
         raise ValueError(msg)
 
     if not cube.coords("clim_season"):
@@ -1051,9 +1051,9 @@ def anomalies(
         reps = cube.shape[tdim] / cube_stddev.shape[tdim]
         if reps % 1 != 0:
             msg = (
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
+                f"Cannot safely apply preprocessor to this dataset since the "
+                f"full time period of this dataset is not a multiple of the "
+                f"period '{period}'"
             )
             raise ValueError(msg)
         cube.data = cube.core_data() / da.concatenate(
