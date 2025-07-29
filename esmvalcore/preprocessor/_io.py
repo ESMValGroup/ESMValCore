@@ -169,19 +169,29 @@ def _load_zarr(
             engine="zarr",
         )
     elif urlparse(file):
-        # basic test that opens the Zarr/.zmetadata file
+        # basic test that opens the Zarr/.zmetadata file for Zarr2
+        # or Zarr/zarr.json for Zarr3
         fs = fsspec.filesystem("http")
+        zarr2 = zarr3 = True
         try:
-            fs.open(file + "/.zmetadata", "rb")
-        # we don't want to catch any specific aiohttp/fsspec exception
-        # bottom line is that file has issues
+            fs.open(file + "/.zmetadata", "rb")  # Zarr2
         except:  # noqa: E722
-            msg = f"File '{file}' can not be open as Zarr file."
+            zarr2 = False
+        try:
+            fs.open(file + "/zarr.json", "rb")  # Zarr3
+        except:  # noqa: E722
+            zarr3 = False
+        # we don't want to catch any specific aiohttp/fsspec exception
+        # bottom line is that that file has issues, so raise
+        if not zarr2 and not zarr3:
+            msg = f"File '{file}' can not be open as Zarr file at the moment."
             raise ValueError(msg) from None
+
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         zarr_xr = xr.open_dataset(
             file,
             consolidated=True,
-            use_cftime=True,
+            decode_times=time_coder,
             engine="zarr",
             backend_kwargs=backend_kwargs,
         )
