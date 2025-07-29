@@ -32,7 +32,8 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
+            pytest -n 4 -m "not singleproc" --junitxml=test-reports/report.xml << parameters.args >>
+            pytest tests/integration/preprocessor/_io/test_zarr.py::test_load_zarr_to_iris_via_ncdata
             esmvaltool version
       - store_test_results:
           path: test-reports/report.xml
