@@ -59,6 +59,8 @@ def test_load_zarr_to_iris_via_ncdata_consolidated_false():
     The ONLY way the test doesn't hang on CircleCI is to set
     consolidate=False (or, not use it as kwarg at all). But that
     returns No Cubes!
+
+    See https://github.com/pp-mo/ncdata/issues/138
     """
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
@@ -98,6 +100,8 @@ def test_load_zarr_to_iris_via_ncdata_consolidated_true():
     The ONLY way the test doesn't hang on CircleCI is to set
     consolidate=False (or, not use it as kwarg at all). But that
     returns No Cubes!
+
+    See https://github.com/pp-mo/ncdata/issues/138
     """
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
