@@ -62,8 +62,8 @@ def test_load_zarr_to_iris_via_ncdata():
 
     zarr_xr = xr.open_dataset(
         zarr_path,
-        consolidated=True,
-        # use_cftime=True,
+        consolidated=False,
+        use_cftime=True,
         engine="zarr",
         backend_kwargs={},
     )
