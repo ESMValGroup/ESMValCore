@@ -145,6 +145,7 @@ minversion = "6"
 markers = [
     "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
+    "singleproc: Skip tests with -n >1, run them single process",
 ]
 testpaths = ["tests"]
 xfail_strict = true
