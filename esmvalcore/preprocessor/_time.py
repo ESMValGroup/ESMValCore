@@ -487,7 +487,7 @@ def hourly_statistics(
     cube: Cube,
     hours: int,
     operator: str = "mean",
-    keep_group_coordinates: bool = True,
+    keep_group_coordinates: bool = False,
     **operator_kwargs,
 ) -> Cube:
     """Compute hourly statistics.
@@ -550,7 +550,7 @@ def hourly_statistics(
 def daily_statistics(
     cube: Cube,
     operator: str = "mean",
-    keep_group_coordinates: bool = True,
+    keep_group_coordinates: bool = False,
     **operator_kwargs,
 ) -> Cube:
     """Compute daily statistics.

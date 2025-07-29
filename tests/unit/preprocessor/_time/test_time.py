@@ -1315,11 +1315,11 @@ class TestHourlyStatistics(tests.Test):
         expected = np.array([0.5, 2.5, 4.5, 6.5])
         assert_array_equal(result.data, expected)
 
-        assert result.coords("hour_group")
-        assert result.coords("day_of_year")
-        assert result.coords("year")
+        assert not result.coords("hour_group")
+        assert not result.coords("day_of_year")
+        assert not result.coords("year")
 
-    def test_mean_no_keep_group_coordinates(self):
+    def test_mean_keep_group_coordinates(self):
         """Test average of a 1D field."""
         data = np.arange(8)
         times = np.arange(0, 48, 6)
@@ -1329,14 +1329,14 @@ class TestHourlyStatistics(tests.Test):
             cube,
             12,
             "mean",
-            keep_group_coordinates=False,
+            keep_group_coordinates=True,
         )
         expected = np.array([0.5, 2.5, 4.5, 6.5])
         assert_array_equal(result.data, expected)
 
-        assert not result.coords("hour_group")
-        assert not result.coords("day_of_year")
-        assert not result.coords("year")
+        assert result.coords("hour_group")
+        assert result.coords("day_of_year")
+        assert result.coords("year")
 
     def test_median(self):
         """Test median of a 1D field."""
@@ -1402,8 +1402,8 @@ class TestDailyStatistics(tests.Test):
         expected = np.array([1.5, 5.5])
         assert_array_equal(result.data, expected)
 
-        assert result.coords("day_of_year")
-        assert result.coords("year")
+        assert not result.coords("day_of_year")
+        assert not result.coords("year")
 
     def test_mean_no_keep_group_coordinates(self):
         """Test average of a 1D field."""
@@ -1411,12 +1411,12 @@ class TestDailyStatistics(tests.Test):
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
-        result = daily_statistics(cube, "mean", keep_group_coordinates=False)
+        result = daily_statistics(cube, "mean", keep_group_coordinates=True)
         expected = np.array([1.5, 5.5])
         assert_array_equal(result.data, expected)
 
-        assert not result.coords("day_of_year")
-        assert not result.coords("year")
+        assert result.coords("day_of_year")
+        assert result.coords("year")
 
     def test_median(self):
         """Test median of a 1D field."""
