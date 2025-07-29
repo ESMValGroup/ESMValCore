@@ -144,65 +144,6 @@ def test_load_zarr_local():
     assert "latitude" in coord_names
 
 
-@pytest.mark.skip(reason="CircleCI hangs reading it sometimes.")
-def test_load_zarr_remote_simdata_bucket():
-    """
-    Test loading a Zarr store from a https Object Store.
-
-    This is a good example of a production test dataset; on HEALPIX grid
-    so not much we can do with it for now, but it's actual model data.
-
-    Possible limit on number of GETs from storage, so test is Skipped.
-    """
-    zarr_path = (
-        "https://hackathon-o.s3-ext.jc.rl.ac.uk/sim-data/dev/v5/"
-        "glm.n2560_RAL3p3/um.PT1H.hp_z2.zarr"
-    )
-    ignore_warnings = [
-        {"message": "does not contain attribute"},
-        {"message": "Missing CF-netCDF grid mapping variable"},
-    ]
-
-    cubes = load(zarr_path, ignore_warnings=ignore_warnings)
-    for cube in cubes:
-        if cube.standard_name == "air_temperature":
-            coords = cube.coords()
-            coord_names = [coord.standard_name for coord in coords]
-            assert "time" in coord_names
-
-
-@pytest.mark.skip(reason="CircleCI hangs reading it sometimes.")
-def test_load_zarr_remote_simdata_permanent_test_bucket():
-    """
-    Test loading a Zarr store from a https Object Store.
-
-    This is a good example of a production test dataset; on HEALPIX grid
-    so not much we can do with it for now, but it's actual model data.
-    Same file as test before ``test_load_zarr_remote_simdata_bucket``
-    only this time the Zarr file has been moved to CEDA test bucket; that
-    operation uses MinIO:
-
-    mc cp -r pier/sim-data/dev/v5/glm.n2560_RAL3p3/um.PT1H.hp_z2.zarr .
-    mc cp -r um.PT1H.hp_z2.zarr/ bryan/esmvaltool-zarr
-
-    where ``pier`` is the remote bucket and ``bryan`` is the test bucket.
-    """
-    zarr_path = (
-        "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
-        "esmvaltool-zarr/um.PT1H.hp_z2.zarr"
-    )
-    ignore_warnings = [
-        {"message": "does not contain attribute"},
-        {"message": "Missing CF-netCDF grid mapping variable"},
-    ]
-    cubes = load(zarr_path, ignore_warnings=ignore_warnings)
-    for cube in cubes:
-        if cube.standard_name == "air_temperature":
-            coords = cube.coords()
-            coord_names = [coord.standard_name for coord in coords]
-            assert "time" in coord_names
-
-
 def test_load_zarr_remote_permanent_test_bucket():
     """
     Test loading a Zarr store from a https Object Store.
