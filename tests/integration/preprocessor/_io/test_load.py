@@ -171,6 +171,7 @@ def test_load_zarr_remote_simdata_bucket():
             assert "time" in coord_names
 
 
+@pytest.mark.skip(reason="CircleCI hangs reading it sometimes.")
 def test_load_zarr_remote_simdata_permanent_test_bucket():
     """
     Test loading a Zarr store from a https Object Store.
