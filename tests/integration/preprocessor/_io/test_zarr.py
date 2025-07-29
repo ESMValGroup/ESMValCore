@@ -7,7 +7,6 @@ a number of issues with Zarr IO so it deserves its own test module.
 
 import iris
 import ncdata
-import pytest
 import xarray as xr
 
 
@@ -42,7 +41,6 @@ def test_load_zarr_xarray():
     assert zarr_xr["tas"].any()
 
 
-@pytest.mark.singleproc
 def test_load_zarr_to_iris_via_ncdata():
     """
     Test loading a Zarr store from a https Object Store.
@@ -51,9 +49,11 @@ def test_load_zarr_to_iris_via_ncdata():
     passing the Xarray Dataset to ``ncdata``.
 
     Test needs about 700MB max RES memory, takes 6.5-7s.
-    Hangs (4 in 6) on CircleCI (pytest -n 4)
+    Hangs (4 in 6) on CircleCI (pytest -n 4),
     see https://github.com/ESMValGroup/ESMValCore/pull/2785/
     checks?check_run_id=46944622218
+
+    Hangs in single proc on CircleCI (pytest simple).
     """
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
@@ -63,7 +63,7 @@ def test_load_zarr_to_iris_via_ncdata():
     zarr_xr = xr.open_dataset(
         zarr_path,
         consolidated=True,
-        use_cftime=True,
+        # use_cftime=True,
         engine="zarr",
         backend_kwargs={},
     )
