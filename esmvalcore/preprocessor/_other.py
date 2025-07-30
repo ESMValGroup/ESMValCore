@@ -33,35 +33,42 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def clip(cube, minimum=None, maximum=None):
+def clip(
+    cube: Cube,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> Cube:
     """Clip values at a specified minimum and/or maximum value.
 
-    Values lower than minimum are set to minimum and values
-    higher than maximum are set to maximum.
+    Values lower than minimum are set to minimum and values higher than maximum
+    are set to maximum.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        iris cube to be clipped
-    minimum: float
-        lower threshold to be applied on input cube data.
-    maximum: float
-        upper threshold to be applied on input cube data.
+    cube:
+        Input cube.
+    minimum:
+        Lower threshold to be applied on input cube data.
+    maximum:
+        Upper threshold to be applied on input cube data.
 
     Returns
     -------
     iris.cube.Cube
-        clipped cube.
+        Clipped cube.
+
+    Raises
+    ------
+    ValueError
+        ``minimum`` and ``maximum`` are set to ``None``.
+
     """
     if minimum is None and maximum is None:
-        msg = "Either minimum, maximum or both have to be\
-                          specified."
-        raise ValueError(
-            msg,
-        )
+        msg = "Either minimum, maximum or both have to be specified"
+        raise ValueError(msg)
     if minimum is not None and maximum is not None:
         if maximum < minimum:
-            msg = "Maximum should be equal or larger than minimum."
+            msg = "Maximum should be equal or larger than minimum"
             raise ValueError(msg)
     cube.data = da.clip(cube.core_data(), minimum, maximum)
     return cube
@@ -235,18 +242,14 @@ def histogram(
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
             f"int"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
     allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
         msg = (
             f"Expected one of {allowed_norms} for normalization, got "
             f"'{normalization}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
@@ -309,9 +312,7 @@ def _get_bins(
             f"Cannot calculate histogram for bin_range={bin_range} (or for "
             f"fully masked data when `bin_range` is not given)"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return (bin_range, bin_edges)
 
