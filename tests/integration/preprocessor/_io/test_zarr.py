@@ -176,6 +176,8 @@ def test_load_zarr3_cmip6_metadata():
     - compression: Blosc
     - Dimensions: (lat: 128, lon: 256, time: 2352, axis_nbounds: 2)
     - chunking: time-slices; netCDF4.Dataset.chunking() = [1, 128, 256]
+
+    Test takes 8-9s (median: 8.5s) and needs max Res mem: 1GB
     """
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
