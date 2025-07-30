@@ -77,7 +77,7 @@ def _restore_lat_lon_units(
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
-    backend_kwargs: dict | None = None,
+    backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
