@@ -144,7 +144,7 @@ def test_load_zarr_local():
     assert "latitude" in coord_names
 
 
-def test_load_zarr_remote_permanent_test_bucket():
+def test_load_zarr_remote():
     """
     Test loading a Zarr store from a https Object Store.
 
@@ -190,11 +190,11 @@ def test_load_zarr_remote_permanent_test_bucket():
     assert "latitude" in coord_names
 
 
-def test_load_zarr_remote_permanent_test_bucket_fail():
+def test_load_zarr_remote_not_zarrfile():
     """
     Test loading a Zarr store from a https Object Store.
 
-    This fails due to not being a file.
+    This fails due to the file being loaded not a Zarr file.
     We have a permanent bucket: esmvaltool-zarr at CEDA's object store
     "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
     where will host a number of test files.
@@ -202,6 +202,24 @@ def test_load_zarr_remote_permanent_test_bucket_fail():
     zarr_path = (
         "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
         "esmvaltool-zarr/example_field_0.zarr17"
+    )
+
+    with pytest.raises(ValueError):
+        load(zarr_path)
+
+
+def test_load_zarr_remote_not_file():
+    """
+    Test loading a Zarr store from a https Object Store.
+
+    This fails due to non-existing file.
+    We have a permanent bucket: esmvaltool-zarr at CEDA's object store
+    "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
+    where will host a number of test files.
+    """
+    zarr_path = (
+        "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/example_field_0.zarr22"
     )
 
     with pytest.raises(ValueError):
