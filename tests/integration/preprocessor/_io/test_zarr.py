@@ -161,6 +161,53 @@ def test_load_zarr3():
     assert "latitude" in coord_names
 
 
+def test_load_zarr3_cmip6_via_ncdata():
+    """
+    Test loading a Zarr3 store from a https Object Store.
+
+    This test is meant to determine how much memory we need via the
+    two main API routes we need to go to load an Iris cube from a Zarr
+    store, using an object storage unit:
+
+    - API1: Xarray.open_dataset
+    - API2: ncdata.iris_xarray.cubes_from_xarray
+
+    We have a permanent bucket: esmvaltool-zarr at CEDA's object store
+    "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
+    where will host a number of test files like this one.
+
+    This is an actual CMIP6 dataset (Zarr built from netCDF4 via Xarray)
+    - Zarr store on disk: 243 MiB
+    - compression: Blosc
+    - Dimensions: (lat: 128, lon: 256, time: 2352, axis_nbounds: 2)
+    - chunking: time-slices; netCDF4.Dataset.chunking() = [1, 128, 256]
+
+    Test takes 8-9s (median: 8.5s) and needs max Res mem: 1GB
+    """
+    zarr_path = (
+        "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/pr_Amon_CNRM-ESM2-1_02Kpd-11_r1i1p2f2_gr_200601-220112.zarr3"
+    )
+
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    zarr_xr = xr.open_dataset(
+        zarr_path,
+        consolidated=True,
+        decode_times=time_coder,
+        engine="zarr",
+        backend_kwargs={},
+    )
+    # API1: 420MB memory; 1.5s
+
+    conversion_func = ncdata.iris_xarray.cubes_from_xarray
+    cubes = conversion_func(zarr_xr)
+    # API2: 1GB memory; 8.5s
+
+    assert isinstance(cubes, iris.cube.CubeList)
+    assert len(cubes) == 1
+    assert cubes[0].has_lazy_data()
+
+
 def test_load_zarr3_cmip6_metadata():
     """
     Test loading a Zarr3 store from a https Object Store.
@@ -197,3 +244,4 @@ def test_load_zarr3_cmip6_metadata():
     assert cube.standard_name == "precipitation_flux"
     assert cube.long_name == "Precipitation"
     assert cube.units == cf_units.Unit("kg m-2 s-1")
+    assert cube.has_lazy_data()
