@@ -204,7 +204,12 @@ def test_load_zarr_remote_not_zarrfile():
         "esmvaltool-zarr/example_field_0.zarr17"
     )
 
-    with pytest.raises(ValueError):
+    msg = (
+        "File 'https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/example_field_0.zarr17' can not "
+        "be open as Zarr file at the moment."
+    )
+    with pytest.raises(ValueError, match=msg):
         load(zarr_path)
 
 
@@ -222,7 +227,25 @@ def test_load_zarr_remote_not_file():
         "esmvaltool-zarr/example_field_0.zarr22"
     )
 
-    with pytest.raises(ValueError):
+    msg = (
+        "File 'https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/example_field_0.zarr22' can not "
+        "be open as Zarr file at the moment."
+    )
+    with pytest.raises(ValueError, match=msg):
+        load(zarr_path)
+
+
+def test_load_not_zarr():
+    """
+    Test loadinng something that has a zarr extension.
+
+    But file doesn't hold any data / doesn't exist.
+    """
+    zarr_path = "esmvaltool-zarr/example_field_0.zarr22"
+
+    msg = "esmvaltool-zarr/example_field_0.zarr22 does not contain any data"
+    with pytest.raises(ValueError, match=msg):
         load(zarr_path)
 
 
