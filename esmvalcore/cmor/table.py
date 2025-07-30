@@ -53,9 +53,7 @@ def _update_cmor_facets(facets):
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
     for key in _CMOR_KEYS:
         if key not in facets:
@@ -115,9 +113,7 @@ def get_var_info(
             f"No CMOR tables available for project '{project}'. The following "
             f"tables are available: {', '.join(CMOR_TABLES)}."
         )
-        raise KeyError(
-            msg,
-        )
+        raise KeyError(msg)
 
     # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
     if project == "CORDEX" and mip.endswith("hr"):
@@ -444,9 +440,7 @@ class CMIP6Info(InfoBase):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         msg = f"CMOR tables not found in {cmor_tables_path}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def _load_table(self, json_file):
         with open(json_file, encoding="utf-8") as inf:
@@ -1060,9 +1054,7 @@ class CustomInfo(CMIP5Info):
                     f"Custom CMOR tables path {self._user_table_folder} is "
                     f"not a directory"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
             self._read_table_dir(self._user_table_folder)
         else:
             self._user_table_folder = None
