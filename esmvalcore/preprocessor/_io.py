@@ -168,18 +168,18 @@ def _load_zarr(
             consolidated=False,
             engine="zarr",
         )
-    elif urlparse(file):
+    elif urlparse(file).scheme in ["http", "https"]:
         # basic test that opens the Zarr/.zmetadata file for Zarr2
         # or Zarr/zarr.json for Zarr3
         fs = fsspec.filesystem("http")
         zarr2 = zarr3 = True
         try:
             fs.open(file + "/.zmetadata", "rb")  # Zarr2
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001
             zarr2 = False
         try:
             fs.open(file + "/zarr.json", "rb")  # Zarr3
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001
             zarr3 = False
         # we don't want to catch any specific aiohttp/fsspec exception
         # bottom line is that that file has issues, so raise
@@ -195,6 +195,8 @@ def _load_zarr(
             engine="zarr",
             backend_kwargs=backend_kwargs,
         )
+    else:
+        return []
 
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
