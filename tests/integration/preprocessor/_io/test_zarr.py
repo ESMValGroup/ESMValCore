@@ -129,7 +129,7 @@ def test_load_zarr_to_iris_via_ncdata_consolidated_true():
     assert len(cubes) == 24
 
 
-def test_load_zarr_3():
+def test_load_zarr3():
     """
     Test loading a Zarr3 store from a https Object Store.
 
@@ -159,3 +159,39 @@ def test_load_zarr_3():
     coord_names = [coord.standard_name for coord in coords]
     assert "longitude" in coord_names
     assert "latitude" in coord_names
+
+
+def test_load_zarr3_cmip6_metadata():
+    """
+    Test loading a Zarr3 store from a https Object Store.
+
+    This test loads just the metadata, no computations.
+
+    We have a permanent bucket: esmvaltool-zarr at CEDA's object store
+    "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk",
+    where will host a number of test files like this one.
+
+    This is an actual CMIP6 dataset (Zarr built from netCDF4 via Xarray)
+    - Zarr store on disk: 243 MiB
+    - compression: Blosc
+    - Dimensions: (lat: 128, lon: 256, time: 2352, axis_nbounds: 2)
+    - chunking: time-slices; netCDF4.Dataset.chunking() = [1, 128, 256]
+    """
+    zarr_path = (
+        "https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
+        "esmvaltool-zarr/pr_Amon_CNRM-ESM2-1_02Kpd-11_r1i1p2f2_gr_200601-220112.zarr3"
+    )
+
+    # with "dummy" storage options
+    cubes = load(
+        zarr_path,
+        ignore_warnings=None,
+        backend_kwargs={"storage_options": {}},
+    )
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "pr"
+    assert cube.standard_name == "precipitation_flux"
+    assert cube.long_name == "Precipitation"
+    assert cube.units == cf_units.Unit("kg m-2 s-1")
