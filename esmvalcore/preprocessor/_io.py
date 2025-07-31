@@ -173,7 +173,9 @@ def _load_zarr(
         try:
             fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
         except Exception:  # noqa: BLE001
-            zarr2 = False
+            pass
+        else:
+            valid_zarr = True
         try:
             fs.open(str(file) + "/zarr.json", "rb")  # Zarr3
         except Exception:  # noqa: BLE001
