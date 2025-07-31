@@ -24,7 +24,7 @@ import pytest
 from esmvalcore.preprocessor._io import load
 
 
-def test_load_zarr2_local():
+def test_load_zarr2_local_path():
     """Test loading a Zarr2 store from local FS."""
     zarr_path = (
         Path(importlib_files("tests"))
@@ -34,6 +34,29 @@ def test_load_zarr2_local():
     )
 
     cubes = load(zarr_path)
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "q"
+    assert cube.standard_name == "specific_humidity"
+    assert cube.long_name is None
+    assert cube.units == cf_units.Unit("1")
+    coords = cube.coords()
+    coord_names = [coord.standard_name for coord in coords]
+    assert "longitude" in coord_names
+    assert "latitude" in coord_names
+
+
+def test_load_zarr2_local_str():
+    """Test loading a Zarr2 store from local FS."""
+    zarr_path = (
+        Path(importlib_files("tests"))
+        / "sample_data"
+        / "zarr-sample-data"
+        / "example_field_0.zarr2"
+    )
+
+    cubes = load(str(zarr_path))
 
     assert len(cubes) == 1
     cube = cubes[0]
