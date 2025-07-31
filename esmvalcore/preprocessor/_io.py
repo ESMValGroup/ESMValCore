@@ -169,7 +169,7 @@ def _load_zarr(
         # basic test that opens the Zarr/.zmetadata file for Zarr2
         # or Zarr/zarr.json for Zarr3
         fs = fsspec.filesystem("http")
-        zarr2 = zarr3 = True
+        valid_zarr = False
         try:
             fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
         except Exception:  # noqa: BLE001
