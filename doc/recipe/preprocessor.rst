@@ -2926,7 +2926,7 @@ Miscellaneous functions that do not belong to any of the other categories.
 
 This function sets cube metadata to entries from a specific target project.
 This is useful to align variable metadata of different projects prior to
-performing multi-model operations (e.g., :ref:`multi-model statistic`).
+performing multi-model operations (e.g., :ref:`multi-model statistics`).
 For example, standard names differ for some variables between CMIP5 and CMIP6
 which would prevent the calculation of multi-model statistics between CMIP5 and
 CMIP6 data.
