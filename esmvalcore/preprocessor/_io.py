@@ -196,7 +196,12 @@ def _load_zarr(
             backend_kwargs=backend_kwargs,
         )
     else:
-        return []
+        zarr_xr = xr.open_dataset(
+            file,
+            consolidated=False,
+            engine="zarr",
+            backend_kwargs=backend_kwargs,
+        )
 
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
