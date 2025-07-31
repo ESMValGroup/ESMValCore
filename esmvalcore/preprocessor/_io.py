@@ -97,7 +97,8 @@ def load(
         needed by ``fsspec`` and its extensions e.g. ``s3fs``, so
         most of the times this will include ``storage_options``. Note that Zarr
         files are opened via ``http`` extension of ``fsspec``, so no need
-        for ``storage_options`` in that case (ie anon/anon).
+        for ``storage_options`` in that case (ie anon/anon). Currently only used
+        as empty dict in Zarr file opening.
 
     Returns
     -------
@@ -174,11 +175,11 @@ def _load_zarr(
         fs = fsspec.filesystem("http")
         zarr2 = zarr3 = True
         try:
-            fs.open(file + "/.zmetadata", "rb")  # Zarr2
+            fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
         except Exception:  # noqa: BLE001
             zarr2 = False
         try:
-            fs.open(file + "/zarr.json", "rb")  # Zarr3
+            fs.open(str(file) + "/zarr.json", "rb")  # Zarr3
         except Exception:  # noqa: BLE001
             zarr3 = False
         # we don't want to catch any specific aiohttp/fsspec exception
