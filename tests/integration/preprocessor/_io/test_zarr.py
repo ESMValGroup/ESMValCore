@@ -9,6 +9,10 @@ We have a permanent bucket: esmvaltool-zarr at CEDA's object store
 where will host a number of test files. Bucket is anon/anon
 (read/GET-only, but PUT can be allowed). Bucket operations are done
 via usual MinIO client (mc command) e.g. ``mc list``, ``mc du`` etc.
+
+Further performance investigations are being run with a number of tests
+that look at ncdata at https://github.com/valeriupredoi/esmvaltool_zarr_tests
+also see https://github.com/pp-mo/ncdata/issues/139
 """
 
 from importlib.resources import files as importlib_files
