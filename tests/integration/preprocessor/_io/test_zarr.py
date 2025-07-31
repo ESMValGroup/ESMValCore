@@ -7,7 +7,8 @@ a number of issues with Zarr IO so it deserves its own test module.
 We have a permanent bucket: esmvaltool-zarr at CEDA's object store
 "url": "https://uor-aces-o.s3-ext.jc.rl.ac.uk/esmvaltool-zarr",
 where will host a number of test files. Bucket is anon/anon
-(read/GET-only, but PUT can be allowed).
+(read/GET-only, but PUT can be allowed). Bucket operations are done
+via usual MinIO client (mc command) e.g. ``mc list``, ``mc du`` etc.
 """
 
 from importlib.resources import files as importlib_files
