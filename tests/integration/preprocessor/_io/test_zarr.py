@@ -24,7 +24,8 @@ import pytest
 from esmvalcore.preprocessor._io import load
 
 
-def test_load_zarr2_local_path():
+@pytest.mark.parametrize("input_type", [str, Path])
+def test_load_zarr2_local(input_type):
     """Test loading a Zarr2 store from local FS."""
     zarr_path = (
         Path(importlib_files("tests"))
