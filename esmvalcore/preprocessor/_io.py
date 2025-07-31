@@ -9,7 +9,9 @@ import warnings
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from urllib.parse import urlparse
 
+import fsspec
 import iris
 import ncdata
 import xarray as xr
@@ -75,6 +77,7 @@ def _restore_lat_lon_units(
 def load(
     file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
     ignore_warnings: list[dict[str, Any]] | None = None,
+    backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:
     """Load Iris cubes.
 
@@ -83,10 +86,19 @@ def load(
     file:
         File to be loaded. If ``file`` is already a loaded dataset, return it
         as a :class:`~iris.cube.CubeList`.
+        File as ``Path`` object could be a Zarr store.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
+    backend_kwargs:
+        Dict to hold info needed by storage backend e.g. to access
+        a PRIVATE S3 bucket containing object stores (e.g. netCDF4 files);
+        needed by ``fsspec`` and its extensions e.g. ``s3fs``, so
+        most of the times this will include ``storage_options``. Note that Zarr
+        files are opened via ``http`` extension of ``fsspec``, so no need
+        for ``storage_options`` in that case (ie anon/anon). Currently only used
+        in Zarr file opening.
 
     Returns
     -------
@@ -102,7 +114,19 @@ def load(
 
     """
     if isinstance(file, (str, Path)):
-        cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        extension = (
+            file.suffix
+            if isinstance(file, Path)
+            else os.path.splitext(file)[1]
+        )
+        if "zarr" not in extension:
+            cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+        else:
+            cubes = _load_zarr(
+                file,
+                ignore_warnings=ignore_warnings,
+                backend_kwargs=backend_kwargs,
+            )
     elif isinstance(file, Cube):
         cubes = CubeList([file])
     elif isinstance(file, CubeList):
@@ -132,6 +156,53 @@ def load(
             warnings.warn(warn_msg, ESMValCoreLoadWarning, stacklevel=2)
 
     return cubes
+
+
+def _load_zarr(
+    file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+    ignore_warnings: list[dict[str, Any]] | None = None,
+    backend_kwargs: dict[str, Any] | None = None,
+) -> CubeList:
+    # case 1: Zarr store is on remote object store
+    # file's URI will always be either http or https
+    if urlparse(str(file)).scheme in ["http", "https"]:
+        # basic test that opens the Zarr/.zmetadata file for Zarr2
+        # or Zarr/zarr.json for Zarr3
+        fs = fsspec.filesystem("http")
+        valid_zarr = True
+        try:
+            fs.open(str(file) + "/zarr.json", "rb")  # Zarr3
+        except Exception:  # noqa: BLE001
+            try:
+                fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
+            except Exception:  # noqa: BLE001
+                valid_zarr = False
+        # we don't want to catch any specific aiohttp/fsspec exception
+        # bottom line is that that file has issues, so raise
+        if not valid_zarr:
+            msg = (
+                f"File '{file}' can not be opened as Zarr file at the moment."
+            )
+            raise ValueError(msg)
+
+        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+        zarr_xr = xr.open_dataset(
+            file,
+            consolidated=True,
+            decode_times=time_coder,
+            engine="zarr",
+            backend_kwargs=backend_kwargs,
+        )
+    # case 2: Zarr store is local to the file system
+    else:
+        zarr_xr = xr.open_dataset(
+            file,
+            consolidated=False,
+            engine="zarr",
+            backend_kwargs=backend_kwargs,
+        )
+
+    return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
 
 def _load_from_file(
