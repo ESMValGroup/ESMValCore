@@ -2919,6 +2919,49 @@ Other
 
 Miscellaneous functions that do not belong to any of the other categories.
 
+.. _align_metadata:
+
+``_align_metadata``
+------------------
+
+This function sets cube metadata to entries from a specific target project.
+This is useful to align variable metadata of different projects prior to
+performing multi-model operations (e.g., :ref:`multi-model statistic`).
+For example, standard names differ for some variables between CMIP5 and CMIP6
+which would prevent the calculation of multi-model statistics between CMIP5 and
+CMIP6 data.
+
+The ``_align_metadata`` preprocessor supports the following arguments in the
+recipe:
+
+* ``target_project`` (:obj:`str`): Project from which target metadata is read.
+* ``target_mip`` (:obj:`str`; optional): MIP table from which target metadata
+  is read.
+  If not given, use the MIP tables of the corresponding variables defined in
+  the recipe.
+* ``target_short_name`` (:obj:`str`; optional): Variable short name from which
+  target metadata is read.
+  If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+  error if desired metadata cannot be read for variable ``target_short_name``
+  of MIP table ``target_mip`` and project ``target_project``.
+  If ``False``, no error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      calculate_multi_model_statistics:
+        align_metadata:
+          target_project: CMIP6
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+
+See also :func:`esmvalcore.preprocessor.align_metadata`.
+
 .. _cumulative_sum:
 
 ``cumulative_sum``
