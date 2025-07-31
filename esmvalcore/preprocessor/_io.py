@@ -95,7 +95,7 @@ def load(
         Dict to hold info needed by storage backend e.g. to access
         a PRIVATE S3 bucket containing object stores (e.g. netCDF4 files);
         needed by ``fsspec`` and its extensions e.g. ``s3fs``, so
-        most of the times it is a ``storage_options`` dict. Note that Zarr
+        most of the times this will include ``storage_options``. Note that Zarr
         files are opened via ``http`` extension of ``fsspec``, so no need
         for ``storage_options`` in that case (ie anon/anon).
 
