@@ -14,6 +14,7 @@ from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
@@ -30,7 +31,84 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from esmvalcore.cmor.table import VariableInfo
+
 logger = logging.getLogger(__name__)
+
+
+def align_metadata(
+    cube: Cube,
+    target_project: str,
+    target_mip: str,
+    target_short_name: str,
+    strict: bool = True,
+) -> Cube:
+    """Set cube metadata to entries from a specific target project.
+
+    This is useful to align variable metadata of different projects prior to
+    performing multi-model operations (e.g.,
+    :func:`~esmvalcore.preprocessor.multi_model_statistics`). For example,
+    standard names differ for some variables between CMIP5 and CMIP6 which
+    would prevent the calculation of multi-model statistics between CMIP5 and
+    CMIP6 data.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    target_project:
+        Project from which target metadata is read.
+    target_mip:
+        MIP table from which target metadata is read.
+    target_short_name:
+        Variable short name from which target metadata is read.
+    strict:
+        If ``True``, raise an error if desired metadata cannot be read for
+        variable ``target_short_name`` of MIP table ``target_mip`` and project
+        ``target_project``. If ``False``, no error is raised.
+
+    Returns
+    -------
+    Cube
+        Cube with updated metadata.
+
+    Raises
+    ------
+    KeyError
+        Invalid ``target_project`` given.
+    ValueError
+        If ``strict=True``: Variable ``target_short_name`` not available for
+        MIP table ``target_mip`` of project ``target_project``.
+
+    """
+    cube = cube.copy()
+
+    try:
+        var_info = _get_var_info(target_project, target_mip, target_short_name)
+    except ValueError as exc:
+        if strict:
+            raise
+        logger.debug(exc)
+        return cube
+
+    cube.long_name = var_info.long_name
+    cube.standard_name = var_info.standard_name
+    cube.var_name = var_info.short_name
+    cube.convert_units(var_info.units)
+
+    return cube
+
+
+def _get_var_info(project: str, mip: str, short_name: str) -> VariableInfo:
+    """Get variable information."""
+    var_info = get_var_info(project, mip, short_name)
+    if var_info is None:
+        msg = (
+            f"Variable '{short_name}' not available for table '{mip}' of "
+            f"project '{project}'"
+        )
+        raise ValueError(msg)
+    return var_info
 
 
 def clip(
