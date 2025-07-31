@@ -34,7 +34,7 @@ def test_load_zarr2_local(input_type):
         / "example_field_0.zarr2"
     )
 
-    cubes = load(zarr_path)
+    cubes = load(input_type(zarr_path))
 
     assert len(cubes) == 1
     cube = cubes[0]
