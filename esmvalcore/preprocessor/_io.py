@@ -168,7 +168,7 @@ def _load_zarr(
             consolidated=False,
             engine="zarr",
         )
-    elif urlparse(file).scheme in ["http", "https"]:
+    if urlparse(str(file)).scheme in ["http", "https"]:
         # basic test that opens the Zarr/.zmetadata file for Zarr2
         # or Zarr/zarr.json for Zarr3
         fs = fsspec.filesystem("http")
