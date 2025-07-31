@@ -98,7 +98,7 @@ def load(
         most of the times this will include ``storage_options``. Note that Zarr
         files are opened via ``http`` extension of ``fsspec``, so no need
         for ``storage_options`` in that case (ie anon/anon). Currently only used
-        as empty dict in Zarr file opening.
+        in Zarr file opening.
 
     Returns
     -------
