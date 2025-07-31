@@ -2922,7 +2922,7 @@ Miscellaneous functions that do not belong to any of the other categories.
 .. _align_metadata:
 
 ``_align_metadata``
-------------------
+-------------------
 
 This function sets cube metadata to entries from a specific target project.
 This is useful to align variable metadata of different projects prior to
