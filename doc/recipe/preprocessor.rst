@@ -2921,8 +2921,8 @@ Miscellaneous functions that do not belong to any of the other categories.
 
 .. _align_metadata:
 
-``_align_metadata``
--------------------
+``align_metadata``
+------------------
 
 This function sets cube metadata to entries from a specific target project.
 This is useful to align variable metadata of different projects prior to
@@ -2931,7 +2931,7 @@ For example, standard names differ for some variables between CMIP5 and CMIP6
 which would prevent the calculation of multi-model statistics between CMIP5 and
 CMIP6 data.
 
-The ``_align_metadata`` preprocessor supports the following arguments in the
+The ``align_metadata`` preprocessor supports the following arguments in the
 recipe:
 
 * ``target_project`` (:obj:`str`): Project from which target metadata is read.
