@@ -179,7 +179,9 @@ def _load_zarr(
         try:
             fs.open(str(file) + "/zarr.json", "rb")  # Zarr3
         except Exception:  # noqa: BLE001
-            zarr3 = False
+            pass
+        else:
+            valid_zarr = True
         # we don't want to catch any specific aiohttp/fsspec exception
         # bottom line is that that file has issues, so raise
         if not zarr2 and not zarr3:
