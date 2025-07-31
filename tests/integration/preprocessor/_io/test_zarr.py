@@ -192,8 +192,10 @@ def test_load_zarr_local_not_file():
     """
     zarr_path = "esmvaltool-zarr/example_field_0.zarr22"
 
-    msg = "Unable to find group"
-    with pytest.raises(FileNotFoundError, match=msg):
+    # "Unable to find group" or "No group found"
+    # Zarr keeps changing the exception string so matching
+    # is bound to fail the test
+    with pytest.raises(FileNotFoundError):
         load(zarr_path)
 
 
@@ -210,6 +212,8 @@ def test_load_zarr_local_not_zarr_file():
         / "example_field_0.zarr17"
     )
 
-    msg = "Unable to find group"
-    with pytest.raises(FileNotFoundError, match=msg):
+    # "Unable to find group" or "No group found"
+    # Zarr keeps changing the exception string so matching
+    # is bound to fail the test
+    with pytest.raises(FileNotFoundError):
         load(zarr_path)
