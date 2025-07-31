@@ -185,7 +185,7 @@ def test_load_zarr_remote_not_zarr_file():
     msg = (
         "File 'https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
         "esmvaltool-zarr/example_field_0.zarr17' can not "
-        "be open as Zarr file at the moment."
+        "be opened as Zarr file at the moment."
     )
     with pytest.raises(ValueError, match=msg):
         load(zarr_path)
@@ -205,7 +205,7 @@ def test_load_zarr_remote_not_file():
     msg = (
         "File 'https://uor-aces-o.s3-ext.jc.rl.ac.uk/"
         "esmvaltool-zarr/example_field_0.zarr22' can not "
-        "be open as Zarr file at the moment."
+        "be opened as Zarr file at the moment."
     )
     with pytest.raises(ValueError, match=msg):
         load(zarr_path)
