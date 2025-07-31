@@ -144,7 +144,7 @@ def test_load_zarr3_cmip6_metadata():
     assert cube.has_lazy_data()
 
 
-def test_load_zarr_remote_not_zarrfile():
+def test_load_zarr_remote_not_zarr_file():
     """
     Test loading a Zarr store from a https Object Store.
 
@@ -184,14 +184,32 @@ def test_load_zarr_remote_not_file():
         load(zarr_path)
 
 
-def test_load_not_zarr():
+def test_load_zarr_local_not_file():
     """
-    Test loadinng something that has a zarr extension.
+    Test loading something that has a zarr extension.
 
-    But file doesn't hold any data / doesn't exist.
+    But file doesn't exist (on local FS).
     """
     zarr_path = "esmvaltool-zarr/example_field_0.zarr22"
 
-    msg = "esmvaltool-zarr/example_field_0.zarr22 does not contain any data"
-    with pytest.raises(ValueError, match=msg):
+    msg = "Unable to find group"
+    with pytest.raises(FileNotFoundError, match=msg):
+        load(zarr_path)
+
+
+def test_load_zarr_local_not_zarr_file():
+    """
+    Test loading something that has a zarr extension.
+
+    But file is plaintext (on local FS).
+    """
+    zarr_path = (
+        Path(importlib_files("tests"))
+        / "sample_data"
+        / "zarr-sample-data"
+        / "example_field_0.zarr17"
+    )
+
+    msg = "Unable to find group"
+    with pytest.raises(FileNotFoundError, match=msg):
         load(zarr_path)
