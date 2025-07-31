@@ -169,23 +169,20 @@ def _load_zarr(
         # basic test that opens the Zarr/.zmetadata file for Zarr2
         # or Zarr/zarr.json for Zarr3
         fs = fsspec.filesystem("http")
-        valid_zarr = False
-        try:
-            fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
-        except Exception:  # noqa: BLE001
-            pass
-        else:
-            valid_zarr = True
+        valid_zarr = True
         try:
             fs.open(str(file) + "/zarr.json", "rb")  # Zarr3
         except Exception:  # noqa: BLE001
-            pass
-        else:
-            valid_zarr = True
+            try:
+                fs.open(str(file) + "/.zmetadata", "rb")  # Zarr2
+            except Exception:  # noqa: BLE001
+                valid_zarr = False
         # we don't want to catch any specific aiohttp/fsspec exception
         # bottom line is that that file has issues, so raise
         if not valid_zarr:
-            msg = f"File '{file}' can not be opened as Zarr file at the moment."
+            msg = (
+                f"File '{file}' can not be opened as Zarr file at the moment."
+            )
             raise ValueError(msg)
 
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
