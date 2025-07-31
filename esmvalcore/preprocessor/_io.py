@@ -186,7 +186,7 @@ def _load_zarr(
         # bottom line is that that file has issues, so raise
         if not valid_zarr:
             msg = f"File '{file}' can not be opened as Zarr file at the moment."
-            raise ValueError(msg) from None
+            raise ValueError(msg)
 
         time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
         zarr_xr = xr.open_dataset(
