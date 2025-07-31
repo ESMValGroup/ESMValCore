@@ -184,7 +184,7 @@ def _load_zarr(
             valid_zarr = True
         # we don't want to catch any specific aiohttp/fsspec exception
         # bottom line is that that file has issues, so raise
-        if not zarr2 and not zarr3:
+        if not valid_zarr:
             msg = f"File '{file}' can not be open as Zarr file at the moment."
             raise ValueError(msg) from None
 
