@@ -1,4 +1,4 @@
-SOURCE: CMIP5
+SOURCE: CMIP6
 !============
 variable_entry:    lwp
 !============
@@ -6,9 +6,9 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:
+standard_name:     atmosphere_mass_content_of_cloud_liquid_water
 units:             kg m-2
-cell_methods:      time: mean
+cell_methods:      area: time: mean
 cell_measures:     area: areacella
 long_name:         Liquid Water Path
 !----------------------------------
@@ -16,9 +16,5 @@ long_name:         Liquid Water Path
 !----------------------------------
 dimensions:        longitude latitude time
 type:              real
-valid_min:         0.0
-valid_max:         5.0
-ok_min_mean_abs:   0.0
-ok_max_mean_abs:   1.0
 !----------------------------------
 !
