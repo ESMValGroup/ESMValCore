@@ -47,7 +47,7 @@ jobs:
       - name: Check version of conda-lock
         run: conda-lock --version
       - name: Create conda lock file for linux-64
-        run: conda-lock lock --platform linux-64 -f environment.yml --mamba --kind explicit
+        run: conda-lock lock --platform linux-64 -f environment.yml --kind explicit  # --mamba
       - name: Creating environment from lock file
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - name: Installing pip
