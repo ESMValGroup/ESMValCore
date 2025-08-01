@@ -35,6 +35,7 @@ jobs:
       - name: Update and show conda config
         run: |
           conda update -n base -c conda-forge conda
+          conda install -y -c conda-forge "mamba>=2.2"
           conda --version
           mamba --version
       - name: Gather Python info
