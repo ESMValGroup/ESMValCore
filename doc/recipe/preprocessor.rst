@@ -2911,53 +2911,56 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-
-.. _Memory use:
-
-Information on maximum memory required
-======================================
-In the most general case, we can set upper limits on the maximum memory the
-analysis will require:
-
-
-``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
-
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
-
-where
-
-* ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multi-model module
-* ``R``: computational efficiency of module; `R` is typically 2-3
-* ``N``: number of datasets
-* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
-  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
-  fully realized data) and ``f`` describes how much the data was shrunk by the
-  immediately previous module, e.g. time extraction, area selection or level
-  extraction; note that for fix_data ``f`` relates only to the time extraction,
-  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
-  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
-  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
-  ``N`` datasets will require:
-
-
-``Ms = 1.5 x (N - 1)`` GB
-
-``Mm = 1.5 x (N - 2)`` GB
-
-As a rule of thumb, the maximum required memory at a certain time for
-multi-model analysis could be estimated by multiplying the number of datasets by
-the average file size of all the datasets; this memory intake is high but also
-assumes that all data is fully realized in memory; this aspect will gradually
-change and the amount of realized data will decrease with the increase of
-``dask`` use.
-
 .. _Other:
+
 
 Other
 =====
 
 Miscellaneous functions that do not belong to any of the other categories.
+
+.. _align_metadata:
+
+``align_metadata``
+------------------
+
+This function sets cube metadata to entries from a specific target project.
+This is useful to align variable metadata of different projects prior to
+performing multi-model operations (e.g., :ref:`multi-model statistics`).
+For example, standard names differ for some variables between CMIP5 and CMIP6
+which would prevent the calculation of multi-model statistics between CMIP5 and
+CMIP6 data.
+
+The ``align_metadata`` preprocessor supports the following arguments in the
+recipe:
+
+* ``target_project`` (:obj:`str`): Project from which target metadata is read.
+* ``target_mip`` (:obj:`str`; optional): MIP table from which target metadata
+  is read.
+  If not given, use the MIP tables of the corresponding variables defined in
+  the recipe.
+* ``target_short_name`` (:obj:`str`; optional): Variable short name from which
+  target metadata is read.
+  If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+  error if desired metadata cannot be read for variable ``target_short_name``
+  of MIP table ``target_mip`` and project ``target_project``.
+  If ``False``, no error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      calculate_multi_model_statistics:
+        align_metadata:
+          target_project: CMIP6
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+
+See also :func:`esmvalcore.preprocessor.align_metadata`.
 
 .. _cumulative_sum:
 
@@ -3085,3 +3088,44 @@ Example:
           normalization: sum
 
 See also :func:`esmvalcore.preprocessor.histogram`.
+
+
+.. _Memory use:
+
+Information on maximum memory required
+======================================
+In the most general case, we can set upper limits on the maximum memory the
+analysis will require:
+
+
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
+
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
+
+where
+
+* ``Ms``: maximum memory for non-multimodel module
+* ``Mm``: maximum memory for multi-model module
+* ``R``: computational efficiency of module; `R` is typically 2-3
+* ``N``: number of datasets
+* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
+  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
+  fully realized data) and ``f`` describes how much the data was shrunk by the
+  immediately previous module, e.g. time extraction, area selection or level
+  extraction; note that for fix_data ``f`` relates only to the time extraction,
+  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
+  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
+  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
+  ``N`` datasets will require:
+
+
+``Ms = 1.5 x (N - 1)`` GB
+
+``Mm = 1.5 x (N - 2)`` GB
+
+As a rule of thumb, the maximum required memory at a certain time for
+multi-model analysis could be estimated by multiplying the number of datasets by
+the average file size of all the datasets; this memory intake is high but also
+assumes that all data is fully realized in memory; this aspect will gradually
+change and the amount of realized data will decrease with the increase of
+``dask`` use.
