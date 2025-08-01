@@ -69,7 +69,7 @@ def align_metadata(
 
     Returns
     -------
-    Cube
+    iris.cube.Cube
         Cube with updated metadata.
 
     Raises
