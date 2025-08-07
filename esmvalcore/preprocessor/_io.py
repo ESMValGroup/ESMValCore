@@ -174,6 +174,15 @@ def _load_zarr(
     # see https://github.com/pydata/xarray/issues/10612 and
     # https://github.com/pp-mo/ncdata/issues/139
 
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    open_kwargs = {
+        "consolidated": False,
+        "decode_times": time_coder,
+        "engine": "zarr",
+        "chunks": {},
+        "backend_kwargs": backend_kwargs,
+    }
+
     # case 1: Zarr store is on remote object store
     # file's URI will always be either http or https
     if urlparse(str(file)).scheme in ["http", "https"]:
@@ -196,24 +205,11 @@ def _load_zarr(
             )
             raise ValueError(msg)
 
-        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-        zarr_xr = xr.open_dataset(
-            file,
-            consolidated=True,
-            decode_times=time_coder,
-            engine="zarr",
-            chunks={},
-            backend_kwargs=backend_kwargs,
-        )
+        open_kwargs["consolidated"] = True
+        zarr_xr = xr.open_dataset(file, **open_kwargs)
     # case 2: Zarr store is local to the file system
     else:
-        zarr_xr = xr.open_dataset(
-            file,
-            consolidated=False,
-            engine="zarr",
-            chunks={},
-            backend_kwargs=backend_kwargs,
-        )
+        zarr_xr = xr.open_dataset(file, **open_kwargs)
 
     # avoid possible
     # ValueError: Object has inconsistent chunks along dimension time.
