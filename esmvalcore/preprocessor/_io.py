@@ -163,6 +163,26 @@ def _load_zarr(
     ignore_warnings: list[dict[str, Any]] | None = None,
     backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:
+    # note on ``chunks`` kwarg to ``xr.open_dataset()``
+    # docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
+    # this is very important because with ``chunks=None`` (default)
+    # data will be realized as Numpy arrays and transferred in memory;
+    # ``chunks={}`` loads the data with dask using the engine preferred
+    # chunk size, generally identical to the formats chunk size. If not
+    # available, a single chunk for all arrays; testing shows this is the
+    # "best guess" compromise for typically CMIP-like chunked data.
+    # see https://github.com/pydata/xarray/issues/10612 and
+    # https://github.com/pp-mo/ncdata/issues/139
+
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    open_kwargs = {
+        "consolidated": False,
+        "decode_times": time_coder,
+        "engine": "zarr",
+        "chunks": {},
+        "backend_kwargs": backend_kwargs,
+    }
+
     # case 1: Zarr store is on remote object store
     # file's URI will always be either http or https
     if urlparse(str(file)).scheme in ["http", "https"]:
@@ -185,22 +205,17 @@ def _load_zarr(
             )
             raise ValueError(msg)
 
-        time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-        zarr_xr = xr.open_dataset(
-            file,
-            consolidated=True,
-            decode_times=time_coder,
-            engine="zarr",
-            backend_kwargs=backend_kwargs,
-        )
+        open_kwargs["consolidated"] = True
+        zarr_xr = xr.open_dataset(file, **open_kwargs)
     # case 2: Zarr store is local to the file system
     else:
-        zarr_xr = xr.open_dataset(
-            file,
-            consolidated=False,
-            engine="zarr",
-            backend_kwargs=backend_kwargs,
-        )
+        zarr_xr = xr.open_dataset(file, **open_kwargs)
+
+    # avoid possible
+    # ValueError: Object has inconsistent chunks along dimension time.
+    # This can be fixed by calling unify_chunks().
+    # when trying to access the ``chunks`` store
+    zarr_xr = zarr_xr.unify_chunks()
 
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
