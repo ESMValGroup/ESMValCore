@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - update_Python_condalock_GHA
   schedule:
     - cron: '0 4 */10 * *'
 
@@ -47,7 +46,8 @@ jobs:
       - name: Check version of conda-lock
         run: conda-lock --version
       - name: Create conda lock file for linux-64
-        run: conda-lock lock --platform linux-64 -f environment.yml --kind explicit  # --mamba
+        # --mamba flag no longer needed since conda uses mamba backend
+        run: conda-lock lock --platform linux-64 -f environment.yml --kind explicit
       - name: Creating environment from lock file
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - name: Installing pip
