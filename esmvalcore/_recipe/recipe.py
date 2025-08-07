@@ -51,7 +51,6 @@ from esmvalcore.preprocessor._shared import _group_products
 from . import check
 from .from_datasets import datasets_to_recipe
 from .to_datasets import (
-    _derive_needed,
     _get_input_datasets,
     _representative_datasets,
 )
@@ -246,7 +245,7 @@ def _get_default_settings(dataset: Dataset) -> PreprocessorSettings:
 
     settings = {}
 
-    if _derive_needed(dataset):
+    if dataset._derivation_necessary():  # noqa: SLF001 (will be replaced soon)
         settings["derive"] = {
             "short_name": facets["short_name"],
             "standard_name": facets["standard_name"],
@@ -633,21 +632,26 @@ def _allow_skipping(dataset: Dataset) -> bool:
     )
 
 
-def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
-    """Set the 'version' facet based on derivation input datasets."""
-    versions = set()
-    for in_dataset in input_datasets:
-        in_dataset.set_version()
-        if version := in_dataset.facets.get("version"):
-            if isinstance(version, list):
-                versions.update(version)
-            else:
-                versions.add(version)
-    if versions:
-        version = versions.pop() if len(versions) == 1 else sorted(versions)
-        dataset.set_facet("version", version)
-    for supplementary_ds in dataset.supplementaries:
-        supplementary_ds.set_version()
+def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
+    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
+    if (
+        dataset.facets.get("project") == "CMIP5"
+        and dataset.facets.get("mip") == "fx"
+        and dataset.facets.get("ensemble") != "r0i0p0"
+        and not dataset.files
+    ):
+        original_ensemble = dataset["ensemble"]
+        copy = dataset.copy()
+        copy.facets["ensemble"] = "r0i0p0"
+        if copy.files:
+            dataset.facets["ensemble"] = "r0i0p0"
+            logger.info(
+                "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                original_ensemble,
+                dataset["ensemble"],
+                dataset.summary(shorten=True),
+            )
+            dataset.find_files()
 
 
 def _get_preprocessor_products(
@@ -673,6 +677,7 @@ def _get_preprocessor_products(
         settings = _get_default_settings(dataset)
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
+        _fix_cmip5_fx_ensemble(dataset)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
@@ -684,7 +689,7 @@ def _get_preprocessor_products(
             else:
                 missing_vars.update(missing)
             continue
-        _set_version(dataset, input_datasets)
+        dataset.set_version()
         USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)
