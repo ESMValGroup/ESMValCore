@@ -86,7 +86,7 @@ test = [
     "pytest-metadata>=1.5.1",
     "pytest-mock",
     "pytest-xdist",
-    "ESMValTool_sample_data==0.0.3",
+    "ESMValTool_sample_data==0.0.4",
 ]
 doc = [
     "autodocsumm>=0.2.2",
