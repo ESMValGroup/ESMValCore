@@ -2,6 +2,7 @@
 
 import os
 import unittest
+from pathlib import Path
 
 import pytest
 
@@ -157,6 +158,12 @@ class TestCMIP6Info(unittest.TestCase):
         """Get activity for experiment 1pctCO2."""
         activity = self.variables_info.activities["1pctCO2"]
         self.assertListEqual(activity, ["CMIP"])
+
+    def test_invalid_path(self):
+        path = Path(__file__) / "path" / "does" / "not" / "exist"
+        msg = r"CMOR tables not found in"
+        with pytest.raises(ValueError, match=msg):
+            CMIP6Info(path)
 
 
 class Testobs4mipsInfo(unittest.TestCase):
