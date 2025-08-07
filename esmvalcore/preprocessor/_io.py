@@ -166,8 +166,7 @@ def _load_zarr(
     # note on ``chunks`` kwarg to ``xr.open_dataset()``
     # docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
     # this is very important because with ``chunks=None`` (default)
-    # data will be realized as Numpy arrays and transferred in memory
-    # both for remote and local Zarr stores;
+    # data will be realized as Numpy arrays and transferred in memory;
     # ``chunks={}`` loads the data with dask using the engine preferred
     # chunk size, generally identical to the formats chunk size. If not
     # available, a single chunk for all arrays; testing shows this is the
