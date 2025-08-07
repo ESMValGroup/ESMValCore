@@ -216,6 +216,12 @@ def _load_zarr(
             backend_kwargs=backend_kwargs,
         )
 
+    # avoid possible
+    # ValueError: Object has inconsistent chunks along dimension time.
+    # This can be fixed by calling unify_chunks().
+    # when trying to access the ``chunks`` store
+    zarr_xr = zarr_xr.unify_chunks()
+
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
 
 
