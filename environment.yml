@@ -5,6 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
+  - aiohttp
   - cartopy
   - cf-units
   - cftime
@@ -13,12 +14,14 @@ dependencies:
   - distributed
   - esgf-pyclient >=0.3.1
   - esmpy
+  - esmvaltool-sample-data
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
   - intake-esgf
+  - intake-esm
   - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
   - iris-esmf-regrid >=0.11.0
   - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
@@ -47,6 +50,7 @@ dependencies:
   - shapely >=2.0.0
   - xarray
   - yamale
+  - zarr >3
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
   - ipython <9.0  # github.com/ESMValGroup/ESMValCore/issues/2680
@@ -67,5 +71,3 @@ dependencies:
   - pydocstyle
   - pylint
   # Not on conda forge - vprof
-  - pip:
-      - ESMValTool_sample_data
