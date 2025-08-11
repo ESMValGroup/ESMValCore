@@ -3699,3 +3699,183 @@ def test_automatic_already_regrid_era5_grib(
         "target_grid": "1x1",
         "scheme": "nearest",
     }
+
+
+def test_align_metadata(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    # Check align_metadata settings have been updated
+    tasks = {t for task in recipe.tasks for t in task.flatten()}
+    assert len(tasks) == 1
+    task = next(iter(tasks))
+    products = task.products
+    assert len(products) == 1
+    product = next(iter(task.products))
+    assert "align_metadata" in product.settings
+    assert product.settings["align_metadata"]["target_project"] == "CMIP6"
+    assert product.settings["align_metadata"]["target_mip"] == "Amon"
+    assert product.settings["align_metadata"]["target_short_name"] == "tas"
+
+
+def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: ZZZ
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = (
+        "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
+        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
+        "OBS6, native6, obs4MIPs, ana4mips, EMAC, CORDEX, IPSLCM, ICON, CESM, "
+        'ACCESS."'
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+              target_short_name: zzz
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = (
+        "align_metadata failed: Variable 'zzz' not available for table 'Amon' "
+        "of project 'CMIP6'. Set `strict=False` to ignore this."
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_align_metadata_invalid_short_name_not_strict(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+              target_short_name: zzz
+              strict: false
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    # Check align_metadata settings have been updated
+    tasks = {t for task in recipe.tasks for t in task.flatten()}
+    assert len(tasks) == 1
+    task = next(iter(tasks))
+    products = task.products
+    assert len(products) == 1
+    product = next(iter(task.products))
+    assert "align_metadata" in product.settings
+    assert product.settings["align_metadata"]["target_project"] == "CMIP6"
+    assert product.settings["align_metadata"]["target_mip"] == "Amon"
+    assert product.settings["align_metadata"]["target_short_name"] == "zzz"
+    assert product.settings["align_metadata"]["strict"] is False
+
+
+def test_align_metadata_missing_arg(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_short_name: tas
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = "Missing required argument"
+    with pytest.raises(ValueError, match=msg):
+        get_recipe(tmp_path, content, session)
