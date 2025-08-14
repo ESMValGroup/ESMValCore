@@ -1,0 +1,36 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"0.125000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"seaIce",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_SI3hrPt"
+    },
+    "variable_entry":{
+        "siconca":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: mean time: point",
+            "comment":"Percentage of grid cell covered by sea ice",
+            "dimensions":"longitude latitude time1 typesi",
+            "frequency":"3hrPt",
+            "long_name":"Sea-Ice Area Percentage (Atmospheric Grid)",
+            "modeling_realm":"seaIce",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"siconca",
+            "positive":"",
+            "standard_name":"sea_ice_area_fraction",
+            "type":"real",
+            "units":"%",
+            "valid_max":"",
+            "valid_min":""
+        }
+    }
+}
