@@ -1,13 +1,16 @@
+from pathlib import Path
+
 import pytest
 from prov.model import ProvDocument
 
 from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX, TrackedFile
+from esmvalcore.local import LocalFile
 
 
 @pytest.fixture
 def tracked_file_nc():
     return TrackedFile(
-        filename="/path/to/file.nc",
+        filename=LocalFile("/path/to/file.nc"),
         attributes={"a": "A"},
         prov_filename="/original/path/to/file.nc",
     )
@@ -16,7 +19,7 @@ def tracked_file_nc():
 @pytest.fixture
 def tracked_file_grb():
     return TrackedFile(
-        filename="/path/to/file.grb",
+        filename=Path("/path/to/file.grb"),
         prov_filename="/original/path/to/file.grb",
     )
 

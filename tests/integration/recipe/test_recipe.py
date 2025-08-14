@@ -790,7 +790,7 @@ def test_recipe_iso_timerange(
     filename = (
         f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
-    assert pr_product.filename.name == filename
+    assert Path(pr_product.filename).name == filename
 
     areacella_task = next(
         t for t in recipe.tasks if t.name.endswith("areacella")
@@ -799,7 +799,7 @@ def test_recipe_iso_timerange(
     areacella_product = areacella_task.products.pop()
 
     filename = "CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc"
-    assert areacella_product.filename.name == filename
+    assert Path(areacella_product.filename).name == filename
 
 
 @pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
@@ -839,7 +839,7 @@ def test_recipe_iso_timerange_as_dataset(
     filename = (
         f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
-    assert product.filename.name == filename
+    assert Path(product.filename).name == filename
 
     assert len(product.datasets) == 1
     dataset = product.datasets[0]

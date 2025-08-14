@@ -118,8 +118,8 @@ class TrackedFile:
 
         Arguments
         ---------
-        filename: str
-            Path to the file on disk.
+        filename: :obj:`pathlib.Path` or :obj:`esmvalcore.io.protocol.DataElement`
+            Path or data element containing the data described by the provenance.
         attributes: dict
             Dictionary with facets describing the file. If set to None, this
             will be read from the file when provenance is initialized.
@@ -130,9 +130,13 @@ class TrackedFile:
             differ from `filename` if the file was moved before resuming
             processing.
         """
-        self._filename = filename
+        self._filename = (
+            str(filename)
+            if isinstance(filename, Path | str)
+            else filename.name
+        )
         if prov_filename is None:
-            self.prov_filename = filename
+            self.prov_filename = self._filename
         else:
             self.prov_filename = prov_filename
         self.attributes = copy.deepcopy(attributes)
@@ -174,13 +178,13 @@ class TrackedFile:
         return new
 
     @property
-    def filename(self):
-        """Filename."""
+    def filename(self) -> str:
+        """Name of data described by this provenance document."""
         return self._filename
 
     @property
     def provenance_file(self):
-        """Filename of provenance."""
+        """Filename of provenance file."""
         return os.path.splitext(self.filename)[0] + "_provenance.xml"
 
     def initialize_provenance(self, activity):
