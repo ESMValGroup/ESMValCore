@@ -37,7 +37,7 @@ def _get_data_sources(session: Session) -> list[DataSource]:
                 and project in esmvalcore.esgf.facets.FACETS
             ):
                 data_source = esmvalcore.esgf.ESGFDataSource(
-                    name="legacy",
+                    name="legacy-esgf",
                     project=project,
                     priority=2,
                     download_dir=session["download_dir"],

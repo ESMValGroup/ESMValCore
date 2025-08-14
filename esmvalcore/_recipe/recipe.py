@@ -443,10 +443,7 @@ def _get_common_attributes(
 
     # Ensure that attributes start_year and end_year are always available if at
     # least one of the input datasets defines it
-    if "timerange" in attributes:
-        start_year, end_year = _parse_period(attributes["timerange"])
-        attributes["start_year"] = int(str(start_year[0:4]))
-        attributes["end_year"] = int(str(end_year[0:4]))
+    _set_start_end_year(attributes)
 
     return attributes
 
@@ -710,7 +707,7 @@ def _get_preprocessor_products(
     )
 
     for product in products:
-        _set_start_end_year(product)
+        _set_start_end_year(product.attributes)
         product.check()
 
     return products
@@ -770,18 +767,18 @@ def _configure_multi_product_preprocessor(
 
     for product in multimodel_products | ensemble_products:
         product.check()
-        _set_start_end_year(product)
+        _set_start_end_year(product.attributes)
 
 
-def _set_start_end_year(product: PreprocessorFile) -> None:
+def _set_start_end_year(attributes: dict) -> None:
     """Set the attributes `start_year` and `end_year`.
 
     These attributes are used by many diagnostic scripts in ESMValTool.
     """
-    if "timerange" in product.attributes:
-        start_year, end_year = _parse_period(product.attributes["timerange"])
-        product.attributes["start_year"] = int(str(start_year[0:4]))
-        product.attributes["end_year"] = int(str(end_year[0:4]))
+    if "timerange" in attributes:
+        start_year, end_year = _parse_period(attributes["timerange"])
+        attributes["start_year"] = int(str(start_year[0:4]))
+        attributes["end_year"] = int(str(end_year[0:4]))
 
 
 def _update_preproc_functions(
