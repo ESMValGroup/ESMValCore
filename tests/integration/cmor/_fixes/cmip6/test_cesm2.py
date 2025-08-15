@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Cli,
     Clw,
     Fgco2,
+    Msftmz,
     Omon,
     Pr,
     Siconc,
@@ -668,3 +669,74 @@ def test_tasmax_fix_metadata(tasmax_cubes):
     assert out_cubes[0].var_name == "tasmax"
     coord = out_cubes[0].coord("height")
     assert coord == height_coord
+
+
+def test_msftmz_fix():
+    fix = Fix.get_fixes("CMIP6", "CESM2", "Omon", "msftmz")
+    assert fix == [Msftmz(None), Omon(None), GenericFix(None)]
+
+
+def test_msftmz_tranform_region_coord():
+    dim_coord = iris.coords.DimCoord(
+        points=[0, 1, 2],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean_basin",
+        attributes={
+            "requested": "atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2",
+        },
+    )
+    aux_coord = iris.coords.AuxCoord(
+        points=[
+            "atlantic_arctic_ocean",
+            "indian_pacific_ocean",
+            "global_ocean",
+        ],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean basin",
+        units="no unit",
+    )
+    assert Msftmz.transform_region_coord(dim_coord) == aux_coord
+
+
+@pytest.fixture
+def msftmz_cubes():
+    """``msftmz`` cube."""
+    region_coord = iris.coords.DimCoord(
+        points=[0, 1, 2],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean_basin",
+        attributes={
+            "requested": "atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2",
+        },
+    )
+    cube = iris.cube.Cube(
+        np.array([0, 0, 0]),
+        var_name="msftmz",
+        standard_name="ocean_meridional_overturning_mass_streamfunction",
+        units="kg s-1",
+        dim_coords_and_dims=[(region_coord, 0)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def test_msftmz_fix_metadata(msftmz_cubes):
+    cubes = Msftmz(
+        get_var_info("CMIP6", "Omon", "msftmz"),
+    ).fix_metadata(msftmz_cubes)
+
+    aux_coord = iris.coords.AuxCoord(
+        points=[
+            "atlantic_arctic_ocean",
+            "indian_pacific_ocean",
+            "global_ocean",
+        ],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean basin",
+        units="no unit",
+    )
+
+    assert cubes[0].coord("region") == aux_coord
