@@ -500,6 +500,7 @@ class Msftmz(Fix):
         Parameters
         ----------
         coord: iris.coords.DimCoord
+               DimCoord to be transformed
 
         Returns
         -------
