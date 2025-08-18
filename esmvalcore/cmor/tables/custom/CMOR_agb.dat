@@ -11,6 +11,7 @@ units:             kg m-2
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Above-Ground Biomass
+comment:           Amount of living biomass (organic matter) stored in vegetation above the soil including stem, stump, branches, bark, seeds and foliage, expressed as dry weight
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
