@@ -19,6 +19,7 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
+from esmvalcore.preprocessor._other import _get_var_info
 from esmvalcore.preprocessor._regrid import (
     HORIZONTAL_SCHEMES_IRREGULAR,
     HORIZONTAL_SCHEMES_REGULAR,
@@ -40,6 +41,31 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+def align_metadata(step_settings: dict[str, Any]) -> None:
+    """Check settings of preprocessor ``align_metadata``."""
+    project = step_settings.get("target_project")
+    mip = step_settings.get("target_mip")
+    short_name = step_settings.get("target_short_name")
+    strict = step_settings.get("strict", True)
+
+    # Any missing arguments will be reported later
+    if project is None or mip is None or short_name is None:
+        return
+
+    try:
+        _get_var_info(project, mip, short_name)
+    except ValueError as exc:
+        if strict:
+            msg = (
+                f"align_metadata failed: {exc}. Set `strict=False` to ignore "
+                f"this."
+            )
+            raise RecipeError(msg) from exc
+    except KeyError as exc:
+        msg = f"align_metadata failed: {exc}"
+        raise RecipeError(msg) from exc
 
 
 def ncl_version() -> None:

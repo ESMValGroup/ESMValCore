@@ -14,6 +14,7 @@ dependencies:
   - distributed
   - esgf-pyclient >=0.3.1
   - esmpy
+  - esmvaltool-sample-data
   - filelock
   - fiona
   - fire
@@ -69,5 +70,3 @@ dependencies:
   - pydocstyle
   - pylint
   # Not on conda forge - vprof
-  - pip:
-      - ESMValTool_sample_data

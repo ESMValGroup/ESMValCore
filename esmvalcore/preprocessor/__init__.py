@@ -51,7 +51,12 @@ from esmvalcore.preprocessor._multimodel import (
     ensemble_statistics,
     multi_model_statistics,
 )
-from esmvalcore.preprocessor._other import clip, cumulative_sum, histogram
+from esmvalcore.preprocessor._other import (
+    align_metadata,
+    clip,
+    cumulative_sum,
+    histogram,
+)
 from esmvalcore.preprocessor._regrid import (
     extract_coordinate_points,
     extract_levels,
@@ -115,7 +120,7 @@ __all__ = [
     # Concatenate all cubes in one
     "concatenate",
     "cmor_check_metadata",
-    # Extract years given by dataset keys (start_year and end_year)
+    # Extract years given by dataset keys (timerange/start_year and end_year)
     "clip_timerange",
     # Data reformatting/CMORization
     "fix_data",
@@ -124,6 +129,8 @@ __all__ = [
     "add_supplementary_variables",
     # Derive variable
     "derive",
+    # Align metadata
+    "align_metadata",
     # Time extraction (as defined in the preprocessor section)
     "extract_time",
     "extract_season",
