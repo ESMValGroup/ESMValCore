@@ -527,15 +527,20 @@ class Msftmz(Fix):
             units="no unit",
         )
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: iris.cube.CubeList) -> iris.cube.CubeList:
         """Transform a DimCoord to AuxCoord.
 
         indexes as points to names as points.
 
         Parameters
         ----------
-        cubes: iris CubeList
-            List of cubes to fix
+        cubes: iris.cube.CubeList
+               List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         coord = cube.coord("region")
