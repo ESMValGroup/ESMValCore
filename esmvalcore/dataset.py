@@ -756,7 +756,7 @@ class Dataset:
         self._file_globs = []
         files: dict[str, DataElement] = {}
         for data_source in sorted(
-            _get_data_sources(self.session),
+            _get_data_sources(self.session, self.facets["project"]),  # type: ignore[arg-type]
             key=lambda ds: ds.priority,
         ):
             if data_source.project == self.facets["project"]:
@@ -985,7 +985,8 @@ class Dataset:
             dataset.facets.pop("timerange")
             dataset.supplementaries = []
             check.data_availability(dataset)
-            intervals = [_get_start_end_date(f) for f in dataset.files]
+            # TODO: read start and end time from facets
+            intervals = [_get_start_end_date(f) for f in dataset.files]  # type: ignore[arg-type]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)

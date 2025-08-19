@@ -138,6 +138,14 @@ def test_load_default_config(cfg_default, monkeypatch):
         paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
         env={},
     )["projects"]
+    # Add in projects without extra facets from the config developer file
+    # until we have transitioned all of its content to the new configuration
+    # system.
+    for project in yaml.safe_load(
+        default_dev_file.read_text(encoding="utf-8"),
+    ):
+        if project not in default_project_settings:
+            default_project_settings[project] = {}
 
     session = cfg_default.start_session("recipe_example")
 

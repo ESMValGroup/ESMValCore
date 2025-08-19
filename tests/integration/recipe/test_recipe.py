@@ -110,7 +110,7 @@ def _get_default_settings_for_chl(save_filename):
         "remove_supplementary_variables": {},
         "save": {
             "compress": False,
-            "filename": save_filename,
+            "filename": Path(save_filename),
             "compute": False,
         },
     }
@@ -416,12 +416,12 @@ def test_simple_recipe(
             dataset = next(
                 d
                 for d in datasets
-                if _get_output_file(d.facets, session.preproc_dir)
+                if str(_get_output_file(d.facets, session.preproc_dir))
                 == product.filename
             )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
-            attributes["filename"] = product.filename
+            attributes["filename"] = Path(product.filename)
             attributes["start_year"] = 1999
             attributes["end_year"] = 2002
             assert product.attributes == attributes
@@ -692,7 +692,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         "remove_supplementary_variables": {},
         "save": {
             "compress": False,
-            "filename": product.filename,
+            "filename": Path(product.filename),
             "compute": False,
         },
     }
@@ -790,7 +790,7 @@ def test_recipe_iso_timerange(
     filename = (
         f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
-    assert pr_product.filename.name == filename
+    assert Path(pr_product.filename).name == filename
 
     areacella_task = next(
         t for t in recipe.tasks if t.name.endswith("areacella")
@@ -799,7 +799,7 @@ def test_recipe_iso_timerange(
     areacella_product = areacella_task.products.pop()
 
     filename = "CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc"
-    assert areacella_product.filename.name == filename
+    assert Path(areacella_product.filename).name == filename
 
 
 @pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
@@ -839,7 +839,7 @@ def test_recipe_iso_timerange_as_dataset(
     filename = (
         f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
     )
-    assert product.filename.name == filename
+    assert Path(product.filename).name == filename
 
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
@@ -2466,8 +2466,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     session["search_esgf"] = "when_missing"
 
     mocker.patch.object(
-        esmvalcore._recipe.recipe.esgf,
-        "download",
+        esmvalcore.io.protocol.DataElement,
+        "prepare",
         create_autospec=True,
     )
 
@@ -2478,10 +2478,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
-        set(),
-        session["download_dir"],
-    )
+    esmvalcore.io.protocol.DataElement.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )

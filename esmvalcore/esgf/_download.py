@@ -22,7 +22,7 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
-from esmvalcore.config._config import CFG
+from esmvalcore.config import CFG
 from esmvalcore.io.protocol import DataElement
 from esmvalcore.local import LocalFile
 from esmvalcore.typing import Facets

@@ -473,17 +473,21 @@ class DataSource(esmvalcore.io.protocol.DataSource):
     priority: int
     """The priority of the data source. Lower values have priority."""
 
-    debug_info: str = field(init=False)
+    debug_info: str = field(init=False, default="")
     """A string containing debug information when no data is found."""
 
     rootpath: Path
+    """The path where the directories are located."""
+
     dirname_template: str
+    """The template for the directory names."""
+
     filename_template: str
+    """The template for the file names."""
 
     def __post_init__(self) -> None:
         """Set further attributes."""
         self._regex_pattern = self._templates_to_regex()
-        self.debug_info = ""
 
     @property
     def regex_pattern(self) -> str:
@@ -502,6 +506,7 @@ class DataSource(esmvalcore.io.protocol.DataSource):
 
     def find_files(self, **facets) -> list[LocalFile]:
         """Find files."""
+        # TODO: deprecate this method
         return self.find_data(**facets)
 
     def find_data(self, **facets) -> list[LocalFile]:
@@ -656,7 +661,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
                     DataSource(
-                        name="legacy",
+                        name="legacy-local",
                         project=project,
                         priority=1,
                         rootpath=path,
@@ -776,6 +781,7 @@ def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     return result
 
 
+# TODO: Deprecate this?
 def find_files(
     *,
     debug: bool = False,
@@ -888,9 +894,6 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
     @facets.setter
     def facets(self, value: Facets) -> None:
         self._facets = value
-
-    def prepare(self) -> None:
-        """Do nothing for local files."""
 
     def to_iris(
         self,

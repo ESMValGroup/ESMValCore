@@ -3,6 +3,7 @@
 import iris
 import iris.cube
 import pytest
+from anyio import Path
 from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
@@ -154,7 +155,7 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
     assert len(task.products) == 2
     for product in task.products:
         print(product.filename)
-        assert product.filename.exists()
+        assert Path(product.filename).exists()
         out_cube = iris.load_cube(product.filename)
         print(out_cube.data)
         if product.attributes["dataset"] == "dataset1":

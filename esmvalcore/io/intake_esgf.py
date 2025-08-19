@@ -13,9 +13,11 @@ from numbers import Number
 import intake_esgf
 import intake_esgf.exceptions
 import iris.cube
+import isodate
 
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
+from esmvalcore.local import _parse_period
 from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
@@ -51,11 +53,17 @@ class IntakeESGFDataset(DataElement):
         :
             The loaded data.
         """
+        files = self.catalog.to_path_dict(
+            minimal_keys=False,
+            quiet=True,
+        )[self.name]
         dataset = self.catalog.to_dataset_dict(
             minimal_keys=False,
             add_measures=False,
             quiet=True,
         )[self.name]
+        dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
+
         return dataset_to_iris(dataset, ignore_warnings=ignore_warnings)
 
 
@@ -121,7 +129,17 @@ class IntakeESGFDataSource(DataSource):
             for our_facet, their_facet in self.facets.items()
             if our_facet in our_facets
         }
-        # TODO: filter by timerange
+        if (
+            "timerange" in facets and "*" not in facets["timerange"]  # type: ignore[operator]
+        ):
+            start, end = _parse_period(facets["timerange"])
+            esgf_facets["file_start"] = isodate.date_isoformat(
+                isodate.parse_date(start.split("T")[0]),
+            )
+            esgf_facets["file_end"] = isodate.date_isoformat(
+                isodate.parse_date(end.split("T")[0]),
+            )
+        # Search ESGF.
         try:
             self.catalog.search(**esgf_facets, quiet=True)
         except intake_esgf.exceptions.NoSearchResults:
@@ -156,6 +174,8 @@ class IntakeESGFDataSource(DataSource):
             dataset_id = row["key"]
             # Subset the catalog to a single dataset.
             cat = self.catalog.clone()
+            cat.file_start = self.catalog.file_start
+            cat.file_end = self.catalog.file_end
             cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
             # Discard all but the latest version. It is not clear how/if
             # `intake_esgf.ESGFCatalog.to_dataset_dict` supports multiple versions.

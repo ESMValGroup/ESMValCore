@@ -351,7 +351,7 @@ class ResumeTask(BaseTask):
         for prov_filename, attributes in prev_metadata.items():
             # Update the filename in case the output directory was moved
             # since the original run
-            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            filename = prev_preproc_dir / Path(prov_filename).name
             attributes["filename"] = filename
             product = TrackedFile(
                 filename,

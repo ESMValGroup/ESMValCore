@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
+from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any, TypeAlias
 
@@ -103,7 +104,6 @@ from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
-    from pathlib import Path
 
     from dask.delayed import Delayed
 
@@ -570,7 +570,7 @@ class PreprocessorFile(TrackedFile):
             self.cubes,
             step,
             input_files=self._input_files,
-            output_file=self.filename,
+            output_file=Path(self.filename),
             debug=debug,
             **self.settings[step],
         )

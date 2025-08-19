@@ -168,7 +168,7 @@ def load(
 
 
 def _load_zarr(
-    file: str | Path | Cube | CubeList | xr.Dataset | ncdata.NcData,
+    file: str | Path,
     ignore_warnings: list[dict[str, Any]] | None = None,
     backend_kwargs: dict[str, Any] | None = None,
 ) -> CubeList:

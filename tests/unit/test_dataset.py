@@ -1,7 +1,6 @@
 import textwrap
 from collections import defaultdict
 from pathlib import Path
-from unittest import mock
 
 import pyesgf
 import pytest
@@ -1420,18 +1419,32 @@ def dataset():
         mip="Amon",
         frequency="mon",
         short_name="tas",
-        dataset="EC.-Earth3",
+        dataset="EC-Earth3",
         exp="historical",
         ensemble="r1i1p1f1",
         grid="gr",
         timerange="1850/1851",
-        alias="CMIP6_EC-Eeath3_tas",
+        alias="CMIP6_EC-Earth3_tas",
     )
     dataset.session = {
         "search_esgf": "when_missing",
         "download_dir": Path("/download_dir"),
-        "rootpath": None,
-        "drs": {},
+        "projects": {
+            "CMIP6": {
+                "data": {
+                    "local": {
+                        "type": "esmvalcore.local.DataSource",
+                        "rootpath": Path("/local_dir"),
+                        "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+                        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                    },
+                    "esgf": {
+                        "type": "esmvalcore.esgf.ESGFDataSource",
+                        "download_dir": Path("/download_dir"),
+                    },
+                },
+            },
+        },
     }
     return dataset
 
@@ -1461,14 +1474,14 @@ def test_find_files(mocker, dataset, local_availability):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.DataSource,
+        "find_data",
         autospec=True,
-        return_value=(list(local_files), []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1498,14 +1511,14 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.DataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1535,14 +1548,14 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.DataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1557,15 +1570,23 @@ def test_find_files_outdated_local(mocker, dataset):
 def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
     """Test that find_files does never download files for non-ESGF projects."""
     monkeypatch.setitem(CFG, "search_esgf", "always")
+
+    files = [
+        mocker.create_autospec(
+            esmvalcore.local.LocalFile,
+            spec_set=True,
+            instance=True,
+        ),
+    ]
     mock_local_find_files = mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.DataSource,
+        "find_data",
         autospec=True,
-        return_value=(mock.sentinel.files, mock.sentinel.file_globs),
+        return_value=files,
     )
     mock_esgf_find_files = mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
     )
 
@@ -1602,11 +1623,10 @@ def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
     tas.augment_facets()
     tas.find_files()
 
-    mock_local_find_files.assert_called_once()
+    mock_local_find_files.assert_called()
     mock_esgf_find_files.assert_not_called()
 
-    assert tas.files == mock.sentinel.files
-    assert tas._file_globs == mock.sentinel.file_globs
+    assert tas.files == files
 
 
 def test_set_version():
