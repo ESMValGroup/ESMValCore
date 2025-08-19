@@ -1,9 +1,10 @@
 """Tests for `esmvalcore.preprocessor.PreprocessingTask`."""
 
+from pathlib import Path
+
 import iris
 import iris.cube
 import pytest
-from anyio import Path
 from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
