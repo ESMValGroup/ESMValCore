@@ -11,8 +11,7 @@ def test_duplications_in_changelog():
         "../../..",
         "doc/changelog.rst",
     )
-    with open(changelog_path, encoding="utf-8") as changelog:
-        changelog = changelog.read()
+    changelog = changelog_path.read_text(encoding="utf-8")
 
     # Find all pull requests
     pr_links = re.compile(

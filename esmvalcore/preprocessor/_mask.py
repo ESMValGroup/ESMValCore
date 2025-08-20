@@ -665,8 +665,8 @@ def mask_fillvalues(
 
     combined_mask = None
     for product in products:
-        for i, cube in enumerate(product.cubes):
-            cube = cube.copy()
+        for i, orig_cube in enumerate(product.cubes):
+            cube = orig_cube.copy()
             product.cubes[i] = cube
             cube.data = array_module.ma.fix_invalid(cube.core_data())
             mask = _get_fillvalues_mask(

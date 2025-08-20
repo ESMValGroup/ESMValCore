@@ -327,8 +327,8 @@ class Config(ValidatedConfig):
         """Get configuration :obj:`dict` from directories."""
         dirs_str: list[str] = []
         for config_dir in dirs:
-            config_dir = Path(config_dir).expanduser().absolute()
-            dirs_str.append(str(config_dir))
+            abs_config_dir = Path(config_dir).expanduser().absolute()
+            dirs_str.append(str(abs_config_dir))
         return dask.config.collect(paths=dirs_str, env={})
 
     def load_from_dirs(self, dirs: Iterable[str | Path]) -> None:

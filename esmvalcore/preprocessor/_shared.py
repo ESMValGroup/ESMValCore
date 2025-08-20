@@ -692,10 +692,10 @@ def _rechunk_aux_factory_dependencies(
     cube = cube.copy()
     cube_chunks = cube.lazy_data().chunks
     for factory in factories:
-        for coord in factory.dependencies.values():
-            coord_dims = cube.coord_dims(coord)
+        for orig_coord in factory.dependencies.values():
+            coord_dims = cube.coord_dims(orig_coord)
             if coord_dims:
-                coord = coord.copy()
+                coord = orig_coord.copy()
                 chunks = tuple(cube_chunks[i] for i in coord_dims)
                 coord.points = coord.lazy_points().rechunk(chunks)
                 if coord.has_bounds():

@@ -450,7 +450,7 @@ def _check_duration_periods(timerange: list[str]) -> None:
             raise RecipeError(msg) from exc
 
 
-def _check_format_years(date: str) -> str:
+def _format_years(date: str) -> str:
     if date != "*" and not date.startswith("P"):
         if len(date) < 4:
             date = date.zfill(4)
@@ -488,8 +488,7 @@ def valid_time_selection(timerange: str) -> None:
         _check_delimiter(timerange_list)
         _check_duration_periods(timerange_list)
         for date in timerange_list:
-            date = _check_format_years(date)
-            _check_timerange_values(date, timerange_list)
+            _check_timerange_values(_format_years(date), timerange_list)
 
 
 def differing_timeranges(
