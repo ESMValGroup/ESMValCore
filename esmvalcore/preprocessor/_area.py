@@ -89,9 +89,8 @@ def extract_region(  # noqa: C901
         msg = f"Invalid end_latitude: {end_latitude}"
         raise ValueError(msg)
     if cube.coord("latitude").ndim == 1:
-        # Iris check if any point of the cell is inside the region
-        # To check only the center, ignore_bounds must be set to
-        # True (default) is False
+        # Iris checks if any point of the cell is inside the region.
+        # To check only the center, ignore_bounds must be set to True.
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
             latitude=(start_latitude, end_latitude),
@@ -895,10 +894,9 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
     for measure in cube.cell_measures():
-        # Cell measures that are time-dependent, with 4 dimension and
-        # an original shape of (time, depth, lat, lon), need to be
-        # broadcast to the cube with 5 dimensions and shape
-        # (time, shape_id, depth, lat, lon)
+        # Cell measures that are time-dependent, with 4 dimensions and an
+        # original shape of (time, depth, lat, lon), need to be broadcast to
+        # the cube with 5 dimensions and shape (time, shape_id, depth, lat, lon)
         if measure.ndim > 3 and result.ndim > 4:
             data = measure.core_data()
             if result.has_lazy_data():
