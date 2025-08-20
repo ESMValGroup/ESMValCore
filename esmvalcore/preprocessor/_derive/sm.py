@@ -11,7 +11,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sm`."""
 
     @staticmethod
-    def required(project):  #  noqa: ARG004
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [{"short_name": "mrsos"}]
 
