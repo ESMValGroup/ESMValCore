@@ -45,7 +45,7 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._running = False
         self._timer = None
 
-    def _start(self, dsk):
+    def _start(self, dsk):  # noqa: ARG002
         self._state = None
         # Start background thread
         self._running = True
@@ -53,17 +53,17 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._timer.daemon = True
         self._timer.start()
 
-    def _start_state(self, dsk, state):
+    def _start_state(self, dsk, state):  # noqa: ARG002
         self.progress.start()
         total = sum(
             len(state[k]) for k in ["ready", "waiting", "running", "finished"]
         )
         self.progress.update(self.task, total=total)
 
-    def _pretask(self, key, dsk, state):
+    def _pretask(self, key, dsk, state):  # noqa: ARG002
         self._state = state
 
-    def _finish(self, dsk, state, errored):
+    def _finish(self, dsk, state, errored):  # noqa: ARG002
         self._running = False
         self._timer.join()
         self._draw_bar()
@@ -102,7 +102,12 @@ class RichDistributedProgressBar(
         self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
 
-    def _draw_bar(self, remaining, all, **kwargs):  # noqa: A002 # pylint: disable=redefined-builtin
+    def _draw_bar(
+        self,
+        remaining: int,
+        all: int,  # noqa: A002 # pylint: disable=redefined-builtin
+        **kwargs,  # noqa: ARG002
+    ) -> None:
         completed = all - remaining
         self.progress.update(self.task_id, completed=completed, total=all)
 
@@ -174,7 +179,7 @@ class DistributedProgressLogger(
         self,
         remaining: int,
         all: int,  # noqa: A002 # pylint: disable=redefined-builtin
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ) -> None:
         frac = (1 - remaining / all) if all else 1.0
         if (

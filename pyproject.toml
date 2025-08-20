@@ -182,7 +182,6 @@ select = ["ALL"]
 ignore = [
     # Ignore until someone has time to fix this:
     "ANN",      # Adding type hints
-    "ARG",      # Unused argument
     "DTZ",      # add tzinfo to datetimes
     "ERA001",   # Found commented-out code
     "FBT",      # avoid boolean positional arguments
@@ -216,6 +215,7 @@ ignore = [
     "T20",      # Printing things in notebooks is fine.
 ]
 "tests/**.py" = [
+    "ARG",      # Fixtures that set up some state are wrongly identified as unused arguments.
     "S101",     # Use of assert in tests code is required.
     "T20",      # Printing things can help with debugging tests.
     "SLF001",   # Testing private members is ok
