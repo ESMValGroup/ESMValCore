@@ -259,7 +259,7 @@ def _get_itype(step: str) -> str:
 
 def check_preprocessor_settings(settings: dict[str, Any]) -> None:
     """Check preprocessor settings."""
-    for step in settings:
+    for step, kwargs in settings.items():
         if step not in DEFAULT_ORDER:
             msg = (
                 f"Unknown preprocessor function '{step}', choose from: "
@@ -294,7 +294,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             ],
         )
         if check_args:
-            invalid_args = set(settings[step]) - set(args)
+            invalid_args = set(kwargs) - set(args)
             if invalid_args:
                 msg = (
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
@@ -310,7 +310,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             if p.default is not inspect.Parameter.empty
         ]
         end = None if not defaults else -len(defaults)
-        missing_args = set(args[:end]) - set(settings[step])
+        missing_args = set(args[:end]) - set(kwargs)
         if missing_args:
             msg = (
                 f"Missing required argument(s) {missing_args} for "
@@ -320,7 +320,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
 
         # Final sanity check in case the above fails to catch a mistake
         try:
-            signature.bind(None, **settings[step])
+            signature.bind(None, **kwargs)
         except TypeError:
             logger.error(
                 "Wrong preprocessor function arguments in function '%s'",

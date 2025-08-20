@@ -188,7 +188,6 @@ ignore = [
     "N818",     # Exception name should be named with an Error suffix
     "PERF",     # Use comprehensions
     "PGH003",   # Use specific rule codes when ignoring type issues
-    "PLC0206",  # Extracting value from dictionary without calling `.items()`
     "PLR2004",  # Don't use magic values
     "PLW2901",  # Don't overwrite a loop variable
     "PT009",    # Use a regular `assert` instead of unittest-style `assertListEqual`
