@@ -431,7 +431,7 @@ class CMIP6Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -872,7 +872,7 @@ class CMIP5Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -1081,7 +1081,7 @@ class CustomInfo(CMIP5Info):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     def get_variable(

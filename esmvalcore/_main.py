@@ -272,16 +272,16 @@ class Recipes:
         configure_logging(console_log_level="info")
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
-        print("# Installed recipes")
+        print("# Installed recipes")  # noqa: T201
         for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == ".":
                 root = ""
             if root:
-                print(f"\n# {root.replace(os.sep, ' - ').title()}")
+                print(f"\n# {root.replace(os.sep, ' - ').title()}")  # noqa: T201
             for filename in sorted(files):
                 if filename.endswith(".yml"):
-                    print(os.path.join(root, filename))
+                    print(os.path.join(root, filename))  # noqa: T201
 
     @staticmethod
     def get(recipe: str) -> None:
@@ -338,7 +338,7 @@ class Recipes:
         msg = f"Recipe {recipe}"
         logger.info(msg)
         logger.info("=" * len(msg))
-        print(installed_recipe.read_text(encoding="utf-8"))
+        print(installed_recipe.read_text(encoding="utf-8"))  # noqa: T201
 
 
 class ESMValTool:
@@ -352,7 +352,7 @@ class ESMValTool:
         self._extra_packages = {}
         esmvaltool_commands = entry_points(group="esmvaltool_commands")
         if not esmvaltool_commands:
-            print(
+            print(  # noqa: T201
                 "Running esmvaltool executable from ESMValCore. "
                 "No other command line utilities are available "
                 "until ESMValTool is installed.",
@@ -378,9 +378,9 @@ class ESMValTool:
         """
         from . import __version__
 
-        print(f"ESMValCore: {__version__}")
+        print(f"ESMValCore: {__version__}")  # noqa: T201
         for project, version in self._extra_packages.items():
-            print(f"{project}: {version}")
+            print(f"{project}: {version}")  # noqa: T201
 
     def run(self, recipe, **kwargs):
         """Execute an ESMValTool recipe.

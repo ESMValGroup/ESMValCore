@@ -198,7 +198,6 @@ ignore = [
     "RUF022",   # `__all__` definitions that are not ordered according to an "isort-style" sort.
     "SIM102",   # Use a single `if` statement instead of nested `if` statements
     "SIM117",   # Use a single `with` statement with multiple contexts instead of nested `with` statements
-    "T201",     # `print` statements.
     "TD003",    # Missing issue link on the line following this TODO
     "TRY400",   # Uses of `logging.error` instead of `logging.exception` when logging an exception
     # Really ignore:
