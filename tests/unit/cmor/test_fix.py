@@ -120,6 +120,7 @@ class TestFixMetadata:
         self.cube = self._create_mock_cube()
         self.fixed_cube = self._create_mock_cube()
         self.mock_fix = Mock()
+        self.mock_fix.GROUP_CUBES_BY_DATE = False
         self.mock_fix.fix_metadata.return_value = [self.fixed_cube]
         self.expected_get_fixes_call = {
             "project": "project",
