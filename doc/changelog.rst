@@ -25,7 +25,7 @@ TODO: add examples of how to deal with these changes
         `iris.analysis:Linear` and `extrapolation_mode: extrapolate` instead.
         This is an exact replacement, e.g.:
 
-         .. code-block:: yml
+         .. code-block:: yaml
 
             preprocessors:
                   regrid_preprocessor:
