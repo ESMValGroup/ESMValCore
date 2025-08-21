@@ -427,8 +427,7 @@ def _calculate_metric(
         raise ValueError(msg)
     (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     with ignore_iris_vague_metadata_warnings():
         res_cube = cube.collapsed(coords, iris.analysis.MAX)
     res_cube.data = res_data

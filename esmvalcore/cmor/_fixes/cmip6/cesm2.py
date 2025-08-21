@@ -507,8 +507,7 @@ class Msftmz(Fix):
         iris.coords.AuxCoord
 
         """
-        # parses string like:
-        # 'atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2'
+        # parses string like: 'atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2'
         region_string = coord.attributes["requested"]
         lookup = {
             int(split_point[1]): split_point[0]

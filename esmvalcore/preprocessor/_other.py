@@ -577,8 +577,7 @@ def _get_histogram_cube(
         units=cube.units,
     )
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     cell_methods = cube.cell_methods
     with ignore_iris_vague_metadata_warnings():
         cube = cube.collapsed(coords, iris.analysis.MAX)

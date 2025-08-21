@@ -285,9 +285,6 @@ def _get_geometries_from_shp(shapefilename):
         msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
 
-    # TODO: might need this for a later, more enhanced, version
-    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
-
     return geometries
 
 

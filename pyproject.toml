@@ -183,7 +183,6 @@ ignore = [
     # Ignore until someone has time to fix this:
     "ANN",      # Adding type hints
     "DTZ",      # add tzinfo to datetimes
-    "ERA001",   # Found commented-out code
     "FBT",      # avoid boolean positional arguments
     "N818",     # Exception name should be named with an Error suffix
     "PERF",     # Use comprehensions

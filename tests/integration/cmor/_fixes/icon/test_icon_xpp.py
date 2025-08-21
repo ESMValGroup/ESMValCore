@@ -36,9 +36,6 @@ def tmp_cache_dir(monkeypatch, tmp_path):
     monkeypatch.setattr(IconFix, "CACHE_DIR", tmp_path)
 
 
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
-
-
 @pytest.fixture
 def cubes_atm_2d(test_data_path):
     """2D sample cubes."""

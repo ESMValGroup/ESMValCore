@@ -280,14 +280,12 @@ class Config(ValidatedConfig):
         for arg in sys.argv:
             for opt in ("--config-file", "--config_file"):
                 if opt in arg:
-                    # Parse '--config-file=/file.yml' or
-                    # '--config_file=/file.yml'
+                    # Parse '--config-file=/file.yml' or '--config_file=/file.yml'
                     partition = arg.partition("=")
                     if partition[2]:
                         return partition[2]
 
-                    # Parse '--config-file /file.yml' or
-                    # '--config_file /file.yml'
+                    # Parse '--config-file /file.yml' or '--config_file /file.yml'
                     config_idx = sys.argv.index(opt)
                     if config_idx == len(sys.argv) - 1:  # no file given
                         return None
