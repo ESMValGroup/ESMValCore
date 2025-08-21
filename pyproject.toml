@@ -79,6 +79,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 test = [
+    "pre-commit",
     "pytest>6.0.0",
     "pytest-cov>=2.10.1",
     "pytest-env",
@@ -97,9 +98,6 @@ doc = [
 ]
 develop = [
     "esmvalcore[test,doc]",
-    "pre-commit",
-    "pylint",
-    "pydocstyle",
     "vprof",
 ]
 
@@ -234,31 +232,3 @@ known-first-party = ["esmvalcore"]
 convention = "numpy"
 [tool.ruff.lint.pylint]
 max-args = 7
-
-# Configure linters that are run by Prospector
-# TODO: remove once we have enabled all ruff rules for the tools provided by
-# Prospector, see https://github.com/ESMValGroup/ESMValCore/issues/2528.
-
-[tool.pylint.main]
-jobs = 1  # Running more than one job in parallel crashes prospector.
-ignore-paths = [
-    "doc/conf.py",  # Sphinx configuration file
-]
-[tool.pylint.basic]
-good-names = [
-    "_",            # Used by convention for unused variables
-    "i", "j", "k",  # Used by convention for indices
-    "logger",       # Our preferred name for the logger
-]
-[tool.pylint.format]
-max-line-length = 79
-[tool.pylint."messages control"]
-disable = [
-    "import-error",      # Needed because Codacy does not install dependencies
-    "file-ignored",      # Disable messages about disabling checks
-    "line-too-long",     # Disable line-too-long as this is taken care of by the formatter.
-    "locally-disabled",  # Disable messages about disabling checks
-]
-
-[tool.pydocstyle]
-convention = "numpy"

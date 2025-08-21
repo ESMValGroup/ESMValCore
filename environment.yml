@@ -57,6 +57,7 @@ dependencies:
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
+  - pre-commit
   - pytest >6.0.0
   - pytest-cov >=2.10.1
   - pytest-env
@@ -64,9 +65,4 @@ dependencies:
   - pytest-metadata >=1.5.1
   - pytest-mock
   - pytest-xdist
-  # Not on conda-forge - ESMValTool_sample_data==0.0.3
-  # Python packages needed for installing in development mode
-  - pre-commit
-  - pydocstyle
-  - pylint
   # Not on conda forge - vprof
