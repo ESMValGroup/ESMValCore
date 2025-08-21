@@ -14,8 +14,6 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
-
 -  Remove deprecated horizontal regridding schemes `unstructured_nearest` and `linear_extrapolate` (:pull:`2743`) by :user:`schlunma`
 
    - `unstructured_nearest`: Please use the scheme nearest instead. This is an
