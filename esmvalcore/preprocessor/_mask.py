@@ -744,7 +744,7 @@ def _get_fillvalues_mask(
         "spell_count",
         count_spells,
         lazy_func=count_spells,
-        units_func=lambda units: 1,
+        units_func=lambda units: 1,  # noqa: ARG005
     )
 
     # Calculate the statistic.

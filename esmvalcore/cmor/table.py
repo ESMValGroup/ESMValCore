@@ -147,7 +147,10 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
 
 
 @lru_cache
-def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
+def _read_cmor_tables(
+    cfg_file: Path,
+    mtime: float,  # noqa: ARG001
+) -> dict[str, CMORTable]:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -428,7 +431,7 @@ class CMIP6Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -869,7 +872,7 @@ class CMIP5Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -1078,14 +1081,14 @@ class CustomInfo(CMIP5Info):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     def get_variable(
         self,
-        table: str,
+        table: str,  # noqa: ARG002
         short_name: str,
-        derived: bool = False,
+        derived: bool = False,  # noqa: ARG002
     ) -> VariableInfo | None:
         """Search and return the variable info.
 
