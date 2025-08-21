@@ -919,7 +919,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
                 dim_map=dim_map,
                 chunks=chunks,
             )
-            measure = iris.coords.CellMeasure(
+            measure = iris.coords.CellMeasure(  # noqa: PLW2901
                 data,
                 standard_name=measure.standard_name,
                 long_name=measure.long_name,

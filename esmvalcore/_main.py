@@ -273,8 +273,8 @@ class Recipes:
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
         print("# Installed recipes")  # noqa: T201
-        for root, _, files in sorted(os.walk(recipes_folder)):
-            root = os.path.relpath(root, recipes_folder)
+        for recipe_root, _, files in sorted(os.walk(recipes_folder)):
+            root = os.path.relpath(recipe_root, recipes_folder)
             if root == ".":
                 root = ""
             if root:
