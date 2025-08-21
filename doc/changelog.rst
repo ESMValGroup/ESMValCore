@@ -18,22 +18,22 @@ TODO: add examples of how to deal with these changes
 
 -  Remove deprecated horizontal regridding schemes `unstructured_nearest` and `linear_extrapolate` (:pull:`2743`) by :user:`schlunma`
 
-      - `unstructured_nearest`: Please use the scheme nearest instead. This is an
-        exact replacement for data on unstructured grids. ESMValCore is now able
-        to determine the most suitable regridding scheme based on the input data.
-      - `linear_extrapolate`: Please use a generic scheme with reference:
-        `iris.analysis:Linear` and `extrapolation_mode: extrapolate` instead.
-        This is an exact replacement, e.g.:
+   - `unstructured_nearest`: Please use the scheme nearest instead. This is an
+      exact replacement for data on unstructured grids. ESMValCore is now able
+      to determine the most suitable regridding scheme based on the input data.
+   - `linear_extrapolate`: Please use a generic scheme with reference:
+      `iris.analysis:Linear` and `extrapolation_mode: extrapolate` instead.
+      This is an exact replacement, e.g.:
 
-         .. code-block:: yaml
+      .. code-block:: yaml
 
-            preprocessors:
-                  regrid_preprocessor:
-                  regrid:
-                     target_grid: 2.5x2.5
-                     scheme:
-                        reference: iris.analysis:Linear
-                        extrapolation_mode: extrapolate
+         preprocessors:
+               regrid_preprocessor:
+               regrid:
+                  target_grid: 2.5x2.5
+                  scheme:
+                     reference: iris.analysis:Linear
+                     extrapolation_mode: extrapolate
 
 -  Align custom `lwp` table with CMIP6 version (:pull:`2791`) by :user:`schlunma`
    There is no way to restore the old behavior. Downstream code needs to be adapted.
