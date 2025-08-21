@@ -2,7 +2,6 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.1.0
   codecov: codecov/codecov@5.3.0
 
 commands:
@@ -146,10 +145,6 @@ jobs:
       - codecov/upload:
           files: 'test-reports/coverage.xml'
           disable_search: true
-      - coverage-reporter/send_report:
-          coverage-reports: 'test-reports/coverage.xml'
-          project-token: $CODACY_PROJECT_TOKEN
-          skip: true  # skip if project-token is not defined (i.e. on a fork)
 
   test_installation_from_source_test_mode:
     # Test installation from source
