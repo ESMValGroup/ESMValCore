@@ -83,8 +83,8 @@ class Fix:
     def fix_file(
         self,
         file: str | Path | xr.Dataset | ncdata.NcData,
-        output_dir: Path,
-        add_unique_suffix: bool = False,
+        output_dir: Path,  # noqa: ARG002
+        add_unique_suffix: bool = False,  # noqa: ARG002
     ) -> str | Path | xr.Dataset | ncdata.NcData:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 

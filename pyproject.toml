@@ -182,13 +182,11 @@ select = ["ALL"]
 ignore = [
     # Ignore until someone has time to fix this:
     "ANN",      # Adding type hints
-    "ARG",      # Unused argument
     "DTZ",      # add tzinfo to datetimes
     "FBT",      # avoid boolean positional arguments
     "N818",     # Exception name should be named with an Error suffix
     "PERF",     # Use comprehensions
     "PGH003",   # Use specific rule codes when ignoring type issues
-    "PLC0206",  # Extracting value from dictionary without calling `.items()`
     "PLR2004",  # Don't use magic values
     "PLW2901",  # Don't overwrite a loop variable
     "PT009",    # Use a regular `assert` instead of unittest-style `assertListEqual`
@@ -198,7 +196,6 @@ ignore = [
     "RUF022",   # `__all__` definitions that are not ordered according to an "isort-style" sort.
     "SIM102",   # Use a single `if` statement instead of nested `if` statements
     "SIM117",   # Use a single `with` statement with multiple contexts instead of nested `with` statements
-    "T201",     # `print` statements.
     "TD003",    # Missing issue link on the line following this TODO
     "TRY400",   # Uses of `logging.error` instead of `logging.exception` when logging an exception
     # Really ignore:
@@ -215,6 +212,7 @@ ignore = [
     "T20",      # Printing things in notebooks is fine.
 ]
 "tests/**.py" = [
+    "ARG",      # Fixtures that set up some state are wrongly identified as unused arguments.
     "S101",     # Use of assert in tests code is required.
     "T20",      # Printing things can help with debugging tests.
     "SLF001",   # Testing private members is ok

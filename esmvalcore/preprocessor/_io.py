@@ -62,7 +62,7 @@ def _get_attr_from_field_coord(
 def _restore_lat_lon_units(
     cube: Cube,
     field: CFVariable,
-    filename: str,
+    filename: str,  # noqa: ARG001
 ) -> None:  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees

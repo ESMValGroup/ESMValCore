@@ -329,13 +329,13 @@ def extract_shape(settings: dict[str, Any]) -> None:
         "crop": {True, False},
         "decomposed": {True, False},
     }
-    for key in valid:
+    for key, valid_values in valid.items():
         value = settings.get(key)
-        if not (value is None or value in valid[key]):
+        if not (value is None or value in valid_values):
             msg = (
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
-                "{}".format(", ".join(f"'{k}'".lower() for k in valid[key]))
+                "{}".format(", ".join(f"'{k}'".lower() for k in valid_values))
             )
             raise RecipeError(msg)
 

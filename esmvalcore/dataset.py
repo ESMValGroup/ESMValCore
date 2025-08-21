@@ -69,9 +69,9 @@ the main dataset.
 
 def _augment(base: dict, update: dict) -> None:
     """Update dict `base` with values from dict `update`."""
-    for key in update:
+    for key, value in update.items():
         if key not in base:
-            base[key] = update[key]
+            base[key] = value
 
 
 def _isglob(facet_value: FacetValue | None) -> bool:

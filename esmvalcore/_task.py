@@ -81,12 +81,12 @@ def _get_resource_usage(process, start_time, children=True):
                 processes = [process]
 
             # Update resource usage
-            for proc in cache:
+            for proc, cached_value in cache.items():
                 # Set cpu percent and memory usage to 0 for old processes
                 if proc not in processes:
-                    cache[proc][1] = 0
-                    cache[proc][2] = 0
-                    cache[proc][3] = 0
+                    cached_value[1] = 0
+                    cached_value[2] = 0
+                    cached_value[3] = 0
             for proc in processes:
                 # Update current processes
                 cache[proc] = [
@@ -206,9 +206,9 @@ def write_ncl_settings(settings, filename, mode="wt"):
             int: "int64",
             dict: "logical",
         }
-        for type_ in typemap:
+        for type_, ncl_type in typemap.items():
             if isinstance(value, type_):
-                return typemap[type_]
+                return ncl_type
         msg = f"Unable to map {type(value)} to an NCL type"
         raise ValueError(msg)
 

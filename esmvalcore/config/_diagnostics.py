@@ -164,9 +164,8 @@ class TagsManager(dict):
         Tags are updated one level deep, and only if the corresponding
         section exists in the ``TagsManager``.
         """
-        for key in dct:
+        for key, tags in dct.items():
             if key in self:
-                tags = dct[key]
                 dct[key] = self.get_tag_values(key, tags)
 
 
