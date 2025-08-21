@@ -40,6 +40,7 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Make extra facets configurable in our configuration (:pull:`2747`) by :user:`schlunma`
+   See :ref:`config-projects`
 
 Bug fixes
 ~~~~~~~~~
