@@ -261,7 +261,14 @@ def test_path2facets(
     """Test `DataSource.path2facets."""
     path = Path(path)
     rootpath = Path(rootpath)
-    data_source = DataSource(rootpath, dirname_template, filename_template)
+    data_source = DataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath=rootpath,
+        dirname_template=dirname_template,
+        filename_template=filename_template,
+    )
     result = data_source.path2facets(path)
     assert result == facets
 

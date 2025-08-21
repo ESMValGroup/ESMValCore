@@ -324,9 +324,9 @@ def test_data_availability_nonexistent(tmp_path):
 def test_reference_for_bias_preproc_empty():
     """Test ``reference_for_bias_preproc``."""
     products = {
-        PreprocessorFile(filename=10),
-        PreprocessorFile(filename=20),
-        PreprocessorFile(filename=30),
+        PreprocessorFile(filename=Path("10")),
+        PreprocessorFile(filename=Path("20")),
+        PreprocessorFile(filename=Path("30")),
     }
     check.reference_for_bias_preproc(products)
 
@@ -334,11 +334,11 @@ def test_reference_for_bias_preproc_empty():
 def test_reference_for_bias_preproc_one_ref():
     """Test ``reference_for_bias_preproc`` with one reference."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
-        PreprocessorFile(filename=20, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("20"), settings={"bias": {}}),
         PreprocessorFile(
-            filename=30,
+            filename=Path("30"),
             settings={"bias": {}},
             attributes={"reference_for_bias": True},
         ),
@@ -349,10 +349,10 @@ def test_reference_for_bias_preproc_one_ref():
 def test_reference_for_bias_preproc_no_ref():
     """Test ``reference_for_bias_preproc`` with no reference."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
-        PreprocessorFile(filename=20, settings={"bias": {}}),
-        PreprocessorFile(filename=30, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("20"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("30"), settings={"bias": {}}),
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)
@@ -376,15 +376,15 @@ def test_reference_for_bias_preproc_no_ref():
 def test_reference_for_bias_preproc_two_refs():
     """Test ``reference_for_bias_preproc`` with two references."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
         PreprocessorFile(
-            filename=20,
+            filename=Path("20"),
             attributes={"reference_for_bias": True},
             settings={"bias": {}},
         ),
         PreprocessorFile(
-            filename=30,
+            filename=Path("30"),
             attributes={"reference_for_bias": True},
             settings={"bias": {}},
         ),

@@ -6,7 +6,7 @@ import itertools
 import logging
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -15,12 +15,17 @@ import isodate
 from cf_units import Unit
 from netCDF4 import Dataset, Variable
 
+import esmvalcore.io.protocol
+from esmvalcore.preprocessor._io import _load_from_file
+
 from .config import CFG
 from .config._config import get_project_config
 from .exceptions import RecipeError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    import iris.cube
 
     from .esgf import ESGFFile
     from .typing import Facets, FacetValue
@@ -456,12 +461,29 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
 
 
 @dataclass(order=True)
-class DataSource:
+class DataSource(esmvalcore.io.protocol.DataSource):
     """Class for storing a data source and finding the associated files."""
 
+    name: str
+    """A name identifying the data source."""
+
+    project: str
+    """The project that the data source provides data for."""
+
+    priority: int
+    """The priority of the data source. Lower values have priority."""
+
+    debug_info: str = field(init=False, default="")
+    """A string containing debug information when no data is found."""
+
     rootpath: Path
+    """The path where the directories are located."""
+
     dirname_template: str
+    """The template for the directory names."""
+
     filename_template: str
+    """The template for the file names."""
 
     def __post_init__(self) -> None:
         """Set further attributes."""
@@ -484,7 +506,17 @@ class DataSource:
 
     def find_files(self, **facets) -> list[LocalFile]:
         """Find files."""
+        # TODO: deprecate this method
+        return self.find_data(**facets)
+
+    def find_data(self, **facets) -> list[LocalFile]:
+        """Find data locally."""
+        facets = dict(facets)
+        if "original_short_name" in facets:
+            facets["short_name"] = facets["original_short_name"]
+
         globs = self.get_glob_patterns(**facets)
+        self.debug_info = "\n".join(str(g) for g in globs)
         logger.debug("Looking for files matching %s", globs)
 
         files: list[LocalFile] = []
@@ -493,6 +525,12 @@ class DataSource:
                 file = LocalFile(filename)
                 file.facets.update(self.path2facets(file))
                 files.append(file)
+
+        files = _filter_versions_called_latest(files)
+
+        if "version" not in facets:
+            files = _select_latest_version(files)
+
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
@@ -622,7 +660,14 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
-                    DataSource(path, d, f)
+                    DataSource(
+                        name="legacy-local",
+                        project=project,
+                        priority=1,
+                        rootpath=path,
+                        dirname_template=d,
+                        filename_template=f,
+                    )
                     for d in dir_templates
                     for f in file_templates
                 )
@@ -736,6 +781,7 @@ def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     return result
 
 
+# TODO: Deprecate this?
 def find_files(
     *,
     debug: bool = False,
@@ -829,7 +875,7 @@ def find_files(
     return files
 
 
-class LocalFile(type(Path())):  # type: ignore
+class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
     """File on the local filesystem."""
 
     @property
@@ -848,3 +894,16 @@ class LocalFile(type(Path())):  # type: ignore
     @facets.setter
     def facets(self, value: Facets) -> None:
         self._facets = value
+
+    def to_iris(
+        self,
+        ignore_warnings: list[dict[str, Any]] | None = None,
+    ) -> iris.cube.CubeList:
+        """Load the data as Iris cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            The loaded data.
+        """
+        return _load_from_file(self, ignore_warnings=ignore_warnings)
