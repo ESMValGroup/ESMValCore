@@ -1044,7 +1044,7 @@ class Recipe:
             ancestors = []
             for id_glob in settings.pop("ancestors", variable_names):
                 if TASKSEP not in id_glob:
-                    id_glob = diagnostic_name + TASKSEP + id_glob
+                    id_glob = diagnostic_name + TASKSEP + id_glob  # noqa: PLW2901
                 ancestors.append(id_glob)
             settings["recipe"] = self._filename
             settings["version"] = __version__

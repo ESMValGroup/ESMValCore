@@ -46,7 +46,7 @@ def attribute_to_authors(entity, authors):
     for author in authors:
         if isinstance(author, str):
             # This happens if the config-references.yml file is not available
-            author = {"name": author}
+            author = {"name": author}  # noqa: PLW2901
         agent = entity.bundle.agent(
             namespace + ":" + author["name"],
             {"attribute:" + k: author[k] for k in author if k != "name"},

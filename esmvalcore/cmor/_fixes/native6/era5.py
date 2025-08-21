@@ -232,7 +232,8 @@ class Orog(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = []
-        for cube in cubes:
+        for orig_cube in cubes:
+            cube = orig_cube.copy()
             cube = remove_time_coordinate(cube)
             divide_by_gravity(cube)
             fixed_cubes.append(cube)
@@ -544,7 +545,7 @@ class AllVars(Fix):
             # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
-                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]
+                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]  # noqa: PLW2901
             coord = cube.coord(axis=axis)
             if axis == "T":
                 coord.convert_units("days since 1850-1-1 00:00:00.0")
@@ -601,7 +602,8 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = CubeList()
-        for cube in cubes:
+        for orig_cube in cubes:
+            cube = orig_cube.copy()
             cube.var_name = self.vardef.short_name
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name

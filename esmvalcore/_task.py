@@ -722,9 +722,9 @@ class DiagnosticTask(BaseTask):
         }
 
         valid = True
-        for filename, attributes in table.items():
+        for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(attributes)
+            attributes = deepcopy(orig_attributes)
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
