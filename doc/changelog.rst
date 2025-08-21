@@ -3,6 +3,132 @@
 Changelog
 =========
 
+v2.13.0
+------------------------
+Highlights
+
+TODO: add highlights
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: add examples of how to deal with these changes
+
+-  Remove deprecated horizontal regridding schemes `unstructured_nearest` and `linear_extrapolate` (:pull:`2743`) by :user:`schlunma`
+-  Align custom `lwp` table with CMIP6 version (:pull:`2791`) by :user:`schlunma`
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Make extra facets configurable in our configuration (:pull:`2747`) by :user:`schlunma`
+
+Bug fixes
+~~~~~~~~~
+
+-  Avoid too wide supplementary file search (:pull:`2771`) by :user:`bouweandela`
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  Fix units and values of tos variable in GISS-E2-1-G-CC esm-piControl (:pull:`2689`) by :user:`dhohn`
+-  Add entry for n2os variable (:pull:`2724`) by :user:`jlenh`
+-  Added custom CMOR tables for `dpn2o` and `n2oflux` (:pull:`2751`) by :user:`schlunma`
+-  Add UKESM1-0-LL exception to fix HadGEM3-GC31-LL 'parent_time_units' error (:pull:`2782`) by :user:`prosku`
+-  Add custom CMOR table for above-ground biomass (agb) (:pull:`2783`) by :user:`axel-lauer`
+
+Community
+~~~~~~~~~
+
+-  Added stale action (:pull:`2759`) by :user:`schlunma`
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Unpin upper sphinx but pin nbsphinx >=0.9.7 (:pull:`2685`) by :user:`valeriupredoi`
+-  Explicitly export LC_ALL for sphinx builds (:pull:`2708`) by :user:`valeriupredoi`
+-  Remove reference to psy-plot recipe in ESMValTool (:pull:`2741`) by :user:`valeriupredoi`
+-  Fix Codecov badge in README (:pull:`2754`) by :user:`valeriupredoi`
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Fix for obs4MIPs dataset C3S-GTO-ECV-9-0 (toz) (:pull:`2722`) by :user:`axel-lauer`
+-  Add on-the-fly CMORizer for ICON-XPP (:pull:`2659`) by :user:`schlunma`
+-  Allow `fix_file` to return dataset objects (:pull:`2579`) by :user:`schlunma`
+-  Fix ocean region coordinate in msftmz dataset (CESM2) (:pull:`1607`) by :user:`dhohn`
+
+Installation
+~~~~~~~~~~~~
+
+-  Pin ipython<9.0 (:pull:`2681`) by :user:`valeriupredoi`
+-  Set a temporary pin `dask <2025.4.0` while Iris are looking for a solution (:pull:`2720`) by :user:`valeriupredoi`
+-  Remove support for  python 3.10 (:pull:`2730`) by :user:`valeriupredoi`
+-  Unpin dask, pin iris, in light of solved #2716 (iris saver not working well with latest Dask API) (:pull:`2726`) by :user:`valeriupredoi`
+-  Harmonize environment.yml with pyproject.yml: identical dependencies (:pull:`2756`) by :user:`valeriupredoi`
+-  Install `esmvaltool-sample-data(==0.0.4)` from conda forge not PyPI (:pull:`2795`) by :user:`valeriupredoi`
+
+Iris
+~~~~
+
+-  Fix test for upstream iris version (:pull:`2752`) by :user:`schlunma`
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Add unit conversion for air mass (:pull:`2698`) by :user:`LisaBock`
+-  Add evaporation flux to special unit conversion (:pull:`2691`) by :user:`lukruh`
+-  Add preprocessor to extract surface values from 3D atmospheric variables (:pull:`2641`) by :user:`jlenh`
+-  Allow adding supplementary variables from a different project and different dataset (:pull:`2755`) by :user:`valeriupredoi`
+-  Move concatenate preprocessor function to its own module (:pull:`2766`) by :user:`bouweandela`
+-  Add preprocessor `align_metadata` (:pull:`2789`) by :user:`schlunma`
+
+Release
+~~~~~~~
+
+-  Use finer current version for pypa PyPI upload github action (:pull:`2804`) by :user:`valeriupredoi`
+-  Commenting out ORNL ESGF node in esgf_pyclient config (:pull:`2806`) by :user:`jlenh`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Add support for codacy-ruff (:pull:`2683`) by :user:`valeriupredoi`
+-  Use --no-deps in upstream tests to avoid installation problems caused by upper pins (:pull:`2710`) by :user:`bouweandela`
+-  Temporary pin dask `!=2025.4.0` (:pull:`2717`) by :user:`valeriupredoi`
+-  Explicitly call mamba env create with arguments in Circle CI configuration (:pull:`2721`) by :user:`valeriupredoi`
+-  Avoid reading configuration from disk for every single test (:pull:`2767`) by :user:`bouweandela`
+-  Do not assume that no warnings are raised during `test_dataset_to_iris` (:pull:`2773`) by :user:`schlunma`
+-  Update CircleCI orbs (:pull:`2784`) by :user:`bouweandela`
+-  Zarr support (backend, in `esmvalcore.preprocessor._io.py`) (:pull:`2785`) by :user:`valeriupredoi`
+-  Update mamba and python (remove pins and allow for Python 3.13) conda-lock file creation Github Action - via ESMValTool_sample_data being a conda-forge package (:pull:`2792`) by :user:`valeriupredoi`
+-  Automatically open pull requests to update GitHub Actions (:pull:`2799`) by :user:`bouweandela`
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Add derivation of moisture flux into atmosphere (:pull:`2697`) by :user:`LisaBock`
+
+Improvements
+~~~~~~~~~~~~
+
+-  Add ocean variable to the ACCESS Live CMORiser (:pull:`2601`) by :user:`rbeucher`
+-  Remove accidentally added file (:pull:`2701`) by :user:`schlunma`
+-  Use `netCDF4.Dataset` to read start and end date from files (:pull:`2728`) by :user:`schlunma`
+-  Allow reading facets from filenames (:pull:`2725`) by :user:`schlunma`
+-  Always context managers when handling `netCDF4.Dataset` objects (:pull:`2734`) by :user:`schlunma`
+-  Enable more ruff rules (:pull:`2715`) by :user:`bouweandela`
+-  Show external warnings only in debug log (:pull:`2733`) by :user:`schlunma`
+-  Fix sign of ERA5 rlut and rlutcs (:pull:`2748`) by :user:`schlunma`
+-  Using `ESMVALTOOL_CONFIG_DIR` will force the usage of new configuration system and ignore old configuration (:pull:`2736`) by :user:`schlunma`
+-  Improve error message if cubes do not overlap in time in `multi_model_statistics` with `span=overlap` (:pull:`2762`) by :user:`schlunma`
+-  In modules relevant for variable derivation: cleaned code, doc, and added type hints (:pull:`2772`) by :user:`schlunma`
+-  Added `CFG.context`/`Session.context` (:pull:`2778`) by :user:`schlunma`
+-  Use https://esgf-node.ornl.gov/esgf-1-5-bridge for ESGF searches by default (:pull:`2781`) by :user:`bouweandela`
+-  Pass `chunks={}` to Xarray dataset loader for Zarr stores (:pull:`2794`) by :user:`valeriupredoi`
+-  Enable ruff rule that checks unused arguments (:pull:`2809`) by :user:`bouweandela`
+-  Enable ruff rule to prevent print statements (:pull:`2810`) by :user:`bouweandela`
+-  Enable ruff rule that enforces using items() to iterate over dict key/value pairs (:pull:`2811`) by :user:`bouweandela`
 
 .. _changelog-v2-12-0:
 
