@@ -34,14 +34,6 @@ MASK_REGRIDDING_MASK_VALUE = {
     esmpy.RegridMethod.NEAREST_STOD: np.array([]),
 }
 
-# ESMF_REGRID_METHODS = {
-#     'bilinear': esmpy.RegridMethod.BILINEAR,
-#     'patch': esmpy.RegridMethod.PATCH,
-#     'conserve': esmpy.RegridMethod.CONSERVE,
-#     'nearest_stod': esmpy.RegridMethod.NEAREST_STOD,
-#     'nearest_dtos': esmpy.RegridMethod.NEAREST_DTOS,
-# }
-
 
 class ESMPyRegridder:
     """General ESMPy regridder.

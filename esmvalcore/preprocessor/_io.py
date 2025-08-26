@@ -183,7 +183,7 @@ def _load_zarr(
         "backend_kwargs": backend_kwargs,
     }
 
-    # case 1: Zarr store is on remote object store
+    # Case 1: Zarr store is on remote object store
     # file's URI will always be either http or https
     if urlparse(str(file)).scheme in ["http", "https"]:
         # basic test that opens the Zarr/.zmetadata file for Zarr2
@@ -207,7 +207,7 @@ def _load_zarr(
 
         open_kwargs["consolidated"] = True
         zarr_xr = xr.open_dataset(file, **open_kwargs)
-    # case 2: Zarr store is local to the file system
+    # Case 2: Zarr store is local to the file system
     else:
         zarr_xr = xr.open_dataset(file, **open_kwargs)
 

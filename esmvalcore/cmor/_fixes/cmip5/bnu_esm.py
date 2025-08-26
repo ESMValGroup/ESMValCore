@@ -211,22 +211,3 @@ class Od550Aer(Fix):
         """
         data = da.ma.masked_equal(cube.core_data(), 1.0e36)
         return cube.copy(data)
-
-
-# No clear way to apply this fix now that we are working with cubes, not files
-
-# class sftlf(Fix):
-#
-#     def fix_metadata(self):
-#         self.cube = self.cube * 1.e6
-
-#   if (name.eq."sftlf") then
-#       files = systemfunc("ls " + INFILE)
-#       f=addfile(files(0), "r")
-#       tmp=f->lat
-#       var&lat = tmp
-#       delete(tmp)
-#       delete(f)
-#       ret = 0
-#   end if
-#
