@@ -493,7 +493,7 @@ Depending on the installation configuration, you may get an error of
 using relative paths. If this happens, use an absolute path instead.
 
 Note that the script should either have the extension for a supported language,
-i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+i.e. ``.py``, ``.R``, or ``.ncl`` for Python, R, and NCL diagnostics
 respectively, or be executable if it is written in any other language.
 
 .. _ancestor-tasks:

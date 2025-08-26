@@ -8,7 +8,6 @@ from esmvalcore.config import _esgf_pyclient
 DEFAULT_CONFIG: dict = {
     "search_connection": {
         "urls": [
-            # "https://esgf-node.ornl.gov/esgf-1-5-bridge",
             "https://esgf.ceda.ac.uk/esg-search",
             "https://esgf-data.dkrz.de/esg-search",
             "https://esgf-node.ipsl.upmc.fr/esg-search",

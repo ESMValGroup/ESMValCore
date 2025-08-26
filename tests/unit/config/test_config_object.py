@@ -514,8 +514,8 @@ def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
     for name, path in rootpath.items():
-        path = Path(path).expanduser().absolute()
-        rootpath[name] = [path]
+        abspath = Path(path).expanduser().absolute()
+        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg
@@ -604,8 +604,8 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
     for name, path in rootpath.items():
-        path = Path(path).expanduser().absolute()
-        rootpath[name] = [path]
+        abspath = Path(path).expanduser().absolute()
+        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg

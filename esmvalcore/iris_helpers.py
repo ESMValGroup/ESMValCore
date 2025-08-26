@@ -303,8 +303,7 @@ def rechunk_cube(
 
     complete_dims = []
     for coord in complete_coords:
-        coord = cube.coord(coord)
-        complete_dims.extend(cube.coord_dims(coord))
+        complete_dims.extend(cube.coord_dims(cube.coord(coord)))
     complete_dims = list(set(complete_dims))
 
     # Rechunk data

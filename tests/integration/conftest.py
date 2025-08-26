@@ -71,8 +71,6 @@ def _get_files(root_path, facets, tracking_id):
         )
 
         if filename.endswith("[_.]*nc"):
-            # Restore when we support filenames with no dates
-            # filenames.append(filename.replace('[_.]*nc', '.nc'))
             filename = filename.replace("[_.]*nc", "_*.nc")
 
         if filename.endswith("*.nc"):
