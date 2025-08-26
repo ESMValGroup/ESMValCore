@@ -689,9 +689,9 @@ def extract_surface_from_atm(
     iris.cube.Cube
         Collapsed cube.
     """
-    # Declare required variables
-    #   - 3D atmo variable to extract at the surface
-    #   - surface_air_pressure (ps)
+    # Declare the required variables:
+    #   - 3D atmospheric variable to extract at the surface
+    #   - surface air pressure (ps)
     try:
         ps_cube = cube.ancillary_variable("surface_air_pressure")
     except iris.exceptions.AncillaryVariableNotFoundError as exc:

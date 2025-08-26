@@ -70,21 +70,21 @@ class Test(tests.Test):
 
     def test_get_fx_mask(self):
         """Test _get_fx_mask func."""
-        # sftlf: land. sea
+        # Test getting land and sea mask from sftlf
         computed = _get_fx_mask(self.fx_data, "land", "sftlf")
         expected = np.array([False, True, False])
         self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, "sea", "sftlf")
         expected = np.array([True, False, True])
         self.assert_array_equal(expected, computed)
-        # sftof: land, sea
+        # Test getting land and sea mask from sftof
         computed = _get_fx_mask(self.fx_data, "land", "sftof")
         expected = np.array([True, False, False])
         self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, "sea", "sftof")
         expected = np.array([False, True, True])
         self.assert_array_equal(expected, computed)
-        # sftgif: ice, landsea
+        # Test getting ice and landsea mask from sftlf
         computed = _get_fx_mask(self.fx_data, "ice", "sftgif")
         expected = np.array([False, True, False])
         self.assert_array_equal(expected, computed)
