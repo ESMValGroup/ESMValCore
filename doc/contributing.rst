@@ -40,7 +40,7 @@ whenever you read it.
 It is recommended that you open a `draft pull
 request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
-:ref:`Codacy to analyse your code <code_quality>`, and
+:ref:`pre-commit.ci to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
 It's also easier to get help from other developers if your code is visible in a
 pull request.
