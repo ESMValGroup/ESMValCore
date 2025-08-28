@@ -1,0 +1,36 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"30.00000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"olevel olevhalf",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"landIce",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_LIday"
+    },
+    "variable_entry":{
+        "licalvf":{
+            "cell_measures":"area: areacellg",
+            "cell_methods":"area: time: mean where ice_sheet",
+            "comment":"Computed as the flux of solid ice into the ocean divided by the area of the land portion of the grid cell",
+            "dimensions":"longitude latitude time",
+            "frequency":"day",
+            "long_name":"Land Ice Calving Flux",
+            "modeling_realm":"landIce",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"licalvf",
+            "positive":"",
+            "standard_name":"land_ice_specific_mass_flux_due_to_calving",
+            "type":"real",
+            "units":"kg m-2 s-1",
+            "valid_max":"",
+            "valid_min":""
+        }
+    }
+}
