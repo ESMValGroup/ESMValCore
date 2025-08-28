@@ -20,6 +20,7 @@ from pathlib import Path
 
 import cf_units
 import pytest
+from zarr.errors import GroupNotFoundError
 
 from esmvalcore.preprocessor._io import load
 
@@ -220,5 +221,5 @@ def test_load_zarr_local_not_zarr_file():
     # "Unable to find group" or "No group found"
     # Zarr keeps changing the exception string so matching
     # is bound to fail the test
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(GroupNotFoundError):
         load(zarr_path)
