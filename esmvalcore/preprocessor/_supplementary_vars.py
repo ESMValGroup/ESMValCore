@@ -238,7 +238,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
                 str(i) for i, d in enumerate(data_dims) if d is None
             )
             msg = (
-                f"Failed to add {ancillary_cube.var_name} as ancillary var "
+                f"Failed to add\n{ancillary_cube}\nas ancillary var "
                 f"to the cube\n{cube}\n"
                 f"No coordinate associated with ancillary cube dimensions "
                 f"{none_dims}"
