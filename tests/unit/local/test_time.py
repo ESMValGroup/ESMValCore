@@ -5,6 +5,7 @@ from pathlib import Path
 import iris
 import pyesgf
 import pytest
+from cf_units import Unit
 
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.local import (
@@ -182,11 +183,11 @@ def test_read_datetime_from_cube(tmp_path):
     temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 100, 200, 366],
+        [0, 100, 200, 361],
         standard_name=None,
         long_name="time",
         var_name="t",
-        units="days since 1990-01-01",
+        units=Unit("days since 1990-01-01", calendar="360_day"),
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
