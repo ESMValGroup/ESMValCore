@@ -104,7 +104,126 @@ def add_cell_measure(
     )
 
 
-def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
+def get_data_dims(  # noqa: C901, PLR0912
+    cube_c: Cube,
+    cube_a: Cube | iris.coords.AncillaryVariable,
+    cube_a_var: iris.coords.AncillaryVariable,
+) -> list[None | int]:
+    """Get matching data dimensions between cube and ancillary variable.
+
+    Parameters
+    ----------
+    cube_c: Cube
+        Iris cube with input data.
+    cube_a: Cube or iris.coords.AncillaryVariable
+        Iris cube or AncillaryVariable with ancillary data.
+    cube_a_var: iris.coords.AncillaryVariable
+        Ancillary variable object containing the ancillary data.
+
+    Returns
+    -------
+    list
+        List with as many entries as the ancillary variable dimensions.
+        The i-th entry corresponds to the i-th ancillary variable
+        dimension match with the cube's dimensions. If there is no match
+        between the ancillary variable and the cube for a dimension, then entry
+        defaults to None.
+    """
+    # Match the coordinates of the ancillary cube to coordinates and
+    # dimensions in the input cube before adding the ancillary variable.
+    data_dims: list[None | int] = []
+    if isinstance(cube_a, iris.coords.AncillaryVariable):
+        start_dim = cube_c.ndim - len(cube_a_var.shape)
+        data_dims = list(range(start_dim, cube_c.ndim))
+    else:
+        data_dims = [None] * cube_a.ndim
+        for coord in cube_a.coords():
+            logger.debug("Matching coordinate...\n%s", coord)
+            try:
+                for ancillary_dim, cube_dim in zip(
+                    cube_a.coord_dims(coord),
+                    cube_c.coord_dims(coord),
+                    strict=False,
+                ):
+                    data_dims[ancillary_dim] = cube_dim
+                logger.debug("Matched coordinate.")
+            except iris.exceptions.CoordinateNotFoundError:
+                logger.debug(
+                    "No exact match from ancillary cube in cube coords.",
+                )
+                # Try with casting coordinate
+                try:
+                    # Cast coordinates to float32 and back to float64
+                    if coord.dtype == np.float64:
+                        logger.debug("Trying to cast coordinates...")
+                        coord_ = coord.copy()
+                        coord_.points = (
+                            coord_.core_points()
+                            .astype(np.float32)
+                            .astype(np.float64)
+                        )
+                    for ancillary_dim, cube_dim in zip(
+                        cube_a.coord_dims(coord_),
+                        cube_c.coord_dims(coord_),
+                        strict=True,
+                    ):
+                        data_dims[ancillary_dim] = cube_dim
+                    logger.debug("Matched casted coordinate.")
+                except iris.exceptions.CoordinateNotFoundError:
+                    # Look for numerically matching coordinate if previous attempt failed
+                    # Only for 1D coordinate
+                    cube_dims = []
+                    for cube_coord in cube_c.coords():
+                        if (
+                            cube_coord.dtype == np.float64
+                            and cube_coord.metadata == coord.metadata
+                            and cube_coord.core_points.ndim == 1
+                        ):
+                            logger.debug(
+                                "Trying to find a close match in the cube coords...",
+                            )
+                            cube_coord.points = (
+                                cube_coord.core_points()
+                                .astype(np.float32)
+                                .astype(np.float64)
+                            )
+                            acceptable_relative_difference = 0.1
+                            min_diff = np.abs(
+                                np.diff(
+                                    cube_coord.core_points(),
+                                ),
+                            ).min()
+                            atol = acceptable_relative_difference * min_diff
+                            if np.allclose(
+                                coord.points,
+                                cube_coord.core_points(),
+                                rtol=0,
+                                atol=atol,
+                            ):
+                                cube_dims = cube_c.coord_dims(cube_coord)
+                                logger.debug("Found a close coordinate.")
+                    for ancillary_dim, cube_dim in zip(
+                        cube_a.coord_dims(coord),
+                        cube_dims,
+                        strict=False,
+                    ):
+                        data_dims[ancillary_dim] = cube_dim
+        if None in data_dims:
+            none_dims = ", ".join(
+                str(i) for i, d in enumerate(data_dims) if d is None
+            )
+            msg = (
+                f"Failed to add\n{cube_a}\nas ancillary var "
+                f"to the cube\n{cube_c}\n"
+                f"Mismatch between ancillary cube and variable cube coordinates "
+                f"{none_dims}"
+            )
+            logger.info(msg)
+            raise iris.exceptions.CoordinateNotFoundError
+    return data_dims
+
+
+def add_ancillary_variable(
     cube: Cube,
     ancillary_cube: Cube | iris.coords.AncillaryVariable,
 ) -> None:
@@ -138,114 +257,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
             "iris.coords.AncillaryVariable object."
         )
         raise ValueError(msg) from err
-    # Match the coordinates of the ancillary cube to coordinates and
-    # dimensions in the input cube before adding the ancillary variable.
-    data_dims: list[int | None] = []
-    if isinstance(ancillary_cube, iris.coords.AncillaryVariable):
-        start_dim = cube.ndim - len(ancillary_var.shape)
-        data_dims = list(range(start_dim, cube.ndim))
-    else:
-        data_dims = [None] * ancillary_cube.ndim
-        for coord in ancillary_cube.coords():
-            logger.debug("Matching coordinate...\n%s", coord)
-            try:
-                for ancillary_dim, cube_dim in zip(
-                    ancillary_cube.coord_dims(coord),
-                    cube.coord_dims(coord),
-                    strict=False,
-                ):
-                    data_dims[ancillary_dim] = cube_dim
-                logger.debug("Matched coordinate.")
-            except iris.exceptions.CoordinateNotFoundError:
-                logger.debug(
-                    "No exact match from ancillary cube in cube coords.",
-                )
-                # Try with casting coordinate
-                try:
-                    # Cast coordinates to float32 and back to float64
-                    if coord.dtype == np.float64:
-                        logger.debug("Trying to cast coordinates...")
-                        coord = coord.copy()
-                        coord.points = (
-                            coord.core_points()
-                            .astype(np.float32)
-                            .astype(np.float64)
-                        )
-                    for ancillary_dim, cube_dim in zip(
-                        ancillary_cube.coord_dims(coord),
-                        cube.coord_dims(coord),
-                        strict=True,
-                    ):
-                        data_dims[ancillary_dim] = cube_dim
-                    logger.debug("Matched casted coordinate.")
-                except iris.exceptions.CoordinateNotFoundError:
-                    ancillary_dims = ancillary_cube.coord_dims(coord)
-                    # Look for numerically matching coordinate if previous attempt failed
-                    logger.debug(
-                        "Trying to find a close match in the cube coords...",
-                    )
-                    cube_dims = []
-                    for cube_coord in cube.coords():
-                        if (
-                            cube_coord.dtype == np.float64
-                            and coord.standard_name == cube_coord.standard_name
-                            and coord.shape == cube_coord.shape
-                        ):
-                            cube_coord.points = (
-                                cube_coord.core_points()
-                                .astype(np.float32)
-                                .astype(np.float64)
-                            )
-                            acceptable_relative_difference = 0.1
-                            if cube_coord.points.ndim > 1:
-                                dy = np.abs(
-                                    np.diff(
-                                        cube_coord.core_points(),
-                                        axis=0,
-                                    ),
-                                ).flatten()
-                                dx = np.abs(
-                                    np.diff(
-                                        cube_coord.core_points(),
-                                        axis=1,
-                                    ),
-                                ).flatten()
-                                diffs = np.concatenate((dy, dx))
-                                diffs = diffs[diffs > 0]
-                                min_diff = np.min(diffs)
-                            else:
-                                min_diff = np.abs(
-                                    np.diff(
-                                        cube_coord.core_points(),
-                                    ),
-                                ).min()
-                            atol = acceptable_relative_difference * min_diff
-                            if np.allclose(
-                                coord.points,
-                                cube_coord.core_points(),
-                                rtol=0,
-                                atol=atol,
-                            ):
-                                cube_dims = cube.coord_dims(cube_coord)
-                                logger.debug("Found a close coordinate.")
-                    for ancillary_dim, cube_dim in zip(
-                        ancillary_dims,
-                        cube_dims,
-                        strict=True,
-                    ):
-                        data_dims[ancillary_dim] = cube_dim
-        if None in data_dims:
-            none_dims = ", ".join(
-                str(i) for i, d in enumerate(data_dims) if d is None
-            )
-            msg = (
-                f"Failed to add\n{ancillary_cube}\nas ancillary var "
-                f"to the cube\n{cube}\n"
-                f"Mismatch between ancillary cube and variable cube coordinates "
-                f"{none_dims}"
-            )
-            logger.info(msg)
-            raise iris.exceptions.CoordinateNotFoundError
+    data_dims = get_data_dims(cube, ancillary_cube, ancillary_var)
     if ancillary_cube.has_lazy_data():
         cube_chunks = tuple(cube.lazy_data().chunks[d] for d in data_dims)
         ancillary_var.data = ancillary_cube.lazy_data().rechunk(cube_chunks)
