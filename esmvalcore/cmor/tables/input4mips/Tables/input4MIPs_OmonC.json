@@ -1,0 +1,36 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"30.00000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"olevel olevhalf",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"ocean",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_OmonC"
+    },
+    "variable_entry":{
+        "sos":{
+            "cell_measures":"area: areacello",
+            "cell_methods":"area: mean where sea time: mean",
+            "comment":"Sea water salinity is the salt content of sea water, often on the Practical Salinity Scale of 1978. However, the unqualified term 'salinity' is generic and does not necessarily imply any particular method of calculation. The units of salinity are dimensionless and the units attribute should normally be given as 1e-3 or 0.001 i.e. parts per thousand. ",
+            "dimensions":"longitude latitude time2",
+            "frequency":"monC",
+            "long_name":"Sea Surface Salinity",
+            "modeling_realm":"ocean",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"sos",
+            "positive":"",
+            "standard_name":"sea_surface_salinity",
+            "type":"real",
+            "units":"0.001",
+            "valid_max":"",
+            "valid_min":""
+        }
+    }
+}
