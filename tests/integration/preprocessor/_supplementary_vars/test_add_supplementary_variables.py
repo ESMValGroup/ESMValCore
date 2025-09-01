@@ -281,6 +281,5 @@ class Test:
             np.ones(3),
             dim_coords_and_dims=[(plev_dim, 0)],
         )
-        msg = "No coordinate associated with ancillary"
-        with pytest.raises(ValueError, match=msg):
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             add_ancillary_variable(cube, ancillary_cube)

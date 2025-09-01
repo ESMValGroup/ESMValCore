@@ -133,7 +133,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
         )
     except AttributeError as err:
         msg = (
-            f"Failed to add {ancillary_cube.var_name} as ancillary var to the cube\n{cube}\n"
+            f"Failed to add\n{ancillary_cube}\nas ancillary var to the cube\n{cube}\n"
             "ancillary_cube should be either an iris.cube.Cube or an "
             "iris.coords.AncillaryVariable object."
         )
