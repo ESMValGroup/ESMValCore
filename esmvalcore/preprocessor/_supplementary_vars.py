@@ -165,6 +165,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
                     # Cast coordinates to float32 and back to float64
                     if coord.dtype == np.float64:
                         logger.debug("Trying to cast coordinates...")
+                        coord = coord.copy()
                         coord.points = (
                             coord.core_points()
                             .astype(np.float32)
@@ -173,7 +174,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
                     for ancillary_dim, cube_dim in zip(
                         ancillary_cube.coord_dims(coord),
                         cube.coord_dims(coord),
-                        strict=False,
+                        strict=True,
                     ):
                         data_dims[ancillary_dim] = cube_dim
                     logger.debug("Matched casted coordinate.")
@@ -221,7 +222,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
                             atol = acceptable_relative_difference * min_diff
                             if np.allclose(
                                 coord.points,
-                                cube_coord.points,
+                                cube_coord.core_points(),
                                 rtol=0,
                                 atol=atol,
                             ):
@@ -230,7 +231,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
                     for ancillary_dim, cube_dim in zip(
                         ancillary_dims,
                         cube_dims,
-                        strict=False,
+                        strict=True,
                     ):
                         data_dims[ancillary_dim] = cube_dim
         if None in data_dims:
@@ -240,7 +241,7 @@ def add_ancillary_variable(  # noqa: C901, PLR0912, PLR0915
             msg = (
                 f"Failed to add\n{ancillary_cube}\nas ancillary var "
                 f"to the cube\n{cube}\n"
-                f"No coordinate associated with ancillary cube dimensions "
+                f"Mismatch between ancillary cube and variable cube coordinates "
                 f"{none_dims}"
             )
             logger.info(msg)
