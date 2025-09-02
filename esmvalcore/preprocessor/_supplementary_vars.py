@@ -154,11 +154,12 @@ def get_data_dims(  # noqa: C901
                 cube_dims = []
                 for cube_coord in cube_c.coords():
                     if (
-                        cube_coord.dtype == np.float64
+                        np.issubdtype(cube_coord.dtype, np.number)
                         and (
-                            cube_coord.var_name == coord.var_name
-                            or coord.standard_name == cube_coord.standard_name
+                            cube_coord.standard_name == coord.standard_name
+                            or cube_coord.var_name == coord.var_name
                         )
+                        and cube_coord.units == coord.units
                         and cube_coord.points.shape == coord.points.shape
                     ):
                         # Trying to cast back and forth the coordinate points
