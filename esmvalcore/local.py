@@ -161,8 +161,16 @@ def _get_start_end_date(
         with Dataset(file) as dataset:
             for variable in dataset.variables.values():
                 var_name = _get_var_name(variable)
-                if var_name == "time" and "units" in variable.ncattrs():
-                    time_units = Unit(variable.getncattr("units"))
+                attrs = variable.ncattrs()
+                if (
+                    var_name == "time"
+                    and "units" in attrs
+                    and "calendar" in attrs
+                ):
+                    time_units = Unit(
+                        variable.getncattr("units"),
+                        calendar=variable.getncattr("calendar"),
+                    )
                     start_date = isodate.date_isoformat(
                         time_units.num2date(variable[0]),
                         format=isodate.isostrf.DATE_BAS_COMPLETE,
