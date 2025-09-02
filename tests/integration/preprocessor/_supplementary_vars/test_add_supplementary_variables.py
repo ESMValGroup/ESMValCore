@@ -301,8 +301,6 @@ class Test:
             bounds=[[0, 1], [1, 2], [2, 3]],
             units="Pa",
         )
-        lats_close = self.lats.copy()
-        lats_close.points = [0.0, 1.4, 3.0]
         # Ancillary var has only one dimension match
         ancillary_dummy = iris.cube.Cube(
             np.ones((3, 3)),
@@ -339,10 +337,23 @@ class Test:
             1,
             2,
         ]
+
+    def test_get_data_dims_close(self):
+        """Test get_data_dims in the case of a "close" coordinate."""
+        cube = iris.cube.Cube(
+            self.new_cube_3D_data,
+            dim_coords_and_dims=[
+                (self.depth, 0),
+                (self.lats, 1),
+                (self.lons, 2),
+            ],
+        )
+        lats_close = self.lats.copy()
+        lats_close.points = [0.0, 1.4, 3.0]
         # Ancillary var has a match for a "close" coordinate (min_diff = 0.15)
         ancillary_dummy = iris.cube.Cube(
-            np.ones((3, 3)),
-            dim_coords_and_dims=[(lats_close, 0), (self.lons, 1)],
+            np.ones(3),
+            dim_coords_and_dims=[(lats_close, 0)],
         )
         ancillary_dummy_cube = iris.coords.AncillaryVariable(
             ancillary_dummy.core_data(),
@@ -352,7 +363,5 @@ class Test:
             attributes=ancillary_dummy.attributes,
             long_name=ancillary_dummy.long_name,
         )
-        assert get_data_dims(cube, ancillary_dummy, ancillary_dummy_cube) == [
-            1,
-            2,
-        ]
+        data_dims = get_data_dims(cube, ancillary_dummy, ancillary_dummy_cube)
+        assert data_dims == [1]

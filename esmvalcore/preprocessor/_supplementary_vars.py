@@ -215,8 +215,8 @@ def get_data_dims(  # noqa: C901, PLR0912
             msg = (
                 f"Failed to add\n{cube_a}\nas ancillary var "
                 f"to the cube\n{cube_c}\n"
-                f"Mismatch between ancillary cube and variable cube coordinates "
-                f"{none_dims}"
+                f"Mismatch between ancillary cube and variable cube coordinate"
+                f" {none_dims}"
             )
             logger.info(msg)
             raise iris.exceptions.CoordinateNotFoundError
