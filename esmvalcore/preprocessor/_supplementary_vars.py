@@ -177,7 +177,7 @@ def get_data_dims(  # noqa: C901, PLR0912
                         if (
                             cube_coord.dtype == np.float64
                             and cube_coord.metadata == coord.metadata
-                            and cube_coord.core_points.ndim == 1
+                            and cube_coord.points.ndim == 1
                         ):
                             logger.debug(
                                 "Trying to find a close match in the cube coords...",
