@@ -4,6 +4,8 @@ Integration tests for the
 :func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 
+import logging
+
 import dask.array as da
 import iris
 import iris.fileformats
@@ -338,8 +340,9 @@ class Test:
             2,
         ]
 
-    def test_get_data_dims_close(self):
+    def test_get_data_dims_close(self, caplog):
         """Test get_data_dims in the case of a "close" coordinate."""
+        caplog.set_level(logging.DEBUG)
         cube = iris.cube.Cube(
             self.new_cube_3D_data,
             dim_coords_and_dims=[
@@ -348,8 +351,11 @@ class Test:
                 (self.lons, 2),
             ],
         )
-        lats_close = self.lats.copy()
-        lats_close.points = [0.0, 1.4, 3.0]
+        lats_close = iris.coords.DimCoord(
+            [0, 1.4, 3],
+            standard_name="latitude",
+            var_name="latitude",
+        )
         # Ancillary var has a match for a "close" coordinate (min_diff = 0.15)
         ancillary_dummy = iris.cube.Cube(
             np.ones(3),
@@ -365,3 +371,4 @@ class Test:
         )
         data_dims = get_data_dims(cube, ancillary_dummy, ancillary_dummy_cube)
         assert data_dims == [1]
+        assert "Found a close coordinate." in caplog.text

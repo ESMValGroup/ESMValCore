@@ -104,7 +104,7 @@ def add_cell_measure(
     )
 
 
-def get_data_dims(  # noqa: C901, PLR0912
+def get_data_dims(  # noqa: C901
     cube_c: Cube,
     cube_a: Cube | iris.coords.AncillaryVariable,
     cube_a_var: iris.coords.AncillaryVariable,
@@ -149,12 +149,19 @@ def get_data_dims(  # noqa: C901, PLR0912
                 logger.debug("Matched coordinate.")
             except iris.exceptions.CoordinateNotFoundError:
                 logger.debug(
-                    "No exact match from ancillary cube in cube coords.",
+                    "No metadata match from ancillary coord in cube coords.",
                 )
-                # Try with casting coordinate
-                try:
-                    # Cast coordinates to float32 and back to float64
-                    if coord.dtype == np.float64:
+                cube_dims = []
+                for cube_coord in cube_c.coords():
+                    if (
+                        cube_coord.dtype == np.float64
+                        and (
+                            cube_coord.var_name == coord.var_name
+                            or coord.standard_name == cube_coord.standard_name
+                        )
+                        and cube_coord.points.shape == coord.points.shape
+                    ):
+                        # Trying to cast back and forth the coordinate points
                         logger.debug("Trying to cast coordinates...")
                         coord_ = coord.copy()
                         coord_.points = (
@@ -162,23 +169,12 @@ def get_data_dims(  # noqa: C901, PLR0912
                             .astype(np.float32)
                             .astype(np.float64)
                         )
-                    for ancillary_dim, cube_dim in zip(
-                        cube_a.coord_dims(coord_),
-                        cube_c.coord_dims(coord_),
-                        strict=True,
-                    ):
-                        data_dims[ancillary_dim] = cube_dim
-                    logger.debug("Matched casted coordinate.")
-                except iris.exceptions.CoordinateNotFoundError:
-                    # Look for numerically matching coordinate if previous attempt failed
-                    # Only for 1D coordinate
-                    cube_dims = []
-                    for cube_coord in cube_c.coords():
-                        if (
-                            cube_coord.dtype == np.float64
-                            and cube_coord.metadata == coord.metadata
-                            and cube_coord.points.ndim == 1
-                        ):
+                        if np.all(coord_.points == cube_coord.points):
+                            cube_dims = cube_c.coord_dims(cube_coord)
+                            logger.debug("Found a matching casted coordinate.")
+                            break
+                        # Trying to find a "close" coordinate for 1D cases
+                        if cube_coord.points.ndim == 1:
                             logger.debug(
                                 "Trying to find a close match in the cube coords...",
                             )
@@ -202,12 +198,13 @@ def get_data_dims(  # noqa: C901, PLR0912
                             ):
                                 cube_dims = cube_c.coord_dims(cube_coord)
                                 logger.debug("Found a close coordinate.")
-                    for ancillary_dim, cube_dim in zip(
-                        cube_a.coord_dims(coord),
-                        cube_dims,
-                        strict=False,
-                    ):
-                        data_dims[ancillary_dim] = cube_dim
+                                break
+                for ancillary_dim, cube_dim in zip(
+                    cube_a.coord_dims(coord),
+                    cube_dims,
+                    strict=False,
+                ):
+                    data_dims[ancillary_dim] = cube_dim
         if None in data_dims:
             none_dims = ", ".join(
                 str(i) for i, d in enumerate(data_dims) if d is None
