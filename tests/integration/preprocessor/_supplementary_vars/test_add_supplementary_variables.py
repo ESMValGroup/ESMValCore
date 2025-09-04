@@ -4,6 +4,8 @@ Integration tests for the
 :func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 
+import logging
+
 import dask.array as da
 import iris
 import iris.fileformats
@@ -14,6 +16,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
     add_supplementary_variables,
+    find_matching_coord,
+    get_data_dims,
     remove_supplementary_variables,
 )
 
@@ -112,6 +116,54 @@ class Test:
                 (self.lats, 2),
                 (self.lons, 3),
             ],
+        )
+        self.cube = iris.cube.Cube(
+            self.new_cube_3D_data,
+            dim_coords_and_dims=[
+                (self.depth, 0),
+                (self.lats, 1),
+                (self.lons, 2),
+            ],
+        )
+        self.plev = iris.coords.DimCoord(
+            [0, 1.5, 3],
+            standard_name="air_pressure",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="Pa",
+        )
+        self.ancillary_cube_plev = iris.cube.Cube(
+            np.ones(3),
+            dim_coords_and_dims=[(self.plev, 0)],
+        )
+        self.ancillary_cube_lat_plev = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats, 0), (self.plev, 1)],
+        )
+        self.ancillary_cube_lat_lon = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats, 0), (self.lons, 1)],
+        )
+        self.lats_casted = iris.coords.DimCoord(
+            [0.0, 1.50000001, 3.0],
+            standard_name="latitude",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="degrees_north",
+            coord_system=crd_sys,
+        )
+        self.lats_close = iris.coords.DimCoord(
+            [0, 1.4, 3],
+            standard_name="latitude",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="degrees_north",
+            coord_system=crd_sys,
+        )
+        self.ancillary_cube_lat_lon_casted = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats_casted, 0), (self.lons, 1)],
+        )
+        self.ancillary_cube_lat_lon_close = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats_close, 0), (self.lons, 1)],
         )
 
     @pytest.mark.parametrize("lazy", [True, False])
@@ -258,29 +310,85 @@ class Test:
 
     def test_add_ancillary_vars_errors(self):
         """Test errors when adding ancillary variable."""
-        cube = iris.cube.Cube(
-            self.new_cube_3D_data,
-            dim_coords_and_dims=[
-                (self.depth, 0),
-                (self.lats, 1),
-                (self.lons, 2),
-            ],
-        )
         # Ancillary var not an iris.cube.Cube or iris.coords.AncillaryVariable
         msg = "ancillary_cube should be either an iris"
         with pytest.raises(ValueError, match=msg):
-            add_ancillary_variable(cube, np.ones(self.new_cube_3D_data.shape))
+            add_ancillary_variable(
+                self.cube,
+                np.ones(self.new_cube_3D_data.shape),
+            )
         # Ancillary var as iris.cube.Cube without matching dimensions
-        plev_dim = iris.coords.DimCoord(
-            [0, 1.5, 3],
-            standard_name="air_pressure",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="Pa",
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            add_ancillary_variable(
+                self.cube,
+                self.ancillary_cube_plev,
+            )
+
+    def test_get_data_dims_no_match(self):
+        """Test get_data_dims matching function w/ no match."""
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            _ = get_data_dims(
+                self.cube,
+                self.ancillary_cube_plev,
+            )
+
+    def test_get_data_dims_one_match(self):
+        """Test get_data_dims matching function w/ only one coordinate match."""
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            _ = get_data_dims(
+                self.cube,
+                self.ancillary_cube_lat_plev,
+            )
+
+    def test_get_data_dims_match(self):
+        """Test get_data_dims matching function w/ both coordinates match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon,
+        ) == [1, 2]
+
+    def test_get_data_dims_match_casted(self):
+        """Test get_data_dims matching function w/ casted coordinate match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon_casted,
+        ) == [1, 2]
+
+    def test_get_data_dims_match_close(self):
+        """Test get_data_dims matching function w/ close coordinate match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon_close,
+        ) == [1, 2]
+
+    def test_find_matching_coord_no_match(self):
+        """Test find_matching_coord function w/ no match."""
+        assert (
+            find_matching_coord(
+                self.plev,
+                self.cube,
+            )
+            is None
         )
-        ancillary_cube = iris.cube.Cube(
-            np.ones(3),
-            dim_coords_and_dims=[(plev_dim, 0)],
+
+    def test_find_matching_coord_cast_match(self, caplog):
+        """Test find_matching_coord function w/ casted coordinate match."""
+        caplog.set_level(logging.DEBUG)
+        msg = "Found a matching casted coordinate"
+        cube_dims = find_matching_coord(
+            self.lats_casted,
+            self.cube,
         )
-        msg = "No coordinate associated with ancillary"
-        with pytest.raises(ValueError, match=msg):
-            add_ancillary_variable(cube, ancillary_cube)
+        assert cube_dims == (1,)
+        assert msg in caplog.text
+
+    def test_find_matching_coord_close_match(self, caplog):
+        """Test find_matching_coord function w/ close coordinate match."""
+        caplog.set_level(logging.DEBUG)
+        msg = "Found a close coordinate"
+        cube_dims = find_matching_coord(
+            self.lats_close,
+            self.cube,
+        )
+        assert cube_dims == (1,)
+        assert msg in caplog.text
