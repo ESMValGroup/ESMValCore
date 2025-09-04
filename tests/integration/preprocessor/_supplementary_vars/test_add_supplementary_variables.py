@@ -157,6 +157,14 @@ class Test:
             units="degrees_north",
             coord_system=crd_sys,
         )
+        self.ancillary_cube_lat_lon_casted = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats_casted, 0), (self.lons, 1)],
+        )
+        self.ancillary_cube_lat_lon_close = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats_close, 0), (self.lons, 1)],
+        )
 
     @pytest.mark.parametrize("lazy", [True, False])
     @pytest.mark.parametrize("var_name", ["areacella", "areacello"])
@@ -337,6 +345,20 @@ class Test:
         assert get_data_dims(
             self.cube,
             self.ancillary_cube_lat_lon,
+        ) == [1, 2]
+
+    def test_get_data_dims_match_casted(self):
+        """Test get_data_dims matching function w/ casted coordinate match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon_casted,
+        ) == [1, 2]
+
+    def test_get_data_dims_match_close(self):
+        """Test get_data_dims matching function w/ close coordinate match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon_close,
         ) == [1, 2]
 
     def test_find_matching_coord_no_match(self):
