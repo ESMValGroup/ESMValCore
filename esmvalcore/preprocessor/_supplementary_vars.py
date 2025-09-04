@@ -105,9 +105,8 @@ def add_cell_measure(
 
 
 def get_data_dims(  # noqa: C901
-    cube_c: Cube,
-    cube_a: Cube | iris.coords.AncillaryVariable,
-    cube_a_var: iris.coords.AncillaryVariable,
+    cube: Cube,
+    ancillary: Cube | iris.coords.AncillaryVariable,
 ) -> list[None | int]:
     """Get matching data dimensions between cube and ancillary variable.
 
@@ -138,47 +137,39 @@ def get_data_dims(  # noqa: C901
     else:
         data_dims = [None] * cube_a.ndim
         for coord in cube_a.coords():
-            logger.debug("Matching coordinate...\n%s", coord)
             try:
                 for ancillary_dim, cube_dim in zip(
                     cube_a.coord_dims(coord),
                     cube_c.coord_dims(coord),
-                    strict=False,
+                    strict=True,
                 ):
                     data_dims[ancillary_dim] = cube_dim
-                logger.debug("Matched coordinate.")
             except iris.exceptions.CoordinateNotFoundError:
-                logger.debug(
-                    "No metadata match from ancillary coord in cube coords.",
-                )
                 cube_dims = []
                 for cube_coord in cube_c.coords():
                     if (
                         np.issubdtype(cube_coord.dtype, np.number)
                         and (
-                            cube_coord.standard_name == coord.standard_name
-                            or cube_coord.var_name == coord.var_name
+                            cube_coord.var_name == coord.var_name
+                            or (coord.standard_name is not None and cube_coord.standard_name == coord.standard_name)
                         )
                         and cube_coord.units == coord.units
                         and cube_coord.points.shape == coord.points.shape
                     ):
                         # Trying to cast back and forth the coordinate points
-                        logger.debug("Trying to cast coordinates...")
                         coord_ = coord.copy()
                         coord_.points = (
                             coord_.core_points()
                             .astype(np.float32)
                             .astype(np.float64)
                         )
+                        cube_coord = cube_coord.copy()
                         if np.all(coord_.points == cube_coord.points):
                             cube_dims = cube_c.coord_dims(cube_coord)
                             logger.debug("Found a matching casted coordinate.")
                             break
                         # Trying to find a "close" coordinate for 1D cases
                         if cube_coord.points.ndim == 1:
-                            logger.debug(
-                                "Trying to find a close match in the cube coords...",
-                            )
                             cube_coord.points = (
                                 cube_coord.core_points()
                                 .astype(np.float32)
