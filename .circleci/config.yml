@@ -94,7 +94,7 @@ commands:
             mamba env create -n esmvaltool -f environment.yml |& tee /logs/conda.txt
             git stash  # Restore repository state to get clean version number.
             conda activate esmvaltool
-            pip install --no-deps --no-deps << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
+            pip install --no-deps << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
       - run:
           name: Log versions
           command: |
