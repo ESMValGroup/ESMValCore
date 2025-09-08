@@ -5,7 +5,6 @@ from collections.abc import Callable, Iterable
 from typing import Literal
 
 import iris.coords
-import numpy as np
 from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
@@ -131,17 +130,25 @@ def find_matching_coord(
                 cube_coord.var_name == coord_to_match.var_name
                 or (
                     coord_to_match.standard_name is not None
-                    and cube_coord.standard_name == coord_to_match.standard_name
+                    and cube_coord.standard_name
+                    == coord_to_match.standard_name
                 )
                 or (
                     coord_to_match.long_name is not None
                     and cube_coord.long_name == coord_to_match.long_name
-                )                
+                )
             )
             and cube_coord.units == coord_to_match.units
             and cube_coord.shape == coord_to_match.shape
         ):
-                    break
+            cube_dims = cube.coord_dims(cube_coord)
+            msg = (
+                f"Found a close coordinate for {coord_to_match.var_name}"
+                f" with coordinate {cube_coord.var_name}"
+                f" in the cube of variable '{cube.var_name}'."
+            )
+            logger.debug(msg)
+            break
     return cube_dims
 
 

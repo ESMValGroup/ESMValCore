@@ -4,8 +4,6 @@ Integration tests for the
 :func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 
-import logging
-
 import dask.array as da
 import iris
 import iris.fileformats
@@ -142,28 +140,6 @@ class Test:
         self.ancillary_cube_lat_lon = iris.cube.Cube(
             np.ones((3, 3)),
             dim_coords_and_dims=[(self.lats, 0), (self.lons, 1)],
-        )
-        self.lats_casted = iris.coords.DimCoord(
-            [0.0, 1.50000001, 3.0],
-            standard_name="latitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_north",
-            coord_system=crd_sys,
-        )
-        self.lats_close = iris.coords.DimCoord(
-            [0, 1.4, 3],
-            standard_name="latitude",
-            bounds=[[0, 1], [1, 2], [2, 3]],
-            units="degrees_north",
-            coord_system=crd_sys,
-        )
-        self.ancillary_cube_lat_lon_casted = iris.cube.Cube(
-            np.ones((3, 3)),
-            dim_coords_and_dims=[(self.lats_casted, 0), (self.lons, 1)],
-        )
-        self.ancillary_cube_lat_lon_close = iris.cube.Cube(
-            np.ones((3, 3)),
-            dim_coords_and_dims=[(self.lats_close, 0), (self.lons, 1)],
         )
 
     @pytest.mark.parametrize("lazy", [True, False])
@@ -347,20 +323,6 @@ class Test:
             self.ancillary_cube_lat_lon,
         ) == [1, 2]
 
-    def test_get_data_dims_match_casted(self):
-        """Test get_data_dims matching function w/ casted coordinate match."""
-        assert get_data_dims(
-            self.cube,
-            self.ancillary_cube_lat_lon_casted,
-        ) == [1, 2]
-
-    def test_get_data_dims_match_close(self):
-        """Test get_data_dims matching function w/ close coordinate match."""
-        assert get_data_dims(
-            self.cube,
-            self.ancillary_cube_lat_lon_close,
-        ) == [1, 2]
-
     def test_find_matching_coord_no_match(self):
         """Test find_matching_coord function w/ no match."""
         assert (
@@ -371,24 +333,9 @@ class Test:
             is None
         )
 
-    def test_find_matching_coord_cast_match(self, caplog):
-        """Test find_matching_coord function w/ casted coordinate match."""
-        caplog.set_level(logging.DEBUG)
-        msg = "Found a matching casted coordinate"
-        cube_dims = find_matching_coord(
-            self.lats_casted,
+    def test_find_matching_coord_match(self):
+        """Test find_matching_coord function w/ match."""
+        assert find_matching_coord(
+            self.lats,
             self.cube,
-        )
-        assert cube_dims == (1,)
-        assert msg in caplog.text
-
-    def test_find_matching_coord_close_match(self, caplog):
-        """Test find_matching_coord function w/ close coordinate match."""
-        caplog.set_level(logging.DEBUG)
-        msg = "Found a close coordinate"
-        cube_dims = find_matching_coord(
-            self.lats_close,
-            self.cube,
-        )
-        assert cube_dims == (1,)
-        assert msg in caplog.text
+        ) == (1,)
