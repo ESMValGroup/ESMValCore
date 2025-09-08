@@ -10,7 +10,7 @@ jobs:
     if: "github.repository == 'ESMValGroup/ESMValCore'"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v10
         with:
           days-before-issue-stale: 720
           days-before-pr-stale: 180
