@@ -127,60 +127,20 @@ def find_matching_coord(
     cube_dims = None
     for cube_coord in cube.coords():
         if (
-            np.issubdtype(cube_coord.dtype, np.number)
-            and (
+            (
                 cube_coord.var_name == coord_to_match.var_name
                 or (
                     coord_to_match.standard_name is not None
-                    and cube_coord.standard_name
-                    == coord_to_match.standard_name
+                    and cube_coord.standard_name == coord_to_match.standard_name
                 )
+                or (
+                    coord_to_match.long_name is not None
+                    and cube_coord.long_name == coord_to_match.long_name
+                )                
             )
             and cube_coord.units == coord_to_match.units
-            and cube_coord.points.shape == coord_to_match.points.shape
+            and cube_coord.shape == coord_to_match.shape
         ):
-            # Trying to cast back and forth the coordinate points
-            coord_ = coord_to_match.copy()
-            coord_.points = (
-                coord_.core_points().astype(np.float32).astype(np.float64)
-            )
-            cube_coord_ = cube_coord.copy()
-            if np.all(coord_.points == cube_coord_.points):
-                cube_dims = cube.coord_dims(cube_coord_)
-                msg = (
-                    f"Found a matching casted coordinate for {coord_.var_name}"
-                    f" with coordinate {coord_.var_name}"
-                    f" in the cube of variable '{cube.var_name}'."
-                )
-                logger.debug(msg)
-                break
-            # Trying to find a "close" coordinate for 1D cases
-            if cube_coord_.points.ndim == 1:
-                cube_coord_.points = (
-                    cube_coord_.core_points()
-                    .astype(np.float32)
-                    .astype(np.float64)
-                )
-                acceptable_relative_difference = 0.1
-                min_diff = np.abs(
-                    np.diff(
-                        cube_coord_.core_points(),
-                    ),
-                ).min()
-                atol = acceptable_relative_difference * min_diff
-                if np.allclose(
-                    coord_.points,
-                    cube_coord_.core_points(),
-                    rtol=0,
-                    atol=atol,
-                ):
-                    cube_dims = cube.coord_dims(cube_coord_)
-                    msg = (
-                        f"Found a close coordinate for {coord_.var_name}"
-                        f" with coordinate {coord_.var_name}"
-                        f" in the cube of variable '{cube.var_name}'."
-                    )
-                    logger.debug(msg)
                     break
     return cube_dims
 
