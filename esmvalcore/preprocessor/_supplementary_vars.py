@@ -143,7 +143,7 @@ def find_matching_coord(
         ):
             cube_dims = cube.coord_dims(cube_coord)
             msg = (
-                f"Found a close coordinate for {coord_to_match.var_name}"
+                f"Found a matching coordinate for {coord_to_match.var_name}"
                 f" with coordinate {cube_coord.var_name}"
                 f" in the cube of variable '{cube.var_name}'."
             )
