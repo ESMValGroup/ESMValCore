@@ -129,6 +129,12 @@ class Test:
             bounds=[[0, 1], [1, 2], [2, 3]],
             units="Pa",
         )
+        self.lats_no_metadata = iris.coords.DimCoord(
+            [0, 1.5, 3],
+            standard_name="latitude",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="degrees_north",
+        )
         self.ancillary_cube_plev = iris.cube.Cube(
             np.ones(3),
             dim_coords_and_dims=[(self.plev, 0)],
@@ -140,6 +146,10 @@ class Test:
         self.ancillary_cube_lat_lon = iris.cube.Cube(
             np.ones((3, 3)),
             dim_coords_and_dims=[(self.lats, 0), (self.lons, 1)],
+        )
+        self.ancillary_cube_lat_no_metadata = iris.cube.Cube(
+            np.ones(3),
+            dim_coords_and_dims=[(self.lats_no_metadata, 0)],
         )
 
     @pytest.mark.parametrize("lazy", [True, False])
@@ -322,6 +332,13 @@ class Test:
             self.cube,
             self.ancillary_cube_lat_lon,
         ) == [1, 2]
+
+    def test_get_data_dims_match_no_metadata(self):
+        """Test get_data_dims matching function w/ coordinate w/o metadata."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_no_metadata,
+        ) == [1]
 
     def test_find_matching_coord_no_match(self):
         """Test find_matching_coord function w/ no match."""
