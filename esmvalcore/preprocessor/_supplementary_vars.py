@@ -103,7 +103,7 @@ def add_cell_measure(
     )
 
 
-def find_matching_coord(
+def find_matching_coord_dims(
     coord_to_match: iris.coords.DimCoord,
     cube: iris.cube.Cube,
 ) -> tuple[int] | None:
@@ -186,7 +186,7 @@ def get_data_dims(
             try:
                 cube_dims = cube.coord_dims(coord)
             except iris.exceptions.CoordinateNotFoundError:
-                cube_dims = find_matching_coord(coord, cube)
+                cube_dims = find_matching_coord_dims(coord, cube)
             if cube_dims is not None:
                 for ancillary_dim, cube_dim in zip(
                     ancillary.coord_dims(coord),

@@ -14,7 +14,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
     add_supplementary_variables,
-    find_matching_coord,
+    find_matching_coord_dims,
     get_data_dims,
     remove_supplementary_variables,
 )
@@ -340,19 +340,19 @@ class Test:
             self.ancillary_cube_lat_no_metadata,
         ) == [1]
 
-    def test_find_matching_coord_no_match(self):
-        """Test find_matching_coord function w/ no match."""
+    def test_find_matching_coord_dims_no_match(self):
+        """Test find_matching_coord_dims function w/ no match."""
         assert (
-            find_matching_coord(
+            find_matching_coord_dims(
                 self.plev,
                 self.cube,
             )
             is None
         )
 
-    def test_find_matching_coord_match(self):
-        """Test find_matching_coord function w/ match."""
-        assert find_matching_coord(
+    def test_find_matching_coord_dims_match(self):
+        """Test find_matching_coord_dims function w/ match."""
+        assert find_matching_coord_dims(
             self.lats,
             self.cube,
         ) == (1,)
