@@ -184,24 +184,16 @@ def get_data_dims(
         data_dims = [None] * ancillary.ndim
         for coord in ancillary.coords():
             try:
+                cube_dims = cube.coord_dims(coord)
+            except iris.exceptions.CoordinateNotFoundError:
+                cube_dims = find_matching_coord(coord, cube)
+            if cube_dims is not None:
                 for ancillary_dim, cube_dim in zip(
                     ancillary.coord_dims(coord),
-                    cube.coord_dims(coord),
+                    cube_dims,
                     strict=True,
                 ):
                     data_dims[ancillary_dim] = cube_dim
-            except iris.exceptions.CoordinateNotFoundError:
-                cube_dims = find_matching_coord(
-                    coord,
-                    cube,
-                )
-                if cube_dims is not None:
-                    for ancillary_dim, cube_dim in zip(
-                        ancillary.coord_dims(coord),
-                        cube_dims,
-                        strict=True,
-                    ):
-                        data_dims[ancillary_dim] = cube_dim
         if None in data_dims:
             none_dims = ", ".join(
                 str(i) for i, d in enumerate(data_dims) if d is None
@@ -212,8 +204,8 @@ def get_data_dims(
                 f"Mismatch between ancillary cube and variable cube coordinate"
                 f" {none_dims}"
             )
-            logger.info(msg)
-            raise iris.exceptions.CoordinateNotFoundError
+            logger.error(msg)
+            raise iris.exceptions.CoordinateNotFoundError(msg)
     return data_dims
 
 

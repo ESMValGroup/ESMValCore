@@ -313,7 +313,7 @@ class Test:
     def test_get_data_dims_no_match(self):
         """Test get_data_dims matching function w/ no match."""
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-            _ = get_data_dims(
+            get_data_dims(
                 self.cube,
                 self.ancillary_cube_plev,
             )
