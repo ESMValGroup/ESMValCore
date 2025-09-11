@@ -68,6 +68,8 @@ Documentation
 -  Explicitly export LC_ALL for sphinx builds (:pull:`2708`) by :user:`valeriupredoi`
 -  Remove reference to psy-plot recipe in ESMValTool (:pull:`2741`) by :user:`valeriupredoi`
 -  Fix Codecov badge in README (:pull:`2754`) by :user:`valeriupredoi`
+-  Remove mention of Julia in documentation ahead of discontinued support in v2.13 (:pull:`2819`) by :user:`jlenh`
+-  Remove codacy badge (:pull:`2822`) by :user:`bouweandela`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -101,12 +103,13 @@ Preprocessor
 -  Allow adding supplementary variables from a different project and different dataset (:pull:`2755`) by :user:`valeriupredoi`
 -  Move concatenate preprocessor function to its own module (:pull:`2766`) by :user:`bouweandela`
 -  Add preprocessor `align_metadata` (:pull:`2789`) by :user:`schlunma`
+-  Fix for `add_ancillary_variable` (#2820) (:pull:`2825`) by :user:`jlenh`
+-  Set correct calendar when reading file dates (:pull:`2826`) by :user:`bouweandela`
 
 Release
 ~~~~~~~
 
--  Use finer current version for pypa PyPI upload github action (:pull:`2804`) by :user:`valeriupredoi`
--  Commenting out ORNL ESGF node in esgf_pyclient config (:pull:`2806`) by :user:`jlenh`
+-  Update version number and changelog.rst for 2.13.0rc1 (:pull:`2817`) by :user:`jlenh`
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
@@ -121,6 +124,9 @@ Automatic testing
 -  Zarr support (backend, in `esmvalcore.preprocessor._io.py`) (:pull:`2785`) by :user:`valeriupredoi`
 -  Update mamba and python (remove pins and allow for Python 3.13) conda-lock file creation Github Action - via ESMValTool_sample_data being a conda-forge package (:pull:`2792`) by :user:`valeriupredoi`
 -  Automatically open pull requests to update GitHub Actions (:pull:`2799`) by :user:`bouweandela`
+-  Use finer current version for pypa PyPI upload github action (:pull:`2804`) by :user:`valeriupredoi`
+-  Change zarr exception test to GroupNotFoundError (:pull:`2823`) by :user:`jlenh`
+-  Remove failing test `test_load_zarr_local_not_zarr_file` due to zarr version changes (:pull:`2824`) by :user:`jlenh`
 
 Variable Derivation
 ~~~~~~~~~~~~~~~~~~~
@@ -147,6 +153,10 @@ Improvements
 -  Enable ruff rule that checks unused arguments (:pull:`2809`) by :user:`bouweandela`
 -  Enable ruff rule to prevent print statements (:pull:`2810`) by :user:`bouweandela`
 -  Enable ruff rule that enforces using items() to iterate over dict key/value pairs (:pull:`2811`) by :user:`bouweandela`
+-  Remove use of prospector and related tools and Codacy (:pull:`2818`) by :user:`bouweandela`
+-  Commenting out ORNL ESGF node in esgf_pyclient config (:pull:`2806`) by :user:`jlenh`
+-  Enable ruff rule that prevents overwriting loop variables (:pull:`2813`) by :user:`bouweandela`
+-  Enable ruff rule that checks for commented out code (:pull:`2808`) by :user:`bouweandela`
 
 .. _changelog-v2-12-0:
 
