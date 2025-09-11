@@ -106,11 +106,6 @@ Preprocessor
 -  Fix for `add_ancillary_variable` (#2820) (:pull:`2825`) by :user:`jlenh`
 -  Set correct calendar when reading file dates (:pull:`2826`) by :user:`bouweandela`
 
-Release
-~~~~~~~
-
--  Update version number and changelog.rst for 2.13.0rc1 (:pull:`2817`) by :user:`jlenh`
-
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
