@@ -1,0 +1,54 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"30.00000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"seaIce",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_SImon"
+    },
+    "variable_entry":{
+        "siconc":{
+            "cell_measures":"area: areacello",
+            "cell_methods":"area: time: mean",
+            "comment":"Percentage of grid cell covered by sea ice",
+            "dimensions":"longitude latitude time",
+            "frequency":"mon",
+            "long_name":"Sea-Ice Area Percentage (Ocean Grid)",
+            "modeling_realm":"seaIce",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"siconc",
+            "positive":"",
+            "standard_name":"sea_ice_area_fraction",
+            "type":"real",
+            "units":"%",
+            "valid_max":"",
+            "valid_min":""
+        },
+        "siconcbcs":{
+            "cell_measures":"area: areacello",
+            "cell_methods":"time: point",
+            "comment":"Percentage of grid cell covered by sea ice",
+            "dimensions":"longitude latitude time1",
+            "frequency":"mon",
+            "long_name":"Constructed mid-month Sea-ice area fraction",
+            "modeling_realm":"seaIce",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"siconcbcs",
+            "positive":"",
+            "standard_name":"sea_ice_area_fraction",
+            "type":"real",
+            "units":"%",
+            "valid_max":"2000",
+            "valid_min":"-2000"
+        }
+    }
+}
