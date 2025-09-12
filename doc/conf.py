@@ -78,6 +78,9 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
+# Don't execute notebooks
+nb_execution_mode = "off"
+
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
 
