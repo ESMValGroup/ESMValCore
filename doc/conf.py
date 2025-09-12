@@ -57,7 +57,7 @@ if rtd_version not in ["latest", "stable", "doc"]:
 # ones.
 extensions = [
     'autodocsumm',
-    'nbsphinx',
+    'myst_nb',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.extlinks',
@@ -77,6 +77,9 @@ autodoc_default_options = {
     'show-inheritance': True,
     'autosummary': True,
 }
+
+# Don't execute notebooks
+nb_execution_mode = "off"
 
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
