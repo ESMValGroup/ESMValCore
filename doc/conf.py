@@ -57,7 +57,7 @@ if rtd_version not in ["latest", "stable", "doc"]:
 # ones.
 extensions = [
     'autodocsumm',
-    'nbsphinx',
+    'myst-nb',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.extlinks',
