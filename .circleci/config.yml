@@ -33,6 +33,7 @@ commands:
             conda activate esmvaltool
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
+            esmvaltool -- --help
       - store_test_results:
           path: test-reports/report.xml
       - store_artifacts:
