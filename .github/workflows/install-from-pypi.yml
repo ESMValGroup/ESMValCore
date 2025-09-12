@@ -61,9 +61,10 @@ jobs:
           python -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
+          pip check
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
@@ -99,7 +100,7 @@ jobs:
           python -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
           esmvaltool --help
