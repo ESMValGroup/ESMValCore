@@ -61,9 +61,10 @@ jobs:
       - name: Show environment contents
         run: conda list
       - name: Install esmvalcore
-        run: pip install -e .[develop]
+        run: pip install --no-deps -e .[develop]
       - name: Run basic commands
         run: |
+          pip check
           esmvaltool --help
           esmvaltool version
       - name: Run pytests

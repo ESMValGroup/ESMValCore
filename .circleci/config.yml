@@ -31,6 +31,7 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
+            pip check
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
             esmvaltool -- --help
@@ -55,7 +56,7 @@ commands:
         type: string
         default: "test"
       flags:
-        description: pip install flags
+        description: pip install --no-deps flags
         type: string
         default: ""
       upstream_packages:
@@ -131,7 +132,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
-            pip install .[test] > /logs/install.txt 2>&1
+            pip install --no-deps .[test] > /logs/install.txt 2>&1
       - test_and_report:
           args: --cov
       - save_cache:
@@ -221,7 +222,8 @@ jobs:
             # Install
             mamba env create -n esmvaltool -f environment.yml
             conda activate esmvaltool
-            pip install .[doc]
+            pip install --no-deps .[doc]
+            pip check
             # Log versions
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
