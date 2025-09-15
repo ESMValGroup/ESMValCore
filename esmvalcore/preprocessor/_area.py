@@ -894,13 +894,14 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         )
         cubelist.append(_cube)
     result = cubelist.merge_cube()
+    last_dims = result.coord_dims("shape_id") + get_dims_along_axes(
+        result,
+        axes=["X", "Y"],
+    )
     if len(masks):
-        last = result.coord_dims("shape_id") + get_dims_along_axes(
-            result,
-            axes=["X", "Y"],
-        )
         result.transpose(
-            tuple(i for i in range(result.ndim) if i not in last) + last,
+            tuple(i for i in range(result.ndim) if i not in last_dims)
+            + last_dims,
         )
     result.coord("shape_id").data = np.array(
         list(masks.keys()),
@@ -912,8 +913,9 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         data = cube.core_data()
     else:
         mask = np.stack(list(masks.values()), axis=0)
-        data_chunks = list(cube.lazy_data().chunks)
-        data_chunks.insert(mask_dims[0], "auto")
+        data_chunks = [
+            None if i in last_dims else "auto" for i in range(result.ndim)
+        ]
         data = iris.util.broadcast_to_shape(
             cube.core_data(),
             result.shape,
