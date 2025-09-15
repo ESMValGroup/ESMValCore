@@ -893,7 +893,15 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
             AuxCoord(id_, units="no_unit", long_name="shape_id"),
         )
         cubelist.append(_cube)
-    result = fix_coordinate_ordering(cubelist.merge_cube())
+    result = cubelist.merge_cube()
+    if len(masks):
+        last = result.coord_dims("shape_id") + get_dims_along_axes(
+            result,
+            axes=["X", "Y"],
+        )
+        result.transpose(
+            tuple(i for i in range(result.ndim) if i not in last) + last,
+        )
     result.coord("shape_id").data = np.array(
         list(masks.keys()),
     )  # Ensure shape IDs are in the same order as masks
@@ -917,6 +925,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         data,
         mask_dims + get_dims_along_axes(result, axes=["X", "Y"]),
     )
+    result = fix_coordinate_ordering(result)
 
     for measure in cube.cell_measures():
         # Cell measures that are time-dependent, with 4 dimensions and an
