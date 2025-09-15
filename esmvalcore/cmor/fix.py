@@ -181,8 +181,8 @@ def fix_metadata(
     for cube in cubes:
         by_file[cube.attributes.get("source_file", "")].append(cube)
 
-    for cube_list in by_file.values():
-        cube_list = CubeList(cube_list)
+    for group in by_file.values():
+        cube_list = CubeList(group)
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 

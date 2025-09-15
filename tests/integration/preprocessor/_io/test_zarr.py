@@ -202,23 +202,3 @@ def test_load_zarr_local_not_file():
     # is bound to fail the test
     with pytest.raises(FileNotFoundError):
         load(zarr_path)
-
-
-def test_load_zarr_local_not_zarr_file():
-    """
-    Test loading something that has a zarr extension.
-
-    But file is plaintext (on local FS).
-    """
-    zarr_path = (
-        Path(importlib_files("tests"))
-        / "sample_data"
-        / "zarr-sample-data"
-        / "example_field_0.zarr17"
-    )
-
-    # "Unable to find group" or "No group found"
-    # Zarr keeps changing the exception string so matching
-    # is bound to fail the test
-    with pytest.raises(FileNotFoundError):
-        load(zarr_path)

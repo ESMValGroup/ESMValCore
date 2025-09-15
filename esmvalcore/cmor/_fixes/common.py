@@ -190,7 +190,7 @@ class OceanFixGrid(Fix):
 
         # Calculate latitude/longitude vertices by interpolation.
         # Following the CF conventions (see
-        # cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries)
+        # https://cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries)
         # we go counter-clockwise around the cells and construct a grid of
         # index values which are in turn used to interpolate longitudes and
         # latitudes in the midpoints between the cell centers.

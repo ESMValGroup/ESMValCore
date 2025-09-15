@@ -230,9 +230,9 @@ def validate_rootpath(value):
                 "Correcting capitalization, project 'obs4mips' should be "
                 "written as 'obs4MIPs' in configured 'rootpath'",
             )
-            key = "obs4MIPs"
+            key = "obs4MIPs"  # noqa: PLW2901
         if isinstance(paths, Path):
-            paths = str(paths)
+            paths = str(paths)  # noqa: PLW2901
         if isinstance(paths, (str, list)):
             new_mapping[key] = validate_pathlist(paths)
         else:
@@ -260,7 +260,7 @@ def validate_drs(value):
                 "Correcting capitalization, project 'obs4mips' should be "
                 "written as 'obs4MIPs' in configured 'drs'",
             )
-            key = "obs4MIPs"
+            key = "obs4MIPs"  # noqa: PLW2901
         new_mapping[key] = validate_string(drs)
     return new_mapping
 

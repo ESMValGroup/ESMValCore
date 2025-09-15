@@ -121,9 +121,9 @@ class ValidatedConfig(MutableMapping):
         """Check and warn for missing variables."""
         for key, more_info in self._warn_if_missing:
             if key not in self:
-                more_info = f" ({more_info})" if more_info else ""
+                more_info_msg = f" ({more_info})" if more_info else ""
                 warnings.warn(
-                    f"`{key}` is not defined{more_info}",
+                    f"`{key}` is not defined{more_info_msg}",
                     MissingConfigParameter,
                     stacklevel=1,
                 )

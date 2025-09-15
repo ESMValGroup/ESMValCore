@@ -161,8 +161,16 @@ def _get_start_end_date(
         with Dataset(file) as dataset:
             for variable in dataset.variables.values():
                 var_name = _get_var_name(variable)
-                if var_name == "time" and "units" in variable.ncattrs():
-                    time_units = Unit(variable.getncattr("units"))
+                attrs = variable.ncattrs()
+                if (
+                    var_name == "time"
+                    and "units" in attrs
+                    and "calendar" in attrs
+                ):
+                    time_units = Unit(
+                        variable.getncattr("units"),
+                        calendar=variable.getncattr("calendar"),
+                    )
                     start_date = isodate.date_isoformat(
                         time_units.num2date(variable[0]),
                         format=isodate.isostrf.DATE_BAS_COMPLETE,
@@ -383,9 +391,8 @@ def _replace_tags(
             tlist.add("sub_experiment")
         pathset = new_paths
 
-    for tag in tlist:
-        original_tag = tag
-        tag, _, _ = _get_caps_options(tag)
+    for original_tag in tlist:
+        tag, _, _ = _get_caps_options(original_tag)
 
         if tag in variable:
             replacewith = variable[tag]
@@ -618,11 +625,10 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 paths = dict.fromkeys(paths, structure)
             sources: list[DataSource] = []
             for path, structure in paths.items():
-                path = Path(path)
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
-                    DataSource(path, d, f)
+                    DataSource(Path(path), d, f)
                     for d in dir_templates
                     for f in file_templates
                 )
