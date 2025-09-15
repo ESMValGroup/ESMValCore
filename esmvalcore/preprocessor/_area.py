@@ -597,6 +597,9 @@ def _get_requested_geometries(
             raise ValueError(
                 msg,
             )
+    if ids is not None:
+        # Return the geometries in the order of the requested IDs.
+        requested_geometries = {id_: requested_geometries[id_] for id_ in ids}
 
     return requested_geometries
 
@@ -883,16 +886,38 @@ def extract_shape(
 def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     """Mask input cube."""
     cubelist = CubeList()
-    for id_, mask in masks.items():
+    for id_ in masks:
         _cube = cube.copy()
         remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
             AuxCoord(id_, units="no_unit", long_name="shape_id"),
         )
-        horizontal_dims = get_dims_along_axes(cube, axes=["X", "Y"])
-        _cube.data = apply_mask(~mask, _cube.core_data(), horizontal_dims)
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
+    result.coord("shape_id").data = np.array(
+        list(masks.keys()),
+    )  # Ensure shape IDs are in the same order as masks
+    mask_dims = result.coord_dims("shape_id")
+    if len(mask_dims) == 0:
+        # This happens when there only one shape_id and mask.
+        mask = next(iter(masks.values()))
+        data = cube.core_data()
+    else:
+        mask = np.stack(list(masks.values()), axis=0)
+        data_chunks = list(cube.lazy_data().chunks)
+        data_chunks.insert(mask_dims[0], "auto")
+        data = iris.util.broadcast_to_shape(
+            cube.core_data(),
+            result.shape,
+            dim_map=[i for i in range(cube.ndim + 1) if i != mask_dims[0]],
+            chunks=data_chunks,
+        )
+    result.data = apply_mask(
+        ~mask,
+        data,
+        mask_dims + get_dims_along_axes(result, axes=["X", "Y"]),
+    )
+
     for measure in cube.cell_measures():
         # Cell measures that are time-dependent, with 4 dimensions and an
         # original shape of (time, depth, lat, lon), need to be broadcast to
