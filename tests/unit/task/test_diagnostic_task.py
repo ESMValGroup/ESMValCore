@@ -20,7 +20,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, "r", encoding="utf-8") as file:
+    with open(file_name, encoding="utf-8") as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert 'if (isvar("profile_diagnostic")) then\n' not in lines
@@ -32,7 +32,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, "r", encoding="utf-8") as file:
+    with open(file_name, encoding="utf-8") as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert "profile_diagnostic" not in lines
@@ -42,12 +42,16 @@ def test_write_ncl_settings(tmp_path):
 def test_initialize_env(ext, tmp_path, monkeypatch):
     """Test that the environmental variables are set correctly."""
     monkeypatch.setattr(
-        esmvalcore._task.DiagnosticTask, "_initialize_cmd", lambda self: None
+        esmvalcore._task.DiagnosticTask,
+        "_initialize_cmd",
+        lambda self: None,
     )
 
     esmvaltool_path = tmp_path / "esmvaltool"
     monkeypatch.setattr(
-        esmvalcore.config._diagnostics.DIAGNOSTICS, "path", esmvaltool_path
+        esmvalcore.config._diagnostics.DIAGNOSTICS,
+        "path",
+        esmvaltool_path,
     )
 
     diagnostics_path = esmvaltool_path / "diag_scripts"
@@ -98,11 +102,13 @@ CMD = {
 }
 
 
-@pytest.mark.parametrize("ext_profile,cmd", CMD.items())
+@pytest.mark.parametrize(("ext_profile", "cmd"), CMD.items())
 def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     """Test creating the command to run the diagnostic script."""
     monkeypatch.setattr(
-        esmvalcore._task.DiagnosticTask, "_initialize_env", lambda self: None
+        esmvalcore._task.DiagnosticTask,
+        "_initialize_env",
+        lambda self: None,
     )
 
     ext, profile = ext_profile
@@ -122,7 +128,9 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     monkeypatch.setattr(esmvalcore._task.sys, "executable", "python")
 
     task = esmvalcore._task.DiagnosticTask(
-        script, settings, output_dir=str(tmp_path)
+        script,
+        settings,
+        output_dir=str(tmp_path),
     )
 
     # Append filenames to expected command
@@ -138,10 +146,12 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     if ext_profile[0] != "" and ext_profile[0] != ".py":
         with pytest.raises(DiagnosticError) as err_mssg:
             esmvalcore._task.DiagnosticTask(
-                script, settings, output_dir=str(tmp_path)
+                script,
+                settings,
+                output_dir=str(tmp_path),
             )
         exp_mssg1 = "Cannot execute script "
-        exp_mssg2 = "program '{}' not installed.".format(CMD[ext_profile][0])
+        exp_mssg2 = f"program '{CMD[ext_profile][0]}' not installed."
         assert exp_mssg1 in str(err_mssg.value)
         assert exp_mssg2 in str(err_mssg.value)
 
@@ -155,7 +165,9 @@ def diagnostic_task(mocker, tmp_path):
     tags = TagsManager({"plot_type": {"tag": "tag_value"}})
     mocker.patch.dict(esmvalcore._task.TAGS, tags)
     mocker.patch.object(
-        esmvalcore._task, "_write_citation_files", autospec=True
+        esmvalcore._task,
+        "_write_citation_files",
+        autospec=True,
     )
 
     mocker.patch.object(esmvalcore._task.DiagnosticTask, "_initialize_cmd")
@@ -167,13 +179,12 @@ def diagnostic_task(mocker, tmp_path):
         "some_diagnostic_setting": True,
     }
 
-    task = esmvalcore._task.DiagnosticTask(
+    return esmvalcore._task.DiagnosticTask(
         "test.py",
         settings,
         output_dir=str(tmp_path),
         name="some-diagnostic-task",
     )
-    return task
 
 
 def write_mock_provenance(diagnostic_task, record):
@@ -186,10 +197,13 @@ def write_mock_provenance(diagnostic_task, record):
 def test_collect_provenance(mocker, diagnostic_task):
     tracked_file_instance = mocker.Mock()
     tracked_file_class = mocker.patch.object(
-        esmvalcore._task, "TrackedFile", return_value=tracked_file_instance
+        esmvalcore._task,
+        "TrackedFile",
+        return_value=tracked_file_instance,
     )
     write_citation = mocker.patch.object(
-        esmvalcore._task, "_write_citation_files"
+        esmvalcore._task,
+        "_write_citation_files",
     )
 
     record = {
@@ -224,11 +238,12 @@ def test_collect_provenance(mocker, diagnostic_task):
         {ancestor_product},
     )
     tracked_file_instance.initialize_provenance.assert_called_once_with(
-        diagnostic_task.activity
+        diagnostic_task.activity,
     )
     tracked_file_instance.save_provenance.assert_called_once()
     write_citation.assert_called_once_with(
-        tracked_file_instance.filename, tracked_file_instance.provenance
+        tracked_file_instance.filename,
+        tracked_file_instance.provenance,
     )
     diagnostic_task.products.add.assert_called_once_with(tracked_file_instance)
 

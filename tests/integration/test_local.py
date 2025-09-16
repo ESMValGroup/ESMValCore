@@ -8,7 +8,13 @@ import pytest
 import yaml
 
 from esmvalcore.config import CFG
-from esmvalcore.local import LocalFile, _get_output_file, find_files
+from esmvalcore.local import (
+    LocalFile,
+    _get_output_file,
+    _parse_period,
+    _select_drs,
+    find_files,
+)
 
 # Load test configuration
 with open(
@@ -86,7 +92,9 @@ def test_find_files(monkeypatch, root, cfg):
     monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
     monkeypatch.setitem(CFG, "rootpath", {project: root})
     create_tree(
-        root, cfg.get("available_files"), cfg.get("available_symlinks")
+        root,
+        cfg.get("available_files"),
+        cfg.get("available_symlinks"),
     )
 
     # Find files
@@ -111,7 +119,9 @@ def test_find_files_with_facets(monkeypatch, root):
     monkeypatch.setitem(CFG, "rootpath", {project: root})
 
     create_tree(
-        root, cfg.get("available_files"), cfg.get("available_symlinks")
+        root,
+        cfg.get("available_files"),
+        cfg.get("available_symlinks"),
     )
 
     # Find files
@@ -120,3 +130,18 @@ def test_find_files_with_facets(monkeypatch, root):
     assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
     assert isinstance(input_filelist[0], LocalFile)
     assert input_filelist[0].facets
+
+
+def test_select_invalid_drs_structure():
+    msg = (
+        r"drs _INVALID_STRUCTURE_ for CMIP6 project not specified in "
+        r"config-developer file"
+    )
+    with pytest.raises(KeyError, match=msg):
+        _select_drs("input_dir", "CMIP6", "_INVALID_STRUCTURE_")
+
+
+def test_parse_period_invalid_timerange_type():
+    msg = r"`timerange` should be a `str`, got <class 'int'>"
+    with pytest.raises(TypeError, match=msg):
+        _parse_period(1)

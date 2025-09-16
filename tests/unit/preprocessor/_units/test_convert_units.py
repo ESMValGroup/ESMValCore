@@ -34,7 +34,9 @@ class TestConvertUnits(tests.Test):
         )
         coords_spec3 = [(lats2, 0), (lons2, 1)]
         self.arr = iris.cube.Cube(
-            self.data2, units="K", dim_coords_and_dims=coords_spec3
+            self.data2,
+            units="K",
+            dim_coords_and_dims=coords_spec3,
         )
 
     def test_convert_incompatible_units(self):
@@ -81,6 +83,78 @@ class TestConvertUnits(tests.Test):
         np.testing.assert_allclose(
             result.data,
             [[0.0, 1e-2], [2e-2, 3e-2]],
+        )
+
+    def test_convert_water_evaporation_flux(self):
+        """Test special conversion of water_evaporation_flux."""
+        self.arr.standard_name = "water_evaporation_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, "lwe_water_evaporation_rate")
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
+    def test_convert_lwe_water_evaporation_rate(self):
+        """Test special conversion of lwe_water_evaporation_rate."""
+        self.arr.standard_name = "lwe_water_evaporation_rate"
+        self.arr.units = "mm s-1"
+        result = convert_units(self.arr, "kg m-2 s-1")
+        self.assertEqual(result.standard_name, "water_evaporation_flux")
+        self.assertEqual(result.units, "kg m-2 s-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0], [2.0, 3.0]],
+        )
+
+    def test_convert_water_potential_evaporation_flux(self):
+        """Test special conversion of water_potential_evaporation_flux."""
+        self.arr.standard_name = "water_potential_evaporation_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, None)
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
+    def test_convert_rate_without_standard_name(self):
+        """Test conversion of a flux without a standard name."""
+        self.arr.units = "mm s-1"
+        result = convert_units(self.arr, "kg m-2 s-1")
+        self.assertEqual(result.units, "kg m-2 s-1")
+
+    def test_convert_air_mass(self):
+        """Test special conversion of surface pressure to air mass."""
+        self.arr.standard_name = "surface_air_pressure"
+        self.arr.units = "Pa"
+        result = convert_units(self.arr, "kg m-2")
+        self.assertEqual(
+            result.standard_name,
+            "atmosphere_mass_of_air_per_unit_area",
+        )
+        self.assertEqual(result.units, "kg m-2")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0 / 9.80665], [2.0 / 9.80665, 3.0 / 9.80665]],
+        )
+
+    def test_convert_air_mass_convertible(self):
+        """Test special conversion of air mass to surface pressure."""
+        self.arr.standard_name = "atmosphere_mass_of_air_per_unit_area"
+        self.arr.units = "kg m-2"
+        result = convert_units(self.arr, "Pa")
+        self.assertEqual(
+            result.standard_name,
+            "surface_air_pressure",
+        )
+        self.assertEqual(result.units, "Pa")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 9.80665], [19.6133, 29.41995]],
         )
 
     def test_convert_precipitation_flux(self):
@@ -149,6 +223,7 @@ class TestConvertUnits(tests.Test):
 
     def test_convert_lwe_precipitation_rate_fail_invalid_name(self):
         """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = "precipitation_flux"
         self.arr.units = "mm s-1"
         self.assertRaises(ValueError, convert_units, self.arr, "kg m-2 s-1")
 
@@ -181,13 +256,18 @@ class TestFluxToTotal(tests.Test):
             (time, 0),
         ]
         self.cube = iris.cube.Cube(
-            data, units="kg day-1", dim_coords_and_dims=coords_spec
+            data,
+            units="kg day-1",
+            dim_coords_and_dims=coords_spec,
         )
 
     def test_missing_coordinate(self):
         """Test error is raised if missing coordinate."""
         self.assertRaises(
-            ValueError, accumulate_coordinate, self.cube, "longitude"
+            ValueError,
+            accumulate_coordinate,
+            self.cube,
+            "longitude",
         )
 
     def test_multidim_coordinate(self):
@@ -227,7 +307,10 @@ class TestFluxToTotal(tests.Test):
             aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
         )
         self.assertRaises(
-            NotImplementedError, accumulate_coordinate, cube, "longitude"
+            NotImplementedError,
+            accumulate_coordinate,
+            cube,
+            "longitude",
         )
 
     def test_flux_by_second(self):

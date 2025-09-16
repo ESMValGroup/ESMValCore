@@ -1,11 +1,16 @@
 """Fixes for EC-Earth model."""
 
+from collections.abc import Iterable
+
 import iris
 import numpy as np
 from dask import array as da
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord, cube_to_aux_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_scalar_height_coord,
+    cube_to_aux_coord,
+)
 
 
 class Sic(Fix):
@@ -125,14 +130,17 @@ class Areacello(Fix):
         return iris.cube.CubeList(
             [
                 areacello,
-            ]
+            ],
         )
 
 
 class Pr(Fix):
     """Fixes for pr."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(
+        self,
+        cubes: Iterable[iris.cube.Cube],
+    ) -> iris.cube.CubeList:
         """Fix time coordinate.
 
         Last file (2000-2009) has erroneously duplicated points
@@ -160,6 +168,8 @@ class Pr(Fix):
                 else:
                     # erase erroneously copy-pasted points
                     select = np.unique(time_coord.points, return_index=True)[1]
-                    new_list.append(cube[select])
+                    new_cube = cube[select]
+                    iris.util.promote_aux_coord_to_dim_coord(new_cube, "time")
+                    new_list.append(new_cube)
 
         return new_list

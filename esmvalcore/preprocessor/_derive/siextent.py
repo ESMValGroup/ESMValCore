@@ -17,13 +17,12 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `siextent`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "sic", "optional": "true"},
             {"short_name": "siconca", "optional": "true"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -50,9 +49,12 @@ class DerivedVariable(DerivedVariableBase):
             try:
                 sic = cubes.extract_cube(Constraint(name="siconca"))
             except iris.exceptions.ConstraintMismatchError as exc:
-                raise RecipeError(
+                msg = (
                     "Derivation of siextent failed due to missing variables "
                     "sic and siconca."
+                )
+                raise RecipeError(
+                    msg,
                 ) from exc
 
         ones = da.ones_like(sic)

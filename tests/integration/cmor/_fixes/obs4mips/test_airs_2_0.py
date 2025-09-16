@@ -17,7 +17,7 @@ def test_fix_metadata_hur():
                 units="1",
                 attributes={"valid_range": [0.0, 1.5]},
             ),
-        ]
+        ],
     )
 
     fixed_cubes = fix_metadata(cubes, "hur", "obs4MIPs", "AIRS-2-0", "Amon")

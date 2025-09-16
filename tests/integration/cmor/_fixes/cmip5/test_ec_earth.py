@@ -154,7 +154,7 @@ class TestAreacello(unittest.TestCase):
                 ),
                 latitude,
                 longitude,
-            ]
+            ],
         )
 
         self.fix = Areacello(None)
@@ -187,7 +187,7 @@ class TestPr(unittest.TestCase):
             units="days since 1850-01-01",
         )
 
-        correct_time_coord = AuxCoord(
+        correct_time_coord = DimCoord(
             points=[1.0, 2.0, 3.0],
             var_name="time",
             standard_name="time",
@@ -208,15 +208,15 @@ class TestPr(unittest.TestCase):
 
         self.time_coord = correct_time_coord
         self.wrong_cube = CubeList(
-            [Cube(np.ones((5, 1, 1)), var_name="pr", units="kg m-2 s-1")]
+            [Cube(np.ones((5, 1, 1)), var_name="pr", units="kg m-2 s-1")],
         )
         self.wrong_cube[0].add_aux_coord(wrong_time_coord, 0)
         self.wrong_cube[0].add_dim_coord(lat_coord, 1)
         self.wrong_cube[0].add_dim_coord(lon_coord, 2)
         self.correct_cube = CubeList(
-            [Cube(np.ones(3), var_name="pr", units="kg m-2 s-1")]
+            [Cube(np.ones(3), var_name="pr", units="kg m-2 s-1")],
         )
-        self.correct_cube[0].add_aux_coord(correct_time_coord, 0)
+        self.correct_cube[0].add_dim_coord(correct_time_coord, 0)
 
         self.fix = Pr(None)
 
@@ -232,10 +232,10 @@ class TestPr(unittest.TestCase):
         out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
         out_correct_cube = self.fix.fix_metadata(self.correct_cube)
 
-        time = out_wrong_cube[0].coord("time")
+        time = out_wrong_cube[0].coord("time", dim_coords=True)
         assert time == self.time_coord
 
-        time = out_correct_cube[0].coord("time")
+        time = out_correct_cube[0].coord("time", dim_coords=True)
         assert time == self.time_coord
 
     def test_pr_fix_metadata_no_time(self):

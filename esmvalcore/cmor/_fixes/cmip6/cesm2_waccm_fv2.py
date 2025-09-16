@@ -1,6 +1,7 @@
 """Fixes for CESM2-WACCM-FV2 model."""
 
-from ..common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
 from .cesm2 import Pr as BasePr

@@ -3,8 +3,11 @@
 import dask.array as da
 import iris
 from iris import NameConstraint
+from iris.cube import Cube, CubeList
 
-from .._regrid import regrid
+from esmvalcore.preprocessor._regrid import regrid
+from esmvalcore.typing import Facets
+
 from ._baseclass import DerivedVariableBase
 
 
@@ -12,30 +15,34 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
     @staticmethod
-    def required(project):
+    def required(project: str) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        required = [
+        sftlf: Facets = {"short_name": "sftlf", "mip": "fx"}
+        if project == "CMIP5":
+            sftlf["ensemble"] = "r0i0p0"
+        return [
             {"short_name": "baresoilFrac"},
             {"short_name": "residualFrac"},
-            {"short_name": "sftlf", "mip": "fx"},
+            sftlf,
         ]
-        return required
 
     @staticmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """Compute vegetation fraction from bare soil fraction."""
         baresoilfrac_cube = cubes.extract_cube(
-            NameConstraint(var_name="baresoilFrac")
+            NameConstraint(var_name="baresoilFrac"),
         )
         residualfrac_cube = cubes.extract_cube(
-            NameConstraint(var_name="residualFrac")
+            NameConstraint(var_name="residualFrac"),
         )
         sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
 
         # Add time dimension to sftlf
         target_shape_sftlf = (baresoilfrac_cube.shape[0], *sftlf_cube.shape)
         sftlf_data = iris.util.broadcast_to_shape(
-            sftlf_cube.data, target_shape_sftlf, (1, 2)
+            sftlf_cube.data,
+            target_shape_sftlf,
+            (1, 2),
         )
         sftlf_cube = baresoilfrac_cube.copy(sftlf_data)
         sftlf_cube.data = sftlf_cube.lazy_data()

@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
 from numbers import Number
-from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
-from esmvalcore.config import Session
-from esmvalcore.dataset import Dataset, _isglob
+from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile, _replace_years_with_timerange
@@ -19,14 +18,19 @@ from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
-from esmvalcore.typing import Facets, FacetValue
 
 from . import check
 from ._io import _load_recipe
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from esmvalcore.config import Session
+    from esmvalcore.typing import Facets, FacetValue
+
 logger = logging.getLogger(__name__)
 
-_ALIAS_INFO_KEYS = (
+_ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
     "activity",
     "driver",
@@ -39,7 +43,7 @@ _ALIAS_INFO_KEYS = (
 """List of keys to be used to compose the alias, ordered by priority."""
 
 
-def _facet_to_str(facet_value: FacetValue) -> str:
+def _facet_to_str(facet_value: FacetValue | None) -> str:
     """Get a string representation of a facet value."""
     if isinstance(facet_value, str):
         return facet_value
@@ -48,7 +52,7 @@ def _facet_to_str(facet_value: FacetValue) -> str:
     return str(facet_value)
 
 
-def _set_alias(variables):
+def _set_alias(variables: Sequence[Sequence[Dataset]]) -> None:
     """Add unique alias for datasets.
 
     Generates a unique alias for each dataset that will be shared by all
@@ -95,43 +99,49 @@ def _set_alias(variables):
     variables : list
         for each recipe variable, a list of datasets
     """
-    datasets_info = set()
+    datasets_info: set[tuple[str, ...]] = set()
 
     for variable in variables:
         for dataset in variable:
-            alias = tuple(
+            alias_tuple = tuple(
                 _facet_to_str(dataset.facets.get(key, None))
                 for key in _ALIAS_INFO_KEYS
             )
-            datasets_info.add(alias)
+            datasets_info.add(alias_tuple)
             if "alias" not in dataset.facets:
-                dataset.facets["alias"] = alias
+                dataset.facets["alias"] = alias_tuple
 
-    alias = {}
+    alias: dict[tuple[str, ...], list[Any]] = {}
     for info in datasets_info:
         alias[info] = []
 
-    datasets_info = list(datasets_info)
-    _get_next_alias(alias, datasets_info, 0)
+    datasets_info_list: list[tuple[str, ...]] = list(datasets_info)
+    _get_next_alias(alias, datasets_info_list, 0)
 
-    for info in datasets_info:
-        alias[info] = "_".join(
-            [str(value) for value in alias[info] if value is not None]
+    final_alias: dict[tuple[str, ...], str] = {}
+    for info in datasets_info_list:
+        final_alias[info] = "_".join(
+            [str(value) for value in alias[info] if value is not None],
         )
-        if not alias[info]:
-            alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
+        if not final_alias[info]:
+            final_alias[info] = info[_ALIAS_INFO_KEYS.index("dataset")]
 
     for variable in variables:
         for dataset in variable:
-            dataset.facets["alias"] = alias.get(
-                dataset.facets["alias"], dataset.facets["alias"]
+            dataset.facets["alias"] = final_alias.get(  # type: ignore
+                dataset.facets["alias"],
+                dataset.facets["alias"],
             )
 
 
-def _get_next_alias(alias, datasets_info, i):
+def _get_next_alias(
+    alias: dict[tuple[str, ...], list[Any]],
+    datasets_info: list[tuple[str, ...]],
+    i: int,
+) -> None:
     if i >= len(_ALIAS_INFO_KEYS):
         return
-    key_values = set(info[i] for info in datasets_info)
+    key_values = {info[i] for info in datasets_info}
     if len(key_values) == 1:
         for info in iter(datasets_info):
             alias[info].append(None)
@@ -150,10 +160,11 @@ def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
     """Check that supplementary variables have a short_name."""
     for facets in supplementaries:
         if "short_name" not in facets:
-            raise RecipeError(
+            msg = (
                 "'short_name' is required for supplementary_variables "
                 f"entries, but missing in {facets}"
             )
+            raise RecipeError(msg)
 
 
 def _merge_supplementary_dicts(
@@ -177,7 +188,7 @@ def _merge_supplementary_dicts(
     return list(merged.values())
 
 
-def _fix_cmip5_fx_ensemble(dataset: Dataset):
+def _fix_cmip5_fx_ensemble(dataset: Dataset) -> None:
     """Automatically correct the wrong ensemble for CMIP5 fx variables."""
     if (
         dataset.facets.get("project") == "CMIP5"
@@ -208,7 +219,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number)):
+    if isinstance(realms, (str, Number, bool)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
@@ -241,7 +252,7 @@ def _append_missing_supplementaries(
             supplementary_facets: Facets = {
                 facet: "*"
                 for facet in FACETS.get(project, ["mip"])
-                if facet not in _CMOR_KEYS
+                if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
             if "version" in facets:
                 supplementary_facets["version"] = "*"
@@ -277,7 +288,8 @@ def _get_dataset_facets_from_recipe(
     # after any wildcards have been resolved.
     if "end_year" in facets and session["max_years"]:
         facets["end_year"] = min(
-            facets["end_year"], facets["start_year"] + session["max_years"] - 1
+            facets["end_year"],
+            facets["start_year"] + session["max_years"] - 1,
         )
 
     # Legacy: support start_year and end_year instead of timerange
@@ -287,7 +299,7 @@ def _get_dataset_facets_from_recipe(
     if facets["project"] == "obs4mips":
         logger.warning(
             "Correcting capitalization, project 'obs4mips' "
-            "should be written as 'obs4MIPs'"
+            "should be written as 'obs4MIPs'",
         )
         facets["project"] = "obs4MIPs"
 
@@ -416,7 +428,9 @@ def datasets_from_recipe(
     return datasets
 
 
-def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
+def _dataset_from_files(  # noqa: C901
+    dataset: Dataset,
+) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
     errors: list[str] = []
@@ -440,7 +454,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             for key, value in dataset.facets.items():
                 if _isglob(value):
                     if key in expanded_ds.facets and not _isglob(
-                        expanded_ds[key]
+                        expanded_ds[key],
                     ):
                         updated_facets[key] = expanded_ds.facets[key]
                     else:
@@ -448,7 +462,9 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
 
             if unexpanded_globs:
                 msg = _report_unexpanded_globs(
-                    dataset, expanded_ds, unexpanded_globs
+                    dataset,
+                    expanded_ds,
+                    unexpanded_globs,
                 )
                 errors.append(msg)
                 continue
@@ -508,7 +524,7 @@ def _report_unexpanded_globs(
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        patterns = expanded_ds._file_globs
+        patterns = expanded_ds._file_globs  # noqa: SLF001
         msg = (
             f"{msg}\nNo files found matching:\n"
             + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]
@@ -547,7 +563,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 
     # Configure input datasets needed to derive variable
     datasets = []
-    required_vars = get_required(facets["short_name"], facets["project"])
+    required_vars = get_required(facets["short_name"], facets["project"])  # type: ignore
     # idea: add option to specify facets in list of dicts that is value of
     # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
@@ -568,10 +584,10 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
             datasets.append(input_dataset)
 
     # Check timeranges of available input data.
-    timeranges = set()
+    timeranges: set[str] = set()
     for input_dataset in datasets:
         if "timerange" in input_dataset.facets:
-            timeranges.add(input_dataset.facets["timerange"])
+            timeranges.add(input_dataset.facets["timerange"])  # type: ignore
     check.differing_timeranges(timeranges, required_vars)
 
     return datasets

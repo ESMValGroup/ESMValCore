@@ -223,13 +223,18 @@ authors:
     family-names: Garcia Perdomo
     given-names: Karen
     orcid: "https://orcid.org/0009-0004-2333-3358"
+  -
+    affiliation: "SMHI, Sweden"
+    family-names: Lenhardt
+    given-names: Julien
+    orcid: "https://orcid.org/0000-0002-9949-3989"
 
 cff-version: 1.2.0
-date-released: 2024-11-26
+date-released: 2025-09-12
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.11.1"
+version: "v2.13.0rc3"
 ...

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, MutableMapping
-from typing import Any
+from collections.abc import Callable, Generator, Mapping, MutableMapping
+from contextlib import contextmanager
+from copy import deepcopy
+from typing import Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -22,7 +24,7 @@ from ._config_validators import ValidationError
 class ValidatedConfig(MutableMapping):
     """Based on `matplotlib.rcParams`."""
 
-    _validate: dict[str, Callable] = {}
+    _validate: ClassVar[dict[str, Callable]] = {}
     """Validation function for each configuration option.
 
     Each key and value in the dictionary corresponds to a configuration option
@@ -31,7 +33,7 @@ class ValidatedConfig(MutableMapping):
     ``ValidationError`` if invalid values are given.
     """
 
-    _deprecate: dict[str, Callable] = {}
+    _deprecate: ClassVar[dict[str, Callable]] = {}
     """Handle deprecated options.
 
     Each key and value in the dictionary corresponds to a configuration option
@@ -40,14 +42,14 @@ class ValidatedConfig(MutableMapping):
     ``f(self, value, validated_value) -> None``.
     """
 
-    _deprecated_defaults: dict[str, Any] = {}
+    _deprecated_defaults: ClassVar[dict[str, Any]] = {}
     """Default values for deprecated options.
 
     Default values for deprecated options that are used if the option is not
     present in the ``_mapping`` dictionary.
     """
 
-    _warn_if_missing: tuple[tuple[str, str], ...] = ()
+    _warn_if_missing: ClassVar[tuple[tuple[str, str], ...]] = ()
     """Handle missing options.
 
     Each sub-tuple in the tuple consists of an option for which a warning is
@@ -57,19 +59,19 @@ class ValidatedConfig(MutableMapping):
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self._mapping = {}
+        self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
         """Map key to value."""
         if key not in self._validate:
-            raise InvalidConfigParameter(
-                f"`{key}` is not a valid config parameter."
-            )
+            msg = f"`{key}` is not a valid config parameter."
+            raise InvalidConfigParameter(msg)
         try:
             cval = self._validate[key](val)
         except ValidationError as verr:
-            raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
+            msg = f"Key `{key}`: {verr}"
+            raise InvalidConfigParameter(msg) from None
 
         if key in self._deprecate:
             self._deprecate[key](self, val, cval)
@@ -90,15 +92,17 @@ class ValidatedConfig(MutableMapping):
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
         repr_split = pprint.pformat(
-            self._mapping, indent=1, width=80 - indent
+            self._mapping,
+            indent=1,
+            width=80 - indent,
         ).split("\n")
         repr_indented = ("\n" + " " * indent).join(repr_split)
-        return "{}({})".format(class_name, repr_indented)
+        return f"{class_name}({repr_indented})"
 
     def __str__(self):
         """Return string representation."""
         return "\n".join(
-            map("{0[0]}: {0[1]}".format, sorted(self._mapping.items()))
+            map("{0[0]}: {0[1]}".format, sorted(self._mapping.items())),
         )
 
     def __iter__(self):
@@ -117,17 +121,43 @@ class ValidatedConfig(MutableMapping):
         """Check and warn for missing variables."""
         for key, more_info in self._warn_if_missing:
             if key not in self:
-                more_info = f" ({more_info})" if more_info else ""
+                more_info_msg = f" ({more_info})" if more_info else ""
                 warnings.warn(
-                    f"`{key}` is not defined{more_info}",
+                    f"`{key}` is not defined{more_info_msg}",
                     MissingConfigParameter,
                     stacklevel=1,
                 )
 
-    def copy(self):
+    def copy(self) -> dict[str, Any]:
         """Copy the keys/values of this object to a dict."""
         return {k: self._mapping[k] for k in self}
 
-    def clear(self):
-        """Clear Config."""
+    def clear(self) -> None:
+        """Clear contents of configuration object."""
         self._mapping.clear()
+
+    @contextmanager
+    def context(
+        self,
+        mapping: Mapping | None = None,
+        **kwargs: Any,
+    ) -> Generator[None, None, None]:
+        """Set configuration options temporarily inside a ``with`` statement.
+
+        This configuration will only be effective inside the context manager.
+
+        Parameters
+        ----------
+        mapping:
+            Mapping with temporary configuration options.
+        **kwargs:
+            Temporary configuration options.
+
+        """
+        original_mapping = self._mapping
+        self._mapping = deepcopy(self._mapping)
+        if mapping is not None:
+            self.update(mapping)
+        self.update(kwargs)
+        yield
+        self._mapping = original_mapping

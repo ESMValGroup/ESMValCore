@@ -1,18 +1,28 @@
 """Configure logging."""
 
+import inspect
 import logging
 import logging.config
 import os
 import time
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import yaml
 
+import esmvalcore.exceptions
+
+_WARNINGS_SHOWN_IN_MAIN_LOG = [
+    cls.__name__
+    for cls in vars(esmvalcore.exceptions).values()
+    if inspect.isclass(cls)
+    and issubclass(cls, esmvalcore.exceptions.ESMValCoreUserWarning)
+]
+
 
 class FilterMultipleNames:
-    """Only allow/Disallow events from loggers with specific names."""
+    """Only allow/disallow events from loggers with specific names."""
 
     def __init__(
         self,
@@ -21,10 +31,7 @@ class FilterMultipleNames:
     ) -> None:
         """Initialize filter."""
         self.names = names
-        if mode == "allow":
-            self.starts_with_name = True
-        else:
-            self.starts_with_name = False
+        self.starts_with_name = mode == "allow"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
@@ -32,6 +39,19 @@ class FilterMultipleNames:
             if record.name.startswith(name):
                 return self.starts_with_name
         return not self.starts_with_name
+
+
+class FilterExternalWarnings:
+    """Do not show warnings from external packages."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        if record.name != "py.warnings":
+            return True
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG:
+            if f" {warning}: " in record.msg:
+                return True
+        return False
 
 
 def _purge_file_handlers(cfg: dict) -> None:
@@ -53,7 +73,7 @@ def _purge_file_handlers(cfg: dict) -> None:
 
 def _get_log_files(
     cfg: dict,
-    output_dir: Optional[Union[os.PathLike, str]] = None,
+    output_dir: os.PathLike | str | None = None,
 ) -> list:
     """Initialize log files for the file handlers."""
     log_files = []
@@ -65,7 +85,8 @@ def _get_log_files(
 
         if filename:
             if output_dir is None:
-                raise ValueError("`output_dir` must be defined")
+                msg = "`output_dir` must be defined"
+                raise ValueError(msg)
 
             if not os.path.isabs(filename):
                 handler["filename"] = os.path.join(output_dir, filename)
@@ -86,9 +107,9 @@ def _update_stream_level(cfg: dict, level=None):
 
 
 def configure_logging(
-    cfg_file: Optional[Union[os.PathLike, str]] = None,
-    output_dir: Optional[Union[os.PathLike, str]] = None,
-    console_log_level: Optional[str] = None,
+    cfg_file: os.PathLike | str | None = None,
+    output_dir: os.PathLike | str | None = None,
+    console_log_level: str | None = None,
 ) -> list:
     """Configure logging.
 
@@ -111,7 +132,7 @@ def configure_logging(
 
     cfg_file = Path(cfg_file).absolute()
 
-    with open(cfg_file, "r", encoding="utf-8") as file_handler:
+    with open(cfg_file, encoding="utf-8") as file_handler:
         cfg = yaml.safe_load(file_handler)
 
     if output_dir is None:

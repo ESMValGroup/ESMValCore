@@ -17,7 +17,6 @@ import time
 from copy import deepcopy
 from pathlib import Path, PosixPath
 from shutil import which
-from typing import Optional
 
 import dask
 import psutil
@@ -82,12 +81,12 @@ def _get_resource_usage(process, start_time, children=True):
                 processes = [process]
 
             # Update resource usage
-            for proc in cache:
+            for proc, cached_value in cache.items():
                 # Set cpu percent and memory usage to 0 for old processes
                 if proc not in processes:
-                    cache[proc][1] = 0
-                    cache[proc][2] = 0
-                    cache[proc][3] = 0
+                    cached_value[1] = 0
+                    cached_value[2] = 0
+                    cached_value[3] = 0
             for proc in processes:
                 # Update current processes
                 cache[proc] = [
@@ -117,7 +116,7 @@ def _get_resource_usage(process, start_time, children=True):
             round(entry, p)
             for entry, p in zip(entries, precision, strict=False)
         ]
-        entries.insert(0, datetime.datetime.utcnow())
+        entries.insert(0, datetime.datetime.now(datetime.UTC))
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
 
@@ -133,17 +132,20 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         start_time = time.time()
         with open(filename, "w", encoding="utf-8") as file:
             for msg, max_mem in _get_resource_usage(
-                process, start_time, children
+                process,
+                start_time,
+                children,
             ):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
                     logger.info(
-                        "Maximum memory used (estimate): %.1f GB", max_mem
+                        "Maximum memory used (estimate): %.1f GB",
+                        max_mem,
                     )
                     logger.info(
                         "Sampled every second. It may be inaccurate if short "
-                        "but high spikes in memory consumption occur."
+                        "but high spikes in memory consumption occur.",
                     )
                     return
 
@@ -162,7 +164,7 @@ def _py2ncl(value, var_name=""):
     if value is None:
         txt += "_Missing"
     elif isinstance(value, (str, Path)):
-        txt += '"{}"'.format(value)
+        txt += f'"{value}"'
     elif isinstance(value, (list, tuple)):
         if not value:
             txt += "_Missing"
@@ -172,18 +174,20 @@ def _py2ncl(value, var_name=""):
             else:
                 type_ = type(value[0])
             if any(not isinstance(v, type_) for v in value):
+                msg = f"NCL array cannot be mixed type: {value}"
                 raise ValueError(
-                    "NCL array cannot be mixed type: {}".format(value)
+                    msg,
                 )
             txt += "(/{}/)".format(", ".join(_py2ncl(v) for v in value))
     elif isinstance(value, dict):
         if not var_name:
+            msg = f"NCL does not support nested dicts: {value}"
             raise ValueError(
-                "NCL does not support nested dicts: {}".format(value)
+                msg,
             )
         txt += "True\n"
         for key in value:
-            txt += "{}@{} = {}\n".format(var_name, key, _py2ncl(value[key]))
+            txt += f"{var_name}@{key} = {_py2ncl(value[key])}\n"
     else:
         txt += str(value)
     return txt
@@ -202,10 +206,11 @@ def write_ncl_settings(settings, filename, mode="wt"):
             int: "int64",
             dict: "logical",
         }
-        for type_ in typemap:
+        for type_, ncl_type in typemap.items():
             if isinstance(value, type_):
-                return typemap[type_]
-        raise ValueError("Unable to map {} to an NCL type".format(type(value)))
+                return ncl_type
+        msg = f"Unable to map {type(value)} to an NCL type"
+        raise ValueError(msg)
 
     lines = []
 
@@ -224,24 +229,22 @@ def write_ncl_settings(settings, filename, mode="wt"):
         if isinstance(value, (list, tuple)):
             # Create an NCL list that can span multiple files
             lines.append(
-                'if (.not. isdefined("{var_name}")) then\n'
-                '  {var_name} = NewList("fifo")\n'
-                "end if\n".format(var_name=var_name)
+                f'if (.not. isdefined("{var_name}")) then\n'
+                f'  {var_name} = NewList("fifo")\n'
+                "end if\n",
             )
             for item in value:
                 lines.append(
-                    "ListAppend({var_name}, new(1, {type}))\n"
-                    "i = ListCount({var_name}) - 1".format(
-                        var_name=var_name, type=_ncl_type(item)
-                    )
+                    f"ListAppend({var_name}, new(1, {_ncl_type(item)}))\n"
+                    f"i = ListCount({var_name}) - 1",
                 )
                 lines.append(_py2ncl(item, var_name + "[i]"))
         else:
             # Create an NCL variable that overwrites previous variables
             lines.append(
-                'if (isvar("{var_name}")) then\n'
-                "  delete({var_name})\n"
-                "end if\n".format(var_name=var_name)
+                f'if (isvar("{var_name}")) then\n'
+                f"  delete({var_name})\n"
+                "end if\n",
             )
             lines.append(_py2ncl(value, var_name))
 
@@ -266,8 +269,9 @@ class BaseTask:
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
         if self.activity is not None:
+            msg = f"Provenance of {self} already initialized"
             raise ValueError(
-                "Provenance of {} already initialized".format(self)
+                msg,
             )
         self.activity = get_task_provenance(self, recipe_entity)
 
@@ -287,7 +291,9 @@ class BaseTask:
             for task in self.ancestors:
                 input_files.extend(task.run())
             logger.info(
-                "Starting task %s in process [%s]", self.name, os.getpid()
+                "Starting task %s in process [%s]",
+                self.name,
+                os.getpid(),
             )
             start = datetime.datetime.now()
             self.output_files = self._run(input_files)
@@ -314,19 +320,18 @@ class BaseTask:
 
     def print_ancestors(self):
         """Return a nicely formatted description."""
-        txt = "ancestors:\n{}".format(
+        return "ancestors:\n{}".format(
             "\n\n".join(
                 textwrap.indent(str(task), prefix="  ")
                 for task in self.ancestors
             )
             if self.ancestors
-            else "None"
+            else "None",
         )
-        return txt
 
     def __repr__(self):
         """Return canonical string representation."""
-        return f"{self.__class__.__name__}({repr(self.name)})"
+        return f"{self.__class__.__name__}({self.name!r})"
 
 
 class ResumeTask(BaseTask):
@@ -349,7 +354,9 @@ class ResumeTask(BaseTask):
             filename = str(prev_preproc_dir / Path(prov_filename).name)
             attributes["filename"] = filename
             product = TrackedFile(
-                filename, attributes, prov_filename=prov_filename
+                filename,
+                attributes,
+                prov_filename=prov_filename,
             )
             products.add(product)
 
@@ -395,12 +402,12 @@ class DiagnosticTask(BaseTask):
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
             logger.debug(
-                "No local diagnostic script found. Attempting to load the script from the base repository."
+                "No local diagnostic script found. Attempting to load the script from the base repository.",
             )
             # Check if esmvaltool package is available
             if importlib.util.find_spec("esmvaltool") is None:
                 logger.warning(
-                    "The 'esmvaltool' package cannot be found. Please ensure it is installed."
+                    "The 'esmvaltool' package cannot be found. Please ensure it is installed.",
                 )
 
             # Try diagnostics_root
@@ -408,7 +415,8 @@ class DiagnosticTask(BaseTask):
                 diagnostics_root / Path(script).expanduser()
             ).absolute()
         if not script_file.is_file():
-            raise DiagnosticError(f"{err_msg}: file does not exist.")
+            msg = f"{err_msg}: file does not exist."
+            raise DiagnosticError(msg)
 
         cmd = []
 
@@ -432,14 +440,20 @@ class DiagnosticTask(BaseTask):
             else:
                 interpreter = which(interpreters[ext])
             if interpreter is None:
-                raise DiagnosticError(
+                msg = (
                     f"{err_msg}: program '{interpreters[ext]}' not installed."
+                )
+                raise DiagnosticError(
+                    msg,
                 )
             cmd.append(interpreter)
         elif not os.access(script_file, os.X_OK):
-            raise DiagnosticError(
+            msg = (
                 f"{err_msg}: non-executable file with unknown extension "
                 f"'{script_file.suffix}'."
+            )
+            raise DiagnosticError(
+                msg,
             )
 
         cmd.extend(args.get(ext, []))
@@ -528,8 +542,8 @@ class DiagnosticTask(BaseTask):
             errors.append("warning:")
 
         msg = (
-            "An error occurred during execution of NCL script {}, "
-            "see the log in {}".format(self.script, self.log)
+            f"An error occurred during execution of NCL script {self.script}, "
+            f"see the log in {self.log}"
         )
 
         warned = False
@@ -569,9 +583,9 @@ class DiagnosticTask(BaseTask):
         logger.info("Writing plots to %s", self.settings["plot_dir"])
         logger.info("Writing log to %s", self.log)
 
-        rerun_msg = "cd {}; ".format(cwd)
+        rerun_msg = f"cd {cwd}; "
         if env:
-            rerun_msg += " ".join('{}="{}"'.format(k, env[k]) for k in env)
+            rerun_msg += " ".join(f'{k}="{env[k]}"' for k in env)
         if "vprof" in cmd:
             script_args = ' "' + cmd[-1] + '"'
             rerun_msg += " " + " ".join(cmd[:-1]) + script_args
@@ -582,7 +596,7 @@ class DiagnosticTask(BaseTask):
         complete_env = dict(os.environ)
         complete_env.update(env)
 
-        process = subprocess.Popen(
+        return subprocess.Popen(
             cmd,
             bufsize=2**20,  # Use a large buffer to prevent NCL crash
             stdout=subprocess.PIPE,
@@ -591,13 +605,10 @@ class DiagnosticTask(BaseTask):
             env=complete_env,
         )
 
-        return process
-
     def _run(self, input_files):
         """Run the diagnostic script."""
         if self.script is None:  # Run only preprocessor
-            output_files = []
-            return output_files
+            return []
 
         ext = Path(self.script).suffix.lower()
         if ext == ".ncl":
@@ -618,13 +629,12 @@ class DiagnosticTask(BaseTask):
         settings_file = self.write_settings()
         if ext == ".ncl":
             env["settings"] = settings_file
+        elif self.settings["profile_diagnostic"]:
+            script_file = cmd.pop()
+            combo_with_settings = script_file + " " + str(settings_file)
+            cmd.append(combo_with_settings)
         else:
-            if self.settings["profile_diagnostic"]:
-                script_file = cmd.pop()
-                combo_with_settings = script_file + " " + str(settings_file)
-                cmd.append(combo_with_settings)
-            else:
-                cmd.append(settings_file)
+            cmd.append(settings_file)
 
         process = self._start_diagnostic_script(cmd, env)
 
@@ -658,9 +668,12 @@ class DiagnosticTask(BaseTask):
             self._collect_provenance()
             return [self.output_dir]
 
+        msg = (
+            f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
+            f"in {self.log}"
+        )
         raise DiagnosticError(
-            "Diagnostic script {} failed with return code {}. See the log "
-            "in {}".format(self.script, returncode, self.log)
+            msg,
         )
 
     def _collect_provenance(self):
@@ -709,9 +722,9 @@ class DiagnosticTask(BaseTask):
         }
 
         valid = True
-        for filename, attributes in table.items():
+        for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(attributes)
+            attributes = deepcopy(orig_attributes)
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
@@ -776,13 +789,12 @@ class DiagnosticTask(BaseTask):
     def __repr__(self):
         """Get human readable description."""
         settings_string = pprint.pformat(self.settings)
-        string = (
+        return (
             f"{self.__class__.__name__}: {self.name}\n"
             f"script: {self.script}\n"
             f"settings:\n{settings_string}\n"
             f"{self.print_ancestors()}\n"
         )
-        return string
 
 
 def available_cpu_count() -> int:
@@ -811,7 +823,7 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: Optional[int] = None) -> None:
+    def run(self, max_parallel_tasks: int | None = None) -> None:
         """Run tasks.
 
         Parameters
@@ -857,7 +869,7 @@ class TaskSet(set):
         create n_threads = n_cpu_cores / n_processes.
         """
         # pylint: disable=import-outside-toplevel
-        from esmvalcore.preprocessor import PreprocessingTask
+        from esmvalcore.preprocessor import PreprocessingTask  # noqa: PLC0415
 
         if dask.config.get("scheduler", "threads") not in (
             "threads",
@@ -880,7 +892,8 @@ class TaskSet(set):
         n_available_cpu_cores = available_cpu_count()
         n_threaded_dask_schedulers = min(n_preproc_tasks, max_parallel_tasks)
         n_workers = max(
-            1, round(n_available_cpu_cores / n_threaded_dask_schedulers)
+            1,
+            round(n_available_cpu_cores / n_threaded_dask_schedulers),
         )
         logger.info(
             "Using the threaded Dask scheduler with %s worker threads per "
@@ -903,7 +916,9 @@ class TaskSet(set):
             max_parallel_tasks = available_cpu_count()
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
         logger.info(
-            "Running %s tasks using %s processes", n_tasks, max_parallel_tasks
+            "Running %s tasks using %s processes",
+            n_tasks,
+            max_parallel_tasks,
         )
 
         dask_config = self._get_dask_config(max_parallel_tasks)

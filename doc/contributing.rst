@@ -40,7 +40,7 @@ whenever you read it.
 It is recommended that you open a `draft pull
 request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
-:ref:`Codacy to analyse your code <code_quality>`, and
+:ref:`pre-commit.ci to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
 It's also easier to get help from other developers if your code is visible in a
 pull request.
@@ -227,54 +227,26 @@ The standard document on best practices for Python code is
 `PEP257 <https://www.python.org/dev/peps/pep-0257/>`__ for code documentation.
 We make use of
 `numpy style docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__
-to document Python functions that are visible on
-`readthedocs <https://docs.esmvaltool.org>`_.
+to document Python functions that are part of the :ref:`api`.
 
 To check if your code adheres to the standard, go to the directory where
-the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://prospector.landscape.io/>`_
-
-::
-
-   prospector esmvalcore/preprocessor/_regrid.py
-
-In addition to prospector, we use `ruff <https://docs.astral.sh/ruff/>`_
-to automatically format the code and to check for certain bugs and
-`mypy <https://mypy.readthedocs.io>`_ for checking that
-`type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
-correct.
-Note that `type hints`_ are completely optional, but if you do choose to add
-them, they should be correct.
-Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
-
-When you make a pull request, adherence to the Python development best practices
-is checked in two ways:
-
-#. A check that the code is formatted using the pre-commit hooks and does
-   not contain any mistakes that can be found by analyzing the code without
-   running it, is performed by
-   `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
-#. `Codacy <https://app.codacy.com/gh/ESMValGroup/ESMValCore/pullRequests>`_
-   is a service that runs prospector (and other code quality tools) on changed
-   files and reports the results.
-   Click the 'Details' link behind the Codacy check entry and then click
-   'View more details on Codacy Production' to see the results of the static
-   code analysis done by Codacy_.
-   If you need to log in, you can do so using your GitHub account.
-
-The automatic code quality checks by prospector are really helpful to improve
-the quality of your code, but they are not flawless.
-If you suspect prospector or Codacy may be wrong, please ask the
-`@ESMValGroup/tech-reviewers`_ by commenting on your pull request.
-
-Note that running prospector locally will give you quicker and sometimes more
-accurate results than waiting for Codacy.
-
-Formatting issues in Python code can be fixed automatically by running the
-command
+the repository is cloned, e.g. ``cd ESMValCore``, and run `pre-commit <https://pre-commit.com/>`_:
 
 ::
 
    pre-commit run --all
+
+We use `ruff <https://docs.astral.sh/ruff/>`_ to automatically format the code
+and to check for certain bugs and
+`mypy <https://mypy.readthedocs.io>`_ for checking that
+`type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
+correct.
+Note that `type hints`_ are optional, but if you do choose to add them, they
+should be correct.
+Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
+
+When you make a pull request, adherence to the Python development best practices
+is checked by `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
 
 YAML
 ~~~~
@@ -299,7 +271,8 @@ The documentation lives on `docs.esmvaltool.org <https://docs.esmvaltool.org>`_.
 Adding documentation
 ~~~~~~~~~~~~~~~~~~~~
 
-The documentation is built by readthedocs_ using `Sphinx <https://www.sphinx-doc.org>`_.
+The documentation is `built by readthedocs <https://app.readthedocs.org/projects/esmvalcore/builds/>`__
+using `Sphinx <https://www.sphinx-doc.org>`_.
 There are two main ways of adding documentation:
 
 #. As written text in the directory
@@ -327,8 +300,8 @@ What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Functionality that is visible to users should be documented.
-Any documentation that is visible on readthedocs_ should be well
-written and adhere to the standards for documentation.
+Any documentation that is visible on `readthedocs <https://docs.esmvaltool.org>`_
+should be well written and adhere to the standards for documentation.
 Examples of this include:
 
 - The :ref:`recipe <recipe_overview>`
@@ -481,15 +454,14 @@ relevant file. Note that tracking code coverage slows down the test runs,
 therefore it is disabled by default and needs to be requested by providing
 ``pytest`` with the ``--cov`` flag.
 
-CircleCI will upload the coverage results from running the tests to codecov and
-Codacy.
+CircleCI will upload the coverage results from running the tests to Codecov.
 `codecov <https://app.codecov.io/gh/ESMValGroup/ESMValCore/pulls>`_ is a service
 that will comment on pull requests with a summary of the test coverage.
 If codecov_ reports that the coverage has decreased, check the report and add
 additional tests.
-Alternatively, it is also possible to view code coverage on Codacy_ (click the
-Files tab) and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
-To see some of the results on CircleCI, Codacy, or codecov, you may need to log
+Alternatively, it is also possible to view code coverage on CircleCI_ (open the
+``tests`` job and click the ARTIFACTS tab).
+To see some of the results on CircleCI or Codecov, you may need to log
 in; you can do so using your GitHub account.
 
 When reviewing a pull request, always check that new code is covered by unit
@@ -717,9 +689,6 @@ After that has been merged into the ``main`` branch and all checks on this
 branch are green again, merge it into your own branch to get the tests to pass.
 
 When reviewing a pull request, always make sure that all checks were successful.
-If the Codacy check keeps failing, please run prospector locally.
-If necessary, ask the pull request author to do the same and to address the
-reported issues.
 See the section on code_quality_ for more information.
 Never merge a pull request with failing pre-commit, CircleCI, or readthedocs checks.
 
@@ -941,7 +910,7 @@ built correctly by
 1. checking that the version tag is available on `Dockerhub`_ and the ``stable``
    tag has been updated,
 2. running some recipes with the ``stable`` tag Docker container, for example one
-   recipe for Python, NCL, R, and Julia,
+   recipe for Python, NCL, and R,
 3. running a recipe with a Singularity container built from the ``stable`` tag.
 
 If there is a problem with the automatically built container image, you can fix

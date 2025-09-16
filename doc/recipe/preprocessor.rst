@@ -196,17 +196,11 @@ case of this operation is the evaluation of a variable which is only available
 in an observational dataset but not in the models. In this case a derivation
 function is provided by the ESMValCore in order to calculate the variable and
 perform the comparison. For example, several observational datasets deliver
-total column ozone as observed variable (`toz`), but CMIP models only provide
+total column ozone as observed variable (``toz``), but CMIP models only provide
 the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-The tool will also look in other ``mip`` tables for the same ``project`` to find
-the definition of derived variables. To contribute a completely new derived
-variable, it is necessary to define a name for it and to provide the
-corresponding CMOR table. This is to guarantee the proper metadata definition
-is attached to the derived data. Such custom CMOR tables are collected as part
-of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 By default, the variable derivation will be applied only if the variable is not
 already available in the input data, but the derivation can be forced by
 setting the ``force_derivation`` flag.
@@ -272,20 +266,22 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - ``fix_file``: apply fixes directly to a copy of the file.
-      Copying the files is costly, so only errors that prevent Iris to load the
-      file are fixed here.
-      See :func:`esmvalcore.preprocessor.fix_file`.
+- ``fix_file``: apply fixes to data before loading them with Iris.
+  This is mainly intended to fix errors that prevent data loading with Iris
+  (e.g., those related to ``missing_value`` or ``_FillValue``) or
+  operations that are more efficient with other packages (e.g., loading
+  files with lots of variables is much faster with Xarray than Iris). See
+  :func:`esmvalcore.preprocessor.fix_file`.
 
-    - ``fix_metadata``: metadata fixes are done just before concatenating the
-      cubes loaded from different files in the final one.
-      Automatic metadata fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_metadata`.
+- ``fix_metadata``: metadata fixes are done just before concatenating the
+  cubes loaded from different files in the final one.
+  Automatic metadata fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_metadata`.
 
-    - ``fix_data``: data fixes are applied before starting any operation that
-      will alter the data itself.
-      Automatic data fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_data`.
+- ``fix_data``: data fixes are applied before starting any operation that
+  will alter the data itself.
+  Automatic data fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_data`.
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
@@ -311,6 +307,7 @@ Preprocessor                                                          Variable s
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 :ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
+:ref:`extract_surface_from_atm<extract_surface_from_atm>` [#f3]_      ``ps``                         surface_air_pressure
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -886,6 +883,24 @@ The arguments are defined below:
   The grid includes this value only if it falls on a grid point.
   Otherwise, it cuts off at the previous value.
 * ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
+
+Regridding input data with multiple horizontal coordinates
+----------------------------------------------------------
+
+When there are multiple horizontal coordinates available in the input data, the
+standard names of the coordinates to use need to be specified. By default, these
+are ``[latitude, longitude]``. To use the coordinates from a
+`rotated pole grid <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#grid-mappings-and-projections>`__,
+one would specify:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 1x1
+          scheme: linear
+          use_src_coords: [grid_latitude, grid_longitude]
 
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
@@ -2100,7 +2115,6 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 
 ``zonal_statistics``
 --------------------
-
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate.
 
@@ -2205,6 +2219,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 * ``extract_transect``: Extract data along a line of constant latitude or
   longitude.
 * ``extract_trajectory``: Extract data along a specified trajectory.
+* ``extract_surface_from_atm``: Extract atmospheric data at the surface.
 
 
 ``extract_volume``
@@ -2386,6 +2401,22 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+.. _extract_surface_from_atm:
+
+``extract_surface_from_atm``
+----------------------------
+
+This function extracts data at the surface for an atmospheric variable.
+
+The function returns the interpolated value of an input filed at the corresponding surface pressure
+given by the surface air pressure ``ps``.
+
+The required supplementary surface air pressure ``ps`` is attached to
+the main dataset as described in :ref:`supplementary_variables`.
+
+See also :func:`esmvalcore.preprocessor.extract_surface_from_atm`.
 
 
 .. _cycles:
@@ -2880,53 +2911,56 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-
-.. _Memory use:
-
-Information on maximum memory required
-======================================
-In the most general case, we can set upper limits on the maximum memory the
-analysis will require:
-
-
-``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
-
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
-
-where
-
-* ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multi-model module
-* ``R``: computational efficiency of module; `R` is typically 2-3
-* ``N``: number of datasets
-* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
-  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
-  fully realized data) and ``f`` describes how much the data was shrunk by the
-  immediately previous module, e.g. time extraction, area selection or level
-  extraction; note that for fix_data ``f`` relates only to the time extraction,
-  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
-  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
-  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
-  ``N`` datasets will require:
-
-
-``Ms = 1.5 x (N - 1)`` GB
-
-``Mm = 1.5 x (N - 2)`` GB
-
-As a rule of thumb, the maximum required memory at a certain time for
-multi-model analysis could be estimated by multiplying the number of datasets by
-the average file size of all the datasets; this memory intake is high but also
-assumes that all data is fully realized in memory; this aspect will gradually
-change and the amount of realized data will decrease with the increase of
-``dask`` use.
-
 .. _Other:
+
 
 Other
 =====
 
 Miscellaneous functions that do not belong to any of the other categories.
+
+.. _align_metadata:
+
+``align_metadata``
+------------------
+
+This function sets cube metadata to entries from a specific target project.
+This is useful to align variable metadata of different projects prior to
+performing multi-model operations (e.g., :ref:`multi-model statistics`).
+For example, standard names differ for some variables between CMIP5 and CMIP6
+which would prevent the calculation of multi-model statistics between CMIP5 and
+CMIP6 data.
+
+The ``align_metadata`` preprocessor supports the following arguments in the
+recipe:
+
+* ``target_project`` (:obj:`str`): Project from which target metadata is read.
+* ``target_mip`` (:obj:`str`; optional): MIP table from which target metadata
+  is read.
+  If not given, use the MIP tables of the corresponding variables defined in
+  the recipe.
+* ``target_short_name`` (:obj:`str`; optional): Variable short name from which
+  target metadata is read.
+  If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+  error if desired metadata cannot be read for variable ``target_short_name``
+  of MIP table ``target_mip`` and project ``target_project``.
+  If ``False``, no error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      calculate_multi_model_statistics:
+        align_metadata:
+          target_project: CMIP6
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+
+See also :func:`esmvalcore.preprocessor.align_metadata`.
 
 .. _cumulative_sum:
 
@@ -3054,3 +3088,44 @@ Example:
           normalization: sum
 
 See also :func:`esmvalcore.preprocessor.histogram`.
+
+
+.. _Memory use:
+
+Information on maximum memory required
+======================================
+In the most general case, we can set upper limits on the maximum memory the
+analysis will require:
+
+
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
+
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
+
+where
+
+* ``Ms``: maximum memory for non-multimodel module
+* ``Mm``: maximum memory for multi-model module
+* ``R``: computational efficiency of module; `R` is typically 2-3
+* ``N``: number of datasets
+* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
+  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
+  fully realized data) and ``f`` describes how much the data was shrunk by the
+  immediately previous module, e.g. time extraction, area selection or level
+  extraction; note that for fix_data ``f`` relates only to the time extraction,
+  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
+  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
+  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
+  ``N`` datasets will require:
+
+
+``Ms = 1.5 x (N - 1)`` GB
+
+``Mm = 1.5 x (N - 2)`` GB
+
+As a rule of thumb, the maximum required memory at a certain time for
+multi-model analysis could be estimated by multiplying the number of datasets by
+the average file size of all the datasets; this memory intake is high but also
+assumes that all data is fully realized in memory; this aspect will gradually
+change and the amount of realized data will decrease with the increase of
+``dask`` use.

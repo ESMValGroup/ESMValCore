@@ -6,7 +6,7 @@ import pytest
 from iris.coords import AuxCoord, DimCoord
 from iris.util import broadcast_to_shape
 
-import esmvalcore.preprocessor._derive.troz as troz
+from esmvalcore.preprocessor._derive import troz
 
 from .test_toz import get_masked_o3_cube, get_ps_cube
 
@@ -19,7 +19,7 @@ def get_o3_cube():
             [[50.0, 70.0], [80.0, 90.0]],
             [[70.0, 90.0], [100.0, 110.0]],
             [[130, 140.0], [150.0, 160.0]],
-        ]
+        ],
     ]
     o3_cube.units = "1e-9"
     return o3_cube
@@ -52,7 +52,9 @@ def cubes_hybrid_plevs():
     plev_coord = o3_cube.coord("air_pressure")
     hybrid_plev_coord = AuxCoord(
         broadcast_to_shape(
-            plev_coord.points, o3_cube.shape, o3_cube.coord_dims(plev_coord)
+            plev_coord.points,
+            o3_cube.shape,
+            o3_cube.coord_dims(plev_coord),
         ),
     )
     hybrid_plev_coord.metadata = plev_coord.metadata
@@ -84,7 +86,7 @@ def test_troz_calculate(cubes):
         [
             [16.255487740869038e-5, 21.1833014579557e-5],
             [23.647208316499057e-5, 26.111115175042404e-5],
-        ]
+        ],
     ]
     np.testing.assert_allclose(out_cube.data, expected_data)
 
@@ -100,7 +102,8 @@ def test_troz_calculate_no_lon(cubes_no_lon):
     assert not np.ma.is_masked(out_cube.data)
     print(out_cube.data)
     np.testing.assert_allclose(
-        out_cube.data, [[[18.71939459941235e-5], [24.87916174577070e-5]]]
+        out_cube.data,
+        [[[18.71939459941235e-5], [24.87916174577070e-5]]],
     )
 
 
@@ -117,13 +120,13 @@ def test_troz_calculate_hybrid_plevs(cubes_hybrid_plevs):
         [
             [31.581106479612044e-5, 27.640725083830575e-5],
             [18.198372761713192e-5, 20.071886603033692e-5],
-        ]
+        ],
     ]
     np.testing.assert_allclose(out_cube.data, expected_data)
 
 
 @pytest.mark.parametrize(
-    "project,out",
+    ("project", "out"),
     [
         ("CMIP5", [{"short_name": "tro3"}, {"short_name": "ps"}]),
         ("TEST", [{"short_name": "tro3"}, {"short_name": "ps"}]),

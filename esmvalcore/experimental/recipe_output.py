@@ -7,11 +7,12 @@ import os.path
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Optional, Tuple, Type
 
 import iris
+import xarray as xr
 
-from ..config._config import TASKSEP
+from esmvalcore.config._config import TASKSEP
+
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
@@ -127,12 +128,12 @@ class RecipeOutput(Mapping):
         The session used to run the recipe.
     """
 
-    FILTER_ATTRS: list = [
+    FILTER_ATTRS: tuple = (
         "realms",
         "plot_type",  # Used by several diagnostics
         "plot_types",
         "long_names",
-    ]
+    )
 
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output
@@ -194,9 +195,7 @@ class RecipeOutput(Mapping):
 
     def __repr__(self):
         """Return canonical string representation."""
-        string = "\n".join(repr(item) for item in self._task_output.values())
-
-        return string
+        return "\n".join(repr(item) for item in self._task_output.values())
 
     def __getitem__(self, key: str):
         """Get task indexed by `key`."""
@@ -289,15 +288,13 @@ class RecipeOutput(Mapping):
         """
         if not template:
             template = get_template(self.__class__.__name__ + ".j2")
-        rendered = template.render(
+        return template.render(
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
             filters=self.filters,
             relpath=os.path.relpath,
         )
-
-        return rendered
 
     def read_main_log(self) -> str:
         """Read log file."""
@@ -322,17 +319,17 @@ class OutputFile:
         Attributes corresponding to the recipe output
     """
 
-    kind: Optional[str] = None
+    kind: str | None = None
 
-    def __init__(self, path: str, attributes: Optional[dict] = None):
+    def __init__(self, path: str, attributes: dict | None = None):
         if not attributes:
             attributes = {}
 
         self.attributes = attributes
         self.path = Path(path)
 
-        self._authors: Optional[Tuple[Contributor, ...]] = None
-        self._references: Optional[Tuple[Reference, ...]] = None
+        self._authors: tuple[Contributor, ...] | None = None
+        self._references: tuple[Reference, ...] | None = None
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -361,7 +358,7 @@ class OutputFile:
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
+    def _get_derived_path(self, append: str, suffix: str | None = None):
         """Return path of related files.
 
         Parameters
@@ -398,13 +395,13 @@ class OutputFile:
     def create(
         cls,
         path: str,
-        attributes: Optional[dict] = None,
+        attributes: dict | None = None,
     ) -> "OutputFile":
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
         """
-        item_class: Type[OutputFile]
+        item_class: type[OutputFile]
 
         ext = Path(path).suffix
         if ext in (".png",):
@@ -441,9 +438,6 @@ class DataFile(OutputFile):
 
     def load_xarray(self):
         """Load data using xarray."""
-        # local import because `ESMValCore` does not depend on `xarray`
-        import xarray as xr
-
         return xr.load_dataset(self.path)
 
     def load_iris(self):

@@ -253,6 +253,7 @@ def test_merge_supplementaries_combine_dataset_with_variable(session):
     assert len(datasets) == 1
     assert len(datasets[0].supplementaries) == 2
     assert datasets[0].supplementaries[0].facets["short_name"] == "areacella"
+    assert datasets[0].supplementaries[0].facets["dataset"] == "AWI-ESM-1-1-LR"
     assert datasets[0].supplementaries[1].facets["short_name"] == "sftlf"
 
 
@@ -400,11 +401,16 @@ def test_append_missing_supplementaries():
     }
 
     to_datasets._append_missing_supplementaries(
-        supplementaries, facets, settings
+        supplementaries,
+        facets,
+        settings,
     )
-
     short_names = {f["short_name"] for f in supplementaries}
     assert short_names == {"areacella", "sftlf"}
+    sftlf = supplementaries[1]
+    assert (
+        "dataset" not in sftlf
+    )  # dataset will be inherited from the main variable
 
 
 def test_report_unexpanded_globs(mocker):
@@ -426,7 +432,9 @@ def test_report_unexpanded_globs(mocker):
     unexpanded_globs = {"dataset": "*"}
 
     msg = to_datasets._report_unexpanded_globs(
-        dataset, dataset, unexpanded_globs
+        dataset,
+        dataset,
+        unexpanded_globs,
     )
 
     assert "paths to the" not in msg

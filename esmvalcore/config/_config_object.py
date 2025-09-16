@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import datetime
 import os
 import sys
 import warnings
-from collections.abc import Iterable, Mapping
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import dask.config
 import yaml
@@ -24,6 +23,9 @@ from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
 
 URL = (
     "https://docs.esmvaltool.org/projects/"
@@ -43,10 +45,13 @@ def _get_user_config_dir() -> Path:
             Path(os.environ["ESMVALTOOL_CONFIG_DIR"]).expanduser().absolute()
         )
         if not user_config_dir.is_dir():
-            raise NotADirectoryError(
+            msg = (
                 f"Invalid configuration directory specified via "
                 f"ESMVALTOOL_CONFIG_DIR environment variable: "
                 f"{user_config_dir} is not an existing directory"
+            )
+            raise NotADirectoryError(
+                msg,
             )
         return user_config_dir
     return Path.home() / ".config" / "esmvaltool"
@@ -98,7 +103,7 @@ class Config(ValidatedConfig):
     @classmethod
     def _load_user_config(
         cls,
-        filename: Optional[os.PathLike | str] = None,
+        filename: os.PathLike | str | None = None,
         raise_exception: bool = True,
     ):
         """Load user configuration from the given file.
@@ -142,10 +147,11 @@ class Config(ValidatedConfig):
             new.update(mapping)
             new.check_missing()
         except InvalidConfigParameter as exc:
-            raise InvalidConfigParameter(
+            msg = (
                 f"Failed to parse user configuration file {config_user_path}: "
-                f"{str(exc)}"
-            ) from exc
+                f"{exc!s}"
+            )
+            raise InvalidConfigParameter(msg) from exc
 
         return new
 
@@ -173,19 +179,18 @@ class Config(ValidatedConfig):
     def _read_config_file(config_user_path: Path) -> dict:
         """Read configuration file and store settings in a dictionary."""
         if not config_user_path.is_file():
+            msg = f"Config file '{config_user_path}' does not exist"
             raise FileNotFoundError(
-                f"Config file '{config_user_path}' does not exist"
+                msg,
             )
 
-        with open(config_user_path, "r", encoding="utf-8") as file:
-            cfg = yaml.safe_load(file)
-
-        return cfg
+        with open(config_user_path, encoding="utf-8") as file:
+            return yaml.safe_load(file)
 
     # TODO: remove in v2.14.0
     @staticmethod
     def _get_config_user_path(
-        filename: Optional[os.PathLike | str] = None,
+        filename: os.PathLike | str | None = None,
     ) -> Path:
         """Get path to user configuration file.
 
@@ -275,14 +280,12 @@ class Config(ValidatedConfig):
         for arg in sys.argv:
             for opt in ("--config-file", "--config_file"):
                 if opt in arg:
-                    # Parse '--config-file=/file.yml' or
-                    # '--config_file=/file.yml'
+                    # Parse '--config-file=/file.yml' or '--config_file=/file.yml'
                     partition = arg.partition("=")
                     if partition[2]:
                         return partition[2]
 
-                    # Parse '--config-file /file.yml' or
-                    # '--config_file /file.yml'
+                    # Parse '--config-file /file.yml' or '--config_file /file.yml'
                     config_idx = sys.argv.index(opt)
                     if config_idx == len(sys.argv) - 1:  # no file given
                         return None
@@ -293,7 +296,7 @@ class Config(ValidatedConfig):
     # TODO: remove in v2.14.0
     def load_from_file(
         self,
-        filename: Optional[os.PathLike | str] = None,
+        filename: os.PathLike | str | None = None,
     ) -> None:
         """Load user configuration from the given file.
 
@@ -322,8 +325,8 @@ class Config(ValidatedConfig):
         """Get configuration :obj:`dict` from directories."""
         dirs_str: list[str] = []
         for config_dir in dirs:
-            config_dir = Path(config_dir).expanduser().absolute()
-            dirs_str.append(str(config_dir))
+            abs_config_dir = Path(config_dir).expanduser().absolute()
+            dirs_str.append(str(abs_config_dir))
         return dask.config.collect(paths=dirs_str, env={})
 
     def load_from_dirs(self, dirs: Iterable[str | Path]) -> None:
@@ -354,7 +357,7 @@ class Config(ValidatedConfig):
 
         """
         # Always consider default options; these have the lowest priority
-        dirs = [DEFAULT_CONFIG_DIR] + list(dirs)
+        dirs = [DEFAULT_CONFIG_DIR, *list(dirs)]
 
         new_config_dict = self._get_config_dict_from_dirs(dirs)
         self.clear()
@@ -388,19 +391,28 @@ class Config(ValidatedConfig):
         # TODO: remove in v2.14.0
         self.clear()
         _deprecated_config_user_path = Config._get_config_user_path()
-        if _deprecated_config_user_path.is_file():
+        if _deprecated_config_user_path.is_file() and not os.environ.get(
+            "ESMVALTOOL_CONFIG_DIR",
+        ):
             deprecation_msg = (
                 f"Usage of the single configuration file "
                 f"~/.esmvaltool/config-user.yml or specifying it via CLI "
                 f"argument `--config_file` has been deprecated in ESMValCore "
                 f"version 2.12.0 and is scheduled for removal in version "
-                f"2.14.0. Please run `mkdir -p ~/.config/esmvaltool && mv "
+                f"2.14.0. To switch to the new configuration system, (1) run "
+                f"`mkdir -p ~/.config/esmvaltool && mv "
                 f"{_deprecated_config_user_path} ~/.config/esmvaltool` (or "
                 f"alternatively use a custom `--config_dir`) and omit "
-                f"`--config_file`."
+                f"`--config_file`, or (2) use the environment variable "
+                f"ESMVALTOOL_CONFIG_DIR to specify a custom user "
+                f"configuration directory. New configuration files present at "
+                f"~/.config/esmvaltool or specified via `--config_dir` are "
+                f"currently ignored."
             )
             warnings.warn(
-                deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2
+                deprecation_msg,
+                ESMValCoreDeprecationWarning,
+                stacklevel=2,
             )
             self.update(Config._load_user_config(raise_exception=False))
             return
@@ -409,10 +421,11 @@ class Config(ValidatedConfig):
         try:
             self.load_from_dirs([USER_CONFIG_DIR])
         except InvalidConfigParameter as exc:
-            raise InvalidConfigParameter(
+            msg = (
                 f"Failed to parse configuration directory {USER_CONFIG_DIR} "
-                f"({USER_CONFIG_SOURCE}): {str(exc)}"
-            ) from exc
+                f"({USER_CONFIG_SOURCE}): {exc!s}"
+            )
+            raise InvalidConfigParameter(msg) from exc
 
     def start_session(self, name: str) -> Session:
         """Start a new session from this configuration object.
@@ -433,8 +446,7 @@ class Config(ValidatedConfig):
                 category=UserWarning,
                 module="esmvalcore",
             )
-            session = Session(config=self.copy(), name=name)
-        return session
+            return Session(config=self.copy(), name=name)
 
     def update_from_dirs(self, dirs: Iterable[str | Path]) -> None:
         """Update configuration object from directories.
@@ -489,6 +501,12 @@ class Config(ValidatedConfig):
         self.update(merged_config_dict)
         self.check_missing()
 
+    clear = ValidatedConfig.clear  # to show this is in API doc
+
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
+
 
 class Session(ValidatedConfig):
     """Container class for session configuration and directory information.
@@ -535,7 +553,7 @@ class Session(ValidatedConfig):
         The `name` is used to name the session directory, e.g.
         `session_20201208_132800/`. The date is suffixed automatically.
         """
-        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        now = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         self.session_name = f"{name}_{now}"
 
     @property
@@ -603,8 +621,14 @@ class Session(ValidatedConfig):
         """Return fixed file directory."""
         return self.session_dir / self._relative_fixed_file_dir
 
+    clear = ValidatedConfig.clear  # to show this is in API doc
 
-def _get_all_config_dirs(cli_config_dir: Optional[Path]) -> list[Path]:
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
+
+
+def _get_all_config_dirs(cli_config_dir: Path | None) -> list[Path]:
     """Get all configuration directories."""
     config_dirs: list[Path] = [
         DEFAULT_CONFIG_DIR,
@@ -615,7 +639,7 @@ def _get_all_config_dirs(cli_config_dir: Optional[Path]) -> list[Path]:
     return config_dirs
 
 
-def _get_all_config_sources(cli_config_dir: Optional[Path]) -> list[str]:
+def _get_all_config_sources(cli_config_dir: Path | None) -> list[str]:
     """Get all sources of configuration directories."""
     config_sources: list[str] = [
         "defaults",

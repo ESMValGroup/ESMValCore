@@ -50,11 +50,13 @@ def load_esgf_pyclient_config():
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         "search_connection": {
-            # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
             "urls": [
+                # Use "https://esgf-node.ornl.gov/esgf-1-5-bridge" once the Solr
+                # based indices below are no longer available.
+                # See https://github.com/ESMValGroup/ESMValCore/issues/2757 and
+                # linked issues and pull requests for additional information.
                 "https://esgf.ceda.ac.uk/esg-search",
-                "https://esgf-node.llnl.gov/esg-search",
                 "https://esgf-data.dkrz.de/esg-search",
                 "https://esgf-node.ipsl.upmc.fr/esg-search",
                 "https://esg-dn1.nsc.liu.se/esg-search",
@@ -85,7 +87,7 @@ def load_esgf_pyclient_config():
     return cfg
 
 
-@lru_cache()
+@lru_cache
 def get_esgf_config():
     """Get the esgf-pyclient configuration."""
     return load_esgf_pyclient_config()

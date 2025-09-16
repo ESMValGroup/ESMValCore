@@ -19,7 +19,9 @@ from esmvalcore.preprocessor._regrid import (
 def clear_regridder_cache(monkeypatch):
     """Clear regridder cache before test runs."""
     monkeypatch.setattr(
-        esmvalcore.preprocessor._regrid, "_CACHED_REGRIDDERS", {}
+        esmvalcore.preprocessor._regrid,
+        "_CACHED_REGRIDDERS",
+        {},
     )
 
 
@@ -41,7 +43,8 @@ def _make_cube(*, lat: tuple, lon: tuple):
 
     return iris.cube.Cube(
         np.zeros(
-            [len(lat_coord.points), len(lon_coord.points)], dtype=np.float32
+            [len(lat_coord.points), len(lon_coord.points)],
+            dtype=np.float32,
         ),
         dim_coords_and_dims=[(lat_coord, 0), (lon_coord, 1)],
     )
@@ -106,7 +109,7 @@ def test_invalid_target_grid(scheme, cube_10x10, mocker):
     """Test `regrid.`."""
     target_grid = mocker.sentinel.target_grid
     msg = "Expecting a cube"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         regrid(cube_10x10, target_grid, scheme)
 
 
@@ -150,7 +153,10 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
         cache_weights=cache_weights,
     )
     cube_lin = regrid(
-        cube_10x10, cube_30x30, "linear", cache_weights=cache_weights
+        cube_10x10,
+        cube_30x30,
+        "linear",
+        cache_weights=cache_weights,
     )
     assert cube_gen.dtype == np.float32
     assert cube_lin.dtype == np.float32
@@ -174,8 +180,8 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
 
 
 @pytest.mark.parametrize(
-    "cube2_spec, expected",
-    (
+    ("cube2_spec", "expected"),
+    [
         # equal lat/lon
         (
             {
@@ -216,7 +222,7 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
             },
             False,
         ),
-    ),
+    ],
 )
 def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     """Test for `_horizontal_grid_is_close`."""
@@ -226,17 +232,50 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
-def test_regrid_is_skipped_if_grids_are_the_same():
+def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
     """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder",
+        autospec=True,
+    )
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
-    scheme = "linear"
 
-    # regridding to the same spec returns the same cube
-    expected_same_cube = regrid(cube, target_grid="10x10", scheme=scheme)
-    assert expected_same_cube is cube
+    expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
 
-    # regridding to a different spec returns a different cube
-    expected_different_cube = regrid(cube, target_grid="5x5", scheme=scheme)
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
+    assert cube.coords("latitude", dim_coords=True)
+    assert cube.coords("longitude", dim_coords=True)
+
+
+def test_regrid_is_skipped_if_grids_are_the_same_aux_coord(mocker):
+    """Test that regridding is skipped if the grids are the same."""
+    mock_get_regridder = mocker.patch(
+        "esmvalcore.preprocessor._regrid._get_regridder",
+        autospec=True,
+    )
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    lat = cube.coord("latitude")
+    lon = cube.coord("longitude")
+    cube.remove_coord(lat)
+    cube.remove_coord(lon)
+    cube.add_aux_coord(lat, 0)
+    cube.add_aux_coord(lon, 1)
+
+    expected_same_cube = regrid(cube, target_grid="10x10", scheme="linear")
+
+    mock_get_regridder.assert_not_called()
+    np.testing.assert_equal(expected_same_cube.shape, cube.shape)
+    assert cube.coords("latitude", dim_coords=False)
+    assert cube.coords("longitude", dim_coords=False)
+
+
+def test_regrid_is_not_skipped_if_grids_are_different():
+    """Test that regridding is not skipped if the grids are different."""
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+
+    expected_different_cube = regrid(cube, target_grid="5x5", scheme="linear")
+
     assert expected_different_cube is not cube
 
 
@@ -348,7 +387,7 @@ def test_rechunk_on_increased_grid(grids):
         src_grid, tgt_grid = grids
         src_dims = (246, 91, 180)
         if src_grid == "unstructured":
-            src_dims = src_dims[:-2] + (np.prod(src_dims[-2:]),)
+            src_dims = (*src_dims[:-2], np.prod(src_dims[-2:]))
         tgt_grid_dims = (2, 361, 720)
         src_cube = globals()[f"make_test_cube_{src_grid}"](src_dims)
         tgt_grid = globals()[f"make_test_cube_{tgt_grid}"](tgt_grid_dims)
@@ -356,7 +395,7 @@ def test_rechunk_on_increased_grid(grids):
 
         expected = ((123, 123), (91,), (180,))
         if src_grid == "unstructured":
-            expected = expected[:-2] + (np.prod(expected[-2:]),)
+            expected = (*expected[:-2], np.prod(expected[-2:]))
         assert result.core_data().chunks == expected
 
 
@@ -414,7 +453,9 @@ def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
         mocker.sentinel.regridder
     )
     mock_load_scheme = mocker.patch.object(
-        esmvalcore.preprocessor._regrid, "_load_scheme", autospec=True
+        esmvalcore.preprocessor._regrid,
+        "_load_scheme",
+        autospec=True,
     )
 
     reg = _get_regridder(cube_10x10, cube_30x30, scheme, cache_weights=True)
