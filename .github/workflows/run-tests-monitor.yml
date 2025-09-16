@@ -40,7 +40,7 @@ jobs:
       - run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - run: pip install --no-deps pytest-monitor
+      - run: pip install pytest-monitor
       - run: pip install --no-deps -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - run: python tests/parse_pymon.py
@@ -76,7 +76,7 @@ jobs:
       - run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - run: mamba install -c conda-forge git
-      - run: pip install --no-deps pytest-monitor
+      - run: pip install pytest-monitor
       - run: pip install --no-deps -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - run: conda list
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
