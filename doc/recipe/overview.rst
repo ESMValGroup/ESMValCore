@@ -137,7 +137,7 @@ To populate a recipe with all available datasets from ESGF, the
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
 the recipe.
-See :ref:`/notebooks/composing-recipes.ipynb` for an example.
+See the :doc:`/notebooks/composing-recipes` notebook for an example.
 This is particularly useful when specific relations are required between
 datasets, e.g. when a dataset needs to be available for multiple variables
 or experiments.
