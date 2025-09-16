@@ -307,7 +307,7 @@ class Dataset:
 
         Examples
         --------
-        See :ref:`/notebooks/discovering-data.ipynb` for example use cases.
+        See :doc:`/notebooks/discovering-data` notebook for example use cases.
 
         Yields
         ------
