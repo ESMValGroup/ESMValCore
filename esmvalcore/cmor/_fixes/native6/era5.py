@@ -34,6 +34,11 @@ def get_frequency(cube):
             "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
         )
         if cube.long_name not in acceptable_long_names:
+            logger.warning(
+                "Cube %s has length 1 time dimension, "
+                "assuming 'monthly' frequency",
+                str(cube),
+            )
             return "monthly"
         return "fx"
 
