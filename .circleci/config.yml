@@ -66,7 +66,7 @@ commands:
       - run:
           name: Install git+ssh
           environment:
-            DEBIAN_FRONTEND: noninteractive  # needed to install tzdata
+            DEBIAN_FRONTEND: noninteractive # needed to install tzdata
           command: apt update && apt install -y git ssh
       - checkout
       - check_changes
@@ -141,6 +141,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
+            pip install intake-esgf 'globus-sdk<4' # TODO: remove before merging
             pip install --no-deps .[test] > /logs/install.txt 2>&1
             pip check
       - test_and_report:
@@ -155,7 +156,7 @@ jobs:
           name: Install gpg (required by codecov orb)
           command: apt update && apt install -y gpg
       - codecov/upload:
-          files: 'test-reports/coverage.xml'
+          files: "test-reports/coverage.xml"
           disable_search: true
 
   test_installation_from_source_test_mode:

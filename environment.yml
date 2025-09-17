@@ -9,7 +9,7 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
+  - dask >=2025 # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
@@ -21,13 +21,14 @@ dependencies:
   - geopy
   - humanfriendly
   - intake-esgf
+  - globus-sdk <4 # https://github.com/esgf2-us/intake-esgf/issues/150
   - intake-esm
-  - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
+  - iris >=3.12.2 # https://github.com/SciTools/iris/issues/6417
   - iris-esmf-regrid >=0.11.0
-  - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
-  - isodate >=0.7.0  # incompatible with very old 0.6.1
+  - iris-grib >=0.20.0 # github.com/ESMValGroup/ESMValCore/issues/2535
+  - isodate >=0.7.0 # incompatible with very old 0.6.1
   - jinja2
-  - libnetcdf !=4.9.1  # to avoid hdf5 warnings; only on conda-forge
+  - libnetcdf !=4.9.1 # to avoid hdf5 warnings; only on conda-forge
   - nc-time-axis
   - ncdata
   - nested-lookup
