@@ -2,18 +2,22 @@
 
 import itertools
 import logging
+from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
 
 import pyesgf.search
 import requests.exceptions
 
 from esmvalcore.config._esgf_pyclient import get_esgf_config
+from esmvalcore.io.protocol import DataSource
 from esmvalcore.local import (
     _get_start_end_date,
     _parse_period,
     _replace_years_with_timerange,
     _truncate_dates,
 )
+from esmvalcore.typing import FacetValue
 
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -378,3 +382,39 @@ def cached_search(**facets):
         logger.debug("Selected files:\n%s", "\n".join(str(f) for f in files))
 
     return files
+
+
+@dataclass
+class ESGFDataSource(DataSource):
+    name: str
+    """A name identifying the data source."""
+
+    project: str
+    """The project that the data source provides data for."""
+
+    priority: int
+    """The priority of the data source. Lower values have priority."""
+
+    download_dir: Path
+    """The destination directory where data will be downloaded."""
+
+    debug_info: str = field(init=False, default="")
+    """A string containing debug information when no data is found."""
+
+    def find_data(self, **facets: FacetValue) -> list[ESGFFile]:
+        """Find data.
+
+        Parameters
+        ----------
+        **facets :
+            Find data matching these facets.
+
+        Returns
+        -------
+        :obj:`list` of :obj:`esmvalcore.esgf.ESGFFile`
+            A list of files that have been found on ESGF.
+        """
+        files = find_files(**facets)
+        for file in files:
+            file.dest_folder = self.download_dir
+        return files

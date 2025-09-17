@@ -111,7 +111,7 @@ def _tracking_ids(i=0):
 def _get_find_files_func(path: Path, suffix: str = ".nc"):
     tracking_id = _tracking_ids()
 
-    def find_files(*, debug: bool = False, **facets):
+    def find_files(self, *, debug: bool = False, **facets):
         files, file_globs = _get_files(path, facets, tracking_id)
         files = [f.with_suffix(suffix) for f in files]
         file_globs = [g.with_suffix(suffix) for g in file_globs]
@@ -125,13 +125,13 @@ def _get_find_files_func(path: Path, suffix: str = ".nc"):
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
     find_files = _get_find_files_func(tmp_path)
-    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
+    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
 
 
 @pytest.fixture
 def patched_datafinder_grib(tmp_path, monkeypatch):
     find_files = _get_find_files_func(tmp_path, suffix=".grib")
-    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
+    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
 
 
 @pytest.fixture
@@ -147,7 +147,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     """
     tracking_id = _tracking_ids()
 
-    def find_files(*, debug: bool = False, **facets):
+    def find_files(self, *, debug: bool = False, **facets):
         files, file_globs = _get_files(tmp_path, facets, tracking_id)
         if facets["frequency"] == "fx":
             files = []
@@ -159,4 +159,4 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
             return returned_files, file_globs
         return returned_files
 
-    monkeypatch.setattr(esmvalcore.local, "find_files", find_files)
+    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
