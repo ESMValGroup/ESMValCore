@@ -304,7 +304,7 @@ def test_esgf_search_fails(mocker):
         requests.exceptions.ReadTimeout("Timeout error message 1"),
         requests.exceptions.ConnectTimeout("Timeout error message 2"),
     ]
-    _, _ = get_mock_connection(
+    get_mock_connection(
         mocker,
         search_results,
     )
