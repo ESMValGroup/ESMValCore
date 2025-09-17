@@ -50,7 +50,7 @@ def test_ncl_version_too_low(mocker):
     )
     with pytest.raises(
         RecipeError,
-        match="NCL version 6.4 or higher is required",
+        match=r"NCL version 6.4 or higher is required",
     ):
         check.ncl_version()
 

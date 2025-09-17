@@ -36,7 +36,7 @@ def test_cube():
     """Create a 3d synthetic test cube."""
     shape = (3, 45, 36)
     data = np.arange(np.prod(shape)).reshape(shape)
-    z, y, x = shape
+    _, y, x = shape
 
     # Create the cube.
     cm = CellMethod(
