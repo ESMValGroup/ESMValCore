@@ -286,7 +286,7 @@ def test_esgf_search_uses_second_index_node(mocker):
         requests.exceptions.ReadTimeout("Timeout error message"),
         search_result,
     ]
-    _, _ = get_mock_connection(
+    get_mock_connection(
         mocker,
         search_results,
     )
