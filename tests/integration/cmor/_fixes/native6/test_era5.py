@@ -116,7 +116,8 @@ def test_get_frequency_fx():
     assert get_frequency(cube) == "fx"
 
     cube.long_name = "Not geopotential"
-    assert get_frequency(cube) == "monthly"
+    with pytest.raises(ValueError):
+        get_frequency(cube)
 
 
 def test_fix_accumulated_units_fail():
