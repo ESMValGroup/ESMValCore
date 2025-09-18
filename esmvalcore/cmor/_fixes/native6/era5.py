@@ -34,12 +34,13 @@ def get_frequency(cube):
             "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
         )
         if cube.long_name not in acceptable_long_names:
-            logger.warning(
-                "Cube %s has length 1 time dimension, "
-                "assuming 'monthly' frequency",
-                str(cube),
+            msg = (
+                "Unable to infer frequency of cube "
+                f"with length 1 time dimension: {cube}"
             )
-            return "monthly"
+            raise ValueError(
+                msg,
+            )
         return "fx"
 
     interval = time.points[1] - time.points[0]
@@ -566,7 +567,11 @@ class AllVars(Fix):
                 ):
                     coord.guess_bounds()
 
-        self._fix_monthly_time_coord(cube)
+        frequency = (
+            get_frequency(cube) if self.frequency is None else self.frequency
+        )
+        if frequency in ("monthly", "mon", "mo"):
+            self._fix_monthly_time_coord(cube)
 
         # Fix coordinate increasing direction
         if cube.coords("latitude") and not has_unstructured_grid(cube):
@@ -583,20 +588,19 @@ class AllVars(Fix):
     @staticmethod
     def _fix_monthly_time_coord(cube):
         """Set the monthly time coordinates to the middle of the month."""
-        if get_frequency(cube) == "monthly":
-            coord = cube.coord(axis="T")
-            end = []
-            for cell in coord.cells():
-                month = cell.point.month + 1
-                year = cell.point.year
-                if month == 13:
-                    month = 1
-                    year = year + 1
-                end.append(cell.point.replace(month=month, year=year))
-            end = date2num(end, coord.units)
-            start = coord.points
-            coord.points = 0.5 * (start + end)
-            coord.bounds = np.column_stack([start, end])
+        coord = cube.coord(axis="T")
+        end = []
+        for cell in coord.cells():
+            month = cell.point.month + 1
+            year = cell.point.year
+            if month == 13:
+                month = 1
+                year = year + 1
+            end.append(cell.point.replace(month=month, year=year))
+        end = date2num(end, coord.units)
+        start = coord.points
+        coord.points = 0.5 * (start + end)
+        coord.bounds = np.column_stack([start, end])
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
