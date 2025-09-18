@@ -567,7 +567,10 @@ class AllVars(Fix):
                 ):
                     coord.guess_bounds()
 
-        self._fix_monthly_time_coord(cube)
+        frequency = (
+            get_frequency(cube) if self.frequency is None else self.frequency
+        )
+        self._fix_monthly_time_coord(cube, frequency)
 
         # Fix coordinate increasing direction
         if cube.coords("latitude") and not has_unstructured_grid(cube):
@@ -582,9 +585,9 @@ class AllVars(Fix):
         return cube
 
     @staticmethod
-    def _fix_monthly_time_coord(cube):
+    def _fix_monthly_time_coord(cube, frequency):
         """Set the monthly time coordinates to the middle of the month."""
-        if get_frequency(cube) == "monthly":
+        if frequency in ("monthly", "mon", "mo"):
             coord = cube.coord(axis="T")
             end = []
             for cell in coord.cells():
