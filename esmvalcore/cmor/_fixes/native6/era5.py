@@ -570,8 +570,7 @@ class AllVars(Fix):
         frequency = (
             get_frequency(cube) if self.frequency is None else self.frequency
         )
-        if frequency in ("monthly", "mon", "mo"):
-            self._fix_monthly_time_coord(cube)
+        self._fix_monthly_time_coord(cube, frequency)
 
         # Fix coordinate increasing direction
         if cube.coords("latitude") and not has_unstructured_grid(cube):
@@ -586,21 +585,22 @@ class AllVars(Fix):
         return cube
 
     @staticmethod
-    def _fix_monthly_time_coord(cube):
+    def _fix_monthly_time_coord(cube, frequency):
         """Set the monthly time coordinates to the middle of the month."""
-        coord = cube.coord(axis="T")
-        end = []
-        for cell in coord.cells():
-            month = cell.point.month + 1
-            year = cell.point.year
-            if month == 13:
-                month = 1
-                year = year + 1
-            end.append(cell.point.replace(month=month, year=year))
-        end = date2num(end, coord.units)
-        start = coord.points
-        coord.points = 0.5 * (start + end)
-        coord.bounds = np.column_stack([start, end])
+        if frequency in ("monthly", "mon", "mo"):
+            coord = cube.coord(axis="T")
+            end = []
+            for cell in coord.cells():
+                month = cell.point.month + 1
+                year = cell.point.year
+                if month == 13:
+                    month = 1
+                    year = year + 1
+                end.append(cell.point.replace(month=month, year=year))
+            end = date2num(end, coord.units)
+            start = coord.points
+            coord.points = 0.5 * (start + end)
+            coord.bounds = np.column_stack([start, end])
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
