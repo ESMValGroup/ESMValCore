@@ -31,7 +31,6 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            pip check
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
             esmvaltool -- --help
@@ -104,6 +103,16 @@ commands:
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
+      - run:
+          name: Check dependencies are compatible
+          command: |
+            if [[ "<< parameters.upstream_packages >>" = "" ]]; then
+                . /opt/conda/etc/profile.d/conda.sh
+                conda activate esmvaltool
+                pip check
+            else
+              echo "Skipping `pip check` due to upstream packages"
+            fi
       - test_and_report
       - save_cache:
           key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
@@ -133,6 +142,7 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install --no-deps .[test] > /logs/install.txt 2>&1
+            pip check
       - test_and_report:
           args: --cov
       - save_cache:
