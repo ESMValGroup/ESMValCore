@@ -164,7 +164,7 @@ def _era5_time(frequency):
         timestamps = [788940, 788964, 788988]
     elif frequency == "hourly":
         timestamps = [788928, 788929, 788930]
-    elif frequency == "monthly":
+    elif frequency in ("monthly","mon"): # mon frequency when not run get_frequency
         timestamps = [788928, 789672, 790344]
     else:
         msg = f"Invalid frequency {frequency}"
@@ -292,7 +292,7 @@ def _cmor_data(mip):
 
 
 def era5_2d(frequency):
-    if frequency == "monthly":
+    if frequency in ("monthly", "mon"):
         time = DimCoord(
             [-31, 0, 31],
             standard_name="time",
@@ -1510,6 +1510,7 @@ VARIABLES = [
         (prsn_era5_hourly(), prsn_cmor_e1hr(), "prsn", "E1hr"),
         (era5_2d("monthly"), cmor_2d("Amon", "prw"), "prw", "Amon"),
         (era5_2d("monthly"), cmor_2d("Amon", "ps"), "ps", "Amon"),
+        (era5_2d("mon"), cmor_2d("Amon", "ps"), "ps", "Amon"),
         (ptype_era5_hourly(), ptype_cmor_e1hr(), "ptype", "E1hr"),
         (
             era5_3d("monthly"),
