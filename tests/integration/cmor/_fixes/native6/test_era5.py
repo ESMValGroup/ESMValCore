@@ -164,7 +164,10 @@ def _era5_time(frequency):
         timestamps = [788940, 788964, 788988]
     elif frequency == "hourly":
         timestamps = [788928, 788929, 788930]
-    elif frequency in ("monthly","mon"): # mon frequency when not run get_frequency
+    elif frequency in (
+        "monthly",
+        "mon",
+    ):  # mon frequency when not run get_frequency
         timestamps = [788928, 789672, 790344]
     else:
         msg = f"Invalid frequency {frequency}"
