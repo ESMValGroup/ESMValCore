@@ -286,7 +286,7 @@ def test_esgf_search_uses_second_index_node(mocker):
         requests.exceptions.ReadTimeout("Timeout error message"),
         search_result,
     ]
-    SearchConnection, context = get_mock_connection(  # noqa: N806
+    get_mock_connection(
         mocker,
         search_results,
     )
@@ -304,7 +304,7 @@ def test_esgf_search_fails(mocker):
         requests.exceptions.ReadTimeout("Timeout error message 1"),
         requests.exceptions.ConnectTimeout("Timeout error message 2"),
     ]
-    SearchConnection, context = get_mock_connection(  # noqa: N806
+    get_mock_connection(
         mocker,
         search_results,
     )

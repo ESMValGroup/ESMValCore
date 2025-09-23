@@ -70,6 +70,7 @@ Documentation
 -  Fix Codecov badge in README (:pull:`2754`) by :user:`valeriupredoi`
 -  Remove mention of Julia in documentation ahead of discontinued support in v2.13 (:pull:`2819`) by :user:`jlenh`
 -  Remove codacy badge (:pull:`2822`) by :user:`bouweandela`
+-  Replace nbsphinx with myst-nb and remove pin on ipython (:pull:`2838`) by :user:`valeriupredoi`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -88,6 +89,7 @@ Installation
 -  Unpin dask, pin iris, in light of solved #2716 (iris saver not working well with latest Dask API) (:pull:`2726`) by :user:`valeriupredoi`
 -  Harmonize environment.yml with pyproject.yml: identical dependencies (:pull:`2756`) by :user:`valeriupredoi`
 -  Install `esmvaltool-sample-data(==0.0.4)` from conda forge not PyPI (:pull:`2795`) by :user:`valeriupredoi`
+-  Use ``pip install --no-deps`` to avoid overwriting packages from the conda environment (:pull:`2829`) by :user:`bouweandela`
 
 Iris
 ~~~~
@@ -122,6 +124,7 @@ Automatic testing
 -  Use finer current version for pypa PyPI upload github action (:pull:`2804`) by :user:`valeriupredoi`
 -  Change zarr exception test to GroupNotFoundError (:pull:`2823`) by :user:`jlenh`
 -  Remove failing test `test_load_zarr_local_not_zarr_file` due to zarr version changes (:pull:`2824`) by :user:`jlenh`
+-  Repair gha tests after pip install with no deps and add working reference to ipynb Jupyter notebooks in docs (:pull:`2844`) by :user:`valeriupredoi`
 
 Variable Derivation
 ~~~~~~~~~~~~~~~~~~~

@@ -343,7 +343,7 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
         short_name="tas",
     )
 
-    with pytest.raises(RecipeError, match="Unable to replace dataset.*"):
+    with pytest.raises(RecipeError, match=r"Unable to replace dataset.*"):
         to_datasets._dataset_from_files(dataset)
 
 
