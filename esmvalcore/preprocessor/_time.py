@@ -131,9 +131,7 @@ def extract_time(
             f"Currently, start_year is {start_year} "
             f"and end_year is {end_year}."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     t_1 = PartialDateTime(
         year=start_year,
@@ -282,9 +280,7 @@ def _extract_datetime(
             f"cube time bounds {time_coord.cell(0).point} to "
             f"{time_coord.cell(-1).point}."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return cube_slice
 
@@ -374,12 +370,10 @@ def extract_season(cube: Cube, season: str) -> Cube:
     allmonths = "JFMAMJJASOND" * 2
     if season not in allmonths:
         msg = (
-            f"Unable to extract Season {season} "
-            f"combination of months not possible."
+            f"Unable to extract Season '{season}': combination of months not "
+            f"possible"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season) : sstart + 12]
     seasons = [season, res_season]
@@ -494,6 +488,7 @@ def hourly_statistics(
     cube: Cube,
     hours: int,
     operator: str = "mean",
+    keep_group_coordinates: bool = False,
     **operator_kwargs,
 ) -> Cube:
     """Compute hourly statistics.
@@ -511,6 +506,9 @@ def hourly_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``hour_group``,
+        ``day_of_year``, ``year``) in the result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -541,9 +539,10 @@ def hourly_statistics(
             **agg_kwargs,
         )
 
-    result.remove_coord("hour_group")
-    result.remove_coord("day_of_year")
-    result.remove_coord("year")
+    if not keep_group_coordinates:
+        result.remove_coord("hour_group")
+        result.remove_coord("day_of_year")
+        result.remove_coord("year")
 
     return result
 
@@ -552,6 +551,7 @@ def hourly_statistics(
 def daily_statistics(
     cube: Cube,
     operator: str = "mean",
+    keep_group_coordinates: bool = False,
     **operator_kwargs,
 ) -> Cube:
     """Compute daily statistics.
@@ -566,6 +566,9 @@ def daily_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``day_of_year``,
+        ``year``) in the result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -584,8 +587,10 @@ def daily_statistics(
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by(["day_of_year", "year"], agg, **agg_kwargs)
 
-    result.remove_coord("day_of_year")
-    result.remove_coord("year")
+    if not keep_group_coordinates:
+        result.remove_coord("day_of_year")
+        result.remove_coord("year")
+
     return result
 
 
@@ -593,6 +598,7 @@ def daily_statistics(
 def monthly_statistics(
     cube: Cube,
     operator: str = "mean",
+    keep_group_coordinates: bool = True,
     **operator_kwargs,
 ) -> Cube:
     """Compute monthly statistics.
@@ -607,6 +613,9 @@ def monthly_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``month_number``,
+        ``year``) in the result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -629,6 +638,11 @@ def monthly_statistics(
             **agg_kwargs,
         )
     _aggregate_time_fx(result, cube)
+
+    if not keep_group_coordinates:
+        result.remove_coord("month_number")
+        result.remove_coord("year")
+
     return result
 
 
@@ -637,6 +651,7 @@ def seasonal_statistics(
     cube: Cube,
     operator: str = "mean",
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
+    keep_group_coordinates: bool = True,
     **operator_kwargs,
 ) -> Cube:
     """Compute seasonal statistics.
@@ -656,6 +671,9 @@ def seasonal_statistics(
         and all sequentially correct combinations holding every month
         of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
         extraction.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``clim_season``,
+        ``season_year``) in the result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -668,10 +686,8 @@ def seasonal_statistics(
     seasons = tuple(sea.upper() for sea in seasons)
 
     if any(len(sea) < 2 for sea in seasons):
-        msg = f"Minimum of 2 month is required per Seasons: {seasons}."
-        raise ValueError(
-            msg,
-        )
+        msg = f"Minimum of 2 months is required per season in {seasons}"
+        raise ValueError(msg)
 
     if not cube.coords("clim_season"):
         iris.coord_categorisation.add_season(
@@ -689,9 +705,7 @@ def seasonal_statistics(
                 f"Seasons {seasons} do not match prior season extraction "
                 f"{old_seasons}."
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
     if not cube.coords("season_year"):
         iris.coord_categorisation.add_season_year(
@@ -740,6 +754,11 @@ def seasonal_statistics(
     full_seasons = spans_full_season(result)
     result = result[full_seasons]
     _aggregate_time_fx(result, cube)
+
+    if not keep_group_coordinates:
+        result.remove_coord("clim_season")
+        result.remove_coord("season_year")
+
     return result
 
 
@@ -747,6 +766,7 @@ def seasonal_statistics(
 def annual_statistics(
     cube: Cube,
     operator: str = "mean",
+    keep_group_coordinates: bool = True,
     **operator_kwargs,
 ) -> Cube:
     """Compute annual statistics.
@@ -763,6 +783,9 @@ def annual_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``year``) in the
+        result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -782,6 +805,10 @@ def annual_statistics(
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by("year", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
+
+    if not keep_group_coordinates:
+        result.remove_coord("year")
+
     return result
 
 
@@ -789,6 +816,7 @@ def annual_statistics(
 def decadal_statistics(
     cube: Cube,
     operator: str = "mean",
+    keep_group_coordinates: bool = True,
     **operator_kwargs,
 ) -> Cube:
     """Compute decadal statistics.
@@ -805,6 +833,9 @@ def decadal_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    keep_group_coordinates:
+        If ``True``, keep temporal group coordinates (i.e., ``decade``) in the
+        result. If ``False``, remove them.
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -835,6 +866,10 @@ def decadal_statistics(
     with ignore_iris_vague_metadata_warnings():
         result = cube.aggregated_by("decade", agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
+
+    if not keep_group_coordinates:
+        result.remove_coord("decade")
+
     return result
 
 
@@ -1017,13 +1052,11 @@ def anomalies(
         reps = cube.shape[tdim] / cube_stddev.shape[tdim]
         if reps % 1 != 0:
             msg = (
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
+                f"Cannot safely apply preprocessor to this dataset since the "
+                f"full time period of this dataset is not a multiple of the "
+                f"period '{period}'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         cube.data = cube.core_data() / da.concatenate(
             [cube_stddev.core_data() for _ in range(int(reps))],
             axis=tdim,
@@ -1172,9 +1205,7 @@ def regrid_time(
             f"Setting a fixed calendar is not supported for frequency "
             f"'{frequency}'"
         )
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
 
     # Setup new time coordinate
     new_dates = _get_new_dates(frequency, coord)
@@ -1247,9 +1278,7 @@ def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
                 f"For `n`-hourly data, `n` must be a divisor of 24, got "
                 f"'{frequency}'"
             )
-            raise NotImplementedError(
-                msg,
-            )
+            raise NotImplementedError(msg)
         half_interval = datetime.timedelta(hours=n_hours / 2.0)
         dates = [
             datetime.datetime(
@@ -1377,9 +1406,7 @@ def timeseries_filter(
             f"Filter type {filter_type} not implemented, "
             f"please choose one of {', '.join(supported_filters)}"
         )
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
 
     # Apply filter
     (agg, agg_kwargs) = get_iris_aggregator(filter_stats, **operator_kwargs)
@@ -1440,17 +1467,13 @@ def resample_hours(
     allowed_intervals = (1, 2, 3, 4, 6, 12)
     if interval not in allowed_intervals:
         msg = f"The number of hours must be one of {allowed_intervals}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if offset >= interval:
         msg = (
             f"The offset ({offset}) must be lower than "
             f"the interval ({interval})"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     time = cube.coord("time")
     cube_period = time.cell(1).point - time.cell(0).point
     if cube_period.total_seconds() / 3600 > interval:
@@ -1458,9 +1481,7 @@ def resample_hours(
             f"Data period ({cube_period}) should be lower than "
             f"the interval ({interval})"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     dates = time.units.num2date(time.points)
 
     # Interpolate input time to requested hours if desired
@@ -1474,9 +1495,7 @@ def resample_hours(
                 f"Expected `None`, 'nearest' or 'linear' for `interpolate`, "
                 f"got '{interpolate}'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         new_dates = sorted(
             [
                 cf_datetime(y, m, d, h, calendar=time.units.calendar)
@@ -1498,9 +1517,7 @@ def resample_hours(
             msg = (
                 f"Time coordinate {dates} does not contain {hours} for {cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
     return cube
 
@@ -1557,9 +1574,7 @@ def resample_time(
         msg = (
             f"Time coordinate {dates} does not contain {requested} for {cube}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return cube
 
 
@@ -1889,9 +1904,7 @@ def _check_cube_coords(cube):
             f"Input cube {cube.summary(shorten=True)} needs a dimensional "
             f"coordinate `time`"
         )
-        raise CoordinateNotFoundError(
-            msg,
-        )
+        raise CoordinateNotFoundError(msg)
     time_coord = cube.coord("time", dim_coords=True)
     # The following works since DimCoords are always 1D and monotonic
     if time_coord.points[0] > time_coord.points[-1]:
@@ -1903,18 +1916,14 @@ def _check_cube_coords(cube):
             f"Input cube {cube.summary(shorten=True)} needs a coordinate "
             f"`longitude`"
         )
-        raise CoordinateNotFoundError(
-            msg,
-        )
+        raise CoordinateNotFoundError(msg)
     lon_ndim = len(cube.coord_dims("longitude"))
     if lon_ndim != 1:
         msg = (
             f"Input cube {cube.summary(shorten=True)} needs a 1D coordinate "
             f"`longitude`, got {lon_ndim:d}D"
         )
-        raise CoordinateMultiDimError(
-            msg,
-        )
+        raise CoordinateMultiDimError(msg)
 
 
 @preserve_float_dtype
