@@ -912,28 +912,6 @@ def test_get_default_settings(mocker):
     }
 
 
-def test_set_version(mocker):
-    dataset = Dataset(short_name="tas")
-    supplementary = Dataset(short_name="areacella")
-    dataset.supplementaries = [supplementary]
-
-    input_dataset = Dataset(short_name="tas")
-    file1 = mocker.Mock()
-    file1.facets = {"version": "v1"}
-    file2 = mocker.Mock()
-    file2.facets = {"version": "v2"}
-    input_dataset.files = [file1, file2]
-
-    file3 = mocker.Mock()
-    file3.facets = {"version": "v3"}
-    supplementary.files = [file3]
-
-    _recipe._set_version(dataset, [input_dataset])
-    print(dataset)
-    assert dataset.facets["version"] == ["v1", "v2"]
-    assert dataset.supplementaries[0].facets["version"] == "v3"
-
-
 def test_extract_preprocessor_order():
     profile = {
         "custom_order": True,
@@ -1003,3 +981,23 @@ def test_special_name_to_dataset_invalid_special_name_type():
     )
     with pytest.raises(RecipeError, match=msg):
         _recipe._special_name_to_dataset(facets, "reference_dataset")
+
+
+def test_fix_cmip5_fx_ensemble(monkeypatch):
+    def find_files(self):
+        if self.facets["ensemble"] == "r0i0p0":
+            self._files = ["file1.nc"]
+
+    monkeypatch.setattr(Dataset, "find_files", find_files)
+
+    dataset = Dataset(
+        dataset="dataset1",
+        short_name="orog",
+        mip="fx",
+        project="CMIP5",
+        ensemble="r1i1p1",
+    )
+
+    _recipe._fix_cmip5_fx_ensemble(dataset)
+
+    assert dataset["ensemble"] == "r0i0p0"
