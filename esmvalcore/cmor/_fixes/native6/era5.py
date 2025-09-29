@@ -20,53 +20,22 @@ from esmvalcore.iris_helpers import (
 logger = logging.getLogger(__name__)
 
 
-def get_frequency(cube):
-    """Determine time frequency of input cube."""
-    try:
-        time = cube.coord(axis="T")
-    except iris.exceptions.CoordinateNotFoundError:
-        return "fx"
 
-    time.convert_units("days since 1850-1-1 00:00:00.0")
-    if len(time.points) == 1:
-        acceptable_long_names = (
-            "Geopotential",
-            "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
-        )
-        if cube.long_name not in acceptable_long_names:
-            msg = (
-                "Unable to infer frequency of cube "
-                f"with length 1 time dimension: {cube}"
-            )
-            raise ValueError(
-                msg,
-            )
-        return "fx"
-
-    interval = time.points[1] - time.points[0]
-
-    if interval - 1 / 24 < 1e-4:
-        return "hourly"
-    if interval - 1.0 < 1e-4:
-        return "daily"
-    return "monthly"
-
-
-def fix_hourly_time_coordinate(cube):
+def fix_hourly_time_coordinate(cube, frequency):
     """Shift aggregated variables 30 minutes back in time."""
-    if get_frequency(cube) == "hourly":
+    if frequency == "1hr":
         time = cube.coord(axis="T")
         time.points = time.points - 1 / 48
     return cube
 
 
-def fix_accumulated_units(cube):
+def fix_accumulated_units(cube, frequency):
     """Convert accumulations to fluxes."""
-    if get_frequency(cube) == "monthly":
+    if frequency == "mon":
         cube.units = cube.units * "d-1"
-    elif get_frequency(cube) == "hourly":
+    elif frequency == "1hr":
         cube.units = cube.units * "h-1"
-    elif get_frequency(cube) == "daily":
+    elif frequency == "day":
         msg = (
             f"Fixing of accumulated units of cube "
             f"{cube.summary(shorten=True)} is not implemented for daily data"
@@ -163,8 +132,8 @@ class Evspsbl(Fix):
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
             cube.units = "m"
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             multiply_with_density(cube)
             # Correct sign to align with CMOR standards
             cube.data = cube.core_data() * -1.0
@@ -180,8 +149,8 @@ class Evspsblpot(Fix):
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
             cube.units = "m"
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             multiply_with_density(cube)
             # Correct sign to align with CMOR standards
             cube.data = cube.core_data() * -1.0
@@ -205,8 +174,8 @@ class Mrro(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             multiply_with_density(cube)
 
         return cubes
@@ -246,8 +215,8 @@ class Pr(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             multiply_with_density(cube)
 
         return cubes
@@ -265,8 +234,8 @@ class Prsn(Fix):
         for cube in cubes:
             # Set input cube units for invalid units were ignored on load
             cube.units = "m"
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             multiply_with_density(cube)
 
         return cubes
@@ -319,8 +288,8 @@ class Rlds(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -332,8 +301,8 @@ class Rlns(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -345,7 +314,7 @@ class Rls(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -357,8 +326,8 @@ class Rlus(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "up"
 
         return cubes
@@ -396,8 +365,8 @@ class Rsds(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -409,8 +378,8 @@ class Rsns(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -422,8 +391,8 @@ class Rsus(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "up"
 
         return cubes
@@ -435,8 +404,8 @@ class Rsdt(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -448,8 +417,8 @@ class Rss(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
+            fix_accumulated_units(cube, self.frequency)
             cube.attributes["positive"] = "down"
 
         return cubes
@@ -482,7 +451,7 @@ class Tasmax(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
         return cubes
 
 
@@ -492,7 +461,7 @@ class Tasmin(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
+            fix_hourly_time_coordinate(cube, self.frequency)
         return cubes
 
 
@@ -567,10 +536,7 @@ class AllVars(Fix):
                 ):
                     coord.guess_bounds()
 
-        frequency = (
-            get_frequency(cube) if self.frequency is None else self.frequency
-        )
-        self._fix_monthly_time_coord(cube, frequency)
+        self._fix_monthly_time_coord(cube, self.frequency)
 
         # Fix coordinate increasing direction
         if cube.coords("latitude") and not has_unstructured_grid(cube):
