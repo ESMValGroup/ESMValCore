@@ -14,12 +14,16 @@ import shutil
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
+from typing import Any
 from urllib.parse import urlparse
 
+import iris.cube
 import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
+from esmvalcore.config import CFG
+from esmvalcore.io.protocol import DataElement
 from esmvalcore.local import LocalFile
 from esmvalcore.typing import Facets
 
@@ -166,7 +170,7 @@ def sort_hosts(urls):
 
 
 @functools.total_ordering
-class ESGFFile:
+class ESGFFile(DataElement):
     """File on the ESGF.
 
     This is the object returned by :func:`esmvalcore.esgf.find_files`.
@@ -185,7 +189,7 @@ class ESGFFile:
         The URLs where the file can be downloaded.
     """
 
-    def __init__(self, results):
+    def __init__(self, results, dest_folder=None):
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix(".nc"))
         self.size = results[0].size
@@ -196,6 +200,20 @@ class ESGFFile:
         for result in results:
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
+        if dest_folder is None:
+            self.dest_folder = CFG["download_dir"]
+
+    def prepare(self) -> None:
+        self.download(self.dest_folder)
+
+    def to_iris(
+        self,
+        ignore_warnings: list[dict[str, Any]] | None = None,
+    ) -> iris.cube.CubeList:
+        local_file = self.local_file(self.dest_folder)
+        if not local_file.exists():
+            self.download(self.dest_folder)
+        return local_file.to_iris(ignore_warnings=ignore_warnings)
 
     @classmethod
     def _from_results(cls, results, facets):

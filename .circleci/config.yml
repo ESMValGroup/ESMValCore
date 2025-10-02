@@ -141,6 +141,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
+            pip install intake-esgf  # TODO: remove before merging
             pip install --no-deps .[test] > /logs/install.txt 2>&1
             pip check
       - test_and_report:
