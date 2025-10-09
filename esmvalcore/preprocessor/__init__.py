@@ -104,6 +104,7 @@ from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
+    import prov.model
     from dask.delayed import Delayed
 
     from esmvalcore.dataset import Dataset, File
@@ -528,8 +529,9 @@ class PreprocessorFile(TrackedFile):
                     input_files.extend(supplementary.files)
             ancestors = [TrackedFile(f) for f in input_files]
         else:
-            # Multimodel preprocessor functions set ancestors at runtime
-            # instead of here.
+            # Multimodel preprocessor functions set ancestors at runtime,
+            # in `esmvalcore.preprocessor.multi_model_statistics` and
+            # `esmvalcore.preprocessor.ensemble_statistics` instead of here.
             input_files = []
             ancestors = []
 
@@ -673,6 +675,7 @@ PreprocessorItem: TypeAlias = PreprocessorFile | Cube | str | Path
 def _apply_multimodel(
     products: set[PreprocessorFile],
     step: str,
+    activity: prov.model.ProvActivity,
     debug: bool | None,
 ) -> set[PreprocessorFile]:
     """Apply multi model step to products."""
@@ -683,6 +686,10 @@ def _apply_multimodel(
         step,
         "\n".join(str(p) for p in products - exclude),
     )
+    for output_product_group in settings.get("output_products", {}).values():
+        for output_product in output_product_group.values():
+            output_product.initialize_provenance(activity)
+
     result: list[PreprocessorFile] = preprocess(  # type: ignore
         products - exclude,  # type: ignore
         step,
@@ -718,24 +725,6 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _initialize_multiproduct_provenance(self, step: str) -> None:
-        """Initialize provenance for multi-model output products."""
-        output_products = sorted(
-            {
-                output_product
-                for input_product in self.products
-                for output_product_group in input_product.settings.get(
-                    step,
-                    {},
-                )
-                .get("output_products", {})
-                .values()
-                for output_product in output_product_group.values()
-            },
-        )
-        for output_product in output_products:
-            output_product.initialize_provenance(self.activity)
-
     def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
         for product in self.products:
@@ -752,10 +741,10 @@ class PreprocessingTask(BaseTask):
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
                 for step in block:
-                    self._initialize_multiproduct_provenance(step)
                     self.products = _apply_multimodel(
                         self.products,
                         step,
+                        self.activity,
                         self.debug,
                     )
             else:

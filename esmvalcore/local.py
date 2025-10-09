@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import itertools
 import logging
 import os
@@ -15,15 +16,18 @@ import isodate
 from cf_units import Unit
 from netCDF4 import Dataset, Variable
 
-from .config import CFG
-from .config._config import get_project_config
-from .exceptions import RecipeError
+from esmvalcore.config import CFG
+from esmvalcore.config._config import get_project_config
+from esmvalcore.exceptions import RecipeError
+from esmvalcore.preprocessor._io import _load_from_file
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from .esgf import ESGFFile
-    from .typing import Facets, FacetValue
+    import iris.cube
+
+    from esmvalcore.esgf import ESGFFile
+    from esmvalcore.typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -854,3 +858,34 @@ class LocalFile(type(Path())):  # type: ignore
     @facets.setter
     def facets(self, value: Facets) -> None:
         self._facets = value
+
+    def to_iris(
+        self,
+        ignore_warnings: list[dict[str, Any]] | None = None,
+    ) -> iris.cube.CubeList:
+        """Load the data as Iris cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            The loaded data.
+        """
+        cubes = _load_from_file(self, ignore_warnings=ignore_warnings)
+        # Cache the attributes.
+        self.attributes = copy.deepcopy(dict(cubes[0].attributes.globals))
+        return cubes
+
+    @property
+    def attributes(self) -> dict[str, Any]:
+        """Attributes read from the file."""
+        if not hasattr(self, "_attributes"):
+            msg = (
+                "Attributes have not been read yet. Call the `to_iris` method "
+                "first to read the attributes from the file."
+            )
+            raise ValueError(msg)
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: dict[str, Any]) -> None:
+        self._attributes = value
