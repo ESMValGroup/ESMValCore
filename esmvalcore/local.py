@@ -859,6 +859,21 @@ class LocalFile(type(Path())):  # type: ignore
     def facets(self, value: Facets) -> None:
         self._facets = value
 
+    @property
+    def attributes(self) -> dict[str, Any]:
+        """Attributes read from the file."""
+        if not hasattr(self, "_attributes"):
+            msg = (
+                "Attributes have not been read yet. Call the `to_iris` method "
+                "first to read the attributes from the file."
+            )
+            raise ValueError(msg)
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: dict[str, Any]) -> None:
+        self._attributes = value
+
     def to_iris(
         self,
         ignore_warnings: list[dict[str, Any]] | None = None,
@@ -874,18 +889,3 @@ class LocalFile(type(Path())):  # type: ignore
         # Cache the attributes.
         self.attributes = copy.deepcopy(dict(cubes[0].attributes.globals))
         return cubes
-
-    @property
-    def attributes(self) -> dict[str, Any]:
-        """Attributes read from the file."""
-        if not hasattr(self, "_attributes"):
-            msg = (
-                "Attributes have not been read yet. Call the `to_iris` method "
-                "first to read the attributes from the file."
-            )
-            raise ValueError(msg)
-        return self._attributes
-
-    @attributes.setter
-    def attributes(self, value: dict[str, Any]) -> None:
-        self._attributes = value
