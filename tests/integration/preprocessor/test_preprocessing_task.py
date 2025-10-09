@@ -7,6 +7,7 @@ from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
 from esmvalcore.dataset import Dataset
+from esmvalcore.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 
@@ -15,11 +16,11 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
     """Test that a task that just loads and saves a file."""
     # Prepare a test dataset
     cube = iris.cube.Cube(data=[273.0], var_name="tas", units="K")
-    in_file = tmp_path / "tas_in.nc"
+    in_file = LocalFile(tmp_path / "tas_in.nc")
     iris.save(cube, in_file)
     dataset = Dataset(short_name="tas")
     dataset.files = [in_file]
-    dataset.load = lambda: cube.copy()
+    dataset.load = lambda: in_file.to_iris()[0]
 
     # Create task
     task = PreprocessingTask(
@@ -62,8 +63,8 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
     # Prepare test datasets
     in_cube = iris.cube.Cube(data=[0.0], var_name="tas", units="degrees_C")
     (tmp_path / "climate_data").mkdir()
-    file1 = tmp_path / "climate_data" / "tas_dataset1.nc"
-    file2 = tmp_path / "climate_data" / "tas_dataset2.nc"
+    file1 = LocalFile(tmp_path / "climate_data" / "tas_dataset1.nc")
+    file2 = LocalFile(tmp_path / "climate_data" / "tas_dataset2.nc")
 
     # Save cubes for reading global attributes into provenance
     iris.save(in_cube, target=file1)
@@ -71,11 +72,11 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     dataset1 = Dataset(short_name="tas", dataset="dataset1")
     dataset1.files = [file1]
-    dataset1.load = lambda: in_cube.copy()
+    dataset1.load = lambda: file1.to_iris()[0]
 
     dataset2 = Dataset(short_name="tas", dataset="dataset1")
     dataset2.files = [file2]
-    dataset2.load = lambda: in_cube.copy()
+    dataset2.load = lambda: file2.to_iris()[0]
 
     # Create some mock preprocessor functions and patch
     # `esmvalcore.preprocessor` so it uses them.
