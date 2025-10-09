@@ -556,6 +556,8 @@ class PreprocessorFile(TrackedFile):
             ancestors=ancestors,
         )
 
+        self.activity = None
+
     def check(self) -> None:
         """Check preprocessor settings."""
         check_preprocessor_settings(self.settings)
@@ -579,6 +581,8 @@ class PreprocessorFile(TrackedFile):
         """Cubes."""
         if self._cubes is None:
             self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
+            self.initialize_provenance(self.activity)
+
         return self._cubes
 
     @cubes.setter
@@ -714,50 +718,28 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _initialize_product_provenance(self) -> None:
-        """Initialize product provenance."""
-        self._initialize_products(self.products)
-        self._initialize_multimodel_provenance()
-        self._initialize_ensemble_provenance()
-
     def _initialize_multiproduct_provenance(self, step: str) -> None:
-        input_products = self._get_input_products(step)
-        if input_products:
-            statistic_products = set()
-
-            for input_product in input_products:
-                step_settings = input_product.settings[step]
-                output_products = step_settings.get("output_products", {})
-
-                for product in output_products.values():
-                    statistic_products.update(product.values())
-
-            self._initialize_products(statistic_products)
-
-    def _initialize_multimodel_provenance(self) -> None:
-        """Initialize provenance for multi-model statistics."""
-        step = "multi_model_statistics"
-        self._initialize_multiproduct_provenance(step)
-
-    def _initialize_ensemble_provenance(self) -> None:
-        """Initialize provenance for ensemble statistics."""
-        step = "ensemble_statistics"
-        self._initialize_multiproduct_provenance(step)
-
-    def _get_input_products(self, step: str) -> list[PreprocessorFile]:
-        """Get input products."""
-        return [
-            product for product in self.products if step in product.settings
-        ]
-
-    def _initialize_products(self, products: set[PreprocessorFile]) -> None:
-        """Initialize products."""
-        for product in products:
-            product.initialize_provenance(self.activity)
+        """Initialize provenance for multi-model output products."""
+        output_products = sorted(
+            {
+                output_product
+                for input_product in self.products
+                for output_product_group in input_product.settings.get(
+                    step,
+                    {},
+                )
+                .get("output_products", {})
+                .values()
+                for output_product in output_product_group.values()
+            },
+        )
+        for output_product in output_products:
+            output_product.initialize_provenance(self.activity)
 
     def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
-        self._initialize_product_provenance()
+        for product in self.products:
+            product.activity = self.activity
 
         steps = {
             step for product in self.products for step in product.settings
@@ -770,6 +752,7 @@ class PreprocessingTask(BaseTask):
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
                 for step in block:
+                    self._initialize_multiproduct_provenance(step)
                     self.products = _apply_multimodel(
                         self.products,
                         step,
