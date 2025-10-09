@@ -1,5 +1,7 @@
 """Tests for `esmvalcore.preprocessor.PreprocessingTask`."""
 
+from pathlib import Path
+
 import iris
 import iris.cube
 import pytest
@@ -84,12 +86,18 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
         cube.data = cube.core_data() + 1.0
         return cube
 
-    def multi_preproc_func(products):
+    def multi_preproc_func(products, output_products):
+        # Preprocessor function that mimics the behaviour of e.g.
+        # `esmvalcore.preprocessor.multi_model_statistics`.`
         for product in products:
             cube = product.cubes[0]
             cube.data = cube.core_data() + 1.0
             product.cubes = [cube]
-        return products
+        output_product = output_products[""]["mean"]
+        output_product.cubes = [
+            iris.cube.Cube([5.0], var_name="tas", units="degrees_C"),
+        ]
+        return products | {output_product}
 
     monkeypatch.setattr(
         esmvalcore.preprocessor,
@@ -133,7 +141,17 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
                 filename=tmp_path / "tas_dataset2.nc",
                 settings={
                     "single_preproc_func": {},
-                    "multi_preproc_func": {},
+                    "multi_preproc_func": {
+                        "output_products": {
+                            "": {
+                                "mean": PreprocessorFile(
+                                    filename=tmp_path / "tas_dataset2_mean.nc",
+                                    attributes={"dataset": "dataset2_mean"},
+                                    settings={},
+                                ),
+                            },
+                        },
+                    },
                 },
                 datasets=[dataset2],
                 attributes={"dataset": "dataset2"},
@@ -150,9 +168,9 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     task.run()
 
-    # Check that two files were saved and the preprocessor functions were
+    # Check that three files were saved and the preprocessor functions were
     # only applied to the second one.
-    assert len(task.products) == 2
+    assert len(task.products) == 3
     for product in task.products:
         print(product.filename)
         assert product.filename.exists()
@@ -162,6 +180,11 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
             assert out_cube.data.tolist() == [0.0]
         elif product.attributes["dataset"] == "dataset2":
             assert out_cube.data.tolist() == [2.0]
+        elif product.attributes["dataset"] == "dataset2_mean":
+            assert out_cube.data.tolist() == [5.0]
         else:
             msg = "unexpected product"
             raise AssertionError(msg)
+        provenance_file = Path(product.provenance_file)
+        assert provenance_file.exists()
+        assert provenance_file.read_text(encoding="utf-8")
