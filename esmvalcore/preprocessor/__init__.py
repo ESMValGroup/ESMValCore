@@ -583,6 +583,8 @@ class PreprocessorFile(TrackedFile):
         """Cubes."""
         if self._cubes is None:
             self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
+            # Initialize provenance after loading the data, so that we can reuse
+            # the global attributes that have been read from the input files.
             self.initialize_provenance(self.activity)
 
         return self._cubes
