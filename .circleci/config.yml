@@ -68,7 +68,8 @@ commands:
           environment:
             DEBIAN_FRONTEND: noninteractive  # needed to install tzdata
           command: apt update && apt install -y git ssh
-      - checkout
+      - checkout:
+          method: blobless
       - check_changes
       - run:
           name: Generate cache key
@@ -129,7 +130,8 @@ jobs:
       - image: esmvalgroup/esmvalcore:development
     resource_class: large
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - run:
           name: Generate cache key
           command: date '+%Y-%V' | tee cache_key.txt
@@ -224,7 +226,8 @@ jobs:
       - image: condaforge/miniforge3
     resource_class: medium
     steps:
-      - checkout
+      - checkout:
+          method: blobless
       - run:
           command: |
             mkdir /logs
