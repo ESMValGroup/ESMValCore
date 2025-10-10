@@ -36,8 +36,7 @@ def get_frequency(cube):
         if cube.long_name not in acceptable_long_names:
             msg = (
                 "Unable to infer frequency of cube "
-                f"with length 1 time dimension: {cube}. "
-                "Use frequency facet to specify manually."
+                f"with length 1 time dimension: {cube}"
             )
             raise ValueError(
                 msg,
