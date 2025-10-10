@@ -18,6 +18,7 @@ from esmvalcore.cmor._fixes.native6.era5 import (
 )
 from esmvalcore.cmor.fix import fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
+from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = (
@@ -38,7 +39,6 @@ def test_get_zg_fix():
     fix = Fix.get_fixes("native6", "ERA5", "Amon", "zg")
     vardef = get_var_info("native6", "E1hr", "evspsbl")
     assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
-
 
 
 def test_fix_accumulated_units_fail():
@@ -1472,14 +1472,30 @@ VARIABLES = [
 @pytest.mark.parametrize(("era5_cubes", "cmor_cubes", "var", "mip"), VARIABLES)
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-    fixed_cubes = fix_metadata(era5_cubes, var, "native6", "era5", mip)
+    dataset = Dataset(
+        short_name=var,
+        mip=mip,
+        project="native6",
+        dataset="ERA5",
+    )
+    dataset.augment_facets()
+
+    # Call `fix_metadata` and `cmor_check_metadata` with the same arguments as
+    # in `esmvalcore.dataset.Dataset.load`.
+    fixed_cubes = fix_metadata(era5_cubes, **dataset.facets)
 
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
 
     # Test that CMOR checks are passing
-    fixed_cubes = cmor_check_metadata(fixed_cube, "native6", mip, var)
+    fixed_cubes = cmor_check_metadata(
+        fixed_cube,
+        cmor_table="native6",
+        mip=mip,
+        short_name=var,
+        frequency=dataset["frequency"],
+    )
 
     if fixed_cube.coords("time"):
         for cube in [fixed_cube, cmor_cube]:

@@ -3,7 +3,6 @@
 import datetime
 import logging
 
-import iris
 import numpy as np
 from iris.cube import CubeList
 from iris.util import reverse
@@ -20,29 +19,51 @@ from esmvalcore.iris_helpers import (
 logger = logging.getLogger(__name__)
 
 
-
 def fix_hourly_time_coordinate(cube, frequency):
     """Shift aggregated variables 30 minutes back in time."""
-    if frequency == "1hr":
+    # While the frequency for aggregated variables is "1hr", the most common frequency
+    # in the CMIP6 E1hr table is "1hrPt" and in the E1hrClimMon table is "1hrCM".
+    # We could set the frequency to "1hr" using the extra_facets_native6.yml configuration
+    # file, but this would be backward incompatible for users who have already
+    # stored the data under a directory with the name 1hrPt. Therefore, apply
+    # this fix to any frequency starting with "1hr".
+    #
+    # Note that comparing instantaneous variables from CMIP6 to averaged
+    # variables from ERA5 may lead to some differences.
+    if frequency.startswith("1hr"):
         time = cube.coord(axis="T")
-        time.points = time.points - 1 / 48
+        if str(time.units).startswith("hours since"):
+            shift = 0.5
+        elif str(time.units).startswith("days since"):
+            shift = 1.0 / 48.0
+        else:
+            msg = f"Unexpected time units {time.units} encountered for ERA5 data."
+            raise ValueError(msg)
+        time.points = time.points - shift
     return cube
 
 
 def fix_accumulated_units(cube, frequency):
     """Convert accumulations to fluxes."""
+    # While the frequency for aggregated variables is "1hr", the most common frequency
+    # in the CMIP6 E1hr table is "1hrPt" and in the E1hrClimMon table is "1hrCM".
+    # We could set the frequency to "1hr" using the extra_facets_native6.yml configuration
+    # file, but this would be backward incompatible for users who have already
+    # stored the data under a directory with the name 1hrPt. Therefore, apply
+    # this fix to any frequency starting with "1hr".
+    #
+    # Note that comparing instantaneous variables from CMIP6 to averaged
+    # variables from ERA5 may lead to some differences.
     if frequency == "mon":
         cube.units = cube.units * "d-1"
-    elif frequency == "1hr":
+    elif frequency.startswith("1hr"):
         cube.units = cube.units * "h-1"
     elif frequency == "day":
         msg = (
             f"Fixing of accumulated units of cube "
             f"{cube.summary(shorten=True)} is not implemented for daily data"
         )
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
     return cube
 
 
