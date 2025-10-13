@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - add_eccodeslib_pypi-dependency
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
