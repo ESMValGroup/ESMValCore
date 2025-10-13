@@ -12,7 +12,6 @@ dependencies:
   - dask >=2025  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
-  - eccodes ==2.41.0  # eccodes dep of iris-grib, but new 2.44 packaging is missing some extra libs (there is no 2.43)
   - esgf-pyclient >=0.3.1
   - esmpy
   - esmvaltool-sample-data
