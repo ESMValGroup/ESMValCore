@@ -1411,8 +1411,14 @@ def get_diagnostic_filename(basename, cfg, extension="nc"):
 
 def simulate_preprocessor_run(task):
     """Simulate preprocessor run."""
-    task._initialize_product_provenance()
     for product in task.products:
+        # Populate the LocalFile.attributes attribute and initialize
+        # provenance as done in `PreprocessingTask.cubes`.
+        for dataset in product.datasets:
+            for file in dataset.files:
+                file.to_iris()
+        product.initialize_provenance(task.activity)
+
         create_test_file(product.filename)
         product.save_provenance()
 
@@ -1871,9 +1877,6 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, session):
 
     assert len(product_out) == len(datasets) * len(statistics)
 
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
-
 
 def test_multi_model_statistics(tmp_path, patched_datafinder, session):
     statistics = ["mean", "max"]
@@ -1919,9 +1922,6 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, session):
     )
 
     assert len(product_out) == len(statistics)
-
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
 
 
 def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
@@ -1976,8 +1976,6 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
     for id_, _ in product_out:
         assert id_ != "OBS"
         assert id_ == "CMIP5"
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
 
 
 def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
