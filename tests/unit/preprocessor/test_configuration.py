@@ -20,14 +20,11 @@ def test_non_repeated_keys():
 
 def test_time_preprocessores_default_order_added():
     assert all(
-        (time_preproc in DEFAULT_ORDER for time_preproc in TIME_PREPROCESSORS)
+        time_preproc in DEFAULT_ORDER for time_preproc in TIME_PREPROCESSORS
     )
 
 
 def test_multimodel_functions_in_default_order():
     assert all(
-        (
-            time_preproc in DEFAULT_ORDER
-            for time_preproc in MULTI_MODEL_FUNCTIONS
-        )
+        time_preproc in DEFAULT_ORDER for time_preproc in MULTI_MODEL_FUNCTIONS
     )

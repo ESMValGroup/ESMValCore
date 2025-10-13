@@ -5,7 +5,6 @@ import os
 import pprint
 import shutil
 from pathlib import Path
-from typing import Dict, Optional
 
 import yaml
 
@@ -16,7 +15,7 @@ from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Recipe:
@@ -33,11 +32,12 @@ class Recipe:
     def __init__(self, path: os.PathLike):
         self.path = Path(path)
         if not self.path.exists():
-            raise FileNotFoundError(f"Cannot find recipe: `{path}`.")
+            msg = f"Cannot find recipe: `{path}`."
+            raise FileNotFoundError(msg)
 
-        self._engine: Optional[RecipeEngine] = None
-        self._data: Optional[Dict] = None
-        self.last_session: Optional[Session] = None
+        self._engine: RecipeEngine | None = None
+        self._data: dict | None = None
+        self.last_session: Session | None = None
         self.info = RecipeInfo(self.data, filename=self.path.name)
 
     def __repr__(self) -> str:
@@ -70,7 +70,7 @@ class Recipe:
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            with open(self.path, "r", encoding="utf-8") as yaml_file:
+            with open(self.path, encoding="utf-8") as yaml_file:
                 self._data = yaml.safe_load(yaml_file)
         return self._data
 
@@ -95,13 +95,15 @@ class Recipe:
         logger.info(pprint.pformat(session))
 
         return RecipeEngine(
-            raw_recipe=self.data, session=session, recipe_file=self.path
+            raw_recipe=self.data,
+            session=session,
+            recipe_file=self.path,
         )
 
     def run(
         self,
-        task: Optional[str] = None,
-        session: Optional[Session] = None,
+        task: str | None = None,
+        session: Session | None = None,
     ):
         """Run the recipe.
 
@@ -153,7 +155,8 @@ class Recipe:
             grouped by diagnostic task.
         """
         if self._engine is None:
-            raise AttributeError("Run the recipe first using `.run()`.")
+            msg = "Run the recipe first using `.run()`."
+            raise AttributeError(msg)
 
         output = self._engine.get_output()
         task_output = output["task_output"]

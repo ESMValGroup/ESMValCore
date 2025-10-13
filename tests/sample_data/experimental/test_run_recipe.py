@@ -29,8 +29,8 @@ AUTHOR_TAGS = {
             "name": "Doe, John",
             "institute": "Testing",
             "orcid": "https://orcid.org/0000-0000-0000-0000",
-        }
-    }
+        },
+    },
 }
 
 
@@ -51,15 +51,20 @@ def get_mock_distributed_client(monkeypatch):
 
 @pytest.fixture
 def recipe():
-    recipe = get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
-    return recipe
+    return get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize("ssh", (True, False))
-@pytest.mark.parametrize("task", (None, "example/ta"))
+@pytest.mark.parametrize("ssh", [True, False])
+@pytest.mark.parametrize("task", [None, "example/ta"])
 def test_run_recipe(
-    monkeypatch, cfg_default, task, ssh, recipe, tmp_path, caplog
+    monkeypatch,
+    cfg_default,
+    task,
+    ssh,
+    recipe,
+    tmp_path,
+    caplog,
 ):
     """Test running a basic recipe using sample data.
 
@@ -125,6 +130,6 @@ def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
 
     session = CFG.start_session(recipe.path.stem)
 
+    task = "example/non-existent"
     with pytest.raises(RecipeError):
-        task = "example/non-existent"
         _ = recipe.run(task, session)

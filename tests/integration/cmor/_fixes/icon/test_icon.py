@@ -27,7 +27,6 @@ from esmvalcore.cmor._fixes.icon.icon import (
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 TEST_GRID_FILE_URI = (
@@ -43,20 +42,17 @@ def tmp_cache_dir(monkeypatch, tmp_path):
     monkeypatch.setattr(IconFix, "CACHE_DIR", tmp_path)
 
 
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
-
-
 @pytest.fixture
-def cubes_2d(test_data_path):
+def cubes_atm_2d(test_data_path):
     """2D sample cubes."""
-    nc_path = test_data_path / "icon_2d.nc"
+    nc_path = test_data_path / "icon_atm_2d.nc"
     return iris.load(str(nc_path))
 
 
 @pytest.fixture
-def cubes_3d(test_data_path):
+def cubes_atm_3d(test_data_path):
     """3D sample cubes."""
-    nc_path = test_data_path / "icon_3d.nc"
+    nc_path = test_data_path / "icon_atm_3d.nc"
     return iris.load(str(nc_path))
 
 
@@ -156,14 +152,13 @@ def simple_unstructured_cube():
         long_name="longitude",
         units="degrees_east",
     )
-    cube = Cube(
+    return Cube(
         [[[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]]],
         var_name="ta",
         units="K",
         dim_coords_and_dims=[(time_coord, 0), (height_coord, 1)],
         aux_coords_and_dims=[(lat_coord, 2), (lon_coord, 2)],
     )
-    return cube
 
 
 def _get_fix(mip, short_name, fix_name, session=None):
@@ -174,13 +169,12 @@ def _get_fix(mip, short_name, fix_name, session=None):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session=session)
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session=session)
 
 
 def get_fix(mip, short_name, session=None):
@@ -199,8 +193,7 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def fix_data(cube, mip, short_name, session=None):
@@ -208,8 +201,7 @@ def fix_data(cube, mip, short_name, session=None):
     fix = get_fix(mip, short_name, session=session)
     cube = fix.fix_data(cube)
     fix = get_allvars_fix(mip, short_name, session=session)
-    cube = fix.fix_data(cube)
-    return cube
+    return fix.fix_data(cube)
 
 
 def check_ta_metadata(cubes):
@@ -256,7 +248,8 @@ def check_time(cube):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time.points, [54770.5])
     np.testing.assert_allclose(time.bounds, [[54755.0, 54786.0]])
@@ -426,7 +419,7 @@ def check_lat_lon(cube):
     check_mesh(mesh)
 
 
-def check_mesh(mesh):
+def check_mesh(mesh):  # noqa: PLR0915
     """Check the mesh."""
     assert mesh is not None
     assert mesh.var_name is None
@@ -502,7 +495,9 @@ def check_mesh(mesh):
     assert mesh_node_lat.units == "degrees_north"
     assert mesh_node_lat.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lat.points, [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0], rtol=1e-5
+        mesh_node_lat.points,
+        [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0],
+        rtol=1e-5,
     )
     assert mesh_node_lat.bounds is None
 
@@ -513,7 +508,9 @@ def check_mesh(mesh):
     assert mesh_node_lon.units == "degrees_east"
     assert mesh_node_lon.attributes == {}
     np.testing.assert_allclose(
-        mesh_node_lon.points, [0.0, 180.0, 270.0, 0.0, 90, 0.0], rtol=1e-5
+        mesh_node_lon.points,
+        [0.0, 180.0, 270.0, 0.0, 90, 0.0],
+        rtol=1e-5,
     )
     assert mesh_node_lon.bounds is None
 
@@ -627,7 +624,7 @@ def test_get_clwvi_fix():
 def test_clwvi_fix(cubes_regular_grid):
     """Test fix."""
     cubes = CubeList(
-        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()]
+        [cubes_regular_grid[0].copy(), cubes_regular_grid[0].copy()],
     )
     cubes[0].var_name = "cllvi"
     cubes[1].var_name = "clivi"
@@ -658,10 +655,10 @@ def test_get_lwp_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_lwp_fix(cubes_2d):
+def test_lwp_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("AERmon", "lwp")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -686,10 +683,10 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsdt_fix(cubes_2d):
+def test_rsdt_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsdt")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -709,10 +706,10 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsut_fix(cubes_2d):
+def test_rsut_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsut")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -735,13 +732,15 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconc_fix(cubes_2d):
+def test_siconc_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconc")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconc", "Sea-Ice Area Percentage (Ocean Grid)"
+        fixed_cubes,
+        "siconc",
+        "Sea-Ice Area Percentage (Ocean Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
@@ -759,13 +758,15 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconca_fix(cubes_2d):
+def test_siconca_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconca")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
-        fixed_cubes, "siconca", "Sea-Ice Area Percentage (Atmospheric Grid)"
+        fixed_cubes,
+        "siconca",
+        "Sea-Ice Area Percentage (Atmospheric Grid)",
     )
     check_time(cube)
     check_lat_lon(cube)
@@ -786,10 +787,10 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_ta_fix(cubes_3d):
+def test_ta_fix(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
-    fixed_cubes = fix.fix_metadata(cubes_3d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_3d)
 
     cube = check_ta_metadata(fixed_cubes)
     check_time(cube)
@@ -797,14 +798,14 @@ def test_ta_fix(cubes_3d):
     check_lat_lon(cube)
 
 
-def test_ta_fix_no_plev_bounds(cubes_3d):
+def test_ta_fix_no_plev_bounds(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
     cubes = CubeList(
         [
-            cubes_3d.extract_cube(NameConstraint(var_name="ta")),
-            cubes_3d.extract_cube(NameConstraint(var_name="pfull")),
-        ]
+            cubes_atm_3d.extract_cube(NameConstraint(var_name="ta")),
+            cubes_atm_3d.extract_cube(NameConstraint(var_name="pfull")),
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -823,10 +824,10 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_tas_fix(cubes_2d):
+def test_tas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     check_time(cube)
@@ -834,29 +835,29 @@ def test_tas_fix(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_spatial_index_coord_already_present(cubes_2d):
+def test_tas_spatial_index_coord_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
 
     index_coord = DimCoord(np.arange(8), var_name="ncells")
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     cube.add_dim_coord(index_coord, 1)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
     check_lat_lon(cube)
 
 
-def test_tas_scalar_height2m_already_present(cubes_2d):
+def test_tas_scalar_height2m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
 
     # Scalar height (with wrong metadata) already present
     height_coord = AuxCoord(2.0, var_name="h", standard_name="height")
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     cube.add_aux_coord(height_coord, ())
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -864,11 +865,11 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_no_mesh(cubes_2d):
+def test_tas_no_mesh(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     fix.extra_facets["ugrid"] = False
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
 
@@ -900,13 +901,13 @@ def test_tas_no_mesh(cubes_2d):
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d):
+def test_tas_dim_height2m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
 
     # Dimensional coordinate height (with wrong metadata) already present
     height_coord = AuxCoord(2.0, var_name="h", standard_name="height")
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     cube.add_aux_coord(height_coord, ())
     cube = iris.util.new_axis(cube, scalar_coord="height")
     cube.transpose((1, 0, 2))
@@ -919,11 +920,11 @@ def test_tas_dim_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_no_shift_time(cubes_2d):
+def test_tas_no_shift_time(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     fix.extra_facets["shift_time"] = False
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     check_lat_lon(cube)
@@ -935,14 +936,15 @@ def test_tas_no_shift_time(cubes_2d):
     assert time.standard_name == "time"
     assert time.long_name == "time"
     assert time.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time.points, [54786.0])
     assert time.bounds is None
     assert time.attributes == {}
 
 
-def test_fix_does_not_change_cached_grid(cubes_2d):
+def test_fix_does_not_change_cached_grid(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     assert not fix._horizontal_grids
@@ -950,7 +952,7 @@ def test_fix_does_not_change_cached_grid(cubes_2d):
 
     # Remove latitude and longitude from tas cube to trigger automatic addition
     # of them
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     cube.remove_coord("latitude")
     cube.remove_coord("longitude")
 
@@ -960,7 +962,7 @@ def test_fix_does_not_change_cached_grid(cubes_2d):
     original_grid = fix._horizontal_grids["icon_grid.nc"].copy()
 
     # Make sure that fix does not alter existing grid
-    fix.fix_metadata(cubes_2d)
+    fix.fix_metadata(cubes_atm_2d)
     assert fix._horizontal_grids["icon_grid.nc"] == original_grid
 
 
@@ -973,10 +975,10 @@ def test_get_uas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_uas_fix(cubes_2d):
+def test_uas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -999,15 +1001,15 @@ def test_uas_fix(cubes_2d):
     assert height.bounds is None
 
 
-def test_uas_scalar_height10m_already_present(cubes_2d):
+def test_uas_scalar_height10m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
 
     # Scalar height (with wrong metadata) already present
     height_coord = AuxCoord(10.0, var_name="h", standard_name="height")
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="uas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="uas"))
     cube.add_aux_coord(height_coord, ())
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1015,13 +1017,13 @@ def test_uas_scalar_height10m_already_present(cubes_2d):
     check_heightxm(cube, 10.0)
 
 
-def test_uas_dim_height10m_already_present(cubes_2d):
+def test_uas_dim_height10m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
 
     # Dimensional coordinate height (with wrong metadata) already present
     height_coord = AuxCoord(10.0, var_name="h", standard_name="height")
-    cube = cubes_2d.extract_cube(NameConstraint(var_name="uas"))
+    cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="uas"))
     cube.add_aux_coord(height_coord, ())
     cube = iris.util.new_axis(cube, scalar_coord="height")
     cube.transpose((1, 0, 2))
@@ -1096,7 +1098,8 @@ def test_ch4clim_fix(cubes_regular_grid):
     assert time_coord.standard_name == "time"
     assert time_coord.long_name == "time"
     assert time_coord.units == Unit(
-        "days since 1850-01-01", calendar="proleptic_gregorian"
+        "days since 1850-01-01",
+        calendar="proleptic_gregorian",
     )
     np.testing.assert_allclose(time_coord.points, [15.5])
     np.testing.assert_allclose(time_coord.bounds, [[0.0, 31.0]])
@@ -1105,7 +1108,7 @@ def test_ch4clim_fix(cubes_regular_grid):
 # Test fix with empty standard_name
 
 
-def test_empty_standard_name_fix(cubes_2d, monkeypatch):
+def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     # We know that tas has a standard name, but this being native model output
@@ -1113,7 +1116,7 @@ def test_empty_standard_name_fix(cubes_2d, monkeypatch):
     # handle this gracefully and here we test it with an artificial, but
     # realistic case.
     monkeypatch.setattr(fix.vardef, "standard_name", "")
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1127,11 +1130,11 @@ def test_empty_standard_name_fix(cubes_2d, monkeypatch):
 # Test automatic addition of missing coordinates
 
 
-def test_add_time(cubes_2d):
+def test_add_time(cubes_atm_2d):
     """Test fix."""
     # Remove time from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
-    uas_cube = cubes_2d.extract_cube(NameConstraint(var_name="uas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
+    uas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="uas"))
     tas_cube = tas_cube[0]
     tas_cube.remove_coord("time")
     cubes = CubeList([tas_cube, uas_cube])
@@ -1152,17 +1155,17 @@ def test_add_time_fail():
         [
             cube,
             Cube(1, var_name="tas", units="K"),
-        ]
+        ],
     )
     msg = "Cannot add required coordinate 'time' to variable 'ta'"
     with pytest.raises(ValueError, match=msg):
         fix._add_time(cube, cubes)
 
 
-def test_add_latitude(cubes_2d):
+def test_add_latitude(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix("Amon", "tas")
@@ -1177,10 +1180,10 @@ def test_add_latitude(cubes_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_longitude(cubes_2d):
+def test_add_longitude(cubes_atm_2d):
     """Test fix."""
     # Remove longitude from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("longitude")
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix("Amon", "tas")
@@ -1195,10 +1198,10 @@ def test_add_longitude(cubes_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_latitude_longitude(cubes_2d):
+def test_add_latitude_longitude(cubes_atm_2d):
     """Test fix."""
     # Remove latitude and longitude from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     tas_cube.remove_coord("longitude")
     cubes = CubeList([tas_cube])
@@ -1214,11 +1217,11 @@ def test_add_latitude_longitude(cubes_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_latitude_fail(cubes_2d):
+def test_add_latitude_fail(cubes_atm_2d):
     """Test fix."""
     # Remove latitude and grid file attribute from tas cube to test automatic
     # addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     tas_cube.attributes = {}
     cubes = CubeList([tas_cube])
@@ -1229,11 +1232,11 @@ def test_add_latitude_fail(cubes_2d):
         fix.fix_metadata(cubes)
 
 
-def test_add_longitude_fail(cubes_2d):
+def test_add_longitude_fail(cubes_atm_2d):
     """Test fix."""
     # Remove longitude and grid file attribute from tas cube to test automatic
     # addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("longitude")
     tas_cube.attributes = {}
     cubes = CubeList([tas_cube])
@@ -1256,10 +1259,10 @@ def test_add_coord_from_grid_file_fail_no_url():
         fix._add_coord_from_grid_file(Cube(0), "clat")
 
 
-def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     index_coord = DimCoord(np.arange(8), var_name="ncells")
     tas_cube.add_dim_coord(index_coord, 1)
@@ -1273,10 +1276,10 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
         fix._add_coord_from_grid_file(tas_cube, "clat")
 
 
-def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
+def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     tas_cube = iris.util.new_axis(tas_cube)
     fix = get_allvars_fix("Amon", "tas")
@@ -1317,7 +1320,9 @@ def test_get_horizontal_grid_from_attr_cached_in_dict(
 
 @mock.patch.object(IconFix, "_get_grid_from_facet", autospec=True)
 def test_get_horizontal_grid_from_attr_rootpath(
-    mock_get_grid_from_facet, monkeypatch, tmp_path
+    mock_get_grid_from_facet,
+    monkeypatch,
+    tmp_path,
 ):
     """Test fix."""
     rootpath = deepcopy(CFG["rootpath"])
@@ -1353,7 +1358,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     cube = Cube(
         0,
         attributes={
-            "grid_file_uri": "https://temporary.url/this/is/the/grid_file.nc"
+            "grid_file_uri": "https://temporary.url/this/is/the/grid_file.nc",
         },
     )
     fix = get_allvars_fix("Amon", "tas")
@@ -1517,7 +1522,7 @@ def test_only_time(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(time_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1539,7 +1544,8 @@ def test_only_time(monkeypatch):
     # Check time data
     np.testing.assert_allclose(new_time_coord.points, [-15.5, 15.5])
     np.testing.assert_allclose(
-        new_time_coord.bounds, [[-31.0, 0.0], [0.0, 31.0]]
+        new_time_coord.bounds,
+        [[-31.0, 0.0], [0.0, 31.0]],
     )
 
     # Check that no mesh has been created
@@ -1559,7 +1565,10 @@ def test_only_height(monkeypatch):
 
     # Create cube with only a single dimension
     height_coord = DimCoord(
-        [1000.0, 100.0], var_name="height", standard_name="height", units="cm"
+        [1000.0, 100.0],
+        var_name="height",
+        standard_name="height",
+        units="cm",
     )
     cubes = CubeList(
         [
@@ -1569,7 +1578,7 @@ def test_only_height(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(height_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1613,7 +1622,10 @@ def test_only_latitude(monkeypatch):
 
     # Create cube with only a single dimension
     lat_coord = DimCoord(
-        [0.0, 10.0], var_name="clat", standard_name="latitude", units="degrees"
+        [0.0, 10.0],
+        var_name="clat",
+        standard_name="latitude",
+        units="degrees",
     )
     cubes = CubeList(
         [
@@ -1623,7 +1635,7 @@ def test_only_latitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lat_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1676,7 +1688,7 @@ def test_only_longitude(monkeypatch):
                 units="K",
                 dim_coords_and_dims=[(lon_coord, 0)],
             ),
-        ]
+        ],
     )
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -1706,45 +1718,46 @@ def test_only_longitude(monkeypatch):
 # Test variable not available in file
 
 
-def test_var_not_available_pr(cubes_2d):
+def test_var_not_available_pr(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "pr")
     msg = "Variable 'pr' used to extract 'pr' is not available in input file"
     with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes_2d)
+        fix.fix_metadata(cubes_atm_2d)
 
 
 # Test fix with invalid time units
 
 
-def test_invalid_time_units(cubes_2d):
+def test_invalid_time_units(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
-    for cube in cubes_2d:
+    for cube in cubes_atm_2d:
         cube.coord("time").attributes["invalid_units"] = "month as %Y%m%d.%f"
     msg = "Expected time units"
     with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes_2d)
+        fix.fix_metadata(cubes_atm_2d)
 
 
 # Test fix with (sub-)hourly data
 
 
-def test_hourly_data(cubes_2d):
+def test_hourly_data(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
     fix.extra_facets["frequency"] = "1hr"
-    for cube in cubes_2d:
+    for cube in cubes_atm_2d:
         cube.coord("time").points = [20041104.5833333]
 
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     date = cube.coord("time").units.num2date(cube.coord("time").points)
     date_bnds = cube.coord("time").units.num2date(cube.coord("time").bounds)
     np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 13, 30)])
     np.testing.assert_array_equal(
-        date_bnds, [[datetime(2004, 11, 4, 13), datetime(2004, 11, 4, 14)]]
+        date_bnds,
+        [[datetime(2004, 11, 4, 13), datetime(2004, 11, 4, 14)]],
     )
 
 
@@ -1832,7 +1845,7 @@ def test_subhourly_data_no_shift():
 
 
 @pytest.mark.parametrize(
-    "frequency,dt_in,dt_out,bounds",
+    ("frequency", "dt_in", "dt_out", "bounds"),
     [
         (
             "dec",
@@ -1911,15 +1924,17 @@ def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
     dt_out = [datetime(*dt) for dt in dt_out]
     bounds = [[datetime(*dt1), datetime(*dt2)] for (dt1, dt2) in bounds]
     np.testing.assert_allclose(
-        time_coord.points, time_coord.units.date2num(dt_out)
+        time_coord.points,
+        time_coord.units.date2num(dt_out),
     )
     np.testing.assert_allclose(
-        time_coord.bounds, time_coord.units.date2num(bounds)
+        time_coord.bounds,
+        time_coord.units.date2num(bounds),
     )
 
 
 @pytest.mark.parametrize(
-    "frequency,dt_in",
+    ("frequency", "dt_in"),
     [
         ("dec", [(2000, 1, 15)]),
         ("yr", [(2000, 1, 1), (2001, 1, 1)]),
@@ -1949,13 +1964,15 @@ def test_shift_time_point_measurement(frequency, dt_in):
     fix._shift_time_coord(cube, time_coord)
 
     np.testing.assert_allclose(
-        time_coord.points, time_coord.units.date2num(datetimes)
+        time_coord.points,
+        time_coord.units.date2num(datetimes),
     )
     assert time_coord.bounds is None
 
 
 @pytest.mark.parametrize(
-    "frequency", ["dec", "yr", "yrPt", "mon", "monC", "monPt"]
+    "frequency",
+    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
 )
 def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
     """Test ``_shift_time_coord``."""
@@ -1978,7 +1995,8 @@ def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
 
 
 @pytest.mark.parametrize(
-    "frequency", ["dec", "yr", "yrPt", "mon", "monC", "monPt"]
+    "frequency",
+    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
 )
 def test_shift_time_coord_not_first_of_month(frequency):
     """Test ``_get_previous_timestep``."""
@@ -2027,7 +2045,7 @@ def test_shift_time_coord_invalid_freq(frequency):
 
 
 @pytest.mark.parametrize(
-    "frequency,datetime_in,datetime_out",
+    ("frequency", "datetime_in", "datetime_out"),
     [
         ("dec", (2000, 1, 1), (1990, 1, 1)),
         ("yr", (2000, 1, 1), (1999, 1, 1)),
@@ -2076,10 +2094,10 @@ def test_get_previous_timestep(frequency, datetime_in, datetime_out):
 
 
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
-def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_2d):
+def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
     """Test fix."""
     # Slightly modify latitude bounds from tas cube to make mesh creation fail
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     lat_bnds = tas_cube.coord("latitude").bounds.copy()
     lat_bnds[0, 0] = 40.0
     tas_cube.coord("latitude").bounds = lat_bnds
@@ -2095,15 +2113,15 @@ def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_2d):
         "the grid file) differ from the corresponding values "
         "calculated from the connectivity ('vertex_of_cell') and the "
         "node coordinate ('vlat'). Using bounds defined by "
-        "connectivity."
+        "connectivity.",
     )
 
 
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
-def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_2d):
+def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d):
     """Test fix."""
     # Slightly modify longitude bounds from tas cube to make mesh creation fail
-    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name="tas"))
+    tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     lon_bnds = tas_cube.coord("longitude").bounds.copy()
     lon_bnds[0, 1] = 40.0
     tas_cube.coord("longitude").bounds = lon_bnds
@@ -2120,7 +2138,7 @@ def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_2d):
         "calculated from the connectivity ('vertex_of_cell') and the "
         "node coordinate ('vlon'). Note that these values are allowed "
         "to differ by 360° or at the poles of the grid. Using bounds "
-        "defined by connectivity."
+        "defined by connectivity.",
     )
 
 
@@ -2221,7 +2239,7 @@ def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path,description,output",
+    ("path", "description", "output"),
     [
         ("{tmp_path}/a.nc", None, "{tmp_path}/a.nc"),
         ("b.nc", "Grid file", "{tmp_path}/b.nc"),
@@ -2247,7 +2265,7 @@ def test_get_path_from_facet(path, description, output, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path,description",
+    ("path", "description"),
     [
         ("{tmp_path}/a.nc", None),
         ("b.nc", "Grid file"),
@@ -2458,7 +2476,7 @@ def test_rtnt_fix(cubes_regular_grid):
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
-        ]
+        ],
     )
     cubes[0].var_name = "rsdt"
     cubes[1].var_name = "rsut"
@@ -2496,7 +2514,7 @@ def test_rtmt_fix(cubes_regular_grid):
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
             cubes_regular_grid[0].copy(),
-        ]
+        ],
     )
     cubes[0].var_name = "rsdt"
     cubes[1].var_name = "rsut"

@@ -52,7 +52,7 @@ def test_select_files_monthly_resolution():
     result = _select_files(files, "196201/196205")
 
     expected = [
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc"
+        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc",
     ]
 
     assert result == expected
@@ -94,10 +94,12 @@ def test_select_files_sub_daily_resolution():
     ]
 
     result_no_separator = _select_files(
-        files_no_separator, "19600101T0900/19610101T09HH00MM"
+        files_no_separator,
+        "19600101T0900/19610101T09HH00MM",
     )
     result_separator = _select_files(
-        files_separator, "19600101T0900/19610101T0900"
+        files_separator,
+        "19600101T0900/19610101T0900",
     )
 
     expected_no_separator = [
@@ -168,3 +170,9 @@ def test_select_files_varying_format():
     assert result_yearly == files
     assert result_monthly == files[0:2]
     assert result_daily == [files[0]]
+
+
+def test_select_files_invalid_timerange_type():
+    msg = r"`timerange` should be a `str`, got <class 'int'>"
+    with pytest.raises(TypeError, match=msg):
+        _select_files([], 1)

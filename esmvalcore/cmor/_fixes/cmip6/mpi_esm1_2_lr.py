@@ -1,6 +1,6 @@
 """Fixes for MPI-ESM1-2-LR model."""
 
-from ..common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 
 Cl = ClFixHybridPressureCoord
 

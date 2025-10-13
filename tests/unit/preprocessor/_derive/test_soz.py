@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.soz as soz
+from esmvalcore.preprocessor._derive import soz
 
 from .test_toz import get_masked_o3_cube, get_masked_o3_hybrid_plevs_cube
 
@@ -19,7 +19,7 @@ def get_o3_cube():
                 [[500.0, 700.0], [800.0, 900.0]],
                 [[1251.0, 1249.0], [1260.0, 1200.0]],
                 [[1000.0, 2000.0], [3000.0, 12000.0]],
-            ]
+            ],
         ],
         10000.0,
     )
@@ -53,7 +53,7 @@ def cubes_hybrid_plevs():
                 [[500.0, 700.0], [800.0, 900.0]],
                 [[1251.0, 1249.0], [1260.0, 1200.0]],
                 [[1000.0, 2000.0], [3000.0, 12000.0]],
-            ]
+            ],
         ],
         10000.0,
     )
@@ -74,7 +74,7 @@ def test_soz_calculate(cubes):
             [
                 [29.543266581831194e-5, 110.2066965482645e-5],
                 [195.06585289042815e-5, np.nan],
-            ]
+            ],
         ],
     )
     expected_mask = [[[False, False], [False, True]]]
@@ -92,7 +92,8 @@ def test_soz_calculate_no_lon(cubes_no_lon):
     assert out_cube.shape == (1, 2, 1)
     assert not np.ma.is_masked(out_cube.data)
     np.testing.assert_allclose(
-        out_cube.data, [[[82.65502241119836e-5], [165.31004482239672e-5]]]
+        out_cube.data,
+        [[[82.65502241119836e-5], [165.31004482239672e-5]]],
     )
 
 
@@ -105,7 +106,7 @@ def test_soz_calculate_hybrid_plevs(cubes_hybrid_plevs):
     assert out_cube.units == "m"
     assert out_cube.shape == (1, 2, 2)
     expected_data = np.ma.masked_invalid(
-        [[[np.nan, 32.40347475318536e-5], [44.53039332403313e-5, np.nan]]]
+        [[[np.nan, 32.40347475318536e-5], [44.53039332403313e-5, np.nan]]],
     )
     expected_mask = [[[True, False], [False, True]]]
     np.testing.assert_allclose(out_cube.data, expected_data)
@@ -113,7 +114,7 @@ def test_soz_calculate_hybrid_plevs(cubes_hybrid_plevs):
 
 
 @pytest.mark.parametrize(
-    "project,out",
+    ("project", "out"),
     [
         ("CMIP5", [{"short_name": "tro3"}]),
         ("TEST", [{"short_name": "tro3"}]),

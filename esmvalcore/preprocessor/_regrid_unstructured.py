@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import dask
 import dask.array as da
 import numpy as np
 from iris.analysis import UnstructuredNearest as IrisUnstructuredNearest
-from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
-from iris.coords import Coord
 from iris.cube import Cube
-from numpy.typing import DTypeLike
 from scipy.spatial import ConvexHull, Delaunay
 
 from esmvalcore.iris_helpers import (
@@ -20,6 +18,11 @@ from esmvalcore.iris_helpers import (
     rechunk_cube,
 )
 from esmvalcore.preprocessor._shared import preserve_float_dtype
+
+if TYPE_CHECKING:
+    from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
+    from iris.coords import Coord
+    from numpy.typing import DTypeLike
 
 logger = logging.getLogger(__name__)
 
@@ -86,14 +89,20 @@ class UnstructuredLinearRegridder:
     def __init__(self, src_cube: Cube, tgt_cube: Cube) -> None:
         """Initialize class instance."""
         if not has_unstructured_grid(src_cube):
-            raise ValueError(
+            msg = (
                 f"Source cube {src_cube.summary(shorten=True)} does not have "
                 f"unstructured grid"
             )
-        if not has_regular_grid(tgt_cube):
             raise ValueError(
+                msg,
+            )
+        if not has_regular_grid(tgt_cube):
+            msg = (
                 f"Target cube {tgt_cube.summary(shorten=True)} does not have "
                 f"regular grid"
+            )
+            raise ValueError(
+                msg,
             )
         src_lat = src_cube.coord("latitude").copy()
         src_lon = src_cube.coord("longitude").copy()
@@ -168,7 +177,8 @@ class UnstructuredLinearRegridder:
         # Wrap around points on convex hull by -360° and +360° and add them to
         # list of source points
         src_points_with_convex_hull = self._add_convex_hull_twice(
-            src_points, hull.vertices
+            src_points,
+            hull.vertices,
         )
         lon_period = np.array(360, dtype=src_points_with_convex_hull.dtype)
         src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= lon_period
@@ -176,7 +186,8 @@ class UnstructuredLinearRegridder:
 
         # Actual weights calculation
         (weights, indices) = self._calculate_weights(
-            src_points_with_convex_hull, tgt_points
+            src_points_with_convex_hull,
+            tgt_points,
         )
 
         return (weights, indices, hull.vertices)
@@ -196,15 +207,21 @@ class UnstructuredLinearRegridder:
 
         """
         if not has_unstructured_grid(cube):
-            raise ValueError(
+            msg = (
                 f"Cube {cube.summary(shorten=True)} does not have "
                 f"unstructured grid"
             )
+            raise ValueError(
+                msg,
+            )
         coords = [cube.coord("latitude"), cube.coord("longitude")]
         if coords != self.src_coords:
-            raise ValueError(
+            msg = (
                 f"The given cube {cube.summary(shorten=True)} is not defined "
                 f"on the same source grid as this regridder"
+            )
+            raise ValueError(
+                msg,
             )
 
         # Get coordinates of regridded cube
@@ -235,8 +252,8 @@ class UnstructuredLinearRegridder:
             if udim not in cube.coord_dims(c)
         ]
         aux_coords_and_dims = []
-        for aux_coord, dims in old_aux_coords_and_dims:
-            dims = tuple(d if d < udim else d + 1 for d in dims)
+        for aux_coord, old_dims in old_aux_coords_and_dims:
+            dims = tuple(d if d < udim else d + 1 for d in old_dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
         # Create new cube with regridded data
@@ -266,7 +283,9 @@ class UnstructuredLinearRegridder:
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
-                src_data, udim, self._weights.dtype
+                src_data,
+                udim,
+                self._weights.dtype,
             )
         else:
             regridded_data = self._regrid_eager(src_data, udim)
@@ -277,7 +296,8 @@ class UnstructuredLinearRegridder:
     def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""
         v_interpolate = np.vectorize(
-            self._interpolate, signature="(i)->(lat,lon)"
+            self._interpolate,
+            signature="(i)->(lat,lon)",
         )
 
         # Make sure that interpolation dimension is rightmost dimension and
@@ -285,9 +305,7 @@ class UnstructuredLinearRegridder:
         data = np.moveaxis(data, axis, -1)
         regridded_arr = v_interpolate(data)
         regridded_arr = np.moveaxis(regridded_arr, -2, axis)
-        regridded_arr = np.moveaxis(regridded_arr, -1, axis + 1)
-
-        return regridded_arr
+        return np.moveaxis(regridded_arr, -1, axis + 1)
 
     def _regrid_lazy(
         self,
@@ -296,7 +314,7 @@ class UnstructuredLinearRegridder:
         dtype: DTypeLike,
     ) -> da.Array:
         """Lazy regridding."""
-        regridded_arr = da.apply_gufunc(
+        return da.apply_gufunc(
             self._interpolate,
             "(i)->(lat,lon)",
             data,
@@ -305,7 +323,6 @@ class UnstructuredLinearRegridder:
             output_dtypes=dtype,
             output_sizes={"lat": self.tgt_n_lat, "lon": self.tgt_n_lon},
         )
-        return regridded_arr
 
     def _interpolate(self, data: np.ndarray) -> np.ndarray:
         """Interpolate data.
@@ -328,10 +345,11 @@ class UnstructuredLinearRegridder:
         """
         data = self._add_convex_hull_twice(data, self._convex_hull_idx)
         interp_data = np.einsum(
-            "nj,nj->n", np.take(data, self._indices), self._weights
+            "nj,nj->n",
+            np.take(data, self._indices),
+            self._weights,
         )
-        interp_data = interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
-        return interp_data
+        return interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
 
     @staticmethod
     def _add_convex_hull_twice(arr: np.ndarray, idx: np.ndarray) -> np.ndarray:

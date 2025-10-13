@@ -39,6 +39,4 @@ def _load_recipe(recipe: Path | str | dict[str, Any] | None) -> dict[str, Any]:
     if isinstance(recipe, str):
         recipe = yaml.safe_load(recipe)
 
-    recipe = _copy(recipe)
-
-    return recipe  # type: ignore
+    return _copy(recipe)

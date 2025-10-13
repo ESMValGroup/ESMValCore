@@ -1,35 +1,35 @@
-import textwrap
+from importlib.resources import files as importlib_files
 from pathlib import Path
 
+import dask.config
 import pytest
 import yaml
 
+import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
     _deep_update,
-    _load_extra_facets,
-    get_extra_facets,
     get_ignored_warnings,
-    importlib_files,
+    load_extra_facets,
 )
-from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),
-    ([dict(a=1, b=2), dict(a=3)], dict(a=3, b=2)),
+    ([{"a": 1, "b": 2}, {"a": 3}], {"a": 3, "b": 2}),
     (
         [
-            dict(a=dict(b=1, c=dict(d=2)), e=dict(f=4, g=5)),
-            dict(a=dict(b=2, c=3)),
+            {"a": {"b": 1, "c": {"d": 2}}, "e": {"f": 4, "g": 5}},
+            {"a": {"b": 2, "c": 3}},
         ],
-        dict(a=dict(b=2, c=3), e=dict(f=4, g=5)),
+        {"a": {"b": 2, "c": 3}, "e": {"f": 4, "g": 5}},
     ),
 ]
 
 
-@pytest.mark.parametrize("dictionaries, expected_merged", TEST_DEEP_UPDATE)
+# TODO: remove in v2.15.0
+@pytest.mark.parametrize(("dictionaries", "expected_merged"), TEST_DEEP_UPDATE)
 def test_deep_update(dictionaries, expected_merged):
     merged = dictionaries[0]
     for update in dictionaries[1:]:
@@ -37,120 +37,81 @@ def test_deep_update(dictionaries, expected_merged):
     assert expected_merged == merged
 
 
-BASE_PATH = importlib_files("tests")
-BASE_PATH /= Path("sample_data") / Path("extra_facets")  # type: ignore
+BASE_PATH = importlib_files("tests") / "sample_data" / "extra_facets"
 
 TEST_LOAD_EXTRA_FACETS = [
-    ("test-nonexistent", tuple(), {}),
+    ("test-nonexistent", (), {}),
     ("test-nonexistent", (BASE_PATH / "simple",), {}),  # type: ignore
     (
         "test6",
         (BASE_PATH / "simple",),  # type: ignore
-        dict(
-            PROJECT1=dict(
-                Amon=dict(
-                    tas=dict(
-                        cds_var_name="2m_temperature", source_var_name="2t"
-                    ),
-                    psl=dict(
-                        cds_var_name="mean_sea_level_pressure",
-                        source_var_name="msl",
-                    ),
-                )
-            )
-        ),
+        {
+            "PROJECT1": {
+                "Amon": {
+                    "tas": {
+                        "cds_var_name": "2m_temperature",
+                        "source_var_name": "2t",
+                    },
+                    "psl": {
+                        "cds_var_name": "mean_sea_level_pressure",
+                        "source_var_name": "msl",
+                    },
+                },
+            },
+        },
     ),
     (
         "test6",
         (BASE_PATH / "simple", BASE_PATH / "override"),  # type: ignore
-        dict(
-            PROJECT1=dict(
-                Amon=dict(
-                    tas=dict(
-                        cds_var_name="temperature_2m", source_var_name="t2m"
-                    ),
-                    psl=dict(
-                        cds_var_name="mean_sea_level_pressure",
-                        source_var_name="msl",
-                    ),
-                    uas=dict(
-                        cds_var_name="10m_u-component_of_neutral_wind",
-                        source_var_name="u10n",
-                    ),
-                    vas=dict(
-                        cds_var_name="v-component_of_neutral_wind_at_10m",
-                        source_var_name="10v",
-                    ),
-                )
-            )
-        ),
+        {
+            "PROJECT1": {
+                "Amon": {
+                    "tas": {
+                        "cds_var_name": "temperature_2m",
+                        "source_var_name": "t2m",
+                    },
+                    "psl": {
+                        "cds_var_name": "mean_sea_level_pressure",
+                        "source_var_name": "msl",
+                    },
+                    "uas": {
+                        "cds_var_name": "10m_u-component_of_neutral_wind",
+                        "source_var_name": "u10n",
+                    },
+                    "vas": {
+                        "cds_var_name": "v-component_of_neutral_wind_at_10m",
+                        "source_var_name": "10v",
+                    },
+                },
+            },
+        },
     ),
 ]
 
 
+# TODO: Remove in v2.15.0
 @pytest.mark.parametrize(
-    "project, extra_facets_dir, expected", TEST_LOAD_EXTRA_FACETS
+    ("project", "extra_facets_dir", "expected"),
+    TEST_LOAD_EXTRA_FACETS,
 )
 def test_load_extra_facets(project, extra_facets_dir, expected):
-    extra_facets = _load_extra_facets(project, extra_facets_dir)
+    extra_facets = load_extra_facets(project, extra_facets_dir)
     assert extra_facets == expected
 
 
-def test_get_extra_facets(tmp_path):
-    dataset = Dataset(
-        **{
-            "project": "test_project",
-            "mip": "test_mip",
-            "dataset": "test_dataset",
-            "short_name": "test_short_name",
-        }
+# TODO: Remove in v2.15.0
+def test_load_extra_facets_deprecation(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        esmvalcore.config._config,
+        "USER_EXTRA_FACETS",
+        tmp_path,
     )
-    extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-            """)
-        .strip()
-        .format(**dataset.facets)
+    msg = (
+        r"Usage of extra facets located in ~/.esmvaltool/extra_facets has "
+        r"been deprecated"
     )
-
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=(tmp_path,))
-
-    assert extra_facets == {"key": "value"}
-
-
-def test_get_extra_facets_cmip3():
-    dataset = Dataset(
-        **{
-            "project": "CMIP3",
-            "mip": "A1",
-            "short_name": "tas",
-            "dataset": "CM3",
-        }
-    )
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
-
-    assert extra_facets == {"institute": ["CNRM", "INM", "CNRM_CERFACS"]}
-
-
-def test_get_extra_facets_cmip5():
-    dataset = Dataset(
-        **{
-            "project": "CMIP5",
-            "mip": "Amon",
-            "short_name": "tas",
-            "dataset": "ACCESS1-0",
-        }
-    )
-    extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
-
-    assert extra_facets == {
-        "institute": ["CSIRO-BOM"],
-        "product": ["output1", "output2"],
-    }
+    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
+        load_extra_facets("PROJECT", ())
 
 
 def test_get_project_config(mocker):
@@ -170,7 +131,13 @@ def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
     project_cfg = {}
     monkeypatch.setattr(_config, "CFG", project_cfg)
-    default_dev_file = importlib_files("esmvalcore") / "config-developer.yml"
+    root_path = importlib_files("esmvalcore")
+    default_dev_file = root_path / "config-developer.yml"
+    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_project_settings = dask.config.collect(
+        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
+        env={},
+    )["projects"]
 
     session = cfg_default.start_session("recipe_example")
 
@@ -205,7 +172,6 @@ def test_load_default_config(cfg_default, monkeypatch):
             "obs4MIPs": "ESGF",
         },
         "exit_on_warning": False,
-        "extra_facets_dir": [],
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},
         "max_datasets": None,
@@ -214,6 +180,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "output_dir": Path.home() / "esmvaltool_output",
         "output_file_type": "png",
         "profile_diagnostic": False,
+        "projects": default_project_settings,
         "remove_preproc_dir": True,
         "resume_from": [],
         "rootpath": {"default": [Path.home() / "climate_data"]},
@@ -238,12 +205,12 @@ def test_load_default_config(cfg_default, monkeypatch):
     assert all(hasattr(session, attr) for attr in directory_attrs)
 
     # Check default values
-    for key in default_cfg:
-        assert session[key] == default_cfg[key]
+    for key, value in default_cfg.items():
+        assert session[key] == value
 
     # Check output directories
     assert str(session.session_dir).startswith(
-        str(Path.home() / "esmvaltool_output" / "recipe_example")
+        str(Path.home() / "esmvaltool_output" / "recipe_example"),
     )
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
@@ -306,7 +273,7 @@ def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
 
 
 @pytest.mark.parametrize(
-    "project,step",
+    ("project", "step"),
     [
         ("invalid_project", "load"),
         ("CMIP6", "load"),

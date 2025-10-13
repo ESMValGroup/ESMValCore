@@ -137,7 +137,7 @@ To populate a recipe with all available datasets from ESGF, the
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
 the recipe.
-See :ref:`/notebooks/composing-recipes.ipynb` for an example.
+See the :doc:`/notebooks/composing-recipes` notebook for an example.
 This is particularly useful when specific relations are required between
 datasets, e.g. when a dataset needs to be available for multiple variables
 or experiments.
@@ -493,7 +493,7 @@ Depending on the installation configuration, you may get an error of
 using relative paths. If this happens, use an absolute path instead.
 
 Note that the script should either have the extension for a supported language,
-i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+i.e. ``.py``, ``.R``, or ``.ncl`` for Python, R, and NCL diagnostics
 respectively, or be executable if it is written in any other language.
 
 .. _ancestor-tasks:

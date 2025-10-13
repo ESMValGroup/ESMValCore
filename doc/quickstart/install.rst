@@ -63,11 +63,11 @@ Finally, activate the newly created environment
 
     conda activate esmvalcore
 
-and install ESMValCore as well as any remaining dependencies with the command:
+and install ESMValCore with the command:
 
 .. code-block:: bash
 
-    pip install esmvalcore
+    pip install --no-deps esmvalcore
 
 
 Docker installation
@@ -189,10 +189,10 @@ To install from source for development, follow these instructions.
 -  Create the esmvalcore conda environment
    ``conda env create --name esmvalcore --file environment.yml``
 -  Activate the esmvalcore environment: ``conda activate esmvalcore``
--  Install in development mode: ``pip install -e '.[develop]'``. If you
+-  Install in development mode: ``pip install --no-deps -e '.[develop]'``. If you
    are installing behind a proxy that does not trust the usual pip-urls
    you can declare them with the option ``--trusted-host``,
-   e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
+   e.g. ``pip install --no-deps --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
 -  Install the :ref:`esmvaltool:pre-commit` hooks by running:

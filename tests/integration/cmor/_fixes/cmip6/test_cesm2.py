@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Cli,
     Clw,
     Fgco2,
+    Msftmz,
     Omon,
     Pr,
     Siconc,
@@ -44,8 +45,8 @@ AIR_PRESSURE_POINTS = np.array(
                 [6.0, 7.0, 8.0, 9.0],
                 [10.0, 11.0, 12.0, 13.0],
             ],
-        ]
-    ]
+        ],
+    ],
 )
 AIR_PRESSURE_BOUNDS = np.array(
     [
@@ -60,13 +61,14 @@ AIR_PRESSURE_BOUNDS = np.array(
                 [[3.5, 11.0], [4.0, 13.0], [4.5, 15.0], [5.0, 17.0]],
                 [[5.5, 19.0], [6.0, 21.0], [6.5, 23.0], [7.0, 25.0]],
             ],
-        ]
-    ]
+        ],
+    ],
 )
 
 
 @unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath", autospec=True
+    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath",
+    autospec=True,
 )
 def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
@@ -88,12 +90,15 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
 
     # Apply fix
     mock_get_filepath.return_value = os.path.join(
-        tmp_path, "fixed_cesm2_cl.nc"
+        tmp_path,
+        "fixed_cesm2_cl.nc",
     )
     fix = Cl(None)
     fixed_file = fix.fix_file(nc_path, tmp_path)
     mock_get_filepath.assert_called_once_with(
-        tmp_path, nc_path, add_unique_suffix=False
+        tmp_path,
+        nc_path,
+        add_unique_suffix=False,
     )
     fixed_cubes = iris.load(fixed_file)
     assert len(fixed_cubes) == 2
@@ -101,16 +106,18 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     assert "cl" in var_names
     assert "ps" in var_names
     fixed_cl_cube = fixed_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer"
+        "cloud_area_fraction_in_atmosphere_layer",
     )
     fixed_air_pressure_coord = fixed_cl_cube.coord("air_pressure")
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.points, AIR_PRESSURE_POINTS
+        fixed_air_pressure_coord.points,
+        AIR_PRESSURE_POINTS,
     )
     np.testing.assert_allclose(
-        fixed_air_pressure_coord.bounds, AIR_PRESSURE_BOUNDS
+        fixed_air_pressure_coord.bounds,
+        AIR_PRESSURE_BOUNDS,
     )
 
 
@@ -143,10 +150,16 @@ def cl_cubes():
         attributes={"positive": "up"},
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     coord_specs = [
         (time_coord, 0),
@@ -171,13 +184,14 @@ def test_cl_fix_metadata(cl_cubes):
     fix = Cl(vardef)
     out_cubes = fix.fix_metadata(cl_cubes)
     out_cube = out_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer"
+        "cloud_area_fraction_in_atmosphere_layer",
     )
     lev_coord = out_cube.coord(var_name="lev")
     assert lev_coord.units == "1"
     np.testing.assert_allclose(lev_coord.points, [1.0, 0.5, 0.2])
     np.testing.assert_allclose(
-        lev_coord.bounds, [[1.0, 0.95], [0.95, 0.5], [0.5, 0.0]]
+        lev_coord.bounds,
+        [[1.0, 0.95], [0.95, 0.5], [0.5, 0.0]],
     )
 
 
@@ -213,10 +227,16 @@ def tas_cubes():
         units="days since 1850-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     coord_specs = [
         (time_coord, 0),
@@ -247,10 +267,16 @@ def tos_cubes():
         units="days since 1850-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     coord_specs = [
         (time_coord, 0),
@@ -278,10 +304,16 @@ def thetao_cubes():
         units="days since 1850-01-01 00:00:00",
     )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lat", standard_name="latitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name="lon", standard_name="longitude", units="degrees"
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     lev_coord = iris.coords.DimCoord(
         [500.0, 1000.0],
@@ -417,7 +449,7 @@ def test_fgco2_fix_metadata():
     cubes = iris.cube.CubeList(
         [
             iris.cube.Cube(0.0, var_name="fgco2"),
-        ]
+        ],
     )
     fix = Fgco2(vardef)
     out_cubes = fix.fix_metadata(cubes)
@@ -453,11 +485,15 @@ def pr_cubes():
     )
 
     lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
 
     lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
 
     correct_coord_specs = [
@@ -514,16 +550,24 @@ def test_pr_fix_metadata(pr_cubes):
 @pytest.fixture
 def tasmin_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[2.0]],
@@ -542,16 +586,24 @@ def tasmin_cubes():
 @pytest.fixture
 def tasmax_cubes():
     correct_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = iris.coords.DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = iris.cube.Cube(
         [[2.0]],
@@ -617,3 +669,74 @@ def test_tasmax_fix_metadata(tasmax_cubes):
     assert out_cubes[0].var_name == "tasmax"
     coord = out_cubes[0].coord("height")
     assert coord == height_coord
+
+
+def test_msftmz_fix():
+    fix = Fix.get_fixes("CMIP6", "CESM2", "Omon", "msftmz")
+    assert fix == [Msftmz(None), Omon(None), GenericFix(None)]
+
+
+def test_msftmz_tranform_region_coord():
+    dim_coord = iris.coords.DimCoord(
+        points=[0, 1, 2],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean_basin",
+        attributes={
+            "requested": "atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2",
+        },
+    )
+    aux_coord = iris.coords.AuxCoord(
+        points=[
+            "atlantic_arctic_ocean",
+            "indian_pacific_ocean",
+            "global_ocean",
+        ],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean basin",
+        units="no unit",
+    )
+    assert Msftmz.transform_region_coord(dim_coord) == aux_coord
+
+
+@pytest.fixture
+def msftmz_cubes():
+    """``msftmz`` cube."""
+    region_coord = iris.coords.DimCoord(
+        points=[0, 1, 2],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean_basin",
+        attributes={
+            "requested": "atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2",
+        },
+    )
+    cube = iris.cube.Cube(
+        np.array([0, 0, 0]),
+        var_name="msftmz",
+        standard_name="ocean_meridional_overturning_mass_streamfunction",
+        units="kg s-1",
+        dim_coords_and_dims=[(region_coord, 0)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def test_msftmz_fix_metadata(msftmz_cubes):
+    cubes = Msftmz(
+        get_var_info("CMIP6", "Omon", "msftmz"),
+    ).fix_metadata(msftmz_cubes)
+
+    aux_coord = iris.coords.AuxCoord(
+        points=[
+            "atlantic_arctic_ocean",
+            "indian_pacific_ocean",
+            "global_ocean",
+        ],
+        standard_name="region",
+        var_name="basin",
+        long_name="ocean basin",
+        units="no unit",
+    )
+
+    assert cubes[0].coord("region") == aux_coord

@@ -10,16 +10,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
+from typing import Any
 from urllib.parse import urlparse
 
-import dask.array as da
 import iris
 import numpy as np
 import pandas as pd
 import requests
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import AuxCoord, DimCoord
+from iris.coords import AuxCoord, Coord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.mesh import Connectivity, MeshXY
 
@@ -42,11 +42,11 @@ class IconFix(NativeDatasetFix):
     TIMEOUT = 5 * 60  # [s]; = 5 min
     GRID_FILE_ATTR = "grid_file_uri"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize ICON fix."""
         super().__init__(*args, **kwargs)
-        self._horizontal_grids = {}
-        self._meshes = {}
+        self._horizontal_grids: dict[str, CubeList] = {}
+        self._meshes: dict[str, MeshXY] = {}
 
     def _create_mesh(self, cube: Cube) -> MeshXY:
         """Create mesh from horizontal grid file.
@@ -75,7 +75,7 @@ class IconFix(NativeDatasetFix):
         # 'vertex_of_cell'; since UGRID expects a different dimension ordering
         # we transpose the cube here)
         vertex_of_cell = horizontal_grid.extract_cube(
-            NameConstraint(var_name="vertex_of_cell")
+            NameConstraint(var_name="vertex_of_cell"),
         ).copy()
         vertex_of_cell.transpose()
 
@@ -109,7 +109,7 @@ class IconFix(NativeDatasetFix):
                 "the grid file) differ from the corresponding values "
                 "calculated from the connectivity ('vertex_of_cell') and the "
                 "node coordinate ('vlat'). Using bounds defined by "
-                "connectivity."
+                "connectivity.",
             )
         face_lat.bounds = node_lat.points[conn_node_inds]
 
@@ -131,7 +131,7 @@ class IconFix(NativeDatasetFix):
                 "calculated from the connectivity ('vertex_of_cell') and the "
                 "node coordinate ('vlon'). Note that these values are allowed "
                 "to differ by 360° or at the poles of the grid. Using bounds "
-                "defined by connectivity."
+                "defined by connectivity.",
             )
         face_lon.bounds = node_lon.points[conn_node_inds]
 
@@ -142,29 +142,33 @@ class IconFix(NativeDatasetFix):
             start_index=start_index,
             location_axis=0,
         )
-        mesh = MeshXY(
+        return MeshXY(
             topology_dimension=2,
             node_coords_and_axes=[(node_lat, "y"), (node_lon, "x")],
             connectivities=[connectivity],
             face_coords_and_axes=[(face_lat, "y"), (face_lon, "x")],
         )
 
-        return mesh
-
-    def _get_grid_url(self, cube):
+    def _get_grid_url(self, cube: Cube) -> tuple[str, str]:
         """Get ICON grid URL from cube."""
         if self.GRID_FILE_ATTR not in cube.attributes:
-            raise ValueError(
+            msg = (
                 f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
                 f"necessary to download the ICON horizontal grid file:\n"
                 f"{cube}"
+            )
+            raise ValueError(
+                msg,
             )
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name
         return (grid_url, grid_name)
 
-    def _get_node_coords(self, horizontal_grid):
+    def _get_node_coords(
+        self,
+        horizontal_grid: CubeList,
+    ) -> tuple[Coord, Coord]:
         """Get node coordinates from horizontal grid.
 
         Extract node coordinates from dummy variable 'dual_area' in horizontal
@@ -174,7 +178,7 @@ class IconFix(NativeDatasetFix):
 
         """
         dual_area_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name="dual_area")
+            NameConstraint(var_name="dual_area"),
         )
         node_lat = dual_area_cube.coord(var_name="vlat").copy()
         node_lon = dual_area_cube.coord(var_name="vlon").copy()
@@ -196,24 +200,31 @@ class IconFix(NativeDatasetFix):
 
         return (node_lat, node_lon)
 
-    def _get_path_from_facet(self, facet, description=None):
+    def _get_path_from_facet(
+        self,
+        facet: str,
+        description: str | None = None,
+    ) -> Path:
         """Try to get path from facet."""
         if description is None:
             description = "File"
         path = Path(os.path.expandvars(self.extra_facets[facet])).expanduser()
-        if not path.is_file():
+        if not path.is_file() and self.session is not None:
             new_path = self.session["auxiliary_data_dir"] / path
             if not new_path.is_file():
-                raise FileNotFoundError(
+                msg = (
                     f"{description} '{path}' given by facet '{facet}' does "
                     f"not exist (specify a valid absolute path or a path "
                     f"relative to the auxiliary_data_dir "
                     f"'{self.session['auxiliary_data_dir']}')"
                 )
+                raise FileNotFoundError(
+                    msg,
+                )
             path = new_path
         return path
 
-    def add_additional_cubes(self, cubes):
+    def add_additional_cubes(self, cubes: CubeList) -> CubeList:
         """Add additional user-defined cubes to list of cubes (in-place).
 
         An example use case is adding a vertical coordinate (e.g., `zg`) to the
@@ -235,7 +246,7 @@ class IconFix(NativeDatasetFix):
 
         Parameters
         ----------
-        cubes: iris.cube.CubeList
+        cubes:
             Input cubes which will be modified in place.
 
         Returns
@@ -264,10 +275,11 @@ class IconFix(NativeDatasetFix):
 
         return cubes
 
-    def _get_grid_from_facet(self):
+    def _get_grid_from_facet(self) -> CubeList:
         """Get horizontal grid from user-defined facet `horizontal_grid`."""
         grid_path = self._get_path_from_facet(
-            "horizontal_grid", "Horizontal grid file"
+            "horizontal_grid",
+            "Horizontal grid file",
         )
         grid_name = grid_path.name
 
@@ -312,14 +324,13 @@ class IconFix(NativeDatasetFix):
         glob_patterns: list[Path] = []
         for data_source in _get_data_sources("ICON"):
             glob_patterns.extend(
-                data_source.get_glob_patterns(**self.extra_facets)
+                data_source.get_glob_patterns(**self.extra_facets),
             )
         possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
-                cubes = self._load_cubes(grid_path)
-                return cubes
+                return self._load_cubes(grid_path)
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -378,10 +389,9 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-        cubes = self._load_cubes(grid_path)
-        return cubes
+        return self._load_cubes(grid_path)
 
-    def get_horizontal_grid(self, cube):
+    def get_horizontal_grid(self, cube: Cube) -> CubeList:
         """Get ICON horizontal grid.
 
         If given, retrieve grid from `horizontal_grid` facet specified by the
@@ -396,7 +406,7 @@ class IconFix(NativeDatasetFix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube:
             Cube for which the ICON horizontal grid is retrieved. If the facet
             `horizontal_grid` is not specified by the user, this cube needs to
             have a global attribute `grid_file_uri` that specifies the download
@@ -425,7 +435,7 @@ class IconFix(NativeDatasetFix):
 
         return grid
 
-    def get_mesh(self, cube):
+    def get_mesh(self, cube: Cube) -> MeshXY:
         """Get mesh.
 
         Note
@@ -435,7 +445,7 @@ class IconFix(NativeDatasetFix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube:
             Cube for which the mesh is retrieved. If the facet
             `horizontal_grid` is not specified by the user, this cube needs to
             have the global attribute `grid_file_uri` that specifies the
@@ -461,7 +471,8 @@ class IconFix(NativeDatasetFix):
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
         if self.extra_facets.get("horizontal_grid") is not None:
             grid_path = self._get_path_from_facet(
-                "horizontal_grid", "Horizontal grid file"
+                "horizontal_grid",
+                "Horizontal grid file",
             )
             grid_name = grid_path.name
         else:
@@ -477,7 +488,7 @@ class IconFix(NativeDatasetFix):
         return self._meshes[grid_name]
 
     @staticmethod
-    def _get_start_index(horizontal_grid):
+    def _get_start_index(horizontal_grid: CubeList) -> np.int32:
         """Get start index used to name nodes from horizontal grid.
 
         Extract start index used to name nodes from the the horizontal grid
@@ -489,7 +500,7 @@ class IconFix(NativeDatasetFix):
 
         """
         vertex_index = horizontal_grid.extract_cube(
-            NameConstraint(var_name="vertex_index")
+            NameConstraint(var_name="vertex_index"),
         )
         return np.int32(np.min(vertex_index.data))
 
@@ -517,11 +528,10 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module="iris",
             )
-            cubes = iris.load(path)
-        return cubes
+            return iris.load(path)
 
     @staticmethod
-    def _set_range_in_0_360(lon_coord):
+    def _set_range_in_0_360(lon_coord: Coord) -> None:
         """Convert longitude coordinate to [0, 360]."""
         lon_coord.points = (lon_coord.core_points() + 360.0) % 360.0
         if lon_coord.has_bounds():
@@ -533,7 +543,7 @@ class AllVarsBase(IconFix):
 
     DEFAULT_PFULL_VAR_NAME = "pfull"
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cubes = self.add_additional_cubes(cubes)
         cube = self.get_cube(cubes)
@@ -557,12 +567,24 @@ class AllVarsBase(IconFix):
                 # Note: iris.util.squeeze is not used here since it might
                 # accidentally squeeze other dimensions.
                 if cube.coords("height", dim_coords=True):
-                    slices = [slice(None)] * cube.ndim
+                    slices: list[slice | int] = [slice(None)] * cube.ndim
                     slices[cube.coord_dims("height")[0]] = 0
                     cube = cube[tuple(slices)]
                 cube.remove_coord("height")
             else:
                 cube = self._fix_height(cube, cubes)
+
+        # Fix depth of ocean data
+        if cube.coords(long_name="depth_below_sea"):
+            self._fix_depth(cube, cubes)
+
+        # Remove undesired lev coordinate with length 1
+        lev_coord = DimCoord(0.0, var_name="lev")
+        if cube.coords(lev_coord, dim_coords=True):
+            slices = [slice(None)] * cube.ndim
+            slices[cube.coord_dims(lev_coord)[0]] = 0
+            cube = cube[tuple(slices)]
+            cube.remove_coord(lev_coord)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -578,7 +600,7 @@ class AllVarsBase(IconFix):
 
         # Fix unstructured mesh of unstructured grid if present
         if self._is_unstructured_grid(lat_idx, lon_idx):
-            self._fix_mesh(cube, lat_idx)
+            self._fix_mesh(cube, lat_idx)  # type: ignore
 
         # Fix scalar coordinates
         self.fix_scalar_coords(cube)
@@ -588,7 +610,7 @@ class AllVarsBase(IconFix):
 
         return CubeList([cube])
 
-    def _add_coord_from_grid_file(self, cube, coord_name):
+    def _add_coord_from_grid_file(self, cube: Cube, coord_name: str) -> None:
         """Add coordinate from ``cell_area`` variable of grid file to cube.
 
         Note
@@ -598,9 +620,9 @@ class AllVarsBase(IconFix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube:
             ICON data to which the coordinate from the grid file is added.
-        coord_name: str
+        coord_name:
             Variable name of the coordinate to add from the grid file.
 
         Raises
@@ -615,19 +637,22 @@ class AllVarsBase(IconFix):
         # this only works for clat and clon
         horizontal_grid = self.get_horizontal_grid(cube)
         grid_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name="cell_area")
+            NameConstraint(var_name="cell_area"),
         )
         coord = grid_cube.coord(var_name=coord_name).copy()
 
         # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
         if n_unnamed_dimensions != 1:
-            raise ValueError(
+            msg = (
                 f"Cannot determine coordinate dimension for coordinate "
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
             )
-        coord_dims = ()
+            raise ValueError(
+                msg,
+            )
+        coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):
                 coord_dims = (idx,)
@@ -639,22 +664,29 @@ class AllVarsBase(IconFix):
         coord.long_name = None
         cube.add_aux_coord(coord, coord_dims)
 
-    def _add_time(self, cube, cubes):
+    def _add_time(self, cube: Cube, cubes: CubeList) -> Cube:
         """Add time coordinate from other cube in cubes."""
         # Try to find time cube from other cubes and it to target cube
         for other_cube in cubes:
             if not other_cube.coords("time"):
                 continue
             time_coord = other_cube.coord("time")
-            cube = add_leading_dim_to_cube(cube, time_coord)
-            return cube
-        raise ValueError(
+            return add_leading_dim_to_cube(cube, time_coord)
+        msg = (
             f"Cannot add required coordinate 'time' to variable "
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it"
         )
+        raise ValueError(
+            msg,
+        )
 
-    def _get_z_coord(self, cubes, points_name, bounds_name=None):
+    def _get_z_coord(
+        self,
+        cubes: CubeList,
+        points_name: str,
+        bounds_name: str | None = None,
+    ) -> AuxCoord:
         """Get z-coordinate without metadata (reversed)."""
         points_cube = iris.util.reverse(
             cubes.extract_cube(NameConstraint(var_name=points_name)),
@@ -669,20 +701,20 @@ class AllVarsBase(IconFix):
                 "height",
             )
             bounds = bounds_cube.core_data()
-            bounds = da.stack(
-                (bounds[..., :-1, :], bounds[..., 1:, :]), axis=-1
+            bounds = np.stack(
+                (bounds[..., :-1, :], bounds[..., 1:, :]),
+                axis=-1,
             )
         else:
             bounds = None
 
-        z_coord = AuxCoord(
+        return AuxCoord(
             points,
             bounds=bounds,
             units=points_cube.units,
         )
-        return z_coord
 
-    def _fix_height(self, cube, cubes):
+    def _fix_height(self, cube: Cube, cubes: CubeList) -> Cube:
         """Fix height coordinate of cube."""
         # Reverse entire cube along height axis so that index 0 is surface
         # level
@@ -692,7 +724,8 @@ class AllVarsBase(IconFix):
         # cubes and add it to cube
         # Note: pfull/phalf have dimensions (time, height, spatial_dim)
         pfull_var = self.extra_facets.get(
-            "pfull_var", self.DEFAULT_PFULL_VAR_NAME
+            "pfull_var",
+            self.DEFAULT_PFULL_VAR_NAME,
         )
         phalf_var = self.extra_facets.get("phalf_var", "phalf")
         if cubes.extract(NameConstraint(var_name=pfull_var)):
@@ -722,7 +755,9 @@ class AllVarsBase(IconFix):
             else:
                 zghalf = None
             alt_coord = self._get_z_coord(
-                cubes, zgfull_var, bounds_name=zghalf
+                cubes,
+                zgfull_var,
+                bounds_name=zghalf,
             )
             self.fix_alt16_metadata(cube, alt_coord)
 
@@ -752,7 +787,23 @@ class AllVarsBase(IconFix):
 
         return cube
 
-    def _fix_lat(self, cube):
+    def _fix_depth(self, cube: Cube, cubes: CubeList) -> None:
+        """Fix ocean depth coordinate."""
+        depth_coord = self.fix_depth_coord_metadata(cube)
+        if depth_coord.has_bounds():
+            return
+
+        # Try to get bounds of depth coordinate from depth_2 coordinate that
+        # might be present in other variables loaded from the same file
+        for other_cube in cubes:
+            if not other_cube.coords(var_name="depth_2"):
+                continue
+            depth_2_coord = other_cube.coord(var_name="depth_2")
+            depth_2_coord.convert_units(depth_coord.units)
+            bounds = depth_2_coord.core_points()
+            depth_coord.bounds = np.stack((bounds[:-1], bounds[1:]), axis=-1)
+
+    def _fix_lat(self, cube: Cube) -> tuple[int, ...]:
         """Fix latitude coordinate of cube."""
         lat_var = self.extra_facets.get("lat_var", "clat")
 
@@ -776,9 +827,9 @@ class AllVarsBase(IconFix):
         lat = cube.coord(var_name=lat_var)
         lat = self.fix_lat_metadata(cube, lat)
 
-        return cube.coord_dims(lat)
+        return cube.coord_dims(lat)  # type: ignore
 
-    def _fix_lon(self, cube):
+    def _fix_lon(self, cube: Cube) -> tuple[int, ...]:
         """Fix longitude coordinate of cube."""
         lon_var = self.extra_facets.get("lon_var", "clon")
 
@@ -803,9 +854,9 @@ class AllVarsBase(IconFix):
         lon = self.fix_lon_metadata(cube, lon)
         self._set_range_in_0_360(lon)
 
-        return cube.coord_dims(lon)
+        return cube.coord_dims(lon)  # type: ignore
 
-    def _fix_time(self, cube, cubes):
+    def _fix_time(self, cube: Cube, cubes: CubeList) -> Cube:
         """Fix time coordinate of cube."""
         # Add time coordinate if not already present
         if not cube.coords("time"):
@@ -832,7 +883,7 @@ class AllVarsBase(IconFix):
 
         return cube
 
-    def _shift_time_coord(self, cube, time_coord):
+    def _shift_time_coord(self, cube: Cube, time_coord: Coord) -> None:
         """Shift time points back by 1/2 of given time period (in-place)."""
         # Do not modify time coordinate for point measurements
         for cell_method in cube.cell_methods:
@@ -856,7 +907,7 @@ class AllVarsBase(IconFix):
         if "dec" in freq or "yr" in freq or "mon" in freq:
             time_units = time_coord.units
             time_coord.convert_units(
-                Unit("days since 1850-01-01", calendar=time_units.calendar)
+                Unit("days since 1850-01-01", calendar=time_units.calendar),
             )
             try:
                 time_coord.points = np.around(time_coord.points)
@@ -872,30 +923,31 @@ class AllVarsBase(IconFix):
             time_coord.convert_units(time_units)
             logger.debug(
                 "Rounded ICON time coordinate to closest day for decadal, "
-                "yearly and monthly data"
+                "yearly and monthly data",
             )
 
         # Use original time points to calculate bounds (for a given point,
         # start of bounds is previous point, end of bounds is point)
         first_datetime = time_coord.units.num2date(time_coord.points[0])
         previous_time_point = time_coord.units.date2num(
-            self._get_previous_timestep(first_datetime)
+            self._get_previous_timestep(first_datetime),
         )
         extended_time_points = np.concatenate(
-            ([previous_time_point], time_coord.points)
+            ([previous_time_point], time_coord.points),
         )
         time_coord.points = (
             np.convolve(extended_time_points, np.ones(2), "valid") / 2.0
         )  # running mean with window length 2
         time_coord.bounds = np.stack(
-            (extended_time_points[:-1], extended_time_points[1:]), axis=-1
+            (extended_time_points[:-1], extended_time_points[1:]),
+            axis=-1,
         )
         logger.debug(
             "Shifted ICON time coordinate back by 1/2 of output interval (%s)",
             self.extra_facets["frequency"],
         )
 
-    def _get_previous_timestep(self, datetime_point):
+    def _get_previous_timestep(self, datetime_point: datetime) -> datetime:
         """Get previous time step."""
         freq = self.extra_facets["frequency"]
         year = datetime_point.year
@@ -914,11 +966,14 @@ class AllVarsBase(IconFix):
         # first of the month 00:00:00
         if "dec" in freq or "yr" in freq or "mon" in freq:
             if datetime_point != datetime(year, month, 1):
-                raise ValueError(
+                msg = (
                     f"Cannot shift time coordinate: expected first of the "
                     f"month at 00:00:00 for decadal, yearly and monthly data, "
                     f"got {datetime_point}. Use `shift_time=false` in the "
                     f"recipe to disable this feature"
+                )
+                raise ValueError(
+                    msg,
                 )
 
         # Decadal data
@@ -949,7 +1004,7 @@ class AllVarsBase(IconFix):
         # Unknown input
         raise ValueError(invalid_freq_error_msg)
 
-    def _fix_mesh(self, cube, mesh_idx):
+    def _fix_mesh(self, cube: Cube, mesh_idx: tuple[int, ...]) -> None:
         """Fix mesh."""
         # Remove any already-present dimensional coordinate describing the mesh
         # dimension
@@ -978,7 +1033,10 @@ class AllVarsBase(IconFix):
                 cube.add_aux_coord(mesh_coord, mesh_idx)
 
     @staticmethod
-    def _is_unstructured_grid(lat_idx, lon_idx):
+    def _is_unstructured_grid(
+        lat_idx: tuple[int, ...] | None,
+        lon_idx: tuple[int, ...] | None,
+    ) -> bool:
         """Check if data is defined on an unstructured grid."""
         # If either latitude or longitude are not present (i.e., the
         # corresponding index is None), no unstructured grid is present
@@ -994,13 +1052,10 @@ class AllVarsBase(IconFix):
 
         # If latitude and longitude are multi-dimensional (e.g., curvilinear
         # grid), no unstructured grid is present
-        if len(lat_idx) != 1:
-            return False
-
-        return True
+        return len(lat_idx) == 1
 
     @staticmethod
-    def _fix_invalid_time_units(time_coord):
+    def _fix_invalid_time_units(time_coord: Coord) -> None:
         """Fix invalid time units (in-place)."""
         # ICON data usually has no time bounds. To be 100% sure, we remove the
         # bounds here (they will be added at a later stage).
@@ -1008,12 +1063,16 @@ class AllVarsBase(IconFix):
         time_format = "day as %Y%m%d.%f"
         t_unit = time_coord.attributes.pop("invalid_units")
         if t_unit != time_format:
-            raise ValueError(
+            msg = (
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'"
             )
+            raise ValueError(
+                msg,
+            )
         new_t_units = Unit(
-            "days since 1850-01-01", calendar="proleptic_gregorian"
+            "days since 1850-01-01",
+            calendar="proleptic_gregorian",
         )
 
         # New routine to convert time of daily and hourly data. The string %f
@@ -1028,7 +1087,8 @@ class AllVarsBase(IconFix):
 
         # Second, extract day fraction and convert it to timedelta object
         day_float_str = time_str.str.extract(
-            r"\d*(\.\d*)", expand=False
+            r"\d*(\.\d*)",
+            expand=False,
         ).fillna("0.0")
         day_float = pd.to_timedelta(day_float_str.astype(float), unit="D")
 
@@ -1049,7 +1109,7 @@ class AllVarsBase(IconFix):
                 category=FutureWarning,
             )
             new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
-        new_dt_points = date2num(np.array(new_datetimes), new_t_units)
+        new_dt_points = date2num(np.array(new_datetimes), new_t_units)  # type: ignore
 
         # Modify time coordinate in place
         time_coord.points = new_dt_points
@@ -1059,7 +1119,7 @@ class AllVarsBase(IconFix):
 class NegateData(IconFix):
     """Base fix to negate data."""
 
-    def fix_data(self, cube):
+    def fix_data(self, cube: Cube) -> Cube:
         """Fix data."""
         cube.data = -cube.core_data()
         return cube

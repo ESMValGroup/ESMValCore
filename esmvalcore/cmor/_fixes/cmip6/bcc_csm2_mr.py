@@ -1,6 +1,9 @@
 """Fixes for BCC-CSM2-MR model."""
 
-from ..common import ClFixHybridPressureCoord, OceanFixGrid
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+)
 
 Areacello = OceanFixGrid
 

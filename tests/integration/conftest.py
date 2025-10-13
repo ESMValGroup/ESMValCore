@@ -55,20 +55,22 @@ def _get_files(root_path, facets, tracking_id):
     for expanded_facets in all_facets:
         filenames = []
         dir_template = _select_drs(
-            "input_dir", expanded_facets["project"], "default"
+            "input_dir",
+            expanded_facets["project"],
+            "default",
         )
         file_template = _select_drs(
-            "input_file", expanded_facets["project"], "default"
+            "input_file",
+            expanded_facets["project"],
+            "default",
         )
         dir_globs = _replace_tags(dir_template, expanded_facets)
         file_globs = _replace_tags(file_template, expanded_facets)
         filename = str(
-            root_path / "input" / dir_globs[0] / Path(file_globs[0]).name
+            root_path / "input" / dir_globs[0] / Path(file_globs[0]).name,
         )
 
         if filename.endswith("[_.]*nc"):
-            # Restore when we support filenames with no dates
-            # filenames.append(filename.replace('[_.]*nc', '.nc'))
             filename = filename.replace("[_.]*nc", "_*.nc")
 
         if filename.endswith("*.nc"):
@@ -147,7 +149,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
     def find_files(*, debug: bool = False, **facets):
         files, file_globs = _get_files(tmp_path, facets, tracking_id)
-        if "fx" == facets["frequency"]:
+        if facets["frequency"] == "fx":
             files = []
         returned_files = []
         for file in files:

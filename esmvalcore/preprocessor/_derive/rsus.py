@@ -14,29 +14,28 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `rsus`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rsds"},
             {"short_name": "rsns"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
         """Compute upwelling shortwave flux from downwelling and net."""
         rsds_cube = cubes.extract_cube(
-            Constraint(name="surface_downwelling_shortwave_flux_in_air")
+            Constraint(name="surface_downwelling_shortwave_flux_in_air"),
         )
         rsns_cube = cubes.extract_cube(
-            Constraint(name="surface_net_downward_shortwave_flux")
+            Constraint(name="surface_net_downward_shortwave_flux"),
         )
         # fix latitude and longitude var_name
         rsns_cube.coord(axis="X").long_name = rsds_cube.coord(
-            axis="X"
+            axis="X",
         ).long_name
         rsns_cube.coord(axis="Y").long_name = rsds_cube.coord(
-            axis="Y"
+            axis="Y",
         ).long_name
         rsns_cube.coord(axis="X").var_name = rsds_cube.coord(axis="X").var_name
         rsns_cube.coord(axis="Y").var_name = rsds_cube.coord(axis="Y").var_name

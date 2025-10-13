@@ -24,7 +24,8 @@ class TestGenericFix:
     def setup(self, mocker):
         """Set up tests."""
         self.mock_debug = mocker.patch(
-            "esmvalcore.cmor._fixes.fix.GenericFix._debug_msg", autospec=True
+            "esmvalcore.cmor._fixes.fix.GenericFix._debug_msg",
+            autospec=True,
         )
         self.mock_warning = mocker.patch(
             "esmvalcore.cmor._fixes.fix.GenericFix._warning_msg",
@@ -249,7 +250,8 @@ class TestGenericFix:
         assert cube.coord("time").standard_name == "time"
         assert cube.coord("time").var_name == "time"
         assert cube.coord("time").units == Unit(
-            "days since 1850-01-01", calendar="365_day"
+            "days since 1850-01-01",
+            calendar="365_day",
         )
         assert cube.coord("time").attributes == {"test": 1}
 
@@ -326,18 +328,22 @@ class TestGenericFix:
 
         # Latitude
         np.testing.assert_allclose(
-            cube.coord("latitude").points, [-10.0, 10.0]
+            cube.coord("latitude").points,
+            [-10.0, 10.0],
         )
         np.testing.assert_allclose(
-            cube.coord("latitude").bounds, [[-20.0, 0.0], [0.0, 20.0]]
+            cube.coord("latitude").bounds,
+            [[-20.0, 0.0], [0.0, 20.0]],
         )
 
         # Longitude
         np.testing.assert_allclose(
-            cube.coord("longitude").points, [0.0, 180.0]
+            cube.coord("longitude").points,
+            [0.0, 180.0],
         )
         np.testing.assert_allclose(
-            cube.coord("longitude").bounds, [[-90.0, 90.0], [90.0, 270.0]]
+            cube.coord("longitude").bounds,
+            [[-90.0, 90.0], [90.0, 270.0]],
         )
 
     def assert_tas_metadata(self, cube):
@@ -476,7 +482,7 @@ class TestGenericFix:
         fixed_cube = fixed_cubes[0]
 
         hybrid_coord = fixed_cube.coord(
-            "atmosphere_hybrid_sigma_pressure_coordinate"
+            "atmosphere_hybrid_sigma_pressure_coordinate",
         )
         assert hybrid_coord.var_name == "lev"
         assert hybrid_coord.long_name is None
@@ -594,7 +600,11 @@ class TestGenericFix:
         self.assert_ta_data(fixed_cube, time_has_bounds=False)
 
         cmor_check_metadata(
-            fixed_cube, project, mip, short_name, frequency="mon"
+            fixed_cube,
+            project,
+            mip,
+            short_name,
+            frequency="mon",
         )
 
         assert self.mock_debug.call_count == 4
@@ -625,13 +635,15 @@ class TestGenericFix:
 
         # Latitude
         np.testing.assert_allclose(
-            fixed_cube.coord("latitude").points, [10.0, -10.0]
+            fixed_cube.coord("latitude").points,
+            [10.0, -10.0],
         )
         assert fixed_cube.coord("latitude").bounds is None
 
         # Longitude
         np.testing.assert_allclose(
-            fixed_cube.coord("longitude").points, [180.0, 0.0]
+            fixed_cube.coord("longitude").points,
+            [180.0, 0.0],
         )
         np.testing.assert_allclose(
             fixed_cube.coord("longitude").bounds,
@@ -641,7 +653,8 @@ class TestGenericFix:
         # Variable data
         assert fixed_cube.has_lazy_data()
         np.testing.assert_allclose(
-            fixed_cube.data, [[273.15, 273.15], [273.15, 273.15]]
+            fixed_cube.data,
+            [[273.15, 273.15], [273.15, 273.15]],
         )
 
         cmor_check_metadata(fixed_cube, project, mip, short_name)
@@ -674,20 +687,23 @@ class TestGenericFix:
 
         # Latitude
         np.testing.assert_allclose(
-            fixed_cube.coord("latitude").points, [[10.0, -10.0]]
+            fixed_cube.coord("latitude").points,
+            [[10.0, -10.0]],
         )
         assert fixed_cube.coord("latitude").bounds is None
 
         # Longitude
         np.testing.assert_allclose(
-            fixed_cube.coord("longitude").points, [[10.0, 20.0]]
+            fixed_cube.coord("longitude").points,
+            [[10.0, 20.0]],
         )
         assert fixed_cube.coord("longitude").bounds is None
 
         # Variable data
         assert fixed_cube.has_lazy_data()
         np.testing.assert_allclose(
-            fixed_cube.data, [[[273.15, 273.15]], [[273.15, 273.15]]]
+            fixed_cube.data,
+            [[[273.15, 273.15]], [[273.15, 273.15]]],
         )
 
         cmor_check_metadata(fixed_cube, project, mip, short_name)
@@ -810,7 +826,7 @@ class TestGenericFix:
         self.cubes_2d_latlon[0].coord("latitude").var_name = "lat"
         self.cubes_2d_latlon[0].coord("longitude").var_name = "lon"
         self.cubes_2d_latlon[0].coord("longitude").bounds = [
-            [[365.0, 375.0], [375.0, 400.0]]
+            [[365.0, 375.0], [375.0, 400.0]],
         ]
 
         fixed_cubes = fix_metadata(
@@ -838,13 +854,15 @@ class TestGenericFix:
 
         # Latitude
         np.testing.assert_allclose(
-            fixed_cube.coord("latitude").points, [[10.0, -10.0]]
+            fixed_cube.coord("latitude").points,
+            [[10.0, -10.0]],
         )
         assert fixed_cube.coord("latitude").bounds is None
 
         # Longitude
         np.testing.assert_allclose(
-            fixed_cube.coord("longitude").points, [[10.0, 20.0]]
+            fixed_cube.coord("longitude").points,
+            [[10.0, 20.0]],
         )
         np.testing.assert_allclose(
             fixed_cube.coord("longitude").bounds,

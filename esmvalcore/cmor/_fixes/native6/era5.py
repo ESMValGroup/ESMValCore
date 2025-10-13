@@ -5,6 +5,7 @@ import logging
 
 import iris
 import numpy as np
+from iris.cube import CubeList
 from iris.util import reverse
 
 from esmvalcore.cmor._fixes.fix import Fix
@@ -33,9 +34,12 @@ def get_frequency(cube):
             "Percentage of the Grid Cell Occupied by Land (Including Lakes)",
         )
         if cube.long_name not in acceptable_long_names:
-            raise ValueError(
+            msg = (
                 "Unable to infer frequency of cube "
                 f"with length 1 time dimension: {cube}"
+            )
+            raise ValueError(
+                msg,
             )
         return "fx"
 
@@ -63,9 +67,12 @@ def fix_accumulated_units(cube):
     elif get_frequency(cube) == "hourly":
         cube.units = cube.units * "h-1"
     elif get_frequency(cube) == "daily":
-        raise NotImplementedError(
+        msg = (
             f"Fixing of accumulated units of cube "
             f"{cube.summary(shorten=True)} is not implemented for daily data"
+        )
+        raise NotImplementedError(
+            msg,
         )
     return cube
 
@@ -225,11 +232,12 @@ class Orog(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = []
-        for cube in cubes:
+        for orig_cube in cubes:
+            cube = orig_cube.copy()
             cube = remove_time_coordinate(cube)
             divide_by_gravity(cube)
             fixed_cubes.append(cube)
-        return iris.cube.CubeList(fixed_cubes)
+        return CubeList(fixed_cubes)
 
 
 class Pr(Fix):
@@ -331,6 +339,18 @@ class Rlns(Fix):
         return cubes
 
 
+class Rls(Fix):
+    """Fixes for Rls."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes["positive"] = "down"
+
+        return cubes
+
+
 class Rlus(Fix):
     """Fixes for Rlus."""
 
@@ -344,16 +364,30 @@ class Rlus(Fix):
         return cubes
 
 
-class Rls(Fix):
-    """Fixes for Rls."""
+class Rlut(Fix):
+    """Fixes for Rlut."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        fixed_cubes = CubeList()
         for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            cube.attributes["positive"] = "down"
+            cube.attributes["positive"] = "up"
+            fixed_cubes.append(-cube)
 
-        return cubes
+        return fixed_cubes
+
+
+class Rlutcs(Fix):
+    """Fixes for Rlutcs."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = CubeList()
+        for cube in cubes:
+            cube.attributes["positive"] = "up"
+            fixed_cubes.append(-cube)
+
+        return fixed_cubes
 
 
 class Rsds(Fix):
@@ -491,7 +525,10 @@ class Zg(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def _fix_coordinates(self, cube):
+    def _fix_coordinates(  # noqa: C901
+        self,
+        cube,
+    ):
         """Fix coordinates."""
         # Add scalar height coordinates
         if "height2m" in self.vardef.dimensions:
@@ -508,7 +545,7 @@ class AllVars(Fix):
             # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
-                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]
+                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]  # noqa: PLW2901
             coord = cube.coord(axis=axis)
             if axis == "T":
                 coord.convert_units("days since 1850-1-1 00:00:00.0")
@@ -564,8 +601,9 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        fixed_cubes = iris.cube.CubeList()
-        for cube in cubes:
+        fixed_cubes = CubeList()
+        for orig_cube in cubes:
+            cube = orig_cube.copy()
             cube.var_name = self.vardef.short_name
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
@@ -580,7 +618,7 @@ class AllVars(Fix):
             )
             if "GRIB_PARAM" in cube.attributes:
                 cube.attributes["GRIB_PARAM"] = str(
-                    cube.attributes["GRIB_PARAM"]
+                    cube.attributes["GRIB_PARAM"],
                 )
 
             fixed_cubes.append(cube)

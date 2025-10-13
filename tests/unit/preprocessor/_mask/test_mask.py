@@ -44,14 +44,17 @@ class Test(tests.Test):
         coords_spec3 = [(lats2, 0), (lons2, 1)]
         self.arr = iris.cube.Cube(self.data2, dim_coords_and_dims=coords_spec3)
         self.time_cube = iris.cube.Cube(
-            np.arange(1, 25), var_name="co2", units="J"
+            np.arange(1, 25),
+            var_name="co2",
+            units="J",
         )
         self.time_cube.add_dim_coord(
             iris.coords.DimCoord(
                 np.arange(15.0, 720.0, 30.0),
                 standard_name="time",
                 units=Unit(
-                    "days since 1950-01-01 00:00:00", calendar="gregorian"
+                    "days since 1950-01-01 00:00:00",
+                    calendar="gregorian",
                 ),
             ),
             0,
@@ -67,21 +70,21 @@ class Test(tests.Test):
 
     def test_get_fx_mask(self):
         """Test _get_fx_mask func."""
-        # sftlf: land. sea
+        # Test getting land and sea mask from sftlf
         computed = _get_fx_mask(self.fx_data, "land", "sftlf")
         expected = np.array([False, True, False])
         self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, "sea", "sftlf")
         expected = np.array([True, False, True])
         self.assert_array_equal(expected, computed)
-        # sftof: land, sea
+        # Test getting land and sea mask from sftof
         computed = _get_fx_mask(self.fx_data, "land", "sftof")
         expected = np.array([True, False, False])
         self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, "sea", "sftof")
         expected = np.array([False, True, True])
         self.assert_array_equal(expected, computed)
-        # sftgif: ice, landsea
+        # Test getting ice and landsea mask from sftlf
         computed = _get_fx_mask(self.fx_data, "ice", "sftgif")
         expected = np.array([False, True, False])
         self.assert_array_equal(expected, computed)
@@ -93,7 +96,8 @@ class Test(tests.Test):
         """Test to mask glaciated (NE mask)."""
         result = mask_glaciated(self.arr, mask_out="glaciated")
         expected = np.ma.masked_array(
-            self.data2, mask=np.array([[True, True], [False, False]])
+            self.data2,
+            mask=np.array([[True, True], [False, False]]),
         )
         self.assert_array_equal(result.data, expected)
 

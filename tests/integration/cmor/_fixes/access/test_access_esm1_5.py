@@ -1,18 +1,19 @@
 """Tests for the ACCESS-ESM on-the-fly CMORizer."""
 
+from pathlib import Path
+
 import dask.array as da
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.access.access_esm1_5
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 time_coord = DimCoord(
@@ -22,6 +23,80 @@ time_coord = DimCoord(
     units=Unit("days since 1851-01-01", calendar="noleap"),
     attributes={"test": 1, "time_origin": "will_be_removed"},
 )
+
+time_ocn_coord = DimCoord(
+    list(range(1, 13)),
+    standard_name="time",
+    var_name="time",
+    long_name="time",
+    units=Unit("days since 0000-01-01", calendar="noleap"),
+    attributes={"calendar_type": "GREGORIAN", "cartesian_axis": "T"},
+)
+
+lat_ocn_coord = DimCoord(
+    np.linspace(-90, 210, 300),
+    standard_name="latitude",
+    long_name="tcell latitude",
+    var_name="yt_ocean",
+    units="degrees_N",
+    attributes={
+        "cartesian_axis": "Y",
+    },
+)
+
+lon_ocn_coord = DimCoord(
+    np.linspace(-90, 270, 360),
+    standard_name="longitude",
+    long_name="tcell longitude",
+    var_name="xt_ocean",
+    units="degrees_E",
+    attributes={
+        "cartesian_axis": "X",
+    },
+)
+
+depth_ocn_coord = DimCoord(
+    [0, 1],
+    long_name="tcell zstar depth",
+    var_name="st_ocean",
+    units="meter",
+    attributes={
+        "cartesian_axis": "Z",
+        "edges": "st_edges_ocean",
+        "positive": "down",
+    },
+)
+
+lat_ocn_aux_coord = AuxCoord(
+    np.tile(
+        np.concatenate(
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80)),
+        ),
+        (300, 1),
+    ),
+    standard_name="latitude",
+    long_name="tracer latitude",
+    var_name="geolat_t",
+    attributes={
+        "valid_range": "[-91. 91]",
+    },
+)
+
+lon_ocn_aux_coord = AuxCoord(
+    np.tile(
+        np.concatenate(
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80)),
+        ),
+        (300, 1),
+    ),
+    standard_name="longitude",
+    long_name="tracer longitude",
+    var_name="geolon_t",
+    attributes={
+        "valid_range": "[-281. 361]",
+    },
+)
+
 lat_coord = DimCoord(
     [0, 10],
     standard_name="latitude",
@@ -56,13 +131,12 @@ def _get_fix(mip, frequency, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = frequency
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ACCESS", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.access.access_esm1_5, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session={}, frequency="")
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session={}, frequency="")
 
 
 def get_fix(mip, frequency, short_name):
@@ -79,8 +153,7 @@ def get_fix_allvar(mip, frequency, short_name):
 def fix_metadata(cubes, mip, frequency, short_name):
     """Fix metadata of cubes."""
     fix = get_fix(mip, frequency, short_name)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def check_tas_metadata(cubes):
@@ -92,6 +165,28 @@ def check_tas_metadata(cubes):
     assert cube.long_name == "Near-Surface Air Temperature"
     assert cube.units == "K"
     assert "positive" not in cube.attributes
+    return cube
+
+
+def check_tos_metadata(cubes):
+    """Check tas metadata."""
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "tos"
+    assert cube.standard_name == "sea_surface_temperature"
+    assert cube.long_name == "Sea Surface Temperature"
+    assert cube.units == "degC"
+    return cube
+
+
+def check_so_metadata(cubes):
+    """Check tas metadata."""
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == "so"
+    assert cube.standard_name == "sea_water_salinity"
+    assert cube.long_name == "Sea Water Salinity"
+    assert cube.units == Unit(0.001)
     return cube
 
 
@@ -127,6 +222,10 @@ def check_lat(cube):
     assert lat.attributes == {}
 
 
+def check_ocn_lat(cube):
+    """Check latitude coordinate of ocean variable cube."""
+
+
 def check_lon(cube):
     """Check longitude coordinate of cube."""
     assert cube.coords("longitude", dim_coords=True)
@@ -147,6 +246,39 @@ def check_heightxm(cube, height_value):
     assert height.attributes == {"positive": "up"}
     np.testing.assert_allclose(height.points, [height_value])
     assert height.bounds is None
+
+
+def check_ocean_dim_coords(cube):
+    """Check dim_coords of ocean variables."""
+    assert (cube.dim_coords[-2].points == np.arange(300)).all()
+    assert cube.dim_coords[-2].standard_name is None
+    assert cube.dim_coords[-2].var_name == "j"
+    assert cube.dim_coords[-2].long_name == "cell index along second dimension"
+    assert cube.dim_coords[-2].attributes == {}
+
+    assert (cube.dim_coords[-1].points == np.arange(360)).all()
+    assert cube.dim_coords[-1].standard_name is None
+    assert cube.dim_coords[-1].var_name == "i"
+    assert cube.dim_coords[-1].long_name == "cell index along first dimension"
+    assert cube.dim_coords[-1].attributes == {}
+
+
+def check_ocean_aux_coords(cube):
+    """Check aux_coords of ocean variables."""
+    assert cube.aux_coords[-2].shape == (300, 360)
+    assert cube.aux_coords[-2].dtype == np.dtype("float64")
+    assert cube.aux_coords[-2].standard_name == "latitude"
+    assert cube.aux_coords[-2].long_name == "latitude"
+    assert cube.aux_coords[-2].var_name == "lat"
+    assert cube.aux_coords[-2].attributes == {}
+
+    assert cube.aux_coords[-1].shape == (300, 360)
+    assert (cube.aux_coords[-1].points < 360).all()
+    assert (cube.aux_coords[-1].points > 0).all()
+    assert cube.aux_coords[-1].standard_name == "longitude"
+    assert cube.aux_coords[-1].long_name == "longitude"
+    assert cube.aux_coords[-1].var_name == "lon"
+    assert cube.aux_coords[-1].attributes == {}
 
 
 def assert_plev_metadata(cube):
@@ -236,10 +368,16 @@ def test_get_tas_fix():
     fix = Fix.get_fixes("ACCESS", "ACCESS_ESM1_5", "Amon", "tas")
     assert fix == [
         esmvalcore.cmor._fixes.access.access_esm1_5.Tas(
-            vardef={}, extra_facets={}, session={}, frequency=""
+            vardef={},
+            extra_facets={},
+            session={},
+            frequency="",
         ),
         esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(
-            vardef={}, extra_facets={}, session={}, frequency=""
+            vardef={},
+            extra_facets={},
+            session={},
+            frequency="",
         ),
         GenericFix(None),
     ]
@@ -399,3 +537,96 @@ def test_rlus_fix():
     fix = get_fix("Amon", "mon", "rlus")
     fixed_cubes = fix.fix_metadata(cubes_3d)
     np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
+
+
+def test_tos_fix(test_data_path):
+    """Test fix 'tos'."""
+    coord_dim = [
+        (time_ocn_coord, 0),
+        (lat_ocn_coord, 1),
+        (lon_ocn_coord, 2),
+    ]
+
+    coord_aux = [
+        (lat_ocn_aux_coord, (1, 2)),
+        (lon_ocn_aux_coord, (1, 2)),
+    ]
+
+    cube_tos = Cube(
+        da.arange(12 * 300 * 360, dtype=np.float32).reshape(12, 300, 360),
+        var_name="sst",
+        units=Unit("degrees K"),
+        dim_coords_and_dims=coord_dim,
+        aux_coords_and_dims=coord_aux,
+        attributes={},
+    )
+
+    grid_path = f"{test_data_path}/access_ocean_grid.nc"
+    cubes_tos = CubeList([cube_tos])
+    fix_tos = get_fix("Omon", "mon", "tos")
+    fix_allvar = get_fix_allvar("Omon", "mon", "tos")
+    fix_tos.extra_facets["ocean_grid_path"] = grid_path
+    fixed_cubes = fix_tos.fix_metadata(cubes_tos)
+    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
+    fixed_cube = check_tos_metadata(fixed_cubes)
+
+    check_ocean_dim_coords(fixed_cube)
+    check_ocean_aux_coords(fixed_cube)
+    assert fixed_cube.shape == (12, 300, 360)
+
+
+def test_so_fix(test_data_path):
+    """Test fix 'so'."""
+    coord_dim = [
+        (time_ocn_coord, 0),
+        (depth_ocn_coord, 1),
+        (lat_ocn_coord, 2),
+        (lon_ocn_coord, 3),
+    ]
+
+    coord_aux = [
+        (lat_ocn_aux_coord, (2, 3)),
+        (lon_ocn_aux_coord, (2, 3)),
+    ]
+
+    cube_so = Cube(
+        da.arange(12 * 2 * 300 * 360, dtype=np.float32).reshape(
+            12,
+            2,
+            300,
+            360,
+        ),
+        var_name="salt",
+        units="unknown",
+        dim_coords_and_dims=coord_dim,
+        aux_coords_and_dims=coord_aux,
+        attributes={
+            "invalid_units": "psu",
+        },
+    )
+
+    grid_path = f"{test_data_path}/access_ocean_grid.nc"
+    facet = "ocean_grid_path"
+    cubes_so = CubeList([cube_so])
+    fix_so = get_fix("Omon", "mon", "so")
+    fix_allvar = get_fix_allvar("Omon", "mon", "so")
+    fix_so.extra_facets[facet] = grid_path
+    fixed_cubes = fix_so.fix_metadata(cubes_so)
+    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
+    fixed_cube = check_so_metadata(fixed_cubes)
+
+    check_ocean_dim_coords(fixed_cube)
+    check_ocean_aux_coords(fixed_cube)
+    assert fixed_cube.shape == (12, 2, 300, 360)
+
+
+def test_get_path_from_facet_false(test_data_path):
+    """Test get_path_from_facet."""
+    facet = "ocean_grid_path"
+    fix = get_fix("Omon", "mon", "so")
+    fix.extra_facets[facet] = test_data_path
+    test_filepath = Path(fix.extra_facets[facet])
+    msg = f"'{test_filepath}' given by facet '{facet}' does not exist"
+
+    with pytest.raises(FileNotFoundError, match=msg):
+        fix._get_path_from_facet(facet)

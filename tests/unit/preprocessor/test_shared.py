@@ -180,7 +180,7 @@ def test_get_iris_aggregator_no_weights_allowed():
 
 
 @pytest.mark.parametrize(
-    "aggregator,result",
+    ("aggregator", "result"),
     [
         (iris.analysis.MEAN, True),
         (iris.analysis.SUM, True),
@@ -227,7 +227,7 @@ TEST_PRESERVE_FLOAT_TYPE = [
 ]
 
 
-@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
+@pytest.mark.parametrize(("data", "dtype"), TEST_PRESERVE_FLOAT_TYPE)
 def test_preserve_float_dtype(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
@@ -245,7 +245,7 @@ def test_preserve_float_dtype(data, dtype):
     assert list(signature.parameters) == ["obj", "arg", "kwarg"]
 
 
-@pytest.mark.parametrize("data,dtype", TEST_PRESERVE_FLOAT_TYPE)
+@pytest.mark.parametrize(("data", "dtype"), TEST_PRESERVE_FLOAT_TYPE)
 def test_preserve_float_dtype_kwargs_only(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
@@ -379,7 +379,8 @@ def test_compute_area_weights(lazy):
     else:
         assert isinstance(weights, np.ndarray)
     np.testing.assert_allclose(
-        weights, iris.analysis.cartography.area_weights(cube)
+        weights,
+        iris.analysis.cartography.area_weights(cube),
     )
 
 
@@ -422,7 +423,7 @@ def test_try_adding_calculated_cell_area():
 
 
 @pytest.mark.parametrize(
-    ["mask", "array", "dim_map", "expected"],
+    ("mask", "array", "dim_map", "expected"),
     [
         (
             np.arange(2),
@@ -447,7 +448,7 @@ def test_try_adding_calculated_cell_area():
             da.zeros((2, 3, 5), chunks=(1, 2, 3)),
             (0, 2),
             da.ma.masked_array(
-                da.zeros((2, 3, 5), da.ones(2, 3, 5), chunks=(1, 2, 3))
+                da.zeros((2, 3, 5), da.ones(2, 3, 5), chunks=(1, 2, 3)),
             ),
         ),
         (
@@ -470,7 +471,8 @@ def test_rechunk_aux_factory_dependencies():
     delta = AuxCoord(
         points=np.array([0.0, 1.0, 2.0], dtype=np.float64),
         bounds=np.array(
-            [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]], dtype=np.float64
+            [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
+            dtype=np.float64,
         ),
         long_name="level_pressure",
         units="Pa",
@@ -506,28 +508,27 @@ def test_rechunk_aux_factory_dependencies():
 
     # Check that the 'air_pressure' coordinate of the resulting cube has been
     # rechunked:
-    assert (
+    assert result.coord("air_pressure").core_points().chunks == (
         (1, 1, 1),
         (2,),
         (2,),
-    ) == result.coord("air_pressure").core_points().chunks
+    )
     # Check that the original cube has not been modified:
-    assert (
+    assert cube.coord("air_pressure").core_points().chunks == (
         (3,),
         (2,),
         (2,),
-    ) == cube.coord("air_pressure").core_points().chunks
+    )
 
 
 def get_0d_time():
     """Get 0D time coordinate."""
-    time = AuxCoord(
+    return AuxCoord(
         15.0,
         bounds=[0.0, 30.0],
         standard_name="time",
         units="days since 1850-01-01 00:00:00",
     )
-    return time
 
 
 @pytest.mark.parametrize("lazy", [True, False])
@@ -678,7 +679,10 @@ def test_get_coord_weights_1d_time(lazy):
     """Test ``get_coord_weights`` for 1D time coordinate."""
     time = get_1d_time()
     cube = Cube(
-        [0.0, 1.0], var_name="x", units="K", dim_coords_and_dims=[(time, 0)]
+        [0.0, 1.0],
+        var_name="x",
+        units="K",
+        dim_coords_and_dims=[(time, 0)],
     )
     if lazy:
         cube.data = cube.lazy_data()

@@ -3,7 +3,7 @@
 import os.path
 import subprocess
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 from unittest import mock
 
 import pyesgf.search.results
@@ -50,7 +50,7 @@ def test_ncl_version_too_low(mocker):
     )
     with pytest.raises(
         RecipeError,
-        match="NCL version 6.4 or higher is required",
+        match=r"NCL version 6.4 or higher is required",
     ):
         check.ncl_version()
 
@@ -124,16 +124,20 @@ DATA_AVAILABILITY_DATA = [
         ERR_RANGE.format("2023-2025", "\n".join(FILES[:-3])),
     ),
     (
-        [FILES[1]] + [FILES[3]],
+        [FILES[1], FILES[3]],
         dict(VAR),
         ERR_RANGE.format(
-            "2020, 2022, 2024-2025", "\n".join([FILES[1]] + [FILES[3]])
+            "2020, 2022, 2024-2025",
+            "\n".join([FILES[1], FILES[3]]),
         ),
     ),
 ]
 
 
-@pytest.mark.parametrize("input_files,var,error", DATA_AVAILABILITY_DATA)
+@pytest.mark.parametrize(
+    ("input_files", "var", "error"),
+    DATA_AVAILABILITY_DATA,
+)
 @mock.patch("esmvalcore._recipe.check.logger", autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
@@ -149,7 +153,7 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert dataset.facets == var
 
 
-DATA_AVAILABILITY_NO_DATA: List[Any] = [
+DATA_AVAILABILITY_NO_DATA: list[Any] = [
     ([], [], None),
     ([""], ["a*.nc"], (ERR_ALL, ": a*.nc")),
     ([""], ["a*.nc", "b*.nc"], (ERR_ALL, "\na*.nc\nb*.nc")),
@@ -160,7 +164,10 @@ DATA_AVAILABILITY_NO_DATA: List[Any] = [
 ]
 
 
-@pytest.mark.parametrize("dirnames,filenames,error", DATA_AVAILABILITY_NO_DATA)
+@pytest.mark.parametrize(
+    ("dirnames", "filenames", "error"),
+    DATA_AVAILABILITY_NO_DATA,
+)
 @mock.patch("esmvalcore._recipe.check.logger", autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data when no data is present."""
@@ -259,7 +266,7 @@ BAD_TIMERANGES = [
 ]
 
 
-@pytest.mark.parametrize("timerange,message", BAD_TIMERANGES)
+@pytest.mark.parametrize(("timerange", "message"), BAD_TIMERANGES)
 def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:
@@ -435,7 +442,7 @@ def test_invalid_multi_model_groupy():
 def test_invalid_multi_model_keep_input():
     with pytest.raises(RecipeError) as rec_err:
         check._verify_keep_input_datasets(
-            INVALID_MM_SETTINGS["keep_input_datasets"]
+            INVALID_MM_SETTINGS["keep_input_datasets"],
         )
     assert str(rec_err.value) == (
         "Invalid value encountered for `keep_input_datasets`."
@@ -446,7 +453,7 @@ def test_invalid_multi_model_keep_input():
 def test_invalid_multi_model_ignore_scalar_coords():
     with pytest.raises(RecipeError) as rec_err:
         check._verify_ignore_scalar_coords(
-            INVALID_MM_SETTINGS["ignore_scalar_coords"]
+            INVALID_MM_SETTINGS["ignore_scalar_coords"],
         )
     assert str(rec_err.value) == (
         "Invalid value encountered for `ignore_scalar_coords`."

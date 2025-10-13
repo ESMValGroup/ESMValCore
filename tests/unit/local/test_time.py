@@ -5,6 +5,7 @@ from pathlib import Path
 import iris
 import pyesgf
 import pytest
+from cf_units import Unit
 
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.local import (
@@ -161,13 +162,14 @@ def test_get_start_end_date(case):
         assert case_end == end
 
 
-def test_read_years_from_cube(monkeypatch, tmp_path):
+def test_read_years_from_cube(tmp_path):
     """Try to get years from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = LocalFile("test.nc")
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    temp_file = LocalFile(tmp_path / "test.nc")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 366],
+        standard_name="time",
+        units="days since 1990-01-01",
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -176,13 +178,16 @@ def test_read_years_from_cube(monkeypatch, tmp_path):
     assert end == 1991
 
 
-def test_read_datetime_from_cube(monkeypatch, tmp_path):
+def test_read_datetime_from_cube(tmp_path):
     """Try to get datetime from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = "test.nc"
-    cube = iris.cube.Cube([0, 0], var_name="var")
+    temp_file = tmp_path / "test.nc"
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
     time = iris.coords.DimCoord(
-        [0, 366], "time", units="days since 1990-01-01"
+        [0, 100, 200, 361],
+        standard_name=None,
+        long_name="time",
+        var_name="t",
+        units=Unit("days since 1990-01-01", calendar="360_day"),
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
@@ -191,11 +196,30 @@ def test_read_datetime_from_cube(monkeypatch, tmp_path):
     assert end == "19910102"
 
 
-def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
+def test_raises_if_unable_to_deduce_no_time(tmp_path):
     """Try to get time from cube if no date in filename."""
-    monkeypatch.chdir(tmp_path)
-    temp_file = "test.nc"
+    temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0], var_name="var")
+    not_time = iris.coords.DimCoord(
+        [0, 366],
+        var_name="time",
+        long_name="not_time",
+        units="days since 2000-01-01",
+    )
+    cube.add_dim_coord(not_time, 0)
+    iris.save(cube, temp_file)
+    with pytest.raises(ValueError):
+        _get_start_end_date(temp_file)
+    with pytest.raises(ValueError):
+        _get_start_end_year(temp_file)
+
+
+def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
+    """Try to get time from cube if no date in filename."""
+    temp_file = tmp_path / "test.nc"
+    cube = iris.cube.Cube([0, 0], var_name="var")
+    time = iris.coords.DimCoord([0, 366], "time")
+    cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
         _get_start_end_date(temp_file)
@@ -205,9 +229,9 @@ def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
-    with pytest.raises((ValueError)):
+    with pytest.raises(ValueError):
         _get_start_end_date("var_whatever")
-    with pytest.raises((ValueError)):
+    with pytest.raises(ValueError):
         _get_start_end_year("var_whatever")
 
 
@@ -284,7 +308,8 @@ TEST_DATES_TO_TIMERANGE = [
 
 
 @pytest.mark.parametrize(
-    "start_date,end_date,expected_timerange", TEST_DATES_TO_TIMERANGE
+    ("start_date", "end_date", "expected_timerange"),
+    TEST_DATES_TO_TIMERANGE,
 )
 def test_dates_to_timerange(start_date, end_date, expected_timerange):
     """Test ``_dates_to_timerange``."""
@@ -307,7 +332,10 @@ TEST_TRUNCATE_DATES = [
 ]
 
 
-@pytest.mark.parametrize("date,date_file,expected_output", TEST_TRUNCATE_DATES)
+@pytest.mark.parametrize(
+    ("date", "date_file", "expected_output"),
+    TEST_TRUNCATE_DATES,
+)
 def test_truncate_dates(date, date_file, expected_output):
     """Test ``_truncate_dates``."""
     output = _truncate_dates(date, date_file)

@@ -12,9 +12,11 @@ from iris.exceptions import CoordinateMultiDimError
 import tests
 from esmvalcore.preprocessor._volume import (
     _add_axis_stats_weights_coord,
+    _get_first_unmasked_data,
     axis_statistics,
     calculate_volume,
     depth_integration,
+    extract_surface_from_atm,
     extract_trajectory,
     extract_transect,
     extract_volume,
@@ -34,6 +36,7 @@ class Test(tests.Test):
         mask3 = np.full((4, 3, 2, 2), False)
         mask3[0, 0, 0, 0] = True
         data3 = np.ma.array(data3, mask=mask3)
+        data4 = np.broadcast_to([[[[0]], [[2]], [[4]]]], (4, 3, 2, 2))
 
         time = iris.coords.DimCoord(
             [15, 45],
@@ -125,6 +128,13 @@ class Test(tests.Test):
             coord_system=coord_sys,
         )
 
+        ps_coord = iris.coords.DimCoord(
+            [0.5, 5.0, 50.0],
+            bounds=[[0.0, 2.5], [2.5, 25.0], [25.0, 250.0]],
+            standard_name="air_pressure",
+            units="Pa",
+        )
+
         coords_spec3 = [(zcoord, 0), (lats2, 1), (lons2, 2)]
         self.grid_3d = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
 
@@ -137,7 +147,7 @@ class Test(tests.Test):
 
         self.grid_4d_lazy = self.grid_4d.copy()
         self.grid_4d_lazy.data = self.grid_4d_lazy.lazy_data().rechunk(
-            (1, 2, None, None)
+            (1, 2, None, None),
         )
 
         coords_spec4_sigma = [(time, 0), (scoord, 1), (lats2, 2), (lons2, 3)]
@@ -186,11 +196,27 @@ class Test(tests.Test):
             units="kg m-3",
         )
 
+        coords_spec_ps = [(time2, 0), (ps_coord, 1), (lats2, 2), (lons2, 3)]
+        self.grid_4d_ps = iris.cube.Cube(
+            data4,
+            dim_coords_and_dims=coords_spec_ps,
+            units="kg m-3",
+            var_name="var",
+        )
+        self.grid_4d_ps_mask = iris.cube.Cube(
+            data3,
+            dim_coords_and_dims=coords_spec_ps,
+            units="kg m-3",
+            var_name="var",
+        )
+
         # allow iris to figure out the axis='z' coordinate
         iris.util.guess_coord_axis(self.grid_3d.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_2.coord("zcoord"))
         iris.util.guess_coord_axis(self.grid_4d_z.coord("zcoord"))
+        iris.util.guess_coord_axis(self.grid_4d_ps.coord("air_pressure"))
+        iris.util.guess_coord_axis(self.grid_4d_ps_mask.coord("air_pressure"))
 
     def test_add_axis_stats_weights_coord(self):
         """Test _add_axis_stats_weights_coord."""
@@ -288,12 +314,18 @@ class Test(tests.Test):
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
         result = axis_statistics(
-            self.grid_4d, "z", "mean", normalize="subtract"
+            self.grid_4d,
+            "z",
+            "mean",
+            normalize="subtract",
         )
         bounds = self.grid_4d.coord(axis="z").bounds
         weights = bounds[:, 1] - bounds[:, 0]
         expected = data - np.average(
-            data, axis=1, weights=weights, keepdims=True
+            data,
+            axis=1,
+            weights=weights,
+            keepdims=True,
         )
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, "kg m-3")
@@ -378,17 +410,19 @@ class Test(tests.Test):
         expected_levels_open = np.array(
             [
                 0.5,
-            ]
+            ],
         )
 
         closed_interval = extract_volume(self.grid_3d, 0.0, 5.0, "closed")
         expected_levels_closed = np.array([0.5, 5.0])
 
         self.assert_array_equal(
-            open_interval.coord(axis="Z").points, expected_levels_open
+            open_interval.coord(axis="Z").points,
+            expected_levels_open,
         )
         self.assert_array_equal(
-            closed_interval.coord(axis="Z").points, expected_levels_closed
+            closed_interval.coord(axis="Z").points,
+            expected_levels_closed,
         )
 
     def test_extract_volume_mixed_intervals(self):
@@ -396,21 +430,23 @@ class Test(tests.Test):
         expected_levels_left = np.array(
             [
                 0.5,
-            ]
+            ],
         )
 
         right_closed = extract_volume(self.grid_3d, 0.5, 5.0, "right_closed")
         expected_levels_right = np.array(
             [
                 5.0,
-            ]
+            ],
         )
 
         self.assert_array_equal(
-            left_closed.coord(axis="Z").points, expected_levels_left
+            left_closed.coord(axis="Z").points,
+            expected_levels_left,
         )
         self.assert_array_equal(
-            right_closed.coord(axis="Z").points, expected_levels_right
+            right_closed.coord(axis="Z").points,
+            expected_levels_right,
         )
 
     def test_extract_volume_nearest_values(self):
@@ -422,10 +458,12 @@ class Test(tests.Test):
         expected_levels_nearest = np.array([0.5, 5.0, 50.0])
 
         self.assert_array_equal(
-            default.coord(axis="Z").points, expected_levels_default
+            default.coord(axis="Z").points,
+            expected_levels_default,
         )
         self.assert_array_equal(
-            nearest.coord(axis="Z").points, expected_levels_nearest
+            nearest.coord(axis="Z").points,
+            expected_levels_nearest,
         )
 
     def test_extract_volume_error(self):
@@ -450,7 +488,7 @@ class Test(tests.Test):
             units="m3",
             measure="volume",
         )
-        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d.add_cell_measure(measure, range(measure.ndim))
 
         result = extract_volume(self.grid_4d, 0.0, 10.0)
 
@@ -540,7 +578,7 @@ class Test(tests.Test):
             units="m3",
             measure="volume",
         )
-        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d.add_cell_measure(measure, range(measure.ndim))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array([1.0, 1.0], mask=False)
         self.assert_array_equal(result.data, expected)
@@ -558,7 +596,7 @@ class Test(tests.Test):
             units="m3",
             measure="volume",
         )
-        self.grid_4d_lazy.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d_lazy.add_cell_measure(measure, range(measure.ndim))
         result = volume_statistics(self.grid_4d_lazy, "mean")
         assert result.has_lazy_data()
         expected = np.ma.array([1.0, 1.0], mask=False)
@@ -623,7 +661,7 @@ class Test(tests.Test):
             units="m3",
             measure="volume",
         )
-        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d.add_cell_measure(measure, range(measure.ndim))
 
         result = volume_statistics(self.grid_4d, "mean", normalize="divide")
 
@@ -639,12 +677,16 @@ class Test(tests.Test):
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
         measure = iris.coords.CellMeasure(
-            data, standard_name="ocean_volume", units="m3", measure="volume"
+            data,
+            standard_name="ocean_volume",
+            units="m3",
+            measure="volume",
         )
-        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d.add_cell_measure(measure, range(measure.ndim))
         result = volume_statistics(self.grid_4d, "mean")
         expected = np.ma.array(
-            [8.333333333333334, 19.144144144144143], mask=[False, False]
+            [8.333333333333334, 19.144144144144143],
+            mask=[False, False],
         )
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, "kg m-3")
@@ -653,7 +695,8 @@ class Test(tests.Test):
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d, "wrong")
         self.assertEqual(
-            "Volume operator wrong not recognised.", str(err.exception)
+            "Volume operator wrong not recognised.",
+            str(err.exception),
         )
 
     def test_volume_statistics_2d_lat_fail(self):
@@ -775,6 +818,49 @@ class Test(tests.Test):
         result = extract_trajectory(self.grid_3d, [1.5, 2.5], [2.0, 2.0], 2)
         expected = np.ones((3, 2))
         self.assert_array_equal(result.data, expected)
+
+    def test__get_first_unmasked_data(self):
+        """Test to get first unmasked value of an array along an axis."""
+        (z_axis,) = self.grid_4d_2.coord_dims(
+            self.grid_4d_2.coord(axis="Z", dim_coords=True),
+        )
+        result = _get_first_unmasked_data(
+            self.grid_4d_2.core_data(),
+            axis=z_axis,
+        )
+        expected = np.ma.ones((4, 2, 2))
+        self.assert_array_equal(result, expected)
+
+    def test_extract_surface_from_atm(self):
+        """Test to extract surface from a (4, 3, 2, 2) cube."""
+        # Create surface air pressure ancillary variable for interpolation
+        ps_ancillary = iris.coords.AncillaryVariable(
+            np.broadcast_to([[[0.25]], [[0.5]], [[5.0]], [[27.5]]], (4, 2, 2)),
+            standard_name="surface_air_pressure",
+            units="Pa",
+            var_name="ps",
+        )
+        # Test without air pressure ancillary variable
+        with self.assertRaises(ValueError) as err:
+            extract_surface_from_atm(self.grid_4d_ps)
+        self.assertEqual(
+            "Surface air pressure could not be found",
+            str(err.exception),
+        )
+        # Test with ancillary variable
+        self.grid_4d_ps.add_ancillary_variable(ps_ancillary, [0, 2, 3])
+        result = extract_surface_from_atm(self.grid_4d_ps)
+        expected = np.ma.array(
+            np.broadcast_to([[[0.0]], [[0.0]], [[2.0]], [[3.0]]], (4, 2, 2)),
+        )
+        self.assert_array_equal(result.data, expected)
+        assert result.var_name == "vars"
+        # Test with ancillary variable and masked input
+        self.grid_4d_ps_mask.add_ancillary_variable(ps_ancillary, [0, 2, 3])
+        result = extract_surface_from_atm(self.grid_4d_ps_mask)
+        expected = np.ma.array(np.ones((4, 2, 2)))
+        self.assert_array_equal(result.data, expected)
+        assert result.var_name == "vars"
 
 
 if __name__ == "__main__":
