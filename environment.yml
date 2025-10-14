@@ -66,3 +66,8 @@ dependencies:
   - pytest-mock
   - pytest-xdist
   # Not on conda forge - vprof
+  # eccodes from PyPI
+  # eccodes via iris-grib, has extra deps that are only PyPI packages
+  # and are internal .so's to conda package but pip check can't find them
+  - pip:
+      - eccodes
