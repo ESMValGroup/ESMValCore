@@ -25,5 +25,6 @@ class DerivedVariable(DerivedVariableBase):
         # Lapse rate
         lapserate_cube = zg_cube
 #        lapsrate_cube.convert_units("K km-1")
+        lapserate_cube.units="K km-1"
 
         return lapserate_cube
