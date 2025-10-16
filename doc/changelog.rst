@@ -4,10 +4,20 @@ Changelog
 =========
 
 v2.13.0
-------------------------
-Highlights
+-------
 
-TODO: add highlights
+Highlights
+~~~~~~~~~~
+
+- Extra facets are now configurable in the configuration under the `projects` section.
+- Preprocessor :func:`esmvalcore.preprocessor.extract_surface_from_atm` allows to
+  extract the surface values of a 3D atmospheric variable based on surface pressure.
+- Force the new configuration system through the environment variable `ESMVALTOOL_CONFIG_DIR`.
+- A set of ruff rules has been enabled in place of prospector and related tools and Codacy.
+  Among others, checks for unused arguments, overwriting loop variables, preventing
+  print statements, and docstrings.
+- An on-the-fly CMORizer for ICON-XPP is now available.
+- Stale issues and pull requests will now be closed automatically following the `stale` action workflow.
 
 This release includes
 
@@ -40,7 +50,28 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Make extra facets configurable in our configuration (:pull:`2747`) by :user:`schlunma`
-   See :ref:`config-projects`
+   See :ref:`config-projects`.
+   Please use the configuration option `extra_facets` instead. For example, instead of:
+
+   .. code-block:: yaml
+
+      # content of ~/.esmvaltool/extra_facets/cmip6-mapping.yml
+      CMIP6-MODEL:
+      Amon:
+         tas:
+            extra_facet_key: extra_facet_value
+
+   use the :ref:`config_for_cli`:
+
+   .. code-block:: yaml
+
+      projects:
+      CMIP6:
+         extra_facets:
+            CMIP6-MODEL:
+            Amon:
+               tas:
+                  extra_facet_key: extra_facet_value
 
 Bug fixes
 ~~~~~~~~~
