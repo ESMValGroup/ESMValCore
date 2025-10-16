@@ -59,7 +59,7 @@ Deprecations
          tas:
             extra_facet_key: extra_facet_value
 
-   use the :ref:`_config_for_cli`:
+   use the :ref:`config_for_cli`:
 
    .. code-block:: yaml
 
