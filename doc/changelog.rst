@@ -4,8 +4,10 @@ Changelog
 =========
 
 v2.13.0
-------------------------
+-------
+
 Highlights
+~~~~~~~~~~
 
 - Extra facets are now configurable in the configuration under the `projects` section.
 - Preprocessor :func:`esmvalcore.preprocessor.extract_surface_from_atm` allows to
