@@ -687,10 +687,8 @@ def test_download_fail(mocker, tmp_path, caplog):
         file.download.assert_called_with(dest_folder)
 
 
-def test_download_noop(caplog):
+def test_download_noop(mocker: MockerFixture) -> None:
     """Test downloading no files."""
-    caplog.set_level("DEBUG")
+    mock_download = mocker.patch.object(_download.ESGFFile, "_download")
     esmvalcore.esgf.download([], dest_folder="/does/not/exist")
-
-    msg = "All required data is available locally, not downloading anything."
-    assert msg in caplog.text
+    mock_download.assert_not_called()

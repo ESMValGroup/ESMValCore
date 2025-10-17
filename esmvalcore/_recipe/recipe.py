@@ -1327,6 +1327,8 @@ class Recipe:
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
+        # Add a special case for ESGF files to enable parallel downloads
+        esgf.download(self._download_files, self.session["download_dir"])
         for file in self._download_files:
             file.prepare()
 

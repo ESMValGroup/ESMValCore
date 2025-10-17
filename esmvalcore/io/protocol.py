@@ -61,6 +61,9 @@ class DataElement(Protocol):
     attributes: dict[str, Any]
     """Attributes are key-value pairs describing the data."""
 
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
+
     def prepare(self) -> None:
         """Prepare the data for access."""
 

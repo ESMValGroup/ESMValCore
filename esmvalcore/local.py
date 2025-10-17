@@ -904,6 +904,9 @@ def find_files(
 class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
     """File on the local filesystem."""
 
+    def prepare(self) -> None:
+        """Prepare the data for access."""
+
     @property
     def facets(self) -> Facets:
         """Facets are key-value pairs that were used to find this data."""
