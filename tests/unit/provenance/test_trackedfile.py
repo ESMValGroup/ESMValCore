@@ -203,6 +203,9 @@ class MockDataElement(DataElement):
     def prepare(self) -> None:
         pass
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     def to_iris(
         self,
         ignore_warnings: list[dict[str, Any]] | None = None,

@@ -2464,7 +2464,12 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     session["search_esgf"] = "when_missing"
 
     mocker.patch.object(
-        esmvalcore.io.protocol.DataElement,
+        esmvalcore.esgf,
+        "download",
+        create_autospec=True,
+    )
+    mocker.patch.object(
+        esmvalcore.local.LocalFile,
         "prepare",
         create_autospec=True,
     )
@@ -2476,7 +2481,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore.io.protocol.DataElement.prepare.assert_called()
+    esmvalcore.esgf.download.assert_called()
+    esmvalcore.local.LocalFile.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )

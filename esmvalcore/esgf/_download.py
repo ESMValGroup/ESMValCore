@@ -216,6 +216,7 @@ class ESGFFile(DataElement):
         self._attributes: dict[str, Any] | None = None
 
     def prepare(self) -> None:
+        """Prepare the data for access."""
         self.download(self.dest_folder)
 
     @property
@@ -432,16 +433,16 @@ class ESGFFile(DataElement):
         """Compare `self` to `other`."""
         return (self.dataset, self.name) < (other.dataset, other.name)
 
-    def __hash__(self):
-        """Compute a unique hash value."""
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
         return hash((self.dataset, self.name))
 
-    def local_file(self, dest_folder):
+    def local_file(self, dest_folder: Path | None) -> LocalFile:
         """Return the path to the local file after download.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Returns
@@ -449,16 +450,17 @@ class ESGFFile(DataElement):
         LocalFile
             The path where the file will be located after download.
         """
+        dest_folder = self.dest_folder if dest_folder is None else dest_folder
         file = LocalFile(dest_folder, self._get_relative_path())
         file.facets = self.facets
         return file
 
-    def download(self, dest_folder):
+    def download(self, dest_folder: Path | None) -> LocalFile:
         """Download the file.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Raises
@@ -600,9 +602,6 @@ def download(files, dest_folder, n_jobs=4):
         and not file.local_file(dest_folder).exists()
     ]
     if not files:
-        logger.debug(
-            "All required data is available locally, not downloading anything.",
-        )
         return
 
     files = sorted(files)

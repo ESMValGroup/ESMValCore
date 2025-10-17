@@ -43,6 +43,10 @@ class IntakeESGFDataset(DataElement):
 
     _attributes: dict[str, Any] | None = field(init=False, default=None)
 
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
+        return hash(self.name)
+
     def prepare(self) -> None:
         """Prepare the data for access."""
         self.catalog.to_path_dict()
