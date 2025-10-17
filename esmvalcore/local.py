@@ -663,9 +663,21 @@ class DataSource(esmvalcore.io.protocol.DataSource):
 
 _ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
 
+_LEGACY_DATA_SOURCES_WARNED: set[str] = set()
+
 
 def _get_data_sources(project: str) -> list[DataSource]:
     """Get a list of data sources."""
+    if project not in _LEGACY_DATA_SOURCES_WARNED:
+        logger.warning(
+            (
+                "Using legacy data sources for project '%s' using 'rootpath' "
+                "and 'drs' settings and the path templates from '%s'"
+            ),
+            project,
+            CFG["config_developer_file"],
+        )
+        _LEGACY_DATA_SOURCES_WARNED.add(project)
     rootpaths = CFG["rootpath"]
     for key in (project, "default"):
         if key in rootpaths:

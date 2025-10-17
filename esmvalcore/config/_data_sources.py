@@ -42,7 +42,6 @@ def _get_data_sources(
         pass
 
     # Use legacy data sources from config-user.yml and config-developer.yml.
-    logger.info("Using legacy data sources for project '%s'", project)
     data_sources: list[DataSource] = []
     try:
         legacy_local_data_sources = esmvalcore.local._get_data_sources(project)  # noqa: SLF001
