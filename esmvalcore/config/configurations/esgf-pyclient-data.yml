@@ -1,0 +1,31 @@
+projects:
+  CMIP6:
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        priority: 10
+  CMIP5:
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        priority: 10
+  CMIP3:
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        priority: 10
+  CORDEX:
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        priority: 10
+  obs4MIPs:
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        priority: 10

@@ -228,7 +228,7 @@ def test_collect_provenance(mocker, diagnostic_task):
     diagnostic_task._collect_provenance()
 
     tracked_file_class.assert_called_once_with(
-        "test.png",
+        Path("test.png"),
         {
             "caption": "Some figure",
             "plot_type": ("tag_value",),

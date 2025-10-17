@@ -16,7 +16,7 @@ import yamale
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
@@ -231,7 +231,9 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets:
+    if "timerange" not in facets or any(
+        "timerange" not in f.facets for f in input_files
+    ):
         return
 
     start_date, end_date = _parse_period(facets["timerange"])
@@ -241,8 +243,10 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
     available_years: set[int] = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file)
-        available_years.update(range(start, end + 1))
+        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+        start_year = int(start_date[:4])
+        end_year = int(end_date[:4])
+        available_years.update(range(start_year, end_year + 1))
 
     missing_years = required_years - available_years
     if missing_years:

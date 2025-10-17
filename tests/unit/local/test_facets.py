@@ -26,6 +26,28 @@ from esmvalcore.local import DataSource, LocalFile
             },
         ),
         (
+            "/climate_data/value1/filename_2000-2001.nc",
+            "/climate_data",
+            "{facet1}",
+            "{facet2}[_.]*nc",
+            {
+                "facet1": "value1",
+                "facet2": "filename",
+                "timerange": "2000/2001",
+            },
+        ),
+        (
+            "/climate_data/value1/filename_20001201-20011231.nc",
+            "/climate_data",
+            "{facet1}",
+            "{facet2}[_.]*nc",
+            {
+                "facet1": "value1",
+                "facet2": "filename",
+                "timerange": "20001201/20011231",
+            },
+        ),
+        (
             "/climate_data/value1/xyz/filename.nc",
             "/climate_data",
             "{facet1}/xyz",
@@ -125,6 +147,7 @@ from esmvalcore.local import DataSource, LocalFile
             {
                 "tier": "3",
                 "dataset": "ds",
+                "timerange": "1993/1993",
             },
         ),
         (
@@ -136,6 +159,7 @@ from esmvalcore.local import DataSource, LocalFile
                 "tier": "3",
                 "dataset": "ds",
                 "short_name": "tas",
+                "timerange": "1993/1993",
             },
         ),
         (
@@ -145,6 +169,7 @@ from esmvalcore.local import DataSource, LocalFile
             "{short_name}_*",
             {
                 "short_name": "tas",
+                "timerange": "1993/1993",
             },
         ),
         (
@@ -165,6 +190,7 @@ from esmvalcore.local import DataSource, LocalFile
             {
                 "short_name": "tas",
                 "dataset": "ds",
+                "timerange": "1993/1993",
             },
         ),
         (
@@ -261,9 +287,37 @@ def test_path2facets(
     """Test `DataSource.path2facets."""
     path = Path(path)
     rootpath = Path(rootpath)
-    data_source = DataSource(rootpath, dirname_template, filename_template)
-    result = data_source.path2facets(path)
+    data_source = DataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath=rootpath,
+        dirname_template=dirname_template,
+        filename_template=filename_template,
+    )
+    add_timerange = "timerange" in facets
+    result = data_source.path2facets(path, add_timerange=add_timerange)
     assert result == facets
+
+
+def test_path2facets_no_timerange():
+    # Test that `DataSource.path2facets` does not add "timerange"
+    # if it cannot determine the timerange.
+    path = Path("/climate_data/value1/filename.nc")
+    rootpath = Path("/climate_data")
+    data_source = DataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath=rootpath,
+        dirname_template="{facet1}",
+        filename_template="{facet2}[_.]*nc",
+    )
+    result = data_source.path2facets(path, add_timerange=True)
+    assert result == {
+        "facet1": "value1",
+        "facet2": "filename",
+    }
 
 
 def test_localfile():
