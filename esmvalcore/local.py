@@ -6,6 +6,7 @@ import copy
 import itertools
 import logging
 import os
+import os.path
 import re
 from dataclasses import dataclass, field
 from glob import glob
@@ -500,7 +501,7 @@ class DataSource(esmvalcore.io.protocol.DataSource):
 
     def __post_init__(self) -> None:
         """Set further attributes."""
-        self.rootpath = Path(self.rootpath)
+        self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
         self._regex_pattern = self._templates_to_regex()
 
     @property

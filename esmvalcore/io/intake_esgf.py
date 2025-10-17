@@ -2,7 +2,7 @@
 
 The default :ref:`configuration <config_overview>` is
 
-.. literalinclude:: ../configurations/intake-esgf.yml
+.. literalinclude:: ../configurations/intake-esgf-data.yml
    :language: yaml
 
 """
