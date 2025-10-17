@@ -1,5 +1,7 @@
 """Derivation of variable ``lapserate``."""
 
+import numpy as np
+
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
@@ -18,13 +20,14 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Calculate the lapse rates as vertical temperature gradient dT/dz [K km-1]."""
+        """Calculate the lapse rates as vertical temperature gradient -dT/dz [K km-1]."""
         ta_cube = cubes.extract_cube(Constraint(name="air_temperature"))
         zg_cube = cubes.extract_cube(Constraint(name="geopotential_height"))
 
         # Lapse rate
-        lapserate_cube = zg_cube
-#        lapsrate_cube.convert_units("K km-1")
+        lapserate_cube = zg_cube.copy()
+        lapserate_cube.data = (np.gradient(ta_cube.core_data(), axis=1) /
+                              np.gradient(zg_cube.core_data(), axis=1) * -1000.)
         lapserate_cube.units="K km-1"
 
         return lapserate_cube
