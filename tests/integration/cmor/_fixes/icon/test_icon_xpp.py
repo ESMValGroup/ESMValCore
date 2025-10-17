@@ -732,6 +732,7 @@ def test_get_rlutcs_fix():
     assert fix == [Rlutcs(None), AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rlutcs_fix(cubes_atm_3d):
     """Test fix."""
     cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
@@ -770,6 +771,7 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rsdt_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsdt")
@@ -793,6 +795,7 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rsut_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsut")
@@ -819,6 +822,7 @@ def test_get_rsutcs_fix():
     assert fix == [Rsutcs(None), AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rsutcs_fix(cubes_atm_3d):
     """Test fix."""
     cube = cubes_atm_3d.extract_cube(NameConstraint(var_name="temp"))
@@ -923,6 +927,7 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_siconc_fix(cubes_ocean_3d):
     """Test fix."""
     cubes = CubeList(
@@ -978,6 +983,7 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_siconca_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconca")
@@ -1007,6 +1013,7 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_ta_fix(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
@@ -1030,6 +1037,7 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_tas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -1068,6 +1076,7 @@ def test_get_thetao_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_thetao_fix(cubes_ocean_3d):
     """Test fix."""
     fix = get_allvars_fix("Omon", "thetao")
@@ -1089,6 +1098,7 @@ def test_thetao_fix(cubes_ocean_3d):
     assert cube.shape == (1, 47, 8)
 
 
+@pytest.mark.online
 def test_thetao_fix_already_bounds(cubes_ocean_3d):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
@@ -1118,6 +1128,7 @@ def test_thetao_fix_already_bounds(cubes_ocean_3d):
     assert cube.shape == (1, 47, 8)
 
 
+@pytest.mark.online
 def test_thetao_fix_no_bounds(cubes_ocean_3d):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
