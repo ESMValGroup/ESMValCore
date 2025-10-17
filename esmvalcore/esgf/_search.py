@@ -2,6 +2,7 @@
 
 import itertools
 import logging
+import os.path
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -400,7 +401,9 @@ class ESGFDataSource(DataSource):
     """A string containing debug information when no data is found."""
 
     def __post_init__(self) -> None:
-        self.download_dir = Path(self.download_dir)
+        self.download_dir = Path(
+            os.path.expandvars(self.download_dir),
+        ).expanduser()
 
     def find_data(self, **facets: FacetValue) -> list[ESGFFile]:
         """Find data.
