@@ -12,7 +12,7 @@ from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile, _replace_years_with_timerange
+from esmvalcore.local import _replace_years_with_timerange
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -511,16 +511,12 @@ def _report_unexpanded_globs(
     expanded_ds.supplementaries = []
 
     if expanded_ds.files:
-        if any(isinstance(f, LocalFile) for f in expanded_ds.files):
-            paths_msg = "paths to the "
-        else:
-            paths_msg = ""
         msg = (
-            f"{msg}\nDo the {paths_msg}files:\n"
+            f"{msg}\nPlease check why the files:\n"
             + "\n".join(
                 f"{f} with facets: {f.facets}" for f in expanded_ds.files
             )
-            + "\nprovide the missing facet values?"
+            + "\ndo not provide the missing facet values."
         )
     else:
         timerange = expanded_ds.facets.get("timerange")

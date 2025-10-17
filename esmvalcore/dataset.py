@@ -15,7 +15,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from esmvalcore import esgf, local
+from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
@@ -273,10 +273,8 @@ class Dataset:
         for dataset, file in partially_defined:
             msg = (
                 f"{dataset} with unexpanded wildcards, created from file "
-                f"{file} with facets {file.facets}. Are the missing facets "
-                "in the path to the file?"
-                if isinstance(file, local.LocalFile)
-                else "available on ESGF?"
+                f"{file} with facets {file.facets}. Please check why "
+                "the missing facets are not available for the file."
             )
             if expanded:
                 logger.info("Ignoring %s", msg)
