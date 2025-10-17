@@ -572,6 +572,7 @@ def test_get_areacella_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_areacella_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix("fx", "areacella")
@@ -595,6 +596,7 @@ def test_get_areacello_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_areacello_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix("Ofx", "areacello")
@@ -655,6 +657,7 @@ def test_get_lwp_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_lwp_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("AERmon", "lwp")
@@ -683,6 +686,7 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rsdt_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsdt")
@@ -706,6 +710,7 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_rsut_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "rsut")
@@ -732,6 +737,7 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_siconc_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconc")
@@ -758,6 +764,7 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_siconca_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("SImon", "siconca")
@@ -787,6 +794,7 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_ta_fix(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
@@ -798,6 +806,7 @@ def test_ta_fix(cubes_atm_3d):
     check_lat_lon(cube)
 
 
+@pytest.mark.online
 def test_ta_fix_no_plev_bounds(cubes_atm_3d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "ta")
@@ -824,6 +833,7 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_tas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -835,6 +845,7 @@ def test_tas_fix(cubes_atm_2d):
     check_heightxm(cube, 2.0)
 
 
+@pytest.mark.online
 def test_tas_spatial_index_coord_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -849,6 +860,7 @@ def test_tas_spatial_index_coord_already_present(cubes_atm_2d):
     check_lat_lon(cube)
 
 
+@pytest.mark.online
 def test_tas_scalar_height2m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -901,6 +913,7 @@ def test_tas_no_mesh(cubes_atm_2d):
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
 
 
+@pytest.mark.online
 def test_tas_dim_height2m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -920,6 +933,7 @@ def test_tas_dim_height2m_already_present(cubes_atm_2d):
     check_heightxm(cube, 2.0)
 
 
+@pytest.mark.online
 def test_tas_no_shift_time(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -944,6 +958,7 @@ def test_tas_no_shift_time(cubes_atm_2d):
     assert time.attributes == {}
 
 
+@pytest.mark.online
 def test_fix_does_not_change_cached_grid(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -975,6 +990,7 @@ def test_get_uas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
+@pytest.mark.online
 def test_uas_fix(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
@@ -1001,6 +1017,7 @@ def test_uas_fix(cubes_atm_2d):
     assert height.bounds is None
 
 
+@pytest.mark.online
 def test_uas_scalar_height10m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
@@ -1017,6 +1034,7 @@ def test_uas_scalar_height10m_already_present(cubes_atm_2d):
     check_heightxm(cube, 10.0)
 
 
+@pytest.mark.online
 def test_uas_dim_height10m_already_present(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "uas")
@@ -1108,6 +1126,7 @@ def test_ch4clim_fix(cubes_regular_grid):
 # Test fix with empty standard_name
 
 
+@pytest.mark.online
 def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -1130,6 +1149,7 @@ def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch):
 # Test automatic addition of missing coordinates
 
 
+@pytest.mark.online
 def test_add_time(cubes_atm_2d):
     """Test fix."""
     # Remove time from tas cube to test automatic addition
@@ -1162,6 +1182,7 @@ def test_add_time_fail():
         fix._add_time(cube, cubes)
 
 
+@pytest.mark.online
 def test_add_latitude(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
@@ -1180,6 +1201,7 @@ def test_add_latitude(cubes_atm_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
+@pytest.mark.online
 def test_add_longitude(cubes_atm_2d):
     """Test fix."""
     # Remove longitude from tas cube to test automatic addition
@@ -1198,6 +1220,7 @@ def test_add_longitude(cubes_atm_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
+@pytest.mark.online
 def test_add_latitude_longitude(cubes_atm_2d):
     """Test fix."""
     # Remove latitude and longitude from tas cube to test automatic addition
@@ -1259,6 +1282,7 @@ def test_add_coord_from_grid_file_fail_no_url():
         fix._add_coord_from_grid_file(Cube(0), "clat")
 
 
+@pytest.mark.online
 def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
@@ -1276,6 +1300,7 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d):
         fix._add_coord_from_grid_file(tas_cube, "clat")
 
 
+@pytest.mark.online
 def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_atm_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
@@ -1380,6 +1405,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     mock_get_grid_from_facet.assert_not_called()
 
 
+@pytest.mark.online
 @mock.patch.object(IconFix, "_get_grid_from_facet", autospec=True)
 def test_get_horizontal_grid_from_attr_cache_file_too_old(
     mock_get_grid_from_facet,
@@ -1742,6 +1768,7 @@ def test_invalid_time_units(cubes_atm_2d):
 # Test fix with (sub-)hourly data
 
 
+@pytest.mark.online
 def test_hourly_data(cubes_atm_2d):
     """Test fix."""
     fix = get_allvars_fix("Amon", "tas")
@@ -2093,6 +2120,7 @@ def test_get_previous_timestep(frequency, datetime_in, datetime_out):
 # Test mesh creation raises warning because bounds do not match vertices
 
 
+@pytest.mark.online
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
 def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
     """Test fix."""
@@ -2117,6 +2145,7 @@ def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
     )
 
 
+@pytest.mark.online
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
 def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d):
     """Test fix."""
