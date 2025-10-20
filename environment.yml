@@ -16,7 +16,7 @@ dependencies:
   - esmpy
   - esmvaltool-sample-data
   - filelock
-  - fiona
+  #  - fiona  # comment out temporarily
   - fire
   - geopy
   - humanfriendly

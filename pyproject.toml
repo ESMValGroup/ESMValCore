@@ -41,7 +41,7 @@ dependencies = [
     "esmf-regrid>=0.11.0",
     "esmpy",  # not on PyPI
     "filelock",
-    "fiona",
+    #  "fiona",  # comment out temporarily
     "fire",
     "geopy",
     "humanfriendly",
