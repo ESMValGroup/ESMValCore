@@ -3,11 +3,26 @@
 Changelog
 =========
 
-v2.13.0
-------------------------
-Highlights
+.. _changelog-v2-13-0:
 
-TODO: add highlights
+v2.13.0
+-------
+
+Highlights
+~~~~~~~~~~
+
+- Extra facets are now more easily configurable with the new configuration system,
+  as described in :ref:`config-extra-facets`.
+- Preprocessor :func:`esmvalcore.preprocessor.extract_surface_from_atm` allows to
+  extract the surface values of a 3D atmospheric variable based on surface pressure.
+- Force the new configuration system through the environment variable `ESMVALTOOL_CONFIG_DIR`
+  as described :ref:`here <config_yaml_files>`.
+- A set of ruff rules has been enabled in place of Prospector and related tools and Codacy,
+  modernizing our development setup. Additional information is available in the
+  section on :ref:`code_quality` in our contribution guidelines.
+- An on-the-fly CMORizer for ICON-XPP is now available.
+- `Stale issues and pull requests <https://github.com/esMValGroup/esMValCore/issues?q=label%3AStale>`__
+  will now be closed automatically following the `stale` action workflow.
 
 This release includes
 
@@ -26,7 +41,7 @@ Backwards incompatible changes
       .. code-block:: yaml
 
          preprocessors:
-               regrid_preprocessor:
+            regrid_preprocessor:
                regrid:
                   target_grid: 2.5x2.5
                   scheme:
@@ -39,13 +54,29 @@ Backwards incompatible changes
 Deprecations
 ~~~~~~~~~~~~
 
--  Make extra facets configurable in our configuration (:pull:`2747`) by :user:`schlunma`
-   See :ref:`config-projects`
+-  Make extra facets configurable using the new configuration system (:pull:`2747`) by :user:`schlunma`
+   See :ref:`config-projects`.
+   Please use the configuration option `extra_facets` instead. For example, instead of:
 
-Bug fixes
-~~~~~~~~~
+   .. code-block:: yaml
 
--  Avoid too wide supplementary file search (:pull:`2771`) by :user:`bouweandela`
+      # content of ~/.esmvaltool/extra_facets/cmip6-mapping.yml
+      CMIP6-MODEL:
+        Amon:
+          tas:
+            extra_facet_key: extra_facet_value
+
+   use the syntax described under :ref:`config-extra-facets`:
+
+   .. code-block:: yaml
+
+      projects:
+        CMIP6:
+          extra_facets:
+            CMIP6-MODEL:
+              Amon:
+                tas:
+                  extra_facet_key: extra_facet_value
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -102,7 +133,7 @@ Preprocessor
 -  Add unit conversion for air mass (:pull:`2698`) by :user:`LisaBock`
 -  Add evaporation flux to special unit conversion (:pull:`2691`) by :user:`lukruh`
 -  Add preprocessor to extract surface values from 3D atmospheric variables (:pull:`2641`) by :user:`jlenh`
--  Allow adding supplementary variables from a different project and different dataset (:pull:`2755`) by :user:`valeriupredoi`
+-  Allow adding supplementary variables from a different project and different dataset (:pull:`2755`) by :user:`valeriupredoi` and (:pull:`2771`) by :user:`bouweandela`
 -  Move concatenate preprocessor function to its own module (:pull:`2766`) by :user:`bouweandela`
 -  Add preprocessor `align_metadata` (:pull:`2789`) by :user:`schlunma`
 -  Fix for `add_ancillary_variable` (#2820) (:pull:`2825`) by :user:`jlenh`

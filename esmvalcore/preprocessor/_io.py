@@ -113,7 +113,9 @@ def load(
         Invalid type for ``file``.
 
     """
-    if isinstance(file, (str, Path)):
+    if hasattr(file, "to_iris"):
+        cubes = file.to_iris(ignore_warnings=ignore_warnings)
+    elif isinstance(file, (str, Path)):
         extension = (
             file.suffix
             if isinstance(file, Path)
