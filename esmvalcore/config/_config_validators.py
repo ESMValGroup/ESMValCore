@@ -491,11 +491,67 @@ def deprecate_extra_facets_dir(
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
 
+def deprecate_rootpath(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
+    """Deprecate ``config_file`` option.
+
+    Parameters
+    ----------
+    validated_config:
+        ``ValidatedConfig`` instance which will be modified in place.
+    value:
+        Raw input value for ``config_file`` option.
+    validated_value:
+        Validated value for ``config_file`` option.
+
+    """
+    validated_config  # noqa: B018
+    value  # noqa: B018
+    validated_value  # noqa: B018
+    option = "rootpath"
+    deprecated_version = "2.13.0"
+    remove_version = "2.16.0"
+    more_info = " Please define data sources using the option `projects: data:` instead."
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+
+
+def deprecate_drs(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
+    """Deprecate ``config_file`` option.
+
+    Parameters
+    ----------
+    validated_config:
+        ``ValidatedConfig`` instance which will be modified in place.
+    value:
+        Raw input value for ``config_file`` option.
+    validated_value:
+        Validated value for ``config_file`` option.
+
+    """
+    validated_config  # noqa: B018
+    value  # noqa: B018
+    validated_value  # noqa: B018
+    option = "drs"
+    deprecated_version = "2.13.0"
+    remove_version = "2.16.0"
+    more_info = " Please define data sources using the option `projects: data:` instead."
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+
+
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
     "config_file": deprecate_config_file,  # TODO: remove in v2.14.0
     "extra_facets_dir": deprecate_extra_facets_dir,  # TODO: remove in v2.15.0
+    "drs": deprecate_drs,  # TODO: remove in v2.16.0
+    "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
 }
 
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from numbers import Number
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
@@ -219,7 +218,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number, bool)):
+    if isinstance(realms, (str, int)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)

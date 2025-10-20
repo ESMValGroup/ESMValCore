@@ -49,7 +49,6 @@ def ignore_existing_user_config(monkeypatch, cfg_default):
 @pytest.fixture
 def session(tmp_path: Path, ignore_existing_user_config, monkeypatch):
     """Session object with default settings."""
-    monkeypatch.setitem(CFG, "rootpath", {"default": {tmp_path: "default"}})
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
     return CFG.start_session("recipe_test")
 

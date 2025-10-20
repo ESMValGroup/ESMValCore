@@ -9,7 +9,6 @@ The default :ref:`configuration <config_overview>` is
 
 import copy
 from dataclasses import dataclass, field
-from numbers import Number
 from typing import Any
 
 import intake_esgf
@@ -138,9 +137,7 @@ class IntakeESGFDataSource(DataSource):
         """
         # Normalize facets so all values are `list[str]`.
         our_facets = {
-            facet: [str(values)]
-            if isinstance(values, str | Number | bool)
-            else values
+            facet: [str(values)] if isinstance(values, str | int) else values
             for facet, values in facets.items()
         }
         # Translate "our" facets to ESGF facets and "our" values to ESGF values.

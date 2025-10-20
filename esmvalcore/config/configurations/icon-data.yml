@@ -1,0 +1,14 @@
+projects:
+  ICON:
+    data:
+      icon: &icon
+        type: "esmvalcore.local.DataSource"
+        rootpath: ~/climate_data
+        dirname_template: "{exp}"
+        filename_template: "{exp}_{var_type}*.nc"
+      icon-outdata:
+        <<: *icon
+        dirname_template: "{exp}/outdata"
+      icon-output:
+        <<: *icon
+        dirname_template: "{exp}/output"
