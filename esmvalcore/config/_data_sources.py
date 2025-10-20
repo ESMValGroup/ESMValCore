@@ -45,7 +45,7 @@ def _get_data_sources(
     data_sources: list[DataSource] = []
     try:
         legacy_local_data_sources = esmvalcore.local._get_data_sources(project)  # noqa: SLF001
-    except RecipeError:
+    except (RecipeError, KeyError):
         # The project is not configured in config-developer.yml
         legacy_local_data_sources = []
     else:

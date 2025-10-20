@@ -86,10 +86,7 @@ class Config(ValidatedConfig):
     _validate = _validators
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
-    _warn_if_missing = (
-        ("drs", URL),
-        ("rootpath", URL),
-    )
+    _warn_if_missing = (("projects", URL),)
 
     def __init__(self, *args, **kwargs):
         """Initialize class instance."""

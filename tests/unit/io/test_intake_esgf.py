@@ -234,7 +234,7 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
     with importlib.resources.as_file(
         importlib.resources.files(esmvalcore.config)
         / "configurations"
-        / "intake-esgf.yml",
+        / "intake-esgf-data.yml",
     ) as config_file:
         cfg = yaml.safe_load(config_file.read_text(encoding="utf-8"))
     session["projects"] = cfg["projects"]

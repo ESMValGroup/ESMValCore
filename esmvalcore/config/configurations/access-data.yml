@@ -1,0 +1,13 @@
+projects:
+  ACCESS:
+    data:
+      access-sub-dataset:
+        type: "esmvalcore.local.DataSource"
+        rootpath: ~/climate_data
+        dirname_template: "{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF"
+        filename_template: "{sub_dataset}.{freq_attribute}-*.nc"
+      access-ocean:
+        type: "esmvalcore.local.DataSource"
+        rootpath: ~/climate_data
+        dirname_template: "{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF"
+        filename_template: "ocean_{freq_attribute}.nc-*"

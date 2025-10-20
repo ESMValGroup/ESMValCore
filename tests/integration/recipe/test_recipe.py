@@ -1,10 +1,13 @@
+import importlib.resources
 import inspect
 import os
 import re
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
+from typing import TYPE_CHECKING
 from unittest.mock import create_autospec
 
 import iris
@@ -29,6 +32,48 @@ from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
+
+@lru_cache
+def _load_data_sources(
+    filename,
+) -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load data source configurations."""
+    with importlib.resources.as_file(
+        importlib.resources.files(esmvalcore.config)
+        / "configurations"
+        / filename,
+    ) as config_file:
+        return yaml.safe_load(config_file.read_text(encoding="utf-8"))
+
+
+def update_data_sources(
+    session: Session,
+    filename: str,
+    rootpath: Path,
+) -> None:
+    """Update the data sources in `session` using config file `filename`."""
+    cfg = _load_data_sources(filename)
+    projects = cfg["projects"]
+    for project in projects:
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(rootpath)
+        session["projects"][project]["data"] = data_sources
+
+
+@pytest.fixture
+def session(tmp_path: Path, session: Session) -> Session:
+    """Session fixture with default data sources."""
+    update_data_sources(session, "local-data.yml", tmp_path)
+    return session
+
 
 TAGS_FOR_TESTING = {
     "authors": {
@@ -2490,8 +2535,14 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary.assert_called_once()
 
 
-def test_representative_dataset_regular_var(patched_datafinder, session):
+def test_representative_dataset_regular_var(
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+):
     """Test ``_representative_dataset`` with regular variable."""
+    update_data_sources(session, "icon-data.yml", tmp_path)
+
     variable = {
         "dataset": "ICON",
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
@@ -2508,18 +2559,20 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     datasets = _representative_datasets(dataset)
     assert len(datasets) == 1
     filename = datasets[0].files[0]
-    path = Path(filename)
-    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990-1999.nc"
+    assert filename.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990-1999.nc"
 
 
 @pytest.mark.parametrize("force_derivation", [True, False])
 def test_representative_dataset_derived_var(
-    patched_datafinder,
-    session,
-    force_derivation,
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+    force_derivation: bool,
 ):
     """Test ``_representative_dataset`` with derived variable."""
-    variable = {
+    update_data_sources(session, "icon-data.yml", tmp_path)
+
+    variable: Facets = {
         "dataset": "ICON",
         "derive": True,
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
@@ -2536,7 +2589,7 @@ def test_representative_dataset_derived_var(
     dataset.session = session
     representative_datasets = _representative_datasets(dataset)
 
-    expected_facets = {
+    expected_facets: Facets = {
         # Already present in variable
         "dataset": "ICON",
         "derive": True,

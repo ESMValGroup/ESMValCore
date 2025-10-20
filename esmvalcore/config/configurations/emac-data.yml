@@ -1,0 +1,8 @@
+projects:
+  EMAC:
+    data:
+      emac:
+        type: "esmvalcore.local.DataSource"
+        rootpath: ~/climate_data
+        dirname_template: "{exp}/{channel}"
+        filename_template: "{exp}*{channel}{postproc_flag}.nc"

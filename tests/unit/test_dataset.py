@@ -1,9 +1,12 @@
+import importlib.resources
 import textwrap
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 
 import pyesgf
 import pytest
+import yaml
 
 import esmvalcore.dataset
 import esmvalcore.local
@@ -12,6 +15,33 @@ from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.typing import Facets
+
+
+@lru_cache
+def _load_default_data_sources() -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load default data sources for local users."""
+    with importlib.resources.as_file(
+        importlib.resources.files(esmvalcore.config)
+        / "configurations"
+        / "local-data.yml",
+    ) as config_file:
+        return yaml.safe_load(config_file.read_text(encoding="utf-8"))
+
+
+@pytest.fixture
+def session(tmp_path: Path, session: Session) -> Session:
+    """Session fixture with default local data sources."""
+    projects = _load_default_data_sources()["projects"]
+    for project in projects:
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(tmp_path)
+        session["projects"][project]["data"] = data_sources
+    return session
 
 
 def test_repr():
@@ -1251,7 +1281,7 @@ def test_concatenating_historical_and_future_exps(mocker):
     assert dataset.supplementaries[0].facets["exp"] == "historical"
 
 
-def test_from_recipe_with_glob(tmp_path, session, mocker):
+def test_from_recipe_with_glob(tmp_path: Path, session: Session) -> None:
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
@@ -1268,8 +1298,6 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
     recipe = tmp_path / "recipe_test.yml"
     recipe.write_text(recipe_txt, encoding="utf-8")
 
-    session["drs"]["CMIP5"] = "ESGF"
-    CFG["rootpath"]["CMIP5"] = [tmp_path]
     filenames = [
         "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
         "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc",
@@ -1281,7 +1309,7 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("")
 
-    definitions = [
+    definitions: list[Facets] = [
         {
             "diagnostic": "diagnostic1",
             "variable_group": "tas",
@@ -1567,11 +1595,22 @@ def test_find_files_outdated_local(mocker, dataset):
 
 @pytest.mark.parametrize(
     "project",
-    ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "ana4mips", "native6"],
+    ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "native6"],
 )
-def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
+def test_find_files_non_esgf_projects(mocker, monkeypatch, session, project):
     """Test that find_files does never download files for non-ESGF projects."""
     monkeypatch.setitem(CFG, "search_esgf", "always")
+    # Add "model" projects that are not part of the default local configuration.
+    with importlib.resources.as_file(
+        importlib.resources.files(esmvalcore.config)
+        / "configurations"
+        / f"{project.lower()}-data.yml",
+    ) as config_file:
+        if config_file.exists():
+            cfg = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+            session["projects"][project]["data"] = cfg["projects"][project][
+                "data"
+            ]
 
     files = [
         mocker.create_autospec(
@@ -1622,6 +1661,7 @@ def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
         var_type="var_type",
         version=1,
     )
+    tas.session = session
     tas.augment_facets()
     tas.find_files()
 
@@ -2159,7 +2199,7 @@ def test_get_extra_facets_native6():
     }
 
 
-OBS6_SAT_FACETS = {
+OBS6_SAT_FACETS: Facets = {
     "project": "OBS6",
     "dataset": "SAT",
     "mip": "Amon",
@@ -2213,8 +2253,11 @@ def test_derivation_necessary_no_derivation():
     assert dataset._derivation_necessary() is False
 
 
-def test_derivation_necessary_no_force_derivation_no_files():
+def test_derivation_necessary_no_force_derivation_no_files(
+    session: Session,
+) -> None:
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.session = session
     assert dataset._derivation_necessary() is True
 
 
