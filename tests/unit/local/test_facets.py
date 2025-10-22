@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore.local import DataSource, LocalFile
+from esmvalcore.local import LocalDataSource, LocalFile
 
 
 @pytest.mark.parametrize(
@@ -284,10 +284,10 @@ def test_path2facets(
     filename_template,
     facets,
 ):
-    """Test `DataSource.path2facets."""
+    """Test `LocalDataSource.path2facets."""
     path = Path(path)
     rootpath = Path(rootpath)
-    data_source = DataSource(
+    data_source = LocalDataSource(
         name="test-source",
         project="test-project",
         priority=1,
@@ -301,11 +301,11 @@ def test_path2facets(
 
 
 def test_path2facets_no_timerange():
-    # Test that `DataSource.path2facets` does not add "timerange"
+    # Test that `LocalDataSource.path2facets` does not add "timerange"
     # if it cannot determine the timerange.
     path = Path("/climate_data/value1/filename.nc")
     rootpath = Path("/climate_data")
-    data_source = DataSource(
+    data_source = LocalDataSource(
         name="test-source",
         project="test-project",
         priority=1,

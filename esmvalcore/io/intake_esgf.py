@@ -1,6 +1,12 @@
 """Access data using `intake-esgf <https://intake-esgf.readthedocs.io>`_.
 
-The default :ref:`configuration <config_overview>` is
+This module replaces the :mod:`esmvalcore.io.esgf` module. Please use this
+module instead of :mod:`esmvalcore.io.esgf` to access data on ESGF. If you
+encounter any issues using this module, please report them at
+https://github.com/ESMValGroup/ESMValCore/issues.
+
+Create a file with the following :ref:`configuration <config_overview>` in
+``~/.config/esmvaltool`` to use this module:
 
 .. literalinclude:: ../configurations/intake-esgf-data.yml
    :language: yaml
