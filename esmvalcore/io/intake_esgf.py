@@ -5,8 +5,10 @@ module instead of :mod:`esmvalcore.io.esgf` to access data on ESGF. If you
 encounter any issues using this module, please report them at
 https://github.com/ESMValGroup/ESMValCore/issues.
 
-Create a file with the following :ref:`configuration <config_overview>` in
-``~/.config/esmvaltool`` to use this module:
+Run the command ``esmvalcore config copy intake-esgf-data.yml`` to update
+your :ref:`configuration <config_overview>` to use this module. This will
+create a file with the following content in ``~/.config/esmvaltool`` or
+the path specified by the ``ESMVALTOOL_CONFIG_DIR`` environment variable:
 
 .. literalinclude:: ../configurations/intake-esgf-data.yml
    :language: yaml
