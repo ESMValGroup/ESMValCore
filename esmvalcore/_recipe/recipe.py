@@ -23,6 +23,7 @@ from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
+    GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
     _get_output_file,
@@ -38,7 +39,6 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
-from esmvalcore.preprocessor._io import GRIB_FORMATS
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,

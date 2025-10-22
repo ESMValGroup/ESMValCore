@@ -21,16 +21,13 @@ from iris.cube import Cube, CubeList
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.exceptions import ESMValCoreLoadWarning
 from esmvalcore.io.protocol import DataElement
-from esmvalcore.iris_helpers import (
-    dataset_to_iris,
-    ignore_warnings_context,
-)
+from esmvalcore.iris_helpers import dataset_to_iris
+from esmvalcore.local import LocalFile
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from dask.delayed import Delayed
-    from iris.fileformats.cf import CFVariable
 
 logger = logging.getLogger(__name__)
 
@@ -43,36 +40,6 @@ VARIABLE_KEYS = {
     "reference_dataset",
     "alternative_dataset",
 }
-GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
-
-
-def _get_attr_from_field_coord(
-    ncfield: CFVariable,
-    coord_name: str | None,
-    attr: str,
-) -> Any:
-    """Get attribute from netCDF field coordinate."""
-    if coord_name is not None:
-        attrs = ncfield.cf_group[coord_name].cf_attrs()
-        attr_val = [value for (key, value) in attrs if key == attr]
-        if attr_val:
-            return attr_val[0]
-    return None
-
-
-def _restore_lat_lon_units(
-    cube: Cube,
-    field: CFVariable,
-    filename: str,  # noqa: ARG001
-) -> None:  # pylint: disable=unused-argument
-    """Use this callback to restore the original lat/lon units."""
-    # Iris chooses to change longitude and latitude units to degrees
-    # regardless of value in file, so reinstating file value
-    for coord in cube.coords():
-        if coord.standard_name in ["longitude", "latitude"]:
-            units = _get_attr_from_field_coord(field, coord.var_name, "units")
-            if units is not None:
-                coord.units = units
 
 
 def load(
@@ -129,7 +96,7 @@ def load(
             else os.path.splitext(file)[1]
         )
         if "zarr" not in extension:
-            cubes = _load_from_file(file, ignore_warnings=ignore_warnings)
+            cubes = LocalFile(file).to_iris(ignore_warnings=ignore_warnings)
         else:
             cubes = _load_zarr(
                 file,
@@ -227,30 +194,6 @@ def _load_zarr(
     zarr_xr = zarr_xr.unify_chunks()
 
     return dataset_to_iris(zarr_xr, ignore_warnings=ignore_warnings)
-
-
-def _load_from_file(
-    file: str | Path,
-    ignore_warnings: list[dict[str, Any]] | None = None,
-) -> CubeList:
-    """Load data from file."""
-    file = Path(file)
-    logger.debug("Loading:\n%s", file)
-
-    with ignore_warnings_context(ignore_warnings):
-        # GRIB files need to be loaded with iris.load, otherwise we will
-        # get separate (lat, lon) slices for each time step, pressure
-        # level, etc.
-        if file.suffix in GRIB_FORMATS:
-            cubes = iris.load(file, callback=_restore_lat_lon_units)
-        else:
-            cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
-    logger.debug("Done with loading %s", file)
-
-    for cube in cubes:
-        cube.attributes.globals["source_file"] = str(file)
-
-    return cubes
 
 
 def save(  # noqa: C901
