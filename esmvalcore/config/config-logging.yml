@@ -1,25 +1,28 @@
 # Logger configuration
 ---
-
 version: 1
 disable_existing_loggers: false
 formatters:
   console:
-    format: '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s'
+    format: "%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s"
   brief:
-    format: '%(levelname)-7s [%(process)d] %(message)s'
+    format: "%(levelname)-7s [%(process)d] %(message)s"
   debug:
-    format: '%(asctime)s UTC [%(process)d] %(levelname)-7s %(name)s:%(lineno)s %(message)s'
+    format: "%(asctime)s UTC [%(process)d] %(levelname)-7s %(name)s:%(lineno)s %(message)s"
 filters:
-  only_cmor:  # only events from CMOR check and generic fixes
+  only_cmor: # only events from CMOR check and generic fixes
     (): esmvalcore.config._logging.FilterMultipleNames
     names: [esmvalcore.cmor.check, esmvalcore.cmor._fixes.fix.genericfix]
     mode: allow
-  no_cmor:  # no events from CMOR check and generic fixes
+  no_cmor: # no events from CMOR check and generic fixes
     (): esmvalcore.config._logging.FilterMultipleNames
     names: [esmvalcore.cmor.check, esmvalcore.cmor._fixes.fix.genericfix]
     mode: disallow
-  no_external_warnings:  # no events from external Python warnings
+  no_intake_esgf: # no events from intake-esgf
+    (): esmvalcore.config._logging.FilterMultipleNames
+    names: ["intake-esgf"]
+    mode: disallow
+  no_external_warnings: # no events from external Python warnings
     (): esmvalcore.config._logging.FilterExternalWarnings
 handlers:
   console:
@@ -27,21 +30,21 @@ handlers:
     level: INFO
     formatter: console
     stream: ext://sys.stdout
-    filters: [no_cmor, no_external_warnings]
+    filters: [no_cmor, no_external_warnings, no_intake_esgf]
   simple_log_file:
     class: logging.FileHandler
     level: INFO
     formatter: brief
     filename: main_log.txt
     mode: w
-    filters: [no_cmor, no_external_warnings]
+    filters: [no_cmor, no_external_warnings, no_intake_esgf]
   debug_log_file:
     class: logging.FileHandler
     level: DEBUG
     formatter: debug
     filename: main_log_debug.txt
     mode: w
-  cmor_log:  # only contains output from CMOR check and generic fixes
+  cmor_log: # only contains output from CMOR check and generic fixes
     class: logging.FileHandler
     level: INFO
     formatter: brief

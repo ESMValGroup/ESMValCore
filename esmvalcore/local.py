@@ -1,4 +1,48 @@
-"""Find files on the local filesystem."""
+"""Find files on the local filesystem.
+
+Example configuration to find CMIP6 data on a personal computer:
+
+.. code-block:: yaml
+
+   projects:
+     CMIP6:
+       data:
+         local-data:
+           type: "esmvalcore.local.LocalDataSource"
+           rootpath: ~/climate_data
+           dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+           filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+
+The module will find files matching the :func:`glob.glob` pattern formed by
+``rootpath/dirname_template/filename_template``, where the facets defined
+inside the curly braces of the templates are replaced by their values
+from the :class:`~esmvalcore.dataset.Dataset` or the :ref:`recipe <recipe>`. Note
+that the name of the data source, ``local-data`` in the example above,
+must be unique within each project but can otherwise be chosen freely.
+
+To start using this module, download the complete file for personal computers
+:download:`here <../configurations/local-data.yml>`, copy it to the
+directory ``~/.config/esmvaltool/``, and tailor it for your own system
+if needed.
+
+Example configuration files for popular HPC systems are also available:
+
+  - :download:`Jasmin at CEDA<../configurations/badc-data.yml>`
+  - :download:`Levante at DKRZ<../configurations/dkrz-data.yml>`
+  - :download:`UK Met Office <../configurations/mo-data.yml>`
+  - :download:`NCI Australia <../configurations/nci-data.yml>`
+  - :download:`IPSL <../configurations/ipsl-data.yml>`
+  - :download:`ETHZ <../configurations/ethz-data.yml>`
+
+Example configuration files for
+:ref:`supported climate models <read_native_models>` are also available:
+
+    - :download:`ACCESS <../configurations/access-data.yml>`
+    - :download:`ICON <../configurations/icon-data.yml>`
+    - :download:`IPSLCM <../configurations/ipslcm-data.yml>`
+    - :download:`EMAC <../configurations/emac-data.yml>`
+
+"""
 
 from __future__ import annotations
 
@@ -6,27 +50,29 @@ import copy
 import itertools
 import logging
 import os
+import os.path
 import re
-from dataclasses import dataclass
+import warnings
+from dataclasses import dataclass, field
 from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import iris.cube
+import iris.fileformats.cf
 import isodate
 from cf_units import Unit
 from netCDF4 import Dataset, Variable
 
+import esmvalcore.io.protocol
 from esmvalcore.config import CFG
 from esmvalcore.config._config import get_project_config
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.preprocessor._io import _load_from_file
+from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    import iris.cube
-
-    from esmvalcore.esgf import ESGFFile
     from esmvalcore.typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
@@ -86,9 +132,9 @@ def _get_var_name(variable: Variable) -> str:
     return str(variable.name)
 
 
-def _get_start_end_date(
-    file: str | Path | LocalFile | ESGFFile,
-) -> tuple[str, str]:
+def _get_start_end_date_from_filename(
+    file: str | Path,
+) -> tuple[str | None, str | None]:
     """Get the start and end dates as a string from a file name.
 
     Examples of allowed dates: 1980, 198001, 1980-01, 19801231, 1980-12-31,
@@ -117,13 +163,6 @@ def _get_start_end_date(
     ValueError
         Start or end date cannot be determined.
     """
-    if hasattr(file, "name"):  # noqa: SIM108
-        # Path, LocalFile, ESGFFile
-        stem = Path(file.name).stem
-    else:
-        # str
-        stem = Path(file).stem
-
     start_date = end_date = None
 
     # Build regex
@@ -151,9 +190,34 @@ def _get_start_end_date(
     start_date, end_date = _get_from_pattern(
         datetime_pattern,
         date_range_pattern,
-        stem,
+        Path(file).stem,
         "datetime",
     )
+    return start_date, end_date
+
+
+def _get_start_end_date(file: str | Path) -> tuple[str, str]:
+    """Get the start and end dates as a string from a file.
+
+    This function first tries to finds the dates from the filename and if that
+    fails it will try to read them from the file.
+
+    Parameters
+    ----------
+    file:
+        The file to read the start and end data from.
+
+    Returns
+    -------
+    tuple[str, str]
+        The start and end date.
+
+    Raises
+    ------
+    ValueError
+        Start or end date cannot be determined.
+    """
+    start_date, end_date = _get_start_end_date_from_filename(file)
 
     # As final resort, try to get the dates from the file contents
     if (
@@ -197,17 +261,6 @@ def _get_start_end_date(
     end_date = end_date.replace("-", "")
 
     return start_date, end_date
-
-
-def _get_start_end_year(
-    file: str | Path | LocalFile | ESGFFile,
-) -> tuple[int, int]:
-    """Get the start and end year as int from a file name.
-
-    See :func:`_get_start_end_date`.
-    """
-    (start_date, end_date) = _get_start_end_date(file)
-    return (int(start_date[:4]), int(end_date[:4]))
 
 
 def _dates_to_timerange(start_date: int | str, end_date: int | str) -> str:
@@ -467,15 +520,33 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
 
 
 @dataclass(order=True)
-class DataSource:
-    """Class for storing a data source and finding the associated files."""
+class LocalDataSource(esmvalcore.io.protocol.DataSource):
+    """Data source for finding files on a local filesystem."""
+
+    name: str
+    """A name identifying the data source."""
+
+    project: str
+    """The project that the data source provides data for."""
+
+    priority: int
+    """The priority of the data source. Lower values have priority."""
+
+    debug_info: str = field(init=False, default="")
+    """A string containing debug information when no data is found."""
 
     rootpath: Path
+    """The path where the directories are located."""
+
     dirname_template: str
+    """The template for the directory names."""
+
     filename_template: str
+    """The template for the file names."""
 
     def __post_init__(self) -> None:
         """Set further attributes."""
+        self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
         self._regex_pattern = self._templates_to_regex()
 
     @property
@@ -495,30 +566,59 @@ class DataSource:
 
     def find_files(self, **facets) -> list[LocalFile]:
         """Find files."""
+        # TODO: deprecate this method
+        return self.find_data(**facets)
+
+    def find_data(self, **facets) -> list[LocalFile]:
+        """Find data locally."""
+        facets = dict(facets)
+        if "original_short_name" in facets:
+            facets["short_name"] = facets["original_short_name"]
+
         globs = self.get_glob_patterns(**facets)
+        self.debug_info = "\n".join(str(g) for g in globs)
         logger.debug("Looking for files matching %s", globs)
 
         files: list[LocalFile] = []
         for glob_ in globs:
             for filename in glob(str(glob_)):
                 file = LocalFile(filename)
-                file.facets.update(self.path2facets(file))
+                file.facets.update(
+                    self.path2facets(
+                        file,
+                        add_timerange="timerange" in facets,
+                    ),
+                )
                 files.append(file)
+
+        files = _filter_versions_called_latest(files)
+
+        if "version" not in facets:
+            files = _select_latest_version(files)
+
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
             files = _select_files(files, facets["timerange"])
         return files
 
-    def path2facets(self, path: Path) -> dict[str, str]:
+    def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
         """Extract facets from path."""
         facets: dict[str, str] = {}
-        match = re.search(self.regex_pattern, str(path))
-        if match is None:
-            return facets
-        for facet, value in match.groupdict().items():
-            if value:
-                facets[facet] = value
+
+        if (match := re.search(self.regex_pattern, str(path))) is not None:
+            for facet, value in match.groupdict().items():
+                if value:
+                    facets[facet] = value
+
+        if add_timerange:
+            try:
+                start_date, end_date = _get_start_end_date(path)
+            except ValueError:
+                pass
+            else:
+                facets["timerange"] = _dates_to_timerange(start_date, end_date)
+
         return facets
 
     def _templates_to_regex(self) -> str:
@@ -607,11 +707,40 @@ class DataSource:
         return pattern
 
 
+class DataSource(LocalDataSource):
+    """Data source for finding files on a local filesystem.
+
+    .. deprecated:: 2.13.0
+         This class is deprecated and will be removed in version 2.16.0.
+         Please use 'esmvalcore.local.LocalDataSource' instead.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        msg = (
+            "The 'esmvalcore.local.LocalDataSource' class is deprecated and will be "
+            "removed in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource'"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        super().__init__(*args, **kwargs)
+
+
 _ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
 
+_LEGACY_DATA_SOURCES_WARNED: set[str] = set()
 
-def _get_data_sources(project: str) -> list[DataSource]:
+
+def _get_data_sources(project: str) -> list[LocalDataSource]:
     """Get a list of data sources."""
+    if project not in _LEGACY_DATA_SOURCES_WARNED:
+        logger.warning(
+            (
+                "Using legacy data sources for project '%s' using 'rootpath' "
+                "and 'drs' settings and the path templates from '%s'"
+            ),
+            project,
+            CFG["config_developer_file"],
+        )
+        _LEGACY_DATA_SOURCES_WARNED.add(project)
     rootpaths = CFG["rootpath"]
     for key in (project, "default"):
         if key in rootpaths:
@@ -627,12 +756,19 @@ def _get_data_sources(project: str) -> list[DataSource]:
             if isinstance(paths, list):
                 structure = CFG["drs"].get(project, "default")
                 paths = dict.fromkeys(paths, structure)
-            sources: list[DataSource] = []
+            sources: list[LocalDataSource] = []
             for path, structure in paths.items():
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
-                    DataSource(Path(path), d, f)
+                    LocalDataSource(
+                        name="legacy-local",
+                        project=project,
+                        priority=1,
+                        rootpath=Path(path),
+                        dirname_template=d,
+                        filename_template=f,
+                    )
                     for d in dir_templates
                     for f in file_templates
                 )
@@ -746,6 +882,7 @@ def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     return result
 
 
+# TODO: Deprecate this?
 def find_files(
     *,
     debug: bool = False,
@@ -839,18 +976,48 @@ def find_files(
     return files
 
 
-class LocalFile(type(Path())):  # type: ignore
+GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
+"""GRIB file extensions."""
+
+
+def _get_attr_from_field_coord(
+    ncfield: iris.fileformats.cf.CFVariable,
+    coord_name: str | None,
+    attr: str,
+) -> Any:
+    """Get attribute from netCDF field coordinate."""
+    if coord_name is not None:
+        attrs = ncfield.cf_group[coord_name].cf_attrs()
+        attr_val = [value for (key, value) in attrs if key == attr]
+        if attr_val:
+            return attr_val[0]
+    return None
+
+
+def _restore_lat_lon_units(
+    cube: iris.cube.Cube,
+    field: iris.fileformats.cf.CFVariable,
+    filename: str,  # noqa: ARG001
+) -> None:  # pylint: disable=unused-argument
+    """Use this callback to restore the original lat/lon units."""
+    # Iris chooses to change longitude and latitude units to degrees
+    # regardless of value in file, so reinstating file value
+    for coord in cube.coords():
+        if coord.standard_name in ["longitude", "latitude"]:
+            units = _get_attr_from_field_coord(field, coord.var_name, "units")
+            if units is not None:
+                coord.units = units
+
+
+class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
     """File on the local filesystem."""
+
+    def prepare(self) -> None:
+        """Prepare the data for access."""
 
     @property
     def facets(self) -> Facets:
-        """Facets describing the file.
-
-        Note
-        ----
-        When using :func:`find_files`, facets are read from the directory
-        structure. Facets stored in filenames are not yet supported.
-        """
+        """Facets are key-value pairs that were used to find this data."""
         if not hasattr(self, "_facets"):
             self._facets: Facets = {}
         return self._facets
@@ -861,7 +1028,7 @@ class LocalFile(type(Path())):  # type: ignore
 
     @property
     def attributes(self) -> dict[str, Any]:
-        """Attributes read from the file."""
+        """Attributes are key-value pairs describing the data."""
         if not hasattr(self, "_attributes"):
             msg = (
                 "Attributes have not been read yet. Call the `to_iris` method "
@@ -885,7 +1052,22 @@ class LocalFile(type(Path())):  # type: ignore
         iris.cube.CubeList
             The loaded data.
         """
-        cubes = _load_from_file(self, ignore_warnings=ignore_warnings)
+        file = Path(self)
+        logger.debug("Loading:\n%s", file)
+
+        with ignore_warnings_context(ignore_warnings):
+            # GRIB files need to be loaded with iris.load, otherwise we will
+            # get separate (lat, lon) slices for each time step, pressure
+            # level, etc.
+            if file.suffix in GRIB_FORMATS:
+                cubes = iris.load(file, callback=_restore_lat_lon_units)
+            else:
+                cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+        logger.debug("Done with loading %s", file)
+
+        for cube in cubes:
+            cube.attributes.globals["source_file"] = str(file)
+
         # Cache the attributes.
         self.attributes = copy.deepcopy(dict(cubes[0].attributes.globals))
         return cubes

@@ -14,6 +14,7 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+import yaml
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -48,6 +49,12 @@ class CheckLevels(IntEnum):
 
     IGNORE = 5
     """Do not fail for any discrepancy with CMOR standards."""
+
+
+yaml.representer.SafeRepresenter.add_representer(
+    CheckLevels,
+    lambda dumper, data: dumper.represent_str(data.name.lower()),
+)
 
 
 class CMORCheckError(Exception):

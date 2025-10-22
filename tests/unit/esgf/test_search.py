@@ -2,13 +2,16 @@
 
 import copy
 import textwrap
+from pathlib import Path
 
 import pyesgf.search
 import pytest
 import requests.exceptions
 from pyesgf.search.results import FileResult
+from pytest_mock import MockerFixture
 
-from esmvalcore.esgf import ESGFFile, _search, find_files
+import esmvalcore.io.protocol
+from esmvalcore.esgf import ESGFDataSource, ESGFFile, _search, find_files
 
 OUR_FACETS = (
     {
@@ -433,3 +436,39 @@ def test_search_unknown_project():
     )
     with pytest.raises(ValueError, match=msg):
         find_files(project=project, dataset="", short_name="")
+
+
+class TestESGFDataSource:
+    """Test `esmvalcore.esgf.ESGFDataSource`."""
+
+    def test_init(self) -> None:
+        """Test initialization."""
+        data_source = ESGFDataSource(
+            name="esgf-cmip6",
+            project="CMIP6",
+            priority=1,
+            download_dir=Path("/path/to/climate_data"),
+        )
+        assert isinstance(data_source, esmvalcore.io.protocol.DataSource)
+
+    def test_find_data(self, mocker: MockerFixture) -> None:
+        """Test find_data method."""
+        data_source = ESGFDataSource(
+            name="esgf-cmip6",
+            project="CMIP6",
+            priority=1,
+            download_dir=Path("/path/to/climate_data"),
+        )
+
+        mock_result = [mocker.create_autospec(ESGFFile, instance=True)]
+        mock_find_files = mocker.patch(
+            "esmvalcore.esgf._search.find_files",
+            return_value=mock_result,
+        )
+
+        facets = {"short_name": "tas", "dataset": "A", "project": "CMIP6"}
+        result = data_source.find_data(**facets)
+
+        mock_find_files.assert_called_once_with(**facets)
+        assert result is mock_result
+        assert result[0].dest_folder == Path("/path/to/climate_data")

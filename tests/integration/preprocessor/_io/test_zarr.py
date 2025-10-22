@@ -48,6 +48,7 @@ def test_load_zarr2_local(input_type):
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr2_remote():
     """Test loading a Zarr2 store from a https Object Store."""
     zarr_path = (
@@ -88,6 +89,7 @@ def test_load_zarr2_remote():
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr3_remote():
     """Test loading a Zarr3 store from a https Object Store."""
     zarr_path = (
@@ -114,6 +116,7 @@ def test_load_zarr3_remote():
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr3_cmip6_metadata():
     """
     Test loading a Zarr3 store from a https Object Store.
