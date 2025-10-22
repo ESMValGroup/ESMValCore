@@ -51,9 +51,7 @@ def _get_user_config_dir() -> Path:
                 f"ESMVALTOOL_CONFIG_DIR environment variable: "
                 f"{user_config_dir} is not an existing directory"
             )
-            raise NotADirectoryError(
-                msg,
-            )
+            raise NotADirectoryError(msg)
         return user_config_dir
     return Path.home() / ".config" / "esmvaltool"
 

@@ -166,6 +166,97 @@ class Config:
     files.
     """
 
+    def __init__(self) -> None:
+        from rich.console import Console
+
+        self.console = Console()
+
+    def show(
+        self,
+        filter: tuple[str] | None = ("extra_facets",),  # noqa: A002
+    ) -> None:
+        """Show the current configuration.
+
+        Parameters
+        ----------
+        filter:
+            Filter this list of keys. By default, the `extra_facets`
+            key is filtered out, as it can be very large.
+
+        """
+        import yaml
+        from nested_lookup import nested_delete
+        from rich.syntax import Syntax
+
+        from esmvalcore.config import CFG
+
+        cfg = dict(CFG)
+        if filter:
+            for key in filter:
+                cfg = nested_delete(cfg, key)
+        exclude_msg = (
+            ", excluding the keys " + ", ".join(f"'{f}'" for f in filter)
+            if filter
+            else ""
+        )
+        self.console.print(f"# Current configuration{exclude_msg}:")
+        self.console.print(
+            Syntax(
+                yaml.safe_dump(cfg),
+                "yaml",
+                background_color="default",
+            ),
+        )
+
+    def list(self) -> None:
+        """List all available example configuration files."""
+        import importlib.resources
+
+        import esmvalcore.config
+
+        config_dir = (
+            importlib.resources.files(esmvalcore.config) / "configurations"
+        )
+        self.console.print("Available configuration files:")
+        available_files = sorted(
+            f.name
+            for f in config_dir.iterdir()
+            if f.suffix == ".yml"  # type: ignore[attr-defined]
+        )
+        self.console.print("\n".join(f"- {f}" for f in available_files))
+
+    def copy(
+        self,
+        source_file: str,
+        target_file: Path | None = None,
+        overwrite: bool = False,
+    ) -> None:
+        """Copy one of the available example configuration files to the configuration directory."""
+        import importlib.resources
+
+        import esmvalcore.config
+
+        target_dir = esmvalcore.config._config_object._get_user_config_dir()  # noqa: SLF001
+        target_file = target_dir / (
+            source_file if target_file is None else target_file
+        )
+        config_dir = (
+            importlib.resources.files(esmvalcore.config) / "configurations"
+        )
+        available_files = sorted(
+            f.name
+            for f in config_dir.iterdir()
+            if f.suffix == ".yml"  # type: ignore[attr-defined]
+        )
+        if source_file not in available_files:
+            msg = (
+                f"Configuration file {source_file} not found, choose from "
+                f"{', '.join(available_files)}"
+            )
+            raise FileNotFoundError(msg)
+        with importlib.resources.as_file(config_dir / source_file) as file:
+            self._copy_config_file(file, target_file, overwrite=overwrite)
+
     @staticmethod
     def _copy_config_file(
         in_file: Path,
@@ -191,7 +282,7 @@ class Config:
             logger.info("Creating folder %s", target_folder)
             target_folder.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Copying file %s to path %s.", in_file, out_file)
+        logger.info("Copying file %s to path %s", in_file, out_file)
         shutil.copy2(in_file, out_file)
         logger.info("Copy finished.")
 

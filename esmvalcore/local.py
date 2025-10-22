@@ -1,4 +1,48 @@
-"""Find files on the local filesystem."""
+"""Find files on the local filesystem.
+
+Example configuration to find CMIP6 data on a personal computer:
+
+.. code-block:: yaml
+
+   projects:
+     CMIP6:
+       data:
+         local-data:
+           type: "esmvalcore.local.LocalDataSource"
+           rootpath: ~/climate_data
+           dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+           filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+
+The module will find files matching the :func:`glob.glob` pattern formed by
+``rootpath/dirname_template/filename_template``, where the facets defined
+inside the curly braces of the templates are replaced by their values
+from the :class:`~esmvalcore.dataset.Dataset` or the :ref:`recipe <recipe>`. Note
+that the name of the data source, ``local-data`` in the example above,
+must be unique within each project but can otherwise be chosen freely.
+
+To start using this module, download the complete file for personal computers
+:download:`here <../configurations/local-data.yml>`, copy it to the
+directory ``~/.config/esmvaltool/``, and tailor it for your own system
+if needed.
+
+Example configuration files for popular HPC systems are also available:
+
+  - :download:`Jasmin at CEDA<../configurations/badc-data.yml>`
+  - :download:`Levante at DKRZ<../configurations/dkrz-data.yml>`
+  - :download:`UK Met Office <../configurations/mo-data.yml>`
+  - :download:`NCI Australia <../configurations/nci-data.yml>`
+  - :download:`IPSL <../configurations/ipsl-data.yml>`
+  - :download:`ETHZ <../configurations/ethz-data.yml>`
+
+Example configuration files for
+:ref:`supported climate models <read_native_models>` are also available:
+
+    - :download:`ACCESS <../configurations/access-data.yml>`
+    - :download:`ICON <../configurations/icon-data.yml>`
+    - :download:`IPSLCM <../configurations/ipslcm-data.yml>`
+    - :download:`EMAC <../configurations/emac-data.yml>`
+
+"""
 
 from __future__ import annotations
 
@@ -8,6 +52,7 @@ import logging
 import os
 import os.path
 import re
+import warnings
 from dataclasses import dataclass, field
 from glob import glob
 from pathlib import Path
@@ -475,8 +520,8 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
 
 
 @dataclass(order=True)
-class DataSource(esmvalcore.io.protocol.DataSource):
-    """Class for storing a data source and finding the associated files."""
+class LocalDataSource(esmvalcore.io.protocol.DataSource):
+    """Data source for finding files on a local filesystem."""
 
     name: str
     """A name identifying the data source."""
@@ -662,12 +707,29 @@ class DataSource(esmvalcore.io.protocol.DataSource):
         return pattern
 
 
+class DataSource(LocalDataSource):
+    """Data source for finding files on a local filesystem.
+
+    .. deprecated:: 2.13.0
+         This class is deprecated and will be removed in version 2.16.0.
+         Please use 'esmvalcore.local.LocalDataSource' instead.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        msg = (
+            "The 'esmvalcore.local.LocalDataSource' class is deprecated and will be "
+            "removed in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource'"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        super().__init__(*args, **kwargs)
+
+
 _ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
 
 _LEGACY_DATA_SOURCES_WARNED: set[str] = set()
 
 
-def _get_data_sources(project: str) -> list[DataSource]:
+def _get_data_sources(project: str) -> list[LocalDataSource]:
     """Get a list of data sources."""
     if project not in _LEGACY_DATA_SOURCES_WARNED:
         logger.warning(
@@ -694,12 +756,12 @@ def _get_data_sources(project: str) -> list[DataSource]:
             if isinstance(paths, list):
                 structure = CFG["drs"].get(project, "default")
                 paths = dict.fromkeys(paths, structure)
-            sources: list[DataSource] = []
+            sources: list[LocalDataSource] = []
             for path, structure in paths.items():
                 dir_templates = _select_drs("input_dir", project, structure)
                 file_templates = _select_drs("input_file", project, structure)
                 sources.extend(
-                    DataSource(
+                    LocalDataSource(
                         name="legacy-local",
                         project=project,
                         priority=1,

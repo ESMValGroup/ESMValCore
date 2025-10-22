@@ -324,7 +324,7 @@ class IconFix(NativeDatasetFix):
         """Try to get grid from the ICON rootpath."""
         glob_patterns: list[Path] = []
         for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
-            if isinstance(data_source, esmvalcore.local.DataSource):
+            if isinstance(data_source, esmvalcore.local.LocalDataSource):
                 glob_patterns.extend(
                     data_source.get_glob_patterns(**self.extra_facets),
                 )

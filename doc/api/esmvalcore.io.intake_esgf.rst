@@ -1,5 +1,5 @@
-Load data using intake-esgf
-===========================
+esmvalcore.io.intake_esgf
+=========================
 
 .. automodule:: esmvalcore.io.intake_esgf
     :no-inherited-members:

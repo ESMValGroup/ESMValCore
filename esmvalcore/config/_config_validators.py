@@ -347,7 +347,7 @@ def validate_projects(value: Any) -> Any:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
-        "data": validate_dict,
+        "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
     }
     for project, project_config in mapping.items():

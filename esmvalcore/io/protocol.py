@@ -31,10 +31,12 @@ example above called ``example_module.ExampleDataSource`` needs to implement the
 in the configuration, ``argument1: value1`` and ``argument2: value2`` are
 passed as keyword arguments to the data source when it is created.
 
-By default, all data sources are created with ``priority: 1``. Data sources
-with a lower ``priority`` value are searched first and if two data sources
-provide the same data, the data from the source with the lowest ``priority`` value
-will be used.
+Dedeplication of search results happens based on the
+:attr:`esmvalcore.io.protocol.DataElement.name` attribute and the ``"version"``
+facet in :attr:`esmvalcore.io.protocol.DataElement.facets` of the data elements
+provided by the data sources. If there is a tie, the data element provided by
+the data source with the lowest value of
+:attr:`esmvalcore.io.protocol.DataSource.priority` is chosen.
 """
 
 from collections.abc import Iterable

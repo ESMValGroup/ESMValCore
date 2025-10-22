@@ -138,13 +138,21 @@ def _get_find_files_func(path: Path, suffix: str = "nc"):
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
     find_files = _get_find_files_func(tmp_path)
-    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
+    monkeypatch.setattr(
+        esmvalcore.local.LocalDataSource,
+        "find_data",
+        find_files,
+    )
 
 
 @pytest.fixture
 def patched_datafinder_grib(tmp_path, monkeypatch):
     find_files = _get_find_files_func(tmp_path, suffix="grib")
-    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
+    monkeypatch.setattr(
+        esmvalcore.local.LocalDataSource,
+        "find_data",
+        find_files,
+    )
 
 
 @pytest.fixture
@@ -172,4 +180,8 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
             return returned_files, file_globs
         return returned_files
 
-    monkeypatch.setattr(esmvalcore.local.DataSource, "find_data", find_files)
+    monkeypatch.setattr(
+        esmvalcore.local.LocalDataSource,
+        "find_data",
+        find_files,
+    )

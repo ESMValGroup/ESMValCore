@@ -2,7 +2,7 @@ projects:
   ICON:
     data:
       icon: &icon
-        type: "esmvalcore.local.DataSource"
+        type: "esmvalcore.local.LocalDataSource"
         rootpath: ~/climate_data
         dirname_template: "{exp}"
         filename_template: "{exp}_{var_type}*.nc"

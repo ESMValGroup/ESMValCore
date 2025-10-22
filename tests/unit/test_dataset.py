@@ -1463,7 +1463,7 @@ def dataset():
             "CMIP6": {
                 "data": {
                     "local": {
-                        "type": "esmvalcore.local.DataSource",
+                        "type": "esmvalcore.local.LocalDataSource",
                         "rootpath": Path("/local_dir"),
                         "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
                         "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
@@ -1504,7 +1504,7 @@ def test_find_files(mocker, dataset, local_availability):
     )
 
     mocker.patch.object(
-        esmvalcore.local.DataSource,
+        esmvalcore.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
@@ -1541,7 +1541,7 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.local.DataSource,
+        esmvalcore.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
@@ -1578,7 +1578,7 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.local.DataSource,
+        esmvalcore.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
@@ -1620,7 +1620,7 @@ def test_find_files_non_esgf_projects(mocker, monkeypatch, session, project):
         ),
     ]
     mock_local_find_files = mocker.patch.object(
-        esmvalcore.local.DataSource,
+        esmvalcore.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=files,
