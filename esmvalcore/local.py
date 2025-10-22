@@ -58,6 +58,8 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import iris.cube
+import iris.fileformats.cf
 import isodate
 from cf_units import Unit
 from netCDF4 import Dataset, Variable
@@ -66,12 +68,10 @@ import esmvalcore.io.protocol
 from esmvalcore.config import CFG
 from esmvalcore.config._config import get_project_config
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.preprocessor._io import _load_from_file
+from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-
-    import iris.cube
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -976,6 +976,39 @@ def find_files(
     return files
 
 
+GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
+"""GRIB file extensions."""
+
+
+def _get_attr_from_field_coord(
+    ncfield: iris.fileformats.cf.CFVariable,
+    coord_name: str | None,
+    attr: str,
+) -> Any:
+    """Get attribute from netCDF field coordinate."""
+    if coord_name is not None:
+        attrs = ncfield.cf_group[coord_name].cf_attrs()
+        attr_val = [value for (key, value) in attrs if key == attr]
+        if attr_val:
+            return attr_val[0]
+    return None
+
+
+def _restore_lat_lon_units(
+    cube: iris.cube.Cube,
+    field: iris.fileformats.cf.CFVariable,
+    filename: str,  # noqa: ARG001
+) -> None:  # pylint: disable=unused-argument
+    """Use this callback to restore the original lat/lon units."""
+    # Iris chooses to change longitude and latitude units to degrees
+    # regardless of value in file, so reinstating file value
+    for coord in cube.coords():
+        if coord.standard_name in ["longitude", "latitude"]:
+            units = _get_attr_from_field_coord(field, coord.var_name, "units")
+            if units is not None:
+                coord.units = units
+
+
 class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
     """File on the local filesystem."""
 
@@ -1019,7 +1052,22 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
         iris.cube.CubeList
             The loaded data.
         """
-        cubes = _load_from_file(self, ignore_warnings=ignore_warnings)
+        file = Path(self)
+        logger.debug("Loading:\n%s", file)
+
+        with ignore_warnings_context(ignore_warnings):
+            # GRIB files need to be loaded with iris.load, otherwise we will
+            # get separate (lat, lon) slices for each time step, pressure
+            # level, etc.
+            if file.suffix in GRIB_FORMATS:
+                cubes = iris.load(file, callback=_restore_lat_lon_units)
+            else:
+                cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
+        logger.debug("Done with loading %s", file)
+
+        for cube in cubes:
+            cube.attributes.globals["source_file"] = str(file)
+
         # Cache the attributes.
         self.attributes = copy.deepcopy(dict(cubes[0].attributes.globals))
         return cubes
