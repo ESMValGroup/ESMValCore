@@ -61,8 +61,8 @@ def select_latest_versions(files, versions):
         versions = (versions,)
 
     files = sorted(files, key=same_file)
-    for _, group in itertools.groupby(files, key=same_file):
-        group = sorted(group, reverse=True)
+    for _, group_iter in itertools.groupby(files, key=same_file):
+        group = sorted(group_iter, reverse=True)
         if versions:
             selection = [f for f in group if f.facets["version"] in versions]
             if not selection:

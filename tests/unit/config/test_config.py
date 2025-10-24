@@ -205,8 +205,8 @@ def test_load_default_config(cfg_default, monkeypatch):
     assert all(hasattr(session, attr) for attr in directory_attrs)
 
     # Check default values
-    for key in default_cfg:
-        assert session[key] == default_cfg[key]
+    for key, value in default_cfg.items():
+        assert session[key] == value
 
     # Check output directories
     assert str(session.session_dir).startswith(

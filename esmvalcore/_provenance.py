@@ -4,7 +4,6 @@ import copy
 import logging
 import os
 from functools import total_ordering
-from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -46,7 +45,7 @@ def attribute_to_authors(entity, authors):
     for author in authors:
         if isinstance(author, str):
             # This happens if the config-references.yml file is not available
-            author = {"name": author}
+            author = {"name": author}  # noqa: PLW2901
         agent = entity.bundle.agent(
             namespace + ":" + author["name"],
             {"attribute:" + k: author[k] for k in author if k != "name"},
@@ -214,11 +213,9 @@ class TrackedFile:
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
         if self.attributes is None:
-            self.attributes = {}
-            if "nc" in Path(self.filename).suffix:
-                with Dataset(self.filename, "r") as dataset:
-                    for attr in dataset.ncattrs():
-                        self.attributes[attr] = dataset.getncattr(attr)
+            # This happens for ancestor files of preprocessor files as created
+            # in esmvalcore.preprocessor.Processorfile.__init__.
+            self.attributes = copy.deepcopy(self.filename.attributes)
 
         attributes = {
             "attribute:" + str(k).replace(" ", "_"): str(v)

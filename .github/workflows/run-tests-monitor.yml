@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
@@ -41,7 +41,7 @@ jobs:
       - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - run: pip install pytest-monitor
-      - run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: pip install --no-deps -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - run: python tests/parse_pymon.py
       - name: Upload artifacts
@@ -61,7 +61,7 @@ jobs:
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
@@ -77,7 +77,7 @@ jobs:
       - run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - run: mamba install -c conda-forge git
       - run: pip install pytest-monitor
-      - run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: pip install --no-deps -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - run: conda list
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - run: python tests/parse_pymon.py

@@ -14,6 +14,7 @@ from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
@@ -30,38 +31,122 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from esmvalcore.cmor.table import VariableInfo
+
 logger = logging.getLogger(__name__)
 
 
-def clip(cube, minimum=None, maximum=None):
-    """Clip values at a specified minimum and/or maximum value.
+def align_metadata(
+    cube: Cube,
+    target_project: str,
+    target_mip: str,
+    target_short_name: str,
+    strict: bool = True,
+) -> Cube:
+    """Set cube metadata to entries from a specific target project.
 
-    Values lower than minimum are set to minimum and values
-    higher than maximum are set to maximum.
+    This is useful to align variable metadata of different projects prior to
+    performing multi-model operations (e.g.,
+    :func:`~esmvalcore.preprocessor.multi_model_statistics`). For example,
+    standard names differ for some variables between CMIP5 and CMIP6 which
+    would prevent the calculation of multi-model statistics between CMIP5 and
+    CMIP6 data.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        iris cube to be clipped
-    minimum: float
-        lower threshold to be applied on input cube data.
-    maximum: float
-        upper threshold to be applied on input cube data.
+    cube:
+        Input cube.
+    target_project:
+        Project from which target metadata is read.
+    target_mip:
+        MIP table from which target metadata is read.
+    target_short_name:
+        Variable short name from which target metadata is read.
+    strict:
+        If ``True``, raise an error if desired metadata cannot be read for
+        variable ``target_short_name`` of MIP table ``target_mip`` and project
+        ``target_project``. If ``False``, no error is raised.
 
     Returns
     -------
     iris.cube.Cube
-        clipped cube.
+        Cube with updated metadata.
+
+    Raises
+    ------
+    KeyError
+        Invalid ``target_project`` given.
+    ValueError
+        If ``strict=True``: Variable ``target_short_name`` not available for
+        MIP table ``target_mip`` of project ``target_project``.
+
+    """
+    cube = cube.copy()
+
+    try:
+        var_info = _get_var_info(target_project, target_mip, target_short_name)
+    except ValueError as exc:
+        if strict:
+            raise
+        logger.debug(exc)
+        return cube
+
+    cube.long_name = var_info.long_name
+    cube.standard_name = var_info.standard_name
+    cube.var_name = var_info.short_name
+    cube.convert_units(var_info.units)
+
+    return cube
+
+
+def _get_var_info(project: str, mip: str, short_name: str) -> VariableInfo:
+    """Get variable information."""
+    var_info = get_var_info(project, mip, short_name)
+    if var_info is None:
+        msg = (
+            f"Variable '{short_name}' not available for table '{mip}' of "
+            f"project '{project}'"
+        )
+        raise ValueError(msg)
+    return var_info
+
+
+def clip(
+    cube: Cube,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> Cube:
+    """Clip values at a specified minimum and/or maximum value.
+
+    Values lower than minimum are set to minimum and values higher than maximum
+    are set to maximum.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    minimum:
+        Lower threshold to be applied on input cube data.
+    maximum:
+        Upper threshold to be applied on input cube data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Clipped cube.
+
+    Raises
+    ------
+    ValueError
+        ``minimum`` and ``maximum`` are set to ``None``.
+
     """
     if minimum is None and maximum is None:
-        msg = "Either minimum, maximum or both have to be\
-                          specified."
-        raise ValueError(
-            msg,
-        )
+        msg = "Either minimum, maximum or both have to be specified"
+        raise ValueError(msg)
     if minimum is not None and maximum is not None:
         if maximum < minimum:
-            msg = "Maximum should be equal or larger than minimum."
+            msg = "Maximum should be equal or larger than minimum"
             raise ValueError(msg)
     cube.data = da.clip(cube.core_data(), minimum, maximum)
     return cube
@@ -235,18 +320,14 @@ def histogram(
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
             f"int"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
     allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
         msg = (
             f"Expected one of {allowed_norms} for normalization, got "
             f"'{normalization}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
@@ -309,9 +390,7 @@ def _get_bins(
             f"Cannot calculate histogram for bin_range={bin_range} (or for "
             f"fully masked data when `bin_range` is not given)"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return (bin_range, bin_edges)
 
@@ -498,8 +577,7 @@ def _get_histogram_cube(
         units=cube.units,
     )
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     cell_methods = cube.cell_methods
     with ignore_iris_vague_metadata_warnings():
         cube = cube.collapsed(coords, iris.analysis.MAX)

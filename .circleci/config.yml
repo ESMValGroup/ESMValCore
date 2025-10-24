@@ -2,8 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.0.0
-  codecov: codecov/codecov@4.1.0
+  codecov: codecov/codecov@5.3.0
 
 commands:
   check_changes:
@@ -34,6 +33,7 @@ commands:
             conda activate esmvaltool
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
+            esmvaltool -- --help
       - store_test_results:
           path: test-reports/report.xml
       - store_artifacts:
@@ -55,7 +55,7 @@ commands:
         type: string
         default: "test"
       flags:
-        description: pip install flags
+        description: pip install --no-deps flags
         type: string
         default: ""
       upstream_packages:
@@ -103,6 +103,16 @@ commands:
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
+      - run:
+          name: Check dependencies are compatible
+          command: |
+            if [[ "<< parameters.upstream_packages >>" = "" ]]; then
+                . /opt/conda/etc/profile.d/conda.sh
+                conda activate esmvaltool
+                pip check
+            else
+              echo "Skipping `pip check` due to upstream packages"
+            fi
       - test_and_report
       - save_cache:
           key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
@@ -131,7 +141,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
-            pip install .[test] > /logs/install.txt 2>&1
+            pip install --no-deps .[test] > /logs/install.txt 2>&1
+            pip check
       - test_and_report:
           args: --cov
       - save_cache:
@@ -144,12 +155,8 @@ jobs:
           name: Install gpg (required by codecov orb)
           command: apt update && apt install -y gpg
       - codecov/upload:
-          when: always
-          file: 'test-reports/coverage.xml'
-      - coverage-reporter/send_report:
-          coverage-reports: 'test-reports/coverage.xml'
-          project-token: $CODACY_PROJECT_TOKEN
-          skip: true  # skip if project-token is not defined (i.e. on a fork)
+          files: 'test-reports/coverage.xml'
+          disable_search: true
 
   test_installation_from_source_test_mode:
     # Test installation from source
@@ -225,7 +232,8 @@ jobs:
             # Install
             mamba env create -n esmvaltool -f environment.yml
             conda activate esmvaltool
-            pip install .[doc]
+            pip install --no-deps .[doc]
+            pip check
             # Log versions
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml

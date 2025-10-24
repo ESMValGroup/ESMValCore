@@ -514,8 +514,8 @@ def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
     for name, path in rootpath.items():
-        path = Path(path).expanduser().absolute()
-        rootpath[name] = [path]
+        abspath = Path(path).expanduser().absolute()
+        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg
@@ -604,8 +604,8 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     for dir_ in dirs:
         config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
     for name, path in rootpath.items():
-        path = Path(path).expanduser().absolute()
-        rootpath[name] = [path]
+        abspath = Path(path).expanduser().absolute()
+        rootpath[name] = [abspath]
 
     cfg = Config()
     assert not cfg
@@ -636,3 +636,49 @@ def test_nested_update():
     assert cfg["drs"] == {"Y": "y", "X": "xx", "Z": "z"}
     assert cfg["search_esgf"] == "when_missing"
     assert cfg["max_years"] == 1
+
+
+def test_context_mapping():
+    cfg = Config()
+    assert not cfg
+    with cfg.context({"output_dir": "/path/to/output"}):
+        assert len(cfg) == 1
+        assert cfg["output_dir"] == Path("/path/to/output")
+    assert not cfg
+
+
+def test_context_kwargs():
+    cfg = Config()
+    assert not cfg
+    with cfg.context(output_dir="/path/to/output"):
+        assert len(cfg) == 1
+        assert cfg["output_dir"] == Path("/path/to/output")
+    assert not cfg
+
+
+def test_context_mapping_and_kwargs():
+    cfg = Config()
+    assert not cfg
+    with cfg.context({"output_dir": "/o"}, auxiliary_data_dir="/a"):
+        assert len(cfg) == 2
+        assert cfg["output_dir"] == Path("/o")
+        assert cfg["auxiliary_data_dir"] == Path("/a")
+    assert not cfg
+
+
+def test_context_mapping_invalid_option():
+    cfg = Config()
+    assert not cfg
+    msg = r"`invalid_config_option` is not a valid config parameter"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with cfg.context({"invalid_config_option": 1}):
+            pass
+
+
+def test_context_kwargs_invalid_option():
+    cfg = Config()
+    assert not cfg
+    msg = r"`invalid_config_option` is not a valid config parameter"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with cfg.context(invalid_config_option=1):
+            pass

@@ -592,10 +592,28 @@ def update_ancestors(
                 settings[key] = value
 
 
+def _update_align_metadata(
+    settings: PreprocessorSettings,
+    dataset: Dataset,
+) -> None:
+    """Update settings for ``align_metadata``."""
+    if "align_metadata" in settings:
+        settings["align_metadata"].setdefault(
+            "target_mip",
+            dataset.facets["mip"],
+        )
+        settings["align_metadata"].setdefault(
+            "target_short_name",
+            dataset.facets["short_name"],
+        )
+        check.align_metadata(settings["align_metadata"])
+
+
 def _update_extract_shape(
     settings: PreprocessorSettings,
     session: Session,
 ) -> None:
+    """Update settings for ``extract_shape``."""
     if "extract_shape" in settings:
         shapefile = settings["extract_shape"].get("shapefile")
         if shapefile:
@@ -785,6 +803,7 @@ def _update_preproc_functions(
     missing_vars: set[str],
 ) -> None:
     session = dataset.session
+    _update_align_metadata(settings, dataset)
     _update_extract_shape(settings, session)
     _update_weighting_settings(settings, dataset.facets)
     try:
@@ -1025,7 +1044,7 @@ class Recipe:
             ancestors = []
             for id_glob in settings.pop("ancestors", variable_names):
                 if TASKSEP not in id_glob:
-                    id_glob = diagnostic_name + TASKSEP + id_glob
+                    id_glob = diagnostic_name + TASKSEP + id_glob  # noqa: PLW2901
                 ancestors.append(id_glob)
             settings["recipe"] = self._filename
             settings["version"] = __version__

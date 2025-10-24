@@ -334,9 +334,9 @@ def test_update_multiproduct_multi_model_statistics():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -419,9 +419,9 @@ def test_update_multiproduct_no_timerange():
 
     assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert "dataset" in product.attributes
     assert "multi_model_statistics" in product.attributes
@@ -523,9 +523,9 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -617,9 +617,9 @@ def test_update_multiproduct_ensemble_statistics():
         "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsembleMedian"
     assert "dataset" in product.attributes
@@ -704,9 +704,9 @@ def test_update_multiproduct_ensemble_statistics_percentile():
         "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsemblePercentile5"
     assert "dataset" in product.attributes

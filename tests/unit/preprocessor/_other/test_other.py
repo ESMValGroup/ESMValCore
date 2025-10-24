@@ -3,7 +3,6 @@
 import unittest
 
 import dask.array as da
-import iris.coord_categorisation
 import iris.coords
 import numpy as np
 import pytest
@@ -20,10 +19,82 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor._other import clip, cumulative_sum, histogram
+from esmvalcore.preprocessor import (
+    align_metadata,
+    clip,
+    cumulative_sum,
+    histogram,
+)
 from tests.unit.preprocessor._compare_with_refs.test_compare_with_refs import (
     get_3d_cube,
 )
+
+
+def test_align_metadata():
+    cube = Cube(0.0, units="celsius")
+
+    new_cube = align_metadata(cube, "CMIP6", "Amon", "tas")
+
+    assert new_cube is not cube
+
+    assert new_cube.long_name == "Near-Surface Air Temperature"
+    assert new_cube.standard_name == "air_temperature"
+    assert new_cube.units == "K"
+    assert new_cube.var_name == "tas"
+    np.testing.assert_allclose(new_cube.data, 273.15)
+
+    assert cube.long_name is None
+    assert cube.standard_name is None
+    assert cube.units == "celsius"
+    assert cube.var_name is None
+    np.testing.assert_allclose(cube.data, 0.0)
+
+
+@pytest.mark.parametrize("short_name", ["sic", "siconc"])
+def test_align_metadata_alt_names(short_name):
+    cube = Cube(0.0, units="%")
+
+    new_cube = align_metadata(cube, "CMIP6", "SImon", short_name)
+
+    assert new_cube is not cube
+
+    assert new_cube.long_name == "Sea-Ice Area Percentage (Ocean Grid)"
+    assert new_cube.standard_name == "sea_ice_area_fraction"
+    assert new_cube.units == "%"
+    assert new_cube.var_name == "siconc"
+    np.testing.assert_allclose(new_cube.data, 0.0)
+
+    assert cube.long_name is None
+    assert cube.standard_name is None
+    assert cube.units == "%"
+    assert cube.var_name is None
+    np.testing.assert_allclose(cube.data, 0.0)
+
+
+def test_align_metadata_invalid_project():
+    cube = Cube(0.0, units="1")
+    msg = "No CMOR tables available for project 'ZZZ'"
+    with pytest.raises(KeyError, match=msg):
+        align_metadata(cube, "ZZZ", "Amon", "tas")
+
+
+def test_align_metadata_invalid_short_name_strict():
+    cube = Cube(0.0, units="1")
+    msg = "Variable 'zzz' not available for table 'Amon' of project 'CMIP6'"
+    with pytest.raises(ValueError, match=msg):
+        align_metadata(cube, "CMIP6", "Amon", "zzz")
+
+
+def test_align_metadata_invalid_short_name_not_strict():
+    cube = Cube(0.0, units="1")
+    new_cube = align_metadata(cube, "CMIP6", "Amon", "zzz", strict=False)
+    assert new_cube is not cube
+    assert new_cube == cube
+    assert new_cube.long_name is None
+    assert new_cube.standard_name is None
+    assert new_cube.units == "1"
+    assert new_cube.var_name is None
+    np.testing.assert_allclose(cube.data, 0.0)
 
 
 class TestOther(unittest.TestCase):

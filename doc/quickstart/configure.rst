@@ -140,6 +140,16 @@ For example:
   >>> CFG['output_dir']
   PosixPath('/home/user/esmvaltool_output')
 
+Or, alternatively, via a context manager:
+
+.. code-block:: python
+
+  >>> with CFG.context(log_level="debug"):
+  ...     print(CFG["log_level"])
+  debug
+  >>> print(CFG["log_level"])
+  info
+
 This will also consider YAML configuration files in the user configuration
 directory (by default ``~/.config/esmvaltool``, but this can be changed with
 the ``ESMVALTOOL_CONFIG_DIR`` environment variable).
@@ -837,27 +847,37 @@ The default settings are:
 
 .. code-block:: yaml
 
-    urls:
-      - 'https://esgf.ceda.ac.uk/esg-search'
-      - 'https://esgf-node.llnl.gov/esg-search'
-      - 'https://esgf-data.dkrz.de/esg-search'
-      - 'https://esgf-node.ipsl.upmc.fr/esg-search'
-      - 'https://esg-dn1.nsc.liu.se/esg-search'
-      - 'https://esgf.nci.org.au/esg-search'
-      - 'https://esgf.nccs.nasa.gov/esg-search'
-      - 'https://esgdata.gfdl.noaa.gov/esg-search'
-    distrib: true
-    timeout: 120  # seconds
-    cache: '~/.esmvaltool/cache/pyesgf-search-results'
-    expire_after: 86400  # cache expires after 1 day
+    search_connection:
+      urls:
+        .. - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
+        - 'https://esgf.ceda.ac.uk/esg-search'
+        - 'https://esgf-data.dkrz.de/esg-search'
+        - 'https://esgf-node.ipsl.upmc.fr/esg-search'
+        - 'https://esg-dn1.nsc.liu.se/esg-search'
+        - 'https://esgf.nci.org.au/esg-search'
+        - 'https://esgf.nccs.nasa.gov/esg-search'
+        - 'https://esgdata.gfdl.noaa.gov/esg-search'
+      distrib: true
+      timeout: 120  # seconds
+      cache: '~/.esmvaltool/cache/pyesgf-search-results'
+      expire_after: 86400  # cache expires after 1 day
 
-Note that by default the tool will try the
+Note that by default the tool will try searching the
 `ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
 in the order provided in the configuration file and use the first one that is
 online.
 Some ESGF index nodes may return search results faster than others, so you may
 be able to speed up the search for files by experimenting with placing different
 index nodes at the top of the list.
+
+.. warning::
+
+   ESGF is currently
+   `transitioning to new server technology <https://github.com/ESGF/esgf-roadmap/blob/main/status/README.md>`__
+   and all of the above indices are expected to go offline except the first one.
+
+Issues with https://esgf-node.ornl.gov/esgf-1-5-bridge can be reported
+`here <https://github.com/esgf2-us/esg_fastapi/issues>`__.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.

@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: esmvalcore
@@ -61,9 +61,10 @@ jobs:
           python -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
+          pip check
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
@@ -83,7 +84,7 @@ jobs:
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
           architecture: ${{ matrix.architecture }}
@@ -99,7 +100,7 @@ jobs:
           python -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
           esmvaltool --help

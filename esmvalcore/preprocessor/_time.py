@@ -462,9 +462,11 @@ def _aggregate_time_fx(result_cube, source_cube):
                     measure.core_data(),
                     axis=tuple(time_dim),
                 )
-                measure = measure.copy(result_measure)
                 measure_dims = tuple(measure_dims - time_dim)
-                result_cube.add_cell_measure(measure, measure_dims)
+                result_cube.add_cell_measure(
+                    measure.copy(result_measure),
+                    measure_dims,
+                )
 
     if source_cube.ancillary_variables():
         for ancillary_var in source_cube.ancillary_variables():
@@ -480,10 +482,9 @@ def _aggregate_time_fx(result_cube, source_cube):
                     ancillary_var.core_data(),
                     axis=tuple(time_dim),
                 )
-                ancillary_var = ancillary_var.copy(result_ancillary_var)
                 ancillary_dims = tuple(ancillary_dims - time_dim)
                 result_cube.add_ancillary_variable(
-                    ancillary_var,
+                    ancillary_var.copy(result_ancillary_var),
                     ancillary_dims,
                 )
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from shutil import copyfile
 
 import iris
+import iris.coords
 import numpy as np
 from netCDF4 import Dataset
 
@@ -482,4 +483,69 @@ class Tasmax(Pr):
         """
         for cube in cubes:
             add_scalar_height_coord(cube, height=2.0)
+        return cubes
+
+
+class Msftmz(Fix):
+    """Fixes for discrete DimCoord."""
+
+    @staticmethod
+    def transform_region_coord(
+        coord: iris.coords.DimCoord,
+    ) -> iris.coords.AuxCoord:
+        """Transform a DimCoord to AuxCoord.
+
+        indexes as points to names as points.
+
+        Parameters
+        ----------
+        coord: iris.coords.DimCoord
+               DimCoord to be transformed
+
+        Returns
+        -------
+        iris.coords.AuxCoord
+
+        """
+        # parses string like: 'atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2'
+        region_string = coord.attributes["requested"]
+        lookup = {
+            int(split_point[1]): split_point[0]
+            for split_point in [
+                point.strip().split("=") for point in region_string.split(",")
+            ]
+        }
+        new_points = [""] * len(lookup)
+        for old_label in coord.points:
+            new_points[old_label] = lookup[old_label]
+        return iris.coords.AuxCoord(
+            new_points,
+            standard_name="region",
+            var_name="basin",
+            long_name="ocean basin",
+            units="no unit",
+        )
+
+    def fix_metadata(self, cubes: iris.cube.CubeList) -> iris.cube.CubeList:
+        """Transform a DimCoord to AuxCoord.
+
+        indexes as points to names as points.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+               List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        coord = cube.coord("region")
+        new_coord = self.transform_region_coord(coord=coord)
+        dims = cube.coord_dims("region")
+        for cube in cubes:
+            cube.remove_coord("region")
+            cube.add_aux_coord(new_coord, dims)
         return cubes

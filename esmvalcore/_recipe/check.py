@@ -19,6 +19,7 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
+from esmvalcore.preprocessor._other import _get_var_info
 from esmvalcore.preprocessor._regrid import (
     HORIZONTAL_SCHEMES_IRREGULAR,
     HORIZONTAL_SCHEMES_REGULAR,
@@ -40,6 +41,31 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+def align_metadata(step_settings: dict[str, Any]) -> None:
+    """Check settings of preprocessor ``align_metadata``."""
+    project = step_settings.get("target_project")
+    mip = step_settings.get("target_mip")
+    short_name = step_settings.get("target_short_name")
+    strict = step_settings.get("strict", True)
+
+    # Any missing arguments will be reported later
+    if project is None or mip is None or short_name is None:
+        return
+
+    try:
+        _get_var_info(project, mip, short_name)
+    except ValueError as exc:
+        if strict:
+            msg = (
+                f"align_metadata failed: {exc}. Set `strict=False` to ignore "
+                f"this."
+            )
+            raise RecipeError(msg) from exc
+    except KeyError as exc:
+        msg = f"align_metadata failed: {exc}"
+        raise RecipeError(msg) from exc
 
 
 def ncl_version() -> None:
@@ -303,13 +329,13 @@ def extract_shape(settings: dict[str, Any]) -> None:
         "crop": {True, False},
         "decomposed": {True, False},
     }
-    for key in valid:
+    for key, valid_values in valid.items():
         value = settings.get(key)
-        if not (value is None or value in valid[key]):
+        if not (value is None or value in valid_values):
             msg = (
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
-                "{}".format(", ".join(f"'{k}'".lower() for k in valid[key]))
+                "{}".format(", ".join(f"'{k}'".lower() for k in valid_values))
             )
             raise RecipeError(msg)
 
@@ -424,7 +450,7 @@ def _check_duration_periods(timerange: list[str]) -> None:
             raise RecipeError(msg) from exc
 
 
-def _check_format_years(date: str) -> str:
+def _format_years(date: str) -> str:
     if date != "*" and not date.startswith("P"):
         if len(date) < 4:
             date = date.zfill(4)
@@ -462,8 +488,7 @@ def valid_time_selection(timerange: str) -> None:
         _check_delimiter(timerange_list)
         _check_duration_periods(timerange_list)
         for date in timerange_list:
-            date = _check_format_years(date)
-            _check_timerange_values(date, timerange_list)
+            _check_timerange_values(_format_years(date), timerange_list)
 
 
 def differing_timeranges(

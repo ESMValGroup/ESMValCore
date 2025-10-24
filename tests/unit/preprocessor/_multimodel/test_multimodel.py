@@ -1100,7 +1100,7 @@ def test_daily_inconsistent_calendars():
 
     cubes = [leapcube, noleapcube]
 
-    # span=full
+    # Test span=full
     aligned_cubes = mm._align_time_coord(cubes, span="full")
     for cube in aligned_cubes:
         assert cube.coord("time").units.calendar in ("standard", "gregorian")
@@ -1113,7 +1113,7 @@ def test_daily_inconsistent_calendars():
     assert result_cube[59].data == 2  # looked up nearest neighbour
     assert result_cube[366].data == 1  # outside original range
 
-    # span=overlap
+    # Test span=overlap
     aligned_cubes = mm._align_time_coord(cubes, span="overlap")
     for cube in aligned_cubes:
         assert cube.coord("time").units.calendar in ("standard", "gregorian")

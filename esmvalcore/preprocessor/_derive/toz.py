@@ -23,7 +23,7 @@ MW_O3_UNIT = cf_units.Unit("g mol^-1")
 DOBSON_UNIT = cf_units.Unit("2.69e20 m^-2")
 
 
-def add_longitude_coord(cube, ps_cube=None):
+def add_longitude_coord(cube):
     """Add dimensional ``longitude`` coordinate of length 1 to cube."""
     lon_coord = iris.coords.DimCoord(
         [180.0],

@@ -252,8 +252,8 @@ class UnstructuredLinearRegridder:
             if udim not in cube.coord_dims(c)
         ]
         aux_coords_and_dims = []
-        for aux_coord, dims in old_aux_coords_and_dims:
-            dims = tuple(d if d < udim else d + 1 for d in dims)
+        for aux_coord, old_dims in old_aux_coords_and_dims:
+            dims = tuple(d if d < udim else d + 1 for d in old_dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
         # Create new cube with regridded data

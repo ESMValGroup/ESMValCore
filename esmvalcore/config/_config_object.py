@@ -280,14 +280,12 @@ class Config(ValidatedConfig):
         for arg in sys.argv:
             for opt in ("--config-file", "--config_file"):
                 if opt in arg:
-                    # Parse '--config-file=/file.yml' or
-                    # '--config_file=/file.yml'
+                    # Parse '--config-file=/file.yml' or '--config_file=/file.yml'
                     partition = arg.partition("=")
                     if partition[2]:
                         return partition[2]
 
-                    # Parse '--config-file /file.yml' or
-                    # '--config_file /file.yml'
+                    # Parse '--config-file /file.yml' or '--config_file /file.yml'
                     config_idx = sys.argv.index(opt)
                     if config_idx == len(sys.argv) - 1:  # no file given
                         return None
@@ -327,8 +325,8 @@ class Config(ValidatedConfig):
         """Get configuration :obj:`dict` from directories."""
         dirs_str: list[str] = []
         for config_dir in dirs:
-            config_dir = Path(config_dir).expanduser().absolute()
-            dirs_str.append(str(config_dir))
+            abs_config_dir = Path(config_dir).expanduser().absolute()
+            dirs_str.append(str(abs_config_dir))
         return dask.config.collect(paths=dirs_str, env={})
 
     def load_from_dirs(self, dirs: Iterable[str | Path]) -> None:
@@ -503,6 +501,12 @@ class Config(ValidatedConfig):
         self.update(merged_config_dict)
         self.check_missing()
 
+    clear = ValidatedConfig.clear  # to show this is in API doc
+
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
+
 
 class Session(ValidatedConfig):
     """Container class for session configuration and directory information.
@@ -616,6 +620,12 @@ class Session(ValidatedConfig):
     def _fixed_file_dir(self):
         """Return fixed file directory."""
         return self.session_dir / self._relative_fixed_file_dir
+
+    clear = ValidatedConfig.clear  # to show this is in API doc
+
+    context = ValidatedConfig.context  # to show this is in API doc
+
+    copy = ValidatedConfig.copy  # to show this is in API doc
 
 
 def _get_all_config_dirs(cli_config_dir: Path | None) -> list[Path]:

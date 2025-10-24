@@ -285,9 +285,6 @@ def _get_geometries_from_shp(shapefilename):
         msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
 
-    # TODO: might need this for a later, more enhanced, version
-    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
-
     return geometries
 
 
@@ -665,8 +662,8 @@ def mask_fillvalues(
 
     combined_mask = None
     for product in products:
-        for i, cube in enumerate(product.cubes):
-            cube = cube.copy()
+        for i, orig_cube in enumerate(product.cubes):
+            cube = orig_cube.copy()
             product.cubes[i] = cube
             cube.data = array_module.ma.fix_invalid(cube.core_data())
             mask = _get_fillvalues_mask(
@@ -744,7 +741,7 @@ def _get_fillvalues_mask(
         "spell_count",
         count_spells,
         lazy_func=count_spells,
-        units_func=lambda units: 1,
+        units_func=lambda units: 1,  # noqa: ARG005
     )
 
     # Calculate the statistic.

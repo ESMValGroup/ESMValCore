@@ -334,7 +334,7 @@ def datasets_to_recipe(
 
     Examples
     --------
-    See :ref:`/notebooks/composing-recipes.ipynb` for example use cases.
+    See :doc:`/notebooks/composing-recipes` notebook for example use cases.
 
     Returns
     -------

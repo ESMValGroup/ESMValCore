@@ -1,18 +1,13 @@
 """Tests for the changelog."""
 
 import collections
-import os
 import re
+from pathlib import Path
 
 
 def test_duplications_in_changelog():
-    changelog_path = os.path.join(
-        os.path.dirname(__file__),
-        "../../..",
-        "doc/changelog.rst",
-    )
-    with open(changelog_path, encoding="utf-8") as changelog:
-        changelog = changelog.read()
+    changelog_path = Path(__file__).parents[3].joinpath("doc", "changelog.rst")
+    changelog = changelog_path.read_text(encoding="utf-8")
 
     # Find all pull requests
     pr_links = re.compile(

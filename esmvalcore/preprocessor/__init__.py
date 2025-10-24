@@ -51,7 +51,12 @@ from esmvalcore.preprocessor._multimodel import (
     ensemble_statistics,
     multi_model_statistics,
 )
-from esmvalcore.preprocessor._other import clip, cumulative_sum, histogram
+from esmvalcore.preprocessor._other import (
+    align_metadata,
+    clip,
+    cumulative_sum,
+    histogram,
+)
 from esmvalcore.preprocessor._regrid import (
     extract_coordinate_points,
     extract_levels,
@@ -99,6 +104,7 @@ from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
+    import prov.model
     from dask.delayed import Delayed
 
     from esmvalcore.dataset import Dataset, File
@@ -115,7 +121,7 @@ __all__ = [
     # Concatenate all cubes in one
     "concatenate",
     "cmor_check_metadata",
-    # Extract years given by dataset keys (start_year and end_year)
+    # Extract years given by dataset keys (timerange/start_year and end_year)
     "clip_timerange",
     # Data reformatting/CMORization
     "fix_data",
@@ -124,6 +130,8 @@ __all__ = [
     "add_supplementary_variables",
     # Derive variable
     "derive",
+    # Align metadata
+    "align_metadata",
     # Time extraction (as defined in the preprocessor section)
     "extract_time",
     "extract_season",
@@ -252,7 +260,7 @@ def _get_itype(step: str) -> str:
 
 def check_preprocessor_settings(settings: dict[str, Any]) -> None:
     """Check preprocessor settings."""
-    for step in settings:
+    for step, kwargs in settings.items():
         if step not in DEFAULT_ORDER:
             msg = (
                 f"Unknown preprocessor function '{step}', choose from: "
@@ -287,7 +295,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             ],
         )
         if check_args:
-            invalid_args = set(settings[step]) - set(args)
+            invalid_args = set(kwargs) - set(args)
             if invalid_args:
                 msg = (
                     f"Invalid argument(s) [{', '.join(invalid_args)}] "
@@ -303,7 +311,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
             if p.default is not inspect.Parameter.empty
         ]
         end = None if not defaults else -len(defaults)
-        missing_args = set(args[:end]) - set(settings[step])
+        missing_args = set(args[:end]) - set(kwargs)
         if missing_args:
             msg = (
                 f"Missing required argument(s) {missing_args} for "
@@ -313,7 +321,7 @@ def check_preprocessor_settings(settings: dict[str, Any]) -> None:
 
         # Final sanity check in case the above fails to catch a mistake
         try:
-            signature.bind(None, **settings[step])
+            signature.bind(None, **kwargs)
         except TypeError:
             logger.error(
                 "Wrong preprocessor function arguments in function '%s'",
@@ -521,8 +529,9 @@ class PreprocessorFile(TrackedFile):
                     input_files.extend(supplementary.files)
             ancestors = [TrackedFile(f) for f in input_files]
         else:
-            # Multimodel preprocessor functions set ancestors at runtime
-            # instead of here.
+            # Multimodel preprocessor functions set ancestors at runtime,
+            # in `esmvalcore.preprocessor.multi_model_statistics` and
+            # `esmvalcore.preprocessor.ensemble_statistics` instead of here.
             input_files = []
             ancestors = []
 
@@ -549,6 +558,8 @@ class PreprocessorFile(TrackedFile):
             ancestors=ancestors,
         )
 
+        self.activity = None
+
     def check(self) -> None:
         """Check preprocessor settings."""
         check_preprocessor_settings(self.settings)
@@ -572,6 +583,10 @@ class PreprocessorFile(TrackedFile):
         """Cubes."""
         if self._cubes is None:
             self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
+            # Initialize provenance after loading the data, so that we can reuse
+            # the global attributes that have been read from the input files.
+            self.initialize_provenance(self.activity)
+
         return self._cubes
 
     @cubes.setter
@@ -662,6 +677,7 @@ PreprocessorItem: TypeAlias = PreprocessorFile | Cube | str | Path
 def _apply_multimodel(
     products: set[PreprocessorFile],
     step: str,
+    activity: prov.model.ProvActivity,
     debug: bool | None,
 ) -> set[PreprocessorFile]:
     """Apply multi model step to products."""
@@ -672,6 +688,10 @@ def _apply_multimodel(
         step,
         "\n".join(str(p) for p in products - exclude),
     )
+    for output_product_group in settings.get("output_products", {}).values():
+        for output_product in output_product_group.values():
+            output_product.initialize_provenance(activity)
+
     result: list[PreprocessorFile] = preprocess(  # type: ignore
         products - exclude,  # type: ignore
         step,
@@ -707,50 +727,10 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _initialize_product_provenance(self) -> None:
-        """Initialize product provenance."""
-        self._initialize_products(self.products)
-        self._initialize_multimodel_provenance()
-        self._initialize_ensemble_provenance()
-
-    def _initialize_multiproduct_provenance(self, step: str) -> None:
-        input_products = self._get_input_products(step)
-        if input_products:
-            statistic_products = set()
-
-            for input_product in input_products:
-                step_settings = input_product.settings[step]
-                output_products = step_settings.get("output_products", {})
-
-                for product in output_products.values():
-                    statistic_products.update(product.values())
-
-            self._initialize_products(statistic_products)
-
-    def _initialize_multimodel_provenance(self) -> None:
-        """Initialize provenance for multi-model statistics."""
-        step = "multi_model_statistics"
-        self._initialize_multiproduct_provenance(step)
-
-    def _initialize_ensemble_provenance(self) -> None:
-        """Initialize provenance for ensemble statistics."""
-        step = "ensemble_statistics"
-        self._initialize_multiproduct_provenance(step)
-
-    def _get_input_products(self, step: str) -> list[PreprocessorFile]:
-        """Get input products."""
-        return [
-            product for product in self.products if step in product.settings
-        ]
-
-    def _initialize_products(self, products: set[PreprocessorFile]) -> None:
-        """Initialize products."""
-        for product in products:
-            product.initialize_provenance(self.activity)
-
     def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
-        self._initialize_product_provenance()
+        for product in self.products:
+            product.activity = self.activity
 
         steps = {
             step for product in self.products for step in product.settings
@@ -766,6 +746,7 @@ class PreprocessingTask(BaseTask):
                     self.products = _apply_multimodel(
                         self.products,
                         step,
+                        self.activity,
                         self.debug,
                     )
             else:
