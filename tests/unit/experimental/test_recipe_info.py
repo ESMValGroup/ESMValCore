@@ -15,29 +15,31 @@ DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
 def test_contributor():
     """Coverage test for Contributor."""
-    TAGS.set_tag_value(section='authors',
-                       tag='doe_john',
-                       value={
-                           'name': 'Doe, John',
-                           'institute': 'Testing',
-                           'orcid': 'https://orcid.org/0000-0000-0000-0000',
-                       })
+    TAGS.set_tag_value(
+        section="authors",
+        tag="doe_john",
+        value={
+            "name": "Doe, John",
+            "institute": "Testing",
+            "orcid": "https://orcid.org/0000-0000-0000-0000",
+        },
+    )
 
-    contributor = Contributor.from_tag('doe_john')
+    contributor = Contributor.from_tag("doe_john")
 
-    assert contributor.name == 'John Doe'
-    assert contributor.institute == 'Testing'
-    assert contributor.orcid == 'https://orcid.org/0000-0000-0000-0000'
+    assert contributor.name == "John Doe"
+    assert contributor.institute == "Testing"
+    assert contributor.orcid == "https://orcid.org/0000-0000-0000-0000"
     assert isinstance(repr(contributor), str)
     assert isinstance(str(contributor), str)
 
 
 def test_contributor_from_dict():
     """Test Contributor init from dict."""
-    name = 'John Doe'
-    institute = 'Testing'
-    orcid = 'https://orcid.org/0000-0000-0000-0000'
-    attributes = {'name': name, 'institute': institute, 'orcid': orcid}
+    name = "John Doe"
+    institute = "Testing"
+    orcid = "https://orcid.org/0000-0000-0000-0000"
+    attributes = {"name": name, "institute": institute, "orcid": orcid}
     author = Contributor.from_dict(attributes=attributes)
     assert author.name == name
     assert author.institute == institute
@@ -46,39 +48,42 @@ def test_contributor_from_dict():
 
 def test_reference(monkeypatch):
     """Coverage test for Reference."""
-    monkeypatch.setattr(esmvalcore.experimental.recipe_metadata, 'DIAGNOSTICS',
-                        DIAGNOSTICS)
+    monkeypatch.setattr(
+        esmvalcore.experimental.recipe_metadata,
+        "DIAGNOSTICS",
+        DIAGNOSTICS,
+    )
 
-    reference = Reference.from_tag('doe2021')
+    reference = Reference.from_tag("doe2021")
 
     assert isinstance(repr(reference), str)
     assert isinstance(str(reference), str)
-    assert isinstance(reference.render('markdown'), str)
+    assert isinstance(reference.render("markdown"), str)
 
-    assert str(reference) == 'J. Doe. Test free or fail hard. 2021. doi:0.'
+    assert str(reference) == "J. Doe. Test free or fail hard. 2021. doi:0."
 
 
 def test_project():
     """Coverage test for Project."""
-    TAGS.set_tag_value('projects', 'test_project', 'Test Project')
+    TAGS.set_tag_value("projects", "test_project", "Test Project")
 
-    project = Project.from_tag('test_project')
+    project = Project.from_tag("test_project")
 
     assert isinstance(repr(project), str)
     assert isinstance(str(project), str)
-    assert project.project == 'Test Project'
+    assert project.project == "Test Project"
 
 
 def test_recipe_info_str():
     """Test `RecipeInfo.__str__`."""
     data = {
-        'documentation': {
-            'title': 'Test recipe',
-            'description': 'This is a very empty test recipe.'
-        }
+        "documentation": {
+            "title": "Test recipe",
+            "description": "This is a very empty test recipe.",
+        },
     }
 
-    recipe = RecipeInfo(data, filename='/path/to/recipe_test.yml')
+    recipe = RecipeInfo(data, filename="/path/to/recipe_test.yml")
 
     text = textwrap.dedent("""
         ## Test recipe

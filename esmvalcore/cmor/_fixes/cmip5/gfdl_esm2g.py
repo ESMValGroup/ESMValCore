@@ -1,9 +1,8 @@
-
 """Fixes for GFDL ESM2G."""
 
 import iris
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 def _get_and_remove(cubes, long_name):
@@ -31,14 +30,14 @@ class AllVars(Fix):
         iris.cube.CubeList
 
         """
-        _get_and_remove(cubes, 'Start time for average period')
-        _get_and_remove(cubes, 'End time for average period')
-        _get_and_remove(cubes, 'Length of average period')
+        _get_and_remove(cubes, "Start time for average period")
+        _get_and_remove(cubes, "End time for average period")
+        _get_and_remove(cubes, "Length of average period")
         return cubes
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
         """
@@ -56,7 +55,7 @@ class Areacello(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        cube.units = 'm2'
+        cube.units = "m2"
         return cubes
 
 
@@ -100,8 +99,8 @@ class FgCo2(Fix):
         iris.cube.CubeList
 
         """
-        _get_and_remove(cubes, 'Latitude of tracer (h) points')
-        _get_and_remove(cubes, 'Longitude of tracer (h) points')
+        _get_and_remove(cubes, "Latitude of tracer (h) points")
+        _get_and_remove(cubes, "Longitude of tracer (h) points")
         return cubes
 
 
@@ -117,12 +116,13 @@ class Usi(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+
         Returns
         -------
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_ice_x_velocity'
+        cube.standard_name = "sea_ice_x_velocity"
         return cubes
 
 
@@ -138,10 +138,11 @@ class Vsi(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+
         Returns
         -------
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_ice_y_velocity'
+        cube.standard_name = "sea_ice_y_velocity"
         return cubes

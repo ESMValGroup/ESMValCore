@@ -3,7 +3,7 @@ from prov.model import ProvDerivation
 
 
 def get_file_record(prov, filename):
-    records = prov.get_record(f'file:{filename}')
+    records = prov.get_record(f"file:{filename}")
     assert records
     return records[0]
 
@@ -19,7 +19,7 @@ def check_provenance(product):
 
 def check_product_wasderivedfrom(product):
     """Check that product.filename was derived from product._ancestors."""
-    print('checking provenance of file', product.filename)
+    print("checking provenance of file", product.filename)
     prov = product.provenance
 
     def get_identifier(filename):
@@ -35,13 +35,14 @@ def check_product_wasderivedfrom(product):
         for record in relations:
             if input_identifier == record.get_attribute(PROV_ATTR_USED_ENTITY):
                 assert identifier == record.get_attribute(
-                    PROV_ATTR_GENERATED_ENTITY)
+                    PROV_ATTR_GENERATED_ENTITY,
+                )
                 break
         else:
-            assert False
+            raise AssertionError
 
     if not product._ancestors:
-        assert 'tracking_id' in product.attributes
+        assert "tracking_id" in product.attributes
     else:
         for ancestor in product._ancestors:
             check_product_wasderivedfrom(ancestor)

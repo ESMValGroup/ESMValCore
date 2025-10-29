@@ -46,24 +46,27 @@ and run that.
 To work with installed recipes, the ESMValTool package provides the
 ``esmvaltool recipes`` command, see :ref:`esmvaltool:recipes_command`.
 
-If the configuration file is not in the default location
-``~/.esmvaltool/config-user.yml``, you can pass its path explicitly:
+By default, ESMValTool searches for :ref:`configuration files
+<config_for_cli>` in ``~/.config/esmvaltool``.
+If you'd like to use a custom location, you can specify this via the
+``--config_dir`` command line argument:
 
 .. code:: bash
 
-	esmvaltool run --config_file /path/to/config-user.yml recipe_example.yml
+	esmvaltool run --config_dir /path/to/custom_config recipe_example.yml
 
-It is also possible to explicitly change values from the config file using flags:
+It is also possible to explicitly set configuration options with command line
+arguments:
 
 .. code:: bash
 
 	esmvaltool run --argument_name argument_value recipe_example.yml
 
-To automatically download the files required to run a recipe from ESGF, set
-``search_esgf`` to ``when_missing`` (use local files whenever possible) or
-``always`` (always search ESGF for latest version of files and only use local
-data if it is the latest version) in the :ref:`user configuration file` or run
-the tool with the corresponding commands
+To automatically download the files required to run a recipe from ESGF, use the
+:ref:`configuration option <config_options>` ``search_esgf=when_missing`` (use
+local files whenever possible) or ``search_esgf=always`` (always search ESGF
+for latest version of files and only use local data if it is the latest
+version):
 
 .. code:: bash
 
@@ -79,7 +82,7 @@ This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 To control the strictness of the CMOR checker and the checks during concatenation
-on auxiliary coordinates, supplementary variables, and derived coordinates, 
+on auxiliary coordinates, supplementary variables, and derived coordinates,
 use the flag ``--check_level``:
 
 .. code:: bash
@@ -93,14 +96,14 @@ Possible values are:
   - `default`: fail if there are any errors.
   - `strict`: fail if there are any warnings.
 
-To re-use pre-processed files from a previous run of the same recipe, you can
+To reuse pre-processed files from a previous run of the same recipe, you can
 use
 
 .. code:: bash
 
     esmvaltool run recipe_example.yml --resume_from ~/esmvaltool_output/recipe_python_20210930_123907
 
-Multiple directories can be specified for re-use, make sure to quote them:
+Multiple directories can be specified for reuse, make sure to quote them:
 
 .. code:: bash
 
@@ -123,7 +126,7 @@ To run only the preprocessor tasks from a recipe, use
 .. note::
 
     Only preprocessing :ref:`tasks <tasks>` that completed successfully
-    can be re-used with the ``--resume_from`` option.
+    can be reused with the ``--resume_from`` option.
     Preprocessing tasks that completed successfully, contain a file called
     :ref:`metadata.yml <interface_esmvalcore_diagnostic>` in their output
     directory.

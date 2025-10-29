@@ -1,7 +1,8 @@
 """Fixes for GFDL-ESM4 model."""
-from ..common import SiconcFixScalarCoord, OceanFixGrid
-from ..fix import Fix
-from ..shared import (
+
+from esmvalcore.cmor._fixes.common import OceanFixGrid, SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     fix_ocean_depth_coord,
 )
@@ -45,8 +46,8 @@ class Omon(Fix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
         return cubes

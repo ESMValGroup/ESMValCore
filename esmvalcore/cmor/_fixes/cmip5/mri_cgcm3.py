@@ -1,9 +1,9 @@
 """Fixes for MRI-CGCM3 model."""
+
 from dask import array as da
 
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
-
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
@@ -27,7 +27,7 @@ class Msftmyz(Fix):
         iris.cube.Cube
 
         """
-        cube.data = da.ma.masked_equal(cube.core_data(), 0.)
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
         return cube
 
 
@@ -50,5 +50,5 @@ class ThetaO(Fix):
         iris.cube.Cube
 
         """
-        cube.data = da.ma.masked_equal(cube.core_data(), 0.)
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
         return cube

@@ -1,25 +1,28 @@
 """Utilities for CMOR module."""
+
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
-from typing import Optional
-
-from iris.coords import Coord
-from iris.cube import Cube
+from typing import TYPE_CHECKING
 
 from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from iris.coords import Coord
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
-    'alevel': {
-        'CMIP5': ['alt40', 'plevs'],
-        'CMIP6': ['alt16', 'plev3'],
-        'obs4MIPs': ['alt16', 'plev3'],
+    "alevel": {
+        "CMIP5": ["alt40", "plevs"],
+        "CMIP6": ["alt16", "plev3"],
+        "obs4MIPs": ["alt16", "plev3"],
     },
-    'zlevel': {
-        'CMIP3': ['pressure'],
+    "zlevel": {
+        "CMIP3": ["pressure"],
     },
 }
 
@@ -55,7 +58,8 @@ def _get_alternative_generic_lev_coord(
 
     """
     alternatives_for_coord = _ALTERNATIVE_GENERIC_LEV_COORDS.get(
-        coord_name, {}
+        coord_name,
+        {},
     )
     allowed_alternatives = alternatives_for_coord.get(cmor_table_type, [])
 
@@ -67,9 +71,12 @@ def _get_alternative_generic_lev_coord(
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
             return (cmor_coord, cube_coord)
 
-    raise ValueError(
+    msg = (
         f"Found no valid alternative coordinate for generic level coordinate "
         f"'{coord_name}'"
+    )
+    raise ValueError(
+        msg,
     )
 
 
@@ -156,18 +163,18 @@ def _get_new_generic_level_coord(
     """
     new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
     new_coord.generic_level = True
-    new_coord.generic_lev_coords = (
-        var_info.coordinates[generic_level_coord_name].generic_lev_coords
-    )
+    new_coord.generic_lev_coords = var_info.coordinates[
+        generic_level_coord_name
+    ].generic_lev_coords
     return new_coord
 
 
 def _get_simplified_calendar(calendar: str) -> str:
     """Simplify calendar."""
     calendar_aliases = {
-        'all_leap': '366_day',
-        'noleap': '365_day',
-        'gregorian': 'standard',
+        "all_leap": "366_day",
+        "noleap": "365_day",
+        "gregorian": "standard",
     }
     return calendar_aliases.get(calendar, calendar)
 
@@ -175,7 +182,7 @@ def _get_simplified_calendar(calendar: str) -> str:
 def _get_single_cube(
     cube_list: Sequence[Cube],
     short_name: str,
-    dataset_str: Optional[str] = None,
+    dataset_str: str | None = None,
 ) -> Cube:
     if len(cube_list) == 1:
         return cube_list[0]
@@ -185,21 +192,25 @@ def _get_single_cube(
             cube = raw_cube
             break
 
-    if dataset_str is None:
-        dataset_str = ''
-    else:
-        dataset_str = f' in {dataset_str}'
+    dataset_str = "" if dataset_str is None else f" in {dataset_str}"
 
     if not cube:
-        raise ValueError(
+        msg = (
             f"More than one cube found for variable {short_name}{dataset_str} "
             f"but none of their var_names match the expected.\nFull list of "
             f"cubes encountered: {cube_list}"
+        )
+        raise ValueError(
+            msg,
         )
     logger.warning(
         "Found variable %s%s, but there were other present in the file. Those "
         "extra variables are usually metadata (cell area, latitude "
         "descriptions) that was not saved according to CF-conventions. It is "
         "possible that errors appear further on because of this.\nFull list "
-        "of cubes encountered: %s", short_name, dataset_str, cube_list)
+        "of cubes encountered: %s",
+        short_name,
+        dataset_str,
+        cube_list,
+    )
     return cube

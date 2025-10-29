@@ -1,4 +1,5 @@
 """ESMValTool core package."""
+
 import logging
 import os
 
@@ -8,9 +9,9 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 __all__ = [
-    '__version__',
-    'cmor',
-    'preprocessor',
+    "__version__",
+    "cmor",
+    "preprocessor",
 ]
 
 

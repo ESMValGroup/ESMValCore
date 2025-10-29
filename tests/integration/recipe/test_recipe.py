@@ -1,3 +1,4 @@
+import inspect
 import os
 import re
 from collections import defaultdict
@@ -30,63 +31,63 @@ from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
-    'authors': {
-        'andela_bouwe': {
-            'name': 'Bouwe, Andela',
+    "authors": {
+        "andela_bouwe": {
+            "name": "Bouwe, Andela",
         },
     },
-    'projects': {
-        'c3s-magic': 'C3S MAGIC project',
+    "projects": {
+        "c3s-magic": "C3S MAGIC project",
     },
-    'themes': {
-        'phys': 'physics',
+    "themes": {
+        "phys": "physics",
     },
-    'realms': {
-        'atmos': 'atmosphere',
+    "realms": {
+        "atmos": "atmosphere",
     },
-    'statistics': {
-        'mean': 'mean',
-        'var': 'variability',
+    "statistics": {
+        "mean": "mean",
+        "var": "variability",
     },
-    'domains': {
-        'et': 'extra tropics',
-        'trop': 'tropics',
+    "domains": {
+        "et": "extra tropics",
+        "trop": "tropics",
     },
-    'plot_types': {
-        'zonal': 'zonal',
+    "plot_types": {
+        "zonal": "zonal",
     },
 }
 
 MANDATORY_DATASET_KEYS = (
-    'dataset',
-    'diagnostic',
-    'frequency',
-    'institute',
-    'long_name',
-    'mip',
-    'modeling_realm',
-    'preprocessor',
-    'project',
-    'short_name',
-    'standard_name',
-    'timerange',
-    'units',
+    "dataset",
+    "diagnostic",
+    "frequency",
+    "institute",
+    "long_name",
+    "mip",
+    "modeling_realm",
+    "preprocessor",
+    "project",
+    "short_name",
+    "standard_name",
+    "timerange",
+    "units",
 )
 
 MANDATORY_SCRIPT_SETTINGS_KEYS = (
-    'log_level',
-    'script',
-    'plot_dir',
-    'run_dir',
-    'work_dir',
+    "log_level",
+    "script",
+    "plot_dir",
+    "run_dir",
+    "work_dir",
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
-    'remove_supplementary_variables',
-    'save',
+    "remove_supplementary_variables",
+    "save",
 )
 
-INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
+INITIALIZATION_ERROR_MSG = "Could not create all tasks"
 
 
 def create_test_file(filename, tracking_id=None):
@@ -96,7 +97,7 @@ def create_test_file(filename, tracking_id=None):
 
     attributes = {}
     if tracking_id is not None:
-        attributes['tracking_id'] = tracking_id
+        attributes["tracking_id"] = tracking_id
     cube = iris.cube.Cube([])
     cube.attributes.globals = attributes
 
@@ -105,37 +106,29 @@ def create_test_file(filename, tracking_id=None):
 
 def _get_default_settings_for_chl(save_filename):
     """Get default preprocessor settings for chl."""
-    defaults = {
-        'remove_supplementary_variables': {},
-        'save': {
-            'compress': False,
-            'filename': save_filename,
-        }
+    return {
+        "remove_supplementary_variables": {},
+        "save": {
+            "compress": False,
+            "filename": save_filename,
+            "compute": False,
+        },
     }
-    return defaults
 
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(short_name, _):
-        if short_name != 'tas':
-            assert False
-        required = [
-            {
-                'short_name': 'pr'
-            },
-            {
-                'short_name': 'areacella',
-                'mip': 'fx',
-                'optional': True
-            },
+        if short_name != "tas":
+            raise AssertionError
+        return [
+            {"short_name": "pr"},
+            {"short_name": "areacella", "mip": "fx", "optional": True},
         ]
-        return required
 
     monkeypatch.setattr(
         esmvalcore._recipe.to_datasets,
-        'get_required',
+        "get_required",
         get_required,
     )
 
@@ -156,14 +149,12 @@ DEFAULT_DOCUMENTATION = dedent("""
 
 def get_recipe(tempdir: Path, content: str, session: Session):
     """Save and load recipe content."""
-    recipe_file = tempdir / 'recipe_test.yml'
+    recipe_file = tempdir / "recipe_test.yml"
     # Add mandatory documentation section
     content = str(DEFAULT_DOCUMENTATION + content)
     recipe_file.write_text(content)
 
-    recipe = read_recipe_file(recipe_file, session)
-
-    return recipe
+    return read_recipe_file(recipe_file, session)
 
 
 def test_recipe_missing_scripts(tmp_path, session):
@@ -181,7 +172,7 @@ def test_recipe_missing_scripts(tmp_path, session):
                 ensemble: r1i1p1
                 timerange: 1999/2002
         """)
-    exc_message = ("Missing scripts section in diagnostic 'diagnostic_name'.")
+    exc_message = "Missing scripts section in diagnostic 'diagnostic_name'."
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -206,9 +197,11 @@ def test_recipe_duplicate_var_script_name(tmp_path, session):
               ta:
                 script: tmp_path / 'diagnostic.py'
         """)
-    exc_message = ("Invalid script name 'ta' encountered in diagnostic "
-                   "'diagnostic_name': scripts cannot have the same "
-                   "name as variables.")
+    exc_message = (
+        "Invalid script name 'ta' encountered in diagnostic "
+        "'diagnostic_name': scripts cannot have the same "
+        "name as variables."
+    )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -233,8 +226,10 @@ def test_recipe_no_script(tmp_path, session):
               script_name:
                 argument: 1
         """)
-    exc_message = ("No script defined for script 'script_name' in "
-                   "diagnostic 'diagnostic_name'.")
+    exc_message = (
+        "No script defined for script 'script_name' in "
+        "diagnostic 'diagnostic_name'."
+    )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -254,9 +249,11 @@ def test_recipe_no_datasets(tmp_path, session):
                 end_year: 2002
             scripts: null
         """)
-    exc_message = ("You have not specified any dataset "
-                   "or additional_dataset groups for variable "
-                   "'ta' in diagnostic 'diagnostic_name'.")
+    exc_message = (
+        "You have not specified any dataset "
+        "or additional_dataset groups for variable "
+        "'ta' in diagnostic 'diagnostic_name'."
+    )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -279,8 +276,10 @@ def test_recipe_duplicated_datasets(tmp_path, session):
                 timerange: 1999/2002
             scripts: null
         """)
-    exc_message = ("Duplicate dataset\n{'dataset': 'bcc-csm1-1'}\n"
-                   "for variable 'ta' in diagnostic 'diagnostic_name'.")
+    exc_message = (
+        "Duplicate dataset\n{'dataset': 'bcc-csm1-1'}\n"
+        "for variable 'ta' in diagnostic 'diagnostic_name'."
+    )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -301,17 +300,19 @@ def test_recipe_var_missing_args(tmp_path, session):
                 timerange: 1999/2002
             scripts: null
         """)
-    exc_message = ("Missing keys {'mip'} in\n{'dataset': 'bcc-csm1-1',"
-                   "\n 'ensemble': 'r1i1p1',\n 'exp': 'historical',\n"
-                   " 'project': 'CMIP5',\n 'short_name': 'ta',\n "
-                   "'timerange': '1999/2002'}\nfor variable 'ta' "
-                   "in diagnostic 'diagnostic_name'.")
+    exc_message = (
+        "Missing keys {'mip'} in\n{'dataset': 'bcc-csm1-1',"
+        "\n 'ensemble': 'r1i1p1',\n 'exp': 'historical',\n"
+        " 'project': 'CMIP5',\n 'short_name': 'ta',\n "
+        "'timerange': '1999/2002'}\nfor variable 'ta' "
+        "in diagnostic 'diagnostic_name'."
+    )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
 
 
-@pytest.mark.parametrize('skip_nonexistent', [True, False])
+@pytest.mark.parametrize("skip_nonexistent", [True, False])
 def test_recipe_no_data(tmp_path, session, skip_nonexistent):
     content = dedent("""
         datasets:
@@ -329,18 +330,20 @@ def test_recipe_no_data(tmp_path, session, skip_nonexistent):
                 end_year: 2002
             scripts: null
         """)
-    session['skip_nonexistent'] = skip_nonexistent
+    session["skip_nonexistent"] = skip_nonexistent
     with pytest.raises(RecipeError) as error:
         get_recipe(tmp_path, content, session)
     if skip_nonexistent:
-        msg = ("Did not find any input data for task diagnostic_name/ta")
+        msg = "Did not find any input data for task diagnostic_name/ta"
     else:
-        msg = ("Missing data for preprocessor diagnostic_name/ta:\n"
-               "- Missing data for Dataset: .*")
+        msg = (
+            "Missing data for preprocessor diagnostic_name/ta:\n"
+            "- Missing data for Dataset: .*"
+        )
     assert re.match(msg, error.value.failed_tasks[0].message)
 
 
-@pytest.mark.parametrize('script_file', ['diagnostic.py', 'diagnostic.ncl'])
+@pytest.mark.parametrize("script_file", ["diagnostic.py", "diagnostic.ncl"])
 def test_simple_recipe(
     tmp_path,
     patched_datafinder,
@@ -348,20 +351,20 @@ def test_simple_recipe(
     script_file,
     monkeypatch,
 ):
-
     def ncl_version():
-        return '6.5'
+        return "6.5"
 
-    monkeypatch.setattr(esmvalcore._recipe.check, 'ncl_version', ncl_version)
+    monkeypatch.setattr(esmvalcore._recipe.check, "ncl_version", ncl_version)
 
     def which(interpreter):
         return interpreter
 
-    monkeypatch.setattr(esmvalcore._task, 'which', which)
+    monkeypatch.setattr(esmvalcore._task, "which", which)
 
     script = tmp_path / script_file
-    script.write_text('')
-    content = dedent("""
+    script.write_text("")
+    content = dedent(
+        f"""
         datasets:
           - dataset: bcc-csm1-1
 
@@ -387,16 +390,17 @@ def test_simple_recipe(
                   - dataset: MPI-ESM-LR
             scripts:
               script_name:
-                script: {}
+                script: {script}
                 custom_setting: 1
-        """.format(script))
+        """,
+    )
 
     recipe = get_recipe(tmp_path, content, session)
     # Check that datasets have been read and updated
     assert len(recipe.datasets) == 3
     for dataset in recipe.datasets:
         for key in MANDATORY_DATASET_KEYS:
-            assert key in dataset.facets and dataset.facets[key]
+            assert dataset.facets.get(key)
 
     # Check that the correct tasks have been created
     datasets = recipe.datasets
@@ -409,15 +413,17 @@ def test_simple_recipe(
         print("Task", task.name)
         assert task.order == list(DEFAULT_ORDER)
         for product in task.products:
-            dataset = [
-                d for d in datasets if _get_output_file(
-                    d.facets, session.preproc_dir) == product.filename
-            ][0]
+            dataset = next(
+                d
+                for d in datasets
+                if _get_output_file(d.facets, session.preproc_dir)
+                == product.filename
+            )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
-            attributes['filename'] = product.filename
-            attributes['start_year'] = 1999
-            attributes['end_year'] = 2002
+            attributes["filename"] = product.filename
+            attributes["start_year"] = 1999
+            attributes["end_year"] = 2002
             assert product.attributes == attributes
             for step in DEFAULT_PREPROCESSOR_STEPS:
                 assert step in product.settings
@@ -429,18 +435,19 @@ def test_simple_recipe(
         assert task.ancestors == list(preproc_tasks)
         assert task.script == str(script)
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
-            assert key in task.settings and task.settings[key]
-        assert task.settings['custom_setting'] == 1
+            assert task.settings.get(key)
+        assert task.settings["custom_setting"] == 1
 
     # Check that NCL interface is enabled for NCL scripts.
-    write_ncl_interface = script.suffix == '.ncl'
-    assert datasets[0].session['write_ncl_interface'] == write_ncl_interface
+    write_ncl_interface = script.suffix == ".ncl"
+    assert datasets[0].session["write_ncl_interface"] == write_ncl_interface
 
 
 def test_write_filled_recipe(tmp_path, patched_datafinder, session):
-    script = tmp_path / 'diagnostic.py'
-    script.write_text('')
-    content = dedent("""
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
+    content = dedent(
+        f"""
         datasets:
           - dataset: bcc-csm1-1
 
@@ -467,30 +474,31 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, session):
                     timerange: '*/P2Y'
             scripts:
               script_name:
-                script: {}
+                script: {script}
                 custom_setting: 1
-        """.format(script))
+        """,
+    )
 
     recipe = get_recipe(tmp_path, content, session)
 
     session.run_dir.mkdir(parents=True)
     esmvalcore._recipe.recipe.Recipe.write_filled_recipe(recipe)
 
-    recipe_file = session.run_dir / 'recipe_test_filled.yml'
+    recipe_file = session.run_dir / "recipe_test_filled.yml"
     assert recipe_file.is_file()
 
     updated_recipe_object = read_recipe_file(recipe_file, session)
     updated_recipe = updated_recipe_object._raw_recipe
     print(pformat(updated_recipe))
-    assert get_occurrence_of_value(updated_recipe, value='*') == 0
-    assert get_occurrence_of_value(updated_recipe, value='1990/2019') == 2
-    assert get_occurrence_of_value(updated_recipe, value='1990/P2Y') == 1
+    assert get_occurrence_of_value(updated_recipe, value="*") == 0
+    assert get_occurrence_of_value(updated_recipe, value="1990/2019") == 2
+    assert get_occurrence_of_value(updated_recipe, value="1990/P2Y") == 1
     assert len(updated_recipe_object.datasets) == 3
 
 
 def test_fx_preproc_error(tmp_path, patched_datafinder, session):
-    script = tmp_path / 'diagnostic.py'
-    script.write_text('')
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
     content = dedent("""
         datasets:
           - dataset: bcc-csm1-1
@@ -515,8 +523,10 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, session):
                   - dataset: MPI-ESM-LR
             scripts: null
         """)
-    msg = ("Time coordinate preprocessor step(s) ['extract_season'] not "
-           "permitted on fx vars, please remove them from recipe")
+    msg = (
+        "Time coordinate preprocessor step(s) ['extract_season'] not "
+        "permitted on fx vars, please remove them from recipe"
+    )
     with pytest.raises(Exception) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -553,10 +563,12 @@ def test_default_preprocessor(tmp_path, patched_datafinder, session):
     assert product.settings == defaults
 
 
-def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
-                                           session):
+def test_default_preprocessor_custom_order(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         preprocessors:
           default_custom_order:
@@ -618,7 +630,6 @@ def test_invalid_preprocessor(tmp_path, patched_datafinder, session):
 
 def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     """Test if default settings are used when ``custom_order`` is ``True``."""
-
     content = dedent("""
         datasets:
           - dataset: HadGEM3-GC31-LL
@@ -650,7 +661,7 @@ def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'remove_supplementary_variables' not in product.settings
+    assert "remove_supplementary_variables" not in product.settings
 
 
 def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
@@ -678,11 +689,12 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
     assert preproc_dir.startswith(str(tmp_path))
 
     defaults = {
-        'remove_supplementary_variables': {},
-        'save': {
-            'compress': False,
-            'filename': product.filename,
-        }
+        "remove_supplementary_variables": {},
+        "save": {
+            "compress": False,
+            "filename": product.filename,
+            "compute": False,
+        },
     }
     assert product.settings == defaults
 
@@ -710,37 +722,46 @@ def test_empty_variable(tmp_path, patched_datafinder, session):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.attributes['short_name'] == 'pr'
-    assert product.attributes['dataset'] == 'CanESM2'
+    assert product.attributes["short_name"] == "pr"
+    assert product.attributes["dataset"] == "CanESM2"
 
 
 TEST_ISO_TIMERANGE = [
-    ('*', '1990-2019'),
-    ('1990/1992', '1990-1992'),
-    ('19900101/19920101', '19900101-19920101'),
-    ('19900101T12H00M00S/19920101T12H00M00',
-     '19900101T12H00M00S-19920101T12H00M00'),
-    ('1990/*', '1990-2019'),
-    ('*/1992', '1990-1992'),
-    ('1990/P2Y', '1990-P2Y'),
-    ('19900101/P2Y2M1D', '19900101-P2Y2M1D'),
-    ('19900101TH00M00S/P2Y2M1DT12H00M00S',
-     '19900101TH00M00S-P2Y2M1DT12H00M00S'),
-    ('P2Y/1992', 'P2Y-1992'),
-    ('P1Y2M1D/19920101', 'P1Y2M1D-19920101'),
-    ('P1Y2M1D/19920101T12H00M00S', 'P1Y2M1D-19920101T12H00M00S'),
-    ('P2Y/*', 'P2Y-2019'),
-    ('P2Y2M1D/*', 'P2Y2M1D-2019'),
-    ('P2Y21DT12H00M00S/*', 'P2Y21DT12H00M00S-2019'),
-    ('*/P2Y', '1990-P2Y'),
-    ('*/P2Y2M1D', '1990-P2Y2M1D'),
-    ('*/P2Y21DT12H00M00S', '1990-P2Y21DT12H00M00S'),
+    ("*", "1990-2019"),
+    ("1990/1992", "1990-1992"),
+    ("19900101/19920101", "19900101-19920101"),
+    (
+        "19900101T12H00M00S/19920101T12H00M00",
+        "19900101T12H00M00S-19920101T12H00M00",
+    ),
+    ("1990/*", "1990-2019"),
+    ("*/1992", "1990-1992"),
+    ("1990/P2Y", "1990-P2Y"),
+    ("19900101/P2Y2M1D", "19900101-P2Y2M1D"),
+    (
+        "19900101T0000/P2Y2M1DT12H00M00S",
+        "19900101T0000-P2Y2M1DT12H00M00S",
+    ),
+    ("P2Y/1992", "P2Y-1992"),
+    ("P1Y2M1D/19920101", "P1Y2M1D-19920101"),
+    ("P1Y2M1D/19920101T120000", "P1Y2M1D-19920101T120000"),
+    ("P2Y/*", "P2Y-2019"),
+    ("P2Y2M1D/*", "P2Y2M1D-2019"),
+    ("P2Y21DT12H00M00S/*", "P2Y21DT12H00M00S-2019"),
+    ("*/P2Y", "1990-P2Y"),
+    ("*/P2Y2M1D", "1990-P2Y2M1D"),
+    ("*/P2Y21DT12H00M00S", "1990-P2Y21DT12H00M00S"),
 ]
 
 
-@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange(tmp_path, patched_datafinder, session,
-                              input_time, output_time):
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange(
+    tmp_path,
+    patched_datafinder,
+    session,
+    input_time,
+    output_time,
+):
     """Test recipe with timerange tag."""
     content = dedent(f"""
         diagnostics:
@@ -762,26 +783,33 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, session,
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.tasks) == 2
-    pr_task = [t for t in recipe.tasks if t.name.endswith('pr')][0]
+    pr_task = next(t for t in recipe.tasks if t.name.endswith("pr"))
     assert len(pr_task.products) == 1
     pr_product = pr_task.products.pop()
 
-    filename = ('CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-                f'pr_gn_{output_time}.nc')
+    filename = (
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
+    )
     assert pr_product.filename.name == filename
 
-    areacella_task = [t for t in recipe.tasks
-                      if t.name.endswith('areacella')][0]
+    areacella_task = next(
+        t for t in recipe.tasks if t.name.endswith("areacella")
+    )
     assert len(areacella_task.products) == 1
     areacella_product = areacella_task.products.pop()
 
-    filename = 'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc'
+    filename = "CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc"
     assert areacella_product.filename.name == filename
 
 
-@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
-                                         input_time, output_time):
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange_as_dataset(
+    tmp_path,
+    patched_datafinder,
+    session,
+    input_time,
+    output_time,
+):
     """Test recipe with timerange tag in the datasets section."""
     content = dedent(f"""
         datasets:
@@ -808,24 +836,30 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    filename = ('CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-                f'pr_gn_{output_time}.nc')
+    filename = (
+        f"CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_gn_{output_time}.nc"
+    )
     assert product.filename.name == filename
 
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
     assert len(dataset.supplementaries) == 1
     supplementary_ds = dataset.supplementaries[0]
-    assert supplementary_ds.facets['short_name'] == 'areacella'
-    assert 'timerange' not in supplementary_ds.facets
+    assert supplementary_ds.facets["short_name"] == "areacella"
+    assert "timerange" not in supplementary_ds.facets
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     levels = [100]
     get_reference_levels = create_autospec(
-        esmvalcore._recipe.recipe.get_reference_levels, return_value=levels)
-    monkeypatch.setattr(esmvalcore._recipe.recipe, 'get_reference_levels',
-                        get_reference_levels)
+        esmvalcore._recipe.recipe.get_reference_levels,
+        return_value=levels,
+    )
+    monkeypatch.setattr(
+        esmvalcore._recipe.recipe,
+        "get_reference_levels",
+        get_reference_levels,
+    )
 
     content = dedent("""
         preprocessors:
@@ -871,28 +905,34 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     assert len(recipe.tasks) == 2
 
     # Check that the reference dataset has been used
-    task = next(t for t in recipe.tasks
-                if t.name == 'diagnostic_name' + TASKSEP + 'ta')
+    task = next(
+        t for t in recipe.tasks if t.name == "diagnostic_name" + TASKSEP + "ta"
+    )
     assert len(task.products) == 2
-    product = next(p for p in task.products
-                   if p.attributes['dataset'] == 'GFDL-CM3')
-    reference = next(p for p in task.products
-                     if p.attributes['dataset'] == 'MPI-ESM-LR')
+    product = next(
+        p for p in task.products if p.attributes["dataset"] == "GFDL-CM3"
+    )
+    reference = next(
+        p for p in task.products if p.attributes["dataset"] == "MPI-ESM-LR"
+    )
 
-    assert product.settings['regrid']['target_grid'] == reference.datasets[0]
-    assert product.settings['extract_levels']['levels'] == levels
+    assert product.settings["regrid"]["target_grid"] == reference.datasets[0]
+    assert product.settings["extract_levels"]["levels"] == levels
 
     get_reference_levels.assert_called_once_with(reference.datasets[0])
 
-    assert 'regrid' not in reference.settings
-    assert 'extract_levels' not in reference.settings
+    assert "regrid" not in reference.settings
+    assert "extract_levels" not in reference.settings
 
     # Check that levels have been read from CMOR table
-    task = next(t for t in recipe.tasks
-                if t.name == 'diagnostic_name' + TASKSEP + 'ch4')
+    task = next(
+        t
+        for t in recipe.tasks
+        if t.name == "diagnostic_name" + TASKSEP + "ch4"
+    )
     assert len(task.products) == 1
     product = next(iter(task.products))
-    assert product.settings['extract_levels']['levels'] == [
+    assert product.settings["extract_levels"]["levels"] == [
         0,
         250,
         750,
@@ -939,8 +979,10 @@ def test_reference_dataset_undefined(tmp_path, monkeypatch, session):
         """)
     with pytest.raises(RecipeError) as error:
         get_recipe(tmp_path, content, session)
-    msg = ("Preprocessor 'test_from_reference' uses 'reference_dataset', but "
-           "'reference_dataset' is not defined")
+    msg = (
+        "Preprocessor 'test_from_reference' uses 'reference_dataset', but "
+        "'reference_dataset' is not defined"
+    )
     assert msg in error.value.failed_tasks[0].message
 
 
@@ -999,32 +1041,36 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
     assert len(recipe.tasks) == 4
 
     for task in recipe.tasks:
-        if task.name == 'diagnostic_name/chl_default':
-            assert task.order.index('area_statistics') < task.order.index(
-                'multi_model_statistics')
-        elif task.name == 'diagnostic_name/chl_custom':
-            assert task.order.index('area_statistics') > task.order.index(
-                'multi_model_statistics')
-        elif task.name == 'diagnostic_name/chl_empty_custom':
+        if task.name == "diagnostic_name/chl_default":
+            assert task.order.index("area_statistics") < task.order.index(
+                "multi_model_statistics",
+            )
+        elif task.name == "diagnostic_name/chl_custom":
+            assert task.order.index("area_statistics") > task.order.index(
+                "multi_model_statistics",
+            )
+        elif task.name == "diagnostic_name/chl_empty_custom":
             assert len(task.products) == 1
-            product = list(task.products)[0]
-            assert set(
-                product.settings.keys()) == set(DEFAULT_PREPROCESSOR_STEPS)
-        elif task.name == 'diagnostic_name/chl_with_extract_time':
+            product = next(iter(task.products))
+            assert set(product.settings.keys()) == set(
+                DEFAULT_PREPROCESSOR_STEPS,
+            )
+        elif task.name == "diagnostic_name/chl_with_extract_time":
             assert len(task.products) == 1
-            product = list(task.products)[0]
-            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(['extract_time']))
+            product = next(iter(task.products))
+            steps = {*DEFAULT_PREPROCESSOR_STEPS, "extract_time"}
             assert set(product.settings.keys()) == steps
-            assert product.settings['extract_time'] == {
-                'start_year': 2001,
-                'start_month': 3,
-                'start_day': 14,
-                'end_year': 2002,
-                'end_month': 6,
-                'end_day': 28,
+            assert product.settings["extract_time"] == {
+                "start_year": 2001,
+                "start_month": 3,
+                "start_day": 14,
+                "end_year": 2002,
+                "end_month": 6,
+                "end_day": 28,
             }
         else:
-            assert False, f"invalid task {task.name}"
+            msg = f"invalid task {task.name}"
+            raise AssertionError(msg)
 
 
 def test_derive(tmp_path, patched_datafinder, session):
@@ -1050,17 +1096,17 @@ def test_derive(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'toz'
+    assert task.name == "diagnostic_name" + TASKSEP + "toz"
 
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'derive' in product.settings
-    assert product.attributes['short_name'] == 'toz'
+    assert "derive" in product.settings
+    assert product.attributes["short_name"] == "toz"
 
     assert len(product.datasets) == 2
-    input_variables = {d.facets['short_name'] for d in product.datasets}
-    assert input_variables == {'ps', 'tro3'}
+    input_variables = {d.facets["short_name"] for d in product.datasets}
+    assert input_variables == {"ps", "tro3"}
 
 
 def test_derive_not_needed(tmp_path, patched_datafinder, session):
@@ -1086,17 +1132,17 @@ def test_derive_not_needed(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name/toz'
+    assert task.name == "diagnostic_name/toz"
 
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'derive' not in product.settings
+    assert "derive" not in product.settings
 
     # Check dataset
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
-    assert dataset.facets['short_name'] == 'toz'
+    assert dataset.facets["short_name"] == "toz"
     assert dataset.files
 
 
@@ -1126,30 +1172,32 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'ohc'
+    assert task.name == "diagnostic_name" + TASKSEP + "ohc"
 
     # Check products
     assert len(task.products) == 3
     for product in task.products:
-        assert 'derive' in product.settings
-        assert product.attributes['short_name'] == 'ohc'
+        assert "derive" in product.settings
+        assert product.attributes["short_name"] == "ohc"
 
         # Check datasets
         assert len(product.datasets) == 2
-        thetao_ds = next(d for d in product.datasets
-                         if d.facets['short_name'] == 'thetao')
-        assert thetao_ds.facets['mip'] == 'Omon'
-        volcello_ds = next(d for d in product.datasets
-                           if d.facets['short_name'] == 'volcello')
-        if volcello_ds.facets['project'] == 'CMIP6':
-            mip = 'Ofx'
-        else:
-            mip = 'fx'
-        assert volcello_ds.facets['mip'] == mip
+        thetao_ds = next(
+            d for d in product.datasets if d.facets["short_name"] == "thetao"
+        )
+        assert thetao_ds.facets["mip"] == "Omon"
+        volcello_ds = next(
+            d for d in product.datasets if d.facets["short_name"] == "volcello"
+        )
+        mip = "Ofx" if volcello_ds.facets["project"] == "CMIP6" else "fx"
+        assert volcello_ds.facets["mip"] == mip
 
 
-def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
-                                 session):
+def test_derive_with_fx_ohc_fail(
+    tmp_path,
+    patched_failing_datafinder,
+    session,
+):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1174,8 +1222,12 @@ def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
         get_recipe(tmp_path, content, session)
 
 
-def test_derive_with_optional_var(tmp_path, patched_datafinder,
-                                  patched_tas_derivation, session):
+def test_derive_with_optional_var(
+    tmp_path,
+    patched_datafinder,
+    patched_tas_derivation,
+    session,
+):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1201,26 +1253,34 @@ def test_derive_with_optional_var(tmp_path, patched_datafinder,
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert task.name == "diagnostic_name" + TASKSEP + "tas"
 
     # Check products
     assert len(task.products) == 3
     for product in task.products:
-        assert 'derive' in product.settings
-        assert product.attributes['short_name'] == 'tas'
+        assert "derive" in product.settings
+        assert product.attributes["short_name"] == "tas"
         assert len(product.datasets) == 2
-        pr_ds = next(d for d in product.datasets
-                     if d.facets['short_name'] == 'pr')
-        assert pr_ds.facets['mip'] == 'Amon'
-        assert pr_ds.facets['timerange'] == '2000/2005'
-        areacella_ds = next(d for d in product.datasets
-                            if d.facets['short_name'] == 'areacella')
-        assert areacella_ds.facets['mip'] == 'fx'
-        assert 'timerange' not in areacella_ds.facets
+        pr_ds = next(
+            d for d in product.datasets if d.facets["short_name"] == "pr"
+        )
+        assert pr_ds.facets["mip"] == "Amon"
+        assert pr_ds.facets["timerange"] == "2000/2005"
+        areacella_ds = next(
+            d
+            for d in product.datasets
+            if d.facets["short_name"] == "areacella"
+        )
+        assert areacella_ds.facets["mip"] == "fx"
+        assert "timerange" not in areacella_ds.facets
 
 
-def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
-                                         patched_tas_derivation, session):
+def test_derive_with_optional_var_nodata(
+    tmp_path,
+    patched_failing_datafinder,
+    patched_tas_derivation,
+    session,
+):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1246,17 +1306,17 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert task.name == "diagnostic_name" + TASKSEP + "tas"
 
     # Check products
     assert len(task.products) == 3
     for product in task.products:
-        assert 'derive' in product.settings
-        assert product.attributes['short_name'] == 'tas'
+        assert "derive" in product.settings
+        assert product.attributes["short_name"] == "tas"
 
         # Check datasets
         assert len(product.datasets) == 1
-        assert product.datasets[0].facets['short_name'] == 'pr'
+        assert product.datasets[0].facets["short_name"] == "pr"
 
 
 def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
@@ -1285,17 +1345,20 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
     # Check that start_year and end_year are present in attributes
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'derive' in product.settings
-    assert product.attributes['short_name'] == 'toz'
-    assert product.attributes['timerange'] == '2000/2005'
-    assert product.attributes['start_year'] == 2000
-    assert product.attributes['end_year'] == 2005
+    assert "derive" in product.settings
+    assert product.attributes["short_name"] == "toz"
+    assert product.attributes["timerange"] == "2000/2005"
+    assert product.attributes["start_year"] == 2000
+    assert product.attributes["end_year"] == 2005
 
 
-@pytest.mark.parametrize('force_derivation', [True, False])
-def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session,
-                                   force_derivation):
-
+@pytest.mark.parametrize("force_derivation", [True, False])
+def test_derive_timerange_wildcard(
+    tmp_path,
+    patched_datafinder,
+    session,
+    force_derivation,
+):
     content = dedent(f"""
         diagnostics:
           diagnostic_name:
@@ -1323,33 +1386,39 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session,
     assert len(task.products) == 1
     product = task.products.pop()
     if force_derivation:
-        assert 'derive' in product.settings
-    assert product.attributes['short_name'] == 'toz'
-    assert product.attributes['timerange'] == '1990/2019'
-    assert product.attributes['start_year'] == 1990
-    assert product.attributes['end_year'] == 2019
+        assert "derive" in product.settings
+    assert product.attributes["short_name"] == "toz"
+    assert product.attributes["timerange"] == "1990/2019"
+    assert product.attributes["start_year"] == 1990
+    assert product.attributes["end_year"] == 2019
 
 
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
-    image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
+    image = Path(cfg["plot_dir"]) / (basename + "." + cfg["output_file_type"])
     image.parent.mkdir(parents=True)
-    Image.new('RGB', (1, 1)).save(image)
+    Image.new("RGB", (1, 1)).save(image)
     return str(image)
 
 
-def get_diagnostic_filename(basename, cfg, extension='nc'):
+def get_diagnostic_filename(basename, cfg, extension="nc"):
     """Get a valid path for saving a diagnostic data file."""
     return os.path.join(
-        cfg['work_dir'],
-        basename + '.' + extension,
+        cfg["work_dir"],
+        basename + "." + extension,
     )
 
 
 def simulate_preprocessor_run(task):
     """Simulate preprocessor run."""
-    task._initialize_product_provenance()
     for product in task.products:
+        # Populate the LocalFile.attributes attribute and initialize
+        # provenance as done in `PreprocessingTask.cubes`.
+        for dataset in product.datasets:
+            for file in dataset.files:
+                file.to_iris()
+        product.initialize_provenance(task.activity)
+
         create_test_file(product.filename)
         product.save_provenance()
 
@@ -1361,21 +1430,21 @@ def simulate_diagnostic_run(diagnostic_task):
         p.filename for a in diagnostic_task.ancestors for p in a.products
     ]
     record = {
-        'caption': 'Test figure',
-        'statistics': ['mean', 'var'],
-        'domains': ['trop', 'et'],
-        'plot_types': ['zonal'],
-        'authors': ['andela_bouwe'],
-        'references': ['acknow_project'],
-        'ancestors': input_files,
+        "caption": "Test figure",
+        "statistics": ["mean", "var"],
+        "domains": ["trop", "et"],
+        "plot_types": ["zonal"],
+        "authors": ["andela_bouwe"],
+        "references": ["acknow_project"],
+        "ancestors": input_files,
     }
 
-    diagnostic_file = get_diagnostic_filename('test', cfg)
+    diagnostic_file = get_diagnostic_filename("test", cfg)
     create_test_file(diagnostic_file)
-    plot_file = create_test_image('test', cfg)
-    provenance = os.path.join(cfg['run_dir'], 'diagnostic_provenance.yml')
-    os.makedirs(cfg['run_dir'])
-    with open(provenance, 'w', encoding='utf-8') as file:
+    plot_file = create_test_image("test", cfg)
+    provenance = os.path.join(cfg["run_dir"], "diagnostic_provenance.yml")
+    os.makedirs(cfg["run_dir"])
+    with open(provenance, "w", encoding="utf-8") as file:
         yaml.safe_dump({diagnostic_file: record, plot_file: record}, file)
 
     diagnostic_task._collect_provenance()
@@ -1387,12 +1456,13 @@ def test_diagnostic_task_provenance(
     patched_datafinder,
     session,
 ):
-    script = tmp_path / 'diagnostic.py'
-    script.write_text('')
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
 
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
-    content = dedent("""
+    content = dedent(
+        f"""
         diagnostics:
           diagnostic_name:
             themes:
@@ -1415,11 +1485,13 @@ def test_diagnostic_task_provenance(
               script_name2:
                 script: {script}
                 ancestors: [script_name]
-        """.format(script=script))
+        """,
+    )
 
     recipe = get_recipe(tmp_path, content, session)
-    preproc_task = next(t for t in recipe.tasks.flatten()
-                        if isinstance(t, PreprocessingTask))
+    preproc_task = next(
+        t for t in recipe.tasks.flatten() if isinstance(t, PreprocessingTask)
+    )
     simulate_preprocessor_run(preproc_task)
 
     diagnostic_task = recipe.tasks.pop()
@@ -1432,44 +1504,90 @@ def test_diagnostic_task_provenance(
     for product in diagnostic_task.products:
         product.restore_provenance()
         check_provenance(product)
-        assert product.attributes['caption'] == record['caption']
-        assert product.entity.get_attribute(
-            'attribute:' + 'caption').pop() == record['caption']
+        assert product.attributes["caption"] == record["caption"]
+        assert (
+            product.entity.get_attribute("attribute:" + "caption").pop()
+            == record["caption"]
+        )
 
         # Check that diagnostic script tags have been added
-        for key in ('statistics', 'domains', 'authors'):
-            assert product.attributes[key] == tuple(TAGS[key][k]
-                                                    for k in record[key])
+        for key in ("statistics", "domains", "authors"):
+            assert product.attributes[key] == tuple(
+                TAGS[key][k] for k in record[key]
+            )
 
         # Check that recipe diagnostic tags have been added
         src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
-        for key in ('realms', 'themes'):
-            value = src['diagnostics']['diagnostic_name'][key]
-            assert product.attributes[key] == tuple(TAGS[key][k]
-                                                    for k in value)
+        for key in ("realms", "themes"):
+            value = src["diagnostics"]["diagnostic_name"][key]
+            assert product.attributes[key] == tuple(
+                TAGS[key][k] for k in value
+            )
 
         # Check that recipe tags have been added
-        recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
+        recipe_record = product.provenance.get_record("recipe:recipe_test.yml")
         assert len(recipe_record) == 1
-        for key in ('description', 'references'):
-            value = src['documentation'][key]
-            if key == 'references':
-                value = str(src['documentation'][key])
-            assert recipe_record[0].get_attribute('attribute:' +
-                                                  key).pop() == value
+        for key in ("description", "references"):
+            value = src["documentation"][key]
+            if key == "references":
+                value = str(src["documentation"][key])
+            assert (
+                recipe_record[0].get_attribute("attribute:" + key).pop()
+                == value
+            )
 
     # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
-        iter(p for p in diagnostic_task.products
-             if p.filename.endswith('.nc')))
+        iter(
+            p for p in diagnostic_task.products if p.filename.endswith(".nc")
+        ),
+    )
     cube = iris.load_cube(product.filename)
-    assert cube.attributes['software'].startswith("Created with ESMValTool v")
-    assert cube.attributes['caption'] == record['caption']
-    prefix = os.path.splitext(product.filename)[0] + '_provenance'
-    assert os.path.exists(prefix + '.xml')
+    assert cube.attributes["software"].startswith("Created with ESMValTool v")
+    assert cube.attributes["caption"] == record["caption"]
+    prefix = os.path.splitext(product.filename)[0] + "_provenance"
+    assert os.path.exists(prefix + ".xml")
 
 
-def test_alias_generation(tmp_path, patched_datafinder, session):
+def test_invalid_diagnostic_ancestor(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
+    content = dedent(
+        f"""
+        diagnostics:
+          diagnostic_name:
+            themes:
+              - phys
+            realms:
+              - atmos
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: 2000/2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - dataset: CanESM2
+            scripts:
+              script_name:
+                script: {script}
+              script_name2:
+                script: {script}
+                ancestors: [invalid_*]
+        """,
+    )
+
+    msg = r"Could not find any ancestors matching"
+    with pytest.raises(RecipeError, match=msg):
+        get_recipe(tmp_path, content, session)
+
+
+def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901, PLR0912
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1502,45 +1620,43 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
                   - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
-        """)  # noqa:
+        """)
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.datasets) == 14
     for dataset in recipe.datasets:
-        if dataset['project'] == 'CMIP5':
-            if dataset['dataset'] == 'GFDL-CM3':
-                assert dataset['alias'] == 'CMIP5_GFDL-CM3'
-            elif dataset['dataset'] == 'FGOALS-g3':
-                if dataset['sub_experiment'] == 's1960':
-                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1960'
+        if dataset["project"] == "CMIP5":
+            if dataset["dataset"] == "GFDL-CM3":
+                assert dataset["alias"] == "CMIP5_GFDL-CM3"
+            elif dataset["dataset"] == "FGOALS-g3":
+                if dataset["sub_experiment"] == "s1960":
+                    assert dataset["alias"] == "CMIP5_FGOALS-g3_s1960"
                 else:
-                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1961'
+                    assert dataset["alias"] == "CMIP5_FGOALS-g3_s1961"
+            elif dataset["ensemble"] == "r1i1p1":
+                assert dataset["alias"] == "CMIP5_EC-EARTH_r1i1p1"
+            elif dataset["ensemble"] == "r2i1p1":
+                assert dataset["alias"] == "CMIP5_EC-EARTH_r2i1p1"
             else:
-                if dataset['ensemble'] == 'r1i1p1':
-                    assert dataset['alias'] == 'CMIP5_EC-EARTH_r1i1p1'
-                elif dataset['ensemble'] == 'r2i1p1':
-                    assert dataset['alias'] == 'CMIP5_EC-EARTH_r2i1p1'
-                else:
-                    assert dataset['alias'] == 'my_alias'
-        elif dataset['project'] == 'CMIP6':
-            if dataset['dataset'] == 'GF3':
-                assert dataset['alias'] == 'CMIP6_CMP_GF3'
-            elif dataset['dataset'] == 'GF2':
-                assert dataset['alias'] == 'CMIP6_CMP_GF2'
-            elif dataset['dataset'] == 'EC':
-                assert dataset['alias'] == 'CMIP6_HRMP_EC'
+                assert dataset["alias"] == "my_alias"
+        elif dataset["project"] == "CMIP6":
+            if dataset["dataset"] == "GF3":
+                assert dataset["alias"] == "CMIP6_CMP_GF3"
+            elif dataset["dataset"] == "GF2":
+                assert dataset["alias"] == "CMIP6_CMP_GF2"
+            elif dataset["dataset"] == "EC":
+                assert dataset["alias"] == "CMIP6_HRMP_EC"
             else:
-                assert dataset['alias'] == 'CMIP6_HRMP_HA'
-        elif dataset['project'] == 'CORDEX':
-            if dataset['driver'] == 'ICHEC-EC-EARTH':
-                assert dataset['alias'] == 'CORDEX_ICHEC-EC-EARTH'
+                assert dataset["alias"] == "CMIP6_HRMP_HA"
+        elif dataset["project"] == "CORDEX":
+            if dataset["driver"] == "ICHEC-EC-EARTH":
+                assert dataset["alias"] == "CORDEX_ICHEC-EC-EARTH"
             else:
-                assert dataset['alias'] == 'CORDEX_MIROC-MIROC5'
+                assert dataset["alias"] == "CORDEX_MIROC-MIROC5"
+        elif dataset["version"] == 1:
+            assert dataset["alias"] == "OBS_1"
         else:
-            if dataset['version'] == 1:
-                assert dataset['alias'] == 'OBS_1'
-            else:
-                assert dataset['alias'] == 'OBS_2'
+            assert dataset["alias"] == "OBS_2"
 
 
 def test_concatenation(tmp_path, patched_datafinder, session):
@@ -1570,10 +1686,10 @@ def test_concatenation(tmp_path, patched_datafinder, session):
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.datasets) == 2
     for dataset in recipe.datasets:
-        if dataset['exp'] == 'historical':
-            assert dataset['alias'] == 'historical'
+        if dataset["exp"] == "historical":
+            assert dataset["alias"] == "historical"
         else:
-            assert dataset['alias'] == 'historical-rcp85'
+            assert dataset["alias"] == "historical-rcp85"
 
 
 def test_ensemble_expansion(tmp_path, patched_datafinder, session):
@@ -1599,9 +1715,9 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, session):
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.datasets) == 3
-    assert recipe.datasets[0]['ensemble'] == 'r1i1p1'
-    assert recipe.datasets[1]['ensemble'] == 'r2i1p1'
-    assert recipe.datasets[2]['ensemble'] == 'r3i1p1'
+    assert recipe.datasets[0]["ensemble"] == "r1i1p1"
+    assert recipe.datasets[1]["ensemble"] == "r2i1p1"
+    assert recipe.datasets[2]["ensemble"] == "r3i1p1"
 
 
 def test_extract_shape(tmp_path, patched_datafinder, session):
@@ -1629,7 +1745,7 @@ def test_extract_shape(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     # Create shapefile
-    shapefile = session['auxiliary_data_dir'] / Path('test.shp')
+    shapefile = session["auxiliary_data_dir"] / Path("test.shp")
     shapefile.parent.mkdir(parents=True, exist_ok=True)
     shapefile.touch()
 
@@ -1639,17 +1755,23 @@ def test_extract_shape(tmp_path, patched_datafinder, session):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.settings['extract_shape']['shapefile'] == shapefile
+    assert product.settings["extract_shape"]["shapefile"] == shapefile
 
 
-@pytest.mark.parametrize('invalid_arg',
-                         ['shapefile', 'method', 'crop', 'decomposed'])
-def test_extract_shape_raises(tmp_path, patched_datafinder, session,
-                              invalid_arg):
+@pytest.mark.parametrize(
+    "invalid_arg",
+    ["shapefile", "method", "crop", "decomposed"],
+)
+def test_extract_shape_raises(
+    tmp_path,
+    patched_datafinder,
+    session,
+    invalid_arg,
+):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     # Create shapefile
-    shapefile = session['auxiliary_data_dir'] / Path('test.shp')
+    shapefile = session["auxiliary_data_dir"] / Path("test.shp")
     shapefile.parent.mkdir(parents=True, exist_ok=True)
     shapefile.touch()
 
@@ -1679,42 +1801,42 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, session,
 
     # Add invalid argument
     recipe = yaml.safe_load(content)
-    recipe['preprocessors']['test']['extract_shape'][invalid_arg] = 'x'
+    recipe["preprocessors"]["test"]["extract_shape"][invalid_arg] = "x"
     content = yaml.safe_dump(recipe)
 
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
 
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert 'extract_shape' in exc.value.failed_tasks[0].message
+    assert "extract_shape" in exc.value.failed_tasks[0].message
     assert invalid_arg in exc.value.failed_tasks[0].message
 
 
 def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
-    for i, product in enumerate(products):
+    for product in products:
         settings = product.settings.get(preprocessor)
         if settings:
-            output_products = settings['output_products']
+            output_products = settings["output_products"]
 
             for identifier, statistic_out in output_products.items():
                 for statistic, preproc_file in statistic_out.items():
                     product_out[identifier, statistic].append(preproc_file)
 
     # Make sure that output products are consistent
-    for (identifier, statistic), value in product_out.items():
+    for (_, statistic), value in product_out.items():
         assert statistic in statistics
-        assert len(set(value)) == 1, 'Output products are not equal'
+        assert len(set(value)) == 1, "Output products are not equal"
 
     return product_out
 
 
 def test_ensemble_statistics(tmp_path, patched_datafinder, session):
-    statistics = ['mean', 'max']
-    diagnostic = 'diagnostic_name'
-    variable = 'pr'
-    preprocessor = 'ensemble_statistics'
+    statistics = ["mean", "max"]
+    diagnostic = "diagnostic_name"
+    variable = "pr"
+    preprocessor = "ensemble_statistics"
 
     content = dedent(f"""
          preprocessors:
@@ -1743,24 +1865,24 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    datasets = set([ds['dataset'] for ds in recipe.datasets])
+    datasets = {ds["dataset"] for ds in recipe.datasets}
     task = next(iter(recipe.tasks))
 
     products = task.products
-    product_out = _test_output_product_consistency(products, preprocessor,
-                                                   statistics)
+    product_out = _test_output_product_consistency(
+        products,
+        preprocessor,
+        statistics,
+    )
 
     assert len(product_out) == len(datasets) * len(statistics)
 
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
-
 
 def test_multi_model_statistics(tmp_path, patched_datafinder, session):
-    statistics = ['mean', 'max']
-    diagnostic = 'diagnostic_name'
-    variable = 'pr'
-    preprocessor = 'multi_model_statistics'
+    statistics = ["mean", "max"]
+    diagnostic = "diagnostic_name"
+    variable = "pr"
+    preprocessor = "multi_model_statistics"
 
     content = dedent(f"""
         preprocessors:
@@ -1793,20 +1915,20 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, session):
     task = next(iter(recipe.tasks))
 
     products = task.products
-    product_out = _test_output_product_consistency(products, preprocessor,
-                                                   statistics)
+    product_out = _test_output_product_consistency(
+        products,
+        preprocessor,
+        statistics,
+    )
 
     assert len(product_out) == len(statistics)
 
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
-
 
 def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
-    statistics = ['mean', 'max']
-    diagnostic = 'diagnostic_name'
-    variable = 'pr'
-    preprocessor = 'multi_model_statistics'
+    statistics = ["mean", "max"]
+    diagnostic = "diagnostic_name"
+    variable = "pr"
+    preprocessor = "multi_model_statistics"
 
     content = dedent(f"""
         preprocessors:
@@ -1843,28 +1965,29 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
     task = next(iter(recipe.tasks))
 
     products = task.products
-    product_out = _test_output_product_consistency(products, preprocessor,
-                                                   statistics)
+    product_out = _test_output_product_consistency(
+        products,
+        preprocessor,
+        statistics,
+    )
 
     assert len(product_out) == len(statistics)
-    assert 'OBS' not in product_out
-    for id, prods in product_out:
-        assert id != 'OBS'
-        assert id == 'CMIP5'
-    task._initialize_product_provenance()
-    assert next(iter(products)).provenance is not None
+    assert "OBS" not in product_out
+    for id_, _ in product_out:
+        assert id_ != "OBS"
+        assert id_ == "CMIP5"
 
 
 def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
-    diagnostic = 'diagnostic_name'
-    variable = 'pr'
+    diagnostic = "diagnostic_name"
+    variable = "pr"
 
-    mm_statistics = ['mean', 'max']
-    mm_preprocessor = 'multi_model_statistics'
-    ens_statistics = ['mean', 'median']
-    ens_preprocessor = 'ensemble_statistics'
+    mm_statistics = ["mean", "max"]
+    mm_preprocessor = "multi_model_statistics"
+    ens_statistics = ["mean", "median"]
+    ens_preprocessor = "ensemble_statistics"
 
-    groupby = [ens_preprocessor, 'tag']
+    groupby = [ens_preprocessor, "tag"]
 
     content = dedent(f"""
         preprocessors:
@@ -1898,7 +2021,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    datasets = set([ds['dataset'] for ds in recipe.datasets])
+    datasets = {ds["dataset"] for ds in recipe.datasets}
 
     products = next(iter(recipe.tasks)).products
 
@@ -1915,8 +2038,9 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
     )
 
     assert len(ens_products) == len(datasets) * len(ens_statistics)
-    assert len(
-        mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
+    assert len(mm_products) == len(mm_statistics) * len(ens_statistics) * len(
+        groupby,
+    )
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
@@ -1953,23 +2077,26 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+    assert task.name == "diagnostic_name" + TASKSEP + "gpp"
 
     # Check weighting
     assert len(task.products) == 2
     for product in task.products:
-        assert 'weighting_landsea_fraction' in product.settings
-        settings = product.settings['weighting_landsea_fraction']
+        assert "weighting_landsea_fraction" in product.settings
+        settings = product.settings["weighting_landsea_fraction"]
         assert len(settings) == 1
-        assert settings['area_type'] == 'land'
+        assert settings["area_type"] == "land"
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert len(dataset.supplementaries) == 1
-        assert dataset.supplementaries[0].facets['short_name'] == 'sftlf'
+        assert dataset.supplementaries[0].facets["short_name"] == "sftlf"
 
 
-def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
-                                          session):
+def test_weighting_landsea_fraction_no_fx(
+    tmp_path,
+    patched_failing_datafinder,
+    session,
+):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -1999,8 +2126,11 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
         get_recipe(tmp_path, content, session)
 
 
-def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
-                                            session):
+def test_weighting_landsea_fraction_exclude(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -2032,23 +2162,26 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+    assert task.name == "diagnostic_name" + TASKSEP + "gpp"
 
     # Check weighting
     assert len(task.products) == 3
     for product in task.products:
-        if product.attributes['dataset'] != 'TEST':
-            assert 'weighting_landsea_fraction' not in product.settings
+        if product.attributes["dataset"] != "TEST":
+            assert "weighting_landsea_fraction" not in product.settings
             continue
-        assert 'weighting_landsea_fraction' in product.settings
-        settings = product.settings['weighting_landsea_fraction']
+        assert "weighting_landsea_fraction" in product.settings
+        settings = product.settings["weighting_landsea_fraction"]
         assert len(settings) == 1
-        assert 'exclude' not in settings
-        assert settings['area_type'] == 'land'
+        assert "exclude" not in settings
+        assert settings["area_type"] == "land"
 
 
-def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
-                                                 session):
+def test_weighting_landsea_fraction_exclude_fail(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -2079,7 +2212,8 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
     assert str(exc_info.value.failed_tasks[0].message) == (
         "Preprocessor 'landfrac_weighting' uses 'alternative_dataset', but "
         "'alternative_dataset' is not defined for variable 'gpp' of "
-        "diagnostic 'diagnostic_name'.")
+        "diagnostic 'diagnostic_name'."
+    )
 
 
 def test_area_statistics(tmp_path, patched_datafinder, session):
@@ -2114,19 +2248,19 @@ def test_area_statistics(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+    assert task.name == "diagnostic_name" + TASKSEP + "gpp"
 
     # Check area_statistics
     assert len(task.products) == 2
     for product in task.products:
-        assert 'area_statistics' in product.settings
-        settings = product.settings['area_statistics']
+        assert "area_statistics" in product.settings
+        settings = product.settings["area_statistics"]
         assert len(settings) == 1
-        assert settings['operator'] == 'mean'
+        assert settings["operator"] == "mean"
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert len(dataset.supplementaries) == 1
-        assert dataset.supplementaries[0].facets['short_name'] == 'areacella'
+        assert dataset.supplementaries[0].facets["short_name"] == "areacella"
 
 
 def test_landmask(tmp_path, patched_datafinder, session):
@@ -2161,19 +2295,19 @@ def test_landmask(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+    assert task.name == "diagnostic_name" + TASKSEP + "gpp"
 
     # Check weighting
     assert len(task.products) == 2
     for product in task.products:
-        assert 'mask_landsea' in product.settings
-        settings = product.settings['mask_landsea']
+        assert "mask_landsea" in product.settings
+        settings = product.settings["mask_landsea"]
         assert len(settings) == 1
-        assert settings['mask_out'] == 'sea'
+        assert settings["mask_out"] == "sea"
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert len(dataset.supplementaries) == 1
-        assert dataset.supplementaries[0].facets['short_name'] == 'sftlf'
+        assert dataset.supplementaries[0].facets["short_name"] == "sftlf"
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
@@ -2207,15 +2341,15 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+    assert task.name == "diagnostic_name" + TASKSEP + "gpp"
 
     # Check masking
     assert len(task.products) == 3
     for product in task.products:
-        assert 'mask_landsea' in product.settings
-        settings = product.settings['mask_landsea']
+        assert "mask_landsea" in product.settings
+        settings = product.settings["mask_landsea"]
         assert len(settings) == 1
-        assert settings['mask_out'] == 'sea'
+        assert settings["mask_out"] == "sea"
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert dataset.supplementaries == []
@@ -2242,8 +2376,10 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-           "with mip 'Omon'")
+    msg = (
+        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+        "with mip 'Omon'"
+    )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
@@ -2278,13 +2414,13 @@ def test_multimodel_mask(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == f'diagnostic_name{TASKSEP}tas'
+    assert task.name == f"diagnostic_name{TASKSEP}tas"
 
     # Check mask_multimodel
     assert len(task.products) == 3
     for product in task.products:
-        assert 'mask_multimodel' in product.settings
-        assert product.settings['mask_multimodel'] == {}
+        assert "mask_multimodel" in product.settings
+        assert product.settings["mask_multimodel"] == {}
 
 
 def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
@@ -2307,7 +2443,7 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
         """)
     recipe = get_recipe(tmp_path, content, session)
     dataset = recipe.datasets[0]
-    assert dataset['project'] == 'obs4MIPs'
+    assert dataset["project"] == "obs4MIPs"
 
 
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
@@ -2324,12 +2460,14 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
                   - {dataset: BNU-ESM}
             scripts: null
         """)
-    session['download_dir'] = tmp_path / 'download_dir'
-    session['search_esgf'] = 'when_missing'
+    session["download_dir"] = tmp_path / "download_dir"
+    session["search_esgf"] = "when_missing"
 
-    mocker.patch.object(esmvalcore._recipe.recipe.esgf,
-                        'download',
-                        create_autospec=True)
+    mocker.patch.object(
+        esmvalcore._recipe.recipe.esgf,
+        "download",
+        create_autospec=True,
+    )
 
     recipe = get_recipe(tmp_path, content, session)
 
@@ -2339,9 +2477,12 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.run()
 
     esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
-        set(), session['download_dir'])
+        set(),
+        session["download_dir"],
+    )
     recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=session['max_parallel_tasks'])
+        max_parallel_tasks=session["max_parallel_tasks"],
+    )
     recipe.write_filled_recipe.assert_called_once()
     recipe.write_html_summary.assert_called_once()
 
@@ -2349,15 +2490,15 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 def test_representative_dataset_regular_var(patched_datafinder, session):
     """Test ``_representative_dataset`` with regular variable."""
     variable = {
-        'dataset': 'ICON',
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'original_short_name': 'tas',
-        'project': 'ICON',
-        'short_name': 'tas',
-        'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
+        "dataset": "ICON",
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "frequency": "mon",
+        "mip": "Amon",
+        "original_short_name": "tas",
+        "project": "ICON",
+        "short_name": "tas",
+        "timerange": "1990/2000",
+        "var_type": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2365,25 +2506,28 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     assert len(datasets) == 1
     filename = datasets[0].files[0]
     path = Path(filename)
-    assert path.name == 'atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc'
+    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc"
 
 
-@pytest.mark.parametrize('force_derivation', [True, False])
-def test_representative_dataset_derived_var(patched_datafinder, session,
-                                            force_derivation):
+@pytest.mark.parametrize("force_derivation", [True, False])
+def test_representative_dataset_derived_var(
+    patched_datafinder,
+    session,
+    force_derivation,
+):
     """Test ``_representative_dataset`` with derived variable."""
     variable = {
-        'dataset': 'ICON',
-        'derive': True,
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'force_derivation': force_derivation,
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'original_short_name': 'alb',
-        'project': 'ICON',
-        'short_name': 'alb',
-        'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
+        "dataset": "ICON",
+        "derive": True,
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "force_derivation": force_derivation,
+        "frequency": "mon",
+        "mip": "Amon",
+        "original_short_name": "alb",
+        "project": "ICON",
+        "short_name": "alb",
+        "timerange": "1990/2000",
+        "var_type": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2391,39 +2535,39 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
 
     expected_facets = {
         # Already present in variable
-        'dataset': 'ICON',
-        'derive': True,
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'force_derivation': force_derivation,
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'project': 'ICON',
-        'timerange': '1990/2000',
+        "dataset": "ICON",
+        "derive": True,
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "force_derivation": force_derivation,
+        "frequency": "mon",
+        "mip": "Amon",
+        "project": "ICON",
+        "timerange": "1990/2000",
         # Added by _add_cmor_info
-        'modeling_realm': ['atmos'],
-        'units': 'W m-2',
+        "modeling_realm": ["atmos"],
+        "units": "W m-2",
         # Added by _add_extra_facets
-        'var_type': 'atm_2d_ml',
+        "var_type": "atm_2d_ml",
     }
     if force_derivation:
         expected_datasets = [
             Dataset(
-                short_name='rsdscs',
-                long_name='Surface Downwelling Clear-Sky Shortwave Radiation',
-                original_short_name='rsdscs',
+                short_name="rsdscs",
+                long_name="Surface Downwelling Clear-Sky Shortwave Radiation",
+                original_short_name="rsdscs",
                 standard_name=(
-                    'surface_downwelling_shortwave_flux_in_air_assuming_clear_'
-                    'sky'
+                    "surface_downwelling_shortwave_flux_in_air_assuming_clear_"
+                    "sky"
                 ),
                 **expected_facets,
             ),
             Dataset(
-                short_name='rsuscs',
-                long_name='Surface Upwelling Clear-Sky Shortwave Radiation',
-                original_short_name='rsuscs',
+                short_name="rsuscs",
+                long_name="Surface Upwelling Clear-Sky Shortwave Radiation",
+                original_short_name="rsuscs",
                 standard_name=(
-                    'surface_upwelling_shortwave_flux_in_air_assuming_clear_'
-                    'sky'
+                    "surface_upwelling_shortwave_flux_in_air_assuming_clear_"
+                    "sky"
                 ),
                 **expected_facets,
             ),
@@ -2439,66 +2583,64 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
 def test_get_derive_input_variables(patched_datafinder, session):
     """Test ``_get_derive_input_variables``."""
     alb_facets = {
-        'dataset': 'ICON',
-        'derive': True,
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'force_derivation': True,
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'original_short_name': 'alb',
-        'project': 'ICON',
-        'short_name': 'alb',
-        'timerange': '1990/2000',
+        "dataset": "ICON",
+        "derive": True,
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "force_derivation": True,
+        "frequency": "mon",
+        "mip": "Amon",
+        "original_short_name": "alb",
+        "project": "ICON",
+        "short_name": "alb",
+        "timerange": "1990/2000",
     }
     alb = Dataset(**alb_facets)
     alb.session = session
 
     rsdscs_facets = {
         # Added by get_required
-        'short_name': 'rsdscs',
+        "short_name": "rsdscs",
         # Already present in variables
-        'dataset': 'ICON',
-        'derive': True,
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'force_derivation': True,
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'project': 'ICON',
-        'timerange': '1990/2000',
+        "dataset": "ICON",
+        "derive": True,
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "force_derivation": True,
+        "frequency": "mon",
+        "mip": "Amon",
+        "project": "ICON",
+        "timerange": "1990/2000",
         # Added by _add_cmor_info
-        'standard_name':
-        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
-        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
-        'modeling_realm': ['atmos'],
-        'original_short_name': 'rsdscs',
-        'units': 'W m-2',
+        "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+        "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
+        "modeling_realm": ["atmos"],
+        "original_short_name": "rsdscs",
+        "units": "W m-2",
         # Added by _add_extra_facets
-        'var_type': 'atm_2d_ml',
+        "var_type": "atm_2d_ml",
     }
     rsdscs = Dataset(**rsdscs_facets)
     rsdscs.session = session
 
     rsuscs_facets = {
         # Added by get_required
-        'short_name': 'rsuscs',
+        "short_name": "rsuscs",
         # Already present in variables
-        'dataset': 'ICON',
-        'derive': True,
-        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
-        'force_derivation': True,
-        'frequency': 'mon',
-        'mip': 'Amon',
-        'project': 'ICON',
-        'timerange': '1990/2000',
+        "dataset": "ICON",
+        "derive": True,
+        "exp": "atm_amip-rad_R2B4_r1i1p1f1",
+        "force_derivation": True,
+        "frequency": "mon",
+        "mip": "Amon",
+        "project": "ICON",
+        "timerange": "1990/2000",
         # Added by _add_cmor_info
-        'standard_name':
-        'surface_upwelling_shortwave_flux_in_air_assuming_clear_sky',
-        'long_name': 'Surface Upwelling Clear-Sky Shortwave Radiation',
-        'modeling_realm': ['atmos'],
-        'original_short_name': 'rsuscs',
-        'units': 'W m-2',
+        "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+        "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
+        "modeling_realm": ["atmos"],
+        "original_short_name": "rsuscs",
+        "units": "W m-2",
         # Added by _add_extra_facets
-        'var_type': 'atm_2d_ml',
+        "var_type": "atm_2d_ml",
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session
@@ -2508,32 +2650,39 @@ def test_get_derive_input_variables(patched_datafinder, session):
 
 
 TEST_DIAG_SELECTION = [
-    (None, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2', 'd4/s1'}),
-    ({''}, set()),
-    ({'wrong_diag/*'}, set()),
-    ({'d1/*'}, {'d1/tas', 'd1/s1'}),
-    ({'d2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
-    ({'d3/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2'}),
-    ({'d4/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s2', 'd4/s1'}),
-    ({'wrong_diag/*', 'd1/*'}, {'d1/tas', 'd1/s1'}),
-    ({'d1/tas'}, {'d1/tas'}),
-    ({'d1/tas', 'd2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
-    ({'d1/tas', 'd3/s1'}, {'d1/tas', 'd3/s1', 'd1/s1'}),
-    ({'d4/*',
-      'd3/s1'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2', 'd4/s1'}),
+    (None, {"d1/tas", "d1/s1", "d2/s1", "d3/s1", "d3/s2", "d4/s1"}),
+    ({""}, set()),
+    ({"wrong_diag/*"}, set()),
+    ({"d1/*"}, {"d1/tas", "d1/s1"}),
+    ({"d2/*"}, {"d1/tas", "d1/s1", "d2/s1"}),
+    ({"d3/*"}, {"d1/tas", "d1/s1", "d2/s1", "d3/s1", "d3/s2"}),
+    ({"d4/*"}, {"d1/tas", "d1/s1", "d2/s1", "d3/s2", "d4/s1"}),
+    ({"wrong_diag/*", "d1/*"}, {"d1/tas", "d1/s1"}),
+    ({"d1/tas"}, {"d1/tas"}),
+    ({"d1/tas", "d2/*"}, {"d1/tas", "d1/s1", "d2/s1"}),
+    ({"d1/tas", "d3/s1"}, {"d1/tas", "d3/s1", "d1/s1"}),
+    (
+        {"d4/*", "d3/s1"},
+        {"d1/tas", "d1/s1", "d2/s1", "d3/s1", "d3/s2", "d4/s1"},
+    ),
 ]
 
 
-@pytest.mark.parametrize('diags_to_run,tasks_run', TEST_DIAG_SELECTION)
-def test_diag_selection(tmp_path, patched_datafinder, session, diags_to_run,
-                        tasks_run):
+@pytest.mark.parametrize(("diags_to_run", "tasks_run"), TEST_DIAG_SELECTION)
+def test_diag_selection(
+    tmp_path,
+    patched_datafinder,
+    session,
+    diags_to_run,
+    tasks_run,
+):
     """Test selection of individual diagnostics via --diagnostics option."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
-    script = tmp_path / 'diagnostic.py'
-    script.write_text('')
+    script = tmp_path / "diagnostic.py"
+    script.write_text("")
 
     if diags_to_run is not None:
-        session['diagnostics'] = diags_to_run
+        session["diagnostics"] = diags_to_run
 
     content = dedent("""
         diagnostics:
@@ -2583,7 +2732,8 @@ def test_diag_selection(tmp_path, patched_datafinder, session, diags_to_run,
 
 
 @pytest.mark.parametrize(
-    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
     content = dedent(f"""
@@ -2614,7 +2764,8 @@ def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize(
-    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
     content = dedent(f"""
@@ -2642,10 +2793,14 @@ def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize(
-    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_stats(
-    preproc, tmp_path, patched_datafinder, session
+    preproc,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2681,20 +2836,25 @@ def test_mm_stats_invalid_stats(
 
 
 @pytest.mark.parametrize(
-    'statistics',
+    "statistics",
     [
-        {'invalid_value': 1},
-        {'percent': 10, 'invalid_value': 1},
-        {'percent': 10, 'weights': False},
-    ]
+        {"invalid_value": 1},
+        {"percent": 10, "invalid_value": 1},
+        {"percent": 10, "weights": False},
+    ],
 )
 @pytest.mark.parametrize(
-    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+    "preproc",
+    ["multi_model_statistics", "ensemble_statistics"],
 )
 def test_mm_stats_invalid_stat_kwargs(
-    preproc, statistics, tmp_path, patched_datafinder, session
+    preproc,
+    statistics,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
-    statistics['operator'] = 'wpercentile'
+    statistics["operator"] = "wpercentile"
     content = dedent(f"""
         preprocessors:
           test:
@@ -2728,18 +2888,21 @@ def test_mm_stats_invalid_stat_kwargs(
 
 
 @pytest.mark.parametrize(
-    'preproc',
+    "preproc",
     [
-        'area_statistics',
-        'axis_statistics',
-        'meridional_statistics',
-        'volume_statistics',
-        'zonal_statistics',
-        'rolling_window_statistics',
-    ]
+        "area_statistics",
+        "axis_statistics",
+        "meridional_statistics",
+        "volume_statistics",
+        "zonal_statistics",
+        "rolling_window_statistics",
+    ],
 )
 def test_statistics_missing_operator_no_default_fail(
-    preproc, tmp_path, patched_datafinder, session
+    preproc,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2766,20 +2929,73 @@ def test_statistics_missing_operator_no_default_fail(
         get_recipe(tmp_path, content, session)
 
 
+def test_check_preprocessor_settings_last_resort(
+    mocker,
+    tmp_path,
+    caplog,
+    patched_datafinder,
+    session,
+):
+    # Create mock so that no errors during the regular preprocessor parameter
+    # checks are raised, but only during the last sanity check
+    def raise_exc():
+        msg = "type error"
+        raise TypeError(msg)
+
+    mock_args = mocker.Mock(name="args", kind=inspect.Parameter.VAR_POSITIONAL)
+    mock_bind = mocker.Mock(side_effect=raise_exc)
+    mock_signature = mocker.Mock(
+        parameters={"args": mock_args},
+        bind=mock_bind,
+    )
+    mocker.patch(
+        "inspect.signature",
+        autospec=True,
+        return_value=mock_signature,
+    )
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    with pytest.raises(TypeError):
+        get_recipe(tmp_path, content, session)
+    log_errors = [r.message for r in caplog.records if r.levelname == "ERROR"]
+    msg = (
+        "Wrong preprocessor function arguments in function "
+        "'remove_supplementary_variables'"
+    )
+    assert msg in log_errors
+
+
 @pytest.mark.parametrize(
-    'preproc,option',
+    ("preproc", "option"),
     [
-        ('annual_statistics', ''),
-        ('climate_statistics', ''),
-        ('daily_statistics', ''),
-        ('decadal_statistics', ''),
-        ('hourly_statistics', 'hours: 1'),
-        ('monthly_statistics', ''),
-        ('seasonal_statistics', ''),
-    ]
+        ("annual_statistics", ""),
+        ("climate_statistics", ""),
+        ("daily_statistics", ""),
+        ("decadal_statistics", ""),
+        ("hourly_statistics", "hours: 1"),
+        ("monthly_statistics", ""),
+        ("seasonal_statistics", ""),
+    ],
 )
 def test_statistics_missing_operator_with_default(
-    preproc, option, tmp_path, patched_datafinder, session
+    preproc,
+    option,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent(f"""
         preprocessors:
@@ -2806,27 +3022,31 @@ def test_statistics_missing_operator_with_default(
 
 
 @pytest.mark.parametrize(
-    'preproc,preproc_kwargs',
+    ("preproc", "preproc_kwargs"),
     [
-        ('annual_statistics', {'invalid_value': 1}),
-        ('area_statistics', {'percent': 10, 'invalid_value': 1}),
-        ('axis_statistics', {'percent': 10, 'weights': False}),
-        ('climate_statistics', {'invalid_value': 1}),
-        ('daily_statistics', {'percent': 10, 'invalid_value': 1}),
-        ('decadal_statistics', {'percent': 10, 'weights': False}),
-        ('hourly_statistics', {'invalid_value': 1, 'hours': 2}),
-        ('meridional_statistics', {'percent': 10, 'invalid_value': 1}),
-        ('monthly_statistics', {'percent': 10, 'weights': False}),
-        ('seasonal_statistics', {'invalid_value': 1}),
-        ('volume_statistics', {'percent': 10, 'weights': False}),
-        ('zonal_statistics', {'invalid_value': 1}),
-        ('rolling_window_statistics', {'percent': 10, 'invalid_value': 1}),
-    ]
+        ("annual_statistics", {"invalid_value": 1}),
+        ("area_statistics", {"percent": 10, "invalid_value": 1}),
+        ("axis_statistics", {"percent": 10, "weights": False}),
+        ("climate_statistics", {"invalid_value": 1}),
+        ("daily_statistics", {"percent": 10, "invalid_value": 1}),
+        ("decadal_statistics", {"percent": 10, "weights": False}),
+        ("hourly_statistics", {"invalid_value": 1, "hours": 2}),
+        ("meridional_statistics", {"percent": 10, "invalid_value": 1}),
+        ("monthly_statistics", {"percent": 10, "weights": False}),
+        ("seasonal_statistics", {"invalid_value": 1}),
+        ("volume_statistics", {"percent": 10, "weights": False}),
+        ("zonal_statistics", {"invalid_value": 1}),
+        ("rolling_window_statistics", {"percent": 10, "invalid_value": 1}),
+    ],
 )
 def test_statistics_invalid_kwargs(
-    preproc, preproc_kwargs, tmp_path, patched_datafinder, session
+    preproc,
+    preproc_kwargs,
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
-    preproc_kwargs['operator'] = 'wpercentile'
+    preproc_kwargs["operator"] = "wpercentile"
     content = dedent(f"""
         preprocessors:
           test:
@@ -2983,6 +3203,45 @@ def test_bias_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
+def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            custom_order: true
+            multi_model_statistics:
+              statistics: [mean]
+              span: overlap
+              groupby: [group]
+              keep_input_datasets: false
+            bias:
+              bias_type: relative
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5,    group: ref, reference_for_bias: true}
+                  - {dataset: CESM2,      group: ref, reference_for_bias: true}
+                  - {dataset: MPI-ESM-LR, group: notref}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
+
+
 def test_invalid_bias_type(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -3019,7 +3278,9 @@ def test_invalid_bias_type(tmp_path, patched_datafinder, session):
 
 
 def test_invalid_builtin_regridding_scheme(
-        tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3039,9 +3300,7 @@ def test_invalid_builtin_regridding_scheme(
                      ensemble: r1i1p1}
             scripts: null
         """)
-    msg = (
-        "Got invalid built-in regridding scheme 'INVALID', expected one of "
-    )
+    msg = "Got invalid built-in regridding scheme 'INVALID', expected one of "
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -3049,7 +3308,9 @@ def test_invalid_builtin_regridding_scheme(
 
 
 def test_generic_regridding_scheme_no_ref(
-        tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3081,7 +3342,9 @@ def test_generic_regridding_scheme_no_ref(
 
 
 def test_invalid_generic_regridding_scheme(
-        tmp_path, patched_datafinder, session
+    tmp_path,
+    patched_datafinder,
+    session,
 ):
     content = dedent("""
         preprocessors:
@@ -3113,57 +3376,7 @@ def test_invalid_generic_regridding_scheme(
     assert msg in str(rec_err_exp.value.failed_tasks[0].message)
 
 
-def test_deprecated_linear_extrapolate_scheme(
-    tmp_path, patched_datafinder, session
-):
-    content = dedent("""
-        preprocessors:
-          test:
-            regrid:
-              scheme: linear_extrapolate
-              target_grid: 2x2
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                mip: Amon
-                preprocessor: test
-                timerange: '2000/2010'
-                additional_datasets:
-                  - {project: CMIP5, dataset: CanESM2, exp: amip,
-                     ensemble: r1i1p1}
-            scripts: null
-        """)
-    get_recipe(tmp_path, content, session)
-
-
-def test_deprecated_unstructured_nearest_scheme(
-    tmp_path, patched_datafinder, session
-):
-    content = dedent("""
-        preprocessors:
-          test:
-            regrid:
-              scheme: unstructured_nearest
-              target_grid: 2x2
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                mip: Amon
-                preprocessor: test
-                timerange: '2000/2010'
-                additional_datasets:
-                  - {project: CMIP5, dataset: CanESM2, exp: amip,
-                     ensemble: r1i1p1}
-            scripts: null
-        """)
-    get_recipe(tmp_path, content, session)
-
-
-def test_wildcard_derived_var(
-    tmp_path, patched_failing_datafinder, session
-):
+def test_wildcard_derived_var(tmp_path, patched_failing_datafinder, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -3182,9 +3395,9 @@ def test_wildcard_derived_var(
 
     assert len(recipe.datasets) == 1
     dataset = recipe.datasets[0]
-    assert dataset.facets['dataset'] == 'BBB'
-    assert dataset.facets['institute'] == 'B'
-    assert dataset.facets['short_name'] == 'swcre'
+    assert dataset.facets["dataset"] == "BBB"
+    assert dataset.facets["institute"] == "B"
+    assert dataset.facets["short_name"] == "swcre"
 
 
 def test_distance_metric_no_ref(tmp_path, patched_datafinder, session):
@@ -3257,6 +3470,46 @@ def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
+def test_distance_metrics_two_refs_with_mmm(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            custom_order: true
+            ensemble_statistics:
+              statistics: [mean]
+              span: overlap
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
+                  - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
+                  - {dataset: MPI-ESM-LR}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 3
+
+
 def test_invalid_metric(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -3325,3 +3578,302 @@ def test_invalid_interpolate(tmp_path, patched_datafinder, session):
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert exc.value.failed_tasks[0].message == msg
+
+
+def test_automatic_regrid_era5_nc(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_regrid_era5_grib(
+    tmp_path,
+    patched_datafinder_grib,
+    session,
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "0.25x0.25",
+        "scheme": "linear",
+    }
+
+
+def test_automatic_no_regrid_era5_grib(
+    tmp_path,
+    patched_datafinder_grib,
+    session,
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3, automatic_regrid: false}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" not in product.settings
+
+
+def test_automatic_already_regrid_era5_grib(
+    tmp_path,
+    patched_datafinder_grib,
+    session,
+):
+    content = dedent("""
+        preprocessors:
+          test_automatic_regrid_era5:
+            regrid:
+              target_grid: 1x1
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test_automatic_regrid_era5
+                mip: Amon
+                timerange: '20000101/20001231'
+                additional_datasets:
+                  - {project: native6, dataset: ERA5, tier: 3}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert "regrid" in product.settings
+    assert product.settings["regrid"] == {
+        "target_grid": "1x1",
+        "scheme": "nearest",
+    }
+
+
+def test_align_metadata(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    # Check align_metadata settings have been updated
+    tasks = {t for task in recipe.tasks for t in task.flatten()}
+    assert len(tasks) == 1
+    task = next(iter(tasks))
+    products = task.products
+    assert len(products) == 1
+    product = next(iter(task.products))
+    assert "align_metadata" in product.settings
+    assert product.settings["align_metadata"]["target_project"] == "CMIP6"
+    assert product.settings["align_metadata"]["target_mip"] == "Amon"
+    assert product.settings["align_metadata"]["target_short_name"] == "tas"
+
+
+def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: ZZZ
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = (
+        "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
+        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
+        "OBS6, native6, obs4MIPs, ana4mips, EMAC, CORDEX, IPSLCM, ICON, CESM, "
+        'ACCESS."'
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+              target_short_name: zzz
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = (
+        "align_metadata failed: Variable 'zzz' not available for table 'Amon' "
+        "of project 'CMIP6'. Set `strict=False` to ignore this."
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_align_metadata_invalid_short_name_not_strict(
+    tmp_path,
+    patched_datafinder,
+    session,
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_project: CMIP6
+              target_short_name: zzz
+              strict: false
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    # Check align_metadata settings have been updated
+    tasks = {t for task in recipe.tasks for t in task.flatten()}
+    assert len(tasks) == 1
+    task = next(iter(tasks))
+    products = task.products
+    assert len(products) == 1
+    product = next(iter(task.products))
+    assert "align_metadata" in product.settings
+    assert product.settings["align_metadata"]["target_project"] == "CMIP6"
+    assert product.settings["align_metadata"]["target_mip"] == "Amon"
+    assert product.settings["align_metadata"]["target_short_name"] == "zzz"
+    assert product.settings["align_metadata"]["strict"] is False
+
+
+def test_align_metadata_missing_arg(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            align_metadata:
+              target_short_name: tas
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: test
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+
+            scripts: null
+        """)
+    msg = "Missing required argument"
+    with pytest.raises(ValueError, match=msg):
+        get_recipe(tmp_path, content, session)

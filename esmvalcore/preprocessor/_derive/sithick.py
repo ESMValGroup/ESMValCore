@@ -9,14 +9,16 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sithick`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [{
-            'short_name': 'sit',
-        }, {
-            'short_name': 'sic',
-        }]
-        return required
+        return [
+            {
+                "short_name": "sit",
+            },
+            {
+                "short_name": "sic",
+            },
+        ]
 
     @staticmethod
     def calculate(cubes):
@@ -36,9 +38,8 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice speed.
 
         """
-        sivol = cubes.extract_cube(Constraint(name='sea_ice_thickness'))
-        siconc = cubes.extract_cube(Constraint(name='sea_ice_area_fraction'))
-        siconc.convert_units('1.0')
+        sivol = cubes.extract_cube(Constraint(name="sea_ice_thickness"))
+        siconc = cubes.extract_cube(Constraint(name="sea_ice_area_fraction"))
+        siconc.convert_units("1.0")
 
-        sithick = sivol / siconc
-        return sithick
+        return sivol / siconc

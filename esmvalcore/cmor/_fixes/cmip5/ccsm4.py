@@ -2,8 +2,9 @@
 
 import dask.array as da
 
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
+
 from .bnu_esm import Cl as BaseCl
 
 Cl = BaseCl
@@ -27,7 +28,7 @@ class Csoil(Fix):
         -------
         iris.cube.Cube
         """
-        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
+        cube.data = da.ma.masked_equal(cube.core_data(), 1.0e33)
         return cube
 
 
@@ -55,7 +56,7 @@ class AllVars(Fix):
         -------
         iris.cube.CubeList
         """
-        return round_coordinates(cubes, decimals=3, coord_names=['latitude'])
+        return round_coordinates(cubes, decimals=3, coord_names=["latitude"])
 
 
 class So(Fix):
@@ -75,5 +76,5 @@ class So(Fix):
         -------
         iris.cube.CubeList
         """
-        self.get_cube_from_list(cubes).units = '1e3'
+        self.get_cube_from_list(cubes).units = "1e3"
         return cubes

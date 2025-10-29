@@ -1,4 +1,5 @@
 """Preprocessor functions calculate trends from data."""
+
 import logging
 
 import dask.array as da
@@ -6,7 +7,10 @@ import iris
 import numpy as np
 from cf_units import Unit
 
-from esmvalcore.preprocessor._shared import preserve_float_dtype
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._shared import (
+    preserve_float_dtype,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +28,7 @@ def _slope(x_arr, y_arr):
     xy_sum = (x_arr * y_arr).sum()
     xx_sum = (x_arr * x_arr).sum()
     x_mean = x_arr.mean()
-    slope = (xy_sum - x_mean * y_arr.sum()) / (xx_sum - x_mean * x_arr.sum())
-    return slope
+    return (xy_sum - x_mean * y_arr.sum()) / (xx_sum - x_mean * x_arr.sum())
 
 
 def _get_slope(y_arr, x_arr):
@@ -57,9 +60,9 @@ def _get_slope_stderr(y_arr, x_arr):
     slope = _slope(x_arr, y_arr)
     intercept = y_mean - slope * x_mean
     y_estim = slope * x_arr + intercept
-    slope_stderr = np.sqrt(((y_arr - y_estim)**2).sum() / dof /
-                           ((x_arr - x_mean)**2).sum())
-    return slope_stderr
+    return np.sqrt(
+        ((y_arr - y_estim) ** 2).sum() / dof / ((x_arr - x_mean) ** 2).sum(),
+    )
 
 
 def _set_trend_units(cube, coord):
@@ -67,14 +70,20 @@ def _set_trend_units(cube, coord):
     coord_units = coord.units
     if coord_units.is_time_reference():
         coord_units = Unit(coord_units.symbol.split()[0])
-    invalid_units = any([cube.units is None, cube.units.is_unknown(),
-                         cube.units.is_no_unit(), coord_units.is_no_unit()])
+    invalid_units = any(
+        [
+            cube.units is None,
+            cube.units.is_unknown(),
+            cube.units.is_no_unit(),
+            coord_units.is_no_unit(),
+        ],
+    )
     if not invalid_units:
         cube.units /= coord_units
 
 
 @preserve_float_dtype
-def linear_trend(cube, coordinate='time'):
+def linear_trend(cube, coordinate="time"):
     """Calculate linear trend of data along a given coordinate.
 
     The linear trend is defined as the slope of an ordinary linear regression.
@@ -104,20 +113,28 @@ def linear_trend(cube, coordinate='time'):
     def call_func(data, axis, x_data):
         """Calculate trend."""
         trend_arr = np.apply_along_axis(_get_slope, axis, data, x_data)
-        trend_arr = np.ma.masked_invalid(trend_arr)
-        return trend_arr
+        return np.ma.masked_invalid(trend_arr)
 
     def lazy_func(data, axis, x_data):
         """Calculate trend lazily."""
         trend_arr = da.apply_along_axis(
-            _get_slope, axis, data, x_data, dtype=data.dtype, shape=())
-        trend_arr = da.ma.masked_invalid(trend_arr)
-        return trend_arr
+            _get_slope,
+            axis,
+            data,
+            x_data,
+            dtype=data.dtype,
+            shape=(),
+        )
+        return da.ma.masked_invalid(trend_arr)
 
-    aggregator = iris.analysis.Aggregator('trend', call_func,
-                                          lazy_func=lazy_func,
-                                          x_data=coord.points)
-    cube = cube.collapsed(coord, aggregator)
+    aggregator = iris.analysis.Aggregator(
+        "trend",
+        call_func,
+        lazy_func=lazy_func,
+        x_data=coord.points,
+    )
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)
@@ -126,7 +143,7 @@ def linear_trend(cube, coordinate='time'):
 
 
 @preserve_float_dtype
-def linear_trend_stderr(cube, coordinate='time'):
+def linear_trend_stderr(cube, coordinate="time"):
     """Calculate standard error of linear trend along a given coordinate.
 
     This gives the standard error (not confidence intervals!) of the trend
@@ -158,22 +175,34 @@ def linear_trend_stderr(cube, coordinate='time'):
     # Construct aggregator and calculate standard error of the trend
     def call_func(data, axis, x_data):
         """Calculate trend standard error."""
-        trend_std_arr = np.apply_along_axis(_get_slope_stderr, axis, data,
-                                            x_data)
-        trend_std_arr = np.ma.masked_invalid(trend_std_arr)
-        return trend_std_arr
+        trend_std_arr = np.apply_along_axis(
+            _get_slope_stderr,
+            axis,
+            data,
+            x_data,
+        )
+        return np.ma.masked_invalid(trend_std_arr)
 
     def lazy_func(data, axis, x_data):
         """Calculate trend standard error lazily."""
         trend_std_arr = da.apply_along_axis(
-            _get_slope_stderr, axis, data, x_data, dtype=data.dtype, shape=())
-        trend_std_arr = da.ma.masked_invalid(trend_std_arr)
-        return trend_std_arr
+            _get_slope_stderr,
+            axis,
+            data,
+            x_data,
+            dtype=data.dtype,
+            shape=(),
+        )
+        return da.ma.masked_invalid(trend_std_arr)
 
-    aggregator = iris.analysis.Aggregator('trend_stderr', call_func,
-                                          lazy_func=lazy_func,
-                                          x_data=coord.points)
-    cube = cube.collapsed(coord, aggregator)
+    aggregator = iris.analysis.Aggregator(
+        "trend_stderr",
+        call_func,
+        lazy_func=lazy_func,
+        x_data=coord.points,
+    )
+    with ignore_iris_vague_metadata_warnings():
+        cube = cube.collapsed(coord, aggregator)
 
     # Adapt units
     _set_trend_units(cube, coord)

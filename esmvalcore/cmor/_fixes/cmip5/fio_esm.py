@@ -1,8 +1,8 @@
-
 """Fixes for FIO ESM model."""
-from ..fix import Fix
-from .cesm1_cam5 import Cl as BaseCl
 
+from esmvalcore.cmor._fixes.fix import Fix
+
+from .cesm1_cam5 import Cl as BaseCl
 
 Cl = BaseCl
 
@@ -26,7 +26,7 @@ class Co2(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 29. / 44. * 1.e6
+        cube *= 29.0 / 44.0 * 1.0e6
         cube.metadata = metadata
         return cube
 
@@ -50,6 +50,6 @@ class Ch4(Fix):
 
         """
         metadata = cube.metadata
-        cube *= 29. / 16. * 1.e9
+        cube *= 29.0 / 16.0 * 1.0e9
         cube.metadata = metadata
         return cube

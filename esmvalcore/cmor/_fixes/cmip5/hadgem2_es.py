@@ -1,8 +1,9 @@
 """Fix HadGEM2_ES."""
+
 import numpy as np
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -22,13 +23,13 @@ class AllVars(Fix):
 
         """
         for cube in cubes:
-            lats = cube.coords('latitude')
+            lats = cube.coords("latitude")
             if lats:
-                lat = cube.coord('latitude')
-                lat.points = np.clip(lat.core_points(), -90., 90.)
+                lat = cube.coord("latitude")
+                lat.points = np.clip(lat.core_points(), -90.0, 90.0)
                 if not lat.has_bounds():
                     lat.guess_bounds()
-                lat.bounds = np.clip(lat.core_bounds(), -90., 90.)
+                lat.bounds = np.clip(lat.core_bounds(), -90.0, 90.0)
 
         return cubes
 
@@ -52,8 +53,8 @@ class O2(Fix):
         iris.cube.CubeList
 
         """
-        std = 'mole_concentration_of_dissolved_molecular_oxygen_in_sea_water'
-        long_name = 'Dissolved Oxygen Concentration'
+        std = "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water"
+        long_name = "Dissolved Oxygen Concentration"
 
         cubes[0].long_name = long_name
         cubes[0].standard_name = std

@@ -126,9 +126,9 @@ Then we have to create the class for the fix deriving from
 Next we must choose the method to use between the ones offered by the
 Fix class:
 
-- ``fix_file``: should be used only to fix errors that prevent data loading.
-  As a rule of thumb, you should only use it if the execution halts before
-  reaching the checks.
+- ``fix_file``: you need to fix errors that prevent loading the data with Iris
+  or perform operations that are more efficient with other packages (e.g.,
+  loading files with lots of variables is much faster with Xarray than Iris).
 
 - ``fix_metadata``: you want to change something in the cube that is not
   the data (e.g., variable or coordinate names, data units).
@@ -329,9 +329,9 @@ severity. From highest to lowest:
 
 Users can have control about which levels of issues are interpreted as errors,
 and therefore make the checker fail or warnings or debug messages.
-For this purpose there is an optional command line option `--check-level`
-that can take a number of values, listed below from the lowest level of
-strictness to the highest:
+For this purpose there is an optional :ref:`configuration option
+<config_options>` ``check_level`` that can take a number of values, listed
+below from the lowest level of strictness to the highest:
 
 - ``ignore``: all issues, regardless of severity, will be reported as
   warnings. Checker will never fail. Use this at your own risk.
@@ -375,8 +375,8 @@ To allow ESMValCore to locate the data files, use the following steps:
 
    - If you want to use the ``native6`` project (recommended for datasets whose
      input files can be easily moved to the usual ``native6`` directory
-     structure given by the ``rootpath`` in your :ref:`user configuration
-     file`; this is usually the case for native reanalysis/observational
+     structure given by the :ref:`configuration option <config_options>`
+     ``rootpath``; this is usually the case for native reanalysis/observational
      datasets):
 
      The entry ``native6`` of ``config-developer.yml`` should be complemented
@@ -399,8 +399,8 @@ To allow ESMValCore to locate the data files, use the following steps:
 
      To find your native data (e.g., called ``MYDATA``) that is for example
      located in ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
-     (``{rootpath}`` is ESMValTool's ``rootpath`` for the project ``native6``
-     defined in your :ref:`user configuration file`), use the following dataset
+     (``{rootpath}`` is ESMValTool's ``rootpath`` :ref:`configuration option
+     <config_options>` for the project ``native6``), use the following dataset
      entry in your recipe
 
      .. code-block:: yaml
@@ -408,8 +408,8 @@ To allow ESMValCore to locate the data files, use the following steps:
         datasets:
           - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
 
-     and make sure to use the following DRS for the project ``native6`` in your
-     :ref:`user configuration file`:
+     and make sure to use the following :ref:`configuration option
+     <config_options>` ``drs``:
 
      .. code-block:: yaml
 
@@ -431,15 +431,15 @@ To allow ESMValCore to locate the data files, use the following steps:
             default:
               - '{exp}'
               - '{exp}/outdata'
+              - '{exp}/output'
           input_file:
             default: '{exp}_{var_type}*.nc'
           ...
 
      To find your ICON data that is for example located in files like
      ``{rootpath}/amip/amip_atm_2d_ml_20000101T000000Z.nc`` (``{rootpath}`` is
-     ESMValTool ``rootpath`` for the project ``ICON`` defined in your
-     :ref:`user configuration file`), use the following dataset entry in your
-     recipe:
+     ESMValCore's :ref:`configuration option <config_options>` ``rootpath`` for
+     the project ``ICON``), use the following dataset entry in your recipe:
 
      .. code-block:: yaml
 
@@ -451,11 +451,11 @@ To allow ESMValCore to locate the data files, use the following steps:
      and CMORizing functionalities.
      For other native models, ``dataset`` could also refer to a subversion of
      the model.
-     Note that it is possible to predefine facets in an :ref:`extra facets file
+     Note that it is possible to predefine facets via :ref:`extra facets
      <add_new_fix_native_datasets_extra_facets>`.
      In this ICON example, the facet ``var_type`` is :download:`predefined
-     </../esmvalcore/config/extra_facets/icon-mappings.yml>` for many
-     variables.
+     </../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>`
+     for many variables.
 
 .. _add_new_fix_native_datasets_fix_data:
 
@@ -480,26 +480,26 @@ An example for its usage can be found `here
 Extra facets for native datasets
 --------------------------------
 
-If necessary, provide a so-called ``extra facets file`` which allows to cope
-e.g. with variable naming issues for finding files or additional information
-that is required for the fixes.
-See :ref:`extra_facets` and :ref:`extra-facets-fixes` for more details on this.
-An example of such a file for IPSL-CM6 is given :download:`here
-<../../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`.
+If necessary, so-called :ref:`config-extra-facets` can be provided which allow
+to cope e.g. with variable naming issues for finding files or additional
+information that is required for the fixes.
+See :ref:`extra-facets-fixes` for more details on this.
+An example of such a configuration file for IPSL-CM6 is given :download:`here
+<../../esmvalcore/config/configurations/defaults/extra_facets_ipslcm.yml>`.
 
 
 .. _extra-facets-fixes:
 
 Use of extra facets in fixes
 ============================
-Extra facets are a mechanism to provide additional information for certain kinds
-of data. The general approach is described in :ref:`extra_facets`. Here, we
-describe how they can be used in fixes to mold data into the form required by
-the applicable standard. For example, if the input data is part of an
-observational product that delivers surface temperature with a variable name of
-`t2m` inside a file named `2m_temperature_1950_monthly.nc`, but the same
-variable is called `tas` in the applicable standard, a fix can be created that
-reads the original variable from the correct file, and provides a renamed
+Extra facets are a mechanism to provide additional information for certain
+kinds of data. The general approach is described in :ref:`config-extra-facets`.
+Here, we describe how they can be used in fixes to mold data into the form
+required by the applicable standard. For example, if the input data is part of
+an observational product that delivers surface temperature with a variable name
+of ``t2m`` inside a file named ``2m_temperature_1950_monthly.nc``, but the same
+variable is called ``tas`` in the applicable standard, a fix can be created
+that reads the original variable from the correct file, and provides a renamed
 variable to the rest of the processing chain.
 
 Normally, the applicable standard for variables is CMIP6.

@@ -196,17 +196,11 @@ case of this operation is the evaluation of a variable which is only available
 in an observational dataset but not in the models. In this case a derivation
 function is provided by the ESMValCore in order to calculate the variable and
 perform the comparison. For example, several observational datasets deliver
-total column ozone as observed variable (`toz`), but CMIP models only provide
+total column ozone as observed variable (``toz``), but CMIP models only provide
 the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-The tool will also look in other ``mip`` tables for the same ``project`` to find
-the definition of derived variables. To contribute a completely new derived
-variable, it is necessary to define a name for it and to provide the
-corresponding CMOR table. This is to guarantee the proper metadata definition
-is attached to the derived data. Such custom CMOR tables are collected as part
-of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 By default, the variable derivation will be applied only if the variable is not
 already available in the input data, but the derivation can be forced by
 setting the ``force_derivation`` flag.
@@ -272,20 +266,22 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - ``fix_file``: apply fixes directly to a copy of the file.
-      Copying the files is costly, so only errors that prevent Iris to load the
-      file are fixed here.
-      See :func:`esmvalcore.preprocessor.fix_file`.
+- ``fix_file``: apply fixes to data before loading them with Iris.
+  This is mainly intended to fix errors that prevent data loading with Iris
+  (e.g., those related to ``missing_value`` or ``_FillValue``) or
+  operations that are more efficient with other packages (e.g., loading
+  files with lots of variables is much faster with Xarray than Iris). See
+  :func:`esmvalcore.preprocessor.fix_file`.
 
-    - ``fix_metadata``: metadata fixes are done just before concatenating the
-      cubes loaded from different files in the final one.
-      Automatic metadata fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_metadata`.
+- ``fix_metadata``: metadata fixes are done just before concatenating the
+  cubes loaded from different files in the final one.
+  Automatic metadata fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_metadata`.
 
-    - ``fix_data``: data fixes are applied before starting any operation that
-      will alter the data itself.
-      Automatic data fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_data`.
+- ``fix_data``: data fixes are applied before starting any operation that
+  will alter the data itself.
+  Automatic data fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_data`.
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
@@ -311,6 +307,7 @@ Preprocessor                                                          Variable s
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 :ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
+:ref:`extract_surface_from_atm<extract_surface_from_atm>` [#f3]_      ``ps``                         surface_air_pressure
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -611,7 +608,7 @@ See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 .. _masking:
 
 Masking
-=======
+========
 
 Introduction to masking
 -----------------------
@@ -887,18 +884,36 @@ The arguments are defined below:
   Otherwise, it cuts off at the previous value.
 * ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
+Regridding input data with multiple horizontal coordinates
+----------------------------------------------------------
+
+When there are multiple horizontal coordinates available in the input data, the
+standard names of the coordinates to use need to be specified. By default, these
+are ``[latitude, longitude]``. To use the coordinates from a
+`rotated pole grid <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html#grid-mappings-and-projections>`__,
+one would specify:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 1x1
+          scheme: linear
+          use_src_coords: [grid_latitude, grid_longitude]
+
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
-ESMValCore has a number of built-in regridding schemes, which are presented in
-:ref:`built-in regridding schemes`. Additionally, it is also possible to use
-third party regridding schemes designed for use with :doc:`Iris
-<iris:index>`. This is explained in :ref:`generic regridding schemes`.
+ESMValCore provides three default regridding schemes, which are presented in
+:ref:`default regridding schemes`. Additionally, it is also possible to use
+third party regridding schemes designed for use with :meth:`iris.cube.Cube.regrid`.
+This is explained in :ref:`generic regridding schemes`.
 
 Grid types
 ~~~~~~~~~~
 
-In ESMValCore, we distinguish between three grid types (note that these might
+In ESMValCore, we distinguish between various grid types (note that these might
 differ from other definitions):
 
 * **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
@@ -907,30 +922,34 @@ differ from other definitions):
   longitude coordinates with common dimensions.
 * **Unstructured grid**: A grid with 1D latitude and 1D longitude coordinates
   with common dimensions (i.e., a simple list of points).
+* **Mesh**: A mesh as supported by Iris and described in :ref:`iris:ugrid`.
 
-.. _built-in regridding schemes:
+.. _default regridding schemes:
 
-Built-in regridding schemes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * ``linear``: Bilinear regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Linear` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='bilinear'`.
   For source data on an unstructured grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredLinear`.
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='nearest'`.
   For source data on an unstructured grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
 * ``area_weighted``: First-order conservative (area-weighted) regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
+  For source and/or target data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='conservative'`.
   Source data on an unstructured grid is not supported.
 
 .. _generic regridding schemes:
@@ -950,7 +969,9 @@ afforded by the built-in schemes described above.
 
 To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
 allows the use of any scheme designed for Iris. The scheme must be installed
-and importable. To use this feature, the ``scheme`` key passed to the
+and importable. Several such schemes are provided by :mod:`iris.analysis` and
+:mod:`esmvalcore.preprocessor.regrid_schemes`.
+To use this feature, the ``scheme`` key passed to the
 preprocessor must be a dictionary instead of a simple string that contains all
 necessary information. That includes a ``reference`` to the desired scheme
 itself, as well as any arguments that should be passed through to the
@@ -996,10 +1017,13 @@ module, the second refers to the scheme, i.e. some callable that will be called
 with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
-One package that aims to capitalize on the :ref:`support for unstructured grids
-introduced in Iris 3.2 <iris:ugrid>` is :doc:`iris-esmf-regrid:index`.
+One package that aims to capitalize on the :ref:`support for meshes
+introduced in Iris 3.2 <iris:ugrid>` is :doc:`esmf_regrid:index`.
 It aims to provide lazy regridding for structured regular and irregular grids,
-as well as unstructured grids.
+as well as meshes. It is recommended to use these schemes through
+the :obj:`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` scheme though,
+as that provides more efficient handling of masks.
+
 An example of its usage in a preprocessor is:
 
 .. code-block:: yaml
@@ -1009,8 +1033,11 @@ An example of its usage in a preprocessor is:
         regrid:
           target_grid: 2.5x2.5
           scheme:
-            reference: esmf_regrid.schemes:ESMFAreaWeighted
+            reference: esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid
+            method: conservative
             mdtol: 0.7
+            use_src_mask: true
+            collapse_src_mask_along: ZT
 
 Additionally, the use of generic schemes that take source and target grid cubes as
 arguments is also supported. The call function for such schemes must be defined as
@@ -1018,7 +1045,7 @@ arguments is also supported. The call function for such schemes must be defined 
 The `regrid` module will automatically pass the source and grid cubes as inputs
 of the scheme. An example of this usage is
 the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
-scheme available in :doc:`iris-esmf-regrid:index`:
+scheme available in :doc:`esmf_regrid:index`:
 
 .. code-block:: yaml
 
@@ -1295,9 +1322,9 @@ daily maximum of any given variable.
 ``extract_time``
 ----------------
 
-This function subsets a dataset between two points in times. It removes all
-times in the dataset before the first time and after the last time point.
-The required arguments are relatively self explanatory:
+This function extracts data within specific time criteria. The
+preprocessor removes all times which fall outside the specified
+time range. The required arguments are relatively self explanatory:
 
 * ``start_year``
 * ``start_month``
@@ -1306,9 +1333,37 @@ The required arguments are relatively self explanatory:
 * ``end_month``
 * ``end_day``
 
-These start and end points are set using the datasets native calendar.
-All six arguments should be given as integers - the named month string
-will not be accepted.
+The start and end points are set using the datasets native calendar.
+``start_month``, ``start_day``, ``end_month``, and ``end_day`` should
+be given as integers - the named month string will not be accepted.
+``start_year`` and ``end_year`` should both be either integers or
+``null``. If ``start_year`` and ``end_year`` are ``null``, the date
+ranges (``start_month``-``start_day`` to ``end_month``-``end_day``)
+are selected in each year. For example, ranges Feb 3 - Apr 6 in each year
+are selected with the following preprocessor:
+
+.. code-block:: yaml
+
+    extract_time:
+      start_year: null
+      start_month: 2
+      start_day: 3
+      end_year: null
+      end_month: 4
+      end_day: 6
+
+And the period between Feb 3, 2001 - Apr 6, 2004 is selected as follows:
+
+.. code-block:: yaml
+
+    extract_time:
+      start_year: 2001
+      start_month: 2
+      start_day: 3
+      end_year: 2004
+      end_month: 4
+      end_day: 6
+
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
 
@@ -1906,9 +1961,10 @@ Parameters:
     region to be extracted.
     If the file contains multiple shapes behaviour depends on the
     ``decomposed`` parameter.
-    This path can be relative to ``auxiliary_data_dir`` defined in the
-    :ref:`user configuration file` or relative to
-    ``esmvalcore/preprocessor/shapefiles`` (in that priority order).
+    This path can be relative to the directory specified via the
+    :ref:`configuration option <config_options>` ``auxiliary_data_dir`` or
+    relative to ``esmvalcore/preprocessor/shapefiles`` (in that priority
+    order).
     Alternatively, a string (see "Shapefile name" below) can be given to load
     one of the following shapefiles that are shipped with ESMValCore:
 
@@ -2059,7 +2115,6 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 
 ``zonal_statistics``
 --------------------
-
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate.
 
@@ -2164,6 +2219,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 * ``extract_transect``: Extract data along a line of constant latitude or
   longitude.
 * ``extract_trajectory``: Extract data along a specified trajectory.
+* ``extract_surface_from_atm``: Extract atmospheric data at the surface.
 
 
 ``extract_volume``
@@ -2347,6 +2403,22 @@ Note that this function uses the expensive ``interpolate`` method from
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
 
+.. _extract_surface_from_atm:
+
+``extract_surface_from_atm``
+----------------------------
+
+This function extracts data at the surface for an atmospheric variable.
+
+The function returns the interpolated value of an input filed at the corresponding surface pressure
+given by the surface air pressure ``ps``.
+
+The required supplementary surface air pressure ``ps`` is attached to
+the main dataset as described in :ref:`supplementary_variables`.
+
+See also :func:`esmvalcore.preprocessor.extract_surface_from_atm`.
+
+
 .. _cycles:
 
 Cycles
@@ -2410,7 +2482,7 @@ See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 .. _detrend:
 
 Detrend
-=======
+========
 
 ESMValCore also supports detrending along any dimension using
 the preprocessor function 'detrend'.
@@ -2561,6 +2633,35 @@ For this, exactly one input dataset needs to be declared as
 
 In the example above, ERA-Interim is used as reference dataset for the bias
 calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_bias: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_bias: true}
+    - {dataset: CESM2,   group: ref, reference_for_bias: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_bias:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      bias:
+        bias_type: relative
+
+Here, the bias of MIROC6 is calculated relative to the multi-model mean from
+the models CanESM5 and CESM2.
+
 The reference dataset needs to be broadcastable to all other datasets.
 This supports `iris' rich broadcasting abilities
 <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
@@ -2627,6 +2728,35 @@ For this, exactly one input dataset needs to be declared as
 
 In the example above, ERA-Interim is used as reference dataset for the distance
 metric calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_metric: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_metric: true}
+    - {dataset: CESM2,   group: ref, reference_for_metric: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_distance_metric:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      distance_metric:
+        metric: emd
+
+Here, the EMD metric of MIROC6 is calculated relative to the the multi-model
+mean from the models CanESM5 and CESM2.
+
 All datasets need to have the same shape and coordinates.
 To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
 :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
@@ -2692,8 +2822,8 @@ recipe:
   .. math::
 
     W_1 = \min_{\gamma \in \mathbb{R}^{n \times n}_{+}} \sum_{i,j}^{n}
-    \gamma_{ij} \lvert X_i - R_i \rvert \\
-    \textrm{with} ~~ \gamma 1 = p_X(X);~ \gamma^T 1 = p_R(R)
+    \gamma_{ij} \lvert X_i - R_i \rvert \\ \textrm{with} ~~ \sum_{j}^{n}
+    \gamma_{ij} = p_X(X_i);~ \sum_{i}^{n} \gamma_{ij} = p_R(R_j)
 
   * ``'weighted_emd'``: `Weighted Earth mover's distance`_.
     Similar to the unweighted EMD (see above), but here weights are considered
@@ -2709,6 +2839,9 @@ recipe:
   or `p`\ :sub:`R`\ (`R`\ :sub:`i`) and a number of bins `n` (see the argument
   ``n_bins`` below) that has been derived for the variables `x` and `r` through
   binning.
+  The bins range from the minimum to the maximum value calculated over both the
+  variable of interest and the reference; thus, `X`\ :sub:`i` = `R`\ :sub:`i`)
+  for all `i`.
   `w`\ :sub:`i` are weights that sum to one (see note below) and `N` is the
   total number of samples.
 
@@ -2778,56 +2911,97 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-
-.. _Memory use:
-
-Information on maximum memory required
-======================================
-In the most general case, we can set upper limits on the maximum memory the
-analysis will require:
-
-
-``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
-
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
-
-where
-
-* ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multi-model module
-* ``R``: computational efficiency of module; `R` is typically 2-3
-* ``N``: number of datasets
-* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
-  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
-  fully realized data) and ``f`` describes how much the data was shrunk by the
-  immediately previous module, e.g. time extraction, area selection or level
-  extraction; note that for fix_data ``f`` relates only to the time extraction,
-  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
-  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
-  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
-  ``N`` datasets will require:
-
-
-``Ms = 1.5 x (N - 1)`` GB
-
-``Mm = 1.5 x (N - 2)`` GB
-
-As a rule of thumb, the maximum required memory at a certain time for
-multi-model analysis could be estimated by multiplying the number of datasets by
-the average file size of all the datasets; this memory intake is high but also
-assumes that all data is fully realized in memory; this aspect will gradually
-change and the amount of realized data will decrease with the increase of
-``dask`` use.
-
 .. _Other:
+
 
 Other
 =====
 
 Miscellaneous functions that do not belong to any of the other categories.
 
-Clip
-----
+.. _align_metadata:
+
+``align_metadata``
+------------------
+
+This function sets cube metadata to entries from a specific target project.
+This is useful to align variable metadata of different projects prior to
+performing multi-model operations (e.g., :ref:`multi-model statistics`).
+For example, standard names differ for some variables between CMIP5 and CMIP6
+which would prevent the calculation of multi-model statistics between CMIP5 and
+CMIP6 data.
+
+The ``align_metadata`` preprocessor supports the following arguments in the
+recipe:
+
+* ``target_project`` (:obj:`str`): Project from which target metadata is read.
+* ``target_mip`` (:obj:`str`; optional): MIP table from which target metadata
+  is read.
+  If not given, use the MIP tables of the corresponding variables defined in
+  the recipe.
+* ``target_short_name`` (:obj:`str`; optional): Variable short name from which
+  target metadata is read.
+  If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+  error if desired metadata cannot be read for variable ``target_short_name``
+  of MIP table ``target_mip`` and project ``target_project``.
+  If ``False``, no error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      calculate_multi_model_statistics:
+        align_metadata:
+          target_project: CMIP6
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+
+See also :func:`esmvalcore.preprocessor.align_metadata`.
+
+.. _cumulative_sum:
+
+``cumulative_sum``
+------------------
+
+This function calculates cumulative sums along a given coordinate.
+
+The ``cumulative_sum`` preprocessor supports the following arguments in the
+recipe:
+
+* ``coord`` (:obj:`str`): Coordinate over which the cumulative sum is
+  calculated.
+  Must be 0D or 1D.
+* ``weights`` (array-like, :obj:`bool`, or ``None``, default: ``None``):
+  Weights for the calculation of the cumulative sum.
+  Each element in the data is multiplied by the corresponding weight before
+  summing.
+  Can be an array of the same shape as the input data, ``False`` or ``None``
+  (no weighting), or ``True`` (calculate the weights from the coordinate
+  bounds; only works if each coordinate point has exactly 2 bounds).
+* ``method`` (:obj:`str`, default: ``"sequential"``): Method used to perform
+  the cumulative sum.
+  Only relevant if the cube has `lazy data
+  <https://scitools-iris.readthedocs.io/en/stable/userguide/real_and_lazy_data.html>`__.
+  See :func:`dask.array.cumsum` for details.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_cumulative_sum:
+        cumulative_sum:
+          coord: time
+          weights: true
+
+See also :func:`esmvalcore.preprocessor.cumulative_sum`.
+
+``clip``
+--------
 
 This function clips data values to a certain minimum, maximum or range. The function takes two
 arguments:
@@ -2848,7 +3022,7 @@ The example below shows how to set all values below zero to zero.
 .. _histogram:
 
 ``histogram``
--------------------
+-------------
 
 This function calculates histograms.
 
@@ -2914,3 +3088,44 @@ Example:
           normalization: sum
 
 See also :func:`esmvalcore.preprocessor.histogram`.
+
+
+.. _Memory use:
+
+Information on maximum memory required
+======================================
+In the most general case, we can set upper limits on the maximum memory the
+analysis will require:
+
+
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
+
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
+
+where
+
+* ``Ms``: maximum memory for non-multimodel module
+* ``Mm``: maximum memory for multi-model module
+* ``R``: computational efficiency of module; `R` is typically 2-3
+* ``N``: number of datasets
+* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
+  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
+  fully realized data) and ``f`` describes how much the data was shrunk by the
+  immediately previous module, e.g. time extraction, area selection or level
+  extraction; note that for fix_data ``f`` relates only to the time extraction,
+  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
+  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
+  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
+  ``N`` datasets will require:
+
+
+``Ms = 1.5 x (N - 1)`` GB
+
+``Mm = 1.5 x (N - 2)`` GB
+
+As a rule of thumb, the maximum required memory at a certain time for
+multi-model analysis could be estimated by multiplying the number of datasets by
+the average file size of all the datasets; this memory intake is high but also
+assumes that all data is fully realized in memory; this aspect will gradually
+change and the amount of realized data will decrease with the increase of
+``dask`` use.

@@ -11,10 +11,9 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sm`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [{'short_name': 'mrsos'}]
-        return required
+        return [{"short_name": "mrsos"}]
 
     @staticmethod
     def calculate(cubes):
@@ -27,12 +26,12 @@ class DerivedVariable(DerivedVariableBase):
         20 deg C).
 
         """
-        mrsos_cube = cubes.extract_cube(NameConstraint(var_name='mrsos'))
+        mrsos_cube = cubes.extract_cube(NameConstraint(var_name="mrsos"))
 
-        depth = mrsos_cube.coord('depth').core_bounds().astype(np.float64)
+        depth = mrsos_cube.coord("depth").core_bounds().astype(np.float64)
         layer_thickness = depth[..., 1] - depth[..., 0]
 
         sm_cube = mrsos_cube / layer_thickness / 998.2
-        sm_cube.units = cf_units.Unit('m3 m^-3')
+        sm_cube.units = cf_units.Unit("m3 m^-3")
 
         return sm_cube

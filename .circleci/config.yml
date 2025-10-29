@@ -2,8 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.0.0
-  codecov: codecov/codecov@4.1.0
+  codecov: codecov/codecov@5.3.0
 
 commands:
   check_changes:
@@ -21,6 +20,10 @@ commands:
               circleci step halt
             fi
   test_and_report:
+    parameters:
+      args:
+        type: string
+        default: ""
     steps:
       - run:
           name: Run tests
@@ -28,9 +31,9 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            flake8 -j 4
-            pytest -n 4 --junitxml=test-reports/report.xml
+            pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
+            esmvaltool -- --help
       - store_test_results:
           path: test-reports/report.xml
       - store_artifacts:
@@ -52,7 +55,7 @@ commands:
         type: string
         default: "test"
       flags:
-        description: pip install flags
+        description: pip install --no-deps flags
         type: string
         default: ""
       upstream_packages:
@@ -88,10 +91,10 @@ commands:
             # Install
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
-            mamba env create |& tee /logs/conda.txt
+            mamba env create -n esmvaltool -f environment.yml |& tee /logs/conda.txt
             git stash  # Restore repository state to get clean version number.
             conda activate esmvaltool
-            pip install << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
+            pip install --no-deps << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
       - run:
           name: Log versions
           command: |
@@ -100,6 +103,16 @@ commands:
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
             pip freeze | tee /logs/requirements.txt
+      - run:
+          name: Check dependencies are compatible
+          command: |
+            if [[ "<< parameters.upstream_packages >>" = "" ]]; then
+                . /opt/conda/etc/profile.d/conda.sh
+                conda activate esmvaltool
+                pip check
+            else
+              echo "Skipping `pip check` due to upstream packages"
+            fi
       - test_and_report
       - save_cache:
           key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
@@ -128,8 +141,10 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
-            pip install .[test] |& tee -a /logs/install.txt
-      - test_and_report
+            pip install --no-deps .[test] > /logs/install.txt 2>&1
+            pip check
+      - test_and_report:
+          args: --cov
       - save_cache:
           key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
@@ -140,17 +155,13 @@ jobs:
           name: Install gpg (required by codecov orb)
           command: apt update && apt install -y gpg
       - codecov/upload:
-          when: always
-          file: 'test-reports/coverage.xml'
-      - coverage-reporter/send_report:
-          coverage-reports: 'test-reports/coverage.xml'
-          project-token: $CODACY_PROJECT_TOKEN
-          skip: true  # skip if project-token is not defined (i.e. on a fork)
+          files: 'test-reports/coverage.xml'
+          disable_search: true
 
   test_installation_from_source_test_mode:
     # Test installation from source
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: large
     steps:
       - test_installation_from_source
@@ -158,7 +169,7 @@ jobs:
   test_installation_from_source_develop_mode:
     # Test development installation
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: large
     steps:
       - test_installation_from_source:
@@ -168,7 +179,7 @@ jobs:
   test_with_upstream_developments:
     # Test with development versions of upstream packages
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: large
     steps:
       - test_installation_from_source:
@@ -188,7 +199,7 @@ jobs:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: medium
     steps:
       - run:
@@ -210,7 +221,7 @@ jobs:
   build_documentation:
     # Test building documentation
     docker:
-      - image: condaforge/mambaforge
+      - image: condaforge/miniforge3
     resource_class: medium
     steps:
       - checkout
@@ -219,9 +230,10 @@ jobs:
             mkdir /logs
             . /opt/conda/etc/profile.d/conda.sh
             # Install
-            mamba env create
+            mamba env create -n esmvaltool -f environment.yml
             conda activate esmvaltool
-            pip install .[doc]
+            pip install --no-deps .[doc]
+            pip check
             # Log versions
             dpkg -l | tee /logs/versions.txt
             conda env export | tee /logs/environment.yml
@@ -237,7 +249,6 @@ workflows:
       - run_tests
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
-      - test_with_upstream_developments
 
   nightly:
     triggers:

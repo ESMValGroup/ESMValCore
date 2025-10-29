@@ -10,12 +10,12 @@ def test_diagnostic_output_repr(mocker):
         mocker.create_autospec(recipe_output.TaskOutput, instance=True),
     ]
     for i, task in enumerate(tasks):
-        task.__str__.return_value = f'Task-{i}'
+        task.__str__.return_value = f"Task-{i}"
 
     diagnostic = recipe_output.DiagnosticOutput(
-        name='diagnostic_name',
-        title='This is a diagnostic',
-        description='With a description',
+        name="diagnostic_name",
+        title="This is a diagnostic",
+        description="With a description",
         task_output=tasks,
     )
 
@@ -32,16 +32,21 @@ def test_diagnostic_output_repr(mocker):
 
 def test_recipe_output_add_to_filters():
     """Coverage test for `RecipeOutput._add_to_filters`."""
-
     filters = {}
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
 
-    recipe_output.RecipeOutput._add_to_filters(filters,
-                                               {valid_attr: "single value"})
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: ["list value 1", "repeated list value"]})
+        filters,
+        {valid_attr: "single value"},
+    )
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: ["list value 2", "repeated list value"]})
+        filters,
+        {valid_attr: ["list value 1", "repeated list value"]},
+    )
+    recipe_output.RecipeOutput._add_to_filters(
+        filters,
+        {valid_attr: ["list value 2", "repeated list value"]},
+    )
 
     assert len(filters) == 1
     assert valid_attr in filters
@@ -54,7 +59,6 @@ def test_recipe_output_add_to_filters():
 
 def test_recipe_output_add_to_filters_no_attributes():
     """Test `RecipeOutput._add_to_filters` with no attributes."""
-
     filters = {}
     recipe_output.RecipeOutput._add_to_filters(filters, {})
     assert len(filters) == 0
@@ -62,21 +66,21 @@ def test_recipe_output_add_to_filters_no_attributes():
 
 def test_recipe_output_add_to_filters_no_valid_attributes():
     """Test `RecipeOutput._add_to_filters` with no valid attributes."""
-
     filters = {}
     invalid = "invalid_attribute"
     recipe_output.RecipeOutput._add_to_filters(filters, {invalid: "value"})
-    assert (invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
-            and len(filters) == 0)
+    assert invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
+    assert len(filters) == 0
 
 
 def test_recipe_output_sort_filters():
     """Coverage test for `RecipeOutput._sort_filters`."""
-
     filters = {}
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
     unsorted_attributes = ["1", "2", "4", "value", "3"]
     recipe_output.RecipeOutput._add_to_filters(
-        filters, {valid_attr: unsorted_attributes})
+        filters,
+        {valid_attr: unsorted_attributes},
+    )
     filters = recipe_output.RecipeOutput._sort_filters(filters)
     assert filters[valid_attr] == sorted(unsorted_attributes)

@@ -1,4 +1,5 @@
 """Test fixes for CNRM-ESM2-1."""
+
 import iris
 import numpy as np
 import pytest
@@ -20,7 +21,7 @@ from esmvalcore.cmor.table import get_var_info
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP6", "CNRM-ESM2-1", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -31,7 +32,7 @@ def test_cl_fix():
 
 def test_get_clcalipso_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'clcalipso')
+    fix = Fix.get_fixes("CMIP6", "CNRM-ESM2-1", "Amon", "clcalipso")
     assert fix == [Clcalipso(None), GenericFix(None)]
 
 
@@ -42,7 +43,7 @@ def test_clcalipso_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'cli')
+    fix = Fix.get_fixes("CMIP6", "CNRM-ESM2-1", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
 
 
@@ -53,7 +54,7 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'clw')
+    fix = Fix.get_fixes("CMIP6", "CNRM-ESM2-1", "Amon", "clw")
     assert fix == [Clw(None), GenericFix(None)]
 
 
@@ -66,16 +67,31 @@ def test_clw_fix():
 def thetao_cubes():
     """Cubes to test fixes for ``thetao``."""
     time_coord = iris.coords.DimCoord(
-        [0.0004, 1.09776], var_name='time', standard_name='time',
-        units='days since 1850-01-01 00:00:00')
+        [0.0004, 1.09776],
+        var_name="time",
+        standard_name="time",
+        units="days since 1850-01-01 00:00:00",
+    )
     lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+        [0.0, 1.0],
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
+    )
     lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+        [0.0, 1.0],
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
+    )
     lev_coord = iris.coords.DimCoord(
-        [5.0, 10.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
-        var_name='lev', standard_name=None, units='m',
-        attributes={'positive': 'up'})
+        [5.0, 10.0],
+        bounds=[[2.5, 7.5], [7.5, 12.5]],
+        var_name="lev",
+        standard_name=None,
+        units="m",
+        attributes={"positive": "up"},
+    )
     coord_specs = [
         (time_coord, 0),
         (lev_coord, 1),
@@ -84,7 +100,7 @@ def thetao_cubes():
     ]
     thetao_cube = iris.cube.Cube(
         np.ones((2, 2, 2, 2)),
-        var_name='thetao',
+        var_name="thetao",
         dim_coords_and_dims=coord_specs,
     )
     return iris.cube.CubeList([thetao_cube])
@@ -92,13 +108,13 @@ def thetao_cubes():
 
 def test_get_thetao_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Omon', 'thetao')
+    fix = Fix.get_fixes("CMIP6", "CNRM-ESM2-1", "Omon", "thetao")
     assert fix == [Omon(None), GenericFix(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):
     """Test ``fix_metadata`` for ``thetao``."""
-    vardef = get_var_info('CMIP6', 'Omon', 'thetao')
+    vardef = get_var_info("CMIP6", "Omon", "thetao")
     fix = Omon(vardef)
     out_cubes = fix.fix_metadata(thetao_cubes)
     assert out_cubes is thetao_cubes
@@ -106,9 +122,9 @@ def test_thetao_fix_metadata(thetao_cubes):
     out_cube = out_cubes[0]
 
     # Check metadata of depth coordinate
-    depth_coord = out_cube.coord('depth')
-    assert depth_coord.standard_name == 'depth'
-    assert depth_coord.var_name == 'lev'
-    assert depth_coord.long_name == 'ocean depth coordinate'
-    assert depth_coord.units == 'm'
-    assert depth_coord.attributes == {'positive': 'down'}
+    depth_coord = out_cube.coord("depth")
+    assert depth_coord.standard_name == "depth"
+    assert depth_coord.var_name == "lev"
+    assert depth_coord.long_name == "ocean depth coordinate"
+    assert depth_coord.units == "m"
+    assert depth_coord.attributes == {"positive": "down"}

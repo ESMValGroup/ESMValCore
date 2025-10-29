@@ -4,68 +4,72 @@ Module that performs a number of masking operations that include:
 masking with ancillary variables, masking with Natural Earth shapefiles
 (land or ocean), masking on thresholds, missing values masking.
 """
+
 from __future__ import annotations
 
 import logging
 import os
+from typing import TYPE_CHECKING, Literal
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
 import iris
+import iris.util
 import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._shared import (
+    apply_mask,
+)
+
 from ._supplementary_vars import register_supplementaries
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
 
-def _get_fx_mask(fx_data, fx_option, mask_type):
+def _get_fx_mask(
+    fx_data: np.ndarray | da.Array,
+    fx_option: Literal["land", "sea", "landsea", "ice"],
+    mask_type: Literal["sftlf", "sftof", "sftgif"],
+) -> np.ndarray | da.Array:
     """Build a percentage-thresholded mask from an fx file."""
-    inmask = da.zeros_like(fx_data, bool)
-    if mask_type == 'sftlf':
-        if fx_option == 'land':
+    inmask = np.zeros_like(fx_data, bool)  # respects dask through dispatch
+    if mask_type == "sftlf":
+        if fx_option == "land":
             # Mask land out
-            inmask[fx_data > 50.] = True
-        elif fx_option == 'sea':
+            inmask[fx_data > 50.0] = True
+        elif fx_option == "sea":
             # Mask sea out
-            inmask[fx_data <= 50.] = True
-    elif mask_type == 'sftof':
-        if fx_option == 'land':
+            inmask[fx_data <= 50.0] = True
+    elif mask_type == "sftof":
+        if fx_option == "land":
             # Mask land out
-            inmask[fx_data < 50.] = True
-        elif fx_option == 'sea':
+            inmask[fx_data < 50.0] = True
+        elif fx_option == "sea":
             # Mask sea out
-            inmask[fx_data >= 50.] = True
-    elif mask_type == 'sftgif':
-        if fx_option == 'ice':
+            inmask[fx_data >= 50.0] = True
+    elif mask_type == "sftgif":
+        if fx_option == "ice":
             # Mask ice out
-            inmask[fx_data > 50.] = True
-        elif fx_option == 'landsea':
+            inmask[fx_data > 50.0] = True
+        elif fx_option == "landsea":
             # Mask landsea out
-            inmask[fx_data <= 50.] = True
+            inmask[fx_data <= 50.0] = True
 
     return inmask
 
 
-def _apply_fx_mask(fx_mask, var_data):
-    """Apply the fx data extracted mask on the actual processed data."""
-    # Apply mask across
-    old_mask = da.ma.getmaskarray(var_data)
-    mask = old_mask | fx_mask
-    var_data = da.ma.masked_array(var_data, mask=mask)
-    # maybe fill_value=1e+20
-
-    return var_data
-
-
 @register_supplementaries(
-    variables=['sftlf', 'sftof'],
-    required='prefer_at_least_one',
+    variables=["sftlf", "sftof"],
+    required="prefer_at_least_one",
 )
-def mask_landsea(cube, mask_out):
+def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
     """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
@@ -78,16 +82,15 @@ def mask_landsea(cube, mask_out):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        data cube to be masked. If the cube has an
+    cube:
+        Data cube to be masked. If the cube has an
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_area_fraction'`` or ``'sea_area_fraction'`` that will be used.
         If both are present, only the 'land_area_fraction' will be used. If the
         ancillary variable is not available, the mask will be calculated from
         Natural Earth shapefiles.
-
-    mask_out: str
-        either "land" to mask out land mass or "sea" to mask out seas.
+    mask_out:
+        Either ``'land'`` to mask out land mass or ``'sea'`` to mask out seas.
 
     Returns
     -------
@@ -107,49 +110,58 @@ def mask_landsea(cube, mask_out):
 
     # ne_10m_land is fast; ne_10m_ocean is very slow
     shapefiles = {
-        'land': os.path.join(cwd, 'ne_masks/ne_10m_land.shp'),
-        'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
+        "land": os.path.join(cwd, "ne_masks/ne_10m_land.shp"),
+        "sea": os.path.join(cwd, "ne_masks/ne_50m_ocean.shp"),
     }
 
     # preserve importance order: try stflf first then sftof
-    fx_cube = None
+    ancillary_var = None
     try:
-        fx_cube = cube.ancillary_variable('land_area_fraction')
+        ancillary_var = cube.ancillary_variable("land_area_fraction")
     except iris.exceptions.AncillaryVariableNotFoundError:
         try:
-            fx_cube = cube.ancillary_variable('sea_area_fraction')
+            ancillary_var = cube.ancillary_variable("sea_area_fraction")
         except iris.exceptions.AncillaryVariableNotFoundError:
-            logger.debug('Ancillary variables land/sea area fraction not '
-                         'found in cube. Check fx_file availability.')
-
-    if fx_cube:
-        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-        landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
-                                    fx_cube.var_name)
-        cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
-        logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
-    else:
-        if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], [
-                0,
-            ])
             logger.debug(
-                "Applying land-sea mask from Natural Earth shapefile: \n%s",
-                shapefiles[mask_out],
+                "Ancillary variables land/sea area fraction not found in "
+                "cube. Check fx_file availability.",
             )
-        else:
-            msg = ("Use of shapefiles with irregular grids not yet "
-                   "implemented, land-sea mask not applied.")
-            raise ValueError(msg)
+
+    if ancillary_var:
+        landsea_mask = _get_fx_mask(
+            ancillary_var.core_data(),
+            mask_out,
+            ancillary_var.var_name,
+        )
+        cube.data = apply_mask(
+            landsea_mask,
+            cube.core_data(),
+            cube.ancillary_variable_dims(ancillary_var),
+        )
+        logger.debug("Applying land-sea mask: %s", ancillary_var.var_name)
+    elif cube.coord("longitude").points.ndim < 2:
+        cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
+        logger.debug(
+            "Applying land-sea mask from Natural Earth shapefile: \n%s",
+            shapefiles[mask_out],
+        )
+    else:
+        msg = (
+            "Use of shapefiles with irregular grids not yet implemented, "
+            "land-sea mask not applied."
+        )
+        raise ValueError(
+            msg,
+        )
 
     return cube
 
 
 @register_supplementaries(
-    variables=['sftgif'],
-    required='require_at_least_one',
+    variables=["sftgif"],
+    required="require_at_least_one",
 )
-def mask_landseaice(cube, mask_out):
+def mask_landseaice(cube: Cube, mask_out: Literal["landsea", "ice"]) -> Cube:
     """Mask out either landsea (combined) or ice.
 
     Function that masks out either landsea (land and seas) or ice (Antarctica,
@@ -159,13 +171,13 @@ def mask_landseaice(cube, mask_out):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        data cube to be masked. It should have an
+    cube:
+        Data cube to be masked. It should have an
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_ice_area_fraction'``.
-
     mask_out: str
-        either "landsea" to mask out landsea or "ice" to mask out ice.
+        Either ``'landsea'`` to mask out land and oceans or ``'ice'`` to mask
+        out ice.
 
     Returns
     -------
@@ -178,19 +190,28 @@ def mask_landseaice(cube, mask_out):
         Error raised if landsea-ice mask not found as an ancillary variable.
     """
     # sftgif is the only one so far but users can set others
-    fx_cube = None
+    ancillary_var = None
     try:
-        fx_cube = cube.ancillary_variable('land_ice_area_fraction')
+        ancillary_var = cube.ancillary_variable("land_ice_area_fraction")
     except iris.exceptions.AncillaryVariableNotFoundError:
-        logger.debug('Ancillary variable land ice area fraction '
-                     'not found in cube. Check fx_file availability.')
-    if fx_cube:
-        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-        landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
-        cube.data = _apply_fx_mask(landice_mask, cube.core_data())
+        logger.debug(
+            "Ancillary variable land ice area fraction not found in cube. "
+            "Check fx_file availability.",
+        )
+    if ancillary_var:
+        landseaice_mask = _get_fx_mask(
+            ancillary_var.core_data(),
+            mask_out,
+            ancillary_var.var_name,
+        )
+        cube.data = apply_mask(
+            landseaice_mask,
+            cube.core_data(),
+            cube.ancillary_variable_dims(ancillary_var),
+        )
         logger.debug("Applying landsea-ice mask: sftgif")
     else:
-        msg = "Landsea-ice mask could not be found. Stopping. "
+        msg = "Landsea-ice mask could not be found. Stopping."
         raise ValueError(msg)
 
     return cube
@@ -225,26 +246,31 @@ def mask_glaciated(cube, mask_out: str = "glaciated"):
     cwd = os.path.dirname(__file__)
     # read glaciated shapefile
     shapefiles = {
-        'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
+        "glaciated": os.path.join(cwd, "ne_masks/ne_10m_glaciated_areas.shp"),
     }
-    if mask_out == 'glaciated':
-        cube = _mask_with_shp(cube, shapefiles[mask_out], [
-            1859,
-            1860,
-            1861,
-            1857,
-            1858,
-            1716,
-            1587,
-            1662,
-            1578,
-            1606,
-        ])
+    if mask_out == "glaciated":
+        cube = _mask_with_shp(
+            cube,
+            shapefiles[mask_out],
+            [
+                1859,
+                1860,
+                1861,
+                1857,
+                1858,
+                1716,
+                1587,
+                1662,
+                1578,
+                1606,
+            ],
+        )
         logger.debug(
-            "Applying glaciated areas mask from Natural Earth"
-            " shapefile: \n%s", shapefiles[mask_out])
+            "Applying glaciated areas mask from Natural Earth shapefile: \n%s",
+            shapefiles[mask_out],
+        )
     else:
-        msg = (f"Invalid argument mask_out: {mask_out}")
+        msg = f"Invalid argument mask_out: {mask_out}"
         raise ValueError(msg)
 
     return cube
@@ -256,11 +282,8 @@ def _get_geometries_from_shp(shapefilename):
     # Index 0 grabs the lowest resolution mask (no zoom)
     geometries = list(reader.geometries())
     if not geometries:
-        msg = "Could not find any geometry in {}".format(shapefilename)
+        msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
-
-    # TODO might need this for a later, more enhanced, version
-    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
 
     return geometries
 
@@ -284,26 +307,29 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
     # Create a set of x,y points from the cube
     # 1D regular grids
-    if cube.coord('longitude').points.ndim < 2:
-        x_p, y_p = da.meshgrid(
-            cube.coord(axis='X').points,
-            cube.coord(axis='Y').points)
+    if cube.coord("longitude").points.ndim < 2:
+        x_p, y_p = np.meshgrid(
+            cube.coord(axis="X").points,
+            cube.coord(axis="Y").points,
+        )
     # 2D irregular grids; spit an error for now
     else:
-        msg = ("No fx-files found (sftlf or sftof)!"
-               "2D grids are suboptimally masked with "
-               "Natural Earth masks. Exiting.")
+        msg = (
+            "No fx-files found (sftlf or sftof)!"
+            "2D grids are suboptimally masked with "
+            "Natural Earth masks. Exiting."
+        )
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data
-    x_p_180 = da.where(x_p >= 180., x_p - 360., x_p)
+    x_p_180 = np.where(x_p >= 180.0, x_p - 360.0, x_p)
 
     # the NE mask has no points at x = -180 and y = +/-90
     # so we will fool it and apply the mask at (-179, -89, 89) instead
-    x_p_180 = da.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
+    x_p_180 = np.where(x_p_180 == -180.0, x_p_180 + 1.0, x_p_180)
 
-    y_p_0 = da.where(y_p == -90., y_p + 1., y_p)
-    y_p_90 = da.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
+    y_p_0 = np.where(y_p == -90.0, y_p + 1.0, y_p)
+    y_p_90 = np.where(y_p_0 == 90.0, y_p_0 - 1.0, y_p_0)
 
     mask = None
     for region in regions:
@@ -313,13 +339,11 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         else:
             mask |= shp_vect.contains(region, x_p_180, y_p_90)
 
-    mask = da.array(mask)
-    iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude')
-                                 + cube.coord_dims('longitude'))
-
-    old_mask = da.ma.getmaskarray(cube.core_data())
-    mask = old_mask | mask
-    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+    cube.data = apply_mask(
+        mask,
+        cube.core_data(),
+        cube.coord_dims("latitude") + cube.coord_dims("longitude"),
+    )
 
     return cube
 
@@ -381,17 +405,17 @@ def count_spells(
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-    hit_windows = rolling_window(
-        data_hits,
-        window=spell_length,
-        step=spell_length,
-        axis=axis,
-    )
+    with ignore_iris_vague_metadata_warnings():
+        hit_windows = rolling_window(
+            data_hits,
+            window=spell_length,
+            step=spell_length,
+            axis=axis,
+        )
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = array_module.all(hit_windows, axis=axis + 1)
     # Count points fulfilling the condition (along the time axis).
-    spell_point_counts = array_module.sum(full_windows, axis=axis, dtype=int)
-    return spell_point_counts
+    return array_module.sum(full_windows, axis=axis, dtype=int)
 
 
 def mask_above_threshold(cube, threshold):
@@ -413,8 +437,10 @@ def mask_above_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = (da.ma.masked_where(cube.core_data() > threshold,
-                                    cube.core_data()))
+    cube.data = da.ma.masked_where(
+        cube.core_data() > threshold,
+        cube.core_data(),
+    )
     return cube
 
 
@@ -436,8 +462,10 @@ def mask_below_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = (da.ma.masked_where(cube.core_data() < threshold,
-                                    cube.core_data()))
+    cube.data = da.ma.masked_where(
+        cube.core_data() < threshold,
+        cube.core_data(),
+    )
     return cube
 
 
@@ -493,9 +521,11 @@ def _get_shape(cubes):
     """Check and get shape of cubes."""
     shapes = {cube.shape for cube in cubes}
     if len(shapes) > 1:
+        msg = f"Expected cubes with identical shapes, got shapes {shapes}"
         raise ValueError(
-            f"Expected cubes with identical shapes, got shapes {shapes}")
-    return list(shapes)[0]
+            msg,
+        )
+    return next(iter(shapes))
 
 
 def _multimodel_mask_cubes(cubes, shape):
@@ -565,7 +595,7 @@ def mask_multimodel(products):
         cubes = products
         shape = _get_shape(cubes)
         return _multimodel_mask_cubes(cubes, shape)
-    if all(type(p).__name__ == 'PreprocessorFile' for p in products):
+    if all(type(p).__name__ == "PreprocessorFile" for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
         cubes = iris.cube.CubeList()
         for product in products:
@@ -575,10 +605,14 @@ def mask_multimodel(products):
         shape = _get_shape(cubes)
         return _multimodel_mask_products(products, shape)
     product_types = {type(p) for p in products}
-    raise TypeError(
+    msg = (
         f"Input type for mask_multimodel not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-        f"got {product_types}")
+        f"got {product_types}"
+    )
+    raise TypeError(
+        msg,
+    )
 
 
 def mask_fillvalues(
@@ -622,13 +656,14 @@ def mask_fillvalues(
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
     """
-    array_module = da if any(c.has_lazy_data() for p in products
-                             for c in p.cubes) else np
+    array_module = (
+        da if any(c.has_lazy_data() for p in products for c in p.cubes) else np
+    )
 
     combined_mask = None
     for product in products:
-        for i, cube in enumerate(product.cubes):
-            cube = cube.copy()
+        for i, orig_cube in enumerate(product.cubes):
+            cube = orig_cube.copy()
             product.cubes[i] = cube
             cube.data = array_module.ma.fix_invalid(cube.core_data())
             mask = _get_fillvalues_mask(
@@ -643,8 +678,9 @@ def mask_fillvalues(
             if mask.ndim in (2, 3):
                 valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
+                msg = f"Unable to handle {mask.ndim} dimensional data"
                 raise NotImplementedError(
-                    f"Unable to handle {mask.ndim} dimensional data"
+                    msg,
                 )
             combined_mask = array_module.where(
                 valid,
@@ -684,11 +720,14 @@ def _get_fillvalues_mask(
     window; a simple value thresholding is also applied if needed.
     """
     if threshold_fraction < 0 or threshold_fraction > 1.0:
-        raise ValueError(
+        msg = (
             f"Fraction of missing values {threshold_fraction} should be "
             f"between 0 and 1.0"
         )
-    nr_time_points = len(cube.coord('time').points)
+        raise ValueError(
+            msg,
+        )
+    nr_time_points = len(cube.coord("time").points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."
         raise ValueError(msg)
@@ -699,23 +738,22 @@ def _get_fillvalues_mask(
 
     # Make an aggregator
     spell_count = Aggregator(
-        'spell_count',
+        "spell_count",
         count_spells,
         lazy_func=count_spells,
-        units_func=lambda units: 1,
+        units_func=lambda units: 1,  # noqa: ARG005
     )
 
     # Calculate the statistic.
-    counts_windowed_cube = cube.collapsed(
-        'time',
-        spell_count,
-        threshold=min_value,
-        spell_length=time_window,
-    )
+    with ignore_iris_vague_metadata_warnings():
+        counts_windowed_cube = cube.collapsed(
+            "time",
+            spell_count,
+            threshold=min_value,
+            spell_length=time_window,
+        )
 
     # Create mask
     mask = counts_windowed_cube.core_data() < counts_threshold
     array_module = da if isinstance(mask, da.Array) else np
-    mask = array_module.ma.filled(mask, True)
-
-    return mask
+    return array_module.ma.filled(mask, True)

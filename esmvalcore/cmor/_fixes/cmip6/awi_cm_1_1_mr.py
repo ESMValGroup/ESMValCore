@@ -1,6 +1,6 @@
 """Fixes for AWI-CM-1-1-MR model."""
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -19,11 +19,11 @@ class AllVars(Fix):
         iris.cube.Cube
         """
         coords_longnames_to_change = {
-            'latitude': 'latitude',
+            "latitude": "latitude",
         }
 
         for cube in cubes:
-            for (std_name, long_name) in coords_longnames_to_change.items():
+            for std_name, long_name in coords_longnames_to_change.items():
                 coord = cube.coord(std_name)
                 if coord.long_name != long_name:
                     coord.long_name = long_name

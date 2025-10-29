@@ -1,8 +1,8 @@
 """Fixes for MPI-ESM1-2-XR model."""
 
-from .mpi_esm1_2_hr import Tas as BaseTas
-from .mpi_esm1_2_hr import Ta as BaseFix
 from .mpi_esm1_2_hr import SfcWind as BaseSfcWind
+from .mpi_esm1_2_hr import Ta as BaseFix
+from .mpi_esm1_2_hr import Tas as BaseTas
 
 
 class Tas(BaseTas):

@@ -10,7 +10,7 @@ from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1-m', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP5", "bcc-csm1-1-m", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -21,7 +21,7 @@ def test_cl_fix():
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1-m', 'Omon', 'tos')
+    fix = Fix.get_fixes("CMIP5", "bcc-csm1-1-m", "Omon", "tos")
     assert fix == [Tos(None), GenericFix(None)]
 
 

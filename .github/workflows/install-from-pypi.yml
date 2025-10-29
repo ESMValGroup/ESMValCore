@@ -37,22 +37,22 @@ defaults:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p pip_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
@@ -61,28 +61,30 @@ jobs:
           python -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
+          pip check
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: PIP_Install_Linux_python_${{ matrix.python-version }}
           path: pip_install_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
+    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
         architecture: ["x64"]  # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
           architecture: ${{ matrix.architecture }}
@@ -90,7 +92,6 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
-          miniforge-variant: Mambaforge
           use-mamba: true
       - run: mkdir -p pip_install_osx_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
@@ -99,14 +100,14 @@ jobs:
           python -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        run: pip install esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install --no-deps esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         run: |
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: PIP_Install_OSX_python_${{ matrix.python-version }}
           path: pip_install_osx_artifacts_python_${{ matrix.python-version }}

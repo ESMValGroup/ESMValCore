@@ -10,16 +10,16 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `clmtkisccp`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [{'short_name': 'clisccp'}]
-        return required
+        return [{"short_name": "clisccp"}]
 
     @staticmethod
     def calculate(cubes):
         """Compute ISCCP middle level thick cloud area fraction."""
         tau = Constraint(
-            atmosphere_optical_thickness_due_to_cloud=lambda t: t > 23.)
-        plev = Constraint(air_pressure=lambda p: 44000. < p <= 68000.)
+            atmosphere_optical_thickness_due_to_cloud=lambda t: t > 23.0,
+        )
+        plev = Constraint(air_pressure=lambda p: 44000.0 < p <= 68000.0)
 
         return cloud_area_fraction(cubes, tau, plev)

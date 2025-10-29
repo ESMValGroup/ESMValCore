@@ -1,9 +1,10 @@
 """Fixes for the ACCESS1-0 model."""
+
 import iris
 from cf_units import Unit
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -27,14 +28,18 @@ class AllVars(Fix):
         """
         for cube in cubes:
             try:
-                time = cube.coord('time')
+                time = cube.coord("time")
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             else:
-                if time.units.calendar == 'proleptic_gregorian':
-                    time.convert_units(Unit("days since 1850-01-01",
-                                            calendar='proleptic_gregorian'))
-                    time.units = Unit(time.units.name, 'gregorian')
+                if time.units.calendar == "proleptic_gregorian":
+                    time.convert_units(
+                        Unit(
+                            "days since 1850-01-01",
+                            calendar="proleptic_gregorian",
+                        ),
+                    )
+                    time.units = Unit(time.units.name, "gregorian")
         return cubes
 
 
@@ -44,7 +49,7 @@ class Cl(ClFixHybridHeightCoord):
     def fix_metadata(self, cubes):
         """Remove attributes from ``vertical coordinate formula term: b(k)``.
 
-        Additionally add pressure level coordiante.
+        Additionally add pressure level coordinate.
 
         Parameters
         ----------
@@ -58,6 +63,6 @@ class Cl(ClFixHybridHeightCoord):
         """
         cubes = super().fix_metadata(cubes)
         cube = self.get_cube_from_list(cubes)
-        coord = cube.coord(long_name='vertical coordinate formula term: b(k)')
+        coord = cube.coord(long_name="vertical coordinate formula term: b(k)")
         coord.attributes = {}
         return cubes

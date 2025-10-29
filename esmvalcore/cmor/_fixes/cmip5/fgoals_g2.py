@@ -1,9 +1,10 @@
 """Fixes for FGOALS-g2 model."""
+
 import iris
 from cf_units import Unit
 
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 
 class AllVars(Fix):
@@ -27,12 +28,12 @@ class AllVars(Fix):
         """
         for cube in cubes:
             try:
-                time = cube.coord('time')
+                time = cube.coord("time")
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
                 time.units = Unit(time.units.name, time.units.calendar)
 
-        round_coordinates(cubes, 4, coord_names=['longitude'])
+        round_coordinates(cubes, 4, coord_names=["longitude"])
 
         return cubes

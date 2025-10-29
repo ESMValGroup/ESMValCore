@@ -1,7 +1,5 @@
 """API for recipe metadata."""
 
-from typing import Optional
-
 import pybtex
 from pybtex.database.input import bibtex
 
@@ -25,22 +23,24 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: Optional[str] = None):
+    def __init__(self, name: str, institute: str, orcid: str | None = None):
         self.name = name
         self.institute = institute
         self.orcid = orcid
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
-        return (f'{self.__class__.__name__}({self.name!r},'
-                f' institute={self.institute!r}, orcid={self.orcid!r})')
+        return (
+            f"{self.__class__.__name__}({self.name!r},"
+            f" institute={self.institute!r}, orcid={self.orcid!r})"
+        )
 
     def __str__(self) -> str:
         """Return string representation."""
-        string = f'{self.name} ({self.institute}'
+        string = f"{self.name} ({self.institute}"
         if self.orcid:
-            string += f'; {self.orcid}'
-        string += ')'
+            string += f"; {self.orcid}"
+        string += ")"
         return string
 
     def _repr_markdown_(self) -> str:
@@ -48,7 +48,7 @@ class Contributor:
         return str(self)
 
     @classmethod
-    def from_tag(cls, tag: str) -> 'Contributor':
+    def from_tag(cls, tag: str) -> "Contributor":
         """Return an instance of Contributor from a tag (``TAGS``).
 
         Parameters
@@ -57,11 +57,11 @@ class Contributor:
             The contributor tags are defined in the authors section in
             ``config-references.yml``.
         """
-        mapping = TAGS.get_tag_value(section='authors', tag=tag)
+        mapping = TAGS.get_tag_value(section="authors", tag=tag)
 
-        name = ' '.join(reversed(mapping['name'].split(', ')))
-        institute = mapping.get('institute', 'No affiliation')
-        orcid = mapping['orcid']
+        name = " ".join(reversed(mapping["name"].split(", ")))
+        institute = mapping.get("institute", "No affiliation")
+        orcid = mapping["orcid"]
 
         return cls(name=name, institute=institute, orcid=orcid)
 
@@ -74,9 +74,9 @@ class Contributor:
         attributes : dict
             Dictionary containing name / institute [/ orcid].
         """
-        name = attributes['name']
-        institute = attributes['institute']
-        orcid = attributes.get('orcid', None)
+        name = attributes["name"]
+        institute = attributes["institute"]
+        orcid = attributes.get("orcid", None)
         return cls(name=name, institute=institute, orcid=orcid)
 
 
@@ -94,15 +94,14 @@ class Project:
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self.project!r})'
+        return f"{self.__class__.__name__}({self.project!r})"
 
     def __str__(self) -> str:
         """Return string representation."""
-        string = f'{self.project}'
-        return string
+        return f"{self.project}"
 
     @classmethod
-    def from_tag(cls, tag: str) -> 'Project':
+    def from_tag(cls, tag: str) -> "Project":
         """Return an instance of Project from a tag (``TAGS``).
 
         Parameters
@@ -110,7 +109,7 @@ class Project:
         tag : str
             The project tags are defined in ``config-references.yml``.
         """
-        project = TAGS['projects'][tag]
+        project = TAGS["projects"][tag]
         return cls(project=project)
 
 
@@ -133,16 +132,20 @@ class Reference:
         bib_data = parser.parse_file(filename)
 
         if len(bib_data.entries) > 1:
+            msg = (
+                f"{self.__class__.__name__} cannot handle bibtex files "
+                "with more than 1 entry."
+            )
             raise NotImplementedError(
-                f'{self.__class__.__name__} cannot handle bibtex files '
-                'with more than 1 entry.')
+                msg,
+            )
 
         self._bib_data = bib_data
-        self._key, self._entry = list(bib_data.entries.items())[0]
+        self._key, self._entry = next(iter(bib_data.entries.items()))
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag: str) -> 'Reference':
+    def from_tag(cls, tag: str) -> "Reference":
         """Return an instance of Reference from a bibtex tag.
 
         Parameters
@@ -151,22 +154,22 @@ class Reference:
             The bibtex tags resolved as ``esmvaltool/references/{tag}.bibtex``
             or the corresponding directory as defined by the diagnostics path.
         """
-        filename = DIAGNOSTICS.references / f'{tag}.bibtex'
+        filename = DIAGNOSTICS.references / f"{tag}.bibtex"
         return cls(filename)
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self._key!r})'
+        return f"{self.__class__.__name__}({self._key!r})"
 
     def __str__(self) -> str:
         """Return string representation."""
-        return self.render(renderer='plaintext')
+        return self.render(renderer="plaintext")
 
     def _repr_html_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
-        return self.render(renderer='html')
+        return self.render(renderer="html")
 
-    def render(self, renderer: str = 'html') -> str:
+    def render(self, renderer: str = "html") -> str:
         """Render the reference.
 
         Parameters
@@ -180,16 +183,20 @@ class Reference:
         str
             Rendered reference
         """
-        style = 'plain'  # alpha, plain, unsrt, unsrtalpha
-        backend = pybtex.plugin.find_plugin('pybtex.backends', renderer)()
-        formatter = pybtex.plugin.find_plugin('pybtex.style.formatting',
-                                              style)()
+        style = "plain"  # alpha, plain, unsrt, unsrtalpha
+        backend = pybtex.plugin.find_plugin("pybtex.backends", renderer)()
+        formatter = pybtex.plugin.find_plugin(
+            "pybtex.style.formatting",
+            style,
+        )()
 
         try:
             formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
+            msg = f"Could not render {self._key!r}: {err}"
             raise RenderError(
-                f'Could not render {self._key!r}: {err}') from None
+                msg,
+            ) from None
 
         return rendered

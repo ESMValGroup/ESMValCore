@@ -40,7 +40,7 @@ whenever you read it.
 It is recommended that you open a `draft pull
 request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
-:ref:`Codacy to analyse your code <code_quality>`, and
+:ref:`pre-commit.ci to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
 It's also easier to get help from other developers if your code is visible in a
 pull request.
@@ -101,7 +101,7 @@ Please keep the following considerations in mind when programming:
   code.
 - If you find yourself copy-pasting a piece of code and making minor changes
   to every copy, instead put the repeated bit of code in a function that you can
-  re-use, and provide the changed bits as function arguments.
+  reuse, and provide the changed bits as function arguments.
 - Be careful when changing existing unit tests to make your new feature work.
   You might be breaking existing features if you have to change existing tests.
 
@@ -158,7 +158,7 @@ These include in particular:
   branch. If a strong objection is raised the backward-incompatible
   change should not be merged until the objection is resolved.
 - 🛠 Information required for the “*backward-incompatible changes*”
-  section in the PR  that introduces the *backward-incompatible change*
+  section in the PR that introduces the *backward-incompatible change*
   available.
 
 .. _scientific_relevance:
@@ -210,6 +210,14 @@ This includes checks for invalid syntax and formatting errors.
 automatically just before you commit your code.
 It knows knows which tool to run for each filetype, and therefore provides
 a convenient way to check your code.
+Install the pre-commit hooks by running
+
+.. code-block:: bash
+
+    pre-commit install
+
+to make sure your code is formatted correctly and does not contain mistakes
+whenever you commit some changes.
 
 Python
 ~~~~~~
@@ -219,82 +227,39 @@ The standard document on best practices for Python code is
 `PEP257 <https://www.python.org/dev/peps/pep-0257/>`__ for code documentation.
 We make use of
 `numpy style docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__
-to document Python functions that are visible on
-`readthedocs <https://docs.esmvaltool.org>`_.
+to document Python functions that are part of the :ref:`api`.
 
 To check if your code adheres to the standard, go to the directory where
-the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://prospector.landscape.io/>`_
+the repository is cloned, e.g. ``cd ESMValCore``, and run `pre-commit <https://pre-commit.com/>`_:
 
 ::
 
-   prospector esmvalcore/preprocessor/_regrid.py
+   pre-commit run --all
 
-In addition to prospector, we use `flake8 <https://flake8.pycqa.org/en/latest/>`_
-to automatically check for bugs and formatting mistakes and
+We use `ruff <https://docs.astral.sh/ruff/>`_ to automatically format the code
+and to check for certain bugs and
 `mypy <https://mypy.readthedocs.io>`_ for checking that
 `type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
 correct.
-Note that `type hints`_ are completely optional, but if you do choose to add
-them, they should be correct.
+Note that `type hints`_ are optional, but if you do choose to add them, they
+should be correct.
+Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
-is checked in two ways:
-
-#. As part of the unit tests, flake8_ and mypy_ are run by
-   `CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_,
-   see the section on Tests_ for more information.
-#. `Codacy <https://app.codacy.com/gh/ESMValGroup/ESMValCore/pullRequests>`_
-   is a service that runs prospector (and other code quality tools) on changed
-   files and reports the results.
-   Click the 'Details' link behind the Codacy check entry and then click
-   'View more details on Codacy Production' to see the results of the static
-   code analysis done by Codacy_.
-   If you need to log in, you can do so using your GitHub account.
-
-The automatic code quality checks by prospector are really helpful to improve
-the quality of your code, but they are not flawless.
-If you suspect prospector or Codacy may be wrong, please ask the
-`@ESMValGroup/tech-reviewers`_ by commenting on your pull request.
-
-Note that running prospector locally will give you quicker and sometimes more
-accurate results than waiting for Codacy.
-
-Most formatting issues in Python code can be fixed automatically by
-running the commands
-
-::
-
-   isort some_file.py
-
-to sort the imports in `the standard way <https://www.python.org/dev/peps/pep-0008/#imports>`__
-using `isort <https://pycqa.github.io/isort/>`__ and
-
-::
-
-   yapf -i some_file.py
-
-to add/remove whitespace as required by the standard using `yapf <https://github.com/google/yapf>`__,
-
-::
-
-   docformatter -i some_file.py
-
-to run `docformatter <https://github.com/myint/docformatter>`__ which helps
-formatting the docstrings (such as line length, spaces).
+is checked by `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
 
 YAML
 ~~~~
 
-Please use `yamllint <https://yamllint.readthedocs.io>`_ to check that your
-YAML files do not contain mistakes.
-``yamllint`` checks for valid syntax, common mistakes like key repetition and
-cosmetic problems such as line length, trailing spaces, wrong indentation, etc.
+We use `yamllint <https://yamllint.readthedocs.io>`_ to check that YAML files
+do not contain mistakes. This is automatically run by pre-commit.
 
 Any text file
 ~~~~~~~~~~~~~
 
 A generic tool to check for common spelling mistakes is
 `codespell <https://pypi.org/project/codespell/>`__.
+This is automatically run by pre-commit.
 
 .. _documentation:
 
@@ -306,7 +271,8 @@ The documentation lives on `docs.esmvaltool.org <https://docs.esmvaltool.org>`_.
 Adding documentation
 ~~~~~~~~~~~~~~~~~~~~
 
-The documentation is built by readthedocs_ using `Sphinx <https://www.sphinx-doc.org>`_.
+The documentation is `built by readthedocs <https://app.readthedocs.org/projects/esmvalcore/builds/>`__
+using `Sphinx <https://www.sphinx-doc.org>`_.
 There are two main ways of adding documentation:
 
 #. As written text in the directory
@@ -334,8 +300,8 @@ What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Functionality that is visible to users should be documented.
-Any documentation that is visible on readthedocs_ should be well
-written and adhere to the standards for documentation.
+Any documentation that is visible on `readthedocs <https://docs.esmvaltool.org>`_
+should be well written and adhere to the standards for documentation.
 Examples of this include:
 
 - The :ref:`recipe <recipe_overview>`
@@ -379,13 +345,13 @@ the individual checks.
 To build the documentation on your own computer, go to the directory where the
 repository was cloned and run
 
-::
+.. code-block:: bash
 
    sphinx-build doc doc/build
 
 or
 
-::
+.. code-block:: bash
 
    sphinx-build -Ea doc doc/build
 
@@ -393,7 +359,8 @@ to build it from scratch.
 
 Make sure that your newly added documentation builds without warnings or
 errors and looks correctly formatted.
-CircleCI_ will build the documentation with the command:
+`CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_
+will build the documentation with the command:
 
 .. code-block:: bash
 
@@ -449,7 +416,7 @@ previous command. To only run tests from a single file, run the command
    pytest tests/unit/test_some_file.py
 
 If you would like to avoid loading the default pytest configuration from
-`setup.cfg <https://github.com/ESMValGroup/ESMValCore/blob/main/setup.cfg>`_
+`pyproject.toml <https://github.com/ESMValGroup/ESMValCore/blob/main/pyproject.toml>`_
 because this can be a bit slow for running just a few tests, use
 
 .. code-block:: bash
@@ -476,19 +443,25 @@ successful.
 Test coverage
 ~~~~~~~~~~~~~
 
-To check which parts of your code are `covered by unit tests`_, open the file
-``test-reports/coverage_html/index.html`` (available after running a ``pytest``
-command) and browse to the relevant file.
+To check which parts of your code are `covered by unit tests`_, run the command
 
-CircleCI will upload the coverage results from running the tests to codecov and
-Codacy.
+.. code-block:: bash
+
+   pytest --cov
+
+and open the file ``test-reports/coverage_html/index.html`` and browse to the
+relevant file. Note that tracking code coverage slows down the test runs,
+therefore it is disabled by default and needs to be requested by providing
+``pytest`` with the ``--cov`` flag.
+
+CircleCI will upload the coverage results from running the tests to Codecov.
 `codecov <https://app.codecov.io/gh/ESMValGroup/ESMValCore/pulls>`_ is a service
 that will comment on pull requests with a summary of the test coverage.
 If codecov_ reports that the coverage has decreased, check the report and add
 additional tests.
-Alternatively, it is also possible to view code coverage on Codacy_ (click the
-Files tab) and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
-To see some of the results on CircleCI, Codacy, or codecov, you may need to log
+Alternatively, it is also possible to view code coverage on CircleCI_ (open the
+``tests`` job and click the ARTIFACTS tab).
+To see some of the results on CircleCI or Codecov, you may need to log
 in; you can do so using your GitHub account.
 
 When reviewing a pull request, always check that new code is covered by unit
@@ -577,7 +550,7 @@ users.
 
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
-:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+:ref:`Python API <api>`, or the :ref:`configuration format <config>`,
 keep in mind that this may affect many users.
 To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
@@ -608,7 +581,7 @@ that feature should be removed in version 2.7:
                "ESMValCore version 2.5 and is scheduled for removal in "
                "version 2.7. Add additional text (e.g., description of "
                "alternatives) here.")
-           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
        # Other code
 
@@ -659,7 +632,7 @@ the following files:
 - ``environment.yml``
   contains all the development dependencies; these are all from
   `conda-forge <https://conda-forge.org/>`_
-- ``setup.py``
+- ``pyproject.toml``
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
@@ -716,11 +689,8 @@ After that has been merged into the ``main`` branch and all checks on this
 branch are green again, merge it into your own branch to get the tests to pass.
 
 When reviewing a pull request, always make sure that all checks were successful.
-If the Codacy check keeps failing, please run prospector locally.
-If necessary, ask the pull request author to do the same and to address the
-reported issues.
 See the section on code_quality_ for more information.
-Never merge a pull request with failing CircleCI or readthedocs checks.
+Never merge a pull request with failing pre-commit, CircleCI, or readthedocs checks.
 
 
 .. _how-to-make-a-release:
@@ -743,15 +713,15 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-The release of ESMValCore is tied to the release of ESMValTool. 
+The release of ESMValCore is tied to the release of ESMValTool.
 The detailed steps can be found in the ESMValTool
 :ref:`documentation <esmvaltool:release_steps>`.
-To start the procedure, ESMValCore gets released as a 
+To start the procedure, ESMValCore gets released as a
 release candidate to test the recipes in ESMValTool. If bugs are found
-during the testing phase of the release candidate, make as many release 
-candidates for ESMValCore as needed in order to fix them. 
+during the testing phase of the release candidate, make as many release
+candidates for ESMValCore as needed in order to fix them.
 
-To make a new release of the package, be it a release candidate or the final release, 
+To make a new release of the package, be it a release candidate or the final release,
 follow these steps:
 
 1. Check that all tests and builds work
@@ -795,13 +765,13 @@ Use the script
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
-Open a discussion to allow members of the development team to nominate pull 
-requests as highlights. Add the most voted pull requests as highlights at the 
-beginning of changelog. After the highlights section, list any backward 
-incompatible changes that the release may include. The 
+Open a discussion to allow members of the development team to nominate pull
+requests as highlights. Add the most voted pull requests as highlights at the
+beginning of changelog. After the highlights section, list any backward
+incompatible changes that the release may include. The
 :ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
-lists the information that should be provided by the developer of any backward 
-incompatible change. Make sure to also list any deprecations that the release 
+lists the information that should be provided by the developer of any backward
+incompatible change. Make sure to also list any deprecations that the release
 may include, as well as a brief description on how to upgrade a deprecated feature.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
@@ -940,7 +910,7 @@ built correctly by
 1. checking that the version tag is available on `Dockerhub`_ and the ``stable``
    tag has been updated,
 2. running some recipes with the ``stable`` tag Docker container, for example one
-   recipe for Python, NCL, R, and Julia,
+   recipe for Python, NCL, and R,
 3. running a recipe with a Singularity container built from the ``stable`` tag.
 
 If there is a problem with the automatically built container image, you can fix

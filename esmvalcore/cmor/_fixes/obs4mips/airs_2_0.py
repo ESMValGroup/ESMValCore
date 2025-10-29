@@ -1,7 +1,8 @@
 """Fixes for obs4MIPs dataset AIRS-2-0."""
+
 import dask.array as da
 
-from ..fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Hur(Fix):
@@ -27,9 +28,9 @@ class Hur(Fix):
             # Put information from valid_range into mask and remove the
             # attribute (otherwise this will cause problems after reloading the
             # data with different units)
-            valid_range = cube.attributes['valid_range']
+            valid_range = cube.attributes["valid_range"]
             cube.data = da.ma.masked_outside(cube.core_data(), *valid_range)
-            cube.attributes.pop('valid_range', None)
+            cube.attributes.pop("valid_range", None)
 
-            cube.convert_units('%')
+            cube.convert_units("%")
         return cubes

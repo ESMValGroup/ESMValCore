@@ -1,4 +1,5 @@
 """Test fixes for CNRM-CM6-1-HR."""
+
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
@@ -8,7 +9,7 @@ from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1-HR', 'Amon', 'cl')
+    fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1-HR", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -19,7 +20,7 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1-HR', 'Amon', 'cli')
+    fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1-HR", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
 
 
@@ -30,7 +31,7 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1-HR', 'Amon', 'clw')
+    fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1-HR", "Amon", "clw")
     assert fix == [Clw(None), GenericFix(None)]
 
 
