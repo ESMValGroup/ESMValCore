@@ -1870,7 +1870,6 @@ def test_relative_anomalies(period):
             cube.data,
             axis=0,
             keepdims=True,
-            ddof=1,
         ) * 100.
         expected = np.ma.masked_invalid(expected_stdanomalies)
         assert_array_equal(result.data, expected)
