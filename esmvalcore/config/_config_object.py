@@ -547,6 +547,12 @@ class Session(ValidatedConfig):
         )
         warnings.warn(msg, UserWarning, stacklevel=2)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(<config>, name={self.session_name})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
     def set_session_name(self, name: str = "session"):
         """Set the name for the session.
 

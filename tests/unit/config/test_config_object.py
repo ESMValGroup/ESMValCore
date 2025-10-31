@@ -154,6 +154,15 @@ def test_session():
     assert session != config
 
 
+def test_session_repr_small(session: Session) -> None:
+    # See https://github.com/ESMValGroup/ESMValCore/issues/2868
+    assert len(repr(session)) < 100
+
+
+def test_session_str_small(session: Session) -> None:
+    assert len(str(session)) < 100
+
+
 def test_session_key_error():
     session = Session({})
     with pytest.raises(KeyError):
