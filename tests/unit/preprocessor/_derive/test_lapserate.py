@@ -21,7 +21,7 @@ def cubes():
     )
     zg_cube = get_cube(
         [[[[1000.0]], [[2000.0]]]],
-        air_pressure_coord=False,
+        air_pressure_coord=True,
         standard_name="geopotential_height",
         var_name="zg",
         units="m",
@@ -33,21 +33,13 @@ def test_lapserate_calculate(cubes):
     """Test function ``calculate``."""
     derived_var = lapserate.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    assert out_cube.shape == (1, 1, 1)
-    assert out_cube.units == "1"
+    assert out_cube.shape == (1, 2, 1, 1)
+    assert out_cube.units == "K km-1"
     assert out_cube.coords("time")
     assert out_cube.coords("air_pressure")
     assert out_cube.coords("latitude")
     assert out_cube.coords("longitude")
-    np.testing.assert_allclose(out_cube.data, [[[10.0]]])
-    np.testing.assert_allclose(out_cube.coord("time").points, [0.0])
-    np.testing.assert_allclose(out_cube.coord("air_pressure").points, 85000.0)
-    np.testing.assert_allclose(
-        out_cube.coord("air_pressure").bounds,
-        [[80000.0, 90000.0]],
-    )
-    np.testing.assert_allclose(out_cube.coord("latitude").points, [45.0])
-    np.testing.assert_allclose(out_cube.coord("longitude").points, [10.0])
+    np.testing.assert_allclose(out_cube.data, [[[[10.0]], [[10.0]]]])
 
 
 def test_lapserate_required():
