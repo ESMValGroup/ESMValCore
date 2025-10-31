@@ -951,6 +951,7 @@ def anomalies(
     period: str,
     reference: dict | None = None,
     standardize: bool = False,
+    relative: bool = False,
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
 ) -> Cube:
     """Compute anomalies using a mean with the specified granularity.
@@ -970,6 +971,8 @@ def anomalies(
         Period of time to use a reference, as needed for the
         :func:`~esmvalcore.preprocessor.extract_time` preprocessor function.
         If ``None``, all available data is used as a reference.
+    relative: optional
+        If ``True`` relative anomalies are calculated.
     standardize: optional
         If ``True`` standardized anomalies are calculated.
     seasons: optional
@@ -1002,19 +1005,27 @@ def anomalies(
             )
             cube = cube / cube_stddev
             cube.units = "1"
+        if relative:
+            cube = cube / reference * 100.
+            cube.metadata = metadata
+            cube.units = "%"
         return cube
 
     cube = _compute_anomalies(cube, reference, period, seasons)
 
     # standardize the results if requested
-    if standardize:
-        cube_stddev = climate_statistics(
+    if standardize or relative:
+        if standardize:
+           oper="std_dev"
+        if relative:
+           oper="mean"
+        cube_div = climate_statistics(
             cube,
-            operator="std_dev",
+            operator=oper,
             period=period,
         )
         tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        reps = cube.shape[tdim] / cube_div.shape[tdim]
         if reps % 1 != 0:
             msg = (
                 "Cannot safely apply preprocessor to this dataset, "
@@ -1025,10 +1036,15 @@ def anomalies(
                 msg,
             )
         cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))],
+            [cube_div.core_data() for _ in range(int(reps))],
             axis=tdim,
         )
-        cube.units = "1"
+        if standardize:
+            cube.units = "1"
+        if relative:
+            cube.data = cube.core_data() * 100.
+            cube.units = "%"
+
     return cube
 
 
