@@ -183,6 +183,9 @@ html_theme_options = {
         "image_light": "figures/ESMValTool-logo-2.png",
         "image_dark": "figures/ESMValTool-logo-2-dark.png",
     },
+    "navbar_center": ["cross_proj_navbar"],
+    "search_bar_text": "Search docs... (hint: also try search in ESMValTool docs)",
+    # "content_footer_items" : ["footer_custom"],
 }
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -222,7 +225,9 @@ html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+html_sidebars = {
+    "**": ["sidebar_nav_lv1", "sidebar-ethical-ads"]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -502,8 +507,3 @@ extlinks = {
 }
 
 # -- Custom Document processing ----------------------------------------------
-
-sys.path.append(os.path.dirname(__file__))
-from gensidebar import generate_sidebar
-
-generate_sidebar(globals(), "esmvalcore")
