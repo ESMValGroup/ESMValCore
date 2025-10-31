@@ -26,7 +26,9 @@ def cubes():
         var_name="zg",
         units="m",
     )
-    return iris.cube.CubeList([ta_cube, zg_cube])
+    return iris.cube.CubeList(
+        [ta_cube, zg_cube],
+    )
 
 
 def test_lapserate_calculate(cubes):
@@ -39,7 +41,10 @@ def test_lapserate_calculate(cubes):
     assert out_cube.coords("air_pressure")
     assert out_cube.coords("latitude")
     assert out_cube.coords("longitude")
-    np.testing.assert_allclose(out_cube.data, [[[[10.0]], [[10.0]]]])
+    np.testing.assert_allclose(
+        out_cube.data,
+        [[[[10.0]], [[10.0]]]],
+    )
 
 
 def test_lapserate_required():
