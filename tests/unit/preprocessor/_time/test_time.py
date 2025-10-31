@@ -1867,7 +1867,7 @@ def test_relative_anomalies(period):
             keepdims=True,
         )
         expected_stdanomalies = expected_anomalies / np.mean(
-            expected_anomalies,
+            cube.data,
             axis=0,
             keepdims=True,
             ddof=1,
