@@ -12,7 +12,6 @@ from esmvalcore.local import (
     LocalFile,
     _dates_to_timerange,
     _get_start_end_date,
-    _get_start_end_year,
     _replace_years_with_timerange,
     _truncate_dates,
 )
@@ -33,104 +32,46 @@ def _get_esgf_file(path):
     return ESGFFile([result])
 
 
-FILENAME_CASES = [
-    ["var_whatever_1980-1981", 1980, 1981],
-    ["var_whatever_1980.nc", 1980, 1980],
-    ["a.b.x_yz_185001-200512.nc", 1850, 2005],
-    ["var_whatever_19800101-19811231.nc1", 1980, 1981],
-    ["var_whatever_19800101.nc", 1980, 1980],
-    ["1980-1981_var_whatever.nc", 1980, 1981],
-    ["1980_var_whatever.nc", 1980, 1980],
-    ["var_control-1980_whatever.nc", 1980, 1980],
-    ["19800101-19811231_var_whatever.nc", 1980, 1981],
-    ["19800101_var_whatever.nc", 1980, 1980],
-    ["var_control-19800101_whatever.nc", 1980, 1980],
-    ["19800101_var_control-1950_whatever.nc", 1980, 1980],
-    ["var_control-1950_whatever_19800101.nc", 1980, 1980],
-    ["CM61-LR-hist-03.1950_18500101_19491231_1M_concbc.nc", 1850, 1949],
+@pytest.mark.parametrize(
+    "case",
     [
-        "icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc",
-        2015,
-        2015,
+        ["var_whatever_1980-1981", "1980", "1981"],
+        ["var_whatever_1980.nc", "1980", "1980"],
+        ["a.b.x_yz_185001-200512.nc", "185001", "200512"],
+        ["var_whatever_19800101-19811231.nc1", "19800101", "19811231"],
+        ["var_whatever_19800101.nc", "19800101", "19800101"],
+        ["1980-1981_var_whatever.nc", "1980", "1981"],
+        ["1980_var_whatever.nc", "1980", "1980"],
+        ["var_control-1980_whatever.nc", "1980", "1980"],
+        ["19800101-19811231_var_whatever.nc", "19800101", "19811231"],
+        ["19800101_var_whatever.nc", "19800101", "19800101"],
+        ["var_control-19800101_whatever.nc", "19800101", "19800101"],
+        ["19800101_var_control-1950_whatever.nc", "19800101", "19800101"],
+        ["var_control-1950_whatever_19800101.nc", "19800101", "19800101"],
+        [
+            "CM61-LR-hist-03.1950_18500101_19491231_1M_concbc.nc",
+            "18500101",
+            "19491231",
+        ],
+        [
+            "icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc",
+            "20150101T000000Z",
+            "20150101T000000Z",
+        ],
+        ["pr_A1.186101-200012.nc", "186101", "200012"],
+        [
+            "tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc",
+            "199001",
+            "199912",
+        ],
+        ["E5sf00_1M_1940_032.grb", "1940", "1940"],
+        ["E5sf00_1D_1998-04_167.grb", "199804", "199804"],
+        ["E5sf00_1H_1986-04-11_167.grb", "19860411", "19860411"],
+        ["E5sf00_1M_1940-1941_032.grb", "1940", "1941"],
+        ["E5sf00_1D_1998-01_1999-12_167.grb", "199801", "199912"],
+        ["E5sf00_1H_2000-01-01_2001-12-31_167.grb", "20000101", "20011231"],
     ],
-    ["pr_A1.186101-200012.nc", 1861, 2000],
-    ["tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc", 1990, 1999],
-    ["E5sf00_1M_1940_032.grb", 1940, 1940],
-    ["E5sf00_1D_1998-04_167.grb", 1998, 1998],
-    ["E5sf00_1H_1986-04-11_167.grb", 1986, 1986],
-    ["E5sf00_1M_1940-1941_032.grb", 1940, 1941],
-    ["E5sf00_1D_1998-01_1999-12_167.grb", 1998, 1999],
-    ["E5sf00_1H_2000-01-01_2001-12-31_167.grb", 2000, 2001],
-]
-
-FILENAME_DATE_CASES = [
-    ["var_whatever_1980-1981", "1980", "1981"],
-    ["var_whatever_1980.nc", "1980", "1980"],
-    ["a.b.x_yz_185001-200512.nc", "185001", "200512"],
-    ["var_whatever_19800101-19811231.nc1", "19800101", "19811231"],
-    ["var_whatever_19800101.nc", "19800101", "19800101"],
-    ["1980-1981_var_whatever.nc", "1980", "1981"],
-    ["1980_var_whatever.nc", "1980", "1980"],
-    ["var_control-1980_whatever.nc", "1980", "1980"],
-    ["19800101-19811231_var_whatever.nc", "19800101", "19811231"],
-    ["19800101_var_whatever.nc", "19800101", "19800101"],
-    ["var_control-19800101_whatever.nc", "19800101", "19800101"],
-    ["19800101_var_control-1950_whatever.nc", "19800101", "19800101"],
-    ["var_control-1950_whatever_19800101.nc", "19800101", "19800101"],
-    [
-        "CM61-LR-hist-03.1950_18500101_19491231_1M_concbc.nc",
-        "18500101",
-        "19491231",
-    ],
-    [
-        "icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc",
-        "20150101T000000Z",
-        "20150101T000000Z",
-    ],
-    ["pr_A1.186101-200012.nc", "186101", "200012"],
-    ["tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc", "199001", "199912"],
-    ["E5sf00_1M_1940_032.grb", "1940", "1940"],
-    ["E5sf00_1D_1998-04_167.grb", "199804", "199804"],
-    ["E5sf00_1H_1986-04-11_167.grb", "19860411", "19860411"],
-    ["E5sf00_1M_1940-1941_032.grb", "1940", "1941"],
-    ["E5sf00_1D_1998-01_1999-12_167.grb", "199801", "199912"],
-    ["E5sf00_1H_2000-01-01_2001-12-31_167.grb", "20000101", "20011231"],
-]
-
-
-@pytest.mark.parametrize("case", FILENAME_CASES)
-def test_get_start_end_year(case):
-    """Tests for _get_start_end_year function."""
-    filename, case_start, case_end = case
-
-    # If the filename is inconclusive or too difficult we resort to reading the
-    # file, which fails here because the file is not there.
-    if case_start is None and case_end is None:
-        with pytest.raises(ValueError):
-            _get_start_end_year(filename)
-        with pytest.raises(ValueError):
-            _get_start_end_year(Path(filename))
-        with pytest.raises(ValueError):
-            _get_start_end_year(LocalFile(filename))
-        with pytest.raises(ValueError):
-            _get_start_end_year(_get_esgf_file(filename))
-
-    else:
-        start, end = _get_start_end_year(filename)
-        assert case_start == start
-        assert case_end == end
-        start, end = _get_start_end_year(Path(filename))
-        assert case_start == start
-        assert case_end == end
-        start, end = _get_start_end_year(LocalFile(filename))
-        assert case_start == start
-        assert case_end == end
-        start, end = _get_start_end_year(_get_esgf_file(filename))
-        assert case_start == start
-        assert case_end == end
-
-
-@pytest.mark.parametrize("case", FILENAME_DATE_CASES)
+)
 def test_get_start_end_date(case):
     """Tests for _get_start_end_date function."""
     filename, case_start, case_end = case
@@ -145,7 +86,7 @@ def test_get_start_end_date(case):
         with pytest.raises(ValueError):
             _get_start_end_date(LocalFile(filename))
         with pytest.raises(ValueError):
-            _get_start_end_date(_get_esgf_file(filename))
+            _get_start_end_date(_get_esgf_file(filename).name)
 
     else:
         start, end = _get_start_end_date(filename)
@@ -157,7 +98,7 @@ def test_get_start_end_date(case):
         start, end = _get_start_end_date(LocalFile(filename))
         assert case_start == start
         assert case_end == end
-        start, end = _get_start_end_date(_get_esgf_file(filename))
+        start, end = _get_start_end_date(_get_esgf_file(filename).name)
         assert case_start == start
         assert case_end == end
 
@@ -173,9 +114,9 @@ def test_read_years_from_cube(tmp_path):
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = _get_start_end_year(temp_file)
-    assert start == 1990
-    assert end == 1991
+    start, end = _get_start_end_date(temp_file)
+    assert int(start[:4]) == 1990
+    assert int(end[:4]) == 1991
 
 
 def test_read_datetime_from_cube(tmp_path):
@@ -210,8 +151,6 @@ def test_raises_if_unable_to_deduce_no_time(tmp_path):
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
         _get_start_end_date(temp_file)
-    with pytest.raises(ValueError):
-        _get_start_end_year(temp_file)
 
 
 def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
@@ -223,16 +162,12 @@ def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
         _get_start_end_date(temp_file)
-    with pytest.raises(ValueError):
-        _get_start_end_year(temp_file)
 
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
     with pytest.raises(ValueError):
         _get_start_end_date("var_whatever")
-    with pytest.raises(ValueError):
-        _get_start_end_year("var_whatever")
 
 
 def test_get_timerange_from_years():

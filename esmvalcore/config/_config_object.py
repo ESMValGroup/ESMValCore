@@ -13,6 +13,7 @@ import dask.config
 import yaml
 
 import esmvalcore
+from esmvalcore.config._config import load_config_developer
 from esmvalcore.config._config_validators import (
     _deprecated_options_defaults,
     _deprecators,
@@ -50,9 +51,7 @@ def _get_user_config_dir() -> Path:
                 f"ESMVALTOOL_CONFIG_DIR environment variable: "
                 f"{user_config_dir} is not an existing directory"
             )
-            raise NotADirectoryError(
-                msg,
-            )
+            raise NotADirectoryError(msg)
         return user_config_dir
     return Path.home() / ".config" / "esmvaltool"
 
@@ -85,10 +84,7 @@ class Config(ValidatedConfig):
     _validate = _validators
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
-    _warn_if_missing = (
-        ("drs", URL),
-        ("rootpath", URL),
-    )
+    _warn_if_missing = (("projects", URL),)
 
     def __init__(self, *args, **kwargs):
         """Initialize class instance."""
@@ -145,6 +141,10 @@ class Config(ValidatedConfig):
 
         try:
             new.update(mapping)
+            # Add known projects from config-developer file while we still have it.
+            for project in load_config_developer(new["config_developer_file"]):
+                if project not in new["projects"]:
+                    new["projects"][project] = {}
             new.check_missing()
         except InvalidConfigParameter as exc:
             msg = (
@@ -362,7 +362,10 @@ class Config(ValidatedConfig):
         new_config_dict = self._get_config_dict_from_dirs(dirs)
         self.clear()
         self.update(new_config_dict)
-
+        # Add known projects from config-developer file while we still have it.
+        for project in load_config_developer(self["config_developer_file"]):
+            if project not in self["projects"]:
+                self["projects"][project] = {}
         self.check_missing()
 
     def reload(self) -> None:

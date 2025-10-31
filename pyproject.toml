@@ -45,6 +45,7 @@ dependencies = [
     "fire",
     "geopy",
     "humanfriendly",
+    "intake-esgf",
     "intake-esm",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",
@@ -143,6 +144,7 @@ minversion = "6"
 markers = [
     "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
+    "online: Run tests that require internet access",
 ]
 testpaths = ["tests"]
 xfail_strict = true
@@ -220,6 +222,7 @@ ignore = [
     "D102",     # Missing docstring in public method
     "D103",     # Missing docstring in public function
     "D104",     # Missing docstring in public package
+    "PT013",    # Allow importing fixtures from pytest to avoid repeating 'pytest' many times
 ]
 "doc/gensidebar.py" = [
     "INP001",   # File is part of an implicit namespace package

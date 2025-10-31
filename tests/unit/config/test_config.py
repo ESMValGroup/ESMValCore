@@ -138,6 +138,14 @@ def test_load_default_config(cfg_default, monkeypatch):
         paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
         env={},
     )["projects"]
+    # Add in projects without extra facets from the config developer file
+    # until we have transitioned all of its content to the new configuration
+    # system.
+    for project in yaml.safe_load(
+        default_dev_file.read_text(encoding="utf-8"),
+    ):
+        if project not in default_project_settings:
+            default_project_settings[project] = {}
 
     session = cfg_default.start_session("recipe_example")
 
@@ -164,13 +172,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         },
         "diagnostics": None,
         "download_dir": Path.home() / "climate_data",
-        "drs": {
-            "CMIP3": "ESGF",
-            "CMIP5": "ESGF",
-            "CMIP6": "ESGF",
-            "CORDEX": "ESGF",
-            "obs4MIPs": "ESGF",
-        },
         "exit_on_warning": False,
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},
@@ -183,7 +184,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "projects": default_project_settings,
         "remove_preproc_dir": True,
         "resume_from": [],
-        "rootpath": {"default": [Path.home() / "climate_data"]},
         "run_diagnostic": True,
         "search_esgf": "never",
         "skip_nonexistent": False,

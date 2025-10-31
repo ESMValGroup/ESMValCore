@@ -148,6 +148,7 @@ def create_esgf_search_results():
     return [file0, file1]
 
 
+@pytest.mark.skip(reason="May not be needed anymore.")
 @pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
 def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
     """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""

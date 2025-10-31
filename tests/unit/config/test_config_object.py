@@ -534,7 +534,9 @@ def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     cfg.load_from_dirs(config_dirs)
 
     assert cfg["output_file_type"] == output_file_type
-    assert cfg["rootpath"] == rootpath
+    if any(Path(d).exists() for d in config_dirs):
+        # Legacy setting "rootpath" is not available in default config.
+        assert cfg["rootpath"] == rootpath
     assert cfg["search_esgf"] == "never"
 
 
