@@ -1,0 +1,72 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"0.00000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"alevel",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"atmos land",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_Afx"
+    },
+    "variable_entry":{
+        "areacella":{
+            "cell_measures":"",
+            "cell_methods":"area: sum",
+            "comment":"For atmospheres with more than 1 mesh (e.g., staggered grids), report areas that apply to surface vertical fluxes of energy",
+            "dimensions":"longitude latitude",
+            "frequency":"fx",
+            "long_name":"Grid-Cell Area for Atmospheric Grid Variables",
+            "modeling_realm":"atmos land",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"areacella",
+            "positive":"",
+            "standard_name":"cell_area",
+            "type":"real",
+            "units":"m2",
+            "valid_max":"",
+            "valid_min":""
+        },
+        "sftlf":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: mean",
+            "comment":"Please express 'X_area_fraction' as the percentage of horizontal area occupied by X",
+            "dimensions":"longitude latitude",
+            "frequency":"fx",
+            "long_name":"Percentage of the Grid Cell Occupied by Land (Including Lakes)",
+            "modeling_realm":"atmos",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"sftlf",
+            "positive":"",
+            "standard_name":"land_area_fraction",
+            "type":"real",
+            "units":"%",
+            "valid_max":"",
+            "valid_min":""
+        },
+        "sftof":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: mean",
+            "comment":"Percentage of horizontal area occupied by ocean",
+            "dimensions":"longitude latitude",
+            "frequency":"fx",
+            "long_name":"Sea Area Percentage",
+            "modeling_realm":"atmos",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"sftof",
+            "positive":"",
+            "standard_name":"sea_area_fraction",
+            "type":"real",
+            "units":"%",
+            "valid_max":"",
+            "valid_min":""
+        }
+    }
+}
