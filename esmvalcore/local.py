@@ -754,7 +754,7 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
                 )
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
-                structure = CFG["drs"].get(project, "default")
+                structure = CFG.get("drs", {}).get(project, "default")
                 paths = dict.fromkeys(paths, structure)
             sources: list[LocalDataSource] = []
             for path, structure in paths.items():
