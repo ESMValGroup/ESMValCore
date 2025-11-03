@@ -1683,7 +1683,7 @@ Parameters:
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
-	* relative: if true, calculate relative (in percent) anomalies (default: false)
+    * relative: if true, calculate relative (in percent) anomalies (default: false)
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
