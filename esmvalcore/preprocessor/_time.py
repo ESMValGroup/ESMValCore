@@ -1020,7 +1020,12 @@ def anomalies(
     return cube
 
 
-def _apply_scaling(cube, period, standardize, relative):
+def _apply_scaling(
+    cube: Cube,
+    period: str,
+    standardize: bool,
+    relative: bool,
+) -> Cube:
     """Apply standardization or relative scaling."""
     if standardize:
         oper = "std_dev"
