@@ -5,10 +5,11 @@ An input data source can be defined in the configuration by using :obj:`esmvalco
 .. code-block:: python
 
     >>> from esmvalcore.config import CFG
-    >>> CFG["projects"]["example-project"]["data"]["example-source-name"] = {
-            "type": "example_module.ExampleDataSource"
-            "argument1": "value1"
-            "argument2": "value2"
+    >>> CFG["projects"]["CMIP6"]["data"]["local"] = {
+            "type": "esmvalcore.local.LocalDataSource",
+            "rootpath": "~/climate_data",
+            "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
         }
 
 or as a :ref:`YAML configuration file <config_overview>`
@@ -16,22 +17,23 @@ or as a :ref:`YAML configuration file <config_overview>`
 .. code-block:: yaml
 
     projects:
-      example-project:
+      CMIP6:
         data:
-          example-source-name
-            type: example_module.ExampleDataSource
-            argument1: value1
-            argument2: value2
+          local:
+            type: "esmvalcore.local.LocalDataSource"
+            rootpath: "~/climate_data"
+            dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+            filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
 
+where ``CMIP6`` is a project, and ``local`` is a unique name describing the
+data source. The data source type,
+:class:`esmvalcore.local.LocalDataSource`, in the example above, needs to
+implement the :class:`esmvalcore.io.protocol.DataSource` protocol. Any
+remaining key-value pairs in the configuration, ``rootpath``,
+``dirname_template``, and ``filename_template`` in this example, are passed
+as keyword arguments to the data source when it is created.
 
-where ``example-project`` is a project, e.g. ``CMIP6``, and ``example-source-name``
-is a unique name describing the data source. The datasource type, in the
-example above called ``example_module.ExampleDataSource`` needs to implement the
-:class:`esmvalcore.io.protocol.DataSource` protocol. Any remaining key-value pairs
-in the configuration, ``argument1: value1`` and ``argument2: value2`` are
-passed as keyword arguments to the data source when it is created.
-
-Dedeplication of search results happens based on the
+Deduplication of search results happens based on the
 :attr:`esmvalcore.io.protocol.DataElement.name` attribute and the ``"version"``
 facet in :attr:`esmvalcore.io.protocol.DataElement.facets` of the data elements
 provided by the data sources. If there is a tie, the data element provided by
@@ -51,7 +53,7 @@ from esmvalcore.typing import FacetValue
 class DataElement(Protocol):
     """A data element represents some data that can be loaded.
 
-    A file is an example of a data element.
+    An :class:`esmvalcore.local.LocalFile` is an example of a data element.
     """
 
     name: str

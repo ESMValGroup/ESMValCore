@@ -199,8 +199,8 @@ def _get_start_end_date_from_filename(
 def _get_start_end_date(file: str | Path) -> tuple[str, str]:
     """Get the start and end dates as a string from a file.
 
-    This function first tries to finds the dates from the filename and if that
-    fails it will try to read them from the file.
+    This function first tries to read the dates from the filename and only
+    if that fails, it will try to read them from the content of the file.
 
     Parameters
     ----------
