@@ -86,6 +86,8 @@ def process_recipe(recipe_file: Path, session):
     import datetime
     import shutil
 
+    import yaml
+
     from esmvalcore._recipe.recipe import read_recipe_file
 
     if not recipe_file.is_file():
@@ -112,6 +114,11 @@ def process_recipe(recipe_file: Path, session):
     logger.info("PREPROCDIR = %s", session.preproc_dir)
     logger.info("PLOTDIR    = %s", session.plot_dir)
     logger.info(70 * "-")
+    logger.debug("Using configuration:\n%s", yaml.safe_dump(dict(session)))
+    logger.debug(
+        "Running recipe:\n%s",
+        recipe_file.read_text(encoding="utf-8"),
+    )
 
     n_processes = session["max_parallel_tasks"] or os.cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
