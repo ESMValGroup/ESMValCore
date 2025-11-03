@@ -1857,7 +1857,7 @@ for period in ("full", "day", "month", "season"):
 
 @pytest.mark.parametrize("period", ["full"])
 def test_relative_anomalies(period):
-    """Test relative ``anomalies``."""
+    """Test  relative ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, relative=True)
     if period == "full":
@@ -1866,12 +1866,16 @@ def test_relative_anomalies(period):
             axis=0,
             keepdims=True,
         )
-        expected_stdanomalies = expected_anomalies / np.mean(
-            cube.data,
-            axis=0,
-            keepdims=True,
-        ) * 100.
-        expected = np.ma.masked_invalid(expected_stdanomalies)
+        expected_meananomalies = (
+            expected_anomalies
+            / np.mean(
+                cube.data,
+                axis=0,
+                keepdims=True,
+            )
+            * 100.0
+        )
+        expected = np.ma.masked_invalid(expected_meananomalies)
         assert_array_equal(result.data, expected)
         assert result.units == "%"
 
