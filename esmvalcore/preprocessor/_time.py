@@ -1005,45 +1005,54 @@ def anomalies(
             )
             cube = cube / cube_stddev
             cube.units = "1"
-        if relative:
-            cube = cube / reference * 100.
+        elif relative:
+            cube = cube / reference * 100.0
             cube.metadata = metadata
             cube.units = "%"
         return cube
 
     cube = _compute_anomalies(cube, reference, period, seasons)
 
-    # standardize the results if requested
+    # standardize results or compute relative anomalies if requested
     if standardize or relative:
-        if standardize:
-           oper="std_dev"
-        if relative:
-           oper="mean"
-        cube_div = climate_statistics(
-            cube,
-            operator=oper,
-            period=period,
+        cube = _apply_scaling(cube, period, standardize, relative)
+
+    return cube
+
+
+def _apply_scaling(cube, period, standardize, relative):
+    """Apply standardization or relative scaling."""
+    if standardize:
+        oper = "std_dev"
+    elif relative:
+        oper = "mean"
+
+    cube_div = climate_statistics(
+        cube,
+        operator=oper,
+        period=period,
+    )
+    tdim = cube.coord_dims("time")[0]
+    reps = cube.shape[tdim] / cube_div.shape[tdim]
+    if reps % 1 != 0:
+        msg = (
+            "Cannot safely apply preprocessor to this dataset, "
+            "since the full time period of this dataset is not "
+            f"a multiple of the period '{period}'"
         )
-        tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / cube_div.shape[tdim]
-        if reps % 1 != 0:
-            msg = (
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
-            )
-            raise ValueError(
-                msg,
-            )
-        cube.data = cube.core_data() / da.concatenate(
-            [cube_div.core_data() for _ in range(int(reps))],
-            axis=tdim,
+        raise ValueError(
+            msg,
         )
-        if standardize:
-            cube.units = "1"
-        if relative:
-            cube.data = cube.core_data() * 100.
-            cube.units = "%"
+    cube.data = cube.core_data() / da.concatenate(
+        [cube_div.core_data() for _ in range(int(reps))],
+        axis=tdim,
+    )
+
+    if standardize:
+        cube.units = "1"
+    elif relative:
+        cube.data = cube.core_data() * 100.0
+        cube.units = "%"
 
     return cube
 
