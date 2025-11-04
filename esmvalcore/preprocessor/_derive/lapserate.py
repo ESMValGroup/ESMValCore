@@ -1,6 +1,6 @@
 """Derivation of variable ``lapserate``."""
 
-import numpy as np
+import dask.array as da
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
@@ -30,8 +30,8 @@ class DerivedVariable(DerivedVariableBase):
         # Lapse rate
         lapserate_cube = zg_cube.copy()
         lapserate_cube.data = (
-            np.gradient(ta_cube.core_data(), axis=1)
-            / np.gradient(zg_cube.core_data(), axis=1)
+            da.gradient(ta_cube.core_data(), axis=1)
+            / da.gradient(zg_cube.core_data(), axis=1)
             * -1000.0
         )
         lapserate_cube.units = "K km-1"
