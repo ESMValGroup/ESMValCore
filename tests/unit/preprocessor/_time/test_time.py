@@ -1915,28 +1915,71 @@ def test_relative_anomalies(period):
     assert result.units == "%"
 
 
-@pytest.mark.parametrize("period", ["full"])
+@pytest.mark.parametrize("period", ["full", "day", "month", "season"])
 def test_standardized_anomalies(period):
     """Test standardized ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=True)
+
+    reference = climate_statistics(
+        cube,
+        period=period,
+        seasons=("DJF", "MAM", "JJA", "SON"),
+    )
+
     if period == "full":
-        expected_anomalies = cube.data - np.mean(
+        expected_stdanomalies = (cube - reference) / np.std(
             cube.data,
-            axis=0,
-            keepdims=True,
-        )
-        # NB: default behaviour for np.std is ddof=0, whereas
-        #     default behaviour for iris.analysis.STD_DEV is ddof=1
-        expected_stdanomalies = expected_anomalies / np.std(
-            expected_anomalies,
             axis=0,
             keepdims=True,
             ddof=1,
         )
-        expected = np.ma.masked_invalid(expected_stdanomalies)
-        assert_array_equal(result.data, expected)
-        assert result.units == "1"
+    else:
+        coord_dict = {
+            "day": "day_of_year",
+            "month": "month_number",
+            "season": "season_number",
+        }
+        coord_name = coord_dict[period]
+        func_name = "add_" + coord_name
+        addfunc = getattr(iris.coord_categorisation, func_name)
+        if not cube.coords(coord_name):
+            addfunc(cube, "time")
+        if not reference.coords(coord_name):
+            addfunc(reference, "time")
+        cube_coord = cube.coord(coord_name)
+        ref_coord = reference.coord(coord_name)
+        indices = np.empty_like(cube_coord.points, dtype=np.int32)
+
+        for idx, point in enumerate(ref_coord.points):
+            indices = np.where(cube_coord.points == point, idx, indices)
+
+        ref_data = reference.core_data()
+        (axis,) = cube.coord_dims(cube_coord)
+        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
+        data = cube.core_data() - ref_data_broadcast
+        expected_stdanomalies = cube.copy(data)
+
+        cube_std = climate_statistics(
+            cube,
+            operator="std_dev",
+            period=period,
+        )
+
+        tdim = cube.coord_dims("time")[0]
+        reps = cube.shape[tdim] / cube_std.shape[tdim]
+
+        expected_stdanomalies = expected_stdanomalies / da.concatenate(
+            [cube_std.core_data() for _ in range(int(reps))],
+            axis=tdim,
+        )
+
+        expected_stdanomalies.remove_coord(cube_coord)
+
+    expected = np.ma.masked_invalid(expected_stdanomalies.data)
+    resultdata = np.ma.masked_invalid(result.data)
+    assert_array_equal(resultdata, expected)
+    assert result.units == "1"
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)
