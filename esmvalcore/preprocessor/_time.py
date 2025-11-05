@@ -1015,28 +1015,28 @@ def anomalies(
 
     # standardize results or compute relative anomalies if requested
     if standardize or relative:
-        cube = _apply_scaling(cube, period, standardize, relative)
+        cube = _apply_scaling(cube, reference, period, standardize, relative)
 
     return cube
 
 
 def _apply_scaling(
     cube: Cube,
+    reference: Cube,
     period: str,
     standardize: bool,
     relative: bool,
 ) -> Cube:
     """Apply standardization or relative scaling."""
     if standardize:
-        oper = "std_dev"
+        cube_div = climate_statistics(
+            cube,
+            operator="std_dev",
+            period=period,
+        )
     elif relative:
-        oper = "mean"
+        cube_div = reference
 
-    cube_div = climate_statistics(
-        cube,
-        operator=oper,
-        period=period,
-    )
     tdim = cube.coord_dims("time")[0]
     reps = cube.shape[tdim] / cube_div.shape[tdim]
     if reps % 1 != 0:
@@ -1048,6 +1048,7 @@ def _apply_scaling(
         raise ValueError(
             msg,
         )
+
     cube.data = cube.core_data() / da.concatenate(
         [cube_div.core_data() for _ in range(int(reps))],
         axis=tdim,
