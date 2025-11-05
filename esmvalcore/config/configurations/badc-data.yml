@@ -1,3 +1,4 @@
+# Read data from the filesystem at CEDA/Jasmin.
 projects:
   CMIP6:
     data:

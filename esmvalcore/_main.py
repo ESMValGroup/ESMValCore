@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
 import warnings
 from importlib.metadata import entry_points
@@ -212,18 +213,41 @@ class Config:
         """List all available example configuration files."""
         import importlib.resources
 
+        from rich.markdown import Markdown
+
         import esmvalcore.config
 
         config_dir = (
             importlib.resources.files(esmvalcore.config) / "configurations"
         )
-        self.console.print("Available configuration files:")
+        msg = ["# Data sources"]
         available_files = sorted(
-            f.name
-            for f in config_dir.iterdir()
-            if f.suffix == ".yml"  # type: ignore[attr-defined]
+            (
+                file
+                for file in config_dir.iterdir()
+                if file.name.endswith(".yml")
+            ),
+            key=lambda file: file.name,
         )
-        self.console.print("\n".join(f"- {f}" for f in available_files))
+        descriptions = []
+        for file in available_files:
+            if first_comment := re.search(
+                r"\A((?: *#.*\r?\n)+)",
+                file.read_text(encoding="utf-8"),
+                flags=re.MULTILINE,
+            ):
+                description = " ".join(
+                    line.lstrip(" #").lstrip()
+                    for line in first_comment.group(1).split("\n")
+                )
+            else:
+                description = ""
+            descriptions.append(description)
+        msg += [
+            f"- `{f.name}`: {d}"
+            for f, d in zip(available_files, descriptions, strict=True)
+        ]
+        self.console.print(Markdown("\n".join(msg)))
 
     def copy(
         self,
@@ -253,7 +277,12 @@ class Config:
                 f"Configuration file {source_file} not found, choose from "
                 f"{', '.join(available_files)}"
             )
-            raise FileNotFoundError(msg)
+            esmvalcore.config._logging.configure_logging(  # noqa: SLF001
+                console_log_level="info",
+            )
+            logger.error(msg)
+            sys.exit(1)
+
         with importlib.resources.as_file(config_dir / source_file) as file:
             self._copy_config_file(file, target_file, overwrite=overwrite)
 
@@ -275,7 +304,7 @@ class Config:
                 logger.info("Overwriting file %s.", out_file)
             else:
                 logger.info("Copy aborted. File %s already exists.", out_file)
-                return
+                sys.exit(1)
 
         target_folder = out_file.parent
         if not target_folder.is_dir():

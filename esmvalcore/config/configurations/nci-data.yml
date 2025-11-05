@@ -1,3 +1,4 @@
+# Read data from the filesystem at NCI.
 projects:
   CMIP6:
     data:

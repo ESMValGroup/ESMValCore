@@ -1,3 +1,4 @@
+# Read data from ESGF using intake-esgf.
 projects:
   CMIP6:
     data:

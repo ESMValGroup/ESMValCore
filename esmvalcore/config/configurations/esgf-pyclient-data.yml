@@ -1,11 +1,12 @@
-# Use a lower priority than for esmvalcore.local.LocalDataSource
-# to avoid searching ESGF with the setting `search_esgf: when_missing`.
+# Download data from ESGF using ESMValCore.
 projects:
   CMIP6: &esgf-pyclient-data
     data:
       esgf-pyclient:
         type: "esmvalcore.esgf.ESGFDataSource"
         download_dir: ~/climate_data
+        # Use a lower priority than for esmvalcore.local.LocalDataSource
+        # to avoid searching ESGF with the setting `search_esgf: when_missing`.
         priority: 10
   CMIP5:
     <<: *esgf-pyclient-data

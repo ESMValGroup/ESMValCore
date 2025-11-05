@@ -1,3 +1,4 @@
+# Read data from the IPSL climate model in its native format.
 projects:
   IPSLCM:
     data:

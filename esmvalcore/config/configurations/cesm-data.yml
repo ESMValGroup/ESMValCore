@@ -1,3 +1,4 @@
+# Read data from the CESM model in its native format.
 projects:
   CESM:
     data:

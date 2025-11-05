@@ -1,3 +1,4 @@
+# Read data from the filesystem at ETHZ.
 projects:
   CMIP6:
     data:

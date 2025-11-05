@@ -1,3 +1,4 @@
+# Read data from the filesystem on a personal computer.
 projects:
   CMIP6:
     data:
