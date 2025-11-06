@@ -1868,7 +1868,7 @@ def test_relative_anomalies_valerr(period):
         "end_day": 31,
     }
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         anomalies(cube, period, reference, relative=True)
 
 
