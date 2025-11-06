@@ -1855,6 +1855,23 @@ for period in ("full", "day", "month", "season"):
         )
 
 
+@pytest.mark.parametrize("period", ["month"])
+def test_relative_anomalies_valerr(period):
+    """Test ValueError in relative ``anomalies``."""
+    cube = make_map_data(number_years=2)[:37]
+    reference = {
+        "start_year": 1950,
+        "start_month": 1,
+        "start_day": 1,
+        "end_year": 1950,
+        "end_month": 12,
+        "end_day": 31,
+    }
+
+    with assert_raises(ValueError):
+        anomalies(cube, period, reference, relative=True)
+
+
 @pytest.mark.parametrize("period", ["full", "day", "month", "season"])
 def test_relative_anomalies(period):
     """Test relative ``anomalies``."""
