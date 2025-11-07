@@ -1,16 +1,20 @@
 """Access data using `intake-esgf <https://intake-esgf.readthedocs.io>`_.
 
-This module replaces the :mod:`esmvalcore.io.esgf` module. Please use this
-module instead of :mod:`esmvalcore.io.esgf` to access data on ESGF. If you
-encounter any issues using this module, please report them at
-https://github.com/ESMValGroup/ESMValCore/issues.
+.. note::
 
-Run the command ``esmvalcore config copy intake-esgf-data.yml`` to update
+    It is highly recommended that you take a moment to
+    :doc:`configure intake-esgf <intake_esgf:configure>` before using it
+    with ESMValCore. Make sure to set ``local_cache`` to a path where
+    it can store downloaded files and if (some) ESGF data is already
+    available on your system, point ``esg_dataroot`` to it. If you are
+    missing certain search results, you may want to choose a different
+    index node for searching the ESGF.
+
+Run the command ``esmvalcore config copy data-intake-esgf.yml`` to update
 your :ref:`configuration <config_overview>` to use this module. This will
-create a file with the following content in ``~/.config/esmvaltool`` or
-the path specified by the ``ESMVALTOOL_CONFIG_DIR`` environment variable:
+create a file with the following content in your configuration directory:
 
-.. literalinclude:: ../configurations/intake-esgf-data.yml
+.. literalinclude:: ../configurations/data-intake-esgf.yml
    :language: yaml
 
 """

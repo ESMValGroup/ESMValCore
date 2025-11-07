@@ -1,3 +1,5 @@
+# Configuration options typically set from the command line.
+
 check_level: default
 diagnostics: null
 max_datasets: null

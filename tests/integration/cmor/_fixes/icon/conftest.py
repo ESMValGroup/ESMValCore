@@ -26,7 +26,7 @@ def session(
     with importlib.resources.as_file(
         importlib.resources.files(esmvalcore.config)
         / "configurations"
-        / "icon-data.yml",
+        / "data-native-icon.yml",
     ) as config_file:
         cfg = yaml.safe_load(config_file.read_text(encoding="utf-8"))
     for data_source in cfg["projects"]["ICON"]["data"]:

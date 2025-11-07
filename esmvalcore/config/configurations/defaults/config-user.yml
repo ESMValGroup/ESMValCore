@@ -1,14 +1,11 @@
-###############################################################################
-# Default configuration settings
-###############################################################################
-#
+# Default top level options.
+
 # Note for users:
 # --------------
 # If only certain values are allowed for an option, these are listed after
 # ``---``. The option in square brackets is the default value, i.e., the one
 # that is used if this option is omitted in the file.
-#
-###############################################################################
+
 ---
 # Destination directory where all output will be written
 # Includes log files and performance stats.
@@ -27,12 +24,6 @@ auxiliary_data_dir: ~/auxiliary_data
 # version of a file, and will only use local files if they correspond to that
 # latest version.
 search_esgf: never
-
-# Directory for storing downloaded climate data
-# Make sure to use a directory where you can store multiple GBs of data. Your
-# home directory on a HPC is usually not suited for this purpose, so please
-# change the default value in this case!
-download_dir: ~/climate_data
 
 # Run at most this many tasks in parallel --- [null]/1/2/3/4/...
 # Set to ``null`` to use the number of available CPUs. If you run out of

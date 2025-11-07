@@ -97,15 +97,15 @@ Within a directory, files are sorted lexicographically, and later files (e.g.,
   presence of any potential old configuration files.
   Support for the deprecated configuration will be removed in version 2.14.0.
 
-To get a copy of the default configuration file, you can run
+The minimal required configuration for the tool is that you configure where
+it can find :ref:`input data <config-data-sources>`. In addition to that, you
+may copy the default configuration file with :ref:`top level options <config_options>`
 
 .. code-block:: bash
 
-  esmvaltool config get_config_user --path=/target/file.yml
+  esmvaltool config get_config_user
 
-If the option ``--path`` is omitted, the file will be copied to
-``~/.config/esmvaltool/config-user.yml``.
-
+and tailor for your system.
 
 Command line arguments
 ----------------------
@@ -676,12 +676,127 @@ The following project-specific options are available:
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | Option                        | Description                            | Type                        | Default value                          |
 +===============================+========================================+=============================+========================================+
+| ``data``                      | Data sources are used to find input    | :obj:`dict`                 | {}                                     |
+|                               | data and have to be configured before  |                             |                                        |
+|                               | running the tool. See                  |                             |                                        |
+|                               | :ref:`config-data-sources` for         |                             |                                        |
+|                               | details.                               |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
 |                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
 |                               | facets defined in the recipe. See      |                             |                                        |
 |                               | :ref:`config-extra-facets` for         |                             |                                        |
 |                               | details.                               |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-data-sources:
+
+Data sources
+============
+The ``data`` section can be used to define sources of input data. The easiest
+way to get started with these is to copy one of the example configuration files
+and tailor it to your needs.
+
+To list the available example configuration files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list
+
+To use one of the example configuration files, copy it to
+your configuration directory by running the command:
+
+.. code-block:: bash
+
+  esmvaltool config copy data-intake-esgf.yml
+
+where ``data-intake-esgf.yml`` needs to be replaced by the name of the example
+configuration you would like to use. The format of the configuration file
+is described in :mod:`esmvalcore.io`.
+
+There are various use cases and we provide example configurations for each of
+them below.
+
+Personal computer
+-----------------
+
+On a personal computer, the recommended setup can be obtained by running the
+commands:
+
+.. code-block:: bash
+
+    esmvaltool config copy data-intake-esgf.yml
+    esmvaltool config copy data-local-esmvaltool.yml
+
+This will use the :mod:`esmvalcore.io.intake_esgf` module to access data
+that is available through ESGF and use :mod:`esmvalcore.local` to find
+observational and reanalysis datasets that have been
+:ref:`CMORized with ESMValTool <esmvaltool:inputdata_observations>`
+(``OBS6`` and ``OBS`` projects for CMIP6- and CMIP5-style CMORization
+respectively) or are supported in their :ref:`native format <read_native_datasets>`
+through the ``native6`` project.
+
+.. warning::
+
+    It is important to configure intake-esgf for your system as described in
+    :mod:`esmvalcore.io.intake_esgf` before running the tool with this
+    configuration.
+
+HPC system
+----------
+
+On HPC systems, data is often stored in large shared filesystems. We have
+several example configurations for popular HPC systems. To list the available
+example files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list data-hpc
+
+If you are using one of the supported HPC systems, for example Jasmin, you can
+copy the example configuration file by running the command:
+
+.. code-block:: bash
+
+  esmvaltool config copy data-hpc-badc.yml
+
+and you should be good to go. If your HPC system is not supported yet, you can
+copy one of the other example configuration files, e.g. ``data-hpc-dkrz.yml``
+and tailor it for your system.
+
+.. warning::
+
+    It is important to configure intake-esgf for your system as described in
+    :mod:`esmvalcore.io.intake_esgf` before running the tool with this
+    configuration.
+
+.. note::
+
+    Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
+    and the :mod:`esmvalcore.local` data sources has not yet been implemented.
+    Therefore it is recommended not to use the configuration option
+    ``search_esgf: always`` when using both data sources for the same project.
+    The ``search_esgf: when_missing`` option can be safely used.
+
+Climate model data in its native format
+---------------------------------------
+
+For each of the climate models that are supported in their
+native format as described in :ref:`read_native_models`, an example configuration
+file is available. To list the available example files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list data-native
+
+
+.. note::
+
+    If you would like automatic download capabilities from ESGF, but prefer not
+    to use intake-esgf just yet, you can use the :mod:`esmvalcore.esgf` data
+    sources instead. If you are using these, please open an issue on GitHub so
+    we can smooth out any issues you may encounter with intake-esgf.
 
 .. _config-extra-facets:
 

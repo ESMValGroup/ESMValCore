@@ -171,7 +171,6 @@ def test_load_default_config(cfg_default, monkeypatch):
             "use": "local_threaded",
         },
         "diagnostics": None,
-        "download_dir": Path.home() / "climate_data",
         "exit_on_warning": False,
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},

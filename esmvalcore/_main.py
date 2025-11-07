@@ -209,28 +209,32 @@ class Config:
             ),
         )
 
-    def list(self) -> None:
-        """List all available example configuration files."""
-        import importlib.resources
+    def list(self, name: str = "") -> None:
+        """List all available example configuration files.
 
+        Arguments
+        ---------
+        name:
+            Only show configuration files that have this string in their name.
+            For example, to only show configuration files for data sources,
+            use `--name='data'`.
+        """
         from rich.markdown import Markdown
 
         import esmvalcore.config
 
-        config_dir = (
-            importlib.resources.files(esmvalcore.config) / "configurations"
-        )
-        msg = ["# Data sources"]
-        available_files = sorted(
-            (
-                file
-                for file in config_dir.iterdir()
-                if file.name.endswith(".yml")
-            ),
-            key=lambda file: file.name,
-        )
-        descriptions = []
-        for file in available_files:
+        headers = {
+            "defaults": "Defaults",
+            "data": "Data Sources",
+        }
+        config_dir = Path(esmvalcore.config.__file__).parent / "configurations"
+        available_files = [
+            file
+            for file in config_dir.rglob("*.yml")
+            if name.lower() in file.name.lower()
+        ]
+
+        def description(file: Path) -> str:
             if first_comment := re.search(
                 r"\A((?: *#.*\r?\n)+)",
                 file.read_text(encoding="utf-8"),
@@ -242,49 +246,61 @@ class Config:
                 )
             else:
                 description = ""
-            descriptions.append(description)
-        msg += [
-            f"- `{f.name}`: {d}"
-            for f, d in zip(available_files, descriptions, strict=True)
-        ]
+            return description
+
+        msg = []
+        for header_name, header in headers.items():
+            files = sorted(
+                f
+                for f in available_files
+                if str(f.relative_to(config_dir)).startswith(header_name)
+            )
+            if files:
+                msg.append(f"\n# {header}\n")
+                msg += [
+                    f"- `{f.relative_to(config_dir)}`: {description(f)}"
+                    for f in files
+                ]
         self.console.print(Markdown("\n".join(msg)))
 
     def copy(
         self,
-        source_file: str,
+        source_file: Path,
         target_file: Path | None = None,
         overwrite: bool = False,
     ) -> None:
         """Copy one of the available example configuration files to the configuration directory."""
-        import importlib.resources
-
         import esmvalcore.config
 
+        source_file = Path(source_file)
         target_dir = esmvalcore.config._config_object._get_user_config_dir()  # noqa: SLF001
         target_file = target_dir / (
-            source_file if target_file is None else target_file
+            source_file.name if target_file is None else target_file
         )
-        config_dir = (
-            importlib.resources.files(esmvalcore.config) / "configurations"
-        )
-        available_files = sorted(
-            f.name
-            for f in config_dir.iterdir()
-            if f.suffix == ".yml"  # type: ignore[attr-defined]
-        )
+        config_dir = Path(esmvalcore.config.__file__).parent / "configurations"
+
+        available_files = {
+            f.relative_to(config_dir) for f in config_dir.rglob("*.yml")
+        }
         if source_file not in available_files:
-            msg = (
-                f"Configuration file {source_file} not found, choose from "
-                f"{', '.join(available_files)}"
-            )
             esmvalcore.config._logging.configure_logging(  # noqa: SLF001
                 console_log_level="info",
             )
-            logger.error(msg)
+            self.list()
+            logger.error(
+                (
+                    "Configuration file %s not found, choose from one of the "
+                    "available files listed above"
+                ),
+                source_file,
+            )
             sys.exit(1)
 
-        with importlib.resources.as_file(config_dir / source_file) as file:
-            self._copy_config_file(file, target_file, overwrite=overwrite)
+        self._copy_config_file(
+            config_dir / source_file,
+            target_file,
+            overwrite=overwrite,
+        )
 
     @staticmethod
     def _copy_config_file(
@@ -299,11 +315,12 @@ class Config:
 
         configure_logging(console_log_level="info")
 
+        logger.info("Copying file %s to path %s", in_file, out_file)
         if out_file.is_file():
             if overwrite:
                 logger.info("Overwriting file %s.", out_file)
             else:
-                logger.info("Copy aborted. File %s already exists.", out_file)
+                logger.error("Copy aborted. File %s already exists.", out_file)
                 sys.exit(1)
 
         target_folder = out_file.parent
@@ -311,7 +328,6 @@ class Config:
             logger.info("Creating folder %s", target_folder)
             target_folder.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Copying file %s to path %s", in_file, out_file)
         shutil.copy2(in_file, out_file)
         logger.info("Copy finished.")
 

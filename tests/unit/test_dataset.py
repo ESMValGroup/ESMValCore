@@ -24,12 +24,25 @@ def _load_default_data_sources() -> dict[
     dict[str, dict[str, dict[str, dict[str, str]]]],
 ]:
     """Load default data sources for local users."""
-    with importlib.resources.as_file(
-        importlib.resources.files(esmvalcore.config)
-        / "configurations"
-        / "local-data.yml",
-    ) as config_file:
-        return yaml.safe_load(config_file.read_text(encoding="utf-8"))
+    cfg: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = {
+        "projects": {},
+    }
+    for file in (
+        "data-local.yml",
+        "data-local-esmvaltool.yml",
+        "data-native-cesm.yml",
+        "data-native-emac.yml",
+        "data-native-icon.yml",
+        "data-native-ipslcm.yml",
+    ):
+        with importlib.resources.as_file(
+            importlib.resources.files(esmvalcore.config)
+            / "configurations"
+            / file,
+        ) as config_file:
+            content = config_file.read_text(encoding="utf-8")
+            cfg["projects"].update(yaml.safe_load(content)["projects"])
+    return cfg
 
 
 @pytest.fixture

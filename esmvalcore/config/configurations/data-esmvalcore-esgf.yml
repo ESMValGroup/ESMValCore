@@ -1,4 +1,4 @@
-# Download data from ESGF using ESMValCore.
+# Download CMIP, CORDEX, and obs4MIPs data from ESGF using the `esmvalcore.esgf` module.
 projects:
   CMIP6: &esgf-pyclient-data
     data:

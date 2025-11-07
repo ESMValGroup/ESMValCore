@@ -20,27 +20,22 @@ from the :class:`~esmvalcore.dataset.Dataset` or the :ref:`recipe <recipe>`. Not
 that the name of the data source, ``local-data`` in the example above,
 must be unique within each project but can otherwise be chosen freely.
 
-To start using this module, download the complete file for personal computers
-:download:`here <../configurations/local-data.yml>`, copy it to the
-directory ``~/.config/esmvaltool/``, and tailor it for your own system
-if needed.
+To start using this module on a personal computer, copy the example
+configuration file into your configuration directory by running the command:
 
-Example configuration files for popular HPC systems are also available:
+.. code-block:: bash
 
-  - :download:`Jasmin at CEDA<../configurations/badc-data.yml>`
-  - :download:`Levante at DKRZ<../configurations/dkrz-data.yml>`
-  - :download:`UK Met Office <../configurations/mo-data.yml>`
-  - :download:`NCI Australia <../configurations/nci-data.yml>`
-  - :download:`IPSL <../configurations/ipsl-data.yml>`
-  - :download:`ETHZ <../configurations/ethz-data.yml>`
+    esmvaltool config copy data-local.yml
 
-Example configuration files for
-:ref:`supported climate models <read_native_models>` are also available:
+and tailor it for your own system if needed.
 
-    - :download:`ACCESS <../configurations/access-data.yml>`
-    - :download:`ICON <../configurations/icon-data.yml>`
-    - :download:`IPSLCM <../configurations/ipslcm-data.yml>`
-    - :download:`EMAC <../configurations/emac-data.yml>`
+Example configuration files for popular HPC systems and some
+:ref:`supported climate models <read_native_models>` are also available. View
+the list of available files by running the command:
+
+.. code-block:: bash
+
+    esmvaltool config list
 
 """
 

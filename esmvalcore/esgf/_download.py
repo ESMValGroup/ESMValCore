@@ -211,7 +211,7 @@ class ESGFFile(DataElement):
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
         self.dest_folder = (
-            CFG["download_dir"] if dest_folder is None else dest_folder
+            CFG.get("download_dir") if dest_folder is None else dest_folder
         )
         self._attributes: dict[str, Any] | None = None
 
@@ -578,14 +578,14 @@ def get_download_message(files):
     return "\n".join(lines)
 
 
-def download(files, dest_folder, n_jobs=4):
+def download(files, dest_folder=None, n_jobs=4):
     """Download multiple ESGFFiles in parallel.
 
     Arguments
     ---------
     files: list of :obj:`ESGFFile`
         The files to download.
-    dest_folder: Path
+    dest_folder: Path or None
         The destination folder.
     n_jobs: int
         The number of files to download in parallel.

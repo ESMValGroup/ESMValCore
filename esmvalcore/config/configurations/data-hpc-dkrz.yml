@@ -1,4 +1,4 @@
-# Read data from the filesystem of Levante at DKRZ.
+# Read CMIP, CORDEX, obs4MIPs, native6, OBS6, and OBS data from the filesystem of Levante at DKRZ.
 projects:
   CMIP6:
     data:

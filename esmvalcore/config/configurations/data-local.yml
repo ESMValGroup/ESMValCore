@@ -1,37 +1,37 @@
-# Read data from the filesystem at IPSL.
+# Read CMIP, CORDEX, and obs4MIPs data from the filesystem on a personal computer.
 projects:
   CMIP6:
     data:
-      ipsl:
+      local:
         type: "esmvalcore.local.LocalDataSource"
-        rootpath: /bdd
+        rootpath: ~/climate_data
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
-      ipsl:
+      local:
         type: "esmvalcore.local.LocalDataSource"
-        rootpath: /bdd
-        dirname_template: "{project}/output/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
+        rootpath: ~/climate_data
+        dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
   CMIP3:
     data:
-      ipsl:
+      local:
         type: "esmvalcore.local.LocalDataSource"
-        rootpath: /bdd
-        dirname_template: "{project}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}"
+        rootpath: ~/climate_data
+        dirname_template: "{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}"
         filename_template: "{short_name}_*.nc"
   CORDEX:
     data:
-      ipsl:
+      local:
         type: "esmvalcore.local.LocalDataSource"
-        rootpath: /bdd
-        dirname_template: "{project}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
+        rootpath: ~/climate_data
+        dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
   obs4MIPs:
     data:
-      ipsl:
+      local:
         type: "esmvalcore.local.LocalDataSource"
-        rootpath: /bdd
-        dirname_template: "{project}/obs-CFMIP/observations/{realm}/{short_name}/{frequency}/{grid}/{institute}/{dataset}/{version}"
+        rootpath: ~/climate_data
+        dirname_template: "{project}/{dataset}/{version}"
         filename_template: "{short_name}_*.nc"

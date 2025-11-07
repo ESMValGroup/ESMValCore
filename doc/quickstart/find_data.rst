@@ -70,11 +70,8 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
   /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
-Since observational data are organized in Tiers depending on their level of
-public availability, the ``default`` directory must be structured accordingly
-with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
-``drs: default``.
-
+Observational data CMORized by ESMValTool are organized in Tiers depending on
+their level of public availability.
 
 .. _read_native_datasets:
 
@@ -105,10 +102,11 @@ Supported native reanalysis/observational datasets
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
 To use these datasets, put the files containing the data in the directory that
-you have :ref:`configured <config_options>` for the ``rootpath`` of the
+you have :ref:`configured <config-data-sources>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
 ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming you are
-using the ``default`` DRS for ``native6``).
+using the default DRS for ``native6`` as defined in
+:download:`../configurations/data-local-esmvaltool.yml`).
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
 
@@ -121,8 +119,8 @@ ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
 the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
 For example for monthly data, place the files in the
 ``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the ``default``
-DRS for ``native6``).
+configured for the ``native6`` project (assuming you are using the  default DRS
+for ``native6`` as defined in :download:`../configurations/data-local-esmvaltool.yml`).
 
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
   ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
@@ -157,21 +155,10 @@ in its native GRIB format.
   <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=download>`__.
   Reading self-downloaded ERA5 data in GRIB format is experimental and likely
   requires additional setup from the user like setting up the proper directory
-  structure for the input files and/or creating a custom :ref:`DRS
-  <config_option_drs>`.
+  structure for the input files.
 
-To read these data with ESMValCore, use the :ref:`rootpath
-<config_option_rootpath>` ``/pool/data/ERA5`` with :ref:`DRS
-<config_option_drs>` ``DKRZ-ERA5-GRIB`` in your configuration, for example:
-
-.. code-block:: yaml
-
-  rootpath:
-    ...
-    native6:
-      /pool/data/ERA5: DKRZ-ERA5-GRIB
-    ...
-
+To read these data with ESMValCore, use the data definition for the ``native6``
+project from :download:`../configurations/data-hpc-dkrz.yml`.
 The `naming conventions
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
 for input directories and files for native ERA5 data in GRIB format on Levante
@@ -230,8 +217,9 @@ MSWEP
 
 For example for monthly data, place the files in the
 ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the ``default``
-DRS for ``native6``).
+configured for the ``native6`` project (assuming you are
+using the default DRS for ``native6`` as defined in
+:download:`../configurations/data-local-esmvaltool.yml`).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -273,8 +261,9 @@ The default naming conventions for input directories and files for CESM are
    * ``{case}/{gcomp}/proc/{tdir}/{tperiod}`` (post-processed data)
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
-as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <config_options>` ``drs: default``).
+as configured in :download:`../configurations/data-native-cesm.yml`). To use
+this configuration, run ``esmvaltool config copy data-native-cesm.yml`` and
+adapt the ``rootpath`` to your system.
 More information about CESM naming conventions are given `here
 <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
@@ -352,8 +341,9 @@ The default naming conventions for input directories and files for EMAC are
 * input directories: ``{exp}/{channel}``
 * input files: ``{exp}*{channel}{postproc_flag}.nc``
 
-as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <config_options>` ``drs: default``).
+as configured in :download:`../configurations/data-native-emac.yml`). To use
+this configuration, run ``esmvaltool config copy data-native-emac.yml`` and
+adapt the ``rootpath`` to your system.
 
 Thus, example dataset entries could look like this:
 
@@ -428,8 +418,9 @@ The default naming conventions for input directories and files for ICON are
 * input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
 * input files: ``{exp}_{var_type}*.nc``
 
-as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <config_options>` ``drs: default``).
+as configured in :download:`../configurations/data-native-icon.yml`). To use
+this configuration, run ``esmvaltool config copy data-native-icon.yml`` and
+adapt the ``rootpath`` to your system.
 
 Currently, two different versions of ICON are supported:
 
@@ -653,6 +644,9 @@ formats) are supported, and should be configured in recipes as e.g.:
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
 
+and data can be found running ``esmvaltool config copy data-native-ipslcm.yml``
+and adapting the ``rootpath`` to your system.
+
 .. _ipslcm_extra_facets_example:
 
 The ``Output`` format is an example of a case where variables are grouped in
@@ -682,11 +676,9 @@ The default naming conventions for input directories and files for ACCESS output
 * input directories: ``{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF``
 * input files: ``{sub_dataset}.{special_attr}-*.nc``
 
-.. hint::
-
-  We only provide one default `input_dir` since this is how ACCESS-ESM native data was
-  stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
-
+as configured in :download:`../configurations/data-native-access.yml`). To use
+this configuration, run ``esmvaltool config copy data-native-access.yml`` and
+adapt the ``rootpath`` to your system.
 
 Thus, example dataset entries could look like this:
 
@@ -729,228 +721,9 @@ Key                  Description                                Default value if
 
 Data retrieval
 ==============
-Data retrieval in ESMValCore has two main aspects from the user's point of
-view:
 
-* data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
-* it is the user's responsibility to set the correct data retrieval parameters;
-
-The first point is self-explanatory: if the user runs the tool on a machine
-that has access to a data repository or multiple data repositories, then
-ESMValCore will look for and find the available data requested by the user.
-If the files are not found locally, the tool can search the ESGF_ and download
-the missing files, provided that they are available.
-
-The second point underlines the fact that the user has full control over what
-type and the amount of data is needed for the analyses. Setting the data
-retrieval parameters is explained below.
-
-Enabling automatic downloads from the ESGF
-------------------------------------------
-To enable automatic downloads from ESGF, use the :ref:`configuration option
-<config_options>` ``search_esgf: when_missing`` (use local files
-whenever possible) or ``search_esgf: always`` (always search ESGF for latest
-version of files and only use local data if it is the latest version).
-The files will be stored in the directory specified via the :ref:`configuration
-option <config_options>` ``download_dir``.
-
-Setting the correct root paths
-------------------------------
-The first step towards providing ESMValCore the correct set of parameters for
-data retrieval is setting the root paths to the data. This is done in the
-configuration. The two sections where the user will
-set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers to
-``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the type
-of directory structure the root paths are structured by. It is important to
-first discuss the ``drs`` parameter: as we've seen in the previous section, the
-DRS as a standard is used for both file naming conventions and for directory
-structures.
-
-.. _config_option_drs:
-
-Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
----------------------------------------------
-Whereas ESMValCore will by default use the CMOR standard for file naming (please
-refer above), by setting the ``drs`` parameter the user tells the tool what
-type of root paths they need the data from, e.g.:
-
-  .. code-block:: yaml
-
-   drs:
-     CMIP6: BADC
-
-will tell the tool that the user needs data from a repository structured
-according to the BADC DRS structure, i.e.:
-
-``ROOT/{institute}/{dataset_name}/{experiment}/{ensemble}/{mip}/{variable_short_name}/{grid}``;
-
-setting the ``ROOT`` parameter is explained below. This is a
-strictly-structured repository tree and if there are any sort of irregularities
-(e.g. there is no ``{mip}`` directory) the data will not be found! ``BADC`` can
-be replaced with ``DKRZ`` or ``ETHZ`` depending on the existing ``ROOT``
-directory structure.
-The snippet
-
-  .. code-block:: yaml
-
-   drs:
-     CMIP6: default
-
-is another way to retrieve data from a ``ROOT`` directory that has no DRS-like
-structure; ``default`` indicates that the data lies in a directory that
-contains all the files without any structure.
-
-The names of the directories trees that can be used under `drs` are defined in
-:ref:`config-developer`.
-
-.. note::
-   When using ``CMIP6: default`` or ``CMIP5: default``, all the needed files
-   must be in the same top-level directory specified under ``rootpath``.
-   However, it is not recommended to use this, as it makes it impossible for
-   the tool to read the facets from the directory tree.
-   Moreover, this way of organizing data makes it impossible to store multiple
-   versions of the same file because the files typically have the same name
-   for different versions.
-
-.. _config_option_rootpath:
-
-Explaining ``rootpath:``
-------------------------
-
-``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
-
-* ``CMIP`` e.g. ``CMIP5`` or ``CMIP6``: this is the `root` path(s) to where the
-  CMIP files are stored; it can be a single path, a list of paths, or a mapping
-  with paths as keys and `drs` names as values; it can
-  point to an ESGF node or it can point to a user private repository. Example
-  for a CMIP5 root path pointing to the ESGF node mounted on CEDA-Jasmin (formerly
-  known as BADC):
-
-  .. code-block:: yaml
-
-    rootpath:
-      CMIP5: /badc/cmip5/data/cmip5/output1
-
-  Example for a CMIP6 root path pointing to the ESGF node on CEDA-Jasmin:
-
-  .. code-block:: yaml
-
-    rootpath:
-      CMIP6: /badc/cmip6/data/CMIP6
-
-  Example for a mix of CMIP6 root path pointing to the ESGF node on CEDA-Jasmin
-  and a user-specific data repository for extra data:
-
-  .. code-block:: yaml
-
-    rootpath:
-      CMIP6:
-        /badc/cmip6/data/CMIP6: BADC
-        ~/climate_data: ESGF
-
-  Note that this notation combines the ``rootpath`` and ``drs`` settings, so it
-  is not necessary to specify the directory structure in under ``drs`` in this
-  case.
-
-* ``OBS``: this is the `root` path(s) to where the observational datasets are
-  stored; again, this could be a single path or a list of paths, just like for
-  CMIP data. Example for the OBS path for a large cache of observation datasets
-  on CEDA-Jasmin:
-
-  .. code-block:: yaml
-
-    rootpath:
-      OBS: /gws/nopw/j04/esmeval/obsdata-v2
-
-* ``default``: this is the `root` path(s) where the tool will look for data
-  from projects that do not have their own rootpath set.
-
-* ``RAWOBS``: this is the `root` path(s) to where the raw observational data
-  files are stored; this is used by ``esmvaltool data format``.
-
-Synda
------
-
-If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
-it maintains the directory structure as on ESGF. To find data downloaded by
-synda, use the ``SYNDA`` ``drs`` parameter.
-
-.. code-block:: yaml
-
- drs:
-   CMIP6: SYNDA
-   CMIP5: SYNDA
-
-Dataset definitions in ``recipe``
----------------------------------
-Once the correct paths have been established, ESMValCore collects the
-information on the specific datasets that are needed for the analysis. This
-information, together with the CMOR convention for naming files (see CMOR-DRS_)
-will allow the tool to search and find the right files. The specific
-datasets are listed in any recipe, under either the ``datasets`` and/or
-``additional_datasets`` sections, e.g.
-
-.. code-block:: yaml
-
-  datasets:
-    - {dataset: HadGEM2-CC, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
-    - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004, end_year: 2014}
-
-The data finding feature will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
-
-Recap and example
-=================
-Let us look at a practical example for a recap of the information above:
-suppose you are using configuration that has the following entries for
-data finding:
-
-.. code-block:: yaml
-
-  rootpath:  # running on CEDA-Jasmin
-    CMIP6: /badc/cmip6/data/CMIP6/CMIP
-  drs:
-    CMIP6: BADC  # since you are on CEDA-Jasmin
-
-and the dataset you need is specified in your ``recipe.yml`` as:
-
-.. code-block:: yaml
-
-  - {dataset: UKESM1-0-LL, project: CMIP6, mip: Amon, exp: historical, grid: gn, ensemble: r1i1p1f2, start_year: 2004, end_year: 2014}
-
-for a variable, e.g.:
-
-.. code-block:: yaml
-
-  diagnostics:
-    some_diagnostic:
-      description: some_description
-      variables:
-        ta:
-          preprocessor: some_preprocessor
-
-The tool will then use the root path ``/badc/cmip6/data/CMIP6/CMIP`` and the
-dataset information and will assemble the full DRS path using information from
-CMOR-DRS_ and establish the path to the files as:
-
-.. code-block:: bash
-
-  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon
-
-then look for variable ``ta`` and specifically the latest version of the data
-file:
-
-.. code-block:: bash
-
-  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/
-
-and finally, using the file naming definition from CMOR-DRS_ find the file:
-
-.. code-block:: bash
-
-  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc
-
-.. _observations:
-
+Please go to :ref:`config-data-sources` for instructions and background on how
+to configure data retrieval.
 
 Data loading
 ============
@@ -1002,7 +775,9 @@ Another use case is files that use different names for variables in their
 file name than for the netCDF4 variable name.
 
 To apply the extra facets for this purpose, simply use the corresponding tag in
-the applicable DRS inside the :ref:`config-developer`.
+the applicable ``filename_template`` or ``dirname_template`` in
+:class:`esmvalcore.local.LocalDataSource`.
+
 For example, given the extra facets
 
 .. code-block:: yaml
@@ -1015,14 +790,20 @@ For example, given the extra facets
             tas:
               source_var_name: t2m
 
-a corresponding entry in the developer configuration file could look like:
+a corresponding entry in the configuration file could look like:
 
 .. code-block:: yaml
-   :caption: Contents of ``config-developer.yml``
+   :caption: Contents of ``data-native6.yml``
 
-   native6:
-     input_file:
-       default: '{source_var_name}_*.nc'
+   projects:
+     native6:
+       data:
+         native6-data:
+           type: "esmvalcore.local.LocalDataSource"
+           rootpath: "~/climate_data"
+           dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
+           filename_template: "{source_var_name}*.nc"
 
 The same replacement mechanism can be employed everywhere where tags can be
-used, particularly in ``input_dir``, ``input_file``, and ``output_file``.
+used, particularly in ``dirname_template`` and ``filename_template`` in
+:class:`esmvalcore.local.LocalDataSource`, and in ``output_file`` in config-developer.yml.

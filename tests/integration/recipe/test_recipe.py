@@ -71,7 +71,8 @@ def update_data_sources(
 @pytest.fixture
 def session(tmp_path: Path, session: Session) -> Session:
     """Session fixture with default data sources."""
-    update_data_sources(session, "local-data.yml", tmp_path)
+    update_data_sources(session, "data-local.yml", tmp_path)
+    update_data_sources(session, "data-local-esmvaltool.yml", tmp_path)
     return session
 
 
@@ -2541,7 +2542,7 @@ def test_representative_dataset_regular_var(
     session: Session,
 ):
     """Test ``_representative_dataset`` with regular variable."""
-    update_data_sources(session, "icon-data.yml", tmp_path)
+    update_data_sources(session, "data-native-icon.yml", tmp_path)
 
     variable = {
         "dataset": "ICON",
@@ -2570,7 +2571,7 @@ def test_representative_dataset_derived_var(
     force_derivation: bool,
 ):
     """Test ``_representative_dataset`` with derived variable."""
-    update_data_sources(session, "icon-data.yml", tmp_path)
+    update_data_sources(session, "data-native-icon.yml", tmp_path)
 
     variable: Facets = {
         "dataset": "ICON",

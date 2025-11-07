@@ -807,7 +807,7 @@ class Dataset:
         input_files = list(self.files)
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
-        esgf.download(input_files, self.session["download_dir"])
+        esgf.download(input_files)
 
         cube = self._load()
         supplementary_cubes = []

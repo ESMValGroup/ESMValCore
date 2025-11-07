@@ -1,4 +1,48 @@
-"""A modular system for reading input data from various sources."""
+"""A modular system for reading input data from various sources.
+
+An input data source can be defined in the configuration by using
+:obj:`esmvalcore.config.CFG`, for example:
+
+.. code-block:: python
+
+    >>> from esmvalcore.config import CFG
+    >>> CFG["projects"]["CMIP6"]["data"]["local"] = {
+            "type": "esmvalcore.local.LocalDataSource",
+            "rootpath": "~/climate_data",
+            "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+        }
+
+or as a :ref:`YAML configuration file <config_overview>`:
+
+.. code-block:: yaml
+
+    projects:
+      CMIP6:
+        data:
+          local:
+            type: "esmvalcore.local.LocalDataSource"
+            rootpath: "~/climate_data"
+            dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+            filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+
+where ``CMIP6`` is a project, and ``local`` is a unique name describing the
+data source. The data source type,
+:class:`esmvalcore.local.LocalDataSource`, in the example above, needs to
+implement the :class:`esmvalcore.io.protocol.DataSource` protocol. Any
+remaining key-value pairs in the configuration, ``rootpath``,
+``dirname_template``, and ``filename_template`` in this example, are passed
+as keyword arguments to the data source when it is created.
+
+If there are multiple data sources configured for a project, deduplication of
+search results happens based on the
+:attr:`esmvalcore.io.protocol.DataElement.name` attribute and the ``"version"``
+facet in :attr:`esmvalcore.io.protocol.DataElement.facets` of the data elements
+provided by the data sources. If no ``version`` facet is specified in the
+search, the latest version will be used. If there is a tie, the data element
+provided by the data source with the lowest value of
+:attr:`esmvalcore.io.protocol.DataSource.priority` is chosen.
+"""
 
 import importlib
 import logging
@@ -14,6 +58,9 @@ def load_data_sources(
     project: str | None = None,
 ) -> list[DataSource]:
     """Get the list of available data sources.
+
+    If no ``priority`` is configured for a data source, the default priority
+    of 1 is used.
 
     Arguments
     ---------

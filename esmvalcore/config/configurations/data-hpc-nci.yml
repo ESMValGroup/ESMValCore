@@ -1,4 +1,4 @@
-# Read data from the filesystem at NCI.
+# Read CMIP, obs4MIPs, native6, OBS6, and OBS data from the filesystem at NCI.
 projects:
   CMIP6:
     data:

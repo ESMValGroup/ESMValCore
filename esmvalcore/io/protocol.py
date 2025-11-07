@@ -1,44 +1,13 @@
 """Protocols for accessing data.
 
-An input data source can be defined in the configuration by using :obj:`esmvalcore.config.CFG`
+This module defines the :class:`DataSource` and :class:`DataElement` protocols
+for finding and loading data. A data source can be used to find data elements
+matching specific facets. A data element represents some data that can be
+loaded as Iris cubes.
 
-.. code-block:: python
+To add support for a new data source, write two classes that implement these
+protocols and configure the tool to use it as described in :mod:`esmvalcore.io`.
 
-    >>> from esmvalcore.config import CFG
-    >>> CFG["projects"]["CMIP6"]["data"]["local"] = {
-            "type": "esmvalcore.local.LocalDataSource",
-            "rootpath": "~/climate_data",
-            "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
-            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
-        }
-
-or as a :ref:`YAML configuration file <config_overview>`
-
-.. code-block:: yaml
-
-    projects:
-      CMIP6:
-        data:
-          local:
-            type: "esmvalcore.local.LocalDataSource"
-            rootpath: "~/climate_data"
-            dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
-            filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
-
-where ``CMIP6`` is a project, and ``local`` is a unique name describing the
-data source. The data source type,
-:class:`esmvalcore.local.LocalDataSource`, in the example above, needs to
-implement the :class:`esmvalcore.io.protocol.DataSource` protocol. Any
-remaining key-value pairs in the configuration, ``rootpath``,
-``dirname_template``, and ``filename_template`` in this example, are passed
-as keyword arguments to the data source when it is created.
-
-Deduplication of search results happens based on the
-:attr:`esmvalcore.io.protocol.DataElement.name` attribute and the ``"version"``
-facet in :attr:`esmvalcore.io.protocol.DataElement.facets` of the data elements
-provided by the data sources. If there is a tie, the data element provided by
-the data source with the lowest value of
-:attr:`esmvalcore.io.protocol.DataSource.priority` is chosen.
 """
 
 from collections.abc import Iterable

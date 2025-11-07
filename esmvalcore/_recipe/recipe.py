@@ -930,7 +930,7 @@ class Recipe:
         for task in exc.failed_tasks:
             logger.error(task.message)
 
-        if self.session["search_esgf"] == "never" and any(
+        if any(
             isinstance(err, InputFilesNotFound) for err in exc.failed_tasks
         ):
             logger.error(
@@ -938,23 +938,16 @@ class Recipe:
                 "found.",
             )
             logger.error(
-                "If the files are available locally, please check "
-                "your `rootpath` and `drs` settings in your configuration "
-                "file(s)",
+                "If the files are available, please check the debug log and "
+                "the configuration of your data sources.",
             )
             logger.error(
-                "To automatically download the required files to "
-                "`download_dir: %s`, use `search_esgf: when_missing` or "
-                "`search_esgf: always` in your configuration file(s), or run "
-                "the recipe with the command line argument "
-                "--search_esgf=when_missing or --search_esgf=always",
-                self.session["download_dir"],
+                "To see your current configuration, run the command "
+                '`esmvaltool config show` and check the "data" entries.',
             )
-            logger.info(
-                "Note that automatic download is only available for files"
-                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
-                ", ".join(list(esgf.facets.FACETS)[:-1]),
-                list(esgf.facets.FACETS)[-1],
+            logger.error(
+                "To see the available example configurations, run the "
+                "command: `esmvaltool config list`.",
             )
 
     @staticmethod
@@ -1328,7 +1321,7 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
-        esgf.download(self._download_files, self.session["download_dir"])
+        esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
 

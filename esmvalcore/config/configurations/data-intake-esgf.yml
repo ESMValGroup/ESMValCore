@@ -1,4 +1,4 @@
-# Read data from ESGF using intake-esgf.
+# Read CMIP and obs4MIPs data from ESGF using intake-esgf.
 projects:
   CMIP6:
     data:

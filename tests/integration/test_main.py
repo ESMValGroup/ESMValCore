@@ -8,13 +8,13 @@ import copy
 import functools
 import sys
 import warnings
-from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
 from fire.core import FireExit
 
+import esmvalcore._main
 from esmvalcore._main import Config, ESMValTool, Recipes, run
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
@@ -232,11 +232,12 @@ def test_get_config_developer():
         run()
 
 
-def test_get_config_developer_no_path():
+def test_get_config_developer_no_path(mocker, tmp_path):
     """Test version command."""
+    mocker.patch.object(esmvalcore._main.Path, "home", return_value=tmp_path)
     with arguments("esmvaltool", "config", "get_config_developer"):
         run()
-    config_file = Path.home() / ".esmvaltool" / "config-developer.yml"
+    config_file = tmp_path / ".esmvaltool" / "config-developer.yml"
     assert config_file.is_file()
 
 
@@ -278,7 +279,8 @@ def test_get_config_developer_no_overwrite(tmp_path):
         "get_config_developer",
         f"--path={config_developer}",
     ):
-        run()
+        with pytest.raises(SystemExit):
+            run()
     assert config_developer.read_text() == "old text"
 
 
@@ -308,11 +310,12 @@ def test_get_config_user():
         run()
 
 
-def test_get_config_user_no_path():
+def test_get_config_user_no_path(mocker, tmp_path):
     """Test version command."""
+    mocker.patch.object(esmvalcore._main.Path, "home", return_value=tmp_path)
     with arguments("esmvaltool", "config", "get_config_user"):
         run()
-    config_file = Path.home() / ".config" / "esmvaltool" / "config-user.yml"
+    config_file = tmp_path / ".config" / "esmvaltool" / "config-user.yml"
     assert config_file.is_file()
 
 
@@ -354,7 +357,8 @@ def test_get_config_user_no_overwrite(tmp_path):
         "get_config_user",
         f"--path={config_user}",
     ):
-        run()
+        with pytest.raises(SystemExit):
+            run()
     assert config_user.read_text() == "old text"
 
 
