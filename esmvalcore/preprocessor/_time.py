@@ -951,6 +951,7 @@ def anomalies(
     period: str,
     reference: dict | None = None,
     standardize: bool = False,
+    relative: bool = False,
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
 ) -> Cube:
     """Compute anomalies using a mean with the specified granularity.
@@ -970,6 +971,8 @@ def anomalies(
         Period of time to use a reference, as needed for the
         :func:`~esmvalcore.preprocessor.extract_time` preprocessor function.
         If ``None``, all available data is used as a reference.
+    relative: optional
+        If ``True`` relative anomalies are calculated.
     standardize: optional
         If ``True`` standardized anomalies are calculated.
     seasons: optional
@@ -1002,33 +1005,61 @@ def anomalies(
             )
             cube = cube / cube_stddev
             cube.units = "1"
+        elif relative:
+            cube = cube / reference * 100.0
+            cube.metadata = metadata
+            cube.units = "%"
         return cube
 
     cube = _compute_anomalies(cube, reference, period, seasons)
 
-    # standardize the results if requested
+    # standardize results or compute relative anomalies if requested
+    if standardize or relative:
+        cube = _apply_scaling(cube, reference, period, standardize, relative)
+
+    return cube
+
+
+def _apply_scaling(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    standardize: bool,
+    relative: bool,
+) -> Cube:
+    """Apply standardization or relative scaling."""
     if standardize:
-        cube_stddev = climate_statistics(
+        cube_div = climate_statistics(
             cube,
             operator="std_dev",
             period=period,
         )
-        tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
-        if reps % 1 != 0:
-            msg = (
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
-            )
-            raise ValueError(
-                msg,
-            )
-        cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))],
-            axis=tdim,
+    elif relative:
+        cube_div = reference
+
+    tdim = cube.coord_dims("time")[0]
+    reps = cube.shape[tdim] / cube_div.shape[tdim]
+    if reps % 1 != 0:
+        msg = (
+            "Cannot safely apply preprocessor to this dataset, "
+            "since the full time period of this dataset is not "
+            f"a multiple of the period '{period}'"
         )
+        raise ValueError(
+            msg,
+        )
+
+    cube.data = cube.core_data() / da.concatenate(
+        [cube_div.core_data() for _ in range(int(reps))],
+        axis=tdim,
+    )
+
+    if standardize:
         cube.units = "1"
+    elif relative:
+        cube.data = cube.core_data() * 100.0
+        cube.units = "%"
+
     return cube
 
 
