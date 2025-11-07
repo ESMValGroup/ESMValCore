@@ -170,7 +170,7 @@ class Config:
     def __init__(self) -> None:
         from rich.console import Console
 
-        self.console = Console()
+        self.console = Console(soft_wrap=True)
 
     def show(
         self,
@@ -269,7 +269,20 @@ class Config:
         target_file: Path | None = None,
         overwrite: bool = False,
     ) -> None:
-        """Copy one of the available example configuration files to the configuration directory."""
+        """Copy one of the available example configuration files to the configuration directory.
+
+        Arguments
+        ---------
+        source_file:
+            Source configuration file to copy. Use `esmvaltool config list`
+            to see all available configuration files.
+        target_file:
+            Target file name. If not provided, the file will be copied to
+            the configuration directory with the same filename as the source
+            file.
+        overwrite:
+            Overwrite an existing file.
+        """
         import esmvalcore.config
 
         source_file = Path(source_file)
@@ -350,7 +363,24 @@ class Config:
             If not provided, the file will be copied to
             `~/.config/esmvaltool/`.
 
+        .. deprecated:: 2.13.0::
+
+            This function is deprecated and will be removed in ESMValCore
+            version 2.16.0. Use the ``copy`` method instead.
+
         """
+        import warnings
+
+        deprecation_msg = (
+            "The 'esmvaltool config get_config_user' command is deprecated and "
+            "will be removed in ESMValCore version 2.16.0. Use the command "
+            "`esmvaltool config copy defaults/config-user.yml` instead."
+        )
+        warnings.warn(
+            deprecation_msg,
+            category=ESMValCoreDeprecationWarning,
+            stacklevel=1,
+        )
         from .config._config_object import DEFAULT_CONFIG_DIR
 
         in_file = DEFAULT_CONFIG_DIR / "config-user.yml"
