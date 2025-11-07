@@ -693,7 +693,7 @@ The following project-specific options are available:
 .. _config-data-sources:
 
 Data sources
-============
+------------
 The ``data`` section can be used to define sources of input data. The easiest
 way to get started with these is to copy one of the example configuration files
 and tailor it to your needs.
@@ -715,11 +715,24 @@ where ``data-intake-esgf.yml`` needs to be replaced by the name of the example
 configuration you would like to use. The format of the configuration file
 is described in :mod:`esmvalcore.io`.
 
+There are three modules available as part of ESMValCore that provide data sources:
+
+- :mod:`esmvalcore.io.intake_esgf`: Use the
+  `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
+  is available from ESGF.
+- :mod:`esmvalcore.local`: Use glob patterns to find files on a filesystem.
+- :mod:`esmvalcore.esgf`: Use the legacy `esgf-pyclient
+  <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
+  from ESGF.
+
+Adding a custom data source is relatively easy and is explained in
+:mod:`esmvalcore.io.protocol`.
+
 There are various use cases and we provide example configurations for each of
 them below.
 
 Personal computer
------------------
+`````````````````
 
 On a personal computer, the recommended setup can be obtained by running the
 commands:
@@ -744,7 +757,7 @@ through the ``native6`` project.
     configuration.
 
 HPC system
-----------
+``````````
 
 On HPC systems, data is often stored in large shared filesystems. We have
 several example configurations for popular HPC systems. To list the available
@@ -780,7 +793,7 @@ and tailor it for your system.
     The ``search_esgf: when_missing`` option can be safely used.
 
 Climate model data in its native format
----------------------------------------
+```````````````````````````````````````
 
 For each of the climate models that are supported in their
 native format as described in :ref:`read_native_models`, an example configuration

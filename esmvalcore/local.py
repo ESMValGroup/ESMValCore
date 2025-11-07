@@ -707,7 +707,7 @@ class DataSource(LocalDataSource):
 
     .. deprecated:: 2.13.0
          This class is deprecated and will be removed in version 2.16.0.
-         Please use 'esmvalcore.local.LocalDataSource' instead.
+         Please use :class:`esmvalcore.local.LocalDataSource` instead.
     """
 
     def __init__(self, *args, **kwargs) -> None:
