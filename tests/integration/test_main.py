@@ -261,7 +261,10 @@ def test_config_show(
     with arguments("esmvaltool", "config", "show", "--filter=None"):
         run()
     stdout = capsys.readouterr().out
-    cfg = yaml.safe_load(stdout)
+    cfg_txt = stdout.split(
+        "# Current configuration:\n",
+    )[1]
+    cfg = yaml.safe_load(cfg_txt)
     reference = yaml.safe_load(yaml.safe_dump(dict(cfg_default)))  # type: ignore[call-overload]
     assert cfg == reference
 
@@ -271,9 +274,10 @@ def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
     with arguments("esmvaltool", "config", "show"):
         run()
     stdout = capsys.readouterr().out
-    print()
-    print(stdout)
-    cfg = yaml.safe_load(stdout)
+    cfg_txt = stdout.split(
+        "# Current configuration, excluding the keys 'extra_facets':\n",
+    )[1]
+    cfg = yaml.safe_load(cfg_txt)
     assert "projects" in cfg
     for project in cfg["projects"]:
         assert "extra_facets" not in cfg["projects"][project]
