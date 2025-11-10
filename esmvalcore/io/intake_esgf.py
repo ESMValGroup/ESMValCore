@@ -19,24 +19,80 @@ create a file with the following content in your configuration directory:
 
 """
 
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass, field
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import intake_esgf
 import intake_esgf.exceptions
-import iris.cube
 import isodate
 
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 from esmvalcore.local import _parse_period
-from esmvalcore.typing import Facets, FacetValue
+
+if TYPE_CHECKING:
+    import iris.cube
+
+    from esmvalcore.typing import Facets, FacetValue
+
 
 __all__ = [
     "IntakeESGFDataSource",
     "IntakeESGFDataset",
 ]
+
+
+class _CachingCatalog(intake_esgf.ESGFCatalog):
+    """An ESGF catalog that caches to_path_dict results."""
+
+    def __init__(self):
+        super().__init__()
+        self._result = {}
+
+    @classmethod
+    def from_catalog(
+        cls,
+        catalog: intake_esgf.ESGFCatalog,
+    ) -> _CachingCatalog:
+        """Create a CachingCatalog from an existing ESGFCatalog."""
+        cat = cls()
+        cat.indices = catalog.indices
+        cat.local_cache = catalog.local_cache
+        cat.esg_dataroot = catalog.esg_dataroot
+        cat.file_start = catalog.file_start
+        cat.file_end = catalog.file_end
+        cat.project = catalog.project
+        cat.df = catalog.df
+        return cat
+
+    def to_path_dict(
+        self,
+        prefer_streaming: bool = False,
+        globus_endpoint: str | None = None,
+        globus_path: Path = Path("/"),
+        minimal_keys: bool = True,
+        ignore_facets: None | str | list[str] = None,
+        separator: str = ".",
+        quiet: bool = False,
+    ) -> dict[str, list[str | Path]]:
+        """Return the current search as a dictionary of paths to files."""
+        kwargs = {
+            "prefer_streaming": prefer_streaming,
+            "globus_endpoint": globus_endpoint,
+            "globus_path": globus_path,
+            "minimal_keys": minimal_keys,
+            "ignore_facets": ignore_facets,
+            "separator": separator,
+            "quiet": quiet,
+        }
+        key = tuple((k, v) for k, v in kwargs.items() if k != "quiet")
+        if key not in self._result:
+            self._result[key] = super().to_path_dict(**kwargs)
+        return self._result[key]
 
 
 @dataclass
@@ -60,7 +116,20 @@ class IntakeESGFDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-        self.catalog.to_path_dict()
+        self.catalog.to_path_dict(minimal_keys=False)
+        for index in self.catalog.indices:
+            # Set the sessions to None to avoid issues with pickling
+            # requests_cache.CachedSession objects when max_parallel_tasks > 1.
+            # After the prepare step, the sessions for interacting with the
+            # search indices are not needed anymore as all file paths required
+            # to load the data have been found. To make sure we do not
+            # accidentally use the sessions later on, we set them to None
+            # instead of e.g. requests.Session objects.
+            #
+            # This seems the safest/fastest solution as it avoids accessing the
+            # sqlite database backing the cached_requests.CachedSession from
+            # multiple processes on multiple machines.
+            index.session = None
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -208,15 +277,14 @@ class IntakeESGFDataSource(DataSource):
         }
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
+            # Use a caching catalog to avoid searching the indices after
+            # calling the ESGFFile.prepare method.
+            cat = _CachingCatalog.from_catalog(self.catalog)
             # Subset the catalog to a single dataset.
-            cat = self.catalog.clone()
-            cat.file_start = self.catalog.file_start
-            cat.file_end = self.catalog.file_end
-            cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
+            cat.df = cat.df[cat.df.key == dataset_id]
             # Discard all but the latest version. It is not clear how/if
             # `intake_esgf.ESGFCatalog.to_dataset_dict` supports multiple versions.
             cat.df = cat.df[cat.df.version == cat.df.version.max()]
-            cat.project = self.catalog.project
             if "short_name" in our_facets:
                 cat.last_search[self.facets["short_name"]] = [
                     self.values.get("short_name", {}).get(v, v)

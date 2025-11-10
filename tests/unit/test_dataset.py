@@ -1830,7 +1830,7 @@ def test_load(mocker, session):
 
     mocker.patch.object(esmvalcore.dataset, "preprocess", mock_preprocess)
 
-    items = [mocker.sentinel.file]
+    items = [mocker.create_autospec(esmvalcore.local.LocalFile, instance=True)]
     dataset.files = items
 
     cube = dataset.load()
@@ -1917,6 +1917,7 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    items[0].prepare.assert_called_once()
 
 
 def test_load_fail(session):

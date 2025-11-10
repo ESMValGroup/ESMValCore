@@ -808,6 +808,8 @@ class Dataset:
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
         esgf.download(input_files)
+        for file in input_files:
+            file.prepare()
 
         cube = self._load()
         supplementary_cubes = []

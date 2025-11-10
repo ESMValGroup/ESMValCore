@@ -23,7 +23,7 @@ def test_prepare(mocker: MockerFixture) -> None:
     dataset = IntakeESGFDataset(name="id", facets={}, catalog=cat)
 
     dataset.prepare()
-    to_path_mock.assert_called_once_with()
+    to_path_mock.assert_called_once_with(minimal_keys=False)
 
 
 def test_attributes_raises_before_to_iris() -> None:
