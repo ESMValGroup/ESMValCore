@@ -267,10 +267,12 @@ def test_config_show(
 
 
 def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
-    """Test esmvaltool config show command."""
+    """Test that the `esmvaltool config show` command produces readable results."""
     with arguments("esmvaltool", "config", "show"):
         run()
     stdout = capsys.readouterr().out
+    print()
+    print(stdout)
     cfg = yaml.safe_load(stdout)
     assert "projects" in cfg
     for project in cfg["projects"]:

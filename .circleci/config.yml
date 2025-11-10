@@ -31,6 +31,7 @@ commands:
             mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
+            pytest -vvs tests/integration/test_main.py::test_config_show_brief_by_default
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
             esmvaltool -- --help
