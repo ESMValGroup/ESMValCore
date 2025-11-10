@@ -1,3 +1,4 @@
+import re
 from importlib.resources import files as importlib_files
 from pathlib import Path
 
@@ -14,6 +15,37 @@ from esmvalcore.config._config import (
     load_extra_facets,
 )
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+
+BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
+    "configurations",
+)
+
+
+@pytest.mark.parametrize(
+    "config_file",
+    [
+        pytest.param(f, id=f.relative_to(BUILTIN_CONFIG_DIR).as_posix())
+        for f in BUILTIN_CONFIG_DIR.rglob("*.yml")
+    ],
+)
+def test_builtin_config_files_have_description(config_file) -> None:
+    """Test that all built-in config files have a description."""
+    # Use the same code to find the description as in the
+    # `esmvaltool config list` command.
+    first_comment = re.search(
+        r"\A((?: *#.*\r?\n)+)",
+        config_file.read_text(encoding="utf-8"),
+        flags=re.MULTILINE,
+    )
+    assert first_comment
+    description = " ".join(
+        line.lstrip(" #").strip()
+        for line in first_comment.group(1).split("\n")
+    ).strip()
+    # Add a basic check that the description is meaningful
+    assert len(description) > 15
+    assert description.endswith(".")
+
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),

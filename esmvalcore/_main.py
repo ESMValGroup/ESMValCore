@@ -241,9 +241,9 @@ class Config:
                 flags=re.MULTILINE,
             ):
                 description = " ".join(
-                    line.lstrip(" #").lstrip()
+                    line.lstrip(" #").strip()
                     for line in first_comment.group(1).split("\n")
-                )
+                ).strip()
             else:
                 description = ""
             return description
