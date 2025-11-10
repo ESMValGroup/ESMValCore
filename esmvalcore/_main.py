@@ -302,7 +302,7 @@ class Config:
             self.list()
             logger.error(
                 (
-                    "Configuration file %s not found, choose from one of the "
+                    "Configuration file '%s' not found, choose from one of the "
                     "available files listed above"
                 ),
                 source_file,

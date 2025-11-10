@@ -238,6 +238,24 @@ def test_config_copy(tmp_path: Path) -> None:
     assert tgt_file.is_file()
 
 
+def test_config_copy_nonexistent_file(
+    capsys: pytest.CaptureFixture,
+) -> None:
+    """Test `esmvaltool config copy` fails if source file does not exist."""
+    with pytest.raises(SystemExit):
+        with arguments(
+            "esmvaltool",
+            "config",
+            "copy",
+            "test-file-that-does-not-exist.yml",
+        ):
+            run()
+    assert (
+        "Configuration file 'test-file-that-does-not-exist.yml' not found"
+        in capsys.readouterr().out
+    )
+
+
 def test_config_list(capsys: pytest.CaptureFixture) -> None:
     """Test esmvaltool config list command."""
     with arguments("esmvaltool", "config", "list"):
@@ -261,9 +279,9 @@ def test_config_show(
     with arguments("esmvaltool", "config", "show", "--filter=None"):
         run()
     stdout = capsys.readouterr().out
-    cfg_txt = stdout.split(
-        "# Current configuration:\n",
-    )[1]
+    expected_header = "# Current configuration:\n"
+    assert expected_header in stdout
+    cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
     reference = yaml.safe_load(yaml.safe_dump(dict(cfg_default)))  # type: ignore[call-overload]
     assert cfg == reference
@@ -274,14 +292,18 @@ def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
     with arguments("esmvaltool", "config", "show"):
         run()
     stdout = capsys.readouterr().out
-    cfg_txt = stdout.split(
-        "# Current configuration, excluding the keys 'extra_facets':\n",
-    )[1]
+    expected_header = (
+        "# Current configuration, excluding the keys 'extra_facets':\n"
+    )
+    assert expected_header in stdout
+    # Check that the configuration that is listed by default is sufficiently
+    # brief for easy reading by a human.
+    assert len(stdout.split("\n")) < 200
+    cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
     assert "projects" in cfg
     for project in cfg["projects"]:
         assert "extra_facets" not in cfg["projects"][project]
-    assert len(stdout.split("\n")) < 200
 
 
 @patch(

@@ -737,6 +737,13 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
         )
         _LEGACY_DATA_SOURCES_WARNED.add(project)
     rootpaths = CFG["rootpath"]
+    default_drs = {
+        "CMIP3": "ESGF",
+        "CMIP5": "ESGF",
+        "CMIP6": "ESGF",
+        "CORDEX": "ESGF",
+        "obs4MIPs": "ESGF",
+    }
     for key in (project, "default"):
         if key in rootpaths:
             paths = rootpaths[key]
@@ -749,7 +756,10 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
                 )
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
-                structure = CFG.get("drs", {}).get(project, "default")
+                structure = CFG.get("drs", {}).get(
+                    project,
+                    default_drs.get(project, "default"),
+                )
                 paths = dict.fromkeys(paths, structure)
             sources: list[LocalDataSource] = []
             for path, structure in paths.items():

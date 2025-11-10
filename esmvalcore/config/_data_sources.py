@@ -3,6 +3,7 @@
 import logging
 
 import esmvalcore.esgf
+import esmvalcore.esgf.facets
 import esmvalcore.local
 from esmvalcore.config import Session
 from esmvalcore.exceptions import RecipeError

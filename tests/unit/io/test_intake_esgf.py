@@ -198,6 +198,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch):
         dataset.name
         == "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
     )
+    assert hash(dataset) == hash(dataset.name)
 
     assert dataset.facets == {
         "activity": "CMIP",

@@ -4,7 +4,7 @@ import pytest
 
 from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import validate_config_developer
-from esmvalcore.local import LocalDataSource, _get_data_sources
+from esmvalcore.local import DataSource, LocalDataSource, _get_data_sources
 
 
 @pytest.mark.parametrize(
@@ -52,3 +52,16 @@ def test_get_data_sources_nodefault(monkeypatch):
     )
     with pytest.raises(KeyError):
         _get_data_sources("CMIP6")
+
+
+def test_data_source_deprecated() -> None:
+    """Test that DataSource is deprecated."""
+    with pytest.deprecated_call():
+        _ = DataSource(
+            name="test",
+            project="CMIP6",
+            priority=1,
+            rootpath=Path("/climate_data"),
+            dirname_template="/",
+            filename_template="*.nc",
+        )
