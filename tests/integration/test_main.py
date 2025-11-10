@@ -17,6 +17,7 @@ import yaml
 from fire.core import FireExit
 
 import esmvalcore._main
+import esmvalcore.config
 from esmvalcore._main import Config, ESMValTool, Recipes, run
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
@@ -269,6 +270,23 @@ def test_config_list(capsys: pytest.CaptureFixture) -> None:
         in stdout
     )
     assert len(stdout.split("\n")) > 20
+
+
+def test_config_list_no_description(
+    capsys: pytest.CaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Test `esmvaltool config list` works when a config files provides no description."""
+    config_dir = tmp_path / "configurations"
+    config_dir.mkdir()
+    monkeypatch.setattr(esmvalcore.config, "__file__", config_dir)
+    tmp_path.joinpath("configurations", "data-config.yml").touch()
+    with arguments("esmvaltool", "config", "list"):
+        run()
+    stdout = capsys.readouterr().out
+    assert "Data Sources" in stdout
+    assert "data-config.yml" in stdout
 
 
 def test_config_show(
