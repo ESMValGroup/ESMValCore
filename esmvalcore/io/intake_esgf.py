@@ -30,6 +30,7 @@ import intake_esgf
 import intake_esgf.exceptions
 import isodate
 
+from esmvalcore.dataset import _isglob, _ismatch
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 from esmvalcore.local import _parse_period
@@ -216,41 +217,45 @@ class IntakeESGFDataSource(DataSource):
         :
             A list of data elements that have been found.
         """
-        # Normalize facets so all values are `list[str]`.
-        our_facets = {
+        # Select searchable facets and normalize so all values are `list[str]`.
+        normalized_facets = {
             facet: [str(values)] if isinstance(values, str | int) else values
             for facet, values in facets.items()
+            if facet in self.facets
+        }
+        # Filter out glob patterns as these are not supported by intake-esgf.
+        non_glob_facets = {
+            facet: values
+            for facet, values in normalized_facets.items()
+            if not any(_isglob(v) for v in values)
         }
         # Translate "our" facets to ESGF facets and "our" values to ESGF values.
-        esgf_facets = {
+        query = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
-                for v in our_facets[our_facet]
+                for v in non_glob_facets[our_facet]
             ]
             for our_facet, their_facet in self.facets.items()
-            if our_facet in our_facets
+            if our_facet in non_glob_facets
         }
         if (
-            "timerange" in facets and "*" not in facets["timerange"]  # type: ignore[operator]
+            "timerange" in facets and _isglob(facets["timerange"])  # type: ignore[operator]
         ):
             start, end = _parse_period(facets["timerange"])
-            esgf_facets["file_start"] = isodate.date_isoformat(
+            query["file_start"] = isodate.date_isoformat(
                 isodate.parse_date(start.split("T")[0]),
             )
-            esgf_facets["file_end"] = isodate.date_isoformat(
+            query["file_end"] = isodate.date_isoformat(
                 isodate.parse_date(end.split("T")[0]),
             )
         # Search ESGF.
         try:
-            self.catalog.search(**esgf_facets, quiet=True)
+            self.catalog.search(**query, quiet=True)
         except intake_esgf.exceptions.NoSearchResults:
             self.debug_info = (
                 "intake_esgf.ESGFCatalog.search("
                 + ", ".join(
-                    [
-                        f"{k}={v if isinstance(v, list) else [v]}"
-                        for k, v in self.catalog.last_search.items()
-                    ],
+                    [f"{k}={v}" for k, v in query.items()],
                 )
                 + ") did not return any results."
             )
@@ -282,16 +287,15 @@ class IntakeESGFDataSource(DataSource):
             cat = _CachingCatalog.from_catalog(self.catalog)
             # Subset the catalog to a single dataset.
             cat.df = cat.df[cat.df.key == dataset_id]
-            # Discard all but the latest version. It is not clear how/if
-            # `intake_esgf.ESGFCatalog.to_dataset_dict` supports multiple versions.
-            cat.df = cat.df[cat.df.version == cat.df.version.max()]
-            if "short_name" in our_facets:
+            # Ensure only the requested variable is included in the dataset.
+            # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
+            if "short_name" in normalized_facets:
                 cat.last_search[self.facets["short_name"]] = [
                     self.values.get("short_name", {}).get(v, v)
-                    for v in our_facets["short_name"]
+                    for v in normalized_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = {}
+            dataset_facets = {"version": [f"v{row['version']}"]}
             for our_facet, esgf_facet in self.facets.items():
                 if esgf_facet in row:
                     esgf_values = row[esgf_facet]
@@ -301,13 +305,24 @@ class IntakeESGFDataSource(DataSource):
                         inverse_values.get(our_facet, {}).get(v, v)
                         for v in esgf_values
                     ]
-                    if len(our_values) == 1:
-                        our_values = our_values[0]
                     dataset_facets[our_facet] = our_values
-            dataset = IntakeESGFDataset(
-                name=dataset_id,
-                facets=dataset_facets,  # type: ignore[arg-type]
-                catalog=cat,
-            )
-            result.append(dataset)
+            # Only return datasets that match the glob patterns.
+            if all(
+                any(
+                    _ismatch(v, p)
+                    for v in dataset_facets[f]
+                    for p in normalized_facets[f]
+                )
+                for f in dataset_facets
+                if f in normalized_facets
+            ):
+                dataset = IntakeESGFDataset(
+                    name=dataset_id,
+                    facets={
+                        k: v[0] if len(v) == 1 else v
+                        for k, v in dataset_facets.items()
+                    },  # type: ignore[arg-type]
+                    catalog=cat,
+                )
+                result.append(dataset)
         return result

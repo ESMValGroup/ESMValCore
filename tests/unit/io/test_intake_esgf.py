@@ -210,6 +210,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "version": "v20190429",
     }
     dataset = results[1]
     assert (
@@ -226,6 +227,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "version": "v20190429",
     }
 
 
@@ -246,7 +248,7 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
 @pytest.mark.parametrize(
     ("facets", "expected_names"),
     [
-        (
+        pytest.param(
             {
                 "dataset": "CanESM5",
                 "ensemble": "r1i1p1f1",
@@ -261,8 +263,27 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
                 "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
                 "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn",
             },
+            id="CMIP6",
         ),
-        (
+        pytest.param(
+            {
+                "dataset": "CanESM5",
+                "ensemble": "r[1-3]i1p1f1",
+                "exp": "historical",
+                "grid": "gn",
+                "mip": "Amon",
+                "project": "CMIP6",
+                "short_name": "tas",
+                "timerange": "1850/2100",
+            },
+            {
+                "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
+                "CMIP6.CMIP.CCCma.CanESM5.historical.r2i1p1f1.Amon.tas.gn",
+                "CMIP6.CMIP.CCCma.CanESM5.historical.r3i1p1f1.Amon.tas.gn",
+            },
+            id="CMIP6-with-glob-pattern",
+        ),
+        pytest.param(
             {
                 "dataset": "ACCESS1-0",
                 "ensemble": "r1i1p1",
@@ -275,8 +296,9 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
                 "CSIRO-BOM.ACCESS1.0.historical.mon.atmos.Amon.r1i1p1.tas",
                 "CSIRO-BOM.ACCESS1.0.rcp85.mon.atmos.Amon.r1i1p1.tas",
             },
+            id="CMIP5",
         ),
-        (
+        pytest.param(
             {
                 "dataset": "cccma_cgcm3_1",
                 "ensemble": "run1",
@@ -289,8 +311,9 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
                 "CMIP3.CCCMA.cccma_cgcm3_1.historical.day.atmos.run1.tas",
                 "CMIP3.CCCMA.cccma_cgcm3_1.historical.mon.atmos.run1.tas",
             },
+            id="CMIP3",
         ),
-        (
+        pytest.param(
             {
                 "dataset": "ERA-5",
                 "project": "obs4MIPs",
@@ -299,6 +322,7 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
             {
                 "obs4MIPs.ECMWF.ERA-5.mon.tas.gn",
             },
+            id="obs4MIPs",
         ),
     ],
 )
@@ -312,5 +336,6 @@ def test_find_data_online(
         ds for ds in data_sources if ds.project == facets["project"]
     )
     result = data_source.find_data(**facets)
+    assert len(result) > 0
     result_names = {ds.name for ds in result}
     assert result_names == expected_names
