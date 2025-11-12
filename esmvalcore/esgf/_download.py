@@ -234,13 +234,10 @@ class ESGFFile(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(
-        self,
-        ignore_warnings: list[dict[str, Any]] | None = None,
-    ) -> iris.cube.CubeList:
+    def to_iris(self) -> iris.cube.CubeList:
         self.prepare()
         local_file = self.local_file(self.dest_folder)
-        cube = local_file.to_iris(ignore_warnings=ignore_warnings)
+        cube = local_file.to_iris()
         self.attributes = local_file.attributes
         return cube
 

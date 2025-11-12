@@ -803,13 +803,26 @@ file is available. To list the available example files, run the command:
 
   esmvaltool config list data-native
 
+.. _filter_load_warnings:
 
-.. note::
+Filter Iris load warnings
+`````````````````````````
 
-    If you would like automatic download capabilities from ESGF, but prefer not
-    to use intake-esgf just yet, you can use the :mod:`esmvalcore.esgf` data
-    sources instead. If you are using these, please open an issue on GitHub so
-    we can smooth out any issues you may encounter with intake-esgf.
+It is possible to ignore specific warnings when loading data with Iris.
+This is particularly useful for native datasets which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured using the ``ignore_warnings`` argument to
+:class:`esmvalcore.local.LocalDataSource`.
+
+Here is an example on how to ignore specific warnings when loading data from
+the ``EMAC`` model in its native format:
+
+.. literalinclude:: ../configurations/data-native-emac.yml
+    :language: yaml
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore``.
 
 .. _config-extra-facets:
 
@@ -1041,18 +1054,17 @@ Developer configuration file
 
 Most users and diagnostic developers will not need to change this file,
 but it may be useful to understand its content.
+The settings from this are being moved to the
+:ref:`new configuration system <config_overview>`. In particular, the ``input_dir``
+and ``input_file`` settings have already been replaced by the
+:class:`esmvalcore.local.LocalDataSource` that can be configured via
+:ref:`data sources <config-data-sources>`.
 It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
-This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
-ETHZ, SMHI, BSC), and for native output data for some
+This configuration file describes the CMOR tables for several
+key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS), and for native output data for some
 models (ICON, IPSL, ... see :ref:`configure_native_models`).
-CMIP data is stored as part of the Earth System Grid
-Federation (ESGF) and the standards for file naming and paths to files are set
-out by CMOR and DRS. For a detailed description of these standards and their
-adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
-relate these standards to the data retrieval mechanism of the ESMValCore.
 
 Users can get a copy of this file with default values by running
 
@@ -1081,64 +1093,17 @@ Example of the CMIP6 project configuration:
 .. code-block:: yaml
 
    CMIP6:
-     input_dir:
-       default: '/'
-       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-       ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
      output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_strict: true
 
-Input file paths
-----------------
-
-When looking for input files, the ``esmvaltool`` command provided by
-ESMValCore replaces the placeholders ``{item}`` in
-``input_dir`` and ``input_file`` with the values supplied in the recipe.
-ESMValCore will try to automatically fill in the values for institute, frequency,
-and modeling_realm based on the information provided in the CMOR tables
-and/or :ref:`config-extra-facets` when reading the recipe.
-If this fails for some reason, these values can be provided in the recipe too.
-
-The data directory structure of the CMIP projects is set up differently
-at each site. As an example, the CMIP6 directory path on BADC would be:
-
-.. code-block:: yaml
-
-   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-
-The resulting directory path would look something like this:
-
-.. code-block:: bash
-
-    CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
-
-Please, bear in mind that ``input_dirs`` can also be a list for those cases in
-which may be needed:
-
-.. code-block:: yaml
-
-  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{version}'
-  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{version}'
-
-In that case, the resultant directories will be:
-
-.. code-block:: bash
-
-  historical/r1i1p1f3/original/Omon/tos/gn/latest
-  historical/r1i1p1f3/computed/Omon/tos/gn/latest
-
-For a more in-depth description of how to configure ESMValCore so it can find
-your data please see :ref:`CMOR-DRS`.
-
 Preprocessor output files
 -------------------------
 
-The filename to use for preprocessed data is configured in a similar manner
-using ``output_file``. Note that the extension ``.nc`` (and if applicable,
-a start and end time) will automatically be appended to the filename.
+The filename to use for preprocessed data is configured using ``output_file``,
+similar to the filename template in :class:`esmvalcore.local.LocalDataSource`.
+Note that the extension ``.nc`` (and if applicable, a start and end time) will
+automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
@@ -1231,38 +1196,6 @@ which will extend the entries from the default one
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
 
 
-.. _filterwarnings_config-developer:
-
-Filter preprocessor warnings
-----------------------------
-
-It is possible to ignore specific warnings of the preprocessor for a given
-``project``.
-This is particularly useful for native datasets which do not follow the CMOR
-standard by default and consequently produce a lot of warnings when handled by
-Iris.
-This can be configured in the ``config-developer.yml`` file for some steps of
-the preprocessing chain.
-
-Currently supported preprocessor steps:
-
-* :func:`~esmvalcore.preprocessor.load`
-
-Here is an example on how to ignore specific warnings during the preprocessor
-step ``load`` for all datasets of project ``EMAC`` (taken from the default
-``config-developer.yml`` file):
-
-.. code-block:: yaml
-
-   ignore_warnings:
-     load:
-       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
-       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
-
-The keyword arguments specified in the list items are directly passed to
-:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
-overwritten in ``config-developer.yml``).
-
 .. _configure_native_models:
 
 Configuring datasets in native format
@@ -1280,23 +1213,12 @@ Example:
 
    native6:
      cmor_strict: false
-     input_dir:
-       default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
-     input_file:
-       default: '*.nc'
      output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 
    ICON:
      cmor_strict: false
-     input_dir:
-       default:
-         - '{exp}'
-         - '{exp}/outdata'
-         - '{exp}/output'
-     input_file:
-       default: '{exp}_{var_type}*.nc'
      output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'

@@ -60,7 +60,7 @@ def test_to_iris(mocker: MockerFixture) -> None:
     )
 
     dataset = IntakeESGFDataset(name=key, facets={}, catalog=cat)
-    result = dataset.to_iris(ignore_warnings=[{"message": "ignore"}])
+    result = dataset.to_iris()
     assert result is cubes
 
     assert dataset.attributes == {

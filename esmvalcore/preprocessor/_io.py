@@ -88,7 +88,7 @@ def load(
 
     """
     if isinstance(file, DataElement):
-        cubes = file.to_iris(ignore_warnings=ignore_warnings)
+        cubes = file.to_iris()
     elif isinstance(file, (str, Path)):
         extension = (
             file.suffix
@@ -96,7 +96,9 @@ def load(
             else os.path.splitext(file)[1]
         )
         if "zarr" not in extension:
-            cubes = LocalFile(file).to_iris(ignore_warnings=ignore_warnings)
+            local_file = LocalFile(file)
+            local_file.ignore_warnings = ignore_warnings
+            cubes = local_file.to_iris()
         else:
             cubes = _load_zarr(
                 file,

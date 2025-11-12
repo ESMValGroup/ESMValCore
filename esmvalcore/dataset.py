@@ -22,7 +22,6 @@ from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
 from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
-    get_ignored_warnings,
     get_institutes,
     load_extra_facets,
 )
@@ -855,12 +854,7 @@ class Dataset:
             "session": self.session,
             **self.facets,
         }
-        settings["load"] = {
-            "ignore_warnings": get_ignored_warnings(
-                self.facets["project"],
-                "load",
-            ),
-        }
+        settings["load"] = {}
         settings["fix_metadata"] = {
             "session": self.session,
             **self.facets,

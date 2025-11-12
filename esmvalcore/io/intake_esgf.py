@@ -151,7 +151,7 @@ class IntakeESGFDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(self, ignore_warnings=None) -> iris.cube.CubeList:
+    def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
         Returns
@@ -172,7 +172,7 @@ class IntakeESGFDataset(DataElement):
         dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
         # Cache the attributes.
         self.attributes = copy.deepcopy(dataset.attrs)
-        return dataset_to_iris(dataset, ignore_warnings=ignore_warnings)
+        return dataset_to_iris(dataset)
 
 
 @dataclass

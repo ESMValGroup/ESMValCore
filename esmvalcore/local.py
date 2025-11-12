@@ -61,7 +61,7 @@ from netCDF4 import Dataset, Variable
 
 import esmvalcore.io.protocol
 from esmvalcore.config import CFG
-from esmvalcore.config._config import get_project_config
+from esmvalcore.config._config import get_ignored_warnings, get_project_config
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.iris_helpers import ignore_warnings_context
 
@@ -539,6 +539,14 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
     filename_template: str
     """The template for the file names."""
 
+    ignore_warnings: list[dict[str, Any]] | None = field(default_factory=list)
+    """Warnings to ignore when loading the data.
+
+    The list should contain :class:`dict`s with keyword arguments that
+    will be passed to the :func:`warnings.filterwarnings` function when
+    calling :meth:`LocalFile.to_iris`.
+    """
+
     def __post_init__(self) -> None:
         """Set further attributes."""
         self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
@@ -584,6 +592,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
                         add_timerange="timerange" in facets,
                     ),
                 )
+                file.ignore_warnings = self.ignore_warnings
                 files.append(file)
 
         files = _filter_versions_called_latest(files)
@@ -773,6 +782,7 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
                         rootpath=Path(path),
                         dirname_template=d,
                         filename_template=f,
+                        ignore_warnings=get_ignored_warnings(project, "load"),
                     )
                     for d in dir_templates
                     for f in file_templates
@@ -1046,10 +1056,23 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(
-        self,
-        ignore_warnings: list[dict[str, Any]] | None = None,
-    ) -> iris.cube.CubeList:
+    @property
+    def ignore_warnings(self) -> list[dict[str, Any]] | None:
+        """Warnings to ignore when loading the data.
+
+        The list should contain :class:`dict`s with keyword arguments that
+        will be passed to the :func:`warnings.filterwarnings` function when
+        calling the ``to_iris`` method.
+        """
+        if not hasattr(self, "_ignore_warnings"):
+            self._ignore_warnings: list[dict[str, Any]] | None = None
+        return self._ignore_warnings
+
+    @ignore_warnings.setter
+    def ignore_warnings(self, value: list[dict[str, Any]] | None) -> None:
+        self._ignore_warnings = value
+
+    def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
         Returns
@@ -1060,7 +1083,7 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
         file = Path(self)
         logger.debug("Loading:\n%s", file)
 
-        with ignore_warnings_context(ignore_warnings):
+        with ignore_warnings_context(self.ignore_warnings):
             # GRIB files need to be loaded with iris.load, otherwise we will
             # get separate (lat, lon) slices for each time step, pressure
             # level, etc.

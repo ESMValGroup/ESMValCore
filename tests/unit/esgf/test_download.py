@@ -296,14 +296,12 @@ def test_to_iris(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
         new_callable=mocker.PropertyMock,
         return_value={"attribute": "value"},
     )
-    cubes = esgf_file.to_iris(mocker.sentinel.ignore_warnings)
+    cubes = esgf_file.to_iris()
 
     assert cubes == mocker.sentinel.iris_cubes
     assert esgf_file.attributes == {"attribute": "value"}
     prepare.assert_called_once()
-    local_file_to_iris.assert_called_once_with(
-        ignore_warnings=mocker.sentinel.ignore_warnings,
-    )
+    local_file_to_iris.assert_called_once()
 
 
 def test_from_results():

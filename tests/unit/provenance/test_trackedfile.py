@@ -206,10 +206,7 @@ class MockDataElement(DataElement):
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def to_iris(
-        self,
-        ignore_warnings: list[dict[str, Any]] | None = None,
-    ) -> iris.cube.CubeList:
+    def to_iris(self) -> iris.cube.CubeList:
         return []
 
 

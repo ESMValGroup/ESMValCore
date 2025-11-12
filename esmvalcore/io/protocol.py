@@ -40,18 +40,8 @@ class DataElement(Protocol):
     def prepare(self) -> None:
         """Prepare the data for access."""
 
-    def to_iris(
-        self,
-        ignore_warnings: list[dict[str, Any]] | None = None,
-    ) -> iris.cube.CubeList:
+    def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
-
-        Parameters
-        ----------
-        ignore_warnings:
-            Keyword arguments passed to :func:`warnings.filterwarnings` used to
-            ignore warnings issued by :func:`iris.load_raw`. Each list element
-            corresponds to one call to :func:`warnings.filterwarnings`.
 
         Returns
         -------

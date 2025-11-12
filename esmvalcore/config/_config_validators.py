@@ -513,7 +513,7 @@ def deprecate_rootpath(
     validated_value  # noqa: B018
     option = "rootpath"
     deprecated_version = "2.14.0"
-    remove_version = "2.17.0"
+    remove_version = "2.16.0"
     more_info = " Please configure data sources under 'projects' instead."
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
@@ -540,7 +540,7 @@ def deprecate_drs(
     validated_value  # noqa: B018
     option = "drs"
     deprecated_version = "2.14.0"
-    remove_version = "2.17.0"
+    remove_version = "2.16.0"
     more_info = " Please configure data sources under 'projects' instead."
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
@@ -567,7 +567,7 @@ def deprecate_download_dir(
     validated_value  # noqa: B018
     option = "download_dir"
     deprecated_version = "2.14.0"
-    remove_version = "2.17.0"
+    remove_version = "2.16.0"
     more_info = " Please configure data sources under 'projects' instead."
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 

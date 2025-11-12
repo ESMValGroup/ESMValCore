@@ -1851,9 +1851,7 @@ def test_load(mocker, session):
     assert order == load_order
 
     load_args = {
-        "load": {
-            "ignore_warnings": None,
-        },
+        "load": {},
         "fix_file": {
             "add_unique_suffix": True,
             "dataset": "CanESM2",
