@@ -80,23 +80,6 @@ Within a directory, files are sorted lexicographically, and later files (e.g.,
   files (like the old ``config-developer.yml`` files) will lead to errors.
   Make sure to move these files to a different directory.
 
-.. deprecated:: 2.12.0
-
-  If a single configuration file is present at its deprecated location
-  ``~/.esmvaltool/config-user.yml`` or specified via the deprecated command
-  line argument ``--config_file``, all potentially available new configuration
-  files at ``~/.config/esmvaltool/`` and/or the location specified via
-  ``--config_dir`` are ignored.
-  This ensures full backwards-compatibility.
-  To switch to the new configuration system outlined here, move your old
-  configuration file to ``~/.config/esmvaltool/`` or to the location specified
-  via ``--config_dir``, remove ``~/.esmvaltool/config-user.yml``, and omit the
-  command line argument ``--config_file``.
-  Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
-  will also force the usage of the new configuration system regardless of the
-  presence of any potential old configuration files.
-  Support for the deprecated configuration will be removed in version 2.14.0.
-
 To get a copy of the default configuration file, you can run
 
 .. code-block:: bash

@@ -32,14 +32,12 @@ from __future__ import annotations
 import logging
 import os
 import sys
-import warnings
 from importlib.metadata import entry_points
 from pathlib import Path
 
 import fire
 
 from esmvalcore.config._config import warn_if_old_extra_facets_exist
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -401,7 +399,6 @@ class ESMValTool:
 
         """
         from .config import CFG
-        from .config._dask import warn_if_old_dask_config_exists
         from .exceptions import InvalidConfigParameter
 
         cli_config_dir = kwargs.pop("config_dir", None)
@@ -414,36 +411,6 @@ class ESMValTool:
                 )
                 raise NotADirectoryError(msg)
 
-        # TODO: remove in v2.14.0
-        # At this point, --config_file is already parsed if a valid file has
-        # been given (see
-        # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
-        # has been raised if the file does not exist. Thus, reload the file
-        # here with `load_from_file` to make sure a proper error is raised.
-        if "config_file" in kwargs:
-            if os.environ.get("ESMVALTOOL_CONFIG_DIR"):
-                deprecation_msg = (
-                    "Usage of a single configuration file specified via CLI "
-                    "argument `--config_file` has been deprecated in "
-                    "ESMValCore version 2.12.0 and is scheduled for removal "
-                    "in version 2.14.0. Since the environment variable "
-                    "ESMVALTOOL_CONFIG_DIR is set, old configuration files "
-                    "present at ~/.esmvaltool/config-user.yml and/or "
-                    "specified via `--config_file` are currently ignored. To "
-                    "silence this warning, omit CLI argument `--config_file`."
-                )
-                warnings.warn(
-                    deprecation_msg,
-                    ESMValCoreDeprecationWarning,
-                    stacklevel=2,
-                )
-                kwargs.pop("config_file")
-            else:
-                cli_config_dir = kwargs["config_file"]
-                CFG.load_from_file(kwargs["config_file"])
-
-        # New in v2.12.0: read additional configuration directory given by CLI
-        # argument
         if CFG.get("config_file") is None and cli_config_dir is not None:
             try:
                 CFG.update_from_dirs([cli_config_dir])
@@ -475,7 +442,6 @@ class ESMValTool:
             CFG.update_from_dirs([cli_config_dir])
         CFG.nested_update(kwargs)
 
-        warn_if_old_dask_config_exists()
         warn_if_old_extra_facets_exist()
 
     @staticmethod
@@ -577,35 +543,24 @@ class ESMValTool:
     @staticmethod
     def _get_config_info(cli_config_dir):
         """Get information about config files for logging."""
-        from .config import CFG
         from .config._config_object import (
-            DEFAULT_CONFIG_DIR,
             _get_all_config_dirs,
             _get_all_config_sources,
         )
 
-        # TODO: remove in v2.14.0
-        if CFG.get("config_file") is not None:
-            config_info = [
-                (DEFAULT_CONFIG_DIR, "defaults"),
-                (CFG["config_file"], "single configuration file [deprecated]"),
-            ]
-
-        # New in v2.12.0
-        else:
-            config_dirs = []
-            for path in _get_all_config_dirs(cli_config_dir):
-                if not path.is_dir():
-                    config_dirs.append(f"{path} [NOT AN EXISTING DIRECTORY]")
-                else:
-                    config_dirs.append(str(path))
-            config_info = list(
-                zip(
-                    config_dirs,
-                    _get_all_config_sources(cli_config_dir),
-                    strict=False,
-                ),
-            )
+        config_dirs = []
+        for path in _get_all_config_dirs(cli_config_dir):
+            if not path.is_dir():
+                config_dirs.append(f"{path} [NOT AN EXISTING DIRECTORY]")
+            else:
+                config_dirs.append(str(path))
+        config_info = list(
+            zip(
+                config_dirs,
+                _get_all_config_sources(cli_config_dir),
+                strict=False,
+            ),
+        )
 
         return "\n".join(f"{i[0]} ({i[1]})" for i in config_info)
 

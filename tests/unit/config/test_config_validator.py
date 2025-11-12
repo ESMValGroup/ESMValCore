@@ -335,7 +335,7 @@ def test_validate_config_developer(tmp_path):
     validate_config_developer(None)
 
 
-# TODO: remove in v2.14.0
+# TODO: remove in v2.15.0
 def test_extra_facets_dir_tuple_deprecated(monkeypatch):
     """Test extra_facets_dir."""
     with pytest.warns(ESMValCoreDeprecationWarning):
