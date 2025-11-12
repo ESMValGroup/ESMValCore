@@ -103,17 +103,21 @@ class IntakeESGFDataset(DataElement):
     name: str
     """A unique name identifying the data."""
 
-    facets: Facets
+    facets: Facets = field(repr=False)
     """Facets are key-value pairs that were used to find this data."""
 
-    catalog: intake_esgf.ESGFCatalog
+    catalog: intake_esgf.ESGFCatalog = field(repr=False)
     """The intake-esgf catalog describing this data."""
 
-    _attributes: dict[str, Any] | None = field(init=False, default=None)
+    _attributes: dict[str, Any] | None = field(
+        init=False,
+        repr=False,
+        default=None,
+    )
 
     def __hash__(self) -> int:
         """Return a number uniquely representing the data element."""
-        return hash(self.name)
+        return hash((self.name, self.facets.get("version")))
 
     def prepare(self) -> None:
         """Prepare the data for access."""
@@ -190,11 +194,12 @@ class IntakeESGFDataSource(DataSource):
     values: dict[str, dict[str, str]] = field(default_factory=dict)
     """Mapping between the ESMValCore and ESGF facet values."""
 
-    debug_info: str = field(init=False, default="")
+    debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
     catalog: intake_esgf.ESGFCatalog = field(
         init=False,
+        repr=False,
         default_factory=intake_esgf.ESGFCatalog,
     )
     """The intake-esgf catalog used to find data."""

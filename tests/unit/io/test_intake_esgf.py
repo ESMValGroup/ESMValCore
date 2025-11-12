@@ -16,6 +16,12 @@ from esmvalcore.config import Session
 from esmvalcore.io.intake_esgf import IntakeESGFDataset, IntakeESGFDataSource
 
 
+def test_intakeesgfdataset_repr() -> None:
+    cat = intake_esgf.ESGFCatalog()
+    dataset = IntakeESGFDataset(name="id", facets={}, catalog=cat)
+    assert repr(dataset) == "IntakeESGFDataset(name='id')"
+
+
 def test_prepare(mocker: MockerFixture) -> None:
     """IntakeESGFDataset.prepare should call the catalog.to_path_dict method."""
     cat = intake_esgf.ESGFCatalog()
@@ -198,7 +204,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch):
         dataset.name
         == "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
     )
-    assert hash(dataset) == hash(dataset.name)
+    assert hash(dataset) == hash((dataset.name, "v20190429"))
 
     assert dataset.facets == {
         "activity": "CMIP",
