@@ -10,7 +10,7 @@
     missing certain search results, you may want to choose a different
     index node for searching the ESGF.
 
-Run the command ``esmvalcore config copy data-intake-esgf.yml`` to update
+Run the command ``esmvaltool config copy data-intake-esgf.yml`` to update
 your :ref:`configuration <config_overview>` to use this module. This will
 create a file with the following content in your configuration directory:
 
@@ -244,7 +244,7 @@ class IntakeESGFDataSource(DataSource):
             if our_facet in non_glob_facets
         }
         if (
-            "timerange" in facets and _isglob(facets["timerange"])  # type: ignore[operator]
+            "timerange" in facets and not _isglob(facets["timerange"])  # type: ignore[operator]
         ):
             start, end = _parse_period(facets["timerange"])
             query["file_start"] = isodate.date_isoformat(
