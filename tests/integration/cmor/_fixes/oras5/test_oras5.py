@@ -57,7 +57,6 @@ def _oras5_longitude():
     )
 
 
-
 def _oras5_time(frequency):
     if frequency == "invariant":
         timestamps = [788928]  # hours since 1900 at 1 january 1990
@@ -72,6 +71,7 @@ def _oras5_time(frequency):
         var_name="time",
         units=Unit("hours since 1900-01-0100:00:00.0", calendar="gregorian"),
     )
+
 
 def _oras5_depth():
     values = np.array(
@@ -162,7 +162,13 @@ def _cmor_data(mip):
     return np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
 
 
-def oras5_2d(frequency):
+def oras5_2d(frequency):    
+    if frequency == "monthly":
+        time = DimCoord(
+            [-31, 0, 31], standard_name="time", units="days since 1850-01-01"
+        )
+    else:
+        time = _oras5_time(frequency)
     cube = Cube(
         _oras5_data("monthly"),
         long_name=None,
