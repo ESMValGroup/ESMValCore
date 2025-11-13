@@ -1,13 +1,12 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
-import os.path
 import subprocess
 from pathlib import Path
-from typing import Any
 from unittest import mock
 
 import pyesgf.search.results
 import pytest
+import pytest_mock
 
 import esmvalcore._recipe.check
 import esmvalcore.esgf
@@ -159,51 +158,39 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert dataset.facets == var
 
 
-DATA_AVAILABILITY_NO_DATA: list[Any] = [
-    ([], [], None),
-    ([""], ["a*.nc"], (ERR_ALL, ": a*.nc")),
-    ([""], ["a*.nc", "b*.nc"], (ERR_ALL, "\na*.nc\nb*.nc")),
-    (["1"], ["a"], (ERR_ALL, ": 1/a")),
-    (["1"], ["a", "b"], (ERR_ALL, "\n1/a\n1/b")),
-    (["1", "2"], ["a"], (ERR_ALL, "\n1/a\n2/a")),
-    (["1", "2"], ["a", "b"], (ERR_ALL, "\n1/a\n1/b\n2/a\n2/b")),
-]
-
-
-@pytest.mark.parametrize(
-    ("dirnames", "filenames", "error"),
-    DATA_AVAILABILITY_NO_DATA,
-)
-@mock.patch("esmvalcore._recipe.check.logger", autospec=True)
-def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
+def test_data_availability_no_data(
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
     """Test check for data when no data is present."""
-    facets = {
-        "frequency": "mon",
-        "short_name": "tas",
-        "timerange": "2020/2025",
-        "alias": "alias",
-        "start_year": 2020,
-        "end_year": 2025,
-    }
-    dataset = Dataset(**facets)
+    dataset = Dataset(
+        frequency="mon",
+        short_name="tas",
+        timerange="2020/2025",
+        alias="alias",
+        start_year=2020,
+        end_year=2025,
+    )
     dataset.files = []
-    dataset._file_globs = [
-        os.path.join(d, f) for d in dirnames for f in filenames
-    ]
-    error_first = ("No input files found for %s", dataset)
-    error_last = ("Set 'log_level' to 'debug' to get more information",)
-    with pytest.raises(RecipeError) as rec_err:
+    mock_data_source = mocker.Mock()
+    mock_data_source.debug_info = "debug info"
+    dataset._used_data_sources = [mock_data_source]
+    with pytest.raises(RecipeError) as exc:
         check.data_availability(dataset)
-    assert str(rec_err.value) == "Missing data for Dataset: tas"
-    if error is None:
-        assert mock_logger.error.call_count == 2
-        errors = [error_first, error_last]
-    else:
-        assert mock_logger.error.call_count == 3
-        errors = [error_first, error, error_last]
-    calls = [mock.call(*e) for e in errors]
-    assert mock_logger.error.call_args_list == calls
-    assert dataset.facets == facets
+    assert str(exc.value) == "Missing data for Dataset: tas"
+    assert len(caplog.records) == 2
+    assert caplog.records[0].message == "\n".join(
+        [
+            f"No files were found for {dataset},",
+            "using data sources:",
+            f"- data source: {mock_data_source}",
+            "  message: debug info",
+        ],
+    )
+    assert (
+        caplog.records[1].message
+        == "Set 'log_level' to 'debug' to get more information"
+    )
 
 
 GOOD_TIMERANGES = [

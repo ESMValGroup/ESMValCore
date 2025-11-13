@@ -527,7 +527,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
     priority: int
     """The priority of the data source. Lower values have priority."""
 
-    debug_info: str = field(init=False, default="")
+    debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
     rootpath: Path
@@ -579,7 +579,9 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             facets["short_name"] = facets["original_short_name"]
 
         globs = self.get_glob_patterns(**facets)
-        self.debug_info = "\n".join(str(g) for g in globs)
+        self.debug_info = "No files found matching glob pattern " + "\n".join(
+            str(g) for g in globs
+        )
         logger.debug("Looking for files matching %s", globs)
 
         files: list[LocalFile] = []

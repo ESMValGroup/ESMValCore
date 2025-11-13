@@ -216,7 +216,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "remove_preproc_dir": True,
         "resume_from": [],
         "run_diagnostic": True,
-        "search_esgf": "never",
+        "search_data": "quick",
         "skip_nonexistent": False,
         "save_intermediary_cubes": False,
     }

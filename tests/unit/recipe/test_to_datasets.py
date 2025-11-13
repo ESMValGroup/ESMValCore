@@ -324,7 +324,10 @@ def test_max_years(session):
 
 
 @pytest.mark.parametrize("found_files", [True, False])
-def test_dataset_from_files_fails(monkeypatch, found_files):
+def test_dataset_from_files_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    found_files: bool,
+) -> None:
     def from_files(_):
         file = LocalFile("/path/to/file")
         file.facets = {"facets1": "value1"}
@@ -333,7 +336,6 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
             short_name="tas",
         )
         dataset.files = [file] if found_files else []
-        dataset._file_globs = ["/path/to/tas_*.nc"]
         return [dataset]
 
     monkeypatch.setattr(Dataset, "from_files", from_files)

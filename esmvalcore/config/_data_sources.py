@@ -51,7 +51,7 @@ def _get_data_sources(
         legacy_local_data_sources = []
     else:
         if (
-            session["search_esgf"] != "never"
+            session.get("search_esgf", "") != "never"
             and project in esmvalcore.esgf.facets.FACETS
         ):
             data_source = esmvalcore.esgf.ESGFDataSource(

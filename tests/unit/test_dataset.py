@@ -1470,7 +1470,7 @@ def dataset():
         alias="CMIP6_EC-Earth3_tas",
     )
     dataset.session = {
-        "search_esgf": "when_missing",
+        "search_data": "quick",
         "download_dir": Path("/download_dir"),
         "projects": {
             "CMIP6": {
@@ -1612,7 +1612,7 @@ def test_find_files_outdated_local(mocker, dataset):
 )
 def test_find_files_non_esgf_projects(mocker, monkeypatch, session, project):
     """Test that find_files does never download files for non-ESGF projects."""
-    monkeypatch.setitem(CFG, "search_esgf", "always")
+    monkeypatch.setitem(CFG, "search_data", "complete")
     # Add "model" projects that are not part of the default local configuration.
     with importlib.resources.as_file(
         importlib.resources.files(esmvalcore.config)
@@ -1754,9 +1754,9 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset["timerange"] == output_time
 
 
-@pytest.mark.parametrize("search_esgf", ["never", "when_missing", "always"])
-def test_update_timerange_no_files(session, search_esgf):
-    session["search_esgf"] = search_esgf
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_update_timerange_no_files(session, search_data):
+    session["search_data"] = search_data
     variable = {
         "alias": "CMIP6",
         "project": "CMIP6",
@@ -1921,7 +1921,6 @@ def test_load(mocker, session):
 def test_load_fail(session):
     dataset = Dataset()
     dataset.session = session
-    dataset.session["search_esgf"] = "when_missing"
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()

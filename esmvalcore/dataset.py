@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from iris.cube import Cube
 
-    from esmvalcore.io.protocol import DataElement
+    from esmvalcore.io.protocol import DataElement, DataSource
     from esmvalcore.preprocessor import PreprocessorItem
     from esmvalcore.typing import Facets, FacetValue
 
@@ -130,7 +130,7 @@ class Dataset:
         self._persist: set[str] = set()
         self._session: Session | None = None
         self._files: Sequence[DataElement] | None = None
-        self._file_globs: Sequence[str] = []
+        self._used_data_sources: Sequence[DataSource] = []
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -755,7 +755,7 @@ class Dataset:
         def version(file: DataElement) -> str:
             return str(file.facets.get("version", ""))
 
-        self._file_globs = []
+        self._used_data_sources = []
         files: dict[str, DataElement] = {}
         for data_source in sorted(
             _get_data_sources(self.session, self.facets["project"]),  # type: ignore[arg-type]
@@ -768,10 +768,10 @@ class Dataset:
                 if version(files[file.name]) < version(file):
                     files[file.name] = file
             self.files = list(files.values())
-            self._file_globs.append(data_source.debug_info)
-            # 'when_missing' mode: if files are available from a higher
+            self._used_data_sources.append(data_source)
+            # 'quick' mode: if files are available from a higher
             # priority source, do not search lower priority sources.
-            if self.session["search_esgf"] == "when_missing":
+            if self.session["search_data"] == "complete":
                 try:
                     check.data_availability(self, log=False)
                 except InputFilesNotFound:
@@ -831,14 +831,7 @@ class Dataset:
     def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
-            lines = [
-                f"No files were found for {self}",
-                "locally using glob patterns:",
-                "\n".join(str(f) for f in self._file_globs or []),
-            ]
-            if self.session["search_esgf"] != "never":
-                lines.append("or on ESGF.")
-            msg = "\n".join(lines)
+            msg = check.get_no_data_message(self)
             raise InputFilesNotFound(msg)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)

@@ -130,7 +130,7 @@ def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
 
     result = data_source.find_data(short_name="tas")
     assert result == []
-    expected_debug_info = "intake_esgf.ESGFCatalog.search(variable_id=['tas']) did not return any results."
+    expected_debug_info = "`intake_esgf.ESGFCatalog().search(variable_id=['tas'])` did not return any results."
     assert data_source.debug_info == expected_debug_info
 
 

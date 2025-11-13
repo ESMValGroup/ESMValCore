@@ -397,7 +397,7 @@ class ESGFDataSource(DataSource):
     download_dir: Path
     """The destination directory where data will be downloaded."""
 
-    debug_info: str = field(init=False, default="")
+    debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
     def __post_init__(self) -> None:
@@ -421,4 +421,9 @@ class ESGFDataSource(DataSource):
         files = find_files(**facets)
         for file in files:
             file.dest_folder = self.download_dir
+        self.debug_info = (
+            f"No search results found on ESGF with query: {FIRST_ONLINE_INDEX_NODE}"
+            "/search?format=application%2Fsolr%2Bjson&distrib=true&type=File&"
+            + "&".join(f"{k}={v}" for k, v in get_esgf_facets(facets).items())
+        )
         return files

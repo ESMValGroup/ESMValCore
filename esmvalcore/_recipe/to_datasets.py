@@ -7,6 +7,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
+from esmvalcore._recipe.check import get_no_data_message
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
@@ -515,21 +516,16 @@ def _report_unexpanded_globs(
             + "\n".join(
                 f"{f} with facets: {f.facets}" for f in expanded_ds.files
             )
-            + "\ndo not provide the missing facet values."
+            + "\ndo not provide the missing facet values. This will depend on "
+            "the data source they come from, e.g. can they be extracted from the "
+            "path for local files, or are they available from ESGF when "
+            "when searching ESGF for files?"
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        patterns = expanded_ds._file_globs  # noqa: SLF001
-        msg = (
-            f"{msg}\nNo files found matching:\n"
-            + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]
-            + (  # type:ignore
-                f"\nwithin the requested timerange {timerange}."
-                if timerange
-                else ""
-            )
-        )
-
+        msg = f"{msg}\n{get_no_data_message(expanded_ds)}"
+        if timerange:
+            msg += f"\nwithin the requested timerange {timerange}."
     return msg
 
 

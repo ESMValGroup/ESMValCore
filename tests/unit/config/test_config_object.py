@@ -529,7 +529,7 @@ def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     cfg = Config()
     assert not cfg
     cfg["rootpath"] = {"X": "x"}
-    cfg["search_esgf"] = "when_missing"
+    cfg["search_data"] = "complete"
 
     cfg.load_from_dirs(config_dirs)
 
@@ -537,7 +537,7 @@ def test_load_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     if any(Path(d).exists() for d in config_dirs):
         # Legacy setting "rootpath" is not available in default config.
         assert cfg["rootpath"] == rootpath
-    assert cfg["search_esgf"] == "never"
+    assert cfg["search_data"] == "quick"
 
 
 @pytest.mark.parametrize(
@@ -621,7 +621,7 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     cfg = Config()
     assert not cfg
     cfg["rootpath"] = {"X": "x"}
-    cfg["search_esgf"] = "when_missing"
+    cfg["search_data"] = "quick"
 
     cfg.update_from_dirs(config_dirs)
 
@@ -630,7 +630,7 @@ def test_update_from_dirs(dirs, output_file_type, rootpath, tmp_path):
     else:
         assert cfg["output_file_type"] == output_file_type
     assert cfg["rootpath"] == rootpath
-    assert cfg["search_esgf"] == "when_missing"
+    assert cfg["search_data"] == "quick"
 
 
 def test_nested_update():
@@ -639,13 +639,13 @@ def test_nested_update():
     assert not cfg
 
     cfg["drs"] = {"X": "x", "Z": "z"}
-    cfg["search_esgf"] = "when_missing"
+    cfg["search_data"] = "quick"
 
     cfg.nested_update({"drs": {"Y": "y", "X": "xx"}, "max_years": 1})
 
     assert len(cfg) == 3
     assert cfg["drs"] == {"Y": "y", "X": "xx", "Z": "z"}
-    assert cfg["search_esgf"] == "when_missing"
+    assert cfg["search_data"] == "quick"
     assert cfg["max_years"] == 1
 
 

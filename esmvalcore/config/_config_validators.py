@@ -33,6 +33,11 @@ SEARCH_ESGF_OPTIONS = (
     "always",  # Always search ESGF for files
 )
 
+SEARCH_DATA_OPTIONS = (
+    "quick",  # Stop searching as soon as a result is found
+    "complete",  # Search all configured data sources
+)
+
 
 class ValidationError(ValueError):
     """Custom validation error."""
@@ -307,6 +312,19 @@ def validate_search_esgf(value):
     return value
 
 
+def validate_search_data(value):
+    """Validate options for data search."""
+    value = validate_string(value)
+    value = value.lower()
+    if value not in SEARCH_DATA_OPTIONS:
+        msg = (
+            f"`{value}` is not a valid option for `search_data`, possible "
+            f"values are {SEARCH_DATA_OPTIONS}"
+        )
+        raise ValidationError(msg)
+    return value
+
+
 def validate_diagnostics(
     diagnostics: Iterable[str] | str | None,
 ) -> set[str] | None:
@@ -387,6 +405,7 @@ _validators = {
     "rootpath": validate_rootpath,
     "run_diagnostic": validate_bool,
     "save_intermediary_cubes": validate_bool,
+    "search_data": validate_search_data,
     "search_esgf": validate_search_esgf,
     "skip_nonexistent": validate_bool,
     # From recipe
@@ -496,7 +515,7 @@ def deprecate_rootpath(
     value: Any,
     validated_value: Any,
 ) -> None:
-    """Deprecate ``config_file`` option.
+    """Deprecate ``rootpath`` option.
 
     Parameters
     ----------
@@ -514,16 +533,16 @@ def deprecate_rootpath(
     option = "rootpath"
     deprecated_version = "2.14.0"
     remove_version = "2.16.0"
-    more_info = " Please configure data sources under 'projects' instead."
+    more_info = " Please configure data sources under `projects` instead."
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
 
 def deprecate_drs(
-    validated_config: ValidatedConfig,
-    value: Any,
-    validated_value: Any,
+    validated_config: ValidatedConfig,  # noqa: ARG001
+    value: Any,  # noqa: ARG001
+    validated_value: Any,  # noqa: ARG001
 ) -> None:
-    """Deprecate ``config_file`` option.
+    """Deprecate ``drs`` option.
 
     Parameters
     ----------
@@ -535,22 +554,16 @@ def deprecate_drs(
         Validated value for ``config_file`` option.
 
     """
-    validated_config  # noqa: B018
-    value  # noqa: B018
-    validated_value  # noqa: B018
-    option = "drs"
-    deprecated_version = "2.14.0"
-    remove_version = "2.16.0"
-    more_info = " Please configure data sources under 'projects' instead."
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+    more_info = " Please configure data sources under `projects` instead."
+    _handle_deprecation("drs", "2.14.0", "2.16.0", more_info)
 
 
 def deprecate_download_dir(
-    validated_config: ValidatedConfig,
-    value: Any,
-    validated_value: Any,
+    validated_config: ValidatedConfig,  # noqa: ARG001
+    value: Any,  # noqa: ARG001
+    validated_value: Any,  # noqa: ARG001
 ) -> None:
-    """Deprecate ``config_file`` option.
+    """Deprecate ``download_dir`` option.
 
     Parameters
     ----------
@@ -562,14 +575,56 @@ def deprecate_download_dir(
         Validated value for ``config_file`` option.
 
     """
-    validated_config  # noqa: B018
-    value  # noqa: B018
-    validated_value  # noqa: B018
-    option = "download_dir"
-    deprecated_version = "2.14.0"
-    remove_version = "2.16.0"
-    more_info = " Please configure data sources under 'projects' instead."
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+    more_info = " Please configure data sources under `projects` instead."
+    _handle_deprecation("download_dir", "2.14.0", "2.16.0", more_info)
+
+
+def deprecate_search_esgf(
+    validated_config: ValidatedConfig,
+    value: Any,  # noqa: ARG001
+    validated_value: Any,
+) -> None:
+    """Deprecate ``search_esgf`` option.
+
+    Parameters
+    ----------
+    validated_config:
+        ``ValidatedConfig`` instance which will be modified in place.
+    value:
+        Raw input value for ``config_file`` option.
+    validated_value:
+        Validated value for ``config_file`` option.
+
+    """
+    translate = {
+        "when_missing": "quick",
+        "always": "complete",
+    }
+    messages = {
+        "never": " Please configure only offline data sources under `projects` instead.",
+    } | {
+        k: f" Please use `search_data: {v}` instead of `search_esgf: {k}`."
+        for k, v in translate.items()
+    }
+
+    if (
+        validated_value in translate
+        and validated_config["search_data"] != translate[validated_value]
+    ):
+        logger.warning(
+            "Changing `search_data` to `%s` due to use of deprecated `search_esgf: %s`."
+            " Please update your configuration to use `search_data` directly. Support for "
+            "the `search_esgf` option will no longer be available in ESMValCore version 2.16.0.",
+            translate[validated_value],
+            validated_value,
+        )
+
+    _handle_deprecation(
+        "search_esgf",
+        "2.14.0",
+        "2.16.0",
+        more_info=messages.get(validated_value, ""),
+    )
 
 
 # Example usage: see removed files in
@@ -580,6 +635,7 @@ _deprecators: dict[str, Callable] = {
     "drs": deprecate_drs,  # TODO: remove in v2.16.0
     "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
     "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
+    "search_esgf": deprecate_search_esgf,  # TODO: remove in v2.16.0
 }
 
 

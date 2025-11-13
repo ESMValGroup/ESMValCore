@@ -56,8 +56,7 @@ A file could look like this (for example, located at
 .. code-block:: yaml
 
   output_dir: ~/esmvaltool_output
-  search_esgf: when_missing
-  download_dir: ~/downloaded_data
+  max_parallel_tasks: 1
 
 ESMValCore searches for **all** YAML files in **each** of the following
 locations and merges them together:
@@ -103,9 +102,9 @@ may copy the default configuration file with :ref:`top level options <config_opt
 
 .. code-block:: bash
 
-  esmvaltool config get_config_user
+  esmvaltool config copy defaults/config-user.yml
 
-and tailor for your system.
+and tailor it for your system.
 
 Command line arguments
 ----------------------
@@ -117,7 +116,7 @@ Example:
 
 .. code-block:: bash
 
-  esmvaltool run --search_esgf=when_missing --max_parallel_tasks=2 /path/to/recipe.yml
+  esmvaltool run --max_parallel_tasks=2 /path/to/recipe.yml
 
 Options given via command line arguments will always take precedence over
 options specified via YAML files.
@@ -166,86 +165,118 @@ Note: the following entries use Python syntax.
 For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 ``true``, and Python's ``False`` is YAML's ``false``.
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
-|                               | stored. [#f1]_                         |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
-|                               | (``debug``, ``strict``, ``default``    |                             |                                        |
-|                               | ``relaxed``, ``ignore``), see          |                             |                                        |
-|                               | :ref:`cmor_check_strictness`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``compress_netcdf``           | Use netCDF compression.                | :obj:`bool`                 | ``False``                              |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``config_developer_file``     | Path to custom                         | :obj:`str`                  | ``None`` (default file)                |
-|                               | :ref:`config-developer`.               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``dask``                      | :ref:`config-dask`.                    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``diagnostics``               | Only run the selected diagnostics from | :obj:`list` or :obj:`str`   | ``None`` (all diagnostics)             |
-|                               | the recipe, see :ref:`running`.        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
-|                               | be stored. [#f4]_                      |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``drs``                       | Directory structure for input data.    | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
-|                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic scripts).                   |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
-|                               | ``info``, ``warning``, ``error``).     |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``logging``                   | :ref:`config-logging`.                 | :obj:`dict`                 | See :ref:`config-logging`              |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see :ref:`task_priority`. [#f5]_       |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``output_dir``                | Directory where all output will be     | :obj:`str`                  | ``~/esmvaltool_output``                |
-|                               | written, see :ref:`outputdata`.        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``output_file_type``          | Plot file type.                        | :obj:`str`                  | ``png``                                |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic run. [#f3]_                 |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``projects``                  | :ref:`config-projects`.                | :obj:`dict`                 | See table in :ref:`config-projects`    |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
-|                               | the run was successful, see also       |                             |                                        |
-|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``resume_from``               | Resume previous run(s) by using        | :obj:`list` of :obj:`str`   | ``[]``                                 |
-|                               | preprocessor output files from these   |                             |                                        |
-|                               | output directories, see                |                             |                                        |
-|                               | ref:`running`.                         |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
-|                               | projects. [#f2]_                       |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``save_intermediary_cubes``   | Save intermediary cubes from the       | :obj:`bool`                 | ``False``                              |
-|                               | preprocessor, see also                 |                             |                                        |
-|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
-|                               | (``never``, ``when_missing``,          |                             |                                        |
-|                               | ``always``). [#f4]_                    |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
+
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``auxiliary_data_dir``
+     - Directory where auxiliary data is stored. [#f1]_
+     - :obj:`str`
+     - ``~/auxiliary_data``
+   * - ``check_level``
+     - Sensitivity of the CMOR check (``debug``, ``strict``, ``default``, ``relaxed``, ``ignore``), see :ref:`cmor_check_strictness`.
+     - :obj:`str`
+     - ``default``
+   * - ``compress_netcdf``
+     - Use netCDF compression.
+     - :obj:`bool`
+     - ``False``
+   * - ``config_developer_file``
+     - Path to custom :ref:`config-developer`.
+     - :obj:`str`
+     - ``None`` (default file)
+   * - ``dask``
+     - :ref:`config-dask`.
+     - :obj:`dict`
+     - See :ref:`config-dask-defaults`
+   * - ``diagnostics``
+     - Only run the selected diagnostics from the recipe, see :ref:`running`.
+     - :obj:`list` or :obj:`str`
+     - ``None`` (all diagnostics)
+   * - ``download_dir``
+     - [deprecated] Directory where downloaded data will be stored. [#f2]_
+     - :obj:`str`
+     - ``~/climate_data``
+   * - ``drs``
+     - [deprecated] Directory structure for input data. [#f2]_
+     - :obj:`dict`
+     - ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6: ESGF, CORDEX: ESGF, obs4MIPs: ESGF}``
+   * - ``exit_on_warning``
+     - Exit on warning (only used in NCL diagnostic scripts).
+     - :obj:`bool`
+     - ``False``
+   * - ``log_level``
+     - Log level of the console (``debug``, ``info``, ``warning``, ``error``).
+     - :obj:`str`
+     - ``info``
+   * - ``logging``
+     - :ref:`config-logging`.
+     - :obj:`dict`
+     - See :ref:`config-logging`
+   * - ``max_datasets``
+     - Maximum number of datasets to use, see :ref:`running`.
+     - :obj:`int`
+     - ``None`` (all datasets from recipe)
+   * - ``max_parallel_tasks``
+     - Maximum number of parallel processes, see :ref:`task_priority`. [#f5]_
+     - :obj:`int`
+     - ``None`` (number of available CPUs)
+   * - ``max_years``
+     - Maximum number of years to use, see :ref:`running`.
+     - :obj:`int`
+     - ``None`` (all years from recipe)
+   * - ``output_dir``
+     - Directory where all output will be written, see :ref:`outputdata`.
+     - :obj:`str`
+     - ``~/esmvaltool_output``
+   * - ``output_file_type``
+     - Plot file type.
+     - :obj:`str`
+     - ``png``
+   * - ``profile_diagnostic``
+     - Use a profiling tool for the diagnostic run. [#f3]_
+     - :obj:`bool`
+     - ``False``
+   * - ``projects``
+     - :ref:`config-projects`.
+     - :obj:`dict`
+     - See table in :ref:`config-projects`
+   * - ``remove_preproc_dir``
+     - Remove the ``preproc`` directory if the run was successful, see :ref:`preprocessed_datasets`.
+     - :obj:`bool`
+     - ``True``
+   * - ``resume_from``
+     - Resume previous run(s) by using preprocessor output files from these output directories, see :ref:`running`.
+     - :obj:`list` of :obj:`str`
+     - ``[]``
+   * - ``rootpath``
+     - [deprecated] Rootpaths to the data from different projects. [#f2]_
+     - :obj:`dict`
+     - ``{default: ~/climate_data}``
+   * - ``run_diagnostic``
+     - Run diagnostic scripts, see :ref:`running`.
+     - :obj:`bool`
+     - ``True``
+   * - ``save_intermediary_cubes``
+     - Save intermediary cubes from the preprocessor, see also :ref:`preprocessed_datasets`.
+     - :obj:`bool`
+     - ``False``
+   * - ``search_data``
+     - Perform a quick or complete search for input data. When set to ``quick``, search will stop as soon as a result is found. (``quick``, ``complete``)
+     - :obj:`str`
+     - ``quick``
+   * - ``search_esgf``
+     - [deprecated] Automatic data download from ESGF (``never``, ``when_missing``, ``always``). [#f2]_
+     - :obj:`str`
+     - ``never``
+   * - ``skip_nonexistent``
+     - Skip non-existent datasets, see :ref:`running`.
+     - :obj:`bool`
+     - ``False``
 
 .. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
     additional auxiliary data files.
@@ -268,10 +299,8 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
        This setting is not for model or observational datasets, rather it is
        for extra data files such as shapefiles or other data sources needed by
        the diagnostics.
-.. [#f2] A detailed explanation of the data finding-related options ``drs``
-    and ``rootpath`` is presented in the :ref:`data-retrieval` section.
-    These sections relate directly to the data finding capabilities of
-    ESMValCore and are very important to be understood by the user.
+.. [#f2] This option is scheduled for removal in v2.14.0. Please use
+    :ref:`data sources <config-data-sources>` to configure data finding instead.
 .. [#f3] The ``profile_diagnostic`` setting triggers profiling of Python
     diagnostics, this will tell you which functions in the diagnostic took most
     time to run.
@@ -288,19 +317,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
     Note that it is also possible to use vprof to understand other resources
     used while running the diagnostic, including execution time of different
     code blocks and memory usage.
-.. [#f4] The ``search_esgf`` setting can be used to disable or enable automatic
-   downloads from ESGF.
-   If ``search_esgf`` is set to ``never``, the tool does not download any data
-   from the ESGF.
-   If ``search_esgf`` is set to ``when_missing``, the tool will download any
-   CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a
-   recipe but not available locally and store it in ``download_dir`` using the
-   ``ESGF`` directory structure defined in the :ref:`config-developer`.
-   If ``search_esgf`` is set to ``always``, the tool will first check the ESGF
-   for the needed data, regardless of any local data availability; if the data
-   found on ESGF is newer than the local data (if any) or the user specifies a
-   version of the data that is available only from the ESGF, then that data
-   will be downloaded; otherwise, local data will be used.
 .. [#f5] When using ``max_parallel_tasks`` with a value larger than 1 with the
    Dask threaded scheduler, every task will start ``num_workers`` threads.
    To avoid running out of memory or slowing down computations due to competition
@@ -789,8 +805,8 @@ and tailor it for your system.
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
     and the :mod:`esmvalcore.local` data sources has not yet been implemented.
     Therefore it is recommended not to use the configuration option
-    ``search_esgf: always`` when using both data sources for the same project.
-    The ``search_esgf: when_missing`` option can be safely used.
+    ``search_data: complete`` when using both data sources for the same project.
+    The ``search_data: quick`` option can be safely used.
 
 Climate model data in its native format
 ```````````````````````````````````````
@@ -944,10 +960,24 @@ ESGF configuration
 
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
-The downloaded files will be stored in the directory specified via the
-:ref:`configuration option <config_options>` ``download_dir``.
-To enable automatic downloads from ESGF, use the :ref:`configuration options
-<config_options>` ``search_esgf: when_missing`` or ``search_esgf: always``.
+
+The easiest way to use this, it to use the intake-esgf based data sources by
+running the command:
+
+.. code-block:: bash
+
+    esmvaltool config copy data-intake-esgf.yml
+
+If you prefer to use the legacy
+`esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_ based data source, you
+can copy the configuration file by running the command:
+
+.. code-block:: bash
+
+    esmvaltool config copy data-esmvalcore-esgf.yml
+
+In the latter case, the downloaded files will be stored in the directory
+specified via the ``download_dir``.
 
 .. note::
 
@@ -967,8 +997,8 @@ To enable automatic downloads from ESGF, use the :ref:`configuration options
 
 Configuration file
 ------------------
-An optional configuration file can be created for configuring how the tool uses
-`esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_
+An optional configuration file can be created for configuring how the
+:class:`esmvalcore.esgf.ESGFDataSource` uses esgf-pyclient_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
 

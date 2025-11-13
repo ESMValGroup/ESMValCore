@@ -258,11 +258,14 @@ class IntakeESGFDataSource(DataSource):
             self.catalog.search(**query, quiet=True)
         except intake_esgf.exceptions.NoSearchResults:
             self.debug_info = (
-                "intake_esgf.ESGFCatalog.search("
+                "`intake_esgf.ESGFCatalog().search("
                 + ", ".join(
-                    [f"{k}={v}" for k, v in query.items()],
+                    [
+                        f"{k}={v}" if isinstance(v, list) else f"{k}='{v}'"
+                        for k, v in query.items()
+                    ],
                 )
-                + ") did not return any results."
+                + ")` did not return any results."
             )
             return []
 

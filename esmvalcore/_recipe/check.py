@@ -178,18 +178,26 @@ def variable(
         raise RecipeError(msg)
 
 
+def get_no_data_message(dataset: Dataset) -> str:
+    """Generate a message for debugging missing data in dataset."""
+    lines = [
+        f"No files were found for {dataset},\nusing data sources:",
+        "\n".join(
+            f"- data source: {data_source}\n  message: {data_source.debug_info}"
+            for data_source in sorted(
+                dataset._used_data_sources,  # noqa: SLF001
+                key=lambda d: d.priority,
+            )
+        ),
+    ]
+    return "\n".join(lines)
+
+
 def _log_data_availability_errors(dataset: Dataset) -> None:
     """Check if the required input data is available."""
-    input_files = dataset.files
-    patterns = dataset._file_globs  # noqa: SLF001
-    if not input_files:
-        logger.error("No input files found for %s", dataset)
-        if patterns:
-            if len(patterns) == 1:
-                msg = f": {patterns[0]}"
-            else:
-                msg = "\n{}".format("\n".join(str(p) for p in patterns))
-            logger.error("Looked for files matching%s", msg)
+    if not dataset.files:
+        msg = get_no_data_message(dataset)
+        logger.error(msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
