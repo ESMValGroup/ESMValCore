@@ -48,3 +48,8 @@ ORAS5:
     so:
       raw_name: vosaline
       raw_units: '0.001'
+  
+  # MIP-specific settings
+  Omon:
+    '*':
+      tres: 1M
