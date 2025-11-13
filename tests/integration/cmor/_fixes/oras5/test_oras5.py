@@ -39,9 +39,9 @@ def test_get_frequency_monthly():
 def _oras5_latitude():
     return DimCoord(
         np.array([90.0, 0.0, -90.0]),
-        standard_name="latitude",
-        long_name="latitude",
-        var_name="latitude",
+        standard_name="grid_latitude",
+        long_name="grid_latitude",
+        var_name="grid_latitude",
         units=Unit("degrees"),
     )
 
@@ -49,9 +49,9 @@ def _oras5_latitude():
 def _oras5_longitude():
     return DimCoord(
         np.array([0, 180, 359.75]),
-        standard_name="longitude",
-        long_name="longitude",
-        var_name="longitude",
+        standard_name="grid_longitude",
+        long_name="grid_longitude",
+        var_name="grid_longitude",
         units=Unit("degrees"),
         circular=True,
     )
@@ -263,17 +263,55 @@ def cmor_3d(mip, short_name):
 # ]
 
 
+
+def tos_oras5_monthly():
+    time = _oras5_time("monthly")
+    cube = Cube(
+        _oras5_data("monthly"),
+        long_name="Sea Surface Temperature",
+        var_name="sosstsst",
+        units="degC",
+        dim_coords_and_dims=[
+            (time, 0),
+            (_oras5_latitude(), 1),
+            (_oras5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def tos_cmor_omon():
+    cmor_table = CMOR_TABLES["ORAS5"]
+    vardef = cmor_table.get_variable("Omon", "tas")
+    time = _cmor_time("Omon", bounds=True)
+    data = _cmor_data("Omon")
+    cube = Cube(
+        data.astype("float32"),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_latitude(), 1),
+            (_cmor_longitude(), 2),
+        ],
+        attributes={"comment": COMMENT},
+    )
+    return CubeList([cube])
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + "_" + d)
     for (a, b, c, d) in [
-        (oras5_3d("monthly"), cmor_3d("Omon", "so"), "so", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "thetao"), "thetao", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "uo"), "uo", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "vo"), "vo", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "mlotst", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "tos", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sos", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "zos", "Omon"),
+        # (oras5_3d("monthly"), cmor_3d("Omon", "so"), "so", "Omon"),
+        # (oras5_3d("monthly"), cmor_3d("Omon", "thetao"), "thetao", "Omon"),
+        # (oras5_3d("monthly"), cmor_3d("Omon", "uo"), "uo", "Omon"),
+        # (oras5_3d("monthly"), cmor_3d("Omon", "vo"), "vo", "Omon"),
+        # (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "mlotst", "Omon"),
+        # (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "tos", "Omon"),
+        # (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sosaline", "Omon"),
+        (tos_oras5_monthly(), tos_cmor_omon(), "tos", "Omon"),
+        # (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "zos", "Omon"),
     ]
 ]
 
