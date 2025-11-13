@@ -148,7 +148,6 @@ def _cmor_depth():
     )
     return DimCoord(
         values,
-        axis="Z",
         long_name="ocean depth coordinate",
         standard_name="depth",
         units=Unit("m"),
