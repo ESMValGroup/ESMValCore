@@ -194,7 +194,7 @@ def oras5_3d(frequency):
     return CubeList([cube])
 
 def cmor_2d(mip, short_name):
-    cmor_table = CMOR_TABLES["oras5"]
+    cmor_table = CMOR_TABLES["native6"]
     vardef = cmor_table.get_variable(mip, short_name)
     if "mon" in mip:
         time = DimCoord(
@@ -224,7 +224,7 @@ def cmor_2d(mip, short_name):
 
 
 def cmor_3d(mip, short_name):
-    cmor_table = CMOR_TABLES["oras5"]
+    cmor_table = CMOR_TABLES["native6"]
     vardef = cmor_table.get_variable(mip, short_name)
     cube = Cube(
         np.ones((3, 2, 3, 3)),
@@ -268,7 +268,7 @@ def test_cmorization(oras5_cubes, cmor_cubes, var, mip):
     cmor_cube = cmor_cubes[0]
 
     # Test that CMOR checks are passing
-    fixed_cubes = cmor_check_metadata(fixed_cube, "oras5", mip, var)
+    fixed_cubes = cmor_check_metadata(fixed_cube, "native6", mip, var)
 
     if fixed_cube.coords("time"):
         for cube in [fixed_cube, cmor_cube]:
