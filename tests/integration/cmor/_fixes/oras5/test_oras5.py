@@ -310,7 +310,7 @@ VARIABLES = [
         # (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "mlotst", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "tos", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sosaline", "Omon"),
-        (tos_oras5_monthly(), tos_cmor_omon(), "tos", "Omon"),
+        (tos_oras5_monthly(), tos_cmor_omon(), "sosstsst", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "zos", "Omon"),
     ]
 ]
