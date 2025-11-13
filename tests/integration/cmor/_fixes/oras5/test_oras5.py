@@ -82,7 +82,6 @@ def _oras5_depth():
     )
     return DimCoord(
         values,
-        axis="Z",
         long_name="Vertical T levels",
         units=Unit("m"),
         var_name="deptht",
