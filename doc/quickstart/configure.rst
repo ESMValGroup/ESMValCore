@@ -388,6 +388,13 @@ Available predefined Dask profiles:
   debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
 
+To copy these predefined profiles to your configuration directory for further
+customization, run the command:
+
+.. code:: bash
+
+  esmvaltool config copy defaults/dask.yml
+
 Dask distributed scheduler configuration
 ----------------------------------------
 
@@ -736,7 +743,7 @@ There are three modules available as part of ESMValCore that provide data source
 - :mod:`esmvalcore.io.intake_esgf`: Use the
   `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
   is available from ESGF.
-- :mod:`esmvalcore.local`: Use glob patterns to find files on a filesystem.
+- :mod:`esmvalcore.local`: Use :mod:`glob` patterns to find files on a filesystem.
 - :mod:`esmvalcore.esgf`: Use the legacy `esgf-pyclient
   <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
   from ESGF.
@@ -768,9 +775,12 @@ through the ``native6`` project.
 
 .. warning::
 
-    It is important to configure intake-esgf for your system as described in
-    :mod:`esmvalcore.io.intake_esgf` before running the tool with this
-    configuration.
+    It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
+    for your system before using it. Make sure to set ``local_cache`` to a path
+    where it can store downloaded files, and if (some) ESGF data is already
+    available on your system, point ``esg_dataroot`` to it. If you are
+    missing certain search results, you may want to choose a different
+    index node for searching the ESGF.
 
 HPC system
 ``````````
@@ -796,9 +806,12 @@ and tailor it for your system.
 
 .. warning::
 
-    It is important to configure intake-esgf for your system as described in
-    :mod:`esmvalcore.io.intake_esgf` before running the tool with this
-    configuration.
+    It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
+    for your system before using it. Make sure to set ``local_cache`` to a path
+    where it can store downloaded files, and if (some) ESGF data is already
+    available on your system, point ``esg_dataroot`` to it. If you are
+    missing certain search results, you may want to choose a different
+    index node for searching the ESGF.
 
 .. note::
 
@@ -961,23 +974,10 @@ ESGF configuration
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
-The easiest way to use this, it to use the intake-esgf based data sources by
-running the command:
-
-.. code-block:: bash
-
-    esmvaltool config copy data-intake-esgf.yml
-
-If you prefer to use the legacy
-`esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_ based data source, you
-can copy the configuration file by running the command:
-
-.. code-block:: bash
-
-    esmvaltool config copy data-esmvalcore-esgf.yml
-
-In the latter case, the downloaded files will be stored in the directory
-specified via the ``download_dir``.
+Refer to :ref:`config-data-sources` for instructions on how to set this up. This
+section describes additional configuration options for the :mod:`esmvalcore.esgf`
+module, which is based on the legacy esgf-pyclient_ library. Most users
+will not need this.
 
 .. note::
 

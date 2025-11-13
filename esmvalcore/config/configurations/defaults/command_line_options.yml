@@ -1,4 +1,4 @@
-# Configuration options typically set from the command line.
+# Default values for configuration options typically set from the command line.
 
 check_level: default
 diagnostics: null
