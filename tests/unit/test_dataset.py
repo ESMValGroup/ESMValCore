@@ -1470,7 +1470,7 @@ def dataset():
         alias="CMIP6_EC-Earth3_tas",
     )
     dataset.session = {
-        "search_data": "quick",
+        "search_data": "complete",
         "download_dir": Path("/download_dir"),
         "projects": {
             "CMIP6": {
@@ -1480,10 +1480,12 @@ def dataset():
                         "rootpath": Path("/local_dir"),
                         "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
                         "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                        "priority": 1,
                     },
                     "esgf": {
                         "type": "esmvalcore.esgf.ESGFDataSource",
                         "download_dir": Path("/download_dir"),
+                        "priority": 2,
                     },
                 },
             },
@@ -1610,9 +1612,9 @@ def test_find_files_outdated_local(mocker, dataset):
     "project",
     ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "native6"],
 )
-def test_find_files_non_esgf_projects(mocker, monkeypatch, session, project):
+def test_find_files_non_esgf_projects(mocker, session, project):
     """Test that find_files does never download files for non-ESGF projects."""
-    monkeypatch.setitem(CFG, "search_data", "complete")
+    session["search_data"] = "complete"
     # Add "model" projects that are not part of the default local configuration.
     with importlib.resources.as_file(
         importlib.resources.files(esmvalcore.config)
