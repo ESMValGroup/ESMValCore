@@ -199,7 +199,7 @@ def oras5_3d(frequency):
     return CubeList([cube])
 
 def cmor_2d(mip, short_name):
-    cmor_table = CMOR_TABLES["native6"]
+    cmor_table = CMOR_TABLES["ORAS5"]
     vardef = cmor_table.get_variable(mip, short_name)
     if "mon" in mip:
         time = DimCoord(
@@ -229,7 +229,7 @@ def cmor_2d(mip, short_name):
 
 
 def cmor_3d(mip, short_name):
-    cmor_table = CMOR_TABLES["native6"]
+    cmor_table = CMOR_TABLES["ORAS5"]
     vardef = cmor_table.get_variable(mip, short_name)
     cube = Cube(
         np.ones((3, 2, 3, 3)),
@@ -266,14 +266,14 @@ VARIABLES = [
 @pytest.mark.parametrize("oras5_cubes, cmor_cubes, var, mip", VARIABLES)
 def test_cmorization(oras5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-    fixed_cubes = fix_metadata(oras5_cubes, var, "oras5", "oras5", mip)
+    fixed_cubes = fix_metadata(oras5_cubes, var, "ORAS5", "oras5", mip)
 
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
 
     # Test that CMOR checks are passing
-    fixed_cubes = cmor_check_metadata(fixed_cube, "native6", mip, var)
+    fixed_cubes = cmor_check_metadata(fixed_cube, "ORAS5", mip, var)
 
     if fixed_cube.coords("time"):
         for cube in [fixed_cube, cmor_cube]:
@@ -312,7 +312,7 @@ def unstructured_grid_cubes():
     )
     cube = Cube(
         da.from_array([[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]]),
-        standard_name="Sea Surface Salinity",
+        standard_name="sea_surface_salinity",
         units="0.001",
         dim_coords_and_dims=[(time, 0)],
         aux_coords_and_dims=[(lat, 1), (lon, 1)],
@@ -325,7 +325,7 @@ def test_unstructured_grid(unstructured_grid_cubes):
     fixed_cubes = fix_metadata(
         unstructured_grid_cubes,
         "sos",
-        "oras5",
+        "ORAS5",
         "oras5",
         "Omon",
     )
