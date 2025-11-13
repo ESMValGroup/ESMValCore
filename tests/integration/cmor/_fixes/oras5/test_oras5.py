@@ -248,20 +248,34 @@ def cmor_3d(mip, short_name):
     return CubeList([cube])
 
 
+# VARIABLES = [
+#     pytest.param(a, b, c, d, id=c + "_" + d)
+#     for (a, b, c, d) in [
+#         (oras5_3d("monthly"), cmor_3d("Omon", "so"), "vosaline", "Omon"),
+#         (oras5_3d("monthly"), cmor_3d("Omon", "thetao"), "votemper", "Omon"),
+#         (oras5_3d("monthly"), cmor_3d("Omon", "uo"), "vozocrte", "Omon"),
+#         (oras5_3d("monthly"), cmor_3d("Omon", "vo"), "vozocrte", "Omon"),
+#         (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "somxl010", "Omon"),
+#         (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "sosstsst", "Omon"),
+#         (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sosaline", "Omon"),
+#         (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "sossheig", "Omon"),
+#     ]
+# ]
+
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + "_" + d)
     for (a, b, c, d) in [
-        (oras5_3d("monthly"), cmor_3d("Omon", "so"), "vosaline", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "thetao"), "votemper", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "uo"), "vozocrte", "Omon"),
-        (oras5_3d("monthly"), cmor_3d("Omon", "vo"), "vozocrte", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "somxl010", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "sosstsst", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sosaline", "Omon"),
-        (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "sossheig", "Omon"),
+        (oras5_3d("monthly"), cmor_3d("Omon", "so"), "so", "Omon"),
+        (oras5_3d("monthly"), cmor_3d("Omon", "thetao"), "thetao", "Omon"),
+        (oras5_3d("monthly"), cmor_3d("Omon", "uo"), "uo", "Omon"),
+        (oras5_3d("monthly"), cmor_3d("Omon", "vo"), "vo", "Omon"),
+        (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "mlotst", "Omon"),
+        (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "tos", "Omon"),
+        (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sos", "Omon"),
+        (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "zos", "Omon"),
     ]
 ]
-
 
 @pytest.mark.parametrize("oras5_cubes, cmor_cubes, var, mip", VARIABLES)
 def test_cmorization(oras5_cubes, cmor_cubes, var, mip):
@@ -324,7 +338,7 @@ def test_unstructured_grid(unstructured_grid_cubes):
     """Test processing unstructured data."""
     fixed_cubes = fix_metadata(
         unstructured_grid_cubes,
-        "sos",
+        "sosaline",
         "ORAS5",
         "oras5",
         "Omon",
