@@ -5,12 +5,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from esmvalcore.preprocessor._regrid_esmpy import (
-    ESMPyAreaWeighted,
-    ESMPyLinear,
-    ESMPyNearest,
-    ESMPyRegridder,
-)
 from esmvalcore.preprocessor._regrid_iris_esmf_regrid import IrisESMFRegrid
 from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinear,
@@ -26,10 +20,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "ESMPyAreaWeighted",
-    "ESMPyLinear",
-    "ESMPyNearest",
-    "ESMPyRegridder",
     "IrisESMFRegrid",
     "GenericFuncScheme",
     "GenericRegridder",
