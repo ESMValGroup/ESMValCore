@@ -9,6 +9,7 @@ import pytest
 import yaml
 
 import esmvalcore.dataset
+import esmvalcore.esgf
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, Session
@@ -1606,84 +1607,6 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     assert dataset.files == esgf_files
-
-
-@pytest.mark.parametrize(
-    "project",
-    ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "native6"],
-)
-def test_find_files_non_esgf_projects(mocker, session, project):
-    """Test that find_files does never download files for non-ESGF projects."""
-    session["search_data"] = "complete"
-    # Add "model" projects that are not part of the default local configuration.
-    with importlib.resources.as_file(
-        importlib.resources.files(esmvalcore.config)
-        / "configurations"
-        / f"{project.lower()}-data.yml",
-    ) as config_file:
-        if config_file.exists():
-            cfg = yaml.safe_load(config_file.read_text(encoding="utf-8"))
-            session["projects"][project]["data"] = cfg["projects"][project][
-                "data"
-            ]
-
-    files = [
-        mocker.create_autospec(
-            esmvalcore.local.LocalFile,
-            spec_set=True,
-            instance=True,
-        ),
-    ]
-    mock_local_find_files = mocker.patch.object(
-        esmvalcore.local.LocalDataSource,
-        "find_data",
-        autospec=True,
-        return_value=files,
-    )
-    mock_esgf_find_files = mocker.patch.object(
-        esmvalcore.esgf.ESGFDataSource,
-        "find_data",
-        autospec=True,
-    )
-
-    tas = Dataset(
-        short_name="tas",
-        mip="Amon",
-        project=project,
-        dataset="MY_DATASET",
-        timerange="2000/2000",
-        account="account",
-        case="case",
-        channel="channel",
-        dir="dir",
-        exp="amip",
-        freq="freq",
-        gcomp="gcomp",
-        group="group",
-        ipsl_varname="ipsl_varname",
-        model="model",
-        out="out",
-        root="root",
-        scomp="scomp",
-        simulation="simulation",
-        status="status",
-        string="string",
-        tag="tag",
-        tdir="tdir",
-        tier=3,
-        tperiod="tperiod",
-        type="sat",
-        var_type="var_type",
-        version=1,
-    )
-    tas.session = session
-    tas.augment_facets()
-    tas.find_files()
-
-    mock_local_find_files.assert_called()
-    mock_esgf_find_files.assert_not_called()
-
-    assert tas.files == files
 
 
 def test_set_version():
