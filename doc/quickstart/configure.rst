@@ -1086,12 +1086,13 @@ Developer configuration file
 
 Most users and diagnostic developers will not need to change this file,
 but it may be useful to understand its content.
-The settings from this are being moved to the
-:ref:`new configuration system <config_overview>`. In particular, the ``input_dir``
-and ``input_file`` settings have already been replaced by the
-:class:`esmvalcore.local.LocalDataSource` that can be configured via
-:ref:`data sources <config-data-sources>`.
-It will be installed along with ESMValCore and can also be viewed on GitHub:
+The settings from this file are being moved to the
+:ref:`new configuration system <config_overview>`. In particular, the
+``input_dir``, ``input_file``, and ``ignore_warnings`` settings have already
+been replaced by the :class:`esmvalcore.local.LocalDataSource` that can be
+configured via :ref:`data sources <config-data-sources>`.
+The developer configuration file will be installed along with ESMValCore and can
+also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the CMOR tables for several

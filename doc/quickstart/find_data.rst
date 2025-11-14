@@ -70,7 +70,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
   /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
-Observational data CMORized by ESMValTool are organized in Tiers depending on
+Observational datasets CMORized by ESMValTool are organized in Tiers depending on
 their level of public availability.
 
 .. _read_native_datasets:
@@ -104,9 +104,14 @@ The following native reanalysis/observational datasets are supported under the
 To use these datasets, put the files containing the data in the directory that
 you have :ref:`configured <config-data-sources>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming you are
-using the default DRS for ``native6`` as defined in
-:download:`../configurations/data-local-esmvaltool.yml`).
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``, assuming you are
+using the default DRS for ``native6`` as defined in the file:
+
+.. literalinclude:: ../configurations/data-local-esmvaltool.yml
+    :caption: Contents of ``data-local-esmvaltool.yml``
+    :start-after: # Read native6, OBS6, and OBS data from the filesystem on a personal computer.
+    :end-before: # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
+
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
 
@@ -119,8 +124,8 @@ ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
 the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
 For example for monthly data, place the files in the
 ``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the  default DRS
-for ``native6`` as defined in :download:`../configurations/data-local-esmvaltool.yml`).
+configured for the ``native6`` project (assuming you are using the default DRS
+for ``native6`` described :ref:`above <read_native_obs>`).
 
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
   ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
@@ -158,7 +163,15 @@ in its native GRIB format.
   structure for the input files.
 
 To read these data with ESMValCore, use the data definition for the ``native6``
-project from :download:`../configurations/data-hpc-dkrz.yml`.
+project:
+
+.. literalinclude:: ../configurations/data-hpc-dkrz.yml
+    :caption: Contents of ``data-hpc-dkrz.yml``
+    :start-at: # ERA5 data in GRIB format:
+    :end-before: OBS6:
+
+To use this configuration, run ``esmvaltool config copy data-hpc-dkrz.yml``.
+
 The `naming conventions
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
 for input directories and files for native ERA5 data in GRIB format on Levante
@@ -217,9 +230,8 @@ MSWEP
 
 For example for monthly data, place the files in the
 ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are
-using the default DRS for ``native6`` as defined in
-:download:`../configurations/data-local-esmvaltool.yml`).
+configured for the ``native6`` project (assuming you are using the default DRS
+for ``native6`` described :ref:`above <read_native_obs>`).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -261,8 +273,12 @@ The default naming conventions for input directories and files for CESM are
    * ``{case}/{gcomp}/proc/{tdir}/{tperiod}`` (post-processed data)
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
-as configured in :download:`../configurations/data-native-cesm.yml`). To use
-this configuration, run ``esmvaltool config copy data-native-cesm.yml`` and
+as configured in:
+
+.. literalinclude:: ../configurations/data-native-cesm.yml
+    :caption: Contents of ``data-native-cesm.yml``
+
+To use this configuration, run ``esmvaltool config copy data-native-cesm.yml`` and
 adapt the ``rootpath`` to your system.
 More information about CESM naming conventions are given `here
 <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
@@ -341,8 +357,12 @@ The default naming conventions for input directories and files for EMAC are
 * input directories: ``{exp}/{channel}``
 * input files: ``{exp}*{channel}{postproc_flag}.nc``
 
-as configured in :download:`../configurations/data-native-emac.yml`). To use
-this configuration, run ``esmvaltool config copy data-native-emac.yml`` and
+as configured in:
+
+.. literalinclude:: ../configurations/data-native-emac.yml
+    :caption: Contents of ``data-native-emac.yml``
+
+To use this configuration, run ``esmvaltool config copy data-native-emac.yml`` and
 adapt the ``rootpath`` to your system.
 
 Thus, example dataset entries could look like this:
@@ -418,8 +438,12 @@ The default naming conventions for input directories and files for ICON are
 * input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
 * input files: ``{exp}_{var_type}*.nc``
 
-as configured in :download:`../configurations/data-native-icon.yml`). To use
-this configuration, run ``esmvaltool config copy data-native-icon.yml`` and
+as configured in:
+
+.. literalinclude:: ../configurations/data-native-icon.yml
+    :caption: Contents of ``data-native-icon.yml``
+
+To use this configuration, run ``esmvaltool config copy data-native-icon.yml`` and
 adapt the ``rootpath`` to your system.
 
 Currently, two different versions of ICON are supported:
@@ -644,7 +668,7 @@ formats) are supported, and should be configured in recipes as e.g.:
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
 
-and data can be found running ``esmvaltool config copy data-native-ipslcm.yml``
+and data can be found by running ``esmvaltool config copy data-native-ipslcm.yml``
 and adapting the ``rootpath`` to your system.
 
 .. _ipslcm_extra_facets_example:
@@ -676,8 +700,12 @@ The default naming conventions for input directories and files for ACCESS output
 * input directories: ``{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF``
 * input files: ``{sub_dataset}.{special_attr}-*.nc``
 
-as configured in :download:`../configurations/data-native-access.yml`). To use
-this configuration, run ``esmvaltool config copy data-native-access.yml`` and
+as configured in:
+
+.. literalinclude:: ../configurations/data-native-access.yml
+    :caption: Contents of ``data-native-access.yml``
+
+To use this configuration, run ``esmvaltool config copy data-native-access.yml`` and
 adapt the ``rootpath`` to your system.
 
 Thus, example dataset entries could look like this:
