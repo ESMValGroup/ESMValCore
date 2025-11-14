@@ -1,3 +1,4 @@
+import logging
 import textwrap
 from pathlib import Path
 
@@ -302,6 +303,57 @@ def test_get_input_datasets_derive(session):
     assert rlns["frequency"] == "1hr"
 
 
+def test_get_input_datasets_derive_optional(caplog, tmp_path, session):
+    facets = {
+        "project": "OBS6",
+        "dataset": "SAT",
+        "mip": "SImon",
+        "short_name": "siextent",
+        "tier": 2,
+        "type": "sat",
+        "timerange": "1980/2000",
+        "derive": True,
+    }
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    sic_file = LocalFile(
+        input_dir / "OBS6_SAT_sat_1_SImon_siconca_1980-2000.nc",
+    )
+    sic_file.touch()
+
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset.session = session
+
+    with caplog.at_level(logging.INFO):
+        datasets = to_datasets._get_input_datasets(dataset)
+
+    expected = Dataset(
+        dataset="SAT",
+        project="OBS6",
+        mip="SImon",
+        short_name="siconca",
+        derive=False,
+        frequency="mon",
+        long_name="Sea-Ice Area Percentage (Atmospheric Grid)",
+        modeling_realm=["seaIce"],
+        optional="true",
+        original_short_name="siconca",
+        standard_name="sea_ice_area_fraction",
+        tier=2,
+        timerange="1980/2000",
+        type="sat",
+        units="%",
+    )
+    expected.session = session
+
+    assert datasets == [expected]
+
+    logger_infos = [r.message for r in caplog.records if r.levelname == "INFO"]
+    assert "which is marked as 'optional'" in logger_infos[-1]
+
+
 def test_max_years(session):
     recipe_txt = textwrap.dedent("""
     diagnostics:
@@ -345,26 +397,6 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
 
     with pytest.raises(RecipeError, match=r"Unable to replace dataset.*"):
         to_datasets._dataset_from_files(dataset)
-
-
-def test_fix_cmip5_fx_ensemble(monkeypatch):
-    def find_files(self):
-        if self.facets["ensemble"] == "r0i0p0":
-            self._files = ["file1.nc"]
-
-    monkeypatch.setattr(Dataset, "find_files", find_files)
-
-    dataset = Dataset(
-        dataset="dataset1",
-        short_name="orog",
-        mip="fx",
-        project="CMIP5",
-        ensemble="r1i1p1",
-    )
-
-    to_datasets._fix_cmip5_fx_ensemble(dataset)
-
-    assert dataset["ensemble"] == "r0i0p0"
 
 
 def test_get_supplementary_short_names(monkeypatch):
