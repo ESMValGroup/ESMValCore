@@ -737,16 +737,6 @@ _LEGACY_DATA_SOURCES_WARNED: set[str] = set()
 
 def _get_data_sources(project: str) -> list[LocalDataSource]:
     """Get a list of data sources."""
-    if project not in _LEGACY_DATA_SOURCES_WARNED:
-        logger.warning(
-            (
-                "Using legacy data sources for project '%s' using 'rootpath' "
-                "and 'drs' settings and the path templates from '%s'"
-            ),
-            project,
-            CFG["config_developer_file"],
-        )
-        _LEGACY_DATA_SOURCES_WARNED.add(project)
     rootpaths = CFG["rootpath"]
     default_drs = {
         "CMIP3": "ESGF",
@@ -789,6 +779,16 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
                     for d in dir_templates
                     for f in file_templates
                 )
+            if project not in _LEGACY_DATA_SOURCES_WARNED:
+                logger.warning(
+                    (
+                        "Using legacy data sources for project '%s' using 'rootpath' "
+                        "and 'drs' settings and the path templates from '%s'"
+                    ),
+                    project,
+                    CFG["config_developer_file"],
+                )
+                _LEGACY_DATA_SOURCES_WARNED.add(project)
             return sources
 
     msg = (

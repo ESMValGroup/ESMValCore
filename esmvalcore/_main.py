@@ -794,7 +794,7 @@ class ESMValTool:
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-    from .exceptions import RecipeError
+    from esmvalcore.exceptions import SuppressedError
 
     # Workaround to avoid using more for the output
 
@@ -808,7 +808,7 @@ def run():
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
-    except RecipeError as exc:
+    except SuppressedError as exc:
         # Hide the stack trace for RecipeErrors
         logger.error("%s", exc)
         logger.debug("Stack trace for debugging:", exc_info=True)

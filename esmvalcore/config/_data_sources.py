@@ -2,11 +2,13 @@
 
 import logging
 
+import yaml
+
 import esmvalcore.esgf
 import esmvalcore.esgf.facets
 import esmvalcore.local
 from esmvalcore.config import Session
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 from esmvalcore.io import load_data_sources
 from esmvalcore.io.protocol import DataSource
 
@@ -33,7 +35,7 @@ def _get_data_sources(
 
     Raises
     ------
-    ValueError:
+    InvalidConfigParameter:
         If the project or its settings are not found in the configuration.
 
     """
@@ -64,9 +66,22 @@ def _get_data_sources(
     data_sources.extend(legacy_local_data_sources)
 
     if not data_sources:
+        cfg_snippet = {
+            "projects": {
+                p: {
+                    "data": session["projects"].get(p, {}).get("data", {}),
+                }
+                for p in (
+                    session["projects"] if project is None else [project]
+                )
+            },
+        }
         msg = (
-            f"No data sources found for project '{project}'. "
-            f"Check your configuration under 'projects: {project}: data'"
+            f"No data sources found for project '{project}'. Current configuration:\n"
+            f"{yaml.safe_dump(cfg_snippet)}"
+            "Please configure a data source by following the instructions at "
+            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
+            "quickstart/configure.html#project-specific-configuration"
         )
-        raise ValueError(msg)
+        raise InvalidConfigParameter(msg)
     return data_sources

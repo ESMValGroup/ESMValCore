@@ -3,6 +3,7 @@ import pytest
 import esmvalcore.config._data_sources
 import esmvalcore.local
 from esmvalcore.config import Session
+from esmvalcore.exceptions import InvalidConfigParameter
 
 
 def test_load_data_sources_no_project_data_sources_configured(
@@ -10,7 +11,7 @@ def test_load_data_sources_no_project_data_sources_configured(
 ) -> None:
     """Test that loading data sources when no data sources are configured raises."""
     with pytest.raises(
-        ValueError,
+        InvalidConfigParameter,
         match=r"No data sources found for project 'test'.*",
     ):
         esmvalcore.config._data_sources._get_data_sources(

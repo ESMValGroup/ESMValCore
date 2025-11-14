@@ -717,9 +717,9 @@ The following project-specific options are available:
 
 Data sources
 ------------
-The ``data`` section can be used to define sources of input data. The easiest
-way to get started with these is to copy one of the example configuration files
-and tailor it to your needs.
+The ``data`` section defines sources of input data. The easiest way to get
+started with these is to copy one of the example configuration files and tailor
+it to your needs.
 
 To list the available example configuration files, run the command:
 
