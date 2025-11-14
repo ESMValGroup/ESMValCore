@@ -61,7 +61,7 @@ def session(cfg):
         ("max_datasets", 2),
         ("max_years", 2),
         ("skip_nonexistent", True),
-        ("search_esgf", "when_missing"),
+        ("search_data", "complete"),
         ("diagnostics", "diagnostic_name/group_name"),
         ("check_level", "strict"),
     ],
@@ -96,9 +96,9 @@ def test_run_command_line_config(mocker, cfg, argument, value, tmp_path):
     assert session[argument] == value
 
 
-@pytest.mark.parametrize("search_esgf", ["never", "when_missing", "always"])
-def test_run(mocker, session, search_esgf):
-    session["search_esgf"] = search_esgf
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_run(mocker, session, search_data):
+    session["search_data"] = search_data
     session["log_level"] = "default"
     session["remove_preproc_dir"] = True
     session["save_intermediary_cubes"] = False
@@ -255,7 +255,7 @@ def test_header(
             cli_config_dir,
         )
 
-    assert len(caplog.messages) == 8
+    assert len(caplog.messages) in [8, 9]
     assert caplog.messages[0] == HEADER
     assert caplog.messages[1] == "Package versions"
     assert caplog.messages[2] == "----------------"
@@ -270,7 +270,8 @@ def test_header(
             f"{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line argument)",
         ],
     )
-    assert caplog.messages[7] == (
+    # There might be a warning about ~/.esmvaltool/config-user.yml here.
+    assert caplog.messages[-1] == (
         "Writing program log files to:\npath_to_log_file1\npath_to_log_file2"
     )
 

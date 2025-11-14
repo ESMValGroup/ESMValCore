@@ -16,7 +16,7 @@ import yamale
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
@@ -178,18 +178,26 @@ def variable(
         raise RecipeError(msg)
 
 
+def get_no_data_message(dataset: Dataset) -> str:
+    """Generate a message for debugging missing data in dataset."""
+    lines = [
+        f"No files were found for {dataset},\nusing data sources:",
+        "\n".join(
+            f"- data source: {data_source}\n  message: {data_source.debug_info}"
+            for data_source in sorted(
+                dataset._used_data_sources,  # noqa: SLF001
+                key=lambda d: d.priority,
+            )
+        ),
+    ]
+    return "\n".join(lines)
+
+
 def _log_data_availability_errors(dataset: Dataset) -> None:
     """Check if the required input data is available."""
-    input_files = dataset.files
-    patterns = dataset._file_globs  # noqa: SLF001
-    if not input_files:
-        logger.error("No input files found for %s", dataset)
-        if patterns:
-            if len(patterns) == 1:
-                msg = f": {patterns[0]}"
-            else:
-                msg = "\n{}".format("\n".join(str(p) for p in patterns))
-            logger.error("Looked for files matching%s", msg)
+    if not dataset.files:
+        msg = get_no_data_message(dataset)
+        logger.error(msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
@@ -231,7 +239,9 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets:
+    if "timerange" not in facets or any(
+        "timerange" not in f.facets for f in input_files
+    ):
         return
 
     start_date, end_date = _parse_period(facets["timerange"])
@@ -241,8 +251,10 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
     available_years: set[int] = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file)
-        available_years.update(range(start, end + 1))
+        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+        start_year = int(start_date[:4])
+        end_year = int(end_date[:4])
+        available_years.update(range(start_year, end_year + 1))
 
     missing_years = required_years - available_years
     if missing_years:

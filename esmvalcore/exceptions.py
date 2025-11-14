@@ -32,7 +32,7 @@ class InvalidConfigParameter(Error, SuppressedError):
     """Config parameter is invalid."""
 
 
-class RecipeError(Error):
+class RecipeError(Error, SuppressedError):
     """Recipe contains an error."""
 
     def __init__(self, msg: str) -> None:

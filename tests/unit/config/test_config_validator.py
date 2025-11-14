@@ -26,6 +26,7 @@ from esmvalcore.config._config_validators import (
     validate_positive,
     validate_projects,
     validate_rootpath,
+    validate_search_data,
     validate_search_esgf,
     validate_string,
     validate_string_or_none,
@@ -201,6 +202,16 @@ def generate_validator_testcases(valid):
             "validator": validate_string_or_none,
             "success": ((None, None),),
             "fail": (),
+        },
+        {
+            "validator": validate_search_data,
+            "success": (
+                ("quick", "quick"),
+                ("QUICK", "quick"),
+                ("complete", "complete"),
+                ("Complete", "complete"),
+            ),
+            "fail": (0, 3.14, True, "fail"),
         },
         {
             "validator": validate_search_esgf,

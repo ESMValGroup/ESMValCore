@@ -1,18 +1,61 @@
+import importlib.resources
 import textwrap
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
-from unittest import mock
 
 import pyesgf
 import pytest
+import yaml
 
 import esmvalcore.dataset
+import esmvalcore.esgf
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.typing import Facets
+
+
+@lru_cache
+def _load_default_data_sources() -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load default data sources for local users."""
+    cfg: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = {
+        "projects": {},
+    }
+    for file in (
+        "data-local.yml",
+        "data-local-esmvaltool.yml",
+        "data-native-cesm.yml",
+        "data-native-emac.yml",
+        "data-native-icon.yml",
+        "data-native-ipslcm.yml",
+    ):
+        with importlib.resources.as_file(
+            importlib.resources.files(esmvalcore.config)
+            / "configurations"
+            / file,
+        ) as config_file:
+            content = config_file.read_text(encoding="utf-8")
+            cfg["projects"].update(yaml.safe_load(content)["projects"])
+    return cfg
+
+
+@pytest.fixture
+def session(tmp_path: Path, session: Session) -> Session:
+    """Session fixture with default local data sources."""
+    projects = _load_default_data_sources()["projects"]
+    for project in projects:
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(tmp_path)
+        session["projects"][project]["data"] = data_sources
+    return session
 
 
 def test_repr():
@@ -873,6 +916,7 @@ def test_from_files_with_globs(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
     file2 = esmvalcore.local.LocalFile(
@@ -984,6 +1028,7 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
     file2 = esmvalcore.local.LocalFile(
@@ -1030,7 +1075,6 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
         mip="Amon",
         project="CMIP6",
         short_name="tas",
-        timerange="185001/201412",
     )
 
     expected.session = session
@@ -1065,6 +1109,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
 
@@ -1250,7 +1295,7 @@ def test_concatenating_historical_and_future_exps(mocker):
     assert dataset.supplementaries[0].facets["exp"] == "historical"
 
 
-def test_from_recipe_with_glob(tmp_path, session, mocker):
+def test_from_recipe_with_glob(tmp_path: Path, session: Session) -> None:
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
@@ -1267,8 +1312,6 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
     recipe = tmp_path / "recipe_test.yml"
     recipe.write_text(recipe_txt, encoding="utf-8")
 
-    session["drs"]["CMIP5"] = "ESGF"
-    CFG["rootpath"]["CMIP5"] = [tmp_path]
     filenames = [
         "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
         "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc",
@@ -1280,7 +1323,7 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("")
 
-    definitions = [
+    definitions: list[Facets] = [
         {
             "diagnostic": "diagnostic1",
             "variable_group": "tas",
@@ -1420,18 +1463,34 @@ def dataset():
         mip="Amon",
         frequency="mon",
         short_name="tas",
-        dataset="EC.-Earth3",
+        dataset="EC-Earth3",
         exp="historical",
         ensemble="r1i1p1f1",
         grid="gr",
         timerange="1850/1851",
-        alias="CMIP6_EC-Eeath3_tas",
+        alias="CMIP6_EC-Earth3_tas",
     )
     dataset.session = {
-        "search_esgf": "when_missing",
+        "search_data": "complete",
         "download_dir": Path("/download_dir"),
-        "rootpath": None,
-        "drs": {},
+        "projects": {
+            "CMIP6": {
+                "data": {
+                    "local": {
+                        "type": "esmvalcore.local.LocalDataSource",
+                        "rootpath": Path("/local_dir"),
+                        "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+                        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                        "priority": 1,
+                    },
+                    "esgf": {
+                        "type": "esmvalcore.esgf.ESGFDataSource",
+                        "download_dir": Path("/download_dir"),
+                        "priority": 2,
+                    },
+                },
+            },
+        },
     }
     return dataset
 
@@ -1461,14 +1520,14 @@ def test_find_files(mocker, dataset, local_availability):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(list(local_files), []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1498,14 +1557,14 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1535,78 +1594,19 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
 
     assert dataset.files == esgf_files
-
-
-@pytest.mark.parametrize(
-    "project",
-    ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "ana4mips", "native6"],
-)
-def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
-    """Test that find_files does never download files for non-ESGF projects."""
-    monkeypatch.setitem(CFG, "search_esgf", "always")
-    mock_local_find_files = mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
-        autospec=True,
-        return_value=(mock.sentinel.files, mock.sentinel.file_globs),
-    )
-    mock_esgf_find_files = mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
-        autospec=True,
-    )
-
-    tas = Dataset(
-        short_name="tas",
-        mip="Amon",
-        project=project,
-        dataset="MY_DATASET",
-        timerange="2000/2000",
-        account="account",
-        case="case",
-        channel="channel",
-        dir="dir",
-        exp="amip",
-        freq="freq",
-        gcomp="gcomp",
-        group="group",
-        ipsl_varname="ipsl_varname",
-        model="model",
-        out="out",
-        root="root",
-        scomp="scomp",
-        simulation="simulation",
-        status="status",
-        string="string",
-        tag="tag",
-        tdir="tdir",
-        tier=3,
-        tperiod="tperiod",
-        type="sat",
-        var_type="var_type",
-        version=1,
-    )
-    tas.augment_facets()
-    tas.find_files()
-
-    mock_local_find_files.assert_called_once()
-    mock_esgf_find_files.assert_not_called()
-
-    assert tas.files == mock.sentinel.files
-    assert tas._file_globs == mock.sentinel.file_globs
 
 
 def test_set_version():
@@ -1679,9 +1679,9 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset["timerange"] == output_time
 
 
-@pytest.mark.parametrize("search_esgf", ["never", "when_missing", "always"])
-def test_update_timerange_no_files(session, search_esgf):
-    session["search_esgf"] = search_esgf
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_update_timerange_no_files(session, search_data):
+    session["search_data"] = search_data
     variable = {
         "alias": "CMIP6",
         "project": "CMIP6",
@@ -1755,7 +1755,7 @@ def test_load(mocker, session):
 
     mocker.patch.object(esmvalcore.dataset, "preprocess", mock_preprocess)
 
-    items = [mocker.sentinel.file]
+    items = [mocker.create_autospec(esmvalcore.local.LocalFile, instance=True)]
     dataset.files = items
 
     cube = dataset.load()
@@ -1776,9 +1776,7 @@ def test_load(mocker, session):
     assert order == load_order
 
     load_args = {
-        "load": {
-            "ignore_warnings": None,
-        },
+        "load": {},
         "fix_file": {
             "add_unique_suffix": True,
             "dataset": "CanESM2",
@@ -1842,12 +1840,12 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    items[0].prepare.assert_called_once()
 
 
 def test_load_fail(session):
     dataset = Dataset()
     dataset.session = session
-    dataset.session["search_esgf"] = "when_missing"
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
@@ -2137,7 +2135,7 @@ def test_get_extra_facets_native6():
     }
 
 
-OBS6_SAT_FACETS = {
+OBS6_SAT_FACETS: Facets = {
     "project": "OBS6",
     "dataset": "SAT",
     "mip": "Amon",
@@ -2191,8 +2189,11 @@ def test_derivation_necessary_no_derivation():
     assert dataset._derivation_necessary() is False
 
 
-def test_derivation_necessary_no_force_derivation_no_files():
+def test_derivation_necessary_no_force_derivation_no_files(
+    session: Session,
+) -> None:
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.session = session
     assert dataset._derivation_necessary() is True
 
 

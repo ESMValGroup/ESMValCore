@@ -409,7 +409,10 @@ is cloned and run the command
 
 Optionally you can skip tests which require additional dependencies for
 supported diagnostic script languages by adding ``-m 'not installation'`` to the
-previous command. To only run tests from a single file, run the command
+previous command. If you are working in a place with a slow internet connection,
+you may want to skip tests that require an internet connection by adding
+``-m 'not online'`` to the command.
+To only run tests from a single file, run the command
 
 .. code-block:: bash
 

@@ -131,8 +131,8 @@ See :ref:`CMOR-DRS` for more information on this kind of file organization.
 When (some) files are available locally, the tool will not automatically look
 for more files on ESGF.
 To populate a recipe with all available datasets from ESGF, the
-:ref:`configuration option <config_options>` ``search_esgf`` should be set to
-``always``.
+:ref:`configuration option <config_options>` ``search_data`` should be set to
+``complete`` and an :ref:`ESGF data source <config-esgf>` needs to be configured.
 
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose

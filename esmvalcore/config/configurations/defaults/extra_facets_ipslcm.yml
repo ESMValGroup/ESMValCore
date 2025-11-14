@@ -1,3 +1,5 @@
+# Extra facets for native IPSL-CM6 model output.
+
 # Mapping, for IPSLCM output formats 'Analyse' and 'Output', between a
 # CMOR variable name and the labels to use by ESMValTool to find the
 # corresponding file, and the corresponding variable in the file

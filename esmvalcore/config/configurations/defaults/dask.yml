@@ -1,3 +1,5 @@
+# Dask configuration profiles.
+
 dask:
   use: local_threaded  # use the `local_threaded` profile defined below
   profiles:

@@ -11,6 +11,7 @@ import pytest
 import requests
 import yaml
 from pyesgf.search.results import FileResult
+from pytest_mock import MockerFixture
 
 import esmvalcore.esgf
 from esmvalcore.esgf import _download
@@ -241,11 +242,66 @@ def test_init():
         "dataset": "ABC",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "2000/2001",
         "version": "v1",
     }
     txt = f"ESGFFile:CMIP6/ABC/v1/{filename} on hosts ['something.org']"
     assert repr(file) == txt
     assert hash(file) == hash(("CMIP6.ABC.v1", filename))
+
+
+@pytest.fixture
+def esgf_file() -> _download.ESGFFile:
+    """ESGFFile fixture."""
+    json = {
+        "dataset_id": "CMIP6.dataset.v1|something.org",
+        "dataset_id_template_": ["%(mip_era)s.%(source_id)s"],
+        "project": ["CMIP6"],
+        "size": 12,
+        "title": "test.nc",
+    }
+    return _download.ESGFFile(
+        [FileResult(json=json, context=None)],
+        dest_folder=Path("/path/to/climate_data"),
+    )
+
+
+def test_prepare(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
+    """Test `ESGFFile.prepare`."""
+    download = mocker.patch.object(_download.ESGFFile, "download")
+    esgf_file.prepare()
+    download.assert_called_once_with(esgf_file.dest_folder)
+
+
+def test_attribute_not_set(esgf_file: _download.ESGFFile) -> None:
+    """Test accessing `ESGFFile.attributes` before calling to_iris."""
+    with pytest.raises(
+        ValueError,
+        match=r"Attributes have not been read yet. Call the `to_iris` method .*",
+    ):
+        _ = esgf_file.attributes
+
+
+def test_to_iris(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
+    """Test `ESGFFile.prepare`."""
+    prepare = mocker.patch.object(_download.ESGFFile, "prepare")
+    local_file_to_iris = mocker.patch.object(
+        esmvalcore.esgf._download.LocalFile,
+        "to_iris",
+        return_value=mocker.sentinel.iris_cubes,
+    )
+    mocker.patch.object(
+        esmvalcore.esgf._download.LocalFile,
+        "attributes",
+        new_callable=mocker.PropertyMock,
+        return_value={"attribute": "value"},
+    )
+    cubes = esgf_file.to_iris()
+
+    assert cubes == mocker.sentinel.iris_cubes
+    assert esgf_file.attributes == {"attribute": "value"}
+    prepare.assert_called_once()
+    local_file_to_iris.assert_called_once()
 
 
 def test_from_results():
@@ -478,7 +534,7 @@ def test_single_download(mocker, tmp_path, checksum):
     response.iter_content.assert_called_with(chunk_size=2**20)
 
 
-def test_download_skip_existing(tmp_path, caplog):
+def test_download_skip_existing(tmp_path: Path, mocker: MockerFixture) -> None:
     filename = "test.nc"
     dataset = "dataset"
     dest_folder = tmp_path
@@ -496,12 +552,9 @@ def test_download_skip_existing(tmp_path, caplog):
     local_file = file.local_file(dest_folder)
     local_file.parent.mkdir(parents=True)
     local_file.touch()
-
-    caplog.set_level(logging.DEBUG)
-
+    mock_download = mocker.patch.object(_download.ESGFFile, "_download")
     local_file = file.download(dest_folder)
-
-    assert f"Skipping download of existing file {local_file}" in caplog.text
+    mock_download.assert_not_called()
 
 
 def test_single_download_fail(mocker, tmp_path):
@@ -632,10 +685,8 @@ def test_download_fail(mocker, tmp_path, caplog):
         file.download.assert_called_with(dest_folder)
 
 
-def test_download_noop(caplog):
+def test_download_noop(mocker: MockerFixture) -> None:
     """Test downloading no files."""
-    caplog.set_level("DEBUG")
+    mock_download = mocker.patch.object(_download.ESGFFile, "_download")
     esmvalcore.esgf.download([], dest_folder="/does/not/exist")
-
-    msg = "All required data is available locally, not downloading anything."
-    assert msg in caplog.text
+    mock_download.assert_not_called()

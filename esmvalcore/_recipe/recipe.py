@@ -23,6 +23,7 @@ from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
+    GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
     _get_output_file,
@@ -38,7 +39,6 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
-from esmvalcore.preprocessor._io import GRIB_FORMATS
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from esmvalcore.config import Session
+    from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
@@ -328,20 +329,12 @@ def _update_weighting_settings(
     _exclude_dataset(settings, facets, "weighting_landsea_fraction")
 
 
-def _add_to_download_list(dataset: Dataset) -> None:
-    """Add the files of `dataset` to `DOWNLOAD_FILES`."""
-    for i, file in enumerate(dataset.files):
-        if isinstance(file, esgf.ESGFFile):
-            DOWNLOAD_FILES.add(file)
-            dataset.files[i] = file.local_file(dataset.session["download_dir"])
-
-
 def _schedule_for_download(datasets: Iterable[Dataset]) -> None:
     """Schedule files for download."""
     for dataset in datasets:
-        _add_to_download_list(dataset)
+        DOWNLOAD_FILES.update(dataset.files)
         for supplementary_ds in dataset.supplementaries:
-            _add_to_download_list(supplementary_ds)
+            DOWNLOAD_FILES.update(supplementary_ds.files)
 
 
 def _log_input_files(datasets: Iterable[Dataset]) -> None:
@@ -367,12 +360,7 @@ def _log_input_files(datasets: Iterable[Dataset]) -> None:
 
 def _get_files_str(dataset: Dataset) -> str:
     """Get nice string representation of all files of a dataset."""
-    return "\n".join(
-        f"  {f}"
-        if f.exists()  # type: ignore
-        else f"  {f} (will be downloaded)"
-        for f in dataset.files
-    )
+    return "\n".join(f"  {f}" for f in dataset.files)
 
 
 def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
@@ -455,10 +443,7 @@ def _get_common_attributes(
 
     # Ensure that attributes start_year and end_year are always available if at
     # least one of the input datasets defines it
-    if "timerange" in attributes:
-        start_year, end_year = _parse_period(attributes["timerange"])
-        attributes["start_year"] = int(str(start_year[0:4]))
-        attributes["end_year"] = int(str(end_year[0:4]))
+    _set_start_end_year(attributes)
 
     return attributes
 
@@ -722,7 +707,7 @@ def _get_preprocessor_products(
     )
 
     for product in products:
-        _set_start_end_year(product)
+        _set_start_end_year(product.attributes)
         product.check()
 
     return products
@@ -782,18 +767,18 @@ def _configure_multi_product_preprocessor(
 
     for product in multimodel_products | ensemble_products:
         product.check()
-        _set_start_end_year(product)
+        _set_start_end_year(product.attributes)
 
 
-def _set_start_end_year(product: PreprocessorFile) -> None:
+def _set_start_end_year(attributes: dict[str, Any]) -> None:
     """Set the attributes `start_year` and `end_year`.
 
     These attributes are used by many diagnostic scripts in ESMValTool.
     """
-    if "timerange" in product.attributes:
-        start_year, end_year = _parse_period(product.attributes["timerange"])
-        product.attributes["start_year"] = int(str(start_year[0:4]))
-        product.attributes["end_year"] = int(str(end_year[0:4]))
+    if "timerange" in attributes:
+        start_year, end_year = _parse_period(attributes["timerange"])
+        attributes["start_year"] = int(str(start_year[0:4]))
+        attributes["end_year"] = int(str(end_year[0:4]))
 
 
 def _update_preproc_functions(
@@ -916,7 +901,7 @@ class Recipe:
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
         USED_DATASETS.clear()
-        self._download_files: set[esgf.ESGFFile] = set()
+        self._download_files: set[DataElement] = set()
         self.session = session
         self.session["write_ncl_interface"] = self._need_ncl(
             raw_recipe["diagnostics"],
@@ -945,7 +930,7 @@ class Recipe:
         for task in exc.failed_tasks:
             logger.error(task.message)
 
-        if self.session["search_esgf"] == "never" and any(
+        if any(
             isinstance(err, InputFilesNotFound) for err in exc.failed_tasks
         ):
             logger.error(
@@ -953,27 +938,20 @@ class Recipe:
                 "found.",
             )
             logger.error(
-                "If the files are available locally, please check "
-                "your `rootpath` and `drs` settings in your configuration "
-                "file(s)",
+                "If the files are available, please check the debug log and "
+                "the configuration of your data sources.",
             )
             logger.error(
-                "To automatically download the required files to "
-                "`download_dir: %s`, use `search_esgf: when_missing` or "
-                "`search_esgf: always` in your configuration file(s), or run "
-                "the recipe with the command line argument "
-                "--search_esgf=when_missing or --search_esgf=always",
-                self.session["download_dir"],
+                "To see your current configuration, run the command "
+                '`esmvaltool config show` and check the "data" entries.',
             )
-            logger.info(
-                "Note that automatic download is only available for files"
-                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
-                ", ".join(list(esgf.facets.FACETS)[:-1]),
-                list(esgf.facets.FACETS)[-1],
+            logger.error(
+                "To see the available example configurations, run the "
+                "command: `esmvaltool config list`.",
             )
 
     @staticmethod
-    def _need_ncl(raw_diagnostics: Diagnostic) -> bool:
+    def _need_ncl(raw_diagnostics: dict[str, Diagnostic]) -> bool:
         if not raw_diagnostics:
             return False
         for diagnostic in raw_diagnostics.values():
@@ -996,8 +974,8 @@ class Recipe:
 
     def _initialize_diagnostics(
         self,
-        raw_diagnostics: Diagnostic,
-    ) -> Diagnostic:
+        raw_diagnostics: dict[str, Diagnostic],
+    ) -> dict[str, Diagnostic]:
         """Define diagnostics in recipe."""
         logger.debug("Retrieving diagnostics from recipe")
         check.diagnostics(raw_diagnostics)
@@ -1013,7 +991,7 @@ class Recipe:
             variable_names = tuple(raw_diagnostic.get("variables", {}))
             diagnostic["scripts"] = self._initialize_scripts(
                 name,
-                raw_diagnostic.get("scripts"),
+                raw_diagnostic.get("scripts", {}),
                 variable_names,
             )
             for key in ("themes", "realms"):
@@ -1342,8 +1320,10 @@ class Recipe:
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
-        if self.session["search_esgf"] != "never":
-            esgf.download(self._download_files, self.session["download_dir"])
+        # Add a special case for ESGF files to enable parallel downloads
+        esgf.download(self._download_files)
+        for file in self._download_files:
+            file.prepare()
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(

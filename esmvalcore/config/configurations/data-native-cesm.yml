@@ -1,0 +1,15 @@
+# Read data from the CESM model in its native format.
+projects:
+  CESM:
+    data:
+      run: &cesm
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: "" # run directory
+        filename_template: "{case}.{scomp}.{type}.{string}*nc"
+      short-term-archive:
+        <<: *cesm
+        dirname_template: "{case}/{gcomp}/hist" # short-term archiving
+      postprocessed:
+        <<: *cesm
+        dirname_template: "{case}/{gcomp}/proc/{tdir}/{tperiod}" # postprocessed data

@@ -1,0 +1,19 @@
+# Download CMIP, CORDEX, and obs4MIPs data from ESGF using the `esmvalcore.esgf`
+# module, which uses the legacy ESGF search interface.
+projects:
+  CMIP6: &esgf-pyclient-data
+    data:
+      esgf-pyclient:
+        type: "esmvalcore.esgf.ESGFDataSource"
+        download_dir: ~/climate_data
+        # Use a lower priority than for esmvalcore.local.LocalDataSource
+        # to avoid searching ESGF with the setting `search_esgf: when_missing`.
+        priority: 10
+  CMIP5:
+    <<: *esgf-pyclient-data
+  CMIP3:
+    <<: *esgf-pyclient-data
+  CORDEX:
+    <<: *esgf-pyclient-data
+  obs4MIPs:
+    <<: *esgf-pyclient-data

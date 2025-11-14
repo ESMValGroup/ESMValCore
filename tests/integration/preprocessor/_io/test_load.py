@@ -13,7 +13,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.exceptions import ESMValCoreLoadWarning
-from esmvalcore.preprocessor._io import _get_attr_from_field_coord, load
+from esmvalcore.preprocessor._io import load
 from tests import assert_array_equal
 
 
@@ -141,15 +141,13 @@ def test_callback_fix_lat_units(tmp_path, sample_cube):
     assert str(sample_cube.coord("latitude").units) == "degrees_north"
 
 
-def test_get_attr_from_field_coord_none(mocker):
-    """Test ``_get_attr_from_field_coord``."""
-    attr = _get_attr_from_field_coord(mocker.sentinel.ncfield, None, "attr")
-    assert attr is None
-
-
 def test_fail_empty_cubes(mocker):
     """Test that ValueError is raised when cubes are empty."""
-    mocker.patch("iris.load_raw", autospec=True, return_value=CubeList([]))
+    mocker.patch(
+        "esmvalcore.preprocessor._io.LocalFile.to_iris",
+        autospec=True,
+        return_value=CubeList([]),
+    )
     msg = "myfilename does not contain any data"
     with pytest.raises(ValueError, match=msg):
         load("myfilename")

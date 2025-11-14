@@ -19,6 +19,7 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
+  - intake-esgf >=2025.10.22
   - intake-esm
   - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
   - iris-esmf-regrid >=0.11.0
