@@ -46,6 +46,7 @@ dependencies = [
     "geopy",
     "humanfriendly",
     "intake-esgf",
+    "globus-sdk<4",  # https://github.com/esgf2-us/intake-esgf/issues/150
     "intake-esm",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",

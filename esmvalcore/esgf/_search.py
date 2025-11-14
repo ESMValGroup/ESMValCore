@@ -426,8 +426,9 @@ class ESGFDataSource(DataSource):
         files = find_files(**facets)
         for file in files:
             file.dest_folder = self.download_dir
+        start_msg = "Search" if files else "No search"
         self.debug_info = (
-            f"No search results found on ESGF with query: {FIRST_ONLINE_INDEX_NODE}"
+            f"{start_msg} results found on ESGF with query: {FIRST_ONLINE_INDEX_NODE}"
             "/search?format=application%2Fsolr%2Bjson&distrib=true&type=File&"
             + "&".join(f"{k}={v}" for k, v in get_esgf_facets(facets).items())
         )

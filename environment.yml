@@ -21,6 +21,7 @@ dependencies:
   - geopy
   - humanfriendly
   - intake-esgf
+  - globus-sdk <4  # https://github.com/esgf2-us/intake-esgf/issues/150
   - intake-esm
   - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
   - iris-esmf-regrid >=0.11.0
