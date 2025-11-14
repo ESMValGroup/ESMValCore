@@ -266,7 +266,9 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - :obj:`bool`
      - ``False``
    * - ``search_data``
-     - Perform a quick or complete search for input data. When set to ``quick``, search will stop as soon as a result is found. (``quick``, ``complete``)
+     - Perform a quick or complete search for input data. When set to ``quick``,
+       search will stop as soon as a result is found. :ref:`Data sources <config-data-sources>`
+       with a lower value for ``priority`` will be searched first. (``quick``, ``complete``)
      - :obj:`str`
      - ``quick``
    * - ``search_esgf``
