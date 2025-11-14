@@ -269,7 +269,6 @@ def sosstsst_oras5_monthly():
     cube = Cube(
         _oras5_data("monthly"),
         long_name="Sea Surface Temperature",
-        raw_name="sosstsst",
         var_name="sosstsst",
         units="degC",
         dim_coords_and_dims=[
