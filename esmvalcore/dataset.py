@@ -274,6 +274,9 @@ class Dataset:
                 f"{dataset} with unexpanded wildcards, created from file "
                 f"{file} with facets {file.facets}. Please check why "
                 "the missing facets are not available for the file."
+                "This will depend on the data source they come from, e.g. can "
+                "they be extracted from the path for local files, or are they "
+                "available from ESGF when when searching ESGF for files?"
             )
             if expanded:
                 logger.info("Ignoring %s", msg)
