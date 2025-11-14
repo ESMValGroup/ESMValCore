@@ -264,7 +264,7 @@ def cmor_3d(mip, short_name):
 
 
 
-def tos_oras5_monthly():
+def sosstsst_oras5_monthly():
     time = _oras5_time("monthly")
     cube = Cube(
         _oras5_data("monthly"),
@@ -310,7 +310,7 @@ VARIABLES = [
         # (oras5_2d("monthly"), cmor_2d("Omon", "mlotst"), "mlotst", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "tos"), "tos", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "sos"), "sosaline", "Omon"),
-        (tos_oras5_monthly(), tos_cmor_omon(), "sosstsst", "Omon"),
+        (sosstsst_oras5_monthly(), tos_cmor_omon(), "sosstsst", "Omon"),
         # (oras5_2d("monthly"), cmor_2d("Omon", "zos"), "zos", "Omon"),
     ]
 ]
