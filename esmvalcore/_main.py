@@ -410,8 +410,6 @@ class ESMValTool:
                     f"existing directory"
                 )
                 raise NotADirectoryError(msg)
-
-        if CFG.get("config_file") is None and cli_config_dir is not None:
             try:
                 CFG.update_from_dirs([cli_config_dir])
             except InvalidConfigParameter as exc:
@@ -578,6 +576,12 @@ class ESMValTool:
             "Reading configuration files from:\n%s",
             self._get_config_info(cli_config_dir),
         )
+        old_config_file = Path.home() / ".esmvaltool" / "config-user.yml"
+        if old_config_file.exists():
+            logger.warning(
+                "Ignoring old configuration file at %s",
+                old_config_file,
+            )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
 
