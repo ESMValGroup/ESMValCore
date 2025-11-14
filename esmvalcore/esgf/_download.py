@@ -1,5 +1,7 @@
 """Module for downloading files from ESGF."""
 
+from __future__ import annotations
+
 import concurrent.futures
 import contextlib
 import datetime
@@ -11,18 +13,15 @@ import os
 import random
 import re
 import shutil
-from collections.abc import Iterable
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-import iris.cube
 import requests
 import yaml
 from humanfriendly import format_size, format_timespan
-from pyesgf.search.results import FileResult
 
 from esmvalcore.config import CFG
 from esmvalcore.io.protocol import DataElement
@@ -31,9 +30,16 @@ from esmvalcore.local import (
     _dates_to_timerange,
     _get_start_end_date_from_filename,
 )
-from esmvalcore.typing import Facets
 
 from .facets import DATASET_MAP, FACETS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+    from pyesgf.search.results import FileResult
+
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ Find and download files from ESGF
 esmvalcore.esgf
 ---------------
 .. automodule:: esmvalcore.esgf
-   :noindex:
+   :no-inherited-members:
 
 esmvalcore.esgf.facets
 ----------------------

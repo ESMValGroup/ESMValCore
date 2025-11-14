@@ -1,11 +1,14 @@
 """Module for finding files on ESGF."""
 
+from __future__ import annotations
+
 import itertools
 import logging
 import os.path
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyesgf.search
 import requests.exceptions
@@ -17,10 +20,12 @@ from esmvalcore.local import (
     _replace_years_with_timerange,
     _truncate_dates,
 )
-from esmvalcore.typing import FacetValue
 
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
