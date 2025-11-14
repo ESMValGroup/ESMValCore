@@ -192,13 +192,8 @@ def test_run_invalid_config_dir(tmp_path):
         program.run("/recipe_dir/recipe_test.yml", config_dir=tmp_path)
 
 
-def test_run_invalid_cli_arg(monkeypatch, tmp_path):
+def test_run_invalid_cli_arg():
     """Test `ESMValTool.run`."""
-    monkeypatch.delitem(  # TODO: remove in v2.14.0
-        esmvalcore.config.CFG._mapping,
-        "config_file",
-        raising=False,
-    )
     program = ESMValTool()
 
     msg = r"Invalid command line argument given:"
@@ -228,25 +223,24 @@ def test_do_not_clean_preproc_dir(session):
     assert session._fixed_file_dir.exists()
 
 
-@mock.patch("esmvalcore._main.ESMValTool._get_config_info")
 @mock.patch("esmvalcore._main.entry_points")
 def test_header(
-    mock_entry_points,
-    mock_get_config_info,
-    monkeypatch,
-    tmp_path,
-    caplog,
-):
-    tmp_path.mkdir(parents=True, exist_ok=True)
+    mock_entry_points: mock.Mock,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user_config_dir = tmp_path
     monkeypatch.setattr(
         esmvalcore.config._config_object,
         "USER_CONFIG_DIR",
-        tmp_path,
+        user_config_dir,
     )
+    esmvalcore.config.CFG.reload()
     monkeypatch.setattr(
         esmvalcore.config._config_object,
         "USER_CONFIG_SOURCE",
-        "SOURCE",
+        "MOCK_SOURCE",
     )
     entry_point = mock.Mock()
     entry_point.dist.name = "MyEntry"
@@ -255,26 +249,29 @@ def test_header(
     mock_entry_points.return_value = [entry_point]
     cli_config_dir = tmp_path / "this" / "does" / "not" / "exist"
 
-    # TODO: remove in v2.14.0
-    mock_get_config_info.return_value = "config_dir (SOURCE)"
-
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
             ["path_to_log_file1", "path_to_log_file2"],
             cli_config_dir,
         )
 
-    assert len(caplog.messages) == 8
+    assert len(caplog.messages) in [8, 9]
     assert caplog.messages[0] == HEADER
     assert caplog.messages[1] == "Package versions"
     assert caplog.messages[2] == "----------------"
     assert caplog.messages[3] == f"ESMValCore: {__version__}"
     assert caplog.messages[4] == "MyEntry: v42.42.42"
     assert caplog.messages[5] == "----------------"
-    assert caplog.messages[6] == (
-        "Reading configuration files from:\nconfig_dir (SOURCE)"
+    assert caplog.messages[6] == "\n".join(
+        [
+            "Reading configuration files from:",
+            f"{Path(esmvalcore.config.__file__).parent}/configurations/defaults (defaults)",
+            f"{user_config_dir} (MOCK_SOURCE)",
+            f"{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line argument)",
+        ],
     )
-    assert caplog.messages[7] == (
+    # There might be a warning about ~/.esmvaltool/config-user.yml here.
+    assert caplog.messages[-1] == (
         "Writing program log files to:\npath_to_log_file1\npath_to_log_file2"
     )
 

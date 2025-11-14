@@ -15,7 +15,6 @@ from iris.coords import (
 )
 from iris.cube import Cube
 
-import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
 
 
@@ -51,30 +50,6 @@ def session(tmp_path: Path, ignore_existing_user_config, monkeypatch):
     """Session object with default settings."""
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
     return CFG.start_session("recipe_test")
-
-
-# TODO: remove in v2.14.0
-@pytest.fixture(autouse=True)
-def ignore_old_config_user(tmp_path, monkeypatch):
-    """Ignore potentially existing old config-user.yml file in all tests."""
-    nonexistent_config_dir = tmp_path / "nonexistent_config_dir"
-    monkeypatch.setattr(
-        Config,
-        "_DEFAULT_USER_CONFIG_DIR",
-        nonexistent_config_dir,
-    )
-
-
-# TODO: remove in v2.14.0
-@pytest.fixture(autouse=True)
-def ignore_old_dask_config_file(tmp_path, monkeypatch):
-    """Ignore potentially existing old dask.yml file in all tests."""
-    nonexistent_file = tmp_path / "nonexistent_file.yml"
-    monkeypatch.setattr(
-        esmvalcore.config._dask,
-        "CONFIG_FILE",
-        nonexistent_file,
-    )
 
 
 @pytest.fixture

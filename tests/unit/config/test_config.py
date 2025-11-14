@@ -227,7 +227,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "preproc_dir",
         "run_dir",
         "work_dir",
-        "config_dir",
     }
     # Check that only allowed keys are in it
     assert set(default_cfg) == set(session)
@@ -246,8 +245,6 @@ def test_load_default_config(cfg_default, monkeypatch):
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        assert session.config_dir is None
 
     # Check that projects were configured
     assert project_cfg

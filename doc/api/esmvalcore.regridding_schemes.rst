@@ -15,9 +15,9 @@ Example:
 
 .. code:: python
 
-   from esmvalcore.preprocessor.regrid_schemes import ESMPyAreaWeighted
+   from esmvalcore.preprocessor.regrid_schemes import IrisESMFRegrid
 
-   regridded_cube = cube.regrid(target_grid, ESMPyAreaWeighted())
+   regridded_cube = cube.regrid(target_grid, IrisESMFRegrid(method="conservative"))
 
 .. automodule:: esmvalcore.preprocessor.regrid_schemes
    :no-show-inheritance:
