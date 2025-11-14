@@ -34,8 +34,8 @@ directory. This will create a file with the following content:
 .. literalinclude:: ../configurations/data-esmvalcore-esgf.yml
    :language: yaml
 
-See :ref:`config-esgf` for instructions on additional configuration
-options of this module.
+See :ref:`config-data-sources` for more information on configuring data sources
+and :ref:`config-esgf` for additional configuration options of this module.
 """
 
 from esmvalcore.esgf._download import ESGFFile, download

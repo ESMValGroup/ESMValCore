@@ -37,6 +37,8 @@ the list of available files by running the command:
 
     esmvaltool config list
 
+Further information is available in :ref:`config-data-sources`.
+
 """
 
 from __future__ import annotations
@@ -552,12 +554,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
         self._regex_pattern = self._templates_to_regex()
 
-    @property
-    def regex_pattern(self) -> str:
-        """Get regex pattern that can be used to extract facets from paths."""
-        return self._regex_pattern
-
-    def get_glob_patterns(self, **facets) -> list[Path]:
+    def _get_glob_patterns(self, **facets) -> list[Path]:
         """Compose the globs that will be used to look for files."""
         dirname_globs = _replace_tags(self.dirname_template, facets)
         filename_globs = _replace_tags(self.filename_template, facets)
@@ -567,18 +564,25 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             for f in filename_globs
         )
 
-    def find_files(self, **facets) -> list[LocalFile]:
-        """Find files."""
-        # TODO: deprecate this method
-        return self.find_data(**facets)
-
     def find_data(self, **facets) -> list[LocalFile]:
-        """Find data locally."""
+        """Find data locally.
+
+        Parameters
+        ----------
+        **facets :
+            Find data matching these facets.
+
+        Returns
+        -------
+        :
+            A list of files.
+
+        """
         facets = dict(facets)
         if "original_short_name" in facets:
             facets["short_name"] = facets["original_short_name"]
 
-        globs = self.get_glob_patterns(**facets)
+        globs = self._get_glob_patterns(**facets)
         self.debug_info = "No files found matching glob pattern " + "\n".join(
             str(g) for g in globs
         )
@@ -589,7 +593,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             for filename in glob(str(glob_)):
                 file = LocalFile(filename)
                 file.facets.update(
-                    self.path2facets(
+                    self._path2facets(
                         file,
                         add_timerange="timerange" in facets,
                     ),
@@ -608,11 +612,11 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             files = _select_files(files, facets["timerange"])
         return files
 
-    def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
+    def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
         """Extract facets from path."""
         facets: dict[str, str] = {}
 
-        if (match := re.search(self.regex_pattern, str(path))) is not None:
+        if (match := re.search(self._regex_pattern, str(path))) is not None:
             for facet, value in match.groupdict().items():
                 if value:
                     facets[facet] = value
@@ -716,7 +720,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
 class DataSource(LocalDataSource):
     """Data source for finding files on a local filesystem.
 
-    .. deprecated:: 2.13.0
+    .. deprecated:: 2.14.0
          This class is deprecated and will be removed in version 2.16.0.
          Please use :class:`esmvalcore.local.LocalDataSource` instead.
     """
@@ -728,6 +732,23 @@ class DataSource(LocalDataSource):
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(*args, **kwargs)
+
+    @property
+    def regex_pattern(self) -> str:
+        """Get regex pattern that can be used to extract facets from paths."""
+        return self._regex_pattern
+
+    def get_glob_patterns(self, **facets) -> list[Path]:
+        """Compose the globs that will be used to look for files."""
+        return self._get_glob_patterns(**facets)
+
+    def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
+        """Extract facets from path."""
+        return self._path2facets(path, add_timerange)
+
+    def find_files(self, **facets) -> list[LocalFile]:
+        """Find files."""
+        return self.find_data(**facets)
 
 
 _ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
@@ -899,13 +920,16 @@ def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
     return result
 
 
-# TODO: Deprecate this?
 def find_files(
     *,
     debug: bool = False,
     **facets: FacetValue,
 ) -> list[LocalFile] | tuple[list[LocalFile], list[Path]]:
     """Find files on the local filesystem.
+
+    .. deprecated:: 2.14.0
+         This function is deprecated and will be removed in version 2.16.0.
+         Please use :method:`esmvalcore.local.LocalDataSource.find_data` instead.
 
     The directories that are searched for files are defined in
     :data:`esmvalcore.config.CFG` under the ``'rootpath'`` key using the
@@ -964,6 +988,12 @@ def find_files(
     list[LocalFile]
         The files that were found.
     """
+    msg = (
+        "The function 'esmvalcore.local.find_files' is deprecated and will be removed "
+        "in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource.find_data'"
+    )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+
     facets = dict(facets)
     if "original_short_name" in facets:
         facets["short_name"] = facets["original_short_name"]
@@ -972,7 +1002,7 @@ def find_files(
     filter_latest = False
     data_sources = _get_data_sources(facets["project"])  # type: ignore
     for data_source in data_sources:
-        for file in data_source.find_files(**facets):
+        for file in data_source.find_data(**facets):
             if file.facets.get("version") == "latest":
                 filter_latest = True
             files.append(file)
@@ -988,7 +1018,7 @@ def find_files(
     if debug:
         globs = []
         for data_source in data_sources:
-            globs.extend(data_source.get_glob_patterns(**facets))
+            globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
         return files, sorted(globs)
     return files
 

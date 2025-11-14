@@ -11,7 +11,7 @@
     index node for searching the ESGF.
 
 Run the command ``esmvaltool config copy data-intake-esgf.yml`` to update
-your :ref:`configuration <config_overview>` to use this module. This will
+your :ref:`configuration <config-data-sources>` to use this module. This will
 create a file with the following content in your configuration directory:
 
 .. literalinclude:: ../configurations/data-intake-esgf.yml

@@ -326,7 +326,7 @@ class IconFix(NativeDatasetFix):
         for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
             if isinstance(data_source, esmvalcore.local.LocalDataSource):
                 glob_patterns.extend(
-                    data_source.get_glob_patterns(**self.extra_facets),
+                    data_source._get_glob_patterns(**self.extra_facets),  # noqa: SLF001
                 )
         possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
         for grid_path in possible_grid_paths:

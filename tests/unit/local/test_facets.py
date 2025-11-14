@@ -296,7 +296,7 @@ def test_path2facets(
         filename_template=filename_template,
     )
     add_timerange = "timerange" in facets
-    result = data_source.path2facets(path, add_timerange=add_timerange)
+    result = data_source._path2facets(path, add_timerange=add_timerange)
     assert result == facets
 
 
@@ -313,7 +313,7 @@ def test_path2facets_no_timerange():
         dirname_template="{facet1}",
         filename_template="{facet2}[_.]*nc",
     )
-    result = data_source.path2facets(path, add_timerange=True)
+    result = data_source._path2facets(path, add_timerange=True)
     assert result == {
         "facet1": "value1",
         "facet2": "filename",

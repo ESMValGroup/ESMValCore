@@ -6,7 +6,8 @@ matching specific facets. A data element represents some data that can be
 loaded as Iris cubes.
 
 To add support for a new data source, write two classes that implement these
-protocols and configure the tool to use it as described in :mod:`esmvalcore.io`.
+protocols and configure the tool to use the newly implemented data source as
+described in :mod:`esmvalcore.io`.
 
 """
 
