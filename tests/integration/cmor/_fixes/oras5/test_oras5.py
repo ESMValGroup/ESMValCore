@@ -282,7 +282,7 @@ def sosstsst_oras5_monthly():
 
 def tos_cmor_omon():
     cmor_table = CMOR_TABLES["ORAS5"]
-    vardef = cmor_table.get_variable("Omon", "tas")
+    vardef = cmor_table.get_variable("Omon", "tos")
     time = _cmor_time("Omon", bounds=True)
     data = _cmor_data("Omon")
     cube = Cube(
