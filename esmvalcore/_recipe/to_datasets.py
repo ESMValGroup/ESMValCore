@@ -504,7 +504,7 @@ def _report_unexpanded_globs(
     msg = (
         "Unable to replace "
         + ", ".join(f"{k}={v}" for k, v in unexpanded_globs.items())
-        + f" by a value for\n{unexpanded_ds}"
+        + f" by a value for {unexpanded_ds}"
     )
 
     # Set supplementaries to [] to avoid searching for supplementary files
@@ -523,7 +523,10 @@ def _report_unexpanded_globs(
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        msg = f"{msg}\n{get_no_data_message(expanded_ds)}"
+        no_data_message = get_no_data_message(expanded_ds)
+        msg = (
+            f"{msg}\nbecause {no_data_message[0].lower()}{no_data_message[1:]}"
+        )
         if timerange:
             msg += f"\nwithin the requested timerange {timerange}."
     return msg
