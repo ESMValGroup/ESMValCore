@@ -108,6 +108,7 @@ you have :ref:`configured <config-data-sources>` for the ``rootpath`` of the
 using the default DRS for ``native6`` as defined in the file:
 
 .. literalinclude:: ../configurations/data-local-esmvaltool.yml
+    :language: yaml
     :caption: Contents of ``data-local-esmvaltool.yml``
     :start-after: # Read native6, OBS6, and OBS data from the filesystem on a personal computer.
     :end-before: # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
@@ -166,6 +167,7 @@ To read these data with ESMValCore, use the data definition for the ``native6``
 project:
 
 .. literalinclude:: ../configurations/data-hpc-dkrz.yml
+    :language: yaml
     :caption: Contents of ``data-hpc-dkrz.yml``
     :start-at: # ERA5 data in GRIB format:
     :end-before: OBS6:
@@ -276,6 +278,7 @@ The default naming conventions for input directories and files for CESM are
 as configured in:
 
 .. literalinclude:: ../configurations/data-native-cesm.yml
+    :language: yaml
     :caption: Contents of ``data-native-cesm.yml``
 
 To use this configuration, run ``esmvaltool config copy data-native-cesm.yml`` and
@@ -360,6 +363,7 @@ The default naming conventions for input directories and files for EMAC are
 as configured in:
 
 .. literalinclude:: ../configurations/data-native-emac.yml
+    :language: yaml
     :caption: Contents of ``data-native-emac.yml``
 
 To use this configuration, run ``esmvaltool config copy data-native-emac.yml`` and
@@ -441,6 +445,7 @@ The default naming conventions for input directories and files for ICON are
 as configured in:
 
 .. literalinclude:: ../configurations/data-native-icon.yml
+    :language: yaml
     :caption: Contents of ``data-native-icon.yml``
 
 To use this configuration, run ``esmvaltool config copy data-native-icon.yml`` and
@@ -703,6 +708,7 @@ The default naming conventions for input directories and files for ACCESS output
 as configured in:
 
 .. literalinclude:: ../configurations/data-native-access.yml
+    :language: yaml
     :caption: Contents of ``data-native-access.yml``
 
 To use this configuration, run ``esmvaltool config copy data-native-access.yml`` and
@@ -820,18 +826,13 @@ For example, given the extra facets
 
 a corresponding entry in the configuration file could look like:
 
-.. code-block:: yaml
-   :caption: Contents of ``data-native6.yml``
-
-   projects:
-     native6:
-       data:
-         native6-data:
-           type: "esmvalcore.local.LocalDataSource"
-           rootpath: "~/climate_data"
-           dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
-           filename_template: "{source_var_name}*.nc"
+.. literalinclude:: ../configurations/data-local-esmvaltool.yml
+    :language: yaml
+    :caption: Contents of ``data-local-esmvaltool.yml``
+    :start-at: # Data that can be read in its native format by ESMValCore.
+    :end-before: # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
 
 The same replacement mechanism can be employed everywhere where tags can be
 used, particularly in ``dirname_template`` and ``filename_template`` in
-:class:`esmvalcore.local.LocalDataSource`, and in ``output_file`` in config-developer.yml.
+:class:`esmvalcore.local.LocalDataSource`, and in ``output_file`` in
+:ref:`config-developer.yml <config-developer>`.

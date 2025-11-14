@@ -664,7 +664,9 @@ class Dataset:
         """Add additional facets.
 
         This function will update the dataset with additional facets from
-        various sources.
+        various sources. These include :ref:`config-extra-facets` as well as
+        facets read from the controlled voculary included in the CMOR tables
+        if applicable.
         """
         self._augment_facets()
         for supplementary in self.supplementaries:

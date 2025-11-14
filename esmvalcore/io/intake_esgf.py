@@ -16,6 +16,7 @@ create a file with the following content in your configuration directory:
 
 .. literalinclude:: ../configurations/data-intake-esgf.yml
    :language: yaml
+   :caption: Contents of ``data-intake-esgf.yml``
 
 """
 

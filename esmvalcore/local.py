@@ -2,22 +2,19 @@
 
 Example configuration to find CMIP6 data on a personal computer:
 
-.. code-block:: yaml
-
-   projects:
-     CMIP6:
-       data:
-         local-data:
-           type: "esmvalcore.local.LocalDataSource"
-           rootpath: ~/climate_data
-           dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
-           filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+.. literalinclude:: ../configurations/data-local.yml
+    :language: yaml
+    :caption: Contents of ``data-local.yml``
+    :start-at: projects:
+    :end-before: CMIP5:
 
 The module will find files matching the :func:`glob.glob` pattern formed by
 ``rootpath/dirname_template/filename_template``, where the facets defined
 inside the curly braces of the templates are replaced by their values
-from the :class:`~esmvalcore.dataset.Dataset` or the :ref:`recipe <recipe>`. Note
-that the name of the data source, ``local-data`` in the example above,
+from the :class:`~esmvalcore.dataset.Dataset` or the :ref:`recipe <recipe>`
+plus any facet-value pairs that can be automatically added using
+:meth:`~esmvalcore.dataset.Dataset.augment_facets`.
+Note that the name of the data source, ``local-data`` in the example above,
 must be unique within each project but can otherwise be chosen freely.
 
 To start using this module on a personal computer, copy the example
