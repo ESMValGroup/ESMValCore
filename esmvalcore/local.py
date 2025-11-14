@@ -929,7 +929,7 @@ def find_files(
 
     .. deprecated:: 2.14.0
          This function is deprecated and will be removed in version 2.16.0.
-         Please use :method:`esmvalcore.local.LocalDataSource.find_data` instead.
+         Please use :meth:`esmvalcore.local.LocalDataSource.find_data` instead.
 
     The directories that are searched for files are defined in
     :data:`esmvalcore.config.CFG` under the ``'rootpath'`` key using the
@@ -1113,7 +1113,6 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
             The loaded data.
         """
         file = Path(self)
-        logger.debug("Loading:\n%s", file)
 
         with ignore_warnings_context(self.ignore_warnings):
             # GRIB files need to be loaded with iris.load, otherwise we will
@@ -1123,7 +1122,6 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
                 cubes = iris.load(file, callback=_restore_lat_lon_units)
             else:
                 cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
-        logger.debug("Done with loading %s", file)
 
         for cube in cubes:
             cube.attributes.globals["source_file"] = str(file)

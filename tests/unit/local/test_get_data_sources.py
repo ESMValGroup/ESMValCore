@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import pytest_mock
 
 from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import validate_config_developer
@@ -54,10 +55,12 @@ def test_get_data_sources_nodefault(monkeypatch):
         _get_data_sources("CMIP6")
 
 
-def test_data_source_deprecated() -> None:
+def test_data_source_deprecated(mocker: pytest_mock.MockerFixture) -> None:
     """Test that DataSource is deprecated."""
+    mocker.patch.object(DataSource, "_path2facets")
+    mocker.patch.object(DataSource, "find_data")
     with pytest.deprecated_call():
-        _ = DataSource(
+        data_source = DataSource(
             name="test",
             project="CMIP6",
             priority=1,
@@ -65,3 +68,10 @@ def test_data_source_deprecated() -> None:
             dirname_template="/",
             filename_template="*.nc",
         )
+
+    assert data_source.regex_pattern
+    assert data_source.get_glob_patterns() == [Path("/climate_data/*.nc")]
+    data_source.path2facets(Path("/climate_data/some_file.nc"), False)
+    data_source._path2facets.assert_called()  # type: ignore[attr-defined]
+    data_source.find_files(dataset="a")
+    data_source.find_data.assert_called()  # type: ignore[attr-defined]
