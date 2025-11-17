@@ -183,6 +183,7 @@ def test_mock_search(variable, mocker):
         ]
 
 
+@pytest.mark.online
 def test_real_search():
     """Test a real search for a single file."""
     variable = {

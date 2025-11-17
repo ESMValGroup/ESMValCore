@@ -11,15 +11,14 @@ from typing import TYPE_CHECKING
 import dask.config
 
 import esmvalcore
+from esmvalcore.config._config import load_config_developer
 from esmvalcore.config._config_validators import (
     _deprecated_options_defaults,
     _deprecators,
     _validators,
 )
 from esmvalcore.config._validated_config import ValidatedConfig
-from esmvalcore.exceptions import (
-    InvalidConfigParameter,
-)
+from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -77,10 +76,7 @@ class Config(ValidatedConfig):
     _validate = _validators
     _deprecate = _deprecators
     _deprecated_defaults = _deprecated_options_defaults
-    _warn_if_missing = (
-        ("drs", URL),
-        ("rootpath", URL),
-    )
+    _warn_if_missing = (("projects", URL),)
 
     def __init__(self, *args, **kwargs):
         """Initialize class instance."""
@@ -133,7 +129,10 @@ class Config(ValidatedConfig):
         new_config_dict = self._get_config_dict_from_dirs(dirs)
         self.clear()
         self.update(new_config_dict)
-
+        # Add known projects from config-developer file while we still have it.
+        for project in load_config_developer(self["config_developer_file"]):
+            if project not in self["projects"]:
+                self["projects"][project] = {}
         self.check_missing()
 
     def reload(self) -> None:

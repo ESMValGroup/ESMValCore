@@ -1,5 +1,7 @@
 """Module for downloading files from ESGF."""
 
+from __future__ import annotations
+
 import concurrent.futures
 import contextlib
 import datetime
@@ -14,16 +16,30 @@ import shutil
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
-from esmvalcore.local import LocalFile
-from esmvalcore.typing import Facets
+from esmvalcore.config import CFG
+from esmvalcore.io.protocol import DataElement
+from esmvalcore.local import (
+    LocalFile,
+    _dates_to_timerange,
+    _get_start_end_date_from_filename,
+)
 
 from .facets import DATASET_MAP, FACETS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+    from pyesgf.search.results import FileResult
+
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +182,7 @@ def sort_hosts(urls):
 
 
 @functools.total_ordering
-class ESGFFile:
+class ESGFFile(DataElement):
     """File on the ESGF.
 
     This is the object returned by :func:`esmvalcore.esgf.find_files`.
@@ -185,7 +201,11 @@ class ESGFFile:
         The URLs where the file can be downloaded.
     """
 
-    def __init__(self, results):
+    def __init__(
+        self,
+        results: Iterable[FileResult],
+        dest_folder: Path | None = None,
+    ) -> None:
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix(".nc"))
         self.size = results[0].size
@@ -196,6 +216,36 @@ class ESGFFile:
         for result in results:
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
+        self.dest_folder = (
+            CFG.get("download_dir") if dest_folder is None else dest_folder
+        )
+        self._attributes: dict[str, Any] | None = None
+
+    def prepare(self) -> None:
+        """Prepare the data for access."""
+        self.download(self.dest_folder)
+
+    @property
+    def attributes(self) -> dict[str, Any]:
+        """Attributes are key-value pairs describing the data."""
+        if self._attributes is None:
+            msg = (
+                "Attributes have not been read yet. Call the `to_iris` method "
+                "first to read the attributes from the file."
+            )
+            raise ValueError(msg)
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: dict[str, Any]) -> None:
+        self._attributes = value
+
+    def to_iris(self) -> iris.cube.CubeList:
+        self.prepare()
+        local_file = self.local_file(self.dest_folder)
+        cube = local_file.to_iris()
+        self.attributes = local_file.attributes
+        return cube
 
     @classmethod
     def _from_results(cls, results, facets):
@@ -275,6 +325,9 @@ class ESGFFile:
                     self.name,
                 )
                 facets[facet] = value
+        start_date, end_date = _get_start_end_date_from_filename(self.name)
+        if start_date and end_date:
+            facets["timerange"] = _dates_to_timerange(start_date, end_date)
         return facets
 
     @staticmethod
@@ -383,16 +436,16 @@ class ESGFFile:
         """Compare `self` to `other`."""
         return (self.dataset, self.name) < (other.dataset, other.name)
 
-    def __hash__(self):
-        """Compute a unique hash value."""
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
         return hash((self.dataset, self.name))
 
-    def local_file(self, dest_folder):
+    def local_file(self, dest_folder: Path | None) -> LocalFile:
         """Return the path to the local file after download.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Returns
@@ -400,16 +453,17 @@ class ESGFFile:
         LocalFile
             The path where the file will be located after download.
         """
+        dest_folder = self.dest_folder if dest_folder is None else dest_folder
         file = LocalFile(dest_folder, self._get_relative_path())
         file.facets = self.facets
         return file
 
-    def download(self, dest_folder):
+    def download(self, dest_folder: Path | None) -> LocalFile:
         """Download the file.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Raises
@@ -424,7 +478,6 @@ class ESGFFile:
         """
         local_file = self.local_file(dest_folder)
         if local_file.exists():
-            logger.debug("Skipping download of existing file %s", local_file)
             return local_file
 
         os.makedirs(local_file.parent, exist_ok=True)
@@ -528,14 +581,14 @@ def get_download_message(files):
     return "\n".join(lines)
 
 
-def download(files, dest_folder, n_jobs=4):
+def download(files, dest_folder=None, n_jobs=4):
     """Download multiple ESGFFiles in parallel.
 
     Arguments
     ---------
     files: list of :obj:`ESGFFile`
         The files to download.
-    dest_folder: Path
+    dest_folder: Path or None
         The destination folder.
     n_jobs: int
         The number of files to download in parallel.
@@ -552,9 +605,6 @@ def download(files, dest_folder, n_jobs=4):
         and not file.local_file(dest_folder).exists()
     ]
     if not files:
-        logger.debug(
-            "All required data is available locally, not downloading anything.",
-        )
         return
 
     files = sorted(files)

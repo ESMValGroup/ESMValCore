@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable, Iterator, Sequence
 from copy import deepcopy
-from numbers import Number
 from typing import TYPE_CHECKING, Any
 
+from esmvalcore._recipe.check import get_no_data_message
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile, _replace_years_with_timerange
+from esmvalcore.local import _replace_years_with_timerange
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -219,7 +219,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, Number, bool)):
+    if isinstance(realms, (str, int)):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
@@ -504,37 +504,31 @@ def _report_unexpanded_globs(
     msg = (
         "Unable to replace "
         + ", ".join(f"{k}={v}" for k, v in unexpanded_globs.items())
-        + f" by a value for\n{unexpanded_ds}"
+        + f" by a value for {unexpanded_ds}"
     )
 
     # Set supplementaries to [] to avoid searching for supplementary files
     expanded_ds.supplementaries = []
 
     if expanded_ds.files:
-        if any(isinstance(f, LocalFile) for f in expanded_ds.files):
-            paths_msg = "paths to the "
-        else:
-            paths_msg = ""
         msg = (
-            f"{msg}\nDo the {paths_msg}files:\n"
+            f"{msg}\nPlease check why the files:\n"
             + "\n".join(
                 f"{f} with facets: {f.facets}" for f in expanded_ds.files
             )
-            + "\nprovide the missing facet values?"
+            + "\ndo not provide the missing facet values. This will depend on "
+            "the data source they come from, e.g. can they be extracted from the "
+            "path for local files, or are they available from ESGF when "
+            "when searching ESGF for files?"
         )
     else:
         timerange = expanded_ds.facets.get("timerange")
-        patterns = expanded_ds._file_globs  # noqa: SLF001
+        no_data_message = get_no_data_message(expanded_ds)
         msg = (
-            f"{msg}\nNo files found matching:\n"
-            + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]
-            + (  # type:ignore
-                f"\nwithin the requested timerange {timerange}."
-                if timerange
-                else ""
-            )
+            f"{msg}\nbecause {no_data_message[0].lower()}{no_data_message[1:]}"
         )
-
+        if timerange:
+            msg += f"\nwithin the requested timerange {timerange}."
     return msg
 
 
