@@ -1,0 +1,72 @@
+{
+    "Header":{
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "approx_interval":"30.00000",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
+        "generic_levels":"alevel alevhalf",
+        "int_missing_value":"-999",
+        "mip_era":"CMIP6",
+        "missing_value":"1e20",
+        "product":"input4MIPs",
+        "realm":"atmos atmosChem",
+        "table_date":"29 May 2024",
+        "table_id":"Table input4MIPs_Ayr"
+    },
+    "variable_entry":{
+        "evspsbl":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: time: mean",
+            "comment":"Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion of both liquid and solid phases to vapor (from underlying surface and vegetation)",
+            "dimensions":"longitude latitude time",
+            "frequency":"yr",
+            "long_name":"Evaporation Including Sublimation and Transpiration",
+            "modeling_realm":"atmos",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"evspsbl",
+            "positive":"",
+            "standard_name":"water_evapotranspiration_flux",
+            "type":"real",
+            "units":"kg m-2 s-1",
+            "valid_max":"",
+            "valid_min":""
+        },
+        "pr":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: time: mean",
+            "comment":"includes both liquid and solid phases",
+            "dimensions":"longitude latitude time",
+            "frequency":"yr",
+            "long_name":"Precipitation",
+            "modeling_realm":"atmos",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"pr",
+            "positive":"",
+            "standard_name":"precipitation_flux",
+            "type":"real",
+            "units":"kg m-2 s-1",
+            "valid_max":"",
+            "valid_min":""
+        },
+        "ts":{
+            "cell_measures":"area: areacella",
+            "cell_methods":"area: time: mean",
+            "comment":"Temperature of the lower boundary of the atmosphere",
+            "dimensions":"longitude latitude time",
+            "frequency":"yr",
+            "long_name":"Surface Temperature",
+            "modeling_realm":"atmos",
+            "ok_max_mean_abs":"",
+            "ok_min_mean_abs":"",
+            "out_name":"ts",
+            "positive":"",
+            "standard_name":"surface_temperature",
+            "type":"real",
+            "units":"K",
+            "valid_max":"",
+            "valid_min":""
+        }
+    }
+}

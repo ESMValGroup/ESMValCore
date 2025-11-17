@@ -22,6 +22,7 @@ from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
 from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
+    get_dataset_category,
     get_ignored_warnings,
     get_institutes,
     load_extra_facets,
@@ -730,6 +731,10 @@ class Dataset:
             activity = get_activity(self.facets)
             if activity:
                 self.facets["activity"] = activity
+        if "dataset_category" not in self.facets:
+            dataset_category = get_dataset_category(self.facets)
+            if dataset_category:
+                self.facets["dataset_category"] = dataset_category
         _update_cmor_facets(self.facets)
         if self.facets.get("frequency") == "fx":
             self.facets.pop("timerange", None)

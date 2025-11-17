@@ -1,0 +1,27 @@
+{
+    "required_global_attributes":[
+        "Conventions",
+        "activity_id",
+        "contact",
+        "creation_date",
+        "dataset_category",
+        "frequency",
+        "further_info_url",
+        "grid_label",
+        "institution",
+        "institution_id",
+        "license",
+        "mip_era",
+        "nominal_resolution",
+        "realm",
+        "region",
+        "source",
+        "source_id",
+        "source_version",
+        "table_id",
+        "target_mip",
+        "title",
+        "tracking_id",
+        "variable_id"
+    ]
+}

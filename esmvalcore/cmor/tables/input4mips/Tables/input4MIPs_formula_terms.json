@@ -1,0 +1,204 @@
+{
+    "formula_entry":{
+        "a":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: a",
+            "out_name":"a",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "a_bnds":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: a(k+1/2)",
+            "out_name":"a_bnds",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "a_half":{
+            "dimensions":"alevhalf",
+            "long_name":"vertical coordinate formula term: a(k)",
+            "out_name":"a",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "ap":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: ap",
+            "out_name":"ap",
+            "standard_name":"",
+            "type":"double",
+            "units":"Pa"
+        },
+        "ap_bnds":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: ap(k+1/2)",
+            "out_name":"ap_bnds",
+            "standard_name":"",
+            "type":"double",
+            "units":"Pa"
+        },
+        "ap_half":{
+            "dimensions":"alevhalf",
+            "long_name":"vertical coordinate formula term: ap(k)",
+            "out_name":"ap",
+            "standard_name":"",
+            "type":"double",
+            "units":"Pa"
+        },
+        "b":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: b",
+            "out_name":"b",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "b_bnds":{
+            "dimensions":"alevel",
+            "long_name":"vertical coordinate formula term: b(k+1/2)",
+            "out_name":"b_bnds",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "b_half":{
+            "dimensions":"alevhalf",
+            "long_name":"vertical coordinate formula term: b(k)",
+            "out_name":"b",
+            "standard_name":"",
+            "type":"double",
+            "units":""
+        },
+        "depth":{
+            "dimensions":"longitude latitude",
+            "long_name":"Sea Floor Depth",
+            "out_name":"depth",
+            "standard_name":"",
+            "type":"real",
+            "units":"m"
+        },
+        "depth_c":{
+            "dimensions":"",
+            "long_name":"vertical coordinate formula term: depth_c",
+            "out_name":"depth_c",
+            "standard_name":"",
+            "type":"double",
+            "units":"m"
+        },
+        "eta":{
+            "dimensions":"longitude latitude time",
+            "long_name":"Sea Surface Height",
+            "out_name":"eta",
+            "standard_name":"",
+            "type":"real",
+            "units":"m"
+        },
+        "eta2":{
+            "dimensions":"longitude latitude time2",
+            "long_name":"Sea Surface Height",
+            "out_name":"eta",
+            "standard_name":"",
+            "type":"real",
+            "units":"m"
+        },
+        "k_c":{
+            "dimensions":"",
+            "long_name":"vertical coordinate formula term: k_c",
+            "out_name":"k_c",
+            "standard_name":"",
+            "type":"integer",
+            "units":""
+        },
+        "nsigma":{
+            "dimensions":"",
+            "long_name":"vertical coordinate formula term: nsigma",
+            "out_name":"nsigma",
+            "standard_name":"",
+            "type":"integer",
+            "units":""
+        },
+        "orog":{
+            "dimensions":"longitude latitude",
+            "long_name":"Surface Altitude",
+            "out_name":"orog",
+            "standard_name":"",
+            "type":"real",
+            "units":"m"
+        },
+        "orog2d":{
+            "dimensions":"latitude",
+            "long_name":"Surface Altitude",
+            "out_name":"orog",
+            "standard_name":"",
+            "type":"real",
+            "units":"m"
+        },
+        "p0":{
+            "dimensions":"",
+            "long_name":"vertical coordinate formula term: reference pressure",
+            "out_name":"p0",
+            "standard_name":"reference_air_pressure_for_atmosphere_vertical_coordinate",
+            "type":"double",
+            "units":"Pa"
+        },
+        "ps":{
+            "dimensions":"longitude latitude time",
+            "long_name":"Surface Air Pressure",
+            "out_name":"ps",
+            "standard_name":"air_pressure",
+            "type":"real",
+            "units":"Pa"
+        },
+        "ps1":{
+            "dimensions":"longitude latitude time1",
+            "long_name":"Surface Air Pressure",
+            "out_name":"ps",
+            "standard_name":"air_pressure",
+            "type":"real",
+            "units":"Pa"
+        },
+        "ps2":{
+            "dimensions":"longitude latitude time2",
+            "long_name":"Surface Air Pressure",
+            "out_name":"ps",
+            "standard_name":"air_pressure",
+            "type":"real",
+            "units":"Pa"
+        },
+        "ps2d":{
+            "dimensions":"latitude time1",
+            "long_name":"Surface Air Pressure",
+            "out_name":"ps",
+            "standard_name":"air_pressure",
+            "type":"real",
+            "units":"Pa"
+        },
+        "ptop":{
+            "dimensions":"",
+            "long_name":"pressure at top of model",
+            "out_name":"ptop",
+            "standard_name":"air_pressure_at_top_of_atmosphere",
+            "type":"double",
+            "units":"Pa"
+        },
+        "zlev":{
+            "dimensions":"olevel",
+            "long_name":"vertical coordinate formula term: zlev(k)",
+            "out_name":"zlev",
+            "standard_name":"",
+            "type":"double",
+            "units":"m"
+        },
+        "zlev_bnds":{
+            "dimensions":"olevel",
+            "long_name":"vertical coordinate formula term: zlev(k+1/2)",
+            "out_name":"zlev_bnds",
+            "standard_name":"",
+            "type":"double",
+            "units":"m"
+        }
+    }
+}

@@ -297,6 +297,9 @@ class ESGFFile:
         #          %(rcm_version)s.%(time_frequency)s.%(variable)s'
         # obs4MIPs: '%(project)s.%(institute)s.%(source_id)s.%(realm)s.
         #            %(time_frequency)s'
+        # input4MIPs: '%(activity_id)s.%(mip_era)s.%(target_mip)s.
+        #              %(institution_id)s.%(source_id)s.%(realm)s.
+        #              %(frequency)s.%(variable_id)s.%(grid_label)s'
         project = results[0].json["project"][0]
 
         # Read the keys from `dataset_id_template_` and translate to our keys

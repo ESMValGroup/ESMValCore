@@ -1,0 +1,15 @@
+{
+    "dataset_category":[
+        "GHGConcentrations",
+        "SSTsAndSeaIce",
+        "aerosolProperties",
+        "atmosphericState",
+        "emissions",
+        "landState",
+        "ozone",
+        "radiation",
+        "solar",
+        "surfaceAir",
+        "surfaceFluxes"
+    ]
+}
