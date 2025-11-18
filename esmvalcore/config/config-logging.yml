@@ -12,7 +12,7 @@ formatters:
 filters:
   only_ours: # only keep events from known loggers
     (): esmvalcore.config._logging.FilterMultipleNames
-    names: [esmvalcore, intake-esgf]
+    names: [esmvalcore, esmvaltool, intake-esgf]
     mode: allow
   only_cmor: # only events from CMOR check and generic fixes
     (): esmvalcore.config._logging.FilterMultipleNames
