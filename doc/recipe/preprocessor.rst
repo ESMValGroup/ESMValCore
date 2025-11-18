@@ -2030,15 +2030,15 @@ Examples:
         .. code-block:: yaml
 
             extract_shape:
-            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
-            decomposed: True
-            method: contains
-            ids:
-              - Spain
-              - France
-              - Italy
-              - United Kingdom
-              - Taiwan
+              shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+              decomposed: True
+              method: contains
+              ids:
+                - Spain
+                - France
+                - Italy
+                - United Kingdom
+                - Taiwan
 
     * Extract European AR6 regions:
 
