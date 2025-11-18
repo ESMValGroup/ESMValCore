@@ -616,6 +616,9 @@ request(s) to update the ESMValTool, before merging the ESMValCore pull request.
 Dependencies
 ------------
 
+We follow the guidelines set out in [SPEC-0](https://scientific-python.org/specs/spec-0000/) regarding
+the supported Python versions and dependencies.
+
 Before considering adding a new dependency, carefully check that the
 `license <https://the-turing-way.netlify.app/reproducible-research/licensing/licensing-software.html>`__
 of the dependency you want to add and any of its dependencies are
