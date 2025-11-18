@@ -2527,9 +2527,10 @@ precipitation sum.
 
   preprocessors:
     preproc_rolling_window:
-      coordinate: time
-      operator: sum
-      window_length: 2
+      rolling_window_statistics:
+        coordinate: time
+        operator: sum
+        window_length: 2
 
 See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
 
