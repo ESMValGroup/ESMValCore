@@ -1,6 +1,6 @@
 .. _how-to-release:
 
-How-to: Make a release
+How to make a release
 ----------------------
 
 The release manager makes the release, assisted by the release manager of the
