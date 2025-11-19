@@ -31,21 +31,18 @@ from esmvalcore import __version__
 # docs.readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
-# This is used for linking and such so we link to the thing we're building
-rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 if on_rtd:
     # On Readthedocs, the conda environment used for building the documentation
     # is not `activated`. As a consequence, a few critical environment variables
     # are not set. Here, we hardcode them instead.
     # In a normal environment, i.e. a local build of the documentation, the
     # normal environment activation takes care of this.
+    rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
     rtd_project = os.environ.get("READTHEDOCS_PROJECT")
     rtd_conda_prefix = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}"
     os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
     os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
     os.environ["PROJ_NETWORK"] = "OFF"
-if rtd_version not in ["latest", "stable", "doc"]:
-    rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
 
@@ -457,10 +454,7 @@ numfig = True
 intersphinx_mapping = {
     'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
     'cftime': ('https://unidata.github.io/cftime/', None),
-    'esmvalcore':
-    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
-     None),
-    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/latest/', None),
     'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
               None),
     'dask': ('https://docs.dask.org/en/stable/', None),
