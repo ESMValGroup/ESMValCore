@@ -2031,7 +2031,7 @@ Examples:
 
             extract_shape:
               shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
-              decomposed: True
+              decomposed: true
               method: contains
               ids:
                 - Spain
