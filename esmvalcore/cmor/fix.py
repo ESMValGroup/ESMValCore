@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     import ncdata
     import xarray as xr
+    from iris.cube import Cube
 
     from esmvalcore.config import Session
 

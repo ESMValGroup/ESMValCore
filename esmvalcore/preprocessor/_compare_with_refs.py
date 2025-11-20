@@ -12,7 +12,7 @@ import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
-from iris.coords import CellMethod, Coord
+from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
@@ -32,6 +32,8 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.coords import Coord
 
     from esmvalcore.preprocessor import PreprocessorFile
 

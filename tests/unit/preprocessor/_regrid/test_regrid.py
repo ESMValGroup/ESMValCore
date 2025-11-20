@@ -224,7 +224,7 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
         ),
     ],
 )
-def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
+def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool) -> None:
     """Test for `_horizontal_grid_is_close`."""
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(**cube2_spec)

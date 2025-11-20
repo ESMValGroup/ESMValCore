@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import importlib.resources
 import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyesgf
 import pytest
@@ -16,7 +19,9 @@ from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.typing import Facets
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 @lru_cache

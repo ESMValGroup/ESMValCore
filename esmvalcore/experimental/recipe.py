@@ -1,19 +1,26 @@
 """Recipe metadata."""
 
+from __future__ import annotations
+
 import logging
-import os
 import pprint
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG
 
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
+
+if TYPE_CHECKING:
+    import os
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +36,7 @@ class Recipe:
         Path to the recipe.
     """
 
-    def __init__(self, path: os.PathLike):
+    def __init__(self, path: os.PathLike) -> None:
         self.path = Path(path)
         if not self.path.exists():
             msg = f"Cannot find recipe: `{path}`."

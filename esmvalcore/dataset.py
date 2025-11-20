@@ -19,7 +19,7 @@ from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG
 from esmvalcore.config._config import (
     get_activity,
     get_institutes,
@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
     from iris.cube import Cube
 
+    from esmvalcore.config import Session
     from esmvalcore.io.protocol import DataElement, DataSource
     from esmvalcore.preprocessor import PreprocessorItem
     from esmvalcore.typing import Facets, FacetValue

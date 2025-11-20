@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 import dask
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord, CoordExtent
-from iris.cube import Cube, CubeList
+from iris.coords import CoordExtent
+from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
     import ncdata
     import xarray as xr
+    from iris.coords import Coord
+    from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session

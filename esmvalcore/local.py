@@ -56,7 +56,7 @@ import iris.cube
 import iris.fileformats.cf
 import isodate
 from cf_units import Unit
-from netCDF4 import Dataset, Variable
+from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
 from esmvalcore.config import CFG
@@ -66,6 +66,8 @@ from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from netCDF4 import Variable
 
     from esmvalcore.typing import Facets, FacetValue
 

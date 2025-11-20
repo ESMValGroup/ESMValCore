@@ -17,7 +17,7 @@ import shapely
 import shapely.ops
 from dask import array as da
 from iris.coords import AuxCoord
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
@@ -39,6 +39,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.cube import Cube
 
     from esmvalcore.config import Session
 

@@ -5,13 +5,15 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
+from esmvalcore.cmor.table import CMOR_TABLES
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from iris.coords import Coord
     from iris.cube import Cube
+
+    from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
 
 logger = logging.getLogger(__name__)
 

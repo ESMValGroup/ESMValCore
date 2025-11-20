@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import warnings
 from copy import deepcopy
 from functools import lru_cache
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -16,6 +18,9 @@ from iris.coords import (
 from iris.cube import Cube
 
 from esmvalcore.config import CFG, Config
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @lru_cache

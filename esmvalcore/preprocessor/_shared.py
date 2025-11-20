@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import CellMeasure, Coord, DimCoord
+from iris.coords import CellMeasure, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
@@ -28,6 +28,8 @@ from esmvalcore.iris_helpers import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from iris.coords import Coord
 
     from esmvalcore.typing import DataType
 

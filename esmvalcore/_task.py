@@ -1,5 +1,7 @@
 """ESMValtool task definition."""
 
+from __future__ import annotations
+
 import abc
 import contextlib
 import datetime
@@ -810,11 +812,11 @@ def available_cpu_count() -> int:
 class TaskSet(set):
     """Container for tasks."""
 
-    def flatten(self) -> "TaskSet":
+    def flatten(self) -> TaskSet:
         """Flatten the list of tasks."""
         return TaskSet(t for task in self for t in task.flatten())
 
-    def get_independent(self) -> "TaskSet":
+    def get_independent(self) -> TaskSet:
         """Return a set of independent tasks."""
         independent_tasks = TaskSet()
         all_tasks = self.flatten()

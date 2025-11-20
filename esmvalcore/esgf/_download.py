@@ -610,7 +610,7 @@ def download(files, dest_folder=None, n_jobs=4):
     files = sorted(files)
     logger.info(get_download_message(files))
 
-    def _download(file: ESGFFile):
+    def _download(file: ESGFFile) -> None:
         """Download file to dest_folder."""
         file.download(dest_folder)
 

@@ -1,13 +1,18 @@
 """ESMValCore utilities."""
 
-import os
+from __future__ import annotations
+
 import re
 from pathlib import Path
-from re import Pattern
+from typing import TYPE_CHECKING
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 
 from .recipe import Recipe
+
+if TYPE_CHECKING:
+    import os
+    from re import Pattern
 
 
 class RecipeList(list):

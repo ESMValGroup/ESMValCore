@@ -16,7 +16,7 @@ import yaml
 
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
-from esmvalcore._task import BaseTask, DiagnosticTask, ResumeTask, TaskSet
+from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
@@ -59,6 +59,7 @@ from .to_datasets import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from esmvalcore._task import BaseTask
     from esmvalcore.config import Session
     from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets

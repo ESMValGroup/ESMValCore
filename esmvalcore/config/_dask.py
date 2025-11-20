@@ -1,9 +1,11 @@
 """Configuration for Dask distributed."""
 
+from __future__ import annotations
+
 import contextlib
 import importlib
 import logging
-from collections.abc import Generator, Mapping
+from collections.abc import Mapping
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -16,6 +18,8 @@ from esmvalcore.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from distributed.deploy import Cluster
 
 logger = logging.getLogger(__name__)

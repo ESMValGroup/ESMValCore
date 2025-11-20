@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.resources
 import inspect
 import os
@@ -24,7 +26,6 @@ from esmvalcore._recipe.recipe import (
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
-from esmvalcore.config import Session
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
@@ -34,6 +35,7 @@ from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
 
 if TYPE_CHECKING:
+    from esmvalcore.config import Session
     from esmvalcore.typing import Facets
 
 
@@ -2538,7 +2540,7 @@ def test_representative_dataset_regular_var(
     tmp_path: Path,
     patched_datafinder: None,
     session: Session,
-):
+) -> None:
     """Test ``_representative_dataset`` with regular variable."""
     update_data_sources(session, "data-native-icon.yml", tmp_path)
 
@@ -2567,7 +2569,7 @@ def test_representative_dataset_derived_var(
     patched_datafinder: None,
     session: Session,
     force_derivation: bool,
-):
+) -> None:
     """Test ``_representative_dataset`` with derived variable."""
     update_data_sources(session, "data-native-icon.yml", tmp_path)
 

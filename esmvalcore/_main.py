@@ -80,7 +80,7 @@ def parse_resume(resume, recipe):
     return resume
 
 
-def process_recipe(recipe_file: Path, session):
+def process_recipe(recipe_file: Path, session) -> None:
     """Process recipe."""
     import datetime
     import shutil
@@ -318,7 +318,7 @@ class Config:
         in_file: Path,
         out_file: Path,
         overwrite: bool,
-    ):
+    ) -> None:
         """Copy a configuration file."""
         import shutil
 

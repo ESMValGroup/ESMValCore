@@ -276,7 +276,7 @@ class Session(ValidatedConfig):
     relative_cmor_log = Path("run", "cmor_log.txt")
     _relative_fixed_file_dir = Path("preproc", "fixed_files")
 
-    def __init__(self, config: dict, name: str = "session"):
+    def __init__(self, config: dict, name: str = "session") -> None:
         super().__init__(config)
         self.session_name: str | None = None
         self.set_session_name(name)
@@ -293,7 +293,7 @@ class Session(ValidatedConfig):
     def __str__(self) -> str:
         return repr(self)
 
-    def set_session_name(self, name: str = "session"):
+    def set_session_name(self, name: str = "session") -> None:
         """Set the name for the session.
 
         The `name` is used to name the session directory, e.g.

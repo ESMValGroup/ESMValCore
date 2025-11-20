@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
-from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import iris
 import pytest
@@ -12,7 +14,11 @@ from esmvalcore.local import (
     _select_drs,
     _select_files,
 )
-from esmvalcore.typing import Facets
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from esmvalcore.typing import Facets
 
 
 def create_test_file(filename, tracking_id=None):

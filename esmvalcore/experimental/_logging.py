@@ -1,8 +1,13 @@
 """Logging utilities."""
 
+from __future__ import annotations
+
 import logging
 from contextlib import contextmanager
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @contextmanager

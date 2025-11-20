@@ -44,11 +44,16 @@ provided by the data source with the lowest value of
 :attr:`esmvalcore.io.protocol.DataSource.priority` is chosen.
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
+from typing import TYPE_CHECKING
 
-from esmvalcore.config import Session
 from esmvalcore.io.protocol import DataSource
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 

@@ -93,7 +93,7 @@ class TagsManager(dict):
             logger.debug("No tags loaded, file %s not present", filename)
             return cls()
 
-    def set_tag_value(self, section: str, tag: str, value):
+    def set_tag_value(self, section: str, tag: str, value) -> None:
         """Set the value of a tag in a section.
 
         Parameters
@@ -110,7 +110,7 @@ class TagsManager(dict):
 
         self[section][tag] = value
 
-    def set_tag_values(self, tag_values: dict):
+    def set_tag_values(self, tag_values: dict) -> None:
         """Update tags from dict.
 
         Parameters
@@ -158,7 +158,7 @@ class TagsManager(dict):
         """
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
-    def replace_tags_in_dict(self, dct: dict):
+    def replace_tags_in_dict(self, dct: dict) -> None:
         """Resolve tags and updates the given dict in-place.
 
         Tags are updated one level deep, and only if the corresponding

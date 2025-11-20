@@ -10,7 +10,7 @@ import dask
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import Coord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
@@ -30,6 +30,8 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
+
+    from iris.coords import Coord
 
     from esmvalcore.cmor.table import VariableInfo
 

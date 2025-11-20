@@ -1,15 +1,19 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import iris.cube
-import prov.model
 import pytest
 from prov.model import ProvDocument
 
 from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX, TrackedFile
 from esmvalcore.io.protocol import DataElement
 from esmvalcore.local import LocalFile
+
+if TYPE_CHECKING:
+    import iris.cube
+    import prov.model
 
 
 def test_set() -> None:

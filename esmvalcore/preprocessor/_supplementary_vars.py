@@ -1,11 +1,16 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
+from __future__ import annotations
+
 import logging
-from collections.abc import Callable, Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import iris.coords
-from iris.cube import Cube
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 

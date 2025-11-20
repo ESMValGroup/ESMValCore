@@ -24,8 +24,8 @@ import isodate
 import numpy as np
 from cf_units import Unit
 from cftime import datetime as cf_datetime
-from iris.coords import AuxCoord, Coord, DimCoord
-from iris.cube import Cube, CubeList
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 from iris.util import broadcast_to_shape
@@ -46,6 +46,8 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from iris.coords import Coord
+    from iris.cube import Cube
     from numpy.typing import DTypeLike
 
 logger = logging.getLogger(__name__)

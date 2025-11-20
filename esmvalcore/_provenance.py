@@ -139,7 +139,7 @@ class TrackedFile:
         attributes: dict[str, Any] | None = None,
         ancestors: Iterable[TrackedFile] | None = None,
         prov_filename: str | None = None,
-    ):
+    ) -> None:
         """Create an instance of a file with provenance tracking.
 
         Arguments
@@ -182,7 +182,7 @@ class TrackedFile:
         return self._attributes
 
     @attributes.setter
-    def attributes(self, value: dict[str, Any] | None):
+    def attributes(self, value: dict[str, Any] | None) -> None:
         """Set attributes describing the file."""
         self._attributes = value
 

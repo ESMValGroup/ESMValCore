@@ -1,8 +1,9 @@
 """Rolling-window operations on data cubes."""
 
-import logging
+from __future__ import annotations
 
-from iris.cube import Cube
+import logging
+from typing import TYPE_CHECKING
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
@@ -10,6 +11,9 @@ from ._shared import (
     get_iris_aggregator,
     preserve_float_dtype,
 )
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 

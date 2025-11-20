@@ -54,7 +54,7 @@ class GenericRegridder:
         tgt_cube: Cube,
         func: Callable,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize class instance."""
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
@@ -93,7 +93,7 @@ class GenericFuncScheme:
         Keyword arguments for the generic regridding function.
     """
 
-    def __init__(self, func: Callable, **kwargs):
+    def __init__(self, func: Callable, **kwargs) -> None:
         """Initialize class instance."""
         self.func = func
         self.kwargs = kwargs

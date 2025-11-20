@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os.path
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from functools import lru_cache, partial
 from importlib.resources import files as importlib_files
 from pathlib import Path
@@ -22,6 +22,8 @@ from esmvalcore.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from esmvalcore.config._validated_config import ValidatedConfig
 
 logger = logging.getLogger(__name__)

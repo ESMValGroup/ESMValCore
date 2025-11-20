@@ -1,5 +1,7 @@
 """API for handing recipe output."""
 
+from __future__ import annotations
+
 import base64
 import getpass
 import logging
@@ -31,7 +33,7 @@ class TaskOutput:
         Mapping of the filenames with the associated attributes.
     """
 
-    def __init__(self, name: str, files: dict):
+    def __init__(self, name: str, files: dict) -> None:
         self.name = name
         self.title = name.replace("_", " ").replace(TASKSEP, ": ").title()
         self.files = tuple(
@@ -70,7 +72,7 @@ class TaskOutput:
         return tuple(item for item in self.files if item.kind == "data")
 
     @classmethod
-    def from_task(cls, task) -> "TaskOutput":
+    def from_task(cls, task) -> TaskOutput:
         """Create an instance of `TaskOutput` from a Task.
 
         Where task is an instance of `esmvalcore._task.BaseTask`.
@@ -135,7 +137,7 @@ class RecipeOutput(Mapping):
         "long_names",
     )
 
-    def __init__(self, task_output: dict, session=None, info=None):
+    def __init__(self, task_output: dict, session=None, info=None) -> None:
         self._raw_task_output = task_output
         self._task_output = {}
         self.diagnostics = {}
@@ -321,7 +323,7 @@ class OutputFile:
 
     kind: str | None = None
 
-    def __init__(self, path: str, attributes: dict | None = None):
+    def __init__(self, path: str, attributes: dict | None = None) -> None:
         if not attributes:
             attributes = {}
 
@@ -396,7 +398,7 @@ class OutputFile:
         cls,
         path: str,
         attributes: dict | None = None,
-    ) -> "OutputFile":
+    ) -> OutputFile:
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.

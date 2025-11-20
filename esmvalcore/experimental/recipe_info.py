@@ -1,13 +1,18 @@
 """Handles recipe metadata (under 'documentation' section)."""
 
-import os
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from .recipe_metadata import Contributor, Project, Reference
 from .templates import get_template
+
+if TYPE_CHECKING:
+    import os
 
 
 class RecipeInfo:
@@ -21,7 +26,7 @@ class RecipeInfo:
         Name of recipe file
     """
 
-    def __init__(self, data, filename: os.PathLike | str):
+    def __init__(self, data, filename: os.PathLike | str) -> None:
         self.filename = Path(filename).name
         self.data = data
         self._authors: tuple[Contributor, ...] | None = None

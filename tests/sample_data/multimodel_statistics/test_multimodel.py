@@ -30,7 +30,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
     np.testing.assert_allclose(this, other, rtol=rtol)
 
 
-def assert_coords_equal(this: list, other: list):
+def assert_coords_equal(this: list, other: list) -> None:
     """Assert coords list `this` equals coords list `other`."""
     for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)

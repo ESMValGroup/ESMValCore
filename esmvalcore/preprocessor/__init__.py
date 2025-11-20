@@ -8,7 +8,7 @@ import logging
 from pprint import pformat
 from typing import TYPE_CHECKING, Any, TypeAlias
 
-from iris.cube import Cube, CubeList
+from iris.cube import Cube
 
 from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
@@ -107,6 +107,7 @@ if TYPE_CHECKING:
 
     import prov.model
     from dask.delayed import Delayed
+    from iris.cube import CubeList
 
     from esmvalcore.dataset import Dataset
 

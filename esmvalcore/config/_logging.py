@@ -1,17 +1,21 @@
 """Configure logging."""
 
+from __future__ import annotations
+
 import inspect
 import logging
 import logging.config
 import os
 import time
-from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import yaml
 
 import esmvalcore.exceptions
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _WARNINGS_SHOWN_IN_MAIN_LOG = [
     cls.__name__
@@ -96,7 +100,7 @@ def _get_log_files(
     return log_files
 
 
-def _update_stream_level(cfg: dict, level=None):
+def _update_stream_level(cfg: dict, level=None) -> None:
     """Update the log level for the stream handlers."""
     handlers = cfg["handlers"]
 
