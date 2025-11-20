@@ -26,7 +26,7 @@ release candidate to test the recipes in ESMValTool. If bugs are found
 during the testing phase of the release candidate, make as many release
 candidates for ESMValCore as needed in order to fix them.
 
-.. figure::  /figures/release-timeline_doodle-esmvalcore.png
+.. figure::  ../figures/release-timeline-doodle-esmvalcore.png
    :align:   center
 
    Example of a release timeline for ESMValCore (in this case for 2.11.0)
