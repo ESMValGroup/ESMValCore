@@ -6,4 +6,4 @@ How-to guides
 .. toctree::
    :maxdepth: 1
 
-   How to make a release <how-to-release>
+   How to make a release <how-to-make-a-release>

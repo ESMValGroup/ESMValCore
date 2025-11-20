@@ -1,4 +1,4 @@
-.. _how-to-release:
+.. _how-to-make-a-release:
 
 How to make a release
 ----------------------
