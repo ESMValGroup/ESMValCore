@@ -595,6 +595,8 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
                         add_timerange="timerange" in facets,
                     ),
                 )
+                print(file)
+                print(facets["short_name"], facets.get("timerange"))
                 file.ignore_warnings = self.ignore_warnings
                 files.append(file)
 
