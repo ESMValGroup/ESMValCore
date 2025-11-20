@@ -232,10 +232,6 @@ class Dataset:
         """
         dataset_template = self.copy()
         dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
