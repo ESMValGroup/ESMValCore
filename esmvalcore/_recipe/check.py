@@ -239,8 +239,9 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets or any(
-        "timerange" not in f.facets for f in input_files
+    if (
+        "*" in facets.get("timerange", "*")  # type: ignore[operator]
+        or any("timerange" not in f.facets for f in input_files)
     ):
         return
 
