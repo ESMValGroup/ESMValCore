@@ -40,7 +40,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.11
+  - python >=3.12
   - python-stratify >=0.3
   - pyyaml
   - requests
