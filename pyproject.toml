@@ -136,8 +136,11 @@ addopts = [
     "--cov-report=html:test-reports/coverage_html",
     "--html=test-reports/report.html",
 ]
-log_cli_level = "INFO"
 env = {MPLBACKEND = "Agg"}
+filterwarnings = [
+    "ignore:Do not instantiate `Config` objects directly:UserWarning"
+]
+log_cli_level = "INFO"
 log_level = "WARNING"
 minversion = "6"
 markers = [
