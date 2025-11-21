@@ -230,10 +230,6 @@ class Dataset:
         """
         dataset_template = self.copy()
         dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
@@ -334,7 +330,11 @@ class Dataset:
 
             for mip in mips:
                 dataset_template = self.copy(mip=mip)
+                print("from_files dataset_template:")
+                print(dataset_template)
+                print("from_files resulting datasets:")
                 for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
+                    print(dataset.summary(shorten=True))
                     expanded = True
                     yield dataset
 
