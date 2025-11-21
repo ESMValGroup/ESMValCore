@@ -11,12 +11,16 @@ described in :mod:`esmvalcore.io`.
 
 """
 
-from collections.abc import Iterable
-from typing import Any, Protocol, runtime_checkable
+from __future__ import annotations
 
-import iris.cube
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from esmvalcore.typing import FacetValue
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+
+    from esmvalcore.typing import FacetValue
 
 
 @runtime_checkable

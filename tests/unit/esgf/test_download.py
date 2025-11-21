@@ -1,20 +1,25 @@
 """Test `esmvalcore.esgf._download`."""
 
+from __future__ import annotations
+
 import datetime
 import logging
 import os
 import re
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import requests
 import yaml
 from pyesgf.search.results import FileResult
-from pytest_mock import MockerFixture
 
 import esmvalcore.esgf
 from esmvalcore.esgf import _download
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_log_speed(monkeypatch, tmp_path):

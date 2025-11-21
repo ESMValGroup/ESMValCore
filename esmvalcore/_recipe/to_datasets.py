@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +23,7 @@ from . import check
 from ._io import _load_recipe
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from pathlib import Path
 
     from esmvalcore.config import Session

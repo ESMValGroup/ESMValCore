@@ -22,7 +22,7 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
 )
-from esmvalcore.cmor.table import CoordinateInfo, get_var_info
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
@@ -30,6 +30,8 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord
     from iris.cube import Cube
+
+    from esmvalcore.cmor.table import CoordinateInfo
 
 
 class CheckLevels(IntEnum):
@@ -540,7 +542,10 @@ class CMORCheck:
 
         self._check_coord_ranges(coords)
 
-    def _check_coord_ranges(self, coords: list[tuple[CoordinateInfo, Coord]]):
+    def _check_coord_ranges(
+        self,
+        coords: list[tuple[CoordinateInfo, Coord]],
+    ) -> None:
         """Check coordinate value are inside valid ranges."""
 
         class Limit(NamedTuple):

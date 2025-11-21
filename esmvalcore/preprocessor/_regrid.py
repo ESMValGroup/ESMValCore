@@ -20,7 +20,11 @@ import iris.coords
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
-from iris.analysis import AreaWeighted, Linear, Nearest
+from iris.analysis import (
+    AreaWeighted,
+    Linear,
+    Nearest,
+)
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
@@ -50,6 +54,7 @@ from esmvalcore.preprocessor.regrid_schemes import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from iris.analysis import Regridder, RegriddingScheme
     from numpy.typing import ArrayLike
 
     from esmvalcore.dataset import Dataset
@@ -580,7 +585,9 @@ def extract_point(
     return cube.interpolate(point, scheme=loaded_scheme)
 
 
-def is_dataset(dataset: Any) -> bool:
+def is_dataset(
+    dataset: Any,  # noqa: ANN401
+) -> bool:
     """Test if something is an `esmvalcore.dataset.Dataset`."""
     # Use this function to avoid circular imports
     return hasattr(dataset, "facets")
@@ -631,7 +638,7 @@ def _load_scheme(
     src_cube: Cube,
     tgt_cube: Cube,
     scheme: NamedHorizontalScheme | dict[str, Any],
-):
+) -> RegriddingScheme:
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
 
@@ -664,7 +671,7 @@ def _load_scheme(
     return loaded_scheme
 
 
-def _load_generic_scheme(scheme: dict[str, Any]):
+def _load_generic_scheme(scheme: dict[str, Any]) -> RegriddingScheme:
     """Load generic regridding scheme."""
     scheme = dict(scheme)  # do not overwrite original scheme
 
@@ -706,7 +713,7 @@ def _get_regridder(
     tgt_cube: Cube,
     scheme: NamedHorizontalScheme | dict,
     cache_weights: bool,
-):
+) -> Regridder:
     """Get regridder to actually perform regridding.
 
     Note

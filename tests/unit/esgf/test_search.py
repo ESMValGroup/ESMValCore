@@ -1,17 +1,22 @@
 """Test 1esmvalcore.esgf._search`."""
 
+from __future__ import annotations
+
 import copy
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyesgf.search
 import pytest
 import requests.exceptions
 from pyesgf.search.results import FileResult
-from pytest_mock import MockerFixture
 
 import esmvalcore.io.protocol
 from esmvalcore.esgf import ESGFDataSource, ESGFFile, _search, find_files
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 OUR_FACETS = (
     {
