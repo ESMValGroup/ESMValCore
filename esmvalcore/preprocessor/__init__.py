@@ -6,7 +6,7 @@ import copy
 import inspect
 import logging
 from pprint import pformat
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube
 
@@ -673,7 +673,7 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-PreprocessorItem: TypeAlias = PreprocessorFile | Cube | DataElement
+type PreprocessorItem = PreprocessorFile | Cube | DataElement
 
 
 def _apply_multimodel(

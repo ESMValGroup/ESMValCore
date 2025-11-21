@@ -63,8 +63,17 @@ def test_config_key_error():
         config["invalid_key"]
 
 
-def test_reload(cfg_default):
+def test_reload(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    cfg_default: Config,
+) -> None:
     """Test `Config.reload`."""
+    monkeypatch.setattr(
+        esmvalcore.config._config_object,
+        "USER_CONFIG_DIR",
+        tmp_path,
+    )
     cfg = Config()
 
     cfg.reload()

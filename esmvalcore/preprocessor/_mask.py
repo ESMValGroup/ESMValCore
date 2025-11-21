@@ -694,6 +694,7 @@ def mask_fillvalues(
                 combined_mask,
             )
 
+    input_products = {p.copy_provenance() for p in products}
     for product in products:
         for cube in product.cubes:
             array = cube.core_data()
@@ -701,11 +702,10 @@ def mask_fillvalues(
             mask = array_module.ma.getmaskarray(array) | combined_mask
             cube.data = array_module.ma.masked_array(data, mask)
 
-    # Record provenance
-    input_products = {p.copy_provenance() for p in products}
-    for other in input_products:
-        if other.filename != product.filename:
-            product.wasderivedfrom(other)
+        # Record provenance
+        for other in input_products:
+            if other.filename != product.filename:
+                product.wasderivedfrom(other)
 
     return products
 

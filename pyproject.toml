@@ -18,7 +18,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
@@ -75,7 +74,7 @@ dependencies = [
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
 license = {text = "Apache License, Version 2.0"}
 name = "ESMValCore"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 [project.optional-dependencies]
 test = [
@@ -136,8 +135,11 @@ addopts = [
     "--cov-report=html:test-reports/coverage_html",
     "--html=test-reports/report.html",
 ]
-log_cli_level = "INFO"
 env = {MPLBACKEND = "Agg"}
+filterwarnings = [
+    "ignore:Do not instantiate `Config` objects directly:UserWarning"
+]
+log_cli_level = "INFO"
 log_level = "WARNING"
 minversion = "6"
 markers = [
