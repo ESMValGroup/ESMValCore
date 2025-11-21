@@ -9,15 +9,19 @@ import os.path
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Self
 
 import iris
 import xarray as xr
 
 from esmvalcore.config._config import TASKSEP
+from esmvalcore.experimental.recipe_info import RecipeInfo
+from esmvalcore.experimental.recipe_metadata import Contributor, Reference
+from esmvalcore.experimental.templates import get_template
 
-from .recipe_info import RecipeInfo
-from .recipe_metadata import Contributor, Reference
-from .templates import get_template
+if TYPE_CHECKING:
+    import esmvalcore._task
+    import esmvalcore.config
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +61,7 @@ class TaskOutput:
         """Return number of files."""
         return len(self.files)
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> OutputFile:
         """Get item indexed by `index`."""
         return self.files[index]
 
@@ -72,11 +76,8 @@ class TaskOutput:
         return tuple(item for item in self.files if item.kind == "data")
 
     @classmethod
-    def from_task(cls, task) -> TaskOutput:
-        """Create an instance of `TaskOutput` from a Task.
-
-        Where task is an instance of `esmvalcore._task.BaseTask`.
-        """
+    def from_task(cls, task: esmvalcore._task.BaseTask) -> TaskOutput:
+        """Create an instance of `TaskOutput` from a Task."""
         product_attributes = task.get_product_attributes()
         return cls(name=task.name, files=product_attributes)
 
@@ -116,18 +117,18 @@ class RecipeOutput(Mapping):
 
     Parameters
     ----------
-    task_output : dict
+    task_output
         Dictionary with recipe output grouped by task name. Each task value is
         a mapping of the filenames with the product attributes.
 
     Attributes
     ----------
-    diagnostics : dict
+    diagnostics
         Dictionary with recipe output grouped by diagnostic.
-    info : RecipeInfo
-        The recipe used to create the output.
-    session : esmvalcore.config.Session
+    session
         The session used to run the recipe.
+    info
+        The recipe used to create the output.
     """
 
     FILTER_ATTRS: tuple = (
@@ -137,7 +138,12 @@ class RecipeOutput(Mapping):
         "long_names",
     )
 
-    def __init__(self, task_output: dict, session=None, info=None) -> None:
+    def __init__(
+        self,
+        task_output: dict[str, dict[str, Any]],
+        session: esmvalcore.config.Session,
+        info: RecipeInfo,
+    ) -> None:
         self._raw_task_output = task_output
         self._task_output = {}
         self.diagnostics = {}
@@ -199,7 +205,7 @@ class RecipeOutput(Mapping):
         """Return canonical string representation."""
         return "\n".join(repr(item) for item in self._task_output.values())
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> TaskOutput:
         """Get task indexed by `key`."""
         return self._task_output[key]
 
@@ -212,8 +218,8 @@ class RecipeOutput(Mapping):
         return len(self._task_output)
 
     @classmethod
-    def from_core_recipe_output(cls, recipe_output: dict):
-        """Construct instance from `_recipe.Recipe` output.
+    def from_core_recipe_output(cls, recipe_output: dict) -> Self:
+        """Construct instance from `esmvalcore._recipe.recipe.Recipe.get_output`.
 
         The core recipe format is not directly compatible with the API. This
         constructor converts the raw recipe dict to :obj:`RecipeInfo`
@@ -221,7 +227,7 @@ class RecipeOutput(Mapping):
         Parameters
         ----------
         recipe_output : dict
-            Output from `_recipe.Recipe.get_product_output`
+            Output from `esmvalcore._recipe.recipe.Recipe.get_output`
         """
         task_output = recipe_output["task_output"]
         recipe_data = recipe_output["recipe_data"]
@@ -360,14 +366,18 @@ class OutputFile:
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: str | None = None):
+    def _get_derived_path(
+        self,
+        append: str,
+        suffix: str | None = None,
+    ) -> Path:
         """Return path of related files.
 
         Parameters
         ----------
-        append : str
+        append
             Add this string to the stem of the path.
-        suffix : str
+        suffix
             The file extension to use (i.e. `.txt`)
 
         Returns

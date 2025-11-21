@@ -59,6 +59,8 @@ from .to_datasets import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from prov.model import ProvEntity
+
     from esmvalcore._task import BaseTask
     from esmvalcore.config import Session
     from esmvalcore.io.protocol import DataElement
@@ -965,7 +967,10 @@ class Recipe:
                     return True
         return False
 
-    def _initialize_provenance(self, raw_documentation: dict[str, Any]):
+    def _initialize_provenance(
+        self,
+        raw_documentation: dict[str, Any],
+    ) -> ProvEntity:
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
 
@@ -1381,10 +1386,10 @@ class Recipe:
                 RecipeOutput,
             )
 
-            output = self.get_output()
-
             try:
-                output = RecipeOutput.from_core_recipe_output(output)
+                output = RecipeOutput.from_core_recipe_output(
+                    self.get_output(),
+                )
             except LookupError as error:
                 # See https://github.com/ESMValGroup/ESMValCore/issues/28
                 logger.warning("Could not write HTML report: %s", error)

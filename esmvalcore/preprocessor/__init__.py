@@ -375,7 +375,7 @@ def _get_multi_model_settings(
 def _run_preproc_function(
     function: Callable,
     items: PreprocessorItem | Sequence[PreprocessorItem],
-    kwargs: Any,
+    kwargs: dict[str, Any],
     input_files: Sequence[DataElement] | None = None,
 ) -> PreprocessorItem | Sequence[PreprocessorItem]:
     """Run preprocessor function."""
@@ -729,7 +729,7 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
+    def _run(self, _: list[str]) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
         for product in self.products:
             product.activity = self.activity

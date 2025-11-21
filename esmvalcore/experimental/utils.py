@@ -7,8 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
-
-from .recipe import Recipe
+from esmvalcore.experimental.recipe import Recipe
 
 if TYPE_CHECKING:
     import os
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 class RecipeList(list):
     """Container for recipes."""
 
-    def find(self, query: Pattern[str]):
+    def find(self, query: Pattern[str]) -> RecipeList:
         """Search for recipes matching the search query or pattern.
 
         Searches in the description, authors and project information fields.

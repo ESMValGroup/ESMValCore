@@ -47,7 +47,7 @@ def guess_bounds(cube, coords):
 
 def get_iris_aggregator(
     operator: str,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> tuple[iris.analysis.Aggregator, dict]:
     """Get :class:`iris.analysis.Aggregator` and keyword arguments.
 
@@ -84,18 +84,14 @@ def get_iris_aggregator(
     # Check if valid aggregator is found
     if not hasattr(iris.analysis, cap_operator):
         msg = f"Aggregator '{operator}' not found in iris.analysis module"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     aggregator = getattr(iris.analysis, cap_operator)
     if not hasattr(aggregator, "aggregate"):
         msg = (
             f"Aggregator {aggregator} found by '{operator}' is not a valid "
             f"iris.analysis.Aggregator"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
@@ -111,9 +107,7 @@ def get_iris_aggregator(
             cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         msg = f"Invalid kwargs for operator '{operator}': {exc!s}"
-        raise ValueError(
-            msg,
-        ) from exc
+        raise ValueError(msg) from exc
 
     return (aggregator, aggregator_kwargs)
 
@@ -143,10 +137,10 @@ def update_weights_kwargs(
     operator: str,
     aggregator: iris.analysis.Aggregator,
     kwargs: dict,
-    weights: Any,
+    weights: Any,  # noqa: ANN401
     cube: Cube | None = None,
     callback: Callable | None = None,
-    **callback_kwargs,
+    **callback_kwargs: Any,
 ) -> dict:
     """Update weights keyword argument.
 
@@ -250,7 +244,7 @@ def get_normalized_cube(
     return normalized_cube
 
 
-def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:
+def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
     """Get first argument given to a function."""
     # If positional arguments are given, use the first one
     if args:

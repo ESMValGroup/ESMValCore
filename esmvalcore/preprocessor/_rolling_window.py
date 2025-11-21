@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
@@ -24,8 +24,8 @@ def rolling_window_statistics(
     coordinate: str,
     operator: str,
     window_length: int,
-    **operator_kwargs,
-):
+    **operator_kwargs: Any,
+) -> Cube:
     """Compute rolling-window statistics over a coordinate.
 
     Parameters

@@ -205,7 +205,7 @@ def save(  # noqa: C901
     compress: bool = False,
     alias: str = "",
     compute: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> Delayed | None:
     """Save iris cubes to file.
 

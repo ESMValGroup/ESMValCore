@@ -25,7 +25,13 @@ def clear_regridder_cache(monkeypatch):
     )
 
 
-def _make_coord(start: float, stop: float, step: int, *, name: str):
+def _make_coord(
+    start: float,
+    stop: float,
+    step: int,
+    *,
+    name: str,
+) -> iris.coords.DimCoord:
     """Create a latitude or longitude coordinate with bounds."""
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
@@ -36,7 +42,7 @@ def _make_coord(start: float, stop: float, step: int, *, name: str):
     return coord
 
 
-def _make_cube(*, lat: tuple, lon: tuple):
+def _make_cube(*, lat: tuple, lon: tuple) -> iris.cube.Cube:
     """Create a cube with a latitude and longitude dimension."""
     lat_coord = _make_coord(*lat, name="latitude")
     lon_coord = _make_coord(*lon, name="longitude")

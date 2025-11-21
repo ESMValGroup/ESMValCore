@@ -11,7 +11,7 @@ import datetime
 import logging
 import warnings
 from functools import partial
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from warnings import filterwarnings
 
 import dask.array as da
@@ -496,7 +496,7 @@ def hourly_statistics(
     cube: Cube,
     hours: int,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute hourly statistics.
 
@@ -554,7 +554,7 @@ def hourly_statistics(
 def daily_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute daily statistics.
 
@@ -595,7 +595,7 @@ def daily_statistics(
 def monthly_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute monthly statistics.
 
@@ -639,7 +639,7 @@ def seasonal_statistics(
     cube: Cube,
     operator: str = "mean",
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute seasonal statistics.
 
@@ -749,7 +749,7 @@ def seasonal_statistics(
 def annual_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute annual statistics.
 
@@ -791,7 +791,7 @@ def annual_statistics(
 def decadal_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute decadal statistics.
 
@@ -846,7 +846,7 @@ def climate_statistics(
     operator: str = "mean",
     period: str = "full",
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute climate statistics with the specified granularity.
 
@@ -1070,7 +1070,7 @@ def _compute_anomalies(
     reference: Cube,
     period: str,
     seasons: Iterable[str],
-):
+) -> Cube:
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
     indices = np.empty_like(cube_coord.points, dtype=np.int32)
@@ -1342,7 +1342,7 @@ def timeseries_filter(
     span: int,
     filter_type: str = "lowpass",
     filter_stats: str = "sum",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a timeseries filter.
 
@@ -1725,7 +1725,7 @@ def _transform_to_lst_eager(
     *,
     time_dim: int,
     lon_dim: int,
-    **__,
+    **__: Any,
 ) -> np.ndarray:
     """Transform array with UTC coord to local solar time (LST) coord.
 

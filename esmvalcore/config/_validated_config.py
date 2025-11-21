@@ -60,7 +60,7 @@ class ValidatedConfig(MutableMapping):
     """
 
     # validate values on the way in
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__()
         self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)

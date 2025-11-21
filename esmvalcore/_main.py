@@ -35,10 +35,14 @@ import re
 import sys
 from importlib.metadata import entry_points
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import fire
 
 from esmvalcore.config._config import warn_if_old_extra_facets_exist
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -80,7 +84,7 @@ def parse_resume(resume, recipe):
     return resume
 
 
-def process_recipe(recipe_file: Path, session) -> None:
+def process_recipe(recipe_file: Path, session: Session) -> None:
     """Process recipe."""
     import datetime
     import shutil
@@ -634,7 +638,7 @@ class ESMValTool:
     def _run(
         self,
         recipe: Path,
-        session,
+        session: Session,
         cli_config_dir: Path | None,
     ) -> None:
         """Run `recipe` using `session`."""
@@ -697,7 +701,7 @@ class ESMValTool:
             shutil.rmtree(session.preproc_dir)
 
     @staticmethod
-    def _get_recipe(recipe) -> Path:
+    def _get_recipe(recipe: str) -> Path:
         from esmvalcore.config._diagnostics import DIAGNOSTICS
 
         if not os.path.isfile(recipe):

@@ -100,7 +100,7 @@ def _get_log_files(
     return log_files
 
 
-def _update_stream_level(cfg: dict, level=None) -> None:
+def _update_stream_level(cfg: dict, level: str | None = None) -> None:
     """Update the log level for the stream handlers."""
     handlers = cfg["handlers"]
 

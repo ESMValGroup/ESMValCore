@@ -553,7 +553,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
         self._regex_pattern = self._templates_to_regex()
 
-    def _get_glob_patterns(self, **facets) -> list[Path]:
+    def _get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
         dirname_globs = _replace_tags(self.dirname_template, facets)
         filename_globs = _replace_tags(self.filename_template, facets)
@@ -563,7 +563,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             for f in filename_globs
         )
 
-    def find_data(self, **facets) -> list[LocalFile]:
+    def find_data(self, **facets: FacetValue) -> list[LocalFile]:
         """Find data locally.
 
         Parameters
@@ -724,7 +724,7 @@ class DataSource(LocalDataSource):
          Please use :class:`esmvalcore.local.LocalDataSource` instead.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         msg = (
             "The 'esmvalcore.local.LocalDataSource' class is deprecated and will be "
             "removed in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource'"
@@ -737,7 +737,7 @@ class DataSource(LocalDataSource):
         """Get regex pattern that can be used to extract facets from paths."""
         return self._regex_pattern
 
-    def get_glob_patterns(self, **facets) -> list[Path]:
+    def get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
         return self._get_glob_patterns(**facets)
 
@@ -745,7 +745,7 @@ class DataSource(LocalDataSource):
         """Extract facets from path."""
         return self._path2facets(path, add_timerange)
 
-    def find_files(self, **facets) -> list[LocalFile]:
+    def find_files(self, **facets: FacetValue) -> list[LocalFile]:
         """Find files."""
         return self.find_data(**facets)
 
@@ -1030,7 +1030,7 @@ def _get_attr_from_field_coord(
     ncfield: iris.fileformats.cf.CFVariable,
     coord_name: str | None,
     attr: str,
-) -> Any:
+) -> Any:  # noqa: ANN401
     """Get attribute from netCDF field coordinate."""
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()

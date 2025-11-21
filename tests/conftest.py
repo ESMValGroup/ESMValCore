@@ -22,6 +22,8 @@ from esmvalcore.config import CFG, Config
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from esmvalcore.config import Session
+
 
 @lru_cache
 def _load_default_config():
@@ -45,13 +47,20 @@ def cfg_default():
 
 
 @pytest.fixture(autouse=True)
-def ignore_existing_user_config(monkeypatch, cfg_default):
+def ignore_existing_user_config(
+    monkeypatch: pytest.MonkeyPatch,
+    cfg_default: Config,
+) -> None:
     """Ignore user's configuration when running tests."""
     monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
 
 
 @pytest.fixture
-def session(tmp_path: Path, ignore_existing_user_config, monkeypatch):
+def session(
+    tmp_path: Path,
+    ignore_existing_user_config: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Session:
     """Session object with default settings."""
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
     return CFG.start_session("recipe_test")

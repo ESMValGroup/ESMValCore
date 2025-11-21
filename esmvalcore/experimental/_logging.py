@@ -7,11 +7,12 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from contextlib.abc import ContextManager
     from pathlib import Path
 
 
 @contextmanager
-def log_to_dir(drc: Path):
+def log_to_dir(drc: Path) -> ContextManager[None]:
     """Log messages to the specified directory.
 
     This is a context manager to temporarily redirect the logging when

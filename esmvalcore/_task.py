@@ -285,7 +285,7 @@ class BaseTask:
         tasks.add(self)
         return tasks
 
-    def run(self, input_files=None):
+    def run(self, input_files: list[str] | None = None) -> None:
         """Run task."""
         if not self.output_files:
             if input_files is None:
@@ -310,7 +310,7 @@ class BaseTask:
         return self.output_files
 
     @abc.abstractmethod
-    def _run(self, input_files):
+    def _run(self, input_files: list[str]) -> list[str]:
         """Run task."""
 
     def get_product_attributes(self) -> dict:
@@ -364,7 +364,7 @@ class ResumeTask(BaseTask):
 
         super().__init__(ancestors=None, name=name, products=products)
 
-    def _run(self, _):
+    def _run(self, _: list[str]) -> list[str]:
         """Return the result of a previous run."""
         metadata = self.get_product_attributes()
 

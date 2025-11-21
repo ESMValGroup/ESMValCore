@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     import iris.cube
-    from pyesgf.search.results import FileResult
+    from pyesgf.search.results import FileResult, ResultSet
 
     from esmvalcore.typing import Facets
 
@@ -331,7 +331,7 @@ class ESGFFile(DataElement):
         return facets
 
     @staticmethod
-    def _get_facets_from_dataset_id(results) -> Facets:
+    def _get_facets_from_dataset_id(results: ResultSet) -> Facets:
         """Read the facets from the `dataset_id`."""
         # This reads the facets from the dataset_id because the facets
         # provided by ESGF are unreliable.

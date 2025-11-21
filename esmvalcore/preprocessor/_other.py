@@ -565,7 +565,7 @@ def _get_histogram_cube(
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
     normalization: Literal["sum", "integral"] | None,
-):
+) -> Cube:
     """Get cube with correct metadata for histogram."""
     # Calculate bin centers using 2-window running mean and get corresponding
     # coordinate

@@ -8,7 +8,7 @@ import inspect
 import logging
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask
 import numpy as np
@@ -423,12 +423,12 @@ class GenericFix(Fix):
             return f"\n(for file {cube.attributes['source_file']})"
         return f"\n(for variable {cube.var_name})"
 
-    def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _debug_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.debug(msg, *args)
 
-    def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _warning_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.warning(msg, *args)

@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import fiona
+import fiona.collection
 import iris
 import numpy as np
 import shapely
@@ -213,7 +214,7 @@ def zonal_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute zonal statistics.
 
@@ -265,7 +266,7 @@ def meridional_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute meridional statistics.
 
@@ -320,7 +321,7 @@ def area_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
@@ -479,7 +480,7 @@ def _crop_cube(
 
 
 def _select_representative_point(
-    shape,
+    shape: shapely.geometry.base.BaseGeometry,
     lon: np.ndarray,
     lat: np.ndarray,
 ) -> np.ndarray:
@@ -521,7 +522,10 @@ def _correct_coords_from_shapefile(
     return lon, lat
 
 
-def _process_ids(geometries, ids: list | dict | None) -> tuple:
+def _process_ids(
+    geometries: fiona.collection.Collection,
+    ids: list | dict | None,
+) -> tuple:
     """Read requested IDs and ID keys."""
     # If ids is a dict, it needs to have length 1 and all geometries needs to
     # have the requested attribute key
@@ -531,9 +535,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                 f"If `ids` is given as dict, it needs exactly one entry, got "
                 f"{ids}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         key = next(iter(ids.keys()))
         for geometry in geometries:
             if key not in geometry["properties"]:
@@ -541,9 +543,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                     f"Geometry {dict(geometry['properties'])} does not have "
                     f"requested attribute {key}"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
         id_keys: tuple[str, ...] = (key,)
         ids = ids[key]
 
@@ -561,7 +561,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
 
 
 def _get_requested_geometries(
-    geometries,
+    geometries: fiona.collection.Collection,
     ids: list | dict | None,
     shapefile: Path,
 ) -> dict[str, dict]:
@@ -596,9 +596,7 @@ def _get_requested_geometries(
                 f"Requested shapes {missing} not found in shapefile "
                 f"{shapefile}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
     return requested_geometries
 

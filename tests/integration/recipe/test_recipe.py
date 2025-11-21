@@ -35,13 +35,16 @@ from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
 
 if TYPE_CHECKING:
+    from esmvalcore._recipe.recipe import (
+        Recipe,
+    )
     from esmvalcore.config import Session
     from esmvalcore.typing import Facets
 
 
 @lru_cache
 def _load_data_sources(
-    filename,
+    filename: str,
 ) -> dict[
     str,
     dict[str, dict[str, dict[str, dict[str, str]]]],
@@ -195,7 +198,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     """)
 
 
-def get_recipe(tempdir: Path, content: str, session: Session):
+def get_recipe(tempdir: Path, content: str, session: Session) -> Recipe:
     """Save and load recipe content."""
     recipe_file = tempdir / "recipe_test.yml"
     # Add mandatory documentation section

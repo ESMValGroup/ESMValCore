@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Self
 
 import yaml
 
-from .recipe_metadata import Contributor, Project, Reference
-from .templates import get_template
+from esmvalcore.experimental.recipe_metadata import (
+    Contributor,
+    Project,
+    Reference,
+)
+from esmvalcore.experimental.templates import get_template
 
 if TYPE_CHECKING:
     import os
@@ -26,7 +30,11 @@ class RecipeInfo:
         Name of recipe file
     """
 
-    def __init__(self, data, filename: os.PathLike | str) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any],
+        filename: os.PathLike | str,
+    ) -> None:
         self.filename = Path(filename).name
         self.data = data
         self._authors: tuple[Contributor, ...] | None = None
@@ -75,7 +83,7 @@ class RecipeInfo:
         return self.render()
 
     @classmethod
-    def from_yaml(cls, path: str):
+    def from_yaml(cls, path: str) -> Self:
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         return cls(data, filename=path)

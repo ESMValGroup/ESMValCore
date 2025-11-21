@@ -27,10 +27,7 @@ from esmvalcore.config._config import (
 )
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
-    _dates_to_timerange,
-    _get_output_file,
-)
+from esmvalcore.local import _dates_to_timerange, _get_output_file
 from esmvalcore.preprocessor import preprocess
 
 if TYPE_CHECKING:
@@ -674,7 +671,7 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
@@ -687,16 +684,16 @@ class Dataset:
             .get(self["project"], {})
             .get("extra_facets", {})
         )
-        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])
+        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 raw_extra_facets[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     raw_extra_facets[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = raw_extra_facets[dataset_name][mip][var]
@@ -710,16 +707,16 @@ class Dataset:
             self.facets["project"],
             tuple(self.session["extra_facets_dir"]),
         )
-        dataset_names = self._pattern_filter(project_details, self["dataset"])
+        dataset_names = self._pattern_filter(project_details, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 project_details[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     project_details[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = project_details[dataset_name][mip][var]
@@ -928,7 +925,7 @@ class Dataset:
         expanded: list[FacetValue] = []
         regex = re.compile(r"\(\d+:\d+\)")
 
-        def expand_range(input_range) -> None:
+        def expand_range(input_range: str) -> None:
             match = regex.search(input_range)
             if match:
                 start, end = match.group(0)[1:-1].split(":")
@@ -949,7 +946,7 @@ class Dataset:
                     raise RecipeError(msg)
             expanded.append(tag)
         else:
-            expand_range(tag)
+            expand_range(tag)  # type: ignore[arg-type]
 
         return expanded
 

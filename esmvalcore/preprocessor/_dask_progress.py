@@ -6,10 +6,11 @@ import datetime
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask.diagnostics
 import distributed
+import distributed.diagnostics.progressbar
 import rich.progress
 
 from esmvalcore.config import CFG
@@ -89,7 +90,7 @@ class RichDistributedProgressBar(
     # Disable warnings about design choices that have been made in the base class.
     # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
-    def __init__(self, keys) -> None:
+    def __init__(self, keys) -> None:  # noqa: ANN001
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
@@ -106,7 +107,7 @@ class RichDistributedProgressBar(
         self,
         remaining: int,
         all: int,  # noqa: A002 # pylint: disable=redefined-builtin
-        **kwargs,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         completed = all - remaining
         self.progress.update(self.task_id, completed=completed, total=all)
@@ -163,7 +164,7 @@ class DistributedProgressLogger(
 
     def __init__(
         self,
-        keys,
+        keys,  # noqa: ANN001
         log_interval: str | float = "1s",
         description: str = "",
     ) -> None:
@@ -179,7 +180,7 @@ class DistributedProgressLogger(
         self,
         remaining: int,
         all: int,  # noqa: A002 # pylint: disable=redefined-builtin
-        **kwargs,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         frac = (1 - remaining / all) if all else 1.0
         if (

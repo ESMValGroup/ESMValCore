@@ -111,7 +111,7 @@ class Recipe:
         self,
         task: str | None = None,
         session: Session | None = None,
-    ):
+    ) -> RecipeOutput:
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -119,17 +119,17 @@ class Recipe:
 
         Parameters
         ----------
-        task : str
+        task
             Specify the name of the diagnostic or preprocessor to run a
             single task.
-        session : :obj:`Session`, optional
+        session
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
             started automatically.
 
         Returns
         -------
-        output : dict
+        :
             Returns output of the recipe as instances of :obj:`OutputItem`
             grouped by diagnostic task.
         """
@@ -157,7 +157,7 @@ class Recipe:
 
         Returns
         -------
-        output : dict
+        output
             Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
@@ -170,6 +170,6 @@ class Recipe:
 
         return RecipeOutput(
             task_output=task_output,
-            session=self.last_session,
+            session=self.last_session,  # type: ignore[arg-type]
             info=self.info,
         )

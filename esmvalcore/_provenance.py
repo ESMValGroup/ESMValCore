@@ -194,11 +194,11 @@ class TrackedFile:
         """Return representation string (e.g., used by ``pformat``)."""
         return f"{self.__class__.__name__}: {self.filename}"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if `other` equals `self`."""
         return hasattr(other, "filename") and self.filename == other.filename
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: object) -> bool:
         """Check if `other` should be sorted before `self`."""
         return hasattr(other, "filename") and self.filename < other.filename
 
