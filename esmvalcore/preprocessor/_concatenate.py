@@ -59,13 +59,13 @@ class _TimesHelper:
         self.times = time.core_points()
         self.units = str(time.units)
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:  # noqa: ANN401
         return getattr(self.times, name)
 
     def __len__(self) -> int:
         return len(self.times)
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: Any) -> Any:  # noqa: ANN401
         return self.times[key]
 
 
@@ -219,7 +219,7 @@ def _concatenate_cubes_by_experiment(cubes: Sequence[Cube]) -> Sequence[Cube]:
         project["exp"] for project in FACETS.values() if "exp" in project
     }
 
-    def get_exp(cube: Cube) -> Any:
+    def get_exp(cube: Cube) -> str:
         for key in exp_facet_names:
             if key in cube.attributes:
                 return cube.attributes[key]

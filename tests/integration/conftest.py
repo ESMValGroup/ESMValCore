@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
-from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import iris
 import pytest
@@ -12,7 +14,11 @@ from esmvalcore.local import (
     _select_drs,
     _select_files,
 )
-from esmvalcore.typing import Facets
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
+    from esmvalcore.typing import Facets, FacetValue
 
 
 def create_test_file(filename, tracking_id=None):
@@ -123,10 +129,21 @@ def _tracking_ids(i=0):
         i += 1
 
 
-def _get_find_files_func(path: Path, suffix: str = "nc"):
+def _get_find_files_func(
+    path: Path,
+    suffix: str = "nc",
+) -> Callable[
+    ...,
+    tuple[list[LocalFile], list[Path]] | list[LocalFile],
+]:
     tracking_id = _tracking_ids()
 
-    def find_files(self, *, debug: bool = False, **facets):
+    def find_files(
+        self: esmvalcore.local.LocalDataSource,
+        *,
+        debug: bool = False,
+        **facets: FacetValue,
+    ) -> tuple[list[LocalFile], list[Path]] | list[LocalFile]:
         files, file_globs = _get_files(path, facets, tracking_id, suffix)
         if debug:
             return files, file_globs
@@ -136,7 +153,7 @@ def _get_find_files_func(path: Path, suffix: str = "nc"):
 
 
 @pytest.fixture
-def patched_datafinder(tmp_path, monkeypatch):
+def patched_datafinder(tmp_path: Path, monkeypatch: pytest.MonkeyPath) -> None:
     find_files = _get_find_files_func(tmp_path)
     monkeypatch.setattr(
         esmvalcore.local.LocalDataSource,
@@ -146,7 +163,10 @@ def patched_datafinder(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def patched_datafinder_grib(tmp_path, monkeypatch):
+def patched_datafinder_grib(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     find_files = _get_find_files_func(tmp_path, suffix="grib")
     monkeypatch.setattr(
         esmvalcore.local.LocalDataSource,
@@ -156,7 +176,10 @@ def patched_datafinder_grib(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def patched_failing_datafinder(tmp_path, monkeypatch):
+def patched_failing_datafinder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Failing data finder.
 
     Do not return files for:
@@ -168,7 +191,12 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     """
     tracking_id = _tracking_ids()
 
-    def find_files(self, *, debug: bool = False, **facets):
+    def find_files(
+        self: esmvalcore.local.LocalDataSource,
+        *,
+        debug: bool = False,
+        **facets: FacetValue,
+    ) -> tuple[list[LocalFile], list[Path]] | list[LocalFile]:
         files, file_globs = _get_files(tmp_path, facets, tracking_id)
         if facets["frequency"] == "fx":
             files = []

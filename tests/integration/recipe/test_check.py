@@ -1,12 +1,14 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
+from __future__ import annotations
+
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pyesgf.search.results
 import pytest
-import pytest_mock
 
 import esmvalcore._recipe.check
 import esmvalcore.esgf
@@ -15,6 +17,9 @@ from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile
 from esmvalcore.preprocessor import PreprocessorFile
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 def test_ncl_version(mocker):

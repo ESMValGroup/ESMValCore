@@ -575,7 +575,7 @@ def ignore_warnings_context(
 def _get_attribute(
     data: ncdata.NcData | ncdata.NcVariable | xr.Dataset | xr.DataArray,
     attribute_name: str,
-) -> Any:
+) -> Any:  # noqa: ANN401
     """Get attribute from an ncdata or xarray object."""
     if isinstance(data, ncdata.NcData | ncdata.NcVariable):
         attribute = data.attributes[attribute_name].value

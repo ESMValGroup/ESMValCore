@@ -5,7 +5,7 @@ from __future__ import annotations
 import itertools
 import logging
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +16,7 @@ from esmvalcore.exceptions import RecipeError
 from ._io import _load_recipe
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
     from esmvalcore.dataset import Dataset
@@ -114,7 +115,7 @@ def _to_frozen(item):
     return item
 
 
-def _move_one_level_up(base: dict, level: str, target: str):
+def _move_one_level_up(base: dict, level: str, target: str) -> None:
     """Move datasets one level up in the recipe."""
     groups = base[level]
     if not groups:

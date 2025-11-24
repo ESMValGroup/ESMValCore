@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.preprocessor._regrid_iris_esmf_regrid import IrisESMFRegrid
 from esmvalcore.preprocessor._regrid_unstructured import (
@@ -53,8 +53,8 @@ class GenericRegridder:
         src_cube: Cube,
         tgt_cube: Cube,
         func: Callable,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Initialize class instance."""
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
@@ -93,7 +93,7 @@ class GenericFuncScheme:
         Keyword arguments for the generic regridding function.
     """
 
-    def __init__(self, func: Callable, **kwargs):
+    def __init__(self, func: Callable, **kwargs: Any) -> None:
         """Initialize class instance."""
         self.func = func
         self.kwargs = kwargs

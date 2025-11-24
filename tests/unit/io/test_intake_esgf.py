@@ -1,6 +1,9 @@
 """Unit tests for esmvalcore.io.intake_esgf."""
 
+from __future__ import annotations
+
 import importlib.resources
+from typing import TYPE_CHECKING
 
 import intake_esgf
 import iris.cube
@@ -8,12 +11,15 @@ import pandas as pd
 import pytest
 import xarray as xr
 import yaml
-from pytest import MonkeyPatch
-from pytest_mock import MockerFixture
 
 import esmvalcore.io.intake_esgf
-from esmvalcore.config import Session
 from esmvalcore.io.intake_esgf import IntakeESGFDataset, IntakeESGFDataSource
+
+if TYPE_CHECKING:
+    from pytest import MonkeyPatch
+    from pytest_mock import MockerFixture
+
+    from esmvalcore.config import Session
 
 
 def test_intakeesgfdataset_repr() -> None:
@@ -134,7 +140,7 @@ def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
     assert data_source.debug_info == expected_debug_info
 
 
-def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch):
+def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
     """find_data should convert catalog.df rows into IntakeESGFDataset instances."""
     cat = intake_esgf.ESGFCatalog()
     cat.project = intake_esgf.projects.projects["cmip6"]

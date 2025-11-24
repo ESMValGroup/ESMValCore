@@ -1,13 +1,18 @@
 """Fixtures for ICON fixes tests."""
 
+from __future__ import annotations
+
 import importlib.resources
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
 
 import esmvalcore.config
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(autouse=True)

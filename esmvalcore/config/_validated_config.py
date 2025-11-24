@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, Generator, Mapping, MutableMapping
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -15,6 +15,9 @@ from esmvalcore.exceptions import (
 )
 
 from ._config_validators import ValidationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Mapping
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -57,7 +60,7 @@ class ValidatedConfig(MutableMapping):
     """
 
     # validate values on the way in
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__()
         self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)

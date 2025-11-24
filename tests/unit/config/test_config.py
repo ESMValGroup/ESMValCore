@@ -28,7 +28,7 @@ BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
         for f in BUILTIN_CONFIG_DIR.rglob("*.yml")
     ],
 )
-def test_builtin_config_files_have_description(config_file) -> None:
+def test_builtin_config_files_have_description(config_file: Path) -> None:
     """Test that all built-in config files have a description."""
     # Use the same code to find the description as in the
     # `esmvaltool config list` command.

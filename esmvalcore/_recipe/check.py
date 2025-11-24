@@ -364,7 +364,7 @@ def _verify_span_value(span: str) -> None:
         raise RecipeError(msg)
 
 
-def _verify_groupby(groupby: Any) -> None:
+def _verify_groupby(groupby: list[str]) -> None:
     """Raise error if groupby arguments cannot be verified."""
     if not isinstance(groupby, list):
         msg = (
@@ -375,7 +375,7 @@ def _verify_groupby(groupby: Any) -> None:
         raise RecipeError(msg)
 
 
-def _verify_keep_input_datasets(keep_input_datasets: Any) -> None:
+def _verify_keep_input_datasets(keep_input_datasets: bool) -> None:
     if not isinstance(keep_input_datasets, bool):
         msg = (
             f"Invalid value encountered for `keep_input_datasets`."
@@ -385,7 +385,7 @@ def _verify_keep_input_datasets(keep_input_datasets: Any) -> None:
         raise RecipeError(msg)
 
 
-def _verify_ignore_scalar_coords(ignore_scalar_coords: Any) -> None:
+def _verify_ignore_scalar_coords(ignore_scalar_coords: bool) -> None:
     if not isinstance(ignore_scalar_coords, bool):
         msg = (
             f"Invalid value encountered for `ignore_scalar_coords`."

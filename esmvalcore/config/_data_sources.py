@@ -1,16 +1,21 @@
 """Module for configuring data sources."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 import yaml
 
 import esmvalcore.esgf
 import esmvalcore.esgf.facets
 import esmvalcore.local
-from esmvalcore.config import Session
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 from esmvalcore.io import load_data_sources
-from esmvalcore.io.protocol import DataSource
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
+    from esmvalcore.io.protocol import DataSource
 
 logger = logging.getLogger(__name__)
 

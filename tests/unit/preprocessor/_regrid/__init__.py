@@ -40,7 +40,7 @@ def _make_cube(  # noqa: PLR0915,C901
     data: np.ndarray,
     aux_coord: bool = True,
     dim_coord: bool = True,
-    dtype=None,
+    dtype=None,  # noqa: ANN001
     grid: Literal["regular", "rotated", "mesh"] = "regular",
 ) -> iris.cube.Cube:
     """Create a 3d synthetic test cube."""

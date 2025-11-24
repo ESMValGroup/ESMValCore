@@ -3,13 +3,15 @@
 Includes a context manager to temporarily modify sys.argv
 """
 
+from __future__ import annotations
+
 import contextlib
 import copy
 import functools
 import sys
 import warnings
-from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -20,6 +22,9 @@ import esmvalcore._main
 import esmvalcore.config
 from esmvalcore._main import Config, ESMValTool, Recipes, run
 from esmvalcore.exceptions import RecipeError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def wrapper(f):
