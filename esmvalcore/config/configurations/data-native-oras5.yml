@@ -1,4 +1,4 @@
-# Read data from the ICON model in its native format.
+# Read data from ORAS5 data in its native format.
 projects:
   ORAS5:
     data:

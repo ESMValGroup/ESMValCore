@@ -1,10 +1,8 @@
-# Extra facets for native ORAS5 data
+# Extra facets for native ORAS5 data.
 
 # Notes:
 # - All facets can also be specified in the recipes. The values given here are
 #   only defaults.
-# - The facet ``var_type`` has to be specified in the recipe if it is not given
-#   here and default DRS is used.
 
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
