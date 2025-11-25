@@ -1,0 +1,24 @@
+# Extra facets for native IFW model output
+
+# Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+projects:
+  IFW:
+    extra_facets:
+      ifwh:
+        '*':
+          # Optional facets for every variable
+          # It is necessary to define them here to allow multiple file/dir name
+          # conventions, see
+          # https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html
+          '*':
+            string: ''
+
+          # Default facets for variables
+          od550aer:
+            raw_name: aod550

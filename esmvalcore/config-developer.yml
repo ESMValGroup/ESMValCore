@@ -103,7 +103,8 @@ native6:
   input_file:
     default: '*.nc'
     DKRZ-ERA5-GRIB: '{family}{level}{typeid}_{tres}_*_{grib_id}.grb'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  output_file:
+    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
@@ -182,6 +183,17 @@ ICON:
   input_file:
     default: '{exp}_{var_type}*.nc'
   output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
+IFW:
+  cmor_strict: false
+  input_dir:
+    default: '{dataset}/{short_name}'
+  input_file:
+    default: '{dataset}_*_{fstep}.nc'
+  output_file:
+    default: '{project}_{dataset}_{mip}_{short_name}_{fstep}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
