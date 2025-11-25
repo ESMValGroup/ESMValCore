@@ -1,14 +1,18 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 
 import datetime
+import warnings
 from copy import deepcopy
 from itertools import permutations
 from pprint import pformat
 from unittest import mock
 
 import dask.array as da
+import iris.analysis
+import ncdata
 import numpy as np
 import pytest
+import xarray as xr
 from cf_units import Unit
 from iris.coords import (
     AncillaryVariable,
@@ -19,13 +23,16 @@ from iris.coords import (
 )
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, UnitConversionError
+from iris.warnings import IrisLoadWarning, IrisUnknownCellMethodWarning
 
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
+    dataset_to_iris,
     date2num,
     has_irregular_grid,
     has_regular_grid,
     has_unstructured_grid,
+    ignore_iris_vague_metadata_warnings,
     merge_cube_attributes,
     rechunk_cube,
     safe_convert_units,
@@ -35,14 +42,13 @@ from esmvalcore.iris_helpers import (
 @pytest.fixture
 def cubes():
     """Test cubes."""
-    cubes = CubeList(
+    return CubeList(
         [
             Cube(0.0, var_name="a", long_name="a"),
             Cube(0.0, var_name="a", long_name="b"),
             Cube(0.0, var_name="c", long_name="d"),
-        ]
+        ],
     )
-    return cubes
 
 
 @pytest.fixture
@@ -136,7 +142,7 @@ def test_add_leading_dim_to_cube_non_1d():
 
 
 @pytest.mark.parametrize(
-    "date, dtype, expected",
+    ("date", "dtype", "expected"),
     [
         (datetime.datetime(1, 1, 1), np.float64, 0.0),
         (datetime.datetime(1, 1, 1), int, 0.0),
@@ -282,10 +288,12 @@ def cube_3d():
 
     # CellMeasures and AncillaryVariables
     cell_measure = CellMeasure(
-        da.ones((3, 4), chunks=(1, 1)), var_name="cell_measure"
+        da.ones((3, 4), chunks=(1, 1)),
+        var_name="cell_measure",
     )
     anc_var = AncillaryVariable(
-        da.ones((3, 4), chunks=(1, 1)), var_name="anc_var"
+        da.ones((3, 4), chunks=(1, 1)),
+        var_name="anc_var",
     )
 
     return Cube(
@@ -486,7 +494,8 @@ def test_has_irregular_grid_1d_lat(lat_coord_1d, lon_coord_2d):
 def test_has_irregular_grid_1d_lat_lon(lat_coord_1d, lon_coord_1d):
     """Test `has_irregular_grid`."""
     cube = Cube(
-        [0, 1], aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)]
+        [0, 1],
+        aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)],
     )
     assert has_irregular_grid(cube) is False
 
@@ -575,7 +584,13 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
 
 
 @pytest.mark.parametrize(
-    "old_units,new_units,old_standard_name,new_standard_name,err_msg",
+    (
+        "old_units",
+        "new_units",
+        "old_standard_name",
+        "new_standard_name",
+        "err_msg",
+    ),
     [
         ("m", "km", "altitude", "altitude", None),
         ("Pa", "hPa", "air_pressure", "air_pressure", None),
@@ -612,7 +627,11 @@ def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
     ],
 )
 def test_safe_convert_units(
-    old_units, new_units, old_standard_name, new_standard_name, err_msg
+    old_units,
+    new_units,
+    old_standard_name,
+    new_standard_name,
+    err_msg,
 ):
     """Test ``esmvalcore.preprocessor._units.safe_convert_units``."""
     cube = Cube(0, standard_name=old_standard_name, units=old_units)
@@ -628,3 +647,128 @@ def test_safe_convert_units(
     assert new_cube is cube
     assert new_cube.standard_name == new_standard_name
     assert new_cube.units == new_units
+
+
+def test_ignore_iris_vague_metadata_warnings():
+    """Test ``ignore_iris_vague_metadata_warnings``."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        x_coord = DimCoord([0, 3], bounds=[[-1, 1], [2, 4]], var_name="x")
+        cube = Cube([1, 1], dim_coords_and_dims=[(x_coord, 0)])
+        with ignore_iris_vague_metadata_warnings():
+            cube.collapsed("x", iris.analysis.MEAN)
+
+
+@pytest.fixture
+def dummy_cubes(realistic_4d_cube):
+    realistic_4d_cube.remove_ancillary_variable(
+        realistic_4d_cube.ancillary_variables()[0],
+    )
+    realistic_4d_cube.data = realistic_4d_cube.lazy_data()
+    return CubeList([realistic_4d_cube])
+
+
+@pytest.fixture
+def empty_cubes():
+    return CubeList([Cube(0.0)])
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
+
+    cubes = dataset_to_iris(dataset, filepath="path/to/file.nc")
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.has_lazy_data()
+    np.testing.assert_allclose(cube.data, dummy_cubes[0].data)
+    assert cube.standard_name == dummy_cubes[0].standard_name
+    assert cube.var_name == dummy_cubes[0].var_name
+    assert cube.long_name == dummy_cubes[0].long_name
+    assert cube.units == dummy_cubes[0].units
+    assert str(cube.coord("latitude").units) == "degrees_north"
+    assert str(cube.coord("longitude").units) == "degrees_east"
+    assert cube.attributes["source_file"] == "path/to/file.nc"
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_empty_cube(conversion_func, empty_cubes):
+    dataset = conversion_func(empty_cubes)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cubes = dataset_to_iris(dataset)
+
+    assert len(cubes) == 1
+    cube = cubes[0]
+
+    assert cube.has_lazy_data()
+    np.testing.assert_allclose(cube.data, np.array(0.0))
+    assert cube.standard_name is None
+    assert cube.var_name == "unknown"
+    assert cube.long_name is None
+    assert cube.units == "unknown"
+    assert not cube.coords()
+    assert "source_file" not in cube.attributes
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_ignore_warnings(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
+    if isinstance(dataset, xr.Dataset):
+        dataset.ta.attrs["units"] = "invalid_units"
+    else:
+        dataset.variables["ta"].attributes["units"] = "invalid_units"
+
+    ignore_warnings = [
+        {
+            "message": (
+                r"Not all file objects were parsed correctly. See "
+                r"iris.loading.LOAD_PROBLEMS for details."
+            ),
+            "category": IrisLoadWarning,
+            "module": "iris",
+        },
+    ]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        dataset_to_iris(dataset, ignore_warnings=ignore_warnings)
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_no_ignore_warnings(conversion_func, dummy_cubes):
+    dataset = conversion_func(dummy_cubes)
+    if isinstance(dataset, xr.Dataset):
+        dataset.ta.attrs["cell_methods"] = "time: invalid_method"
+    else:
+        dataset.variables["ta"].set_attrval(
+            "cell_methods",
+            "time: invalid_method",
+        )
+
+    msg = r"NetCDF variable 'ta' contains unknown cell method 'invalid_method'"
+    with pytest.warns(IrisUnknownCellMethodWarning, match=msg):
+        dataset_to_iris(dataset)
+
+
+def test_dataset_to_iris_invalid_type_fail():
+    msg = (
+        r"Expected type ncdata.NcData or xr.Dataset for dataset, got type "
+        r"<class 'int'>"
+    )
+    with pytest.raises(TypeError, match=msg):
+        dataset_to_iris(1)

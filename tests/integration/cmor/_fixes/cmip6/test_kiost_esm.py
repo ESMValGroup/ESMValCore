@@ -16,16 +16,24 @@ from esmvalcore.cmor.table import get_var_info
 @pytest.fixture
 def sfcwind_cubes():
     correct_lat_coord = DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = Cube(
         [[10.0]],
@@ -45,16 +53,24 @@ def sfcwind_cubes():
 @pytest.fixture
 def tas_cubes():
     correct_lat_coord = DimCoord(
-        [0.0], var_name="lat", standard_name="latitude"
+        [0.0],
+        var_name="lat",
+        standard_name="latitude",
     )
     wrong_lat_coord = DimCoord(
-        [0.0], var_name="latitudeCoord", standard_name="latitude"
+        [0.0],
+        var_name="latitudeCoord",
+        standard_name="latitude",
     )
     correct_lon_coord = DimCoord(
-        [0.0], var_name="lon", standard_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
     )
     wrong_lon_coord = DimCoord(
-        [0.0], var_name="longitudeCoord", standard_name="longitude"
+        [0.0],
+        var_name="longitudeCoord",
+        standard_name="longitude",
     )
     correct_cube = Cube(
         [[10.0]],

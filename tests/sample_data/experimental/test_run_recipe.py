@@ -29,8 +29,8 @@ AUTHOR_TAGS = {
             "name": "Doe, John",
             "institute": "Testing",
             "orcid": "https://orcid.org/0000-0000-0000-0000",
-        }
-    }
+        },
+    },
 }
 
 
@@ -51,15 +51,20 @@ def get_mock_distributed_client(monkeypatch):
 
 @pytest.fixture
 def recipe():
-    recipe = get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
-    return recipe
+    return get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.parametrize("ssh", (True, False))
-@pytest.mark.parametrize("task", (None, "example/ta"))
+@pytest.mark.parametrize("ssh", [True, False])
+@pytest.mark.parametrize("task", [None, "example/ta"])
 def test_run_recipe(
-    monkeypatch, cfg_default, task, ssh, recipe, tmp_path, caplog
+    monkeypatch,
+    cfg_default,
+    task,
+    ssh,
+    recipe,
+    tmp_path,
+    caplog,
 ):
     """Test running a basic recipe using sample data.
 
@@ -78,13 +83,18 @@ def test_run_recipe(
     assert isinstance(recipe._repr_html_(), str)
 
     sample_data_config = esmvaltool_sample_data.get_rootpaths()
-    monkeypatch.setitem(CFG, "rootpath", sample_data_config["rootpath"])
-    monkeypatch.setitem(CFG, "drs", {"CMIP6": "SYNDA"})
     session = cfg_default.start_session(recipe.path.stem)
     session["output_dir"] = tmp_path / "esmvaltool_output"
     session["max_parallel_tasks"] = 1
     session["remove_preproc_dir"] = False
-
+    session["projects"]["CMIP6"]["data"] = {
+        "local": {
+            "type": "esmvalcore.local.LocalDataSource",
+            "rootpath": sample_data_config["rootpath"]["CMIP6"][0],
+            "dirname_template": "{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+        },
+    }
     output = recipe.run(task=task, session=session)
 
     assert len(output) > 0
@@ -125,6 +135,6 @@ def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
 
     session = CFG.start_session(recipe.path.stem)
 
+    task = "example/non-existent"
     with pytest.raises(RecipeError):
-        task = "example/non-existent"
         _ = recipe.run(task, session)

@@ -1,21 +1,31 @@
 """Module for finding files on ESGF."""
 
+from __future__ import annotations
+
 import itertools
 import logging
+import os.path
+from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyesgf.search
 import requests.exceptions
 
-from ..config._esgf_pyclient import get_esgf_config
-from ..local import (
-    _get_start_end_date,
+from esmvalcore.config._esgf_pyclient import get_esgf_config
+from esmvalcore.io.protocol import DataSource
+from esmvalcore.local import (
     _parse_period,
     _replace_years_with_timerange,
     _truncate_dates,
 )
+
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +70,8 @@ def select_latest_versions(files, versions):
         versions = (versions,)
 
     files = sorted(files, key=same_file)
-    for _, group in itertools.groupby(files, key=same_file):
-        group = sorted(group, reverse=True)
+    for _, group_iter in itertools.groupby(files, key=same_file):
+        group = sorted(group_iter, reverse=True)
         if versions:
             selection = [f for f in group if f.facets["version"] in versions]
             if not selection:
@@ -106,7 +116,7 @@ def _search_index_nodes(facets):
     search_args = dict(cfg["search_connection"])
     urls = search_args.pop("urls")
 
-    global FIRST_ONLINE_INDEX_NODE
+    global FIRST_ONLINE_INDEX_NODE  # noqa: PLW0603
     if FIRST_ONLINE_INDEX_NODE:
         urls.insert(0, urls.pop(urls.index(FIRST_ONLINE_INDEX_NODE)))
 
@@ -135,7 +145,7 @@ def _search_index_nodes(facets):
 
     raise FileNotFoundError(
         "Failed to search ESGF, unable to connect:\n"
-        + "\n".join(f"- {e}" for e in errors)
+        + "\n".join(f"- {e}" for e in errors),
     )
 
 
@@ -154,11 +164,13 @@ def esgf_search_files(facets):
     """
     results = _search_index_nodes(facets)
 
-    files = ESGFFile._from_results(results, facets)
+    files = ESGFFile._from_results(results, facets)  # noqa: SLF001
 
     msg = "none" if not files else "\n" + "\n".join(str(f) for f in files)
     logger.debug(
-        "Found the following files matching facets %s: %s", facets, msg
+        "Found the following files matching facets %s: %s",
+        facets,
+        msg,
     )
 
     return files
@@ -174,17 +186,16 @@ def select_by_time(files, timerange):
 
     for file in files:
         start_date, end_date = _parse_period(timerange)
-        try:
-            start, end = _get_start_end_date(file)
-        except ValueError:
-            # If start and end year cannot be read from the filename
-            # just select everything.
-            selection.append(file)
-        else:
+        if "timerange" in file.facets:
+            start, end = file.facets["timerange"].split("/")
             start_date, end = _truncate_dates(start_date, end)
             end_date, start = _truncate_dates(end_date, start)
             if start <= end_date and end >= start_date:
                 selection.append(file)
+        else:
+            # If start and end year cannot be read from the filename just select
+            # everything.
+            selection.append(file)
 
     return selection
 
@@ -332,9 +343,12 @@ def find_files(*, project, short_name, dataset, **facets):
         A list of files that have been found.
     """  # pylint: disable=locally-disabled, line-too-long
     if project not in FACETS:
-        raise ValueError(
+        msg = (
             f"Unable to download from ESGF, because project {project} is not"
             " on it or is not supported by the esmvalcore.esgf module."
+        )
+        raise ValueError(
+            msg,
         )
 
     # The project is required for the function to work.
@@ -372,3 +386,50 @@ def cached_search(**facets):
         logger.debug("Selected files:\n%s", "\n".join(str(f) for f in files))
 
     return files
+
+
+@dataclass
+class ESGFDataSource(DataSource):
+    name: str
+    """A name identifying the data source."""
+
+    project: str
+    """The project that the data source provides data for."""
+
+    priority: int
+    """The priority of the data source. Lower values have priority."""
+
+    download_dir: Path
+    """The destination directory where data will be downloaded."""
+
+    debug_info: str = field(init=False, repr=False, default="")
+    """A string containing debug information when no data is found."""
+
+    def __post_init__(self) -> None:
+        self.download_dir = Path(
+            os.path.expandvars(self.download_dir),
+        ).expanduser()
+
+    def find_data(self, **facets: FacetValue) -> list[ESGFFile]:
+        """Find data.
+
+        Parameters
+        ----------
+        **facets :
+            Find data matching these facets.
+
+        Returns
+        -------
+        :obj:`list` of :obj:`esmvalcore.esgf.ESGFFile`
+            A list of files that have been found on ESGF.
+        """
+        files = find_files(**facets)
+        for file in files:
+            file.dest_folder = self.download_dir
+        start_msg = "Search" if files else "No search"
+        self.debug_info = (
+            f"{start_msg} results found on ESGF with query: {FIRST_ONLINE_INDEX_NODE}"
+            "/search?format=application%2Fsolr%2Bjson&distrib=true&type=File&"
+            + "&".join(f"{k}={v}" for k, v in get_esgf_facets(facets).items())
+        )
+        return files

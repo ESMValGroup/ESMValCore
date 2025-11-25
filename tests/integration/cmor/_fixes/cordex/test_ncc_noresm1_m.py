@@ -55,7 +55,8 @@ def test_get_rca4_fix(short_name):
 
 
 @pytest.mark.parametrize(
-    "short_name", ["tasmax", "tasmin", "tas", "hurs", "huss"]
+    "short_name",
+    ["tasmax", "tasmin", "tas", "hurs", "huss"],
 )
 def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
@@ -70,7 +71,10 @@ def test_get_wrf381p_fix(short_name):
 
 def test_wrf381p_height_fix():
     time_coord = iris.coords.DimCoord(
-        [0.0], var_name="time", standard_name="time", long_name="time"
+        [0.0],
+        var_name="time",
+        standard_name="time",
+        long_name="time",
     )
     cube = iris.cube.Cube(
         [10.0],

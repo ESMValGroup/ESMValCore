@@ -3,8 +3,8 @@
 import iris
 from cf_units import Unit
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class AllVars(Fix):
@@ -37,7 +37,7 @@ class AllVars(Fix):
                         Unit(
                             "days since 1850-01-01",
                             calendar="proleptic_gregorian",
-                        )
+                        ),
                     )
                     time.units = Unit(time.units.name, "gregorian")
         return cubes

@@ -9,22 +9,21 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lwcre`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rlut"},
             {"short_name": "rlutcs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
         """Compute longwave cloud radiative effect."""
         rlut_cube = cubes.extract_cube(
-            Constraint(name="toa_outgoing_longwave_flux")
+            Constraint(name="toa_outgoing_longwave_flux"),
         )
         rlutcs_cube = cubes.extract_cube(
-            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky")
+            Constraint(name="toa_outgoing_longwave_flux_assuming_clear_sky"),
         )
 
         lwcre_cube = rlutcs_cube - rlut_cube

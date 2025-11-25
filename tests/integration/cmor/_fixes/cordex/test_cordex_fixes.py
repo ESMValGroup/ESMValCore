@@ -18,10 +18,16 @@ from esmvalcore.exceptions import RecipeError
 @pytest.fixture
 def cubes():
     correct_time_coord = iris.coords.DimCoord(
-        [0.0], var_name="time", standard_name="time", long_name="time"
+        [0.0],
+        var_name="time",
+        standard_name="time",
+        long_name="time",
     )
     wrong_time_coord = iris.coords.DimCoord(
-        [0.0], var_name="time", standard_name="time", long_name="wrong"
+        [0.0],
+        var_name="time",
+        standard_name="time",
+        long_name="wrong",
     )
     correct_lat_coord = iris.coords.DimCoord(
         [0.0, 1.0],
@@ -36,7 +42,10 @@ def cubes():
         long_name="latitude",
     )
     correct_lon_coord = iris.coords.DimCoord(
-        [0.0], var_name="lon", standard_name="longitude", long_name="longitude"
+        [0.0],
+        var_name="lon",
+        standard_name="longitude",
+        long_name="longitude",
     )
     wrong_lon_coord = iris.coords.DimCoord(
         [0.0],
@@ -72,7 +81,9 @@ def cordex_cubes():
         grid_north_pole_longitude=-162,
     )
     time = iris.coords.DimCoord(
-        np.arange(0, 3), var_name="time", standard_name="time"
+        np.arange(0, 3),
+        var_name="time",
+        standard_name="time",
     )
 
     rlat = iris.coords.DimCoord(
@@ -88,10 +99,14 @@ def cordex_cubes():
         coord_system=coord_system,
     )
     lat = iris.coords.AuxCoord(
-        np.ones((412, 424)), var_name="lat", standard_name="latitude"
+        np.ones((412, 424)),
+        var_name="lat",
+        standard_name="latitude",
     )
     lon = iris.coords.AuxCoord(
-        np.ones((412, 424)), var_name="lon", standard_name="longitude"
+        np.ones((412, 424)),
+        var_name="lon",
+        standard_name="longitude",
     )
 
     cube = iris.cube.Cube(
@@ -104,7 +119,7 @@ def cordex_cubes():
 
 
 @pytest.mark.parametrize(
-    "coord, var_name, long_name",
+    ("coord", "var_name", "long_name"),
     [
         ("time", "time", "time"),
         ("latitude", "lat", "latitude"),
@@ -130,10 +145,12 @@ def test_timelongname_fix_metadata(cubes):
 
 def test_clmcomcclm4817_fix_metadata(cubes):
     cubes[0].coord("time").units = Unit(
-        "days since 1850-1-1 00:00:00", calendar="proleptic_gregorian"
+        "days since 1850-1-1 00:00:00",
+        calendar="proleptic_gregorian",
     )
     cubes[1].coord("time").units = Unit(
-        "days since 1850-1-1 00:00:00", calendar="standard"
+        "days since 1850-1-1 00:00:00",
+        calendar="standard",
     )
     for coord in cubes[1].coords():
         coord.points = coord.core_points().astype(">f8", casting="same_kind")
@@ -146,7 +163,8 @@ def test_clmcomcclm4817_fix_metadata(cubes):
     assert cubes is out_cubes
     for cube in out_cubes:
         assert cube.coord("time").units == Unit(
-            "days since 1850-1-1 00:00:00", calendar="proleptic_gregorian"
+            "days since 1850-1-1 00:00:00",
+            calendar="proleptic_gregorian",
         )
         for coord in cube.coords():
             assert coord.points.dtype == np.float64

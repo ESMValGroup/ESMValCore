@@ -5,10 +5,9 @@ from __future__ import annotations
 import itertools
 import logging
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from functools import partial
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from nested_lookup import nested_delete
 
@@ -17,12 +16,15 @@ from esmvalcore.exceptions import RecipeError
 from ._io import _load_recipe
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
+
     from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
-Recipe = Dict[str, Any]
-Facets = Dict[str, Any]
+Recipe = dict[str, Any]
+Facets = dict[str, Any]
 
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
@@ -54,17 +56,19 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
             facets["supplementary_variables"].append(anc_facets)
         variables[variable_group]["additional_datasets"].append(facets)
 
-    recipe = {"diagnostics": diagnostics}
-    return recipe
+    return {"diagnostics": diagnostics}
 
 
 def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
     """Convert datasets to a condensed recipe dict."""
     for dataset in datasets:
         if "diagnostic" not in dataset.facets:
-            raise RecipeError(
+            msg = (
                 f"'diagnostic' facet missing from {dataset},"
                 "unable to convert to recipe."
+            )
+            raise RecipeError(
+                msg,
             )
 
     recipe = _datasets_to_raw_recipe(datasets)
@@ -74,7 +78,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
     for diagnostic in diagnostics:
         for variable in diagnostic["variables"].values():
             variable["additional_datasets"] = _group_ensemble_members(
-                variable["additional_datasets"]
+                variable["additional_datasets"],
             )
 
     # Move identical facets from dataset to variable
@@ -85,9 +89,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
         }
 
     # Deduplicate by moving datasets up from variable to diagnostic to recipe
-    recipe = _move_datasets_up(recipe)
-
-    return recipe
+    return _move_datasets_up(recipe)
 
 
 def _move_datasets_up(recipe: Recipe) -> Recipe:
@@ -113,7 +115,7 @@ def _to_frozen(item):
     return item
 
 
-def _move_one_level_up(base: dict, level: str, target: str):
+def _move_one_level_up(base: dict, level: str, target: str) -> None:
     """Move datasets one level up in the recipe."""
     groups = base[level]
     if not groups:
@@ -266,7 +268,8 @@ def _create_ensemble_ranges(
         grouped_ensembles = []
         ensembles = sorted(ensembles, key=partial(order, i))
         for (prefix, suffix), ibunch in itertools.groupby(
-            ensembles, key=partial(grouper, i)
+            ensembles,
+            key=partial(grouper, i),
         ):
             bunch = list(ibunch)
             prev = bunch[0][i]
@@ -281,7 +284,7 @@ def _create_ensemble_ranges(
             groups[-1].append(prev)
             result = []
             for group in groups:
-                item = prefix + (tuple(group),) + suffix
+                item = (*prefix, tuple(group), *suffix)
                 result.append(item)
             grouped_ensembles.extend(result)
 
@@ -332,7 +335,7 @@ def datasets_to_recipe(
 
     Examples
     --------
-    See :ref:`/notebooks/composing-recipes.ipynb` for example use cases.
+    See :doc:`/notebooks/composing-recipes` notebook for example use cases.
 
     Returns
     -------

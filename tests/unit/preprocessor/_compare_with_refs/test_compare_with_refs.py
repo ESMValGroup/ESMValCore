@@ -60,10 +60,11 @@ def get_3d_cube(data, **cube_kwargs):
         units="degrees_east",
     )
     coord_specs = [(times, 0), (lats, 1), (lons, 2)]
-    cube = Cube(
-        data.astype("float32"), dim_coords_and_dims=coord_specs, **cube_kwargs
+    return Cube(
+        data.astype("float32"),
+        dim_coords_and_dims=coord_specs,
+        **cube_kwargs,
     )
-    return cube
 
 
 @pytest.fixture
@@ -71,7 +72,10 @@ def regular_cubes():
     """Regular cubes."""
     cube_data = np.arange(8.0).reshape(2, 2, 2)
     cube = get_3d_cube(
-        cube_data, standard_name="air_temperature", var_name="tas", units="K"
+        cube_data,
+        standard_name="air_temperature",
+        var_name="tas",
+        units="K",
     )
     return CubeList([cube])
 
@@ -82,7 +86,10 @@ def ref_cubes():
     cube_data = np.full((2, 2, 2), 2.0)
     cube_data[1, 1, 1] = 4.0
     cube = get_3d_cube(
-        cube_data, standard_name="air_temperature", var_name="tas", units="K"
+        cube_data,
+        standard_name="air_temperature",
+        var_name="tas",
+        units="K",
     )
     return CubeList([cube])
 
@@ -93,11 +100,13 @@ TEST_BIAS = [
 ]
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     """Test calculation of bias with products."""
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_bias": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_bias": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -141,7 +150,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert product_b.mock_ancestors == {ref_product}
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 def test_bias_cubes(regular_cubes, ref_cubes, bias_type, data, units):
     """Test calculation of bias with cubes."""
     ref_cube = ref_cubes[0]
@@ -166,9 +175,16 @@ TEST_BIAS_BROADCASTABLE = [
 ]
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS_BROADCASTABLE)
+@pytest.mark.parametrize(
+    ("bias_type", "data", "units"),
+    TEST_BIAS_BROADCASTABLE,
+)
 def test_bias_cubes_broadcastable(
-    regular_cubes, ref_cubes, bias_type, data, units
+    regular_cubes,
+    ref_cubes,
+    bias_type,
+    data,
+    units,
 ):
     """Test calculation of bias with cubes."""
     ref_cube = ref_cubes[0][0]  # only select one time step
@@ -190,14 +206,18 @@ def test_bias_cubes_broadcastable(
 def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
     """Test denominator_mask_threshold argument with products."""
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_bias": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_bias": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
         ref_product,
     }
     out_products = bias(
-        products, bias_type="relative", denominator_mask_threshold=3.0
+        products,
+        bias_type="relative",
+        denominator_mask_threshold=3.0,
     )
 
     assert isinstance(out_products, set)
@@ -211,7 +231,8 @@ def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
     out_cube = product_a.cubes[0]
     assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal(
-        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]], 42.0
+        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]],
+        42.0,
     )
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == "tas"
@@ -238,7 +259,8 @@ def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
     out_cube = out_cubes[0]
     assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal(
-        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]], 42.0
+        [[[42.0, 42.0], [42.0, 42.0]], [[42.0, 42.0], [42.0, 0.75]]],
+        42.0,
     )
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == "tas"
@@ -256,7 +278,9 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
         PreprocessorFile(ref_cubes, "REF", {"reference_for_bias": True}),
     }
     out_products = bias(
-        products, bias_type=bias_type, keep_reference_dataset=True
+        products,
+        bias_type=bias_type,
+        keep_reference_dataset=True,
     )
 
     assert isinstance(out_products, set)
@@ -278,14 +302,19 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
     assert out_cube.aux_coords == ref_cubes[0].aux_coords
 
 
-@pytest.mark.parametrize("bias_type,data,units", TEST_BIAS)
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
 @pytest.mark.parametrize("keep_ref", [True, False])
 def test_bias_products_and_ref_cube(
-    regular_cubes, ref_cubes, keep_ref, bias_type, data, units
+    regular_cubes,
+    ref_cubes,
+    keep_ref,
+    bias_type,
+    data,
+    units,
 ):
     """Test calculation of bias with products and ref_cube given."""
     ref_cube = ref_cubes[0]
-    products = set([PreprocessorFile(regular_cubes, "A", {"dataset": "a"})])
+    products = {PreprocessorFile(regular_cubes, "A", {"dataset": "a"})}
 
     out_products = bias(
         products,
@@ -380,9 +409,10 @@ AREA_WEIGHTS = CellMeasure(
 
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,ref_data,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "ref_data", "long_name", "var_name", "units"),
+    TEST_DISTANCE_METRICS,
 )
-def test_distance_metric(
+def test_distance_metric(  # noqa: PLR0913, PLR0915
     regular_cubes,
     ref_cubes,
     metric,
@@ -400,7 +430,9 @@ def test_distance_metric(
             regular_cubes[0].cell_measure("cell_area").lazy_data()
         )
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_metric": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_metric": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -475,7 +507,9 @@ def test_distance_metric(
     assert not out_cube.has_lazy_data()
     # an rtol=1e-6 is needed for numpy >=2.0
     assert_allclose(
-        out_cube.data, np.array(ref_data, dtype=np.float32), rtol=1e-6
+        out_cube.data,
+        np.array(ref_data, dtype=np.float32),
+        rtol=1e-6,
     )
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -505,16 +539,25 @@ TEST_DISTANCE_METRICS_LAZY = [
 
 
 @pytest.mark.parametrize(
-    "metric,data,long_name,var_name,units", TEST_DISTANCE_METRICS_LAZY
+    ("metric", "data", "long_name", "var_name", "units"),
+    TEST_DISTANCE_METRICS_LAZY,
 )
 def test_distance_metric_lazy(
-    regular_cubes, ref_cubes, metric, data, long_name, var_name, units
+    regular_cubes,
+    ref_cubes,
+    metric,
+    data,
+    long_name,
+    var_name,
+    units,
 ):
     """Test `distance_metric` with lazy data."""
     regular_cubes[0].data = da.array(regular_cubes[0].data)
     ref_cubes[0].data = da.array(ref_cubes[0].data)
     ref_product = PreprocessorFile(
-        ref_cubes, "REF", {"reference_for_metric": True}
+        ref_cubes,
+        "REF",
+        {"reference_for_metric": True},
     )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
@@ -564,14 +607,14 @@ def test_distance_metric_lazy(
 
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,_,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_cubes(
+def test_distance_metric_cubes(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -609,14 +652,14 @@ def test_distance_metric_cubes(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    "metric,data,_,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "data", "long_name", "var_name", "units"),
+    [t[:2] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_masked_data(
+def test_distance_metric_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
     data,
-    _,
     long_name,
     var_name,
     units,
@@ -644,13 +687,14 @@ def test_distance_metric_masked_data(
         constant_values=np.nan,
     )
     cube = Cube(
-        np.ma.masked_invalid(cube_data), dim_coords_and_dims=coord_specs
+        np.ma.masked_invalid(cube_data),
+        dim_coords_and_dims=coord_specs,
     )
     cube.metadata = regular_cubes[0].metadata
     cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
     if lazy_weights:
         cube.cell_measure("cell_area").data = cube.cell_measure(
-            "cell_area"
+            "cell_area",
         ).lazy_data()
 
     # Ref cube
@@ -701,14 +745,13 @@ def test_distance_metric_masked_data(
 @pytest.mark.parametrize("lazy_weights", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
 @pytest.mark.parametrize(
-    "metric,_,__,long_name,var_name,units", TEST_DISTANCE_METRICS
+    ("metric", "long_name", "var_name", "units"),
+    [t[:1] + t[3:] for t in TEST_DISTANCE_METRICS],
 )
-def test_distance_metric_fully_masked_data(
+def test_distance_metric_fully_masked_data(  # noqa: PLR0913
     regular_cubes,
     ref_cubes,
     metric,
-    _,
-    __,
     long_name,
     var_name,
     units,
@@ -721,7 +764,7 @@ def test_distance_metric_fully_masked_data(
     cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
     if lazy_weights:
         cube.cell_measure("cell_area").data = cube.cell_measure(
-            "cell_area"
+            "cell_area",
         ).lazy_data()
     ref_cube = ref_cubes[0]
 
@@ -859,7 +902,7 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
 
 
 @pytest.mark.parametrize(
-    "metric,error",
+    ("metric", "error"),
     [
         ("rmse", False),
         ("weighted_rmse", True),
@@ -875,9 +918,8 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
     ref_cube = regular_cubes[0].copy()
     msg = (
         r"Cube .* needs a `longitude` coordinate to calculate cell area "
-        r"weights for weighted distance metric over coordinates \['time', "
-        r"'latitude'\] \(alternatively, a `cell_area` can be given to the "
-        r"cube as supplementary variable\)"
+        r"weights \(alternatively, a `cell_area` can be given to the cube as "
+        r"supplementary variable\)"
     )
     if error:
         context = pytest.raises(CoordinateNotFoundError, match=msg)

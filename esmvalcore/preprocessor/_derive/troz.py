@@ -3,6 +3,8 @@
 import dask.array as da
 import iris
 
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+
 from ._baseclass import DerivedVariableBase
 from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
@@ -29,10 +31,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_ozone_in_air")
+            iris.Constraint(name="mole_fraction_of_ozone_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
@@ -45,7 +47,8 @@ class DerivedVariable(DerivedVariableBase):
         # have correct shapes
         if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            with ignore_iris_vague_metadata_warnings():
+                ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
             ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 

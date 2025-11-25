@@ -5,10 +5,10 @@ from copy import deepcopy
 import cftime
 import numpy as np
 
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.iris_helpers import date2num
 
-from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
-from ..fix import Fix
 from .cesm1_cam5 import Cl as BaseCl
 
 Cl = BaseCl

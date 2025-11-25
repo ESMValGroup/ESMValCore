@@ -1,14 +1,13 @@
 """Derivation of variable ``toz``."""
 
-import warnings
-
 import cf_units
 import iris
 from scipy import constants
 
 from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
+from esmvalcore.preprocessor._regrid import extract_levels, regrid
 
-from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
 
@@ -24,7 +23,7 @@ MW_O3_UNIT = cf_units.Unit("g mol^-1")
 DOBSON_UNIT = cf_units.Unit("2.69e20 m^-2")
 
 
-def add_longitude_coord(cube, ps_cube=None):
+def add_longitude_coord(cube):
     """Add dimensional ``longitude`` coordinate of length 1 to cube."""
     lon_coord = iris.coords.DimCoord(
         [180.0],
@@ -51,10 +50,12 @@ def interpolate_hybrid_plevs(cube):
     # Use CMIP6's plev19 target levels (in Pa)
     target_levels = CMOR_TABLES["CMIP6"].coords["plev19"].requested
     cube.coord("air_pressure").convert_units("Pa")
-    cube = extract_levels(
-        cube, target_levels, "linear", coordinate="air_pressure"
+    return extract_levels(
+        cube,
+        target_levels,
+        "linear",
+        coordinate="air_pressure",
     )
-    return cube
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -88,10 +89,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name="mole_fraction_of_ozone_in_air")
+            iris.Constraint(name="mole_fraction_of_ozone_in_air"),
         )
         ps_cube = cubes.extract_cube(
-            iris.Constraint(name="surface_air_pressure")
+            iris.Constraint(name="surface_air_pressure"),
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
@@ -104,7 +105,8 @@ class DerivedVariable(DerivedVariableBase):
         # have correct shapes
         if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
-            ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
+            with ignore_iris_vague_metadata_warnings():
+                ps_cube = ps_cube.collapsed("longitude", iris.analysis.MEAN)
             ps_cube.remove_coord("longitude")
             ps_cube = add_longitude_coord(ps_cube)
 
@@ -117,12 +119,7 @@ class DerivedVariable(DerivedVariableBase):
         # widths
         p_layer_widths = pressure_level_widths(o3_cube, ps_cube, top_limit=0.0)
         toz_cube = o3_cube * p_layer_widths / STANDARD_GRAVITY * MW_O3 / MW_AIR
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=UserWarning,
-                message="Collapsing a non-contiguous coordinate",
-            )
+        with ignore_iris_vague_metadata_warnings():
             toz_cube = toz_cube.collapsed("air_pressure", iris.analysis.SUM)
         toz_cube.units = (
             o3_cube.units

@@ -1,10 +1,19 @@
 """Rolling-window operations on data cubes."""
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
-from iris.cube import Cube
+from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
-from ._shared import get_iris_aggregator, preserve_float_dtype
+from ._shared import (
+    get_iris_aggregator,
+    preserve_float_dtype,
+)
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +24,8 @@ def rolling_window_statistics(
     coordinate: str,
     operator: str,
     window_length: int,
-    **operator_kwargs,
-):
+    **operator_kwargs: Any,
+) -> Cube:
     """Compute rolling-window statistics over a coordinate.
 
     Parameters
@@ -42,6 +51,5 @@ def rolling_window_statistics(
 
     """
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
-
-    return cube
+    with ignore_iris_vague_metadata_warnings():
+        return cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)

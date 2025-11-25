@@ -1,11 +1,14 @@
 """Test `esmvalcore.esgf._download`."""
 
+from __future__ import annotations
+
 import datetime
 import logging
 import os
 import re
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import requests
@@ -15,6 +18,9 @@ from pyesgf.search.results import FileResult
 import esmvalcore.esgf
 from esmvalcore.esgf import _download
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 
 def test_log_speed(monkeypatch, tmp_path):
     hosts_file = tmp_path / ".esmvaltool" / "cache" / "esgf-hosts.yml"
@@ -23,7 +29,9 @@ def test_log_speed(monkeypatch, tmp_path):
     megabyte = 10**6
     _download.log_speed("http://somehost.org/some_file.nc", 100 * megabyte, 10)
     _download.log_speed(
-        "http://somehost.org/some_other_file.nc", 200 * megabyte, 16
+        "http://somehost.org/some_other_file.nc",
+        200 * megabyte,
+        16,
     )
     _download.log_speed("http://otherhost.org/other_file.nc", 4 * megabyte, 1)
 
@@ -64,7 +72,7 @@ def test_error(monkeypatch, tmp_path):
             "duration (s)": 2,
             "size (bytes)": 3 * megabyte,
             "error": True,
-        }
+        },
     }
     assert result == expected
 
@@ -190,7 +198,7 @@ def test_get_dataset_id_noop():
                 "dataset_id": "ABC.v1|hostname.org",
             },
             context=None,
-        )
+        ),
     ]
     dataset_id = _download.ESGFFile._get_dataset_id(file_results)
     assert dataset_id == "ABC.v1"
@@ -205,7 +213,7 @@ def test_get_dataset_id_obs4mips():
                 "dataset_id": "obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610|abc.org",
             },
             context=None,
-        )
+        ),
     ]
     dataset_id = _download.ESGFFile._get_dataset_id(file_results)
     assert dataset_id == "obs4MIPs.CERES-EBAF.v20160610"
@@ -239,11 +247,66 @@ def test_init():
         "dataset": "ABC",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "2000/2001",
         "version": "v1",
     }
     txt = f"ESGFFile:CMIP6/ABC/v1/{filename} on hosts ['something.org']"
     assert repr(file) == txt
     assert hash(file) == hash(("CMIP6.ABC.v1", filename))
+
+
+@pytest.fixture
+def esgf_file() -> _download.ESGFFile:
+    """ESGFFile fixture."""
+    json = {
+        "dataset_id": "CMIP6.dataset.v1|something.org",
+        "dataset_id_template_": ["%(mip_era)s.%(source_id)s"],
+        "project": ["CMIP6"],
+        "size": 12,
+        "title": "test.nc",
+    }
+    return _download.ESGFFile(
+        [FileResult(json=json, context=None)],
+        dest_folder=Path("/path/to/climate_data"),
+    )
+
+
+def test_prepare(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
+    """Test `ESGFFile.prepare`."""
+    download = mocker.patch.object(_download.ESGFFile, "download")
+    esgf_file.prepare()
+    download.assert_called_once_with(esgf_file.dest_folder)
+
+
+def test_attribute_not_set(esgf_file: _download.ESGFFile) -> None:
+    """Test accessing `ESGFFile.attributes` before calling to_iris."""
+    with pytest.raises(
+        ValueError,
+        match=r"Attributes have not been read yet. Call the `to_iris` method .*",
+    ):
+        _ = esgf_file.attributes
+
+
+def test_to_iris(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
+    """Test `ESGFFile.prepare`."""
+    prepare = mocker.patch.object(_download.ESGFFile, "prepare")
+    local_file_to_iris = mocker.patch.object(
+        esmvalcore.esgf._download.LocalFile,
+        "to_iris",
+        return_value=mocker.sentinel.iris_cubes,
+    )
+    mocker.patch.object(
+        esmvalcore.esgf._download.LocalFile,
+        "attributes",
+        new_callable=mocker.PropertyMock,
+        return_value={"attribute": "value"},
+    )
+    cubes = esgf_file.to_iris()
+
+    assert cubes == mocker.sentinel.iris_cubes
+    assert esgf_file.attributes == {"attribute": "value"}
+    prepare.assert_called_once()
+    local_file_to_iris.assert_called_once()
 
 
 def test_from_results():
@@ -283,7 +346,7 @@ def test_from_results():
                 "title": wrong_var_filename,
             },
             context=None,
-        )
+        ),
     )
 
     files = _download.ESGFFile._from_results(results, facets)
@@ -316,7 +379,7 @@ def test_sorting():
 
     file1 = _download.ESGFFile([result1])
     file2 = _download.ESGFFile([result2])
-    assert file1 == file1
+    assert file1 == file1  # noqa: PLR0124
     assert file1 != file2
     assert file1 < file2
     assert file2 > file1
@@ -414,11 +477,16 @@ def test_single_download(mocker, tmp_path, checksum):
     mocker.patch.object(_download, "HOSTS_FILE", hosts_file)
 
     response = mocker.create_autospec(
-        requests.Response, spec_set=True, instance=True
+        requests.Response,
+        spec_set=True,
+        instance=True,
     )
     response.iter_content.return_value = [b"chunk1", b"chunk2"]
     get = mocker.patch.object(
-        _download.requests, "get", autospec=True, return_value=response
+        _download.requests,
+        "get",
+        autospec=True,
+        return_value=response,
     )
 
     dest_folder = tmp_path
@@ -445,7 +513,8 @@ def test_single_download(mocker, tmp_path, checksum):
 
     if checksum == "wrong":
         with pytest.raises(
-            _download.DownloadError, match="Wrong MD5 checksum"
+            _download.DownloadError,
+            match="Wrong MD5 checksum",
         ):
             file.download(dest_folder)
         return
@@ -470,7 +539,7 @@ def test_single_download(mocker, tmp_path, checksum):
     response.iter_content.assert_called_with(chunk_size=2**20)
 
 
-def test_download_skip_existing(tmp_path, caplog):
+def test_download_skip_existing(tmp_path: Path, mocker: MockerFixture) -> None:
     filename = "test.nc"
     dataset = "dataset"
     dest_folder = tmp_path
@@ -488,12 +557,9 @@ def test_download_skip_existing(tmp_path, caplog):
     local_file = file.local_file(dest_folder)
     local_file.parent.mkdir(parents=True)
     local_file.touch()
-
-    caplog.set_level(logging.DEBUG)
-
+    mock_download = mocker.patch.object(_download.ESGFFile, "_download")
     local_file = file.download(dest_folder)
-
-    assert f"Skipping download of existing file {local_file}" in caplog.text
+    mock_download.assert_not_called()
 
 
 def test_single_download_fail(mocker, tmp_path):
@@ -501,13 +567,18 @@ def test_single_download_fail(mocker, tmp_path):
     mocker.patch.object(_download, "HOSTS_FILE", hosts_file)
 
     response = mocker.create_autospec(
-        requests.Response, spec_set=True, instance=True
+        requests.Response,
+        spec_set=True,
+        instance=True,
     )
     response.raise_for_status.side_effect = (
         requests.exceptions.RequestException("test error")
     )
     mocker.patch.object(
-        _download.requests, "get", autospec=True, return_value=response
+        _download.requests,
+        "get",
+        autospec=True,
+        return_value=response,
     )
 
     filename = "test.nc"
@@ -525,10 +596,7 @@ def test_single_download_fail(mocker, tmp_path):
     }
     file = _download.ESGFFile([FileResult(json=json, context=None)])
     local_file = file.local_file(dest_folder)
-    msg = (
-        f"Failed to download file {local_file}, errors:"
-        "\n" + f"{url}: test error"
-    )
+    msg = f"Failed to download file {local_file}, errors:\n{url}: test error"
     with pytest.raises(_download.DownloadError, match=re.escape(msg)):
         file.download(dest_folder)
 
@@ -622,10 +690,8 @@ def test_download_fail(mocker, tmp_path, caplog):
         file.download.assert_called_with(dest_folder)
 
 
-def test_download_noop(caplog):
+def test_download_noop(mocker: MockerFixture) -> None:
     """Test downloading no files."""
-    caplog.set_level("DEBUG")
+    mock_download = mocker.patch.object(_download.ESGFFile, "_download")
     esmvalcore.esgf.download([], dest_folder="/does/not/exist")
-
-    msg = "All required data is available locally, not downloading anything."
-    assert msg in caplog.text
+    mock_download.assert_not_called()

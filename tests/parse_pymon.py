@@ -44,12 +44,11 @@ def _get_slow_tests(cur):
     hundred_slowest_tests = timed_tests[0:100]
     print("List of 100 slowest tests (duration, path, name")
     if hundred_slowest_tests:
-        for _, test_var, pth, test_duration in hundred_slowest_tests:
-            pth = pth.replace(".", "/") + ".py"
-            executable_test = pth + "::" + test_var
+        for _, test_name, test_mod, test_duration in hundred_slowest_tests:
+            executable_test = f"{test_mod.replace('.', '/')}.py::{test_name}"
             if ", " in executable_test:
                 executable_test = executable_test.replace(", ", "-")
-            mssg = "%.2f" % test_duration + "s " + executable_test
+            mssg = f"{test_duration:.2f}" + "s " + executable_test
             print(mssg)
     else:
         print("Could not retrieve test timing data.")

@@ -3,8 +3,8 @@
 import iris
 import numpy as np
 
-from ..common import ClFixHybridHeightCoord
-from ..fix import Fix
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class Cl(ClFixHybridHeightCoord):
@@ -134,10 +134,12 @@ class Hus(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord("air_pressure").points = np.round(
-            cube.coord("air_pressure").core_points(), 0
+            cube.coord("air_pressure").core_points(),
+            0,
         )
         cube.coord("air_pressure").bounds = np.round(
-            cube.coord("air_pressure").core_bounds(), 0
+            cube.coord("air_pressure").core_bounds(),
+            0,
         )
         return cubes
 
@@ -159,9 +161,11 @@ class Zg(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord("air_pressure").points = np.round(
-            cube.coord("air_pressure").core_points(), 0
+            cube.coord("air_pressure").core_points(),
+            0,
         )
         cube.coord("air_pressure").bounds = np.round(
-            cube.coord("air_pressure").core_bounds(), 0
+            cube.coord("air_pressure").core_bounds(),
+            0,
         )
         return cubes

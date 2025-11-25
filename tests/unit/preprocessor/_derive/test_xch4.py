@@ -4,7 +4,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.xch4 as xch4
+from esmvalcore.preprocessor._derive import xch4
 
 from .test_shared import get_cube
 
@@ -57,7 +57,8 @@ def test_xch4_calculate(cubes):
     np.testing.assert_allclose(out_cube.coord("time").points, [0.0])
     np.testing.assert_allclose(out_cube.coord("air_pressure").points, 85000.0)
     np.testing.assert_allclose(
-        out_cube.coord("air_pressure").bounds, [[80000.0, 90000.0]]
+        out_cube.coord("air_pressure").bounds,
+        [[80000.0, 90000.0]],
     )
     np.testing.assert_allclose(out_cube.coord("latitude").points, [45.0])
     np.testing.assert_allclose(out_cube.coord("longitude").points, [10.0])

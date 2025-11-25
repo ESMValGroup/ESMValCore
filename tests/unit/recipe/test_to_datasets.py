@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
@@ -8,6 +11,9 @@ from esmvalcore._recipe import to_datasets
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import LocalFile
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 def test_from_recipe(session):
@@ -253,6 +259,7 @@ def test_merge_supplementaries_combine_dataset_with_variable(session):
     assert len(datasets) == 1
     assert len(datasets[0].supplementaries) == 2
     assert datasets[0].supplementaries[0].facets["short_name"] == "areacella"
+    assert datasets[0].supplementaries[0].facets["dataset"] == "AWI-ESM-1-1-LR"
     assert datasets[0].supplementaries[1].facets["short_name"] == "sftlf"
 
 
@@ -323,7 +330,10 @@ def test_max_years(session):
 
 
 @pytest.mark.parametrize("found_files", [True, False])
-def test_dataset_from_files_fails(monkeypatch, found_files):
+def test_dataset_from_files_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    found_files: bool,
+) -> None:
     def from_files(_):
         file = LocalFile("/path/to/file")
         file.facets = {"facets1": "value1"}
@@ -332,7 +342,6 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
             short_name="tas",
         )
         dataset.files = [file] if found_files else []
-        dataset._file_globs = ["/path/to/tas_*.nc"]
         return [dataset]
 
     monkeypatch.setattr(Dataset, "from_files", from_files)
@@ -342,7 +351,7 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
         short_name="tas",
     )
 
-    with pytest.raises(RecipeError, match="Unable to replace dataset.*"):
+    with pytest.raises(RecipeError, match=r"Unable to replace dataset.*"):
         to_datasets._dataset_from_files(dataset)
 
 
@@ -400,14 +409,23 @@ def test_append_missing_supplementaries():
     }
 
     to_datasets._append_missing_supplementaries(
-        supplementaries, facets, settings
+        supplementaries,
+        facets,
+        settings,
     )
-
     short_names = {f["short_name"] for f in supplementaries}
     assert short_names == {"areacella", "sftlf"}
+    sftlf = supplementaries[1]
+    assert (
+        "dataset" not in sftlf
+    )  # dataset will be inherited from the main variable
 
 
-def test_report_unexpanded_globs(mocker):
+@pytest.mark.parametrize("files", [False, True])
+def test_report_unexpanded_globs(
+    mocker: pytest_mock.MockFixture,
+    files: bool,
+) -> None:
     dataset = Dataset(
         alias="CMIP5",
         dataset="*",
@@ -419,14 +437,23 @@ def test_report_unexpanded_globs(mocker):
         project="CMIP5",
         recipe_dataset_index=1,
         short_name="ta",
+        timerange="2000/2014",
         variable_group="ta850",
     )
-    file = mocker.Mock(facets={"dataset": "*"})
-    dataset.files = [file]
+    dataset.add_supplementary(short_name="areacella", mip="fx")
+    dataset.files = [mocker.Mock(facets={"dataset": "*"})] if files else []
     unexpanded_globs = {"dataset": "*"}
 
     msg = to_datasets._report_unexpanded_globs(
-        dataset, dataset, unexpanded_globs
+        dataset,
+        dataset,
+        unexpanded_globs,
     )
-
+    print(msg)
     assert "paths to the" not in msg
+    assert "Unable to replace dataset=* by a value" in msg
+    if not files:
+        main_dataset = dataset.copy()
+        main_dataset.supplementaries = []
+        assert f"because no files were found for {main_dataset}" in msg
+        assert "within the requested timerange 2000/2014" in msg

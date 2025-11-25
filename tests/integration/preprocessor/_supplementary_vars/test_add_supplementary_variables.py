@@ -14,6 +14,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
     add_supplementary_variables,
+    find_matching_coord_dims,
+    get_data_dims,
     remove_supplementary_variables,
 )
 
@@ -93,7 +95,8 @@ class Test:
         )
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.fx_area = iris.cube.Cube(
-            fx_area_data, dim_coords_and_dims=self.coords_spec
+            fx_area_data,
+            dim_coords_and_dims=self.coords_spec,
         )
         self.fx_volume = iris.cube.Cube(
             fx_volume_data,
@@ -112,6 +115,42 @@ class Test:
                 (self.lons, 3),
             ],
         )
+        self.cube = iris.cube.Cube(
+            self.new_cube_3D_data,
+            dim_coords_and_dims=[
+                (self.depth, 0),
+                (self.lats, 1),
+                (self.lons, 2),
+            ],
+        )
+        self.plev = iris.coords.DimCoord(
+            [0, 1.5, 3],
+            standard_name="air_pressure",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="Pa",
+        )
+        self.lats_no_metadata = iris.coords.DimCoord(
+            [0, 1.5, 3],
+            standard_name="latitude",
+            bounds=[[0, 1], [1, 2], [2, 3]],
+            units="degrees_north",
+        )
+        self.ancillary_cube_plev = iris.cube.Cube(
+            np.ones(3),
+            dim_coords_and_dims=[(self.plev, 0)],
+        )
+        self.ancillary_cube_lat_plev = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats, 0), (self.plev, 1)],
+        )
+        self.ancillary_cube_lat_lon = iris.cube.Cube(
+            np.ones((3, 3)),
+            dim_coords_and_dims=[(self.lats, 0), (self.lons, 1)],
+        )
+        self.ancillary_cube_lat_no_metadata = iris.cube.Cube(
+            np.ones(3),
+            dim_coords_and_dims=[(self.lats_no_metadata, 0)],
+        )
 
     @pytest.mark.parametrize("lazy", [True, False])
     @pytest.mark.parametrize("var_name", ["areacella", "areacello"])
@@ -124,7 +163,8 @@ class Test:
         self.fx_area.standard_name = "cell_area"
         self.fx_area.units = "m2"
         cube = iris.cube.Cube(
-            self.new_cube_data, dim_coords_and_dims=self.coords_spec
+            self.new_cube_data,
+            dim_coords_and_dims=self.coords_spec,
         )
 
         cube = add_supplementary_variables(cube, [self.fx_area])
@@ -142,7 +182,7 @@ class Test:
         if lazy:
             self.fx_volume.data = self.fx_volume.lazy_data()
             self.new_cube_3D_data = da.array(self.new_cube_3D_data).rechunk(
-                (1, 2, 3)
+                (1, 2, 3),
             )
         self.fx_volume.var_name = "volcello"
         self.fx_volume.standard_name = "ocean_volume"
@@ -188,7 +228,8 @@ class Test:
         self.fx_area.standard_name = "land_area_fraction"
         self.fx_area.units = "%"
         cube = iris.cube.Cube(
-            self.new_cube_data, dim_coords_and_dims=self.coords_spec
+            self.new_cube_data,
+            dim_coords_and_dims=self.coords_spec,
         )
 
         cube = add_supplementary_variables(cube, [self.fx_area])
@@ -252,3 +293,66 @@ class Test:
         cube = remove_supplementary_variables(cube)
         assert cube.cell_measures() == []
         assert cube.ancillary_variables() == []
+
+    def test_add_ancillary_vars_errors(self):
+        """Test errors when adding ancillary variable."""
+        # Ancillary var not an iris.cube.Cube or iris.coords.AncillaryVariable
+        msg = "ancillary_cube should be either an iris"
+        with pytest.raises(ValueError, match=msg):
+            add_ancillary_variable(
+                self.cube,
+                np.ones(self.new_cube_3D_data.shape),
+            )
+        # Ancillary var as iris.cube.Cube without matching dimensions
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            add_ancillary_variable(
+                self.cube,
+                self.ancillary_cube_plev,
+            )
+
+    def test_get_data_dims_no_match(self):
+        """Test get_data_dims matching function w/ no match."""
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            get_data_dims(
+                self.cube,
+                self.ancillary_cube_plev,
+            )
+
+    def test_get_data_dims_one_match(self):
+        """Test get_data_dims matching function w/ only one coordinate match."""
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            _ = get_data_dims(
+                self.cube,
+                self.ancillary_cube_lat_plev,
+            )
+
+    def test_get_data_dims_match(self):
+        """Test get_data_dims matching function w/ both coordinates match."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_lon,
+        ) == [1, 2]
+
+    def test_get_data_dims_match_no_metadata(self):
+        """Test get_data_dims matching function w/ coordinate w/o metadata."""
+        assert get_data_dims(
+            self.cube,
+            self.ancillary_cube_lat_no_metadata,
+        ) == [1]
+
+    def test_find_matching_coord_dims_no_match(self):
+        """Test find_matching_coord_dims function w/ no match."""
+        assert (
+            find_matching_coord_dims(
+                self.plev,
+                self.cube,
+            )
+            is None
+        )
+
+    def test_find_matching_coord_dims_match(self):
+        """Test find_matching_coord_dims function w/ match."""
+        assert find_matching_coord_dims(
+            self.lats,
+            self.cube,
+        ) == (1,)

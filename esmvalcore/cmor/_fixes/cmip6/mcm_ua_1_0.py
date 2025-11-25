@@ -4,8 +4,11 @@ import iris
 import numpy as np
 from dask import array as da
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord, fix_ocean_depth_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
+    add_scalar_height_coord,
+    fix_ocean_depth_coord,
+)
 
 
 def strip_cube_metadata(cube):
@@ -23,7 +26,10 @@ def strip_cube_metadata(cube):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(  # noqa: C901
+        self,
+        cubes,
+    ):
         """Fix metadata.
 
         Remove unnecessary spaces in metadata and rename ``var_name`` of
@@ -57,7 +63,8 @@ class AllVars(Fix):
             time_units = cube.attributes.get("parent_time_units")
             if time_units is not None:
                 cube.attributes["parent_time_units"] = time_units.replace(
-                    " (noleap)", ""
+                    " (noleap)",
+                    "",
                 )
 
         for cube in cubes:
@@ -81,7 +88,9 @@ class AllVars(Fix):
                         cube.data = da.roll(cube.core_data(), -1, axis=lon_dim)
                         lon_points = np.roll(lon_coord.core_points(), -1)
                         lon_bounds = np.roll(
-                            lon_coord.core_bounds(), -1, axis=0
+                            lon_coord.core_bounds(),
+                            -1,
+                            axis=0,
                         )
                         lon_points[-1] += 360.0
                         lon_bounds[-1] += 360.0

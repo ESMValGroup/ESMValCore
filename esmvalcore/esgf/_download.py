@@ -1,5 +1,7 @@
 """Module for downloading files from ESGF."""
 
+from __future__ import annotations
+
 import concurrent.futures
 import contextlib
 import datetime
@@ -14,16 +16,30 @@ import shutil
 from pathlib import Path
 from statistics import median
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
-from esmvalcore.typing import Facets
+from esmvalcore.config import CFG
+from esmvalcore.io.protocol import DataElement
+from esmvalcore.local import (
+    LocalFile,
+    _dates_to_timerange,
+    _get_start_end_date_from_filename,
+)
 
-from ..local import LocalFile
 from .facets import DATASET_MAP, FACETS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+    from pyesgf.search.results import FileResult, ResultSet
+
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +58,7 @@ class DownloadError(Exception):
 
 def compute_speed(size, duration):
     """Compute download speed in MB/s."""
-    if duration != 0:
-        speed = size / duration / 10**6
-    else:
-        speed = 0
-    return speed
+    return size / duration / 10**6 if duration != 0 else 0
 
 
 def load_speeds():
@@ -55,8 +67,7 @@ def load_speeds():
         content = HOSTS_FILE.read_text(encoding="utf-8")
     except FileNotFoundError:
         content = "{}"
-    speeds = yaml.safe_load(content)
-    return speeds
+    return yaml.safe_load(content)
 
 
 def log_speed(url, size, duration):
@@ -116,10 +127,7 @@ def get_preferred_hosts():
     # Hosts from which no data has been downloaded yet get median speed; if no
     # host with non-zero entries is found assign a value of 0.0
     speeds_list = [speeds[h][SPEED] for h in speeds if speeds[h][SPEED] != 0.0]
-    if not speeds_list:
-        median_speed = 0.0
-    else:
-        median_speed = median(speeds_list)
+    median_speed = 0.0 if not speeds_list else median(speeds_list)
     for host in speeds:
         if speeds[host][SIZE] == 0:
             speeds[host][SPEED] = median_speed
@@ -174,7 +182,7 @@ def sort_hosts(urls):
 
 
 @functools.total_ordering
-class ESGFFile:
+class ESGFFile(DataElement):
     """File on the ESGF.
 
     This is the object returned by :func:`esmvalcore.esgf.find_files`.
@@ -193,7 +201,11 @@ class ESGFFile:
         The URLs where the file can be downloaded.
     """
 
-    def __init__(self, results):
+    def __init__(
+        self,
+        results: Iterable[FileResult],
+        dest_folder: Path | None = None,
+    ) -> None:
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix(".nc"))
         self.size = results[0].size
@@ -204,6 +216,36 @@ class ESGFFile:
         for result in results:
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
+        self.dest_folder = (
+            CFG.get("download_dir") if dest_folder is None else dest_folder
+        )
+        self._attributes: dict[str, Any] | None = None
+
+    def prepare(self) -> None:
+        """Prepare the data for access."""
+        self.download(self.dest_folder)
+
+    @property
+    def attributes(self) -> dict[str, Any]:
+        """Attributes are key-value pairs describing the data."""
+        if self._attributes is None:
+            msg = (
+                "Attributes have not been read yet. Call the `to_iris` method "
+                "first to read the attributes from the file."
+            )
+            raise ValueError(msg)
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, value: dict[str, Any]) -> None:
+        self._attributes = value
+
+    def to_iris(self) -> iris.cube.CubeList:
+        self.prepare()
+        local_file = self.local_file(self.dest_folder)
+        cube = local_file.to_iris()
+        self.attributes = local_file.attributes
+        return cube
 
     @classmethod
     def _from_results(cls, results, facets):
@@ -266,7 +308,8 @@ class ESGFFile:
                 v: k for k, v in DATASET_MAP.get(project, {}).items()
             }
             facets["dataset"] = reverse_dataset_map.get(
-                facets["dataset"], facets["dataset"]
+                facets["dataset"],
+                facets["dataset"],
             )
 
         # Update the facets with information from the dataset_id and filename
@@ -282,10 +325,13 @@ class ESGFFile:
                     self.name,
                 )
                 facets[facet] = value
+        start_date, end_date = _get_start_end_date_from_filename(self.name)
+        if start_date and end_date:
+            facets["timerange"] = _dates_to_timerange(start_date, end_date)
         return facets
 
     @staticmethod
-    def _get_facets_from_dataset_id(results) -> Facets:
+    def _get_facets_from_dataset_id(results: ResultSet) -> Facets:
         """Read the facets from the `dataset_id`."""
         # This reads the facets from the dataset_id because the facets
         # provided by ESGF are unreliable.
@@ -390,16 +436,16 @@ class ESGFFile:
         """Compare `self` to `other`."""
         return (self.dataset, self.name) < (other.dataset, other.name)
 
-    def __hash__(self):
-        """Compute a unique hash value."""
+    def __hash__(self) -> int:
+        """Return a number uniquely representing the data element."""
         return hash((self.dataset, self.name))
 
-    def local_file(self, dest_folder):
+    def local_file(self, dest_folder: Path | None) -> LocalFile:
         """Return the path to the local file after download.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Returns
@@ -407,16 +453,17 @@ class ESGFFile:
         LocalFile
             The path where the file will be located after download.
         """
+        dest_folder = self.dest_folder if dest_folder is None else dest_folder
         file = LocalFile(dest_folder, self._get_relative_path())
         file.facets = self.facets
         return file
 
-    def download(self, dest_folder):
+    def download(self, dest_folder: Path | None) -> LocalFile:
         """Download the file.
 
         Arguments
         ---------
-        dest_folder: Path
+        dest_folder:
             The destination folder.
 
         Raises
@@ -431,7 +478,6 @@ class ESGFFile:
         """
         local_file = self.local_file(dest_folder)
         if local_file.exists():
-            logger.debug("Skipping download of existing file %s", local_file)
             return local_file
 
         os.makedirs(local_file.parent, exist_ok=True)
@@ -445,7 +491,9 @@ class ESGFFile:
                 requests.exceptions.RequestException,
             ) as error:
                 logger.debug(
-                    "Not able to download %s. Error message: %s", url, error
+                    "Not able to download %s. Error message: %s",
+                    url,
+                    error,
                 )
                 errors[url] = error
                 log_error(url)
@@ -455,7 +503,7 @@ class ESGFFile:
         if not local_file.exists():
             raise DownloadError(
                 f"Failed to download file {local_file}, errors:"
-                "\n" + "\n".join(f"{url}: {errors[url]}" for url in errors)
+                "\n" + "\n".join(f"{url}: {errors[url]}" for url in errors),
             )
 
         return local_file
@@ -470,10 +518,7 @@ class ESGFFile:
         """Download file from a single url."""
         idx = self.urls.index(url)
         checksum_type, checksum = self._checksums[idx]
-        if checksum_type is None:
-            hasher = None
-        else:
-            hasher = hashlib.new(checksum_type)
+        hasher = None if checksum_type is None else hashlib.new(checksum_type)
 
         tmp_file = self._tmp_local_file(local_file)
 
@@ -501,10 +546,13 @@ class ESGFFile:
         else:
             local_checksum = hasher.hexdigest()
             if local_checksum != checksum:
-                raise DownloadError(
+                msg = (
                     f"Wrong {checksum_type} checksum for file {tmp_file},"
                     f" downloaded from {url}: expected {checksum}, but got"
                     f" {local_checksum}. Try downloading the file again."
+                )
+                raise DownloadError(
+                    msg,
                 )
 
         shutil.move(tmp_file, local_file)
@@ -533,14 +581,14 @@ def get_download_message(files):
     return "\n".join(lines)
 
 
-def download(files, dest_folder, n_jobs=4):
+def download(files, dest_folder=None, n_jobs=4):
     """Download multiple ESGFFiles in parallel.
 
     Arguments
     ---------
     files: list of :obj:`ESGFFile`
         The files to download.
-    dest_folder: Path
+    dest_folder: Path or None
         The destination folder.
     n_jobs: int
         The number of files to download in parallel.
@@ -557,15 +605,12 @@ def download(files, dest_folder, n_jobs=4):
         and not file.local_file(dest_folder).exists()
     ]
     if not files:
-        logger.debug(
-            "All required data is available locally, not downloading anything."
-        )
         return
 
     files = sorted(files)
     logger.info(get_download_message(files))
 
-    def _download(file: ESGFFile):
+    def _download(file: ESGFFile) -> None:
         """Download file to dest_folder."""
         file.download(dest_folder)
 
@@ -585,7 +630,9 @@ def download(files, dest_folder, n_jobs=4):
                 future.result()
             except DownloadError as error:
                 logger.error(
-                    "Failed to download %s, error message %s", file, error
+                    "Failed to download %s, error message %s",
+                    file,
+                    error,
                 )
                 errors.append(error)
             else:
@@ -601,7 +648,7 @@ def download(files, dest_folder, n_jobs=4):
 
     if errors:
         msg = "Failed to download the following files:\n" + "\n".join(
-            sorted(str(error) for error in errors)
+            sorted(str(error) for error in errors),
         )
         raise DownloadError(msg)
 

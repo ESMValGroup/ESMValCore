@@ -1,6 +1,14 @@
 """Contains the base class for derived variables."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariableBase:
@@ -8,7 +16,7 @@ class DerivedVariableBase:
 
     @staticmethod
     @abstractmethod
-    def required(project):
+    def required(project: str) -> list[Facets]:
         """Return required variables for derivation.
 
         This method needs to be overridden in the child class belonging to the
@@ -16,27 +24,27 @@ class DerivedVariableBase:
 
         Note
         ----
-        It is possible to declare a required variable as `optional=True`, which
-        allows the skipping of this particular variable during data extraction.
-        For example, this is useful for fx variables which are often not
-        available for observational datasets. Otherwise, the tool will fail if
-        not all required variables are available for all datasets.
+        It is possible to declare a required variable as ``optional=True``,
+        which allows the skipping of this particular variable during data
+        extraction. For example, this is useful for fx variables which are
+        often not available for observational datasets. Otherwise, the tool
+        will fail if not all required variables are available for all datasets.
 
         Parameters
         ----------
-        project : str
+        project:
             Project of the dataset for which the desired variable is derived.
 
         Returns
         -------
-        list of dict
-            List of variable metadata.
+        list[esmvalcore.typing.Facets]
+            List of facets.
 
         """
 
     @staticmethod
     @abstractmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """Compute desired derived variable.
 
         This method needs to be overridden in the child class belonging to the
@@ -44,20 +52,13 @@ class DerivedVariableBase:
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
+        cubes:
             Includes all the needed variables (incl. fx variables) for
-            derivation defined in the static class variable
-            `_required_variables`.
+            derivation defined in ``required``.
 
         Returns
         -------
         iris.cube.Cube
             New derived variable.
-
-        Raises
-        ------
-        NotImplementedError
-            If the desired variable derivation is not implemented, i.e. if this
-            method is called from this base class and not a child class.
 
         """
