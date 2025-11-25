@@ -177,7 +177,8 @@ def _get_fix(mip, short_name, fix_name, session=None):
     extra_facets = get_extra_facets(dataset, ())
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "omip"
-    extra_facets["horizontal_grid"] = '/work/bd1083/b382555/esmvalcore_dev/tests/integration/cmor/_fixes/test_data/oras5_grid.nc'
+    test_data_path = Path(__file__).resolve().parent.parent / "test_data"
+    extra_facets["horizontal_grid"] = str(test_data_path / "oras5_grid.nc")
     vardef = get_var_info(project="ORAS5", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.oras5.oras5, fix_name)
     fix = cls(vardef, extra_facets=extra_facets, session=session)
