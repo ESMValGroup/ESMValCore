@@ -73,15 +73,15 @@ class Oras5Fix(IconFix):
         node_lat = iris.coords.AuxCoord(
             node_lat,
             standard_name="latitude",
-            var_name="lat",
-            long_name="latitude",
+            var_name="nlat",
+            long_name="node latitude",
             units="degrees",
         )
         node_lon = iris.coords.AuxCoord(
             node_lon,
             standard_name="longitude",
-            var_name="lon",
-            long_name="longitude",
+            var_name="nlon",
+            long_name="node longitude",
             units="degrees",
         )
 
