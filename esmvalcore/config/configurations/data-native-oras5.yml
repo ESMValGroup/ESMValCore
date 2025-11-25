@@ -1,0 +1,9 @@
+# Read data from the ICON model in its native format.
+projects:
+  ORAS5:
+    data:
+      oras5: &oras5
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: '/'
+        filename_template: '*{raw_name}*{version}*.nc'

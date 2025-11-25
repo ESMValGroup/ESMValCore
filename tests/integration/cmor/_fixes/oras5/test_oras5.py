@@ -14,20 +14,9 @@ from iris.coords import AuxCoord, CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.oras5.oras5
-from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.oras5._base_fixes import Oras5Fix
-from esmvalcore.cmor._fixes.oras5.oras5 import (
-    AllVars,
-    # Clwvi,
-    # Hfls,
-    # Hfss,
-    # Rtmt,
-    # Rtnt,
-)
-from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import CoordinateInfo, get_var_info
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config import CFG
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 TEST_GRID_FILE_URI = (
@@ -174,7 +163,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "omip"
     test_data_path = Path(__file__).resolve().parent.parent / "test_data"
