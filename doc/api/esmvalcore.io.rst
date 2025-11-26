@@ -10,8 +10,10 @@ the other modules here provide an implementation for a particular data source.
 .. toctree::
    :maxdepth: 1
 
-   esmvalcore.io.protocol
+   esmvalcore.io.esgf
    esmvalcore.io.intake_esgf
+   esmvalcore.io.local
+   esmvalcore.io.protocol
 
 esmvalcore.io
 -------------
