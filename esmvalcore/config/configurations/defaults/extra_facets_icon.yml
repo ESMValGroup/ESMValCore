@@ -80,6 +80,10 @@ projects:
 
       ICON-XPP:
         '*':
+          # Cell measures
+          areacella: {raw_name: cell_area, var_type: jsb_2d_ml}
+          areacello: {raw_name: cell_area}
+
           # 2D atmosphere variables
           asr: {var_type: atm_2d_ml}
           clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
@@ -130,6 +134,10 @@ projects:
           # 2D land variables
           gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
           lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
+          #hfls: {raw_name: seb_latent_hflx_box, var_type: jsb_2d_ml}
+          #hfss: {raw_name: seb_sensible_hflx_box, var_type: jsb_2d_ml}
+          #evspsbl: {raw_name: hydro_evapotrans_box, var_type: jsb_2d_ml}
+          tsland: {raw_name: seb_t_box, var_type: jsb_2d_ml}
 
           # 2D ocean variables
           hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
