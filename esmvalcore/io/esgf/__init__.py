@@ -31,8 +31,8 @@ or the :ref:`recipe <recipe>`. To use it, run the command
 to copy the default configuration file for this module to your configuration
 directory. This will create a file with the following content:
 
-.. literalinclude:: ../configurations/data-esmvalcore.io.esgf.yml
-   :caption: Contents of ``data-esmvalcore.io.esgf.yml``
+.. literalinclude:: ../configurations/data-esmvalcore-esgf.yml
+   :caption: Contents of ``data-esmvalcore-esgf.yml``
    :language: yaml
 
 See :ref:`config-data-sources` for more information on configuring data sources
