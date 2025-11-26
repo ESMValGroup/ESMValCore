@@ -41,8 +41,8 @@ if TYPE_CHECKING:
     from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
-    "Dataset",
     "INHERITED_FACETS",
+    "Dataset",
     "datasets_to_recipe",
 ]
 
