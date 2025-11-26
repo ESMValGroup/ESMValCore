@@ -4,7 +4,6 @@ import logging
 
 import dask.array as da
 import iris
-import iris.util
 import numpy as np
 from iris import Constraint
 from iris.coords import DimCoord

@@ -7,8 +7,6 @@ import dask.array as da
 import iris
 import numpy as np
 
-# import xarray as xr
-# from iris import Constraint
 from iris.mesh import Connectivity, MeshXY
 
 from ..icon.icon import IconFix
