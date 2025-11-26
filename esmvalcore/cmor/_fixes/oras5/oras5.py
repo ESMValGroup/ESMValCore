@@ -94,7 +94,6 @@ class AllVars(Oras5Fix, AllVars_ICON):
         dim_shape = tuple(cube.data.shape[:-2])
         data_shape = data.shape / np.prod(dim_shape)
         data_shape = tuple(map(int, data_shape))
-        print(dim_shape, data_shape)
         data = np.reshape(data, dim_shape + data_shape)
         return iris.cube.Cube(data, dim_coords_and_dims=coords_add)
 
