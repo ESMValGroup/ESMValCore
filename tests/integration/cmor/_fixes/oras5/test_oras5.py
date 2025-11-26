@@ -408,7 +408,7 @@ def check_lat_lon(cube):
         "first spatial index for variables stored on an unstructured grid"
     )
     assert i_coord.units == "1"
-    np.testing.assert_allclose(i_coord.points, list(range(13*12)))
+    np.testing.assert_allclose(i_coord.points, list(range(13 * 12)))
     assert i_coord.bounds is None
 
     assert len(cube.coord_dims(lat)) == 1
@@ -523,7 +523,7 @@ def check_mesh(mesh):
     assert conn.cf_role == "face_node_connectivity"
     assert conn.start_index == 0
     assert conn.location_axis == 0
-    assert conn.shape == (int(13*12), 4)
+    assert conn.shape == (int(13 * 12), 4)
     # np.testing.assert_array_equal(
     #     conn.indices,
     #     [
@@ -555,6 +555,7 @@ def test_thetao_fix(cubes_3d):
     # check_height(cube)
     check_lat_lon(cube)
 
+
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("ORAS5", "ORAS5", "Omon", "tos")
@@ -570,6 +571,7 @@ def test_tos_fix(cubes_2d):
     check_time(cube)
     check_lat_lon(cube)
     # check_heightxm(cube, 2.0)
+
 
 def test_tos_no_mesh(cubes_2d):
     """Test fix."""
@@ -661,6 +663,7 @@ def test_add_time_fail():
     msg = "Cannot add required coordinate 'time' to variable 'tos'"
     with pytest.raises(ValueError, match=msg):
         fix._add_time(cube, cubes)
+
 
 # def test_add_latitude_fail(cubes_2d):
 #     """Test fix."""
@@ -895,6 +898,7 @@ def test_get_horizontal_grid_from_facet_fail(tmp_path):
     with pytest.raises(FileNotFoundError):
         fix.get_horizontal_grid(cube)
 
+
 def test_get_horizontal_grid_none(tmp_path):
     """Test fix."""
     session = CFG.start_session("my session")
@@ -903,7 +907,7 @@ def test_get_horizontal_grid_none(tmp_path):
     cube = Cube(0)
     fix = get_allvars_fix("Omon", "tos", session=session)
     del fix.extra_facets["horizontal_grid"]
-    
+
     msg = "Full path to suitable ORAS5 grid must be specified in facet 'horizontal_grid'"
     with pytest.raises(NotImplementedError, match=msg):
         fix.get_horizontal_grid(cube)
@@ -1643,7 +1647,7 @@ def test_get_bounds_cached_from_facet(cubes_2d, cubes_3d):
     """Test fix."""
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     tos_cube2 = tos_cube.copy()
-    cubes = CubeList([tos_cube,tos_cube2])
+    cubes = CubeList([tos_cube, tos_cube2])
 
     fix = get_allvars_fix("Omon", "tos")
     fix.extra_facets["ugrid"] = False
@@ -1652,18 +1656,33 @@ def test_get_bounds_cached_from_facet(cubes_2d, cubes_3d):
         fixed_cubes.append(fix.fix_metadata(CubeList([cubes[i]]))[0])
     fixed_cubes = CubeList(fixed_cubes)
 
-    assert (fixed_cubes[0].coord("latitude") == fixed_cubes[1].coord("latitude"))
-    assert (fixed_cubes[0].coord("longitude") == fixed_cubes[1].coord("longitude"))
-    assert (fixed_cubes[0].coord("latitude").bounds == fixed_cubes[1].coord("latitude").bounds).all()
-    assert (fixed_cubes[0].coord("latitude").points == fixed_cubes[1].coord("latitude").points).all()
-    assert (fixed_cubes[0].coord("longitude").bounds == fixed_cubes[1].coord("longitude").bounds).all()
-    assert (fixed_cubes[0].coord("longitude").points == fixed_cubes[1].coord("longitude").points).all()
+    assert fixed_cubes[0].coord("latitude") == fixed_cubes[1].coord("latitude")
+    assert fixed_cubes[0].coord("longitude") == fixed_cubes[1].coord(
+        "longitude"
+    )
+    assert (
+        fixed_cubes[0].coord("latitude").bounds
+        == fixed_cubes[1].coord("latitude").bounds
+    ).all()
+    assert (
+        fixed_cubes[0].coord("latitude").points
+        == fixed_cubes[1].coord("latitude").points
+    ).all()
+    assert (
+        fixed_cubes[0].coord("longitude").bounds
+        == fixed_cubes[1].coord("longitude").bounds
+    ).all()
+    assert (
+        fixed_cubes[0].coord("longitude").points
+        == fixed_cubes[1].coord("longitude").points
+    ).all()
+
 
 def test_get_coord_cached_from_facet(cubes_2d, cubes_3d):
     """Test fix."""
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     tos_cube2 = tos_cube.copy()
-    cubes = CubeList([tos_cube,tos_cube2])
+    cubes = CubeList([tos_cube, tos_cube2])
     # thetao_cube = cubes_3d.extract_cube(NameConstraint(var_name="votemper"))
 
     fix = get_allvars_fix("Omon", "tos")
@@ -1672,12 +1691,27 @@ def test_get_coord_cached_from_facet(cubes_2d, cubes_3d):
         fixed_cubes.append(fix.fix_metadata(CubeList([cubes[i]]))[0])
     fixed_cubes = CubeList(fixed_cubes)
 
-    assert (fixed_cubes[0].coord("latitude") == fixed_cubes[1].coord("latitude"))
-    assert (fixed_cubes[0].coord("longitude") == fixed_cubes[1].coord("longitude"))
-    assert (fixed_cubes[0].coord("latitude").bounds == fixed_cubes[1].coord("latitude").bounds).all()
-    assert (fixed_cubes[0].coord("latitude").points == fixed_cubes[1].coord("latitude").points).all()
-    assert (fixed_cubes[0].coord("longitude").bounds == fixed_cubes[1].coord("longitude").bounds).all()
-    assert (fixed_cubes[0].coord("longitude").points == fixed_cubes[1].coord("longitude").points).all()
+    assert fixed_cubes[0].coord("latitude") == fixed_cubes[1].coord("latitude")
+    assert fixed_cubes[0].coord("longitude") == fixed_cubes[1].coord(
+        "longitude"
+    )
+    assert (
+        fixed_cubes[0].coord("latitude").bounds
+        == fixed_cubes[1].coord("latitude").bounds
+    ).all()
+    assert (
+        fixed_cubes[0].coord("latitude").points
+        == fixed_cubes[1].coord("latitude").points
+    ).all()
+    assert (
+        fixed_cubes[0].coord("longitude").bounds
+        == fixed_cubes[1].coord("longitude").bounds
+    ).all()
+    assert (
+        fixed_cubes[0].coord("longitude").points
+        == fixed_cubes[1].coord("longitude").points
+    ).all()
+
 
 # Test _get_path_from_facet
 

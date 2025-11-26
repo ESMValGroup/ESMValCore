@@ -24,7 +24,7 @@ projects:
             raw_name: cell_area
 
           # Variable names and units
-          uo: 
+          uo:
             raw_name: vozocrte
             raw_units: m/s
           vo:
