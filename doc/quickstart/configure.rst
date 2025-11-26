@@ -732,8 +732,8 @@ There are three modules available as part of ESMValCore that provide data source
 - :mod:`esmvalcore.io.intake_esgf`: Use the
   `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
   is available from ESGF.
-- :mod:`esmvalcore.local`: Use :mod:`glob` patterns to find files on a filesystem.
-- :mod:`esmvalcore.esgf`: Use the legacy `esgf-pyclient
+- :mod:`esmvalcore.io.local`: Use :mod:`glob` patterns to find files on a filesystem.
+- :mod:`esmvalcore.io.esgf`: Use the legacy `esgf-pyclient
   <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
   from ESGF.
 
@@ -755,7 +755,7 @@ commands:
     esmvaltool config copy data-local-esmvaltool.yml
 
 This will use the :mod:`esmvalcore.io.intake_esgf` module to access data
-that is available through ESGF and use :mod:`esmvalcore.local` to find
+that is available through ESGF and use :mod:`esmvalcore.io.local` to find
 observational and reanalysis datasets that have been
 :ref:`CMORized with ESMValTool <esmvaltool:inputdata_observations>`
 (``OBS6`` and ``OBS`` projects for CMIP6- and CMIP5-style CMORization
@@ -805,7 +805,7 @@ and tailor it for your system.
 .. note::
 
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
-    and the :mod:`esmvalcore.local` data sources has not yet been implemented.
+    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
     Therefore it is recommended not to use the configuration option
     ``search_data: complete`` when using both data sources for the same project.
     The ``search_data: quick`` option can be safely used.
@@ -831,7 +831,7 @@ This is particularly useful for native datasets which do not follow the CMOR
 standard by default and consequently produce a lot of warnings when handled by
 Iris.
 This can be configured using the ``ignore_warnings`` argument to
-:class:`esmvalcore.local.LocalDataSource`.
+:class:`esmvalcore.io.local.LocalDataSource`.
 
 Here is an example on how to ignore specific warnings when loading data from
 the ``EMAC`` model in its native format:
@@ -964,7 +964,7 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 Refer to :ref:`config-data-sources` for instructions on how to set this up. This
-section describes additional configuration options for the :mod:`esmvalcore.esgf`
+section describes additional configuration options for the :mod:`esmvalcore.io.esgf`
 module, which is based on the legacy esgf-pyclient_ library. Most users
 will not need this.
 
@@ -987,7 +987,7 @@ will not need this.
 Configuration file
 ------------------
 An optional configuration file can be created for configuring how the
-:class:`esmvalcore.esgf.ESGFDataSource` uses esgf-pyclient_
+:class:`esmvalcore.io.esgf.ESGFDataSource` uses esgf-pyclient_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
 
@@ -1076,7 +1076,7 @@ but it may be useful to understand its content.
 The settings from this file are being moved to the
 :ref:`new configuration system <config_overview>`. In particular, the
 ``input_dir``, ``input_file``, and ``ignore_warnings`` settings have already
-been replaced by the :class:`esmvalcore.local.LocalDataSource` that can be
+been replaced by the :class:`esmvalcore.io.local.LocalDataSource` that can be
 configured via :ref:`data sources <config-data-sources>`.
 The developer configuration file will be installed along with ESMValCore and can
 also be viewed on GitHub:
@@ -1121,7 +1121,7 @@ Preprocessor output files
 -------------------------
 
 The filename to use for preprocessed data is configured using ``output_file``,
-similar to the filename template in :class:`esmvalcore.local.LocalDataSource`.
+similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
 Note that the extension ``.nc`` (and if applicable, a start and end time) will
 automatically be appended to the filename.
 

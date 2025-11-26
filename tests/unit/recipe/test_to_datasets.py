@@ -10,7 +10,7 @@ import yaml
 from esmvalcore._recipe import to_datasets
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
     import pytest_mock

@@ -18,8 +18,9 @@ import yaml
 from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
-import esmvalcore
 import esmvalcore._task
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_datasets,
@@ -30,7 +31,7 @@ from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _get_output_file
+from esmvalcore.io.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
 
@@ -2513,12 +2514,12 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
         """)
 
     mocker.patch.object(
-        esmvalcore.esgf,
+        esmvalcore.io.esgf,
         "download",
         create_autospec=True,
     )
     mocker.patch.object(
-        esmvalcore.local.LocalFile,
+        esmvalcore.io.local.LocalFile,
         "prepare",
         create_autospec=True,
     )
@@ -2530,8 +2531,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore.esgf.download.assert_called()
-    esmvalcore.local.LocalFile.prepare.assert_called()
+    esmvalcore.io.esgf.download.assert_called()
+    esmvalcore.io.local.LocalFile.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )

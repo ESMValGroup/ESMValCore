@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pyesgf.search.results import FileResult
 
-from esmvalcore.esgf import _search, download, find_files
+from esmvalcore.io.esgf import _search, download, find_files
 
 VARIABLES = [
     {

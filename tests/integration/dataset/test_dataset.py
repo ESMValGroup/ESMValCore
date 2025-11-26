@@ -54,7 +54,7 @@ def example_data_source(tmp_path: Path) -> dict[str, str]:
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
     return {
-        "type": "esmvalcore.local.LocalDataSource",
+        "type": "esmvalcore.io.local.LocalDataSource",
         "rootpath": str(rootpath),
         "dirname_template": "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}",
         "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc",

@@ -8,7 +8,7 @@ import pytest
 
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.dataset import Dataset
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 

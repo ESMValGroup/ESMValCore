@@ -1,4 +1,4 @@
-"""Unit tests for time related functions in `esmvalcore.local`."""
+"""Unit tests for time related functions in `esmvalcore.io.local`."""
 
 from pathlib import Path
 
@@ -7,8 +7,8 @@ import pyesgf
 import pytest
 from cf_units import Unit
 
-from esmvalcore.esgf import ESGFFile
-from esmvalcore.local import (
+from esmvalcore.io.esgf import ESGFFile
+from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
     _get_start_end_date,

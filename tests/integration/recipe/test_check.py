@@ -11,11 +11,11 @@ import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe.check
-import esmvalcore.esgf
+import esmvalcore.io.esgf
 from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessorFile
 
 if TYPE_CHECKING:
@@ -313,7 +313,9 @@ def test_data_availability_nonexistent(tmp_path):
         context=None,
     )
     dest_folder = tmp_path
-    input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
+    input_files = [
+        esmvalcore.io.esgf.ESGFFile([result]).local_file(dest_folder),
+    ]
     dataset = Dataset(**var)
     dataset.files = input_files
     check.data_availability(dataset)

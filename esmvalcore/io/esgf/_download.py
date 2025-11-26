@@ -24,12 +24,12 @@ import yaml
 from humanfriendly import format_size, format_timespan
 
 from esmvalcore.config import CFG
-from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
     _get_start_end_date_from_filename,
 )
+from esmvalcore.io.protocol import DataElement
 
 from .facets import DATASET_MAP, FACETS
 
@@ -185,7 +185,7 @@ def sort_hosts(urls):
 class ESGFFile(DataElement):
     """File on the ESGF.
 
-    This is the object returned by :func:`esmvalcore.esgf.find_files`.
+    This is the object returned by :func:`esmvalcore.io.esgf.find_files`.
 
     Attributes
     ----------

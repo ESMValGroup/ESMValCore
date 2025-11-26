@@ -1,11 +1,11 @@
-"""Tests for `_replace_tags` in `esmvalcore.local`."""
+"""Tests for `_replace_tags` in `esmvalcore.io.local`."""
 
 from pathlib import Path
 
 import pytest
 
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _replace_tags
+from esmvalcore.io.local import _replace_tags
 
 VARIABLE = {
     "project": "CMIP6",

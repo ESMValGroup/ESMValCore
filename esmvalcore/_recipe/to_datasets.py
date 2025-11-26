@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any
 from esmvalcore._recipe.check import get_no_data_message
 from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.dataset import INHERITED_FACETS, Dataset, _isglob
-from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _replace_years_with_timerange
+from esmvalcore.io.esgf.facets import FACETS
+from esmvalcore.io.local import _replace_years_with_timerange
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (

@@ -32,9 +32,9 @@ import intake_esgf.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob, _ismatch
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.local import _parse_period
 
 if TYPE_CHECKING:
     import iris.cube

@@ -8,8 +8,8 @@ import pytest
 from prov.model import ProvDocument
 
 from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX, TrackedFile
+from esmvalcore.io.local import LocalFile
 from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import LocalFile
 
 if TYPE_CHECKING:
     import iris.cube

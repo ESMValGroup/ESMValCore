@@ -11,7 +11,7 @@ import numpy as np
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.esgf.facets import FACETS
+from esmvalcore.io.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 

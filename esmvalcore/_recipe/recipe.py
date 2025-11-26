@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from esmvalcore import __version__, esgf
+import esmvalcore.io.esgf
+from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
@@ -22,7 +23,7 @@ from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
@@ -1327,7 +1328,7 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
-        esgf.download(self._download_files)
+        esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
 
