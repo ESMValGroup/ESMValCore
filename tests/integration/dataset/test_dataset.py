@@ -61,7 +61,7 @@ def example_data_source(tmp_path: Path) -> dict[str, str]:
     }
 
 
-@pytest.mark.parametrize("timerange", ["1850/185002", "*", "*/P2M"])
+@pytest.mark.parametrize("timerange", ["1850/185002", "*", "*/P2M", "1860/*"])
 def test_find_data(
     example_data_source: dict[str, str],
     session: Session,
