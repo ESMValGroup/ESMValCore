@@ -450,7 +450,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         dest_folder = self.dest_folder if dest_folder is None else dest_folder
@@ -473,7 +473,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)
