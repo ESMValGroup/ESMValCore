@@ -34,10 +34,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-_ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
-
-_LEGACY_DATA_SOURCES_WARNED: set[str] = set()
-
 
 def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     """Select the directory structure of input path."""
@@ -54,6 +50,11 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
 
     msg = f"drs {structure} for {project} project not specified in config-developer file"
     raise KeyError(msg)
+
+
+_ROOTPATH_WARNED: set[tuple[str, tuple[str]]] = set()
+
+_LEGACY_DATA_SOURCES_WARNED: set[str] = set()
 
 
 def _get_data_sources(project: str) -> list[LocalDataSource]:

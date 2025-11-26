@@ -698,7 +698,8 @@ get_input_filelist:
       - Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_42_Amon_tas_197901-199912.nc
       - Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_42_Amon_tas_200001-201012.nc
 
-  - dirname_template: "Tier{tier}/{dataset}"
+  - drs: default
+    dirname_template: "Tier{tier}/{dataset}"
     filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
     variable:
       variable_group: test
