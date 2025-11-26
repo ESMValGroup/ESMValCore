@@ -594,7 +594,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
                 file.facets.update(
                     self._path2facets(
                         file,
-                        add_timerange="timerange" in facets,
+                        add_timerange=facets.get("frequency", "fx") != "fx",
                     ),
                 )
                 file.ignore_warnings = self.ignore_warnings
