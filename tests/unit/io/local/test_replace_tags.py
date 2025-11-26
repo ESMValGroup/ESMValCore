@@ -46,6 +46,17 @@ def test_replace_tags():
     ]
 
 
+def test_replace_tags_with_caps():
+    """Test for `_replace_tags` function with .lower and .upper feature."""
+    input_file = _replace_tags(
+        "{short_name.upper}_{mip}_{dataset.lower}_{exp}_{ensemble}_{grid}*.nc",
+        VARIABLE,
+    )
+    assert input_file == [
+        Path("TAS_Amon_accurate-model_experiment_r1i1p1f1_gr*.nc"),
+    ]
+
+
 def test_replace_tags_missing_facet():
     """Check that a RecipeError is raised if a required facet is missing."""
     paths = ["{short_name}_{missing}_*.nc"]
