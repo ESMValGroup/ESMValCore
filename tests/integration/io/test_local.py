@@ -1,4 +1,6 @@
-"""Tests for `esmvalcore.local`."""
+"""Tests for `esmvalcore.io.local`."""
+
+from __future__ import annotations
 
 import os
 import pprint
@@ -8,13 +10,13 @@ import pytest
 import yaml
 
 from esmvalcore.config import CFG
-from esmvalcore.local import (
+from esmvalcore.io.local import (
+    LocalDataSource,
     LocalFile,
     _get_output_file,
     _parse_period,
-    _select_drs,
-    find_files,
 )
+from esmvalcore.local import _select_drs, find_files
 
 # Load test configuration
 with open(
@@ -84,6 +86,11 @@ def root(tmp_path):
 @pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
 def test_find_files(monkeypatch, root, cfg):
     """Test retrieving input filelist."""
+    if "drs" not in cfg:
+        pytest.skip(
+            "Skipping test that depends on multiple patterns, this is intentionally not "
+            "supported for `LocalDataSource`. Create multiple data sources if you need this.",
+        )
     print(
         f"Testing DRS {cfg['drs']} with variable:\n",
         pprint.pformat(cfg["variable"]),
@@ -130,6 +137,44 @@ def test_find_files_with_facets(monkeypatch, root):
     assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
     assert isinstance(input_filelist[0], LocalFile)
     assert input_filelist[0].facets
+
+
+@pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
+def test_find_data(root, cfg):
+    """Test retrieving input filelist."""
+    if "dirname_template" not in cfg:
+        pytest.skip(
+            "Skipping test that depends on multiple patterns, this is intentionally not "
+            "supported for `LocalDataSource`. Create multiple data sources if you need this.",
+        )
+    data_source = LocalDataSource(
+        name="test-data-source",
+        project=cfg["variable"]["project"],
+        rootpath=root,
+        priority=1,
+        dirname_template=cfg["dirname_template"],
+        filename_template=cfg["filename_template"],
+    )
+    print(
+        f"Testing {data_source} with variable:\n",
+        pprint.pformat(cfg["variable"]),
+    )
+    create_tree(
+        root,
+        cfg.get("available_files"),
+        cfg.get("available_symlinks"),
+    )
+
+    # Find files
+    input_filelist = data_source.find_data(**cfg["variable"])
+    # Test result
+    ref_files = [Path(root, file) for file in cfg["found_files"]]
+    ref_globs = [
+        Path(root, d, f) for d in cfg["dirs"] for f in cfg["file_patterns"]
+    ]
+    assert [Path(f) for f in input_filelist] == sorted(ref_files)
+    for pattern in ref_globs:
+        assert str(pattern) in data_source.debug_info
 
 
 def test_select_invalid_drs_structure():

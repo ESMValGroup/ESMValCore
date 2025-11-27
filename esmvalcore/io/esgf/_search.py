@@ -14,12 +14,12 @@ import pyesgf.search
 import requests.exceptions
 
 from esmvalcore.config._esgf_pyclient import get_esgf_config
-from esmvalcore.io.protocol import DataSource
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     _parse_period,
     _replace_years_with_timerange,
     _truncate_dates,
 )
+from esmvalcore.io.protocol import DataSource
 
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -345,7 +345,7 @@ def find_files(*, project, short_name, dataset, **facets):
     if project not in FACETS:
         msg = (
             f"Unable to download from ESGF, because project {project} is not"
-            " on it or is not supported by the esmvalcore.esgf module."
+            " on it or is not supported by the esmvalcore.io.esgf module."
         )
         raise ValueError(
             msg,
@@ -420,7 +420,7 @@ class ESGFDataSource(DataSource):
 
         Returns
         -------
-        :obj:`list` of :obj:`esmvalcore.esgf.ESGFFile`
+        :obj:`list` of :obj:`esmvalcore.io.esgf.ESGFFile`
             A list of files that have been found on ESGF.
         """
         files = find_files(**facets)

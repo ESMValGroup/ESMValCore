@@ -3,35 +3,35 @@ projects:
   CMIP6:
     data:
       ipsl:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: /bdd
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
       ipsl:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: /bdd
         dirname_template: "{project}/output/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
   CMIP3:
     data:
       ipsl:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: /bdd
         dirname_template: "{project}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}"
         filename_template: "{short_name}_*.nc"
   CORDEX:
     data:
       ipsl:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: /bdd
         dirname_template: "{project}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
   obs4MIPs:
     data:
       ipsl:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: /bdd
         dirname_template: "{project}/obs-CFMIP/observations/{realm}/{short_name}/{frequency}/{grid}/{institute}/{dataset}/{version}"
         filename_template: "{short_name}_*.nc"

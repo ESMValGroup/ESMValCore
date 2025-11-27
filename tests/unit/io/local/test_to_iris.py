@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import iris.cube
 import pytest
 
-from esmvalcore.local import LocalFile, _get_attr_from_field_coord
+from esmvalcore.io.local import LocalFile, _get_attr_from_field_coord
 
 if TYPE_CHECKING:
     from pathlib import Path

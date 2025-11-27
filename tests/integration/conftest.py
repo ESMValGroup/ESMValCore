@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 import iris
 import pytest
 
-import esmvalcore.local
-from esmvalcore.local import (
+import esmvalcore.io.local
+from esmvalcore.io.local import (
     LocalFile,
     _replace_tags,
-    _select_drs,
     _select_files,
 )
+from esmvalcore.local import _select_drs
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -139,7 +139,7 @@ def _get_find_files_func(
     tracking_id = _tracking_ids()
 
     def find_files(
-        self: esmvalcore.local.LocalDataSource,
+        self: esmvalcore.io.local.LocalDataSource,
         *,
         debug: bool = False,
         **facets: FacetValue,
@@ -156,7 +156,7 @@ def _get_find_files_func(
 def patched_datafinder(tmp_path: Path, monkeypatch: pytest.MonkeyPath) -> None:
     find_files = _get_find_files_func(tmp_path)
     monkeypatch.setattr(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         find_files,
     )
@@ -169,7 +169,7 @@ def patched_datafinder_grib(
 ) -> None:
     find_files = _get_find_files_func(tmp_path, suffix="grib")
     monkeypatch.setattr(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         find_files,
     )
@@ -192,7 +192,7 @@ def patched_failing_datafinder(
     tracking_id = _tracking_ids()
 
     def find_files(
-        self: esmvalcore.local.LocalDataSource,
+        self: esmvalcore.io.local.LocalDataSource,
         *,
         debug: bool = False,
         **facets: FacetValue,
@@ -209,7 +209,7 @@ def patched_failing_datafinder(
         return returned_files
 
     monkeypatch.setattr(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         find_files,
     )

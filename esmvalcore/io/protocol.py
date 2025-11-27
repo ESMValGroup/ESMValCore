@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class DataElement(Protocol):
     """A data element represents some data that can be loaded.
 
-    An :class:`esmvalcore.local.LocalFile` is an example of a data element.
+    An :class:`esmvalcore.io.local.LocalFile` is an example of a data element.
     """
 
     name: str

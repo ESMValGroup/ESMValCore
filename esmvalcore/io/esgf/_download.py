@@ -24,12 +24,12 @@ import yaml
 from humanfriendly import format_size, format_timespan
 
 from esmvalcore.config import CFG
-from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
     _get_start_end_date_from_filename,
 )
+from esmvalcore.io.protocol import DataElement
 
 from .facets import DATASET_MAP, FACETS
 
@@ -185,7 +185,7 @@ def sort_hosts(urls):
 class ESGFFile(DataElement):
     """File on the ESGF.
 
-    This is the object returned by :func:`esmvalcore.esgf.find_files`.
+    This is the object returned by :func:`esmvalcore.io.esgf.find_files`.
 
     Attributes
     ----------
@@ -450,7 +450,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         dest_folder = self.dest_folder if dest_folder is None else dest_folder
@@ -473,7 +473,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)

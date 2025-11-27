@@ -7,7 +7,7 @@ An input data source can be defined in the configuration by using
 
     >>> from esmvalcore.config import CFG
     >>> CFG["projects"]["CMIP6"]["data"]["local"] = {
-            "type": "esmvalcore.local.LocalDataSource",
+            "type": "esmvalcore.io.local.LocalDataSource",
             "rootpath": "~/climate_data",
             "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
             "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
@@ -21,14 +21,14 @@ or as a :ref:`YAML configuration file <config_overview>`:
       CMIP6:
         data:
           local:
-            type: "esmvalcore.local.LocalDataSource"
+            type: "esmvalcore.io.local.LocalDataSource"
             rootpath: "~/climate_data"
             dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
             filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
 
 where ``CMIP6`` is a project, and ``local`` is a unique name describing the
 data source. The data source type,
-:class:`esmvalcore.local.LocalDataSource`, in the example above, needs to
+:class:`esmvalcore.io.local.LocalDataSource`, in the example above, needs to
 implement the :class:`esmvalcore.io.protocol.DataSource` protocol. Any
 remaining key-value pairs in the configuration, ``rootpath``,
 ``dirname_template``, and ``filename_template`` in this example, are passed

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore.local import LocalDataSource, LocalFile
+from esmvalcore.io.local import LocalDataSource, LocalFile
 
 
 @pytest.mark.parametrize(

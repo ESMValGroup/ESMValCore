@@ -20,9 +20,9 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.exceptions import ESMValCoreLoadWarning
+from esmvalcore.io.local import LocalFile
 from esmvalcore.io.protocol import DataElement
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.local import LocalFile
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -1,4 +1,4 @@
-"""Test 1esmvalcore.esgf._search`."""
+"""Test 1esmvalcore.io.esgf._search`."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import requests.exceptions
 from pyesgf.search.results import FileResult
 
 import esmvalcore.io.protocol
-from esmvalcore.esgf import ESGFDataSource, ESGFFile, _search, find_files
+from esmvalcore.io.esgf import ESGFDataSource, ESGFFile, _search, find_files
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -437,14 +437,14 @@ def test_search_unknown_project():
     project = "Unknown"
     msg = (
         f"Unable to download from ESGF, because project {project} is not on"
-        " it or is not supported by the esmvalcore.esgf module."
+        " it or is not supported by the esmvalcore.io.esgf module."
     )
     with pytest.raises(ValueError, match=msg):
         find_files(project=project, dataset="", short_name="")
 
 
 class TestESGFDataSource:
-    """Test `esmvalcore.esgf.ESGFDataSource`."""
+    """Test `esmvalcore.io.esgf.ESGFDataSource`."""
 
     def test_init(self) -> None:
         """Test initialization."""
@@ -467,7 +467,7 @@ class TestESGFDataSource:
 
         mock_result = [mocker.create_autospec(ESGFFile, instance=True)]
         mock_find_files = mocker.patch(
-            "esmvalcore.esgf._search.find_files",
+            "esmvalcore.io.esgf._search.find_files",
             return_value=mock_result,
         )
 

@@ -1,12 +1,12 @@
-"""Test `esmvalcore.esgf.facets`."""
+"""Test `esmvalcore.io.esgf.facets`."""
 
 import pyesgf.search
 
-from esmvalcore.esgf import facets
+from esmvalcore.io.esgf import facets
 
 
 def test_create_dataset_map(monkeypatch, mocker):
-    """Test `esmvalcore.esgf.facets.create_dataset_map`."""
+    """Test `esmvalcore.io.esgf.facets.create_dataset_map`."""
     monkeypatch.setattr(facets, "FACETS", {"CMIP5": facets.FACETS["CMIP5"]})
 
     conn = mocker.create_autospec(

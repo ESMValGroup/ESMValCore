@@ -10,7 +10,7 @@ import esmvalcore._task
 import esmvalcore.config
 import esmvalcore.config._config_object
 import esmvalcore.config._logging
-import esmvalcore.esgf
+import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError

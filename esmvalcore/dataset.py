@@ -27,7 +27,7 @@ from esmvalcore.config._config import (
 )
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _dates_to_timerange, _get_output_file
+from esmvalcore.io.local import _dates_to_timerange, _get_output_file
 from esmvalcore.preprocessor import preprocess
 
 if TYPE_CHECKING:
@@ -94,7 +94,7 @@ class Dataset:
     ----------
     **facets
         Facets describing the dataset. See
-        :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
+        :obj:`esmvalcore.io.esgf.facets.FACETS` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes
