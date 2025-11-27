@@ -192,7 +192,6 @@ ignore = [
     "PT011",    # pytest.raises without match argument
     "PT027",    # Use `pytest.raises` instead of unittest-style `assertRaises`
     "PTH",      # Use pathlib everywhere
-    "RUF022",   # `__all__` definitions that are not ordered according to an "isort-style" sort.
     "SIM102",   # Use a single `if` statement instead of nested `if` statements
     "SIM117",   # Use a single `with` statement with multiple contexts instead of nested `with` statements
     "TD003",    # Missing issue link on the line following this TODO
