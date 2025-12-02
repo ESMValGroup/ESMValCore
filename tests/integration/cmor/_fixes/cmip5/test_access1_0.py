@@ -1,7 +1,7 @@
 """Test Access1-0 fixes."""
 
-import unittest
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from cf_units import Unit, num2date
@@ -95,7 +95,7 @@ def cl_cubes():
     return CubeList([cl_cube, x_cube])
 
 
-@unittest.mock.patch(
+@patch(
     "esmvalcore.cmor._fixes.cmip5.access1_0.ClFixHybridHeightCoord."
     "fix_metadata",
     autospec=True,
