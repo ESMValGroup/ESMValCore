@@ -255,7 +255,7 @@ configured for the ``native6`` project (assuming you are using the default DRS
 for ``native6`` described :ref:`above <read_native_obs>`).
 
 - Supported variables: ``uo``, ``vo``, ``tos``, ``sos``, ``zos``, ``mlotst``,
-``thetao``, ``so``, ``hfds``, ``tauuo``.
+  ``thetao``, ``so``, ``hfds``, ``tauuo``.
 - Tier: 3
 
 .. note:: For ORAS5 you need the grid files to read the data properly, which
