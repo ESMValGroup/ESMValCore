@@ -467,6 +467,8 @@ it is CMOR-compliant), use :ref:`dataset fixes <fixing_data>`.
 This is where the actual CMORization takes place.
 For example, a ``native6`` dataset fix for ERA5 is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/native6/era5.py>`__,
+the ORAS5 fix is located `here
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/native6/oras5.py>`__,
 and the ``ICON`` fix is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
 
