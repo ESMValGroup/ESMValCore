@@ -1,11 +1,11 @@
 """Tests for MIROC5."""
 import unittest
+from unittest.mock import patch
 
 import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from unittest.mock import patch
 from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Pr, Sftof, Tas
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
