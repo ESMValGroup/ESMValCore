@@ -43,8 +43,8 @@ from esmvalcore.io.esgf._download import ESGFFile, download
 from esmvalcore.io.esgf._search import ESGFDataSource, find_files
 
 __all__ = [
-    "ESGFFile",
     "ESGFDataSource",
+    "ESGFFile",
     "download",
     "find_files",
 ]

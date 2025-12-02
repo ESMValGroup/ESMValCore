@@ -8,8 +8,8 @@
 from esmvalcore.io.esgf.facets import DATASET_MAP, FACETS, create_dataset_map
 
 __all__ = [
-    "FACETS",
     "DATASET_MAP",
+    "FACETS",
     "create_dataset_map",
 ]
 
