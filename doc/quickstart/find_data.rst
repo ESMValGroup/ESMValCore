@@ -244,19 +244,26 @@ Data for the version ``V220`` can be downloaded from: https://hydrology.princeto
 
 .. _read_native_oras5:
 
-ORAS5 (in netCDF format downloaded from the CDS)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ORAS5
+^^^^^
 
-ORAS5 data can be downloaded from the Copernicus Climate Data Store (CDS)
-`CDS <https://cds.climate.copernicus.eu/datasets/reanalysis-oras5?tab=download>`__.
+ORAS5 data can be downloaded in netCDF from the Copernicus Climate Data Store
+`(CDS) <https://cds.climate.copernicus.eu/datasets/reanalysis-oras5?tab=download>`__.
 Place the files in the ``/Tier3/ORAS5/single_levels`` or ``/Tier3/ORAS5/all_levels``
 subdirectory (depending on whether it is 2D or 3D data) of your ``rootpath`` that you have
 configured for the ``native6`` project (assuming you are using the default DRS
 for ``native6`` described :ref:`above <read_native_obs>`).
 
-- Supported variables: ``uo``, ``vo``, ``tos``, ``sos``, ``zos``,
-  ``mlotst``, ``thetao``, ``so``, ``hfds``, ``tauuo``.
+- Supported variables: ``uo``, ``vo``, ``tos``, ``sos``, ``zos``, ``mlotst``,
+``thetao``, ``so``, ``hfds``, ``tauuo``.
 - Tier: 3
+
+.. note:: For ORAS5 you need the grid files to read the data properly, which
+  can be downloaded `here <https://nc.uni-bremen.de/public.php/dav/files/nJBXTYbQe5diPof/?accept=zip>`__.
+  Be aware that for the variables ``uo``, and ``tauuo`` you need to use the
+  ``oras5_mesh_u.nc`` grid and for the variable ``vo`` the ``oras5_mesh_v.nc``
+  grid, respectively. For all other supported variables you need the
+  ``oras5_mesh_T.nc`` grid file.
 
 .. note:: For ORAS5 the rotated meridional and zonal velocities are available.
   Per default ESMValCore expects that you use those. Otherwise, you need to specify
