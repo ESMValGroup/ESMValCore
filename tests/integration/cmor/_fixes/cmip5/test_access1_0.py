@@ -1,6 +1,5 @@
 """Test Access1-0 fixes."""
 
-import unittest
 from datetime import datetime
 from unittest.mock import patch
 
