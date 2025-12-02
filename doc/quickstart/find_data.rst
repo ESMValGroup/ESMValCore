@@ -245,7 +245,7 @@ Data for the version ``V220`` can be downloaded from: https://hydrology.princeto
 .. _read_native_oras5:
 
 ORAS5 (in netCDF format downloaded from the CDS)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ORAS5 data can be downloaded from the Copernicus Climate Data Store (CDS)
 `CDS <https://cds.climate.copernicus.eu/datasets/reanalysis-oras5?tab=download>`__.
