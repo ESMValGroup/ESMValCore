@@ -1,11 +1,11 @@
 """Tests for MIROC5."""
-
 import unittest
 
 import iris
 from cf_units import Unit
 from iris.cube import Cube
 
+from unittest.mock import patch
 from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Pr, Sftof, Tas
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -35,7 +35,7 @@ def test_get_pr_fix():
     assert fix == [Pr(None), GenericFix(None)]
 
 
-@unittest.mock.patch(
+@patch(
     "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata",
     autospec=True,
 )
@@ -46,7 +46,7 @@ def test_hur_fix_metadata(mock_base_fix_metadata):
     mock_base_fix_metadata.assert_called_once_with(fix, "cubes")
 
 
-@unittest.mock.patch(
+@patch(
     "esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata",
     autospec=True,
 )
