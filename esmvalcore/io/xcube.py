@@ -1,4 +1,14 @@
-"""Load data using ``xcube``."""
+"""Access data using `xcube <https://xcube.readthedocs.io>`_.
+
+Run the command ``esmvaltool config copy data-xcube-ccizarr.yml`` to update
+your :ref:`configuration <config-data-sources>` to use this module. This will
+create a file with the following content in your configuration directory:
+
+.. literalinclude:: ../configurations/data-xcube-ccizarr.yml
+   :language: yaml
+   :caption: Contents of ``data-xcube-ccizarr.yml``
+
+"""
 
 from __future__ import annotations
 
@@ -20,7 +30,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class XCubeDataset(esmvalcore.io.protocol.DataElement):
-    """A dataset that can be used to load data found using intake-esgf_."""
+    """A dataset that can be used to load data found using xcube_."""
 
     name: str
     """A unique name identifying the data."""
@@ -111,7 +121,11 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     """A string containing debug information when no data is found."""
 
     data_store_id: str
-    """Name of the data store."""
+    """Name of the data store.
+
+    A list of available data stores can be found in the `xcube documentation
+    <https://xcube.readthedocs.io/en/latest/dataaccess.html#available-data-stores>`__.
+    """
 
     data_store_params: dict[str, Any] = field(default_factory=dict, repr=False)
     """Parameters to use when creating the data store."""
