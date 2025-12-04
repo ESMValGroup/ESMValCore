@@ -219,6 +219,11 @@
       "affiliation": "ECCC, Canada",
       "name": "Garcia Perdomo, Karen",
       "orcid": "0009-0004-2333-3358"
+    },
+    {
+      "affiliation": "SMHI, Sweden",
+      "name": "Lenhardt, Julien",
+      "orcid": "https://orcid.org/0000-0002-9949-3989"
     }
   ],
   "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
@@ -227,37 +232,40 @@
   },
   "title": "ESMValCore",
   "communities": [
-      {
-          "identifier": "is-enes3"
-      },
-      {
-          "identifier": "dlr_de"
-      },
-      {
-          "identifier": "ecfunded"
-      },
-      {
-          "identifier": "nlesc"
-      }
+    {
+      "identifier": "enes-ri"
+    },
+    {
+      "identifier": "is-enes3"
+    },
+    {
+      "identifier": "dlr_de"
+    },
+    {
+      "identifier": "ecfunded"
+    },
+    {
+      "identifier": "nlesc"
+    }
   ],
   "grants": [
-      {
-          "id": "10.13039/501100000780::282672"
-      },
-      {
-          "id": "10.13039/501100000780::641727"
-      },
-      {
-          "id": "10.13039/501100000780::641816"
-      },
-      {
-          "id": "10.13039/501100000780::727862"
-      },
-      {
-          "id": "10.13039/501100000780::776613"
-      },
-      {
-          "id": "10.13039/501100000780::824084"
-      }
+    {
+      "id": "10.13039/501100000780::282672"
+    },
+    {
+      "id": "10.13039/501100000780::641727"
+    },
+    {
+      "id": "10.13039/501100000780::641816"
+    },
+    {
+      "id": "10.13039/501100000780::727862"
+    },
+    {
+      "id": "10.13039/501100000780::776613"
+    },
+    {
+      "id": "10.13039/501100000780::824084"
+    }
   ]
 }

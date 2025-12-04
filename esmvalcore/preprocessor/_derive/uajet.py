@@ -17,10 +17,9 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `uajet`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [{"short_name": "ua"}]
-        return required
+        return [{"short_name": "ua"}]
 
     @staticmethod
     def calculate(cubes):
@@ -28,10 +27,11 @@ class DerivedVariable(DerivedVariableBase):
         # Load cube, extract correct region and perform zonal mean
         ua_cube = cubes.extract_cube(iris.Constraint(name="eastward_wind"))
         ua_cube = ua_cube.interpolate(
-            [("air_pressure", PLEV)], scheme=iris.analysis.Linear()
+            [("air_pressure", PLEV)],
+            scheme=iris.analysis.Linear(),
         )
         ua_cube = ua_cube.extract(
-            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1])
+            iris.Constraint(latitude=lambda cell: LAT[0] <= cell <= LAT[1]),
         )
         with ignore_iris_vague_metadata_warnings():
             ua_cube = ua_cube.collapsed("longitude", iris.analysis.MEAN)
@@ -52,7 +52,7 @@ class DerivedVariable(DerivedVariableBase):
             polynom = np.poly1d(polyfit)
             uajet_vals.append(polynom(np.max(ua_data)))
 
-        uajet_cube = iris.cube.Cube(
+        return iris.cube.Cube(
             uajet_vals,
             units=cf_units.Unit("degrees_north"),
             dim_coords_and_dims=[(ua_cube.coord("time"), 0)],
@@ -62,5 +62,3 @@ class DerivedVariable(DerivedVariableBase):
                 "lat_range_1": LAT[1],
             },
         )
-
-        return uajet_cube

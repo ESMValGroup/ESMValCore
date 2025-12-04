@@ -25,9 +25,7 @@ class MockBaseTask(BaseTask):
         tmp_path = self._tmp_path
         output_file = tmp_path / self.name
 
-        msg = "running {} in thread {}, using input {}, generating {}".format(
-            self.name, os.getpid(), input_files, output_file
-        )
+        msg = f"running {self.name} in thread {os.getpid()}, using input {input_files}, generating {output_file}"
         print(msg)
 
         # Check that the output is created just once
@@ -75,7 +73,7 @@ def get_distributed_client_mock(client):
 
 
 @pytest.mark.parametrize(
-    ["mpmethod", "max_parallel_tasks"],
+    ("mpmethod", "max_parallel_tasks"),
     [
         ("fork", 1),
         ("fork", 2),
@@ -173,7 +171,9 @@ def test_run_task(mocker, address):
     task = mocker.create_autospec(DiagnosticTask, instance=True)
     task.products = mocker.Mock()
     output_files, products = _run_task(
-        task, scheduler_address=address, scheduler_lock=scheduler_lock
+        task,
+        scheduler_address=address,
+        scheduler_lock=scheduler_lock,
     )
     assert output_files == task.run.return_value
     assert products == task.products
@@ -204,11 +204,10 @@ def test_py2ncl():
 
 def _get_single_base_task():
     """Test BaseTask basic attributes."""
-    task = BaseTask(
+    return BaseTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
     )
-    return task
 
 
 def test_base_task_names():
@@ -235,15 +234,13 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
         with open(diag_script, "w", encoding="utf-8") as fil:
             fil.write("import os\n\nprint(os.getcwd())")
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=[BaseTask(name=f"task0-ancestor{j}") for j in range(2)],
         script=diag_script,
         settings=diag_settings,
         output_dir=diag_output_dir,
     )
-
-    return task
 
 
 def test_py_diagnostic_task_constructor(tmp_path):
@@ -268,7 +265,7 @@ def test_py_diagnostic_task_write_settings(tmp_path):
     my_arg_dict = {"b": [1], "a": 3.0, "c": False}
     task.settings.update(my_arg_dict)
     settings = task.write_settings()
-    with open(settings, "r") as stream:
+    with open(settings) as stream:
         settings_data = yaml.safe_load(stream)
 
     assert list(settings_data) == ["run_dir", "b", "a", "c"]
@@ -281,9 +278,7 @@ def test_diagnostic_diag_script_none(tmp_path):
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = "Cannot execute script '{}' ({}): file does not exist.".format(
-        script_file, script_file
-    )
+    ept = f"Cannot execute script '{script_file}' ({script_file}): file does not exist."
     assert ept == str(err_msg.value)
 
 
@@ -306,7 +301,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
     with open(diag_script, "w", encoding="utf-8") as fil:
         fil.write(diagnostic_text)
 
-    task = DiagnosticTask(
+    return DiagnosticTask(
         name="task0",
         ancestors=None,
         script=diag_script.as_posix(),
@@ -314,15 +309,15 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         output_dir=diag_output_dir.as_posix(),
     )
 
-    return task
-
 
 # skip if no exec
 no_ncl = pytest.mark.skipif(
-    shutil.which("ncl") is None, reason="ncl is not installed"
+    shutil.which("ncl") is None,
+    reason="ncl is not installed",
 )
 no_rscript = pytest.mark.skipif(
-    shutil.which("Rscript") is None, reason="Rscript is not installed"
+    shutil.which("Rscript") is None,
+    reason="Rscript is not installed",
 )
 
 CMD_diag = {
@@ -343,7 +338,7 @@ CMD_diag_fail = {
 }
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag.items())
 @no_ncl
 @no_rscript
 def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
@@ -359,10 +354,13 @@ def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
     task.run()
 
 
-@pytest.mark.parametrize("executable,diag_text", CMD_diag_fail.items())
+@pytest.mark.parametrize(("executable", "diag_text"), CMD_diag_fail.items())
 @no_ncl
 def test_diagnostic_run_task_fail(
-    monkeypatch, executable, diag_text, tmp_path
+    monkeypatch,
+    executable,
+    diag_text,
+    tmp_path,
 ):
     """Run DiagnosticTask that will fail."""
 
@@ -375,4 +373,4 @@ def test_diagnostic_run_task_fail(
     monkeypatch.setattr(BaseTask, "_run", _run)
     with pytest.raises(DiagnosticError) as err_mssg:
         task.run()
-        assert diag_text[1] in str(err_mssg.value)
+    assert diag_text[1] in str(err_mssg.value)

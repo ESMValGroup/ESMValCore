@@ -19,13 +19,12 @@ def test_get_cl_fix():
 @pytest.fixture
 def cl_cube():
     """``cl`` cube."""
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [1.0],
         var_name="cl",
         standard_name="cloud_area_fraction_in_atmosphere_layer",
         units="%",
     )
-    return cube
 
 
 def test_cl_fix():

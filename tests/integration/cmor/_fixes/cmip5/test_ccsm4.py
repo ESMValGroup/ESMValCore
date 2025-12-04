@@ -78,8 +78,8 @@ class TestsAllVars(unittest.TestCase):
         self.assertTrue(
             np.all(
                 latitude.bounds
-                == np.array([[0.0000, 1.0000], [1.0000, 2.0000]])
-            )
+                == np.array([[0.0000, 1.0000], [1.0000, 2.0000]]),
+            ),
         )
 
 

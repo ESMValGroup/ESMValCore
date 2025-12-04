@@ -4,13 +4,15 @@ import numpy as np
 import pytest
 from iris.cube import Cube, CubeList
 
-import esmvalcore.preprocessor._derive.netcre as netcre
+from esmvalcore.preprocessor._derive import netcre
 
 
 @pytest.fixture
 def cubes():
     rlut_cube = Cube(
-        3, standard_name="toa_outgoing_longwave_flux", units="W m-2"
+        3,
+        standard_name="toa_outgoing_longwave_flux",
+        units="W m-2",
     )
     rlutcs_cube = Cube(
         1,
@@ -18,7 +20,9 @@ def cubes():
         units="W m-2",
     )
     rsut_cube = Cube(
-        3, standard_name="toa_outgoing_shortwave_flux", units="W m-2"
+        3,
+        standard_name="toa_outgoing_shortwave_flux",
+        units="W m-2",
     )
     rsutcs_cube = Cube(
         1,

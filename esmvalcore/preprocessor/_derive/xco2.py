@@ -10,21 +10,20 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``xco2``."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "co2"},
             {"short_name": "hus"},
             {"short_name": "zg"},
             {"short_name": "ps"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
         """Calculate the column-averaged atmospheric CO2 [1e-6]."""
         co2_cube = cubes.extract_cube(
-            Constraint(name="mole_fraction_of_carbon_dioxide_in_air")
+            Constraint(name="mole_fraction_of_carbon_dioxide_in_air"),
         )
         hus_cube = cubes.extract_cube(Constraint(name="specific_humidity"))
         zg_cube = cubes.extract_cube(Constraint(name="geopotential_height"))

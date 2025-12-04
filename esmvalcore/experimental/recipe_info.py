@@ -1,14 +1,22 @@
 """Handles recipe metadata (under 'documentation' section)."""
 
-import os
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Self
 
 import yaml
 
-from .recipe_metadata import Contributor, Project, Reference
-from .templates import get_template
+from esmvalcore.experimental.recipe_metadata import (
+    Contributor,
+    Project,
+    Reference,
+)
+from esmvalcore.experimental.templates import get_template
+
+if TYPE_CHECKING:
+    import os
 
 
 class RecipeInfo:
@@ -22,15 +30,19 @@ class RecipeInfo:
         Name of recipe file
     """
 
-    def __init__(self, data, filename: Union[os.PathLike, str]):
+    def __init__(
+        self,
+        data: dict[str, Any],
+        filename: os.PathLike | str,
+    ) -> None:
         self.filename = Path(filename).name
         self.data = data
-        self._authors: Optional[Tuple[Contributor, ...]] = None
-        self._maintainers: Optional[Tuple[Contributor, ...]] = None
-        self._projects: Optional[Tuple[Project, ...]] = None
-        self._references: Optional[Tuple[Reference, ...]] = None
-        self._title: Optional[str] = None
-        self._description: Optional[str] = None
+        self._authors: tuple[Contributor, ...] | None = None
+        self._maintainers: tuple[Contributor, ...] | None = None
+        self._projects: tuple[Project, ...] | None = None
+        self._references: tuple[Reference, ...] | None = None
+        self._title: str | None = None
+        self._description: str | None = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -71,7 +83,7 @@ class RecipeInfo:
         return self.render()
 
     @classmethod
-    def from_yaml(cls, path: str):
+    def from_yaml(cls, path: str) -> Self:
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         return cls(data, filename=path)
@@ -139,9 +151,7 @@ class RecipeInfo:
         """
         if not template:
             template = get_template(self.__class__.__name__ + ".j2")
-        rendered = template.render(info=self)
-
-        return rendered
+        return template.render(info=self)
 
     def resolve(self) -> None:
         """Force resolve of all tags in recipe.

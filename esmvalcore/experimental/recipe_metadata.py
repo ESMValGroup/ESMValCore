@@ -1,6 +1,6 @@
 """API for recipe metadata."""
 
-from typing import Optional
+from __future__ import annotations
 
 import pybtex
 from pybtex.database.input import bibtex
@@ -25,7 +25,12 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        institute: str,
+        orcid: str | None = None,
+    ) -> None:
         self.name = name
         self.institute = institute
         self.orcid = orcid
@@ -50,7 +55,7 @@ class Contributor:
         return str(self)
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Contributor":
+    def from_tag(cls, tag: str) -> Contributor:
         """Return an instance of Contributor from a tag (``TAGS``).
 
         Parameters
@@ -91,7 +96,7 @@ class Project:
         The project title.
     """
 
-    def __init__(self, project: str):
+    def __init__(self, project: str) -> None:
         self.project = project
 
     def __repr__(self) -> str:
@@ -100,11 +105,10 @@ class Project:
 
     def __str__(self) -> str:
         """Return string representation."""
-        string = f"{self.project}"
-        return string
+        return f"{self.project}"
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Project":
+    def from_tag(cls, tag: str) -> Project:
         """Return an instance of Project from a tag (``TAGS``).
 
         Parameters
@@ -130,22 +134,25 @@ class Reference:
         If the bibtex file contains more than 1 entry.
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
 
         if len(bib_data.entries) > 1:
-            raise NotImplementedError(
+            msg = (
                 f"{self.__class__.__name__} cannot handle bibtex files "
                 "with more than 1 entry."
             )
+            raise NotImplementedError(
+                msg,
+            )
 
         self._bib_data = bib_data
-        self._key, self._entry = list(bib_data.entries.items())[0]
+        self._key, self._entry = next(iter(bib_data.entries.items()))
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Reference":
+    def from_tag(cls, tag: str) -> Reference:
         """Return an instance of Reference from a bibtex tag.
 
         Parameters
@@ -186,15 +193,17 @@ class Reference:
         style = "plain"  # alpha, plain, unsrt, unsrtalpha
         backend = pybtex.plugin.find_plugin("pybtex.backends", renderer)()
         formatter = pybtex.plugin.find_plugin(
-            "pybtex.style.formatting", style
+            "pybtex.style.formatting",
+            style,
         )()
 
         try:
             formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
+            msg = f"Could not render {self._key!r}: {err}"
             raise RenderError(
-                f"Could not render {self._key!r}: {err}"
+                msg,
             ) from None
 
         return rendered

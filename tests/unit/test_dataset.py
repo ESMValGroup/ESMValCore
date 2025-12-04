@@ -1,18 +1,66 @@
+from __future__ import annotations
+
+import importlib.resources
 import textwrap
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
-from unittest import mock
+from typing import TYPE_CHECKING
 
 import pyesgf
 import pytest
+import yaml
 
 import esmvalcore.dataset
-import esmvalcore.local
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.io.esgf import ESGFFile
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
+
+
+@lru_cache
+def _load_default_data_sources() -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load default data sources for local users."""
+    cfg: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = {
+        "projects": {},
+    }
+    for file in (
+        "data-local.yml",
+        "data-local-esmvaltool.yml",
+        "data-native-cesm.yml",
+        "data-native-emac.yml",
+        "data-native-icon.yml",
+        "data-native-ipslcm.yml",
+    ):
+        with importlib.resources.as_file(
+            importlib.resources.files(esmvalcore.config)
+            / "configurations"
+            / file,
+        ) as config_file:
+            content = config_file.read_text(encoding="utf-8")
+            cfg["projects"].update(yaml.safe_load(content)["projects"])
+    return cfg
+
+
+@pytest.fixture
+def session(tmp_path: Path, session: Session) -> Session:
+    """Session fixture with default local data sources."""
+    projects = _load_default_data_sources()["projects"]
+    for project in projects:
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(tmp_path)
+        session["projects"][project]["data"] = data_sources
+    return session
 
 
 def test_repr():
@@ -57,7 +105,7 @@ def test_repr_supplementary():
 
 
 @pytest.mark.parametrize(
-    "separator,join_lists,output",
+    ("separator", "join_lists", "output"),
     [
         ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
         ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
@@ -78,7 +126,8 @@ def test_get_joined_summary_facet(separator, join_lists, output):
         version="v1",
     )
     joined_str = ds._get_joined_summary_facets(
-        separator, join_lists=join_lists
+        separator,
+        join_lists=join_lists,
     )
     assert joined_str == output
 
@@ -117,9 +166,9 @@ def test_session_setter():
 
 
 @pytest.mark.parametrize(
-    "facets,added_facets",
+    ("facets", "added_facets"),
     [
-        [
+        (
             {
                 "short_name": "areacella",
                 "project": "ICON",
@@ -134,13 +183,11 @@ def test_session_setter():
                 "units": "m2",
                 "modeling_realm": ["atmos", "land"],
                 "frequency": "fx",
-                # Added from extra facets YAML file
-                "latitude": "grid_latitude",
-                "longitude": "grid_longitude",
+                # Added from extra facets
                 "raw_name": "cell_area",
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "zg",
                 "mip": "A1",
@@ -157,11 +204,11 @@ def test_session_setter():
                 "long_name": "Geopotential Height",
                 "standard_name": "geopotential_height",
                 "units": "m",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["BCCR"],
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "pr",
                 "mip": "3hr",
@@ -179,12 +226,12 @@ def test_session_setter():
                 "modeling_realm": ["atmos"],
                 "standard_name": "precipitation_flux",
                 "units": "kg m-2 s-1",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "institute": ["CNRM-CERFACS"],
                 "product": ["output1", "output2"],
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "pr",
                 "mip": "3hr",
@@ -207,8 +254,8 @@ def test_session_setter():
                 "timerange": "2000/2001",
                 "units": "kg m-2 s-1",
             },
-        ],
-        [
+        ),
+        (
             {
                 "short_name": "tas",
                 "mip": "mon",
@@ -233,7 +280,7 @@ def test_session_setter():
                 "timerange": "1991/1993",
                 "units": "K",
             },
-        ],
+        ),
     ],
 )
 def test_augment_facets(session, facets, added_facets):
@@ -509,11 +556,13 @@ def test_from_recipe_with_skip_supplementary(session, tmp_path):
 
 
 def test_from_recipe_with_automatic_supplementary(
-    session, tmp_path, monkeypatch
+    session,
+    tmp_path,
+    monkeypatch,
 ):
     def _find_files(self):
         if self.facets["short_name"] == "areacello":
-            file = esmvalcore.local.LocalFile()
+            file = esmvalcore.io.local.LocalFile()
             file.facets = {
                 "short_name": "areacello",
                 "mip": "fx",
@@ -587,13 +636,13 @@ def test_from_recipe_with_automatic_supplementary(
 
 
 @pytest.mark.parametrize(
-    "pattern,result",
-    (
-        ["a", False],
-        ["*", True],
-        ["r?i1p1", True],
-        ["r[1-3]i1p1*", True],
-    ),
+    ("pattern", "result"),
+    [
+        ("a", False),
+        ("*", True),
+        ("r?i1p1", True),
+        ("r[1-3]i1p1*", True),
+    ],
 )
 def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
@@ -614,7 +663,7 @@ def mock_find_files(*files):
 
 def test_from_files(session, monkeypatch):
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -639,7 +688,7 @@ def test_from_files(session, monkeypatch):
         "grid": "gn",
         "version": "v20190827",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -654,7 +703,7 @@ def test_from_files(session, monkeypatch):
         "tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_200001-200912.nc",
     )
     file2.facets = dict(file1.facets)
-    file3 = esmvalcore.local.LocalFile(
+    file3 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -693,10 +742,16 @@ def test_from_files(session, monkeypatch):
 
     expected = [
         Dataset(
-            short_name="tas", mip="Amon", project="CMIP6", dataset="FGOALS-g3"
+            short_name="tas",
+            mip="Amon",
+            project="CMIP6",
+            dataset="FGOALS-g3",
         ),
         Dataset(
-            short_name="tas", mip="Amon", project="CMIP6", dataset="NorESM2-LM"
+            short_name="tas",
+            mip="Amon",
+            project="CMIP6",
+            dataset="NorESM2-LM",
         ),
     ]
     for expected_ds in expected:
@@ -708,7 +763,7 @@ def test_from_files(session, monkeypatch):
 
 def test_from_files_with_supplementary(session, monkeypatch):
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -733,7 +788,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20190827",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -758,7 +813,37 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20210615",
     }
-    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
+    file3 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "CMIP5",
+        "CMIP",
+        "MOHC",
+        "UKESM-0-LL",
+        "piControl",
+        "r1i1p1f1",
+        "fx",
+        "tas",
+        "gn",
+        "v20210615",
+        "areacello_fx_UKESM-0-LL_piControl_r1i1p1f1_gn.nc",
+    )
+    file3.facets = {
+        "activity": "CMIP",
+        "project": "CMIP5",
+        "institute": "MOHC",
+        "dataset": "UKESM-0-LL",
+        "exp": "piControl",
+        "mip": "fx",
+        "ensemble": "r1i1p1f1",
+        "short_name": "areacello",
+        "grid": "gn",
+        "version": "v20210615",
+    }
+    monkeypatch.setattr(
+        Dataset,
+        "find_files",
+        mock_find_files(file1, file2, file3),
+    )
 
     dataset = Dataset(
         short_name="tas",
@@ -769,6 +854,14 @@ def test_from_files_with_supplementary(session, monkeypatch):
     )
     dataset.session = session
     dataset.add_supplementary(short_name="areacella", mip="*", ensemble="*")
+    dataset.add_supplementary(
+        project="CMIP5",
+        dataset="UKESM-0-LL",
+        experiment="piControl",
+        short_name="areacello",
+        mip="*",
+        ensemble="*",
+    )
 
     expected = Dataset(
         short_name="tas",
@@ -780,6 +873,14 @@ def test_from_files_with_supplementary(session, monkeypatch):
     expected.session = session
     expected.add_supplementary(
         short_name="areacella",
+        mip="fx",
+        ensemble="r1i1p1f1",
+    )
+    expected.add_supplementary(
+        project="CMIP5",
+        dataset="UKESM-0-LL",
+        experiment="piControl",
+        short_name="areacello",
         mip="fx",
         ensemble="r1i1p1f1",
     )
@@ -796,7 +897,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
 def test_from_files_with_globs(monkeypatch, session):
     """Test `from_files` with wildcards in dataset and supplementary."""
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -820,9 +921,10 @@ def test_from_files_with_globs(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "GMMIP",
@@ -907,7 +1009,7 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     Tests a combination of files with complete facets and missing facets.
     """
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -931,9 +1033,10 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "tas",
         "tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc",
@@ -977,7 +1080,6 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
         mip="Amon",
         project="CMIP6",
         short_name="tas",
-        timerange="185001/201412",
     )
 
     expected.session = session
@@ -992,7 +1094,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
     added.
     """
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "BCC-CSM2-MR",
@@ -1012,6 +1114,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
         "mip": "Amon",
         "project": "CMIP6",
         "short_name": "tas",
+        "timerange": "185001/201412",
         "version": "v20181126",
     }
 
@@ -1060,7 +1163,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
 def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and only files with missing facets."""
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -1197,7 +1300,7 @@ def test_concatenating_historical_and_future_exps(mocker):
     assert dataset.supplementaries[0].facets["exp"] == "historical"
 
 
-def test_from_recipe_with_glob(tmp_path, session, mocker):
+def test_from_recipe_with_glob(tmp_path: Path, session: Session) -> None:
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
@@ -1214,8 +1317,6 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
     recipe = tmp_path / "recipe_test.yml"
     recipe.write_text(recipe_txt, encoding="utf-8")
 
-    session["drs"]["CMIP5"] = "ESGF"
-    CFG["rootpath"]["CMIP5"] = [tmp_path]
     filenames = [
         "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
         "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc",
@@ -1227,7 +1328,7 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("")
 
-    definitions = [
+    definitions: list[Facets] = [
         {
             "diagnostic": "diagnostic1",
             "variable_group": "tas",
@@ -1340,7 +1441,7 @@ def create_esgf_file(timerange, version):
         "dataset_id_template_": [
             "%(mip_era)s.%(activity_drs)s.%(institution_id)s."
             "%(source_id)s.%(experiment_id)s.%(member_id)s."
-            "%(table_id)s.%(variable_id)s.%(grid_label)s"
+            "%(table_id)s.%(variable_id)s.%(grid_label)s",
         ],
         "project": ["CMIP6"],
         "size": 4745571,
@@ -1367,18 +1468,34 @@ def dataset():
         mip="Amon",
         frequency="mon",
         short_name="tas",
-        dataset="EC.-Earth3",
+        dataset="EC-Earth3",
         exp="historical",
         ensemble="r1i1p1f1",
         grid="gr",
         timerange="1850/1851",
-        alias="CMIP6_EC-Eeath3_tas",
+        alias="CMIP6_EC-Earth3_tas",
     )
     dataset.session = {
-        "search_esgf": "when_missing",
+        "search_data": "complete",
         "download_dir": Path("/download_dir"),
-        "rootpath": None,
-        "drs": {},
+        "projects": {
+            "CMIP6": {
+                "data": {
+                    "local": {
+                        "type": "esmvalcore.io.local.LocalDataSource",
+                        "rootpath": Path("/local_dir"),
+                        "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+                        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                        "priority": 1,
+                    },
+                    "esgf": {
+                        "type": "esmvalcore.io.esgf.ESGFDataSource",
+                        "download_dir": Path("/download_dir"),
+                        "priority": 2,
+                    },
+                },
+            },
+        },
     }
     return dataset
 
@@ -1408,14 +1525,14 @@ def test_find_files(mocker, dataset, local_availability):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.io.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(list(local_files), []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.io.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1445,14 +1562,14 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.io.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.io.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1471,7 +1588,7 @@ def test_find_files_outdated_local(mocker, dataset):
     local_dir = Path("/local_dir")
     local_files = [
         create_esgf_file(version="v1", timerange="185001-185012").local_file(
-            local_dir
+            local_dir,
         ),
     ]
 
@@ -1482,14 +1599,14 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
+        esmvalcore.io.local.LocalDataSource,
+        "find_data",
         autospec=True,
-        return_value=(local_files, []),
+        return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
+        esmvalcore.io.esgf.ESGFDataSource,
+        "find_data",
         autospec=True,
         return_value=list(esgf_files),
     )
@@ -1497,73 +1614,14 @@ def test_find_files_outdated_local(mocker, dataset):
     assert dataset.files == esgf_files
 
 
-@pytest.mark.parametrize(
-    "project",
-    ["CESM", "EMAC", "ICON", "IPSLCM", "OBS", "OBS6", "ana4mips", "native6"],
-)
-def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
-    """Test that find_files does never download files for non-ESGF projects."""
-    monkeypatch.setitem(CFG, "search_esgf", "always")
-    mock_local_find_files = mocker.patch.object(
-        esmvalcore.dataset.local,
-        "find_files",
-        autospec=True,
-        return_value=(mock.sentinel.files, mock.sentinel.file_globs),
-    )
-    mock_esgf_find_files = mocker.patch.object(
-        esmvalcore.dataset.esgf,
-        "find_files",
-        autospec=True,
-    )
-
-    tas = Dataset(
-        short_name="tas",
-        mip="Amon",
-        project=project,
-        dataset="MY_DATASET",
-        timerange="2000/2000",
-        account="account",
-        case="case",
-        channel="channel",
-        dir="dir",
-        exp="amip",
-        freq="freq",
-        gcomp="gcomp",
-        group="group",
-        ipsl_varname="ipsl_varname",
-        model="model",
-        out="out",
-        root="root",
-        scomp="scomp",
-        simulation="simulation",
-        status="status",
-        string="string",
-        tag="tag",
-        tdir="tdir",
-        tier=3,
-        tperiod="tperiod",
-        type="sat",
-        var_type="var_type",
-        version=1,
-    )
-    tas.augment_facets()
-    tas.find_files()
-
-    mock_local_find_files.assert_called_once()
-    mock_esgf_find_files.assert_not_called()
-
-    assert tas.files == mock.sentinel.files
-    assert tas._file_globs == mock.sentinel.file_globs
-
-
 def test_set_version():
     dataset = Dataset(short_name="tas")
     dataset.add_supplementary(short_name="areacella")
-    file_v1 = esmvalcore.local.LocalFile("/path/to/v1/tas.nc")
+    file_v1 = esmvalcore.io.local.LocalFile("/path/to/v1/tas.nc")
     file_v1.facets["version"] = "v1"
-    file_v2 = esmvalcore.local.LocalFile("/path/to/v2/tas.nc")
+    file_v2 = esmvalcore.io.local.LocalFile("/path/to/v2/tas.nc")
     file_v2.facets["version"] = "v2"
-    areacella_file = esmvalcore.local.LocalFile("/path/to/v3/areacella.nc")
+    areacella_file = esmvalcore.io.local.LocalFile("/path/to/v3/areacella.nc")
     areacella_file.facets["version"] = "v3"
     dataset.files = [file_v2, file_v1]
     dataset.supplementaries[0].files = [areacella_file]
@@ -1608,7 +1666,7 @@ TEST_YEAR_FORMAT = [
 ]
 
 
-@pytest.mark.parametrize("input_time,output_time", TEST_YEAR_FORMAT)
+@pytest.mark.parametrize(("input_time", "output_time"), TEST_YEAR_FORMAT)
 def test_update_timerange_year_format(session, input_time, output_time):
     variable = {
         "project": "CMIP6",
@@ -1626,9 +1684,9 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset["timerange"] == output_time
 
 
-@pytest.mark.parametrize("search_esgf", ["never", "when_missing", "always"])
-def test_update_timerange_no_files(session, search_esgf):
-    session["search_esgf"] = search_esgf
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_update_timerange_no_files(session, search_data):
+    session["search_data"] = search_data
     variable = {
         "alias": "CMIP6",
         "project": "CMIP6",
@@ -1689,7 +1747,12 @@ def test_load(mocker, session):
     order = []
 
     def mock_preprocess(
-        items, step, input_files, output_file, debug, **kwargs
+        items,
+        step,
+        input_files,
+        output_file,
+        debug,
+        **kwargs,
     ):
         order.append(step)
         args[step] = kwargs
@@ -1697,7 +1760,9 @@ def test_load(mocker, session):
 
     mocker.patch.object(esmvalcore.dataset, "preprocess", mock_preprocess)
 
-    items = [mocker.sentinel.file]
+    items = [
+        mocker.create_autospec(esmvalcore.io.local.LocalFile, instance=True),
+    ]
     dataset.files = items
 
     cube = dataset.load()
@@ -1718,12 +1783,9 @@ def test_load(mocker, session):
     assert order == load_order
 
     load_args = {
-        "load": {
-            "ignore_warnings": None,
-        },
+        "load": {},
         "fix_file": {
             "add_unique_suffix": True,
-            "session": session,
             "dataset": "CanESM2",
             "ensemble": "r1i1p1",
             "exp": "historical",
@@ -1731,6 +1793,7 @@ def test_load(mocker, session):
             "mip": "Oyr",
             "output_dir": fix_dir_prefix,
             "project": "CMIP5",
+            "session": session,
             "short_name": "chl",
             "timerange": "2000/2005",
         },
@@ -1784,12 +1847,433 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    items[0].prepare.assert_called_once()
 
 
 def test_load_fail(session):
     dataset = Dataset()
     dataset.session = session
-    dataset.session["search_esgf"] = "when_missing"
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
+
+
+# TODO: Remove in v2.15.0
+def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
+    dataset = Dataset(
+        project="CMIP5",
+        mip="Amon",
+        dataset="ACCESS1-3",
+        short_name="test",
+    )
+    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+                  institute: new-institute
+            """)
+        .strip()
+        .format(**dataset.facets),
+    )
+    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "product": ["output1", "output2"],
+        "key": "value",
+        "institute": "new-institute",
+    }
+
+
+# TODO: Remove in v2.15.0
+def test_get_extra_facets_ignore_deprecated_facets(tmp_path, monkeypatch):
+    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
+
+    dataset = Dataset(
+        project="CMIP5",
+        mip="Amon",
+        dataset="ACCESS1-3",
+        short_name="test",
+    )
+    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+                  institute: new-institute
+            """)
+        .strip()
+        .format(**dataset.facets),
+    )
+    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "product": ["output1", "output2"],
+        "institute": ["CSIRO-BOM"],
+    }
+
+
+def test_get_extra_facets(monkeypatch):
+    raw_extra_facets = {
+        "not_TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "not_TEST-MODEL_Amon_tas",
+                    "x": "not_TEST-MODEL_Amon_tas",
+                },
+            },
+        },
+        "TEST-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TEST-MODEL_Amon_tas",
+                    "b": "TEST-MODEL_Amon_tas",
+                },
+                "*": {
+                    "a": "TEST-MODEL_Amon_*",
+                    "c": "TEST-MODEL_Amon_*",
+                },
+                "ta?": {
+                    "a": "TEST-MODEL_Amon_ta?",
+                    "d": "TEST-MODEL_Amon_ta?",
+                },
+            },
+        },
+        "TES[ABCT]-MODEL": {
+            "Amon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_Amon_tas",
+                    "e": "TES[ABCT]-MODEL_Amon_tas",
+                },
+            },
+            "[!X]mon": {
+                "tas": {
+                    "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+                    "f": "TES[ABCT]-MODEL_[!X]mon_tas",
+                },
+            },
+        },
+    }
+    project_config = {"TEST": {"extra_facets": raw_extra_facets}}
+    monkeypatch.setitem(CFG, "projects", project_config)
+    dataset = Dataset(
+        project="TEST",
+        mip="Amon",
+        short_name="tas",
+        dataset="TEST-MODEL",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "a": "TES[ABCT]-MODEL_[!X]mon_tas",
+        "b": "TEST-MODEL_Amon_tas",
+        "c": "TEST-MODEL_Amon_*",
+        "d": "TEST-MODEL_Amon_ta?",
+        "e": "TES[ABCT]-MODEL_Amon_tas",
+        "f": "TES[ABCT]-MODEL_[!X]mon_tas",
+    }
+
+
+def test_get_extra_facets_access():
+    dataset = Dataset(
+        project="ACCESS",
+        mip="Amon",
+        short_name="tas",
+        dataset="ACCESS-ESM1-5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "fld_s03i236",
+        "modeling_realm": "atm",
+    }
+
+
+def test_get_extra_facets_cesm():
+    dataset = Dataset(
+        project="CESM",
+        mip="Amon",
+        short_name="tas",
+        dataset="CESM2",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "string": "",
+        "tdir": "",
+        "tperiod": "",
+        "raw_name": "TREFHT",
+        "gcomp": "atm",
+        "scomp": "cam",
+    }
+
+
+def test_get_extra_facets_cmip3():
+    dataset = Dataset(
+        project="CMIP3",
+        mip="A1",
+        short_name="tas",
+        dataset="CM3",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {"institute": ["CNRM", "INM", "CNRM_CERFACS"]}
+
+
+def test_get_extra_facets_cmip5():
+    dataset = Dataset(
+        project="CMIP5",
+        mip="fx",
+        short_name="areacella",
+        dataset="ACCESS1-0",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "ensemble": "r0i0p0",
+        "institute": ["CSIRO-BOM"],
+        "product": ["output1", "output2"],
+    }
+
+
+def test_get_extra_facets_emac():
+    dataset = Dataset(
+        project="EMAC",
+        mip="Amon",
+        short_name="clt",
+        dataset="EMAC",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "postproc_flag": "",
+        "raw_name": ["aclcov_cav", "aclcov_ave", "aclcov"],
+        "raw_units": "1",
+        "channel": "Amon",
+    }
+
+
+def test_get_extra_facets_icon():
+    dataset = Dataset(
+        project="ICON",
+        mip="SImon",
+        short_name="siconc",
+        dataset="ICON",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "sic",
+        "raw_units": "1",
+        "var_type": "atm_2d_ml",
+    }
+
+
+def test_get_extra_facets_icon_xpp():
+    dataset = Dataset(
+        project="ICON",
+        mip="Omon",
+        short_name="so",
+        dataset="ICON-XPP",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "raw_name": "so",
+        "raw_units": "0.001",
+        "var_type": "oce_def",
+    }
+
+
+def test_get_extra_facets_ipslcm():
+    dataset = Dataset(
+        project="IPSLCM",
+        mip="Amon",
+        short_name="ta",
+        dataset="IPSL-CM6",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "model": "IPSLCM6",
+        "use_cdo": False,
+        "ipsl_varname": "ta",
+        "group": "histmthNMC",
+        "dir": "ATM",
+    }
+
+
+def test_get_extra_facets_native6():
+    dataset = Dataset(
+        project="native6",
+        mip="Amon",
+        short_name="ta",
+        dataset="ERA5",
+    )
+
+    extra_facets = dataset._get_extra_facets()
+
+    assert extra_facets == {
+        "automatic_regrid": True,
+        "family": "E5",
+        "type": "an",
+        "typeid": "00",
+        "version": "v1",
+        "level": "pl",
+        "grib_id": "130",
+        "tres": "1M",
+    }
+
+
+OBS6_SAT_FACETS: Facets = {
+    "project": "OBS6",
+    "dataset": "SAT",
+    "mip": "Amon",
+    "tier": 2,
+    "type": "sat",
+    "timerange": "1980/2000",
+}
+
+
+def test_is_derived_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_derived() is False
+
+
+def test_is_derived_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_derived() is True
+
+
+def test_is_force_derived_no_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_no_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_no_force():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    assert dataset._is_force_derived() is False
+
+
+def test_is_force_derived_derivation_force():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset._is_force_derived() is True
+
+
+def test_derivation_necessary_no_derivation():
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
+    assert dataset._derivation_necessary() is False
+
+
+def test_derivation_necessary_no_force_derivation_no_files(
+    session: Session,
+) -> None:
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.session = session
+    assert dataset._derivation_necessary() is True
+
+
+def test_derivation_necessary_no_force_derivation(tmp_path, session):
+    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
+    dataset.session = session
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    lwcre_file = esmvalcore.io.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
+    )
+    lwcre_file.touch()
+
+    assert dataset._derivation_necessary() is False
+
+
+def test_derivation_necessary_force_derivation(tmp_path, session):
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+    dataset.session = session
+
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    lwcre_file = esmvalcore.io.local.LocalFile(
+        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
+    )
+    lwcre_file.touch()
+
+    assert dataset._derivation_necessary() is True
+
+
+def test_add_supplementary_to_derived():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(short_name="pr")
+
+    expected_supplementary = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="pr",
+        derive=False,
+        force_derivation=False,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary
+
+
+def test_add_derived_supplementary_to_derived():
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="lwcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    dataset.add_supplementary(
+        short_name="swcre",
+        derive=True,
+        force_derivation=True,
+    )
+
+    expected_supplementary = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="swcre",
+        derive=True,
+        force_derivation=True,
+    )
+    assert dataset.supplementaries[0] == expected_supplementary

@@ -63,7 +63,7 @@ def test_update_attributes(product):
 
 
 @pytest.mark.parametrize(
-    "name,cube_property,expected_name",
+    ("name", "cube_property", "expected_name"),
     [
         ("standard_name", "standard_name", ""),
         ("long_name", "long_name", ""),
@@ -71,7 +71,10 @@ def test_update_attributes(product):
     ],
 )
 def test_update_attributes_empty_names(
-    product, name, cube_property, expected_name
+    product,
+    name,
+    cube_property,
+    expected_name,
 ):
     """Test ``_update_attributes``."""
     setattr(product._cubes[0], cube_property, None)
@@ -160,7 +163,26 @@ def test_save(mock_preprocess):
 
     assert mock_preprocess.mock_calls == [
         mock.call(
-            mock.sentinel.cubes, "save", input_files=mock.sentinel.input_files
+            mock.sentinel.cubes,
+            "save",
+            input_files=mock.sentinel.input_files,
         ),
         mock.call().__getitem__(0),
     ]
+
+
+def test_apply_invalid_settings():
+    product = PreprocessorFile(filename=Path("test"), settings={})
+    msg = r"PreprocessorFile: test has no settings for step invalid_step"
+    with pytest.raises(ValueError, match=msg):
+        product.apply("invalid_step")
+
+
+@pytest.mark.parametrize(
+    ("cubes", "output"),
+    [(None, True), (CubeList([]), False)],
+)
+def test_is_closed(cubes, output):
+    product = PreprocessorFile(filename=Path("test"))
+    product.cubes = cubes
+    assert product.is_closed is output

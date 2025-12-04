@@ -1,10 +1,19 @@
 """Derivation of variable `ohc`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import iris
 from cf_units import Unit
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 RHO_CP = iris.coords.AuxCoord(4.09169e6, units=Unit("kg m-3 J kg-1 K-1"))
 
@@ -13,21 +22,17 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
 
     @staticmethod
-    def required(project):
+    def required(project: str) -> list[Facets]:
         """Declare the variables needed for derivation."""
-        required = [
-            {"short_name": "thetao"},
-            {"short_name": "volcello", "mip": "fx"},
-        ]
-        if project == "CMIP6":
-            required = [
-                {"short_name": "thetao"},
-                {"short_name": "volcello", "mip": "Ofx"},
-            ]
-        return required
+        volcello: Facets = {"short_name": "volcello", "mip": "fx"}
+        if project == "CMIP5":
+            volcello["ensemble"] = "r0i0p0"
+        elif project == "CMIP6":
+            volcello["mip"] = "Ofx"
+        return [{"short_name": "thetao"}, volcello]
 
     @staticmethod
-    def calculate(cubes):
+    def calculate(cubes: CubeList) -> Cube:
         """
         Compute ocean heat content.
 
@@ -46,10 +51,10 @@ class DerivedVariable(DerivedVariableBase):
         """
         # 1. Load the thetao and volcello cubes
         cube = cubes.extract_cube(
-            Constraint(cube_func=lambda c: c.var_name == "thetao")
+            Constraint(cube_func=lambda c: c.var_name == "thetao"),
         )
         volume = cubes.extract_cube(
-            Constraint(cube_func=lambda c: c.var_name == "volcello")
+            Constraint(cube_func=lambda c: c.var_name == "volcello"),
         )
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
@@ -65,13 +70,15 @@ class DerivedVariable(DerivedVariableBase):
             dim_coords = [
                 (coord, cube.coord_dims(coord)[0])
                 for coord in cube.coords(
-                    contains_dimension=t_coord_dim, dim_coords=True
+                    contains_dimension=t_coord_dim,
+                    dim_coords=True,
                 )
             ]
             aux_coords = [
                 (coord, cube.coord_dims(coord))
                 for coord in cube.coords(
-                    contains_dimension=t_coord_dim, dim_coords=False
+                    contains_dimension=t_coord_dim,
+                    dim_coords=False,
                 )
             ]
             for coord, _ in dim_coords + aux_coords:

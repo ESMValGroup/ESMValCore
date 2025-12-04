@@ -5,10 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore.config._logging import FilterMultipleNames, configure_logging
+from esmvalcore.config._logging import (
+    _WARNINGS_SHOWN_IN_MAIN_LOG,
+    FilterExternalWarnings,
+    FilterMultipleNames,
+    configure_logging,
+)
 
 
-@pytest.mark.parametrize("level", (None, "INFO", "DEBUG"))
+@pytest.mark.parametrize("level", [None, "INFO", "DEBUG"])
 def test_logging_with_level(level):
     """Test log level configuration."""
     ret = configure_logging(console_log_level=level)
@@ -39,7 +44,7 @@ def test_logging_log_level_invalid():
 
 
 @pytest.mark.parametrize(
-    "names,mode,output",
+    ("names", "mode", "output"),
     [
         (["test"], "allow", False),
         (["test"], "disallow", True),
@@ -59,8 +64,54 @@ def test_logging_log_level_invalid():
 )
 def test_filter_multiple_names(names, mode, output):
     """Test `FilterMultipleNames`."""
-    filter = FilterMultipleNames(names, mode)
+    filter_ = FilterMultipleNames(names, mode)
     record = logging.LogRecord(
-        "a.b.c", "level", "path", "lineno", "msg", [], "exc_info"
+        "a.b.c",
+        "level",
+        "path",
+        "lineno",
+        "msg",
+        [],
+        "exc_info",
     )
-    assert filter.filter(record) is output
+    assert filter_.filter(record) is output
+
+
+@pytest.mark.parametrize(
+    ("name", "msg", "output"),
+    [
+        ("test.module", "warning", True),
+        ("test.module", "1: ESMValCoreUserWarning: warning", True),
+        ("test.module", "1: ESMValCoreDeprecationWarning: warning", True),
+        ("test.module", "1: MissingConfigParameter: warning", True),
+        ("py.warnings", "warning", False),
+        ("py.warnings", "1: ESMValCoreUserWarning: warning", True),
+        ("py.warnings", "1: ESMValCoreDeprecationWarning: warning", True),
+        ("py.warnings", "1: MissingConfigParameter: warning", True),
+    ],
+)
+def test_filter_external_warnings(name, msg, output):
+    """Test `FilterMultipleNames`."""
+    filter_ = FilterExternalWarnings()
+    record = logging.LogRecord(
+        name,
+        "level",
+        "path",
+        "lineno",
+        msg,
+        [],
+        "exc_info",
+    )
+    assert filter_.filter(record) is output
+
+
+def test_warnings_shown_in_main_log():
+    expected_warnings = {
+        "ESMValCoreUserWarning",
+        "ESMValCoreDeprecationWarning",
+        "MissingConfigParameter",
+        "ESMValCorePreprocessorWarning",
+        "ESMValCoreLoadWarning",
+    }
+    assert len(_WARNINGS_SHOWN_IN_MAIN_LOG) == 5
+    assert set(_WARNINGS_SHOWN_IN_MAIN_LOG) == expected_warnings

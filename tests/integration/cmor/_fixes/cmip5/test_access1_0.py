@@ -1,7 +1,7 @@
 """Test Access1-0 fixes."""
 
-import unittest
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from cf_units import Unit, num2date
@@ -88,13 +88,14 @@ def cl_cubes():
         aux_coords_and_dims=[(b_coord.copy(), 0)],
     )
     x_cube = Cube(
-        [0.0], long_name="x", aux_coords_and_dims=[(b_coord.copy(), 0)]
+        [0.0],
+        long_name="x",
+        aux_coords_and_dims=[(b_coord.copy(), 0)],
     )
-    cubes = CubeList([cl_cube, x_cube])
-    return cubes
+    return CubeList([cl_cube, x_cube])
 
 
-@unittest.mock.patch(
+@patch(
     "esmvalcore.cmor._fixes.cmip5.access1_0.ClFixHybridHeightCoord."
     "fix_metadata",
     autospec=True,
@@ -107,7 +108,7 @@ def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2
     cl_cube = fixed_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer"
+        "cloud_area_fraction_in_atmosphere_layer",
     )
     b_coord_cl = cl_cube.coord("vertical coordinate formula term: b(k)")
     assert not b_coord_cl.attributes

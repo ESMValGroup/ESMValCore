@@ -1,8 +1,8 @@
 """Fixes for GFDL-ESM4 model."""
 
-from ..common import OceanFixGrid, SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import (
+from esmvalcore.cmor._fixes.common import OceanFixGrid, SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     fix_ocean_depth_coord,
 )

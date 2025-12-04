@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
 import iris.cube
-import iris.exceptions
-import numpy as np
 from esmf_regrid.schemes import (
     ESMFAreaWeightedRegridder,
     ESMFBilinearRegridder,
@@ -21,6 +18,12 @@ from esmvalcore.preprocessor._shared import (
     get_dims_along_coords,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.exceptions
+    import numpy as np
+
 METHODS = {
     "conservative": ESMFAreaWeightedRegridder,
     "bilinear": ESMFBilinearRegridder,
@@ -30,6 +33,11 @@ METHODS = {
 
 class IrisESMFRegrid:
     """:doc:`esmf_regrid:index` based regridding scheme.
+
+    This regridding scheme is a thin wrapper around the regridders provided by
+    :mod:`esmf_regrid` with improved handling of masks. This allows using
+    these regridders from the :ref:`regrid preprocessor <Horizontal regridding>`
+    function.
 
     Supports lazy regridding.
 
@@ -111,7 +119,7 @@ class IrisESMFRegrid:
         Keyword arguments that will be provided to the regridder.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         method: Literal["bilinear", "conservative", "nearest"],
         mdtol: float | None = None,
@@ -124,10 +132,11 @@ class IrisESMFRegrid:
         tgt_location: Literal["face", "node"] | None = None,
     ) -> None:
         if method not in METHODS:
-            raise ValueError(
+            msg = (
                 "`method` should be one of 'bilinear', 'conservative', or "
                 "'nearest'"
             )
+            raise ValueError(msg)
 
         if use_src_mask is None:
             use_src_mask = method != "nearest"
@@ -144,31 +153,32 @@ class IrisESMFRegrid:
         }
         if method == "nearest":
             if mdtol is not None:
-                raise TypeError(
+                msg = (
                     "`mdol` can only be specified when `method='bilinear'` "
                     "or `method='conservative'`"
                 )
+                raise TypeError(msg)
         else:
             self.kwargs["mdtol"] = mdtol
         if method == "conservative":
             self.kwargs["src_resolution"] = src_resolution
             self.kwargs["tgt_resolution"] = tgt_resolution
         elif src_resolution is not None:
-            raise TypeError(
+            msg = (
                 "`src_resolution` can only be specified when "
                 "`method='conservative'`"
             )
+            raise TypeError(msg)
         elif tgt_resolution is not None:
-            raise TypeError(
+            msg = (
                 "`tgt_resolution` can only be specified when "
                 "`method='conservative'`"
             )
+            raise TypeError(msg)
 
     def __repr__(self) -> str:
         """Return string representation of class."""
-        kwargs_str = ", ".join(
-            f"{k}={repr(v)}" for k, v in self.kwargs.items()
-        )
+        kwargs_str = ", ".join(f"{k}={v!r}" for k, v in self.kwargs.items())
         return f"{self.__class__.__name__}({kwargs_str})"
 
     @staticmethod

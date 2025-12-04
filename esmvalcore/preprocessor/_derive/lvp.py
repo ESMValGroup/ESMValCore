@@ -14,14 +14,13 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lvp`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "hfls"},
             {"short_name": "pr"},
             {"short_name": "evspsbl"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -30,6 +29,4 @@ class DerivedVariable(DerivedVariableBase):
         pr_cube = cubes.extract_cube(NameConstraint(var_name="pr"))
         evspsbl_cube = cubes.extract_cube(NameConstraint(var_name="evspsbl"))
 
-        lvp_cube = hfls_cube * (pr_cube / evspsbl_cube)
-
-        return lvp_cube
+        return hfls_cube * (pr_cube / evspsbl_cube)

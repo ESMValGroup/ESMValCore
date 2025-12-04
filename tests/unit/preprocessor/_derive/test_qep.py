@@ -4,13 +4,15 @@ import numpy as np
 import pytest
 from iris.cube import Cube, CubeList
 
-import esmvalcore.preprocessor._derive.qep as qep
+from esmvalcore.preprocessor._derive import qep
 
 
 @pytest.fixture
 def cubes():
     evspsbl_cube = Cube(
-        3, standard_name="water_evapotranspiration_flux", units="kg m-2 s-1"
+        3,
+        standard_name="water_evapotranspiration_flux",
+        units="kg m-2 s-1",
     )
     pr_cube = Cube(1, standard_name="precipitation_flux", units="kg m-2 s-1")
     return CubeList([evspsbl_cube, pr_cube])

@@ -2,9 +2,9 @@
 
 from dask import array as da
 
-from ..common import SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
 
 class Tas(Fix):

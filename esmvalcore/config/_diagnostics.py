@@ -3,6 +3,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Self
 
 import yaml
 
@@ -58,7 +59,7 @@ class Diagnostics:
     def find(cls):
         """Try to find installed diagnostic scripts."""
         try:
-            import esmvaltool
+            import esmvaltool  # noqa: PLC0415
         except ImportError:
             path = Path.cwd()
         else:
@@ -80,11 +81,11 @@ class TagsManager(dict):
         self.source_file = None
 
     @classmethod
-    def from_file(cls, filename: str):
+    def from_file(cls, filename: str) -> Self:
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
             logger.debug("Loading tags from %s", filename)
-            with open(filename, "r", encoding="utf-8") as file:
+            with open(filename, encoding="utf-8") as file:
                 tags = cls(yaml.safe_load(file))
                 tags.source_file = filename
                 return tags
@@ -93,7 +94,7 @@ class TagsManager(dict):
             logger.debug("No tags loaded, file %s not present", filename)
             return cls()
 
-    def set_tag_value(self, section: str, tag: str, value):
+    def set_tag_value(self, section: str, tag: str, value: str) -> None:
         """Set the value of a tag in a section.
 
         Parameters
@@ -110,7 +111,7 @@ class TagsManager(dict):
 
         self[section][tag] = value
 
-    def set_tag_values(self, tag_values: dict):
+    def set_tag_values(self, tag_values: dict[str, dict[str, str]]) -> None:
         """Update tags from dict.
 
         Parameters
@@ -122,7 +123,7 @@ class TagsManager(dict):
             for tag, value in tags.items():
                 self.set_tag_value(section, tag, value)
 
-    def get_tag_value(self, section: str, tag: str):
+    def get_tag_value(self, section: str, tag: str) -> str:
         """Retrieve the value of a tag from a section.
 
         Parameters
@@ -134,37 +135,36 @@ class TagsManager(dict):
         """
         if section not in self:
             postfix = f" in {self.source_file}" if self.source_file else ""
-            raise ValueError(f"Section '{section}' does not exist{postfix}")
+            msg = f"Section '{section}' does not exist{postfix}"
+            raise ValueError(msg)
 
         if tag not in self[section]:
             postfix = f" of {self.source_file}" if self.source_file else ""
-            raise ValueError(
-                f"Tag '{tag}' does not exist in section '{section}'{postfix}"
-            )
+            msg = f"Tag '{tag}' does not exist in section '{section}'{postfix}"
+            raise ValueError(msg)
 
         return self[section][tag]
 
-    def get_tag_values(self, section: str, tags: tuple):
+    def get_tag_values(self, section: str, tags: tuple) -> tuple[str, ...]:
         """Retrieve the values for a list of tags from a section.
 
         Parameters
         ----------
-        section : str
+        section
             Name of the subsection
-        tags : tuple[str] or list[str]
-            List or tuple with tag names
+        tags
+            Tuple with tag names
         """
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
-    def replace_tags_in_dict(self, dct: dict):
+    def replace_tags_in_dict(self, dct: dict) -> None:
         """Resolve tags and updates the given dict in-place.
 
         Tags are updated one level deep, and only if the corresponding
         section exists in the ``TagsManager``.
         """
-        for key in dct:
+        for key, tags in dct.items():
             if key in self:
-                tags = dct[key]
                 dct[key] = self.get_tag_values(key, tags)
 
 

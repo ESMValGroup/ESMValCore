@@ -4,13 +4,15 @@ import numpy as np
 import pytest
 from iris.cube import Cube, CubeList
 
-import esmvalcore.preprocessor._derive.swcre as swcre
+from esmvalcore.preprocessor._derive import swcre
 
 
 @pytest.fixture
 def cubes():
     rsut_cube = Cube(
-        3, standard_name="toa_outgoing_shortwave_flux", units="W m-2"
+        3,
+        standard_name="toa_outgoing_shortwave_flux",
+        units="W m-2",
     )
     rsutcs_cube = Cube(
         1,

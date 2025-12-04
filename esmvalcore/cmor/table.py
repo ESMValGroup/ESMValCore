@@ -15,7 +15,7 @@ import os
 from collections import Counter
 from functools import lru_cache, total_ordering
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import yaml
 
@@ -49,10 +49,11 @@ def _update_cmor_facets(facets):
     else:
         table_entry = None
     if table_entry is None:
-        raise RecipeError(
+        msg = (
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'"
         )
+        raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
     for key in _CMOR_KEYS:
         if key not in facets:
@@ -70,8 +71,7 @@ def _update_cmor_facets(facets):
 def _get_mips(project: str, short_name: str) -> list[str]:
     """Get all available MIP tables in a project."""
     tables = CMOR_TABLES[project].tables
-    mips = [mip for mip in tables if short_name in tables[mip]]
-    return mips
+    return [mip for mip in tables if short_name in tables[mip]]
 
 
 def get_var_info(
@@ -109,10 +109,11 @@ def get_var_info(
 
     """
     if project not in CMOR_TABLES:
-        raise KeyError(
+        msg = (
             f"No CMOR tables available for project '{project}'. The following "
             f"tables are available: {', '.join(CMOR_TABLES)}."
         )
+        raise KeyError(msg)
 
     # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
     if project == "CORDEX" and mip.endswith("hr"):
@@ -121,7 +122,7 @@ def get_var_info(
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
+def read_cmor_tables(cfg_developer: Path | None = None) -> None:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -137,9 +138,8 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
     if cfg_developer is None:
         cfg_developer = Path(__file__).parents[1] / "config-developer.yml"
     elif not isinstance(cfg_developer, Path):
-        raise TypeError(
-            "cfg_developer is not a Path-like object, got ", cfg_developer
-        )
+        msg = "cfg_developer is not a Path-like object, got "
+        raise TypeError(msg, cfg_developer)
     mtime = cfg_developer.stat().st_mtime
     cmor_tables = _read_cmor_tables(cfg_developer, mtime)
     CMOR_TABLES.clear()
@@ -147,7 +147,10 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
 
 
 @lru_cache
-def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
+def _read_cmor_tables(
+    cfg_file: Path,
+    mtime: float,  # noqa: ARG001
+) -> dict[str, CMORTable]:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -163,7 +166,7 @@ def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
         cfg_developer = yaml.safe_load(file)
     cwd = os.path.dirname(os.path.realpath(__file__))
     var_alt_names_file = os.path.join(cwd, "variable_alt_names.yml")
-    with open(var_alt_names_file, "r", encoding="utf-8") as yfile:
+    with open(var_alt_names_file, encoding="utf-8") as yfile:
         alt_names = yaml.safe_load(yfile)
 
     cmor_tables: dict[str, CMORTable] = {}
@@ -183,7 +186,11 @@ def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
         if table == "custom":
             continue
         cmor_tables[table] = _read_table(
-            cfg_developer, table, install_dir, custom, alt_names
+            cfg_developer,
+            table,
+            install_dir,
+            custom,
+            alt_names,
         )
     return cmor_tables
 
@@ -207,7 +214,10 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
 
     if cmor_type == "CMIP5":
         return CMIP5Info(
-            table_path, default=custom, strict=cmor_strict, alt_names=alt_names
+            table_path,
+            default=custom,
+            strict=cmor_strict,
+            alt_names=alt_names,
         )
 
     if cmor_type == "CMIP6":
@@ -218,7 +228,8 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
             default_table_prefix=default_table_prefix,
             alt_names=alt_names,
         )
-    raise ValueError(f"Unsupported CMOR type {cmor_type}")
+    msg = f"Unsupported CMOR type {cmor_type}"
+    raise ValueError(msg)
 
 
 class InfoBase:
@@ -308,7 +319,9 @@ class InfoBase:
         # cmor_strict=False or derived=True
         if not var_info:
             var_info = self._look_in_default(
-                derived, alt_names_list, table_name
+                derived,
+                alt_names_list,
+                table_name,
             )
 
         # If necessary, adapt frequency of variable (set it to the one from the
@@ -350,7 +363,7 @@ class InfoBase:
                         alt_name
                         for alt_name in alt_names
                         if alt_name not in alt_names_list
-                    ]
+                    ],
                 )
         return alt_names_list
 
@@ -418,7 +431,7 @@ class CMIP6Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -429,9 +442,8 @@ class CMIP6Info(InfoBase):
         cmor_tables_path = os.path.join(cwd, "tables", cmor_tables_path)
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
-        raise ValueError(
-            "CMOR tables not found in {}".format(cmor_tables_path)
-        )
+        msg = f"CMOR tables not found in {cmor_tables_path}"
+        raise ValueError(msg)
 
     def _load_table(self, json_file):
         with open(json_file, encoding="utf-8") as inf:
@@ -485,11 +497,11 @@ class CMIP6Info(InfoBase):
     def _load_coordinates(self):
         self.coords = {}
         for json_file in glob.glob(
-            os.path.join(self._cmor_folder, "*coordinate*.json")
+            os.path.join(self._cmor_folder, "*coordinate*.json"),
         ):
             with open(json_file, encoding="utf-8") as inf:
                 table_data = json.loads(inf.read())
-                for coord_name in table_data["axis_entry"].keys():
+                for coord_name in table_data["axis_entry"]:
                     coord = CoordinateInfo(coord_name)
                     coord.read_json(table_data["axis_entry"][coord_name])
                     self.coords[coord_name] = coord
@@ -498,7 +510,7 @@ class CMIP6Info(InfoBase):
         self.activities = {}
         self.institutes = {}
         for json_file in glob.glob(
-            os.path.join(self._cmor_folder, "*_CV.json")
+            os.path.join(self._cmor_folder, "*_CV.json"),
         ):
             with open(json_file, encoding="utf-8") as inf:
                 table_data = json.loads(inf.read())
@@ -535,15 +547,13 @@ class CMIP6Info(InfoBase):
         try:
             return self.tables[table]
         except KeyError:
-            return self.tables.get("".join((self.default_table_prefix, table)))
+            return self.tables.get(f"{self.default_table_prefix}{table}")
 
     @staticmethod
     def _is_table(table_data):
         if "variable_entry" not in table_data:
             return False
-        if "Header" not in table_data:
-            return False
-        return True
+        return "Header" in table_data
 
 
 @total_ordering
@@ -552,7 +562,7 @@ class TableInfo(dict):
 
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
-        super(TableInfo, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.name = ""
         self.frequency = ""
         self.realm = ""
@@ -579,7 +589,7 @@ class TableInfo(dict):
         )
 
 
-class JsonInfo(object):
+class JsonInfo:
     """Base class for the info classes.
 
     Provides common utility methods to read json variables
@@ -634,7 +644,7 @@ class VariableInfo(JsonInfo):
         short_name: str
             Variable's short name.
         """
-        super(VariableInfo, self).__init__()
+        super().__init__()
         self.table_type = table_type
         self.modeling_realm = []
         """Modeling realm"""
@@ -698,7 +708,7 @@ class VariableInfo(JsonInfo):
         self.valid_max = self._read_json_variable("valid_max")
         self.positive = self._read_json_variable("positive")
         self.modeling_realm = self._read_json_variable(
-            "modeling_realm"
+            "modeling_realm",
         ).split()
         self.frequency = self._read_json_variable("frequency", default_freq)
 
@@ -747,7 +757,7 @@ class CoordinateInfo(JsonInfo):
         name: str
             coordinate's name
         """
-        super(CoordinateInfo, self).__init__()
+        super().__init__()
         self.name = name
         self.generic_level = False
         self.generic_lev_coords = {}
@@ -828,7 +838,11 @@ class CMIP5Info(InfoBase):
     """
 
     def __init__(
-        self, cmor_tables_path, default=None, alt_names=None, strict=True
+        self,
+        cmor_tables_path,
+        default=None,
+        alt_names=None,
+        strict=True,
     ):
         super().__init__(default, alt_names, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
@@ -858,7 +872,7 @@ class CMIP5Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -866,8 +880,7 @@ class CMIP5Info(InfoBase):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, "tables", cmor_tables_path)
-        return cmor_tables_path
+        return os.path.join(cwd, "tables", cmor_tables_path)
 
     def _load_table(self, table_file, table_name=""):
         if table_name and table_name in self.tables:
@@ -880,7 +893,7 @@ class CMIP5Info(InfoBase):
         self._read_table_file(table_file, table)
 
     def _read_table_file(self, table_file, table=None):
-        with open(table_file, "r", encoding="utf-8") as self._current_table:
+        with open(table_file, encoding="utf-8") as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read
@@ -934,9 +947,7 @@ class CMIP5Info(InfoBase):
             if key in ("variable_entry", "axis_entry"):
                 return coord
             if key == "requested":
-                coord.requested.extend(
-                    (val for val in value.split(" ") if val)
-                )
+                coord.requested.extend(val for val in value.split(" ") if val)
                 continue
             if hasattr(coord, key):
                 setattr(coord, key, value)
@@ -1024,7 +1035,7 @@ class CustomInfo(CMIP5Info):
 
     """
 
-    def __init__(self, cmor_tables_path: Optional[str | Path] = None) -> None:
+    def __init__(self, cmor_tables_path: str | Path | None = None) -> None:
         """Initialize class member."""
         self.coords = {}
         self.tables = {}
@@ -1042,10 +1053,11 @@ class CustomInfo(CMIP5Info):
         if cmor_tables_path is not None:
             self._user_table_folder = self._get_cmor_path(cmor_tables_path)
             if not os.path.isdir(self._user_table_folder):
-                raise ValueError(
+                msg = (
                     f"Custom CMOR tables path {self._user_table_folder} is "
                     f"not a directory"
                 )
+                raise ValueError(msg)
             self._read_table_dir(self._user_table_folder)
         else:
             self._user_table_folder = None
@@ -1069,11 +1081,14 @@ class CustomInfo(CMIP5Info):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     def get_variable(
-        self, table: str, short_name: str, derived: bool = False
+        self,
+        table: str,  # noqa: ARG002
+        short_name: str,
+        derived: bool = False,  # noqa: ARG002
     ) -> VariableInfo | None:
         """Search and return the variable info.
 
@@ -1100,10 +1115,10 @@ class CustomInfo(CMIP5Info):
     def _read_table_file(
         self,
         table_file: str,
-        _: Optional[TableInfo] = None,
+        _: TableInfo | None = None,
     ) -> None:
         """Read a single table file."""
-        with open(table_file, "r", encoding="utf-8") as self._current_table:
+        with open(table_file, encoding="utf-8") as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read
@@ -1118,7 +1133,8 @@ class CustomInfo(CMIP5Info):
                     continue
                 elif key == "variable_entry":
                     self.tables["custom"][value] = self._read_variable(
-                        value, ""
+                        value,
+                        "",
                     )
                     continue
                 if not self._read_line():

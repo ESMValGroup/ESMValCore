@@ -9,16 +9,17 @@ import subprocess
 from functools import partial
 from pprint import pformat
 from shutil import which
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import isodate
 import yamale
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
+from esmvalcore.preprocessor._other import _get_var_info
 from esmvalcore.preprocessor._regrid import (
     HORIZONTAL_SCHEMES_IRREGULAR,
     HORIZONTAL_SCHEMES_REGULAR,
@@ -30,38 +31,75 @@ from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+    from pathlib import Path
+
+    from esmvalcore._task import TaskSet
+    from esmvalcore.dataset import Dataset
+    from esmvalcore.typing import Facets
+
+
 logger = logging.getLogger(__name__)
 
 
-def ncl_version():
+def align_metadata(step_settings: dict[str, Any]) -> None:
+    """Check settings of preprocessor ``align_metadata``."""
+    project = step_settings.get("target_project")
+    mip = step_settings.get("target_mip")
+    short_name = step_settings.get("target_short_name")
+    strict = step_settings.get("strict", True)
+
+    # Any missing arguments will be reported later
+    if project is None or mip is None or short_name is None:
+        return
+
+    try:
+        _get_var_info(project, mip, short_name)
+    except ValueError as exc:
+        if strict:
+            msg = (
+                f"align_metadata failed: {exc}. Set `strict=False` to ignore "
+                f"this."
+            )
+            raise RecipeError(msg) from exc
+    except KeyError as exc:
+        msg = f"align_metadata failed: {exc}"
+        raise RecipeError(msg) from exc
+
+
+def ncl_version() -> None:
     """Check the NCL version."""
     ncl = which("ncl")
     if not ncl:
-        raise RecipeError(
+        msg = (
             "Recipe contains NCL scripts, but cannot find an NCL installation."
         )
+        raise RecipeError(msg)
     try:
         cmd = [ncl, "-V"]
         version = subprocess.check_output(cmd, universal_newlines=True)
     except subprocess.CalledProcessError as exc:
         logger.error("Failed to execute '%s'", " ".join(cmd))
-        raise RecipeError(
+        msg = (
             "Recipe contains NCL scripts, but your NCL "
             "installation appears to be broken."
-        ) from exc
+        )
+        raise RecipeError(msg) from exc
 
     version = version.strip()
     logger.info("Found NCL version %s", version)
 
     major, minor = (int(i) for i in version.split(".")[:2])
     if major < 6 or (major == 6 and minor < 4):
-        raise RecipeError(
+        msg = (
             "NCL version 6.4 or higher is required to run "
             "a recipe containing NCL scripts."
         )
+        raise RecipeError(msg)
 
 
-def recipe_with_schema(filename):
+def recipe_with_schema(filename: Path) -> None:
     """Check if the recipe content matches schema."""
     schema_file = os.path.join(os.path.dirname(__file__), "recipe_schema.yml")
     logger.debug("Checking recipe against schema %s", schema_file)
@@ -70,31 +108,33 @@ def recipe_with_schema(filename):
     yamale.validate(schema, recipe, strict=False)
 
 
-def diagnostics(diags):
+def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:
     """Check diagnostics in recipe."""
     if diags is None:
-        raise RecipeError("The given recipe does not have any diagnostic.")
+        msg = "The given recipe does not have any diagnostic."
+        raise RecipeError(msg)
     for name, diagnostic in diags.items():
         if "scripts" not in diagnostic:
-            raise RecipeError(
-                f"Missing scripts section in diagnostic '{name}'."
-            )
+            msg = f"Missing scripts section in diagnostic '{name}'."
+            raise RecipeError(msg)
         variable_names = tuple(diagnostic.get("variables", {}))
         scripts = diagnostic.get("scripts")
         if scripts is None:
             scripts = {}
         for script_name, script in scripts.items():
             if script_name in variable_names:
-                raise RecipeError(
+                msg = (
                     f"Invalid script name '{script_name}' encountered "
                     f"in diagnostic '{name}': scripts cannot have the "
                     "same name as variables."
                 )
+                raise RecipeError(msg)
             if not script.get("script"):
-                raise RecipeError(
+                msg = (
                     f"No script defined for script '{script_name}' in "
                     f"diagnostic '{name}'."
                 )
+                raise RecipeError(msg)
 
 
 def duplicate_datasets(
@@ -104,18 +144,20 @@ def duplicate_datasets(
 ) -> None:
     """Check for duplicate datasets."""
     if not datasets:
-        raise RecipeError(
+        msg = (
             "You have not specified any dataset or additional_dataset "
             f"groups for variable '{variable_group}' in diagnostic "
             f"'{diagnostic}'."
         )
+        raise RecipeError(msg)
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
-            raise RecipeError(
+            msg = (
                 f"Duplicate dataset\n{pformat(dataset)}\nfor variable "
                 f"'{variable_group}' in diagnostic '{diagnostic}'."
             )
+            raise RecipeError(msg)
         checked_datasets_.append(dataset)
 
 
@@ -129,28 +171,37 @@ def variable(
     required = set(required_keys)
     missing = required - set(var)
     if missing:
-        raise RecipeError(
+        msg = (
             f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
             f"'{variable_group}' in diagnostic '{diagnostic}'."
         )
+        raise RecipeError(msg)
 
 
-def _log_data_availability_errors(dataset):
+def get_no_data_message(dataset: Dataset) -> str:
+    """Generate a message for debugging missing data in dataset."""
+    lines = [
+        f"No files were found for {dataset},\nusing data sources:",
+        "\n".join(
+            f"- data source: {data_source}\n  message: {data_source.debug_info}"
+            for data_source in sorted(
+                dataset._used_data_sources,  # noqa: SLF001
+                key=lambda d: d.priority,
+            )
+        ),
+    ]
+    return "\n".join(lines)
+
+
+def _log_data_availability_errors(dataset: Dataset) -> None:
     """Check if the required input data is available."""
-    input_files = dataset.files
-    patterns = dataset._file_globs
-    if not input_files:
-        logger.error("No input files found for %s", dataset)
-        if patterns:
-            if len(patterns) == 1:
-                msg = f": {patterns[0]}"
-            else:
-                msg = "\n{}".format("\n".join(str(p) for p in patterns))
-            logger.error("Looked for files matching%s", msg)
+    if not dataset.files:
+        msg = get_no_data_message(dataset)
+        logger.error(msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
-def _group_years(years):
+def _group_years(years: Iterable[int]) -> str:
     """Group an iterable of years into easy to read text.
 
     Example
@@ -176,7 +227,7 @@ def _group_years(years):
     return ", ".join(ranges)
 
 
-def data_availability(dataset, log=True):
+def data_availability(dataset: Dataset, log: bool = True) -> None:
     """Check if input_files cover the required years."""
     input_files = dataset.files
     facets = dataset.facets
@@ -185,33 +236,42 @@ def data_availability(dataset, log=True):
         _log_data_availability_errors(dataset)
 
     if not input_files:
-        raise InputFilesNotFound(f"Missing data for {dataset.summary(True)}")
+        msg = f"Missing data for {dataset.summary(True)}"
+        raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets:
+    if (
+        "*" in facets.get("timerange", "*")  # type: ignore[operator]
+        or any("timerange" not in f.facets for f in input_files)
+    ):
         return
 
     start_date, end_date = _parse_period(facets["timerange"])
     start_year = int(start_date[0:4])
     end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
-    available_years = set()
+    available_years: set[int] = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file)
-        available_years.update(range(start, end + 1))
+        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+        start_year = int(start_date[:4])
+        end_year = int(end_date[:4])
+        available_years.update(range(start_year, end_year + 1))
 
     missing_years = required_years - available_years
     if missing_years:
         missing_txt = _group_years(missing_years)
 
-        raise InputFilesNotFound(
-            "No input data available for years {} in files:\n{}".format(
-                missing_txt, "\n".join(str(f) for f in input_files)
-            )
+        msg = "No input data available for years {} in files:\n{}".format(
+            missing_txt,
+            "\n".join(str(f) for f in input_files),
         )
+        raise InputFilesNotFound(msg)
 
 
-def preprocessor_supplementaries(dataset, settings):
+def preprocessor_supplementaries(
+    dataset: Dataset,
+    settings: dict[str, Any],
+) -> None:
     """Check that the required supplementary variables have been added."""
     steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
     supplementaries = {d.facets["short_name"] for d in dataset.supplementaries}
@@ -223,11 +283,12 @@ def preprocessor_supplementaries(dataset, settings):
                 break
         else:
             if ancs["required"] == "require_at_least_one":
-                raise RecipeError(
+                msg = (
                     f"Preprocessor function {step} requires that at least "
                     f"one supplementary variable of {ancs['variables']} is "
                     f"defined in the recipe for {dataset}."
                 )
+                raise RecipeError(msg)
             if ancs["required"] == "prefer_at_least_one":
                 logger.warning(
                     "Preprocessor function %s works best when at least "
@@ -239,7 +300,7 @@ def preprocessor_supplementaries(dataset, settings):
                 )
 
 
-def tasks_valid(tasks):
+def tasks_valid(tasks: TaskSet) -> None:
     """Check that tasks are consistent."""
     filenames = set()
     msg = "Duplicate preprocessor filename {}, please file a bug report."
@@ -251,7 +312,7 @@ def tasks_valid(tasks):
                 filenames.add(product.filename)
 
 
-def check_for_temporal_preprocs(profile):
+def check_for_temporal_preprocs(profile: dict[str, Any]) -> None:
     """Check for temporal operations on fx variables."""
     temp_preprocs = [
         preproc
@@ -259,82 +320,89 @@ def check_for_temporal_preprocs(profile):
         if profile[preproc] and preproc in TIME_PREPROCESSORS
     ]
     if temp_preprocs:
-        raise RecipeError(
-            "Time coordinate preprocessor step(s) {} not permitted on fx "
-            "vars, please remove them from recipe".format(temp_preprocs)
+        msg = (
+            f"Time coordinate preprocessor step(s) {temp_preprocs} not permitted on fx "
+            "vars, please remove them from recipe"
         )
+        raise RecipeError(msg)
 
 
-def extract_shape(settings):
+def extract_shape(settings: dict[str, Any]) -> None:
     """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get("shapefile", "")
     if not os.path.exists(shapefile):
-        raise RecipeError(
-            "In preprocessor function `extract_shape`: "
-            f"Unable to find 'shapefile: {shapefile}'"
+        msg = (
+            f"In preprocessor function `extract_shape`: Unable to find "
+            f"'shapefile: {shapefile}'"
         )
+        raise RecipeError(msg)
 
-    valid = {
+    valid: dict[str, set[Any]] = {
         "method": {"contains", "representative"},
         "crop": {True, False},
         "decomposed": {True, False},
     }
-    for key in valid:
+    for key, valid_values in valid.items():
         value = settings.get(key)
-        if not (value is None or value in valid[key]):
-            raise RecipeError(
+        if not (value is None or value in valid_values):
+            msg = (
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
-                "{}".format(", ".join(f"'{k}'".lower() for k in valid[key]))
+                "{}".format(", ".join(f"'{k}'".lower() for k in valid_values))
             )
+            raise RecipeError(msg)
 
 
-def _verify_span_value(span):
+def _verify_span_value(span: str) -> None:
     """Raise error if span argument cannot be verified."""
     valid_names = ("overlap", "full")
     if span not in valid_names:
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `span` in preprocessor "
             f"`multi_model_statistics`. Valid values are {valid_names}."
             f"Got {span}."
         )
+        raise RecipeError(msg)
 
 
-def _verify_groupby(groupby):
+def _verify_groupby(groupby: list[str]) -> None:
     """Raise error if groupby arguments cannot be verified."""
     if not isinstance(groupby, list):
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `groupby` in preprocessor "
             "`multi_model_statistics`.`groupby` must be defined as a "
             f"list. Got {groupby}."
         )
+        raise RecipeError(msg)
 
 
-def _verify_keep_input_datasets(keep_input_datasets):
+def _verify_keep_input_datasets(keep_input_datasets: bool) -> None:
     if not isinstance(keep_input_datasets, bool):
-        raise RecipeError(
+        msg = (
             f"Invalid value encountered for `keep_input_datasets`."
             f"Must be defined as a boolean (true or false). "
             f"Got {keep_input_datasets}."
         )
+        raise RecipeError(msg)
 
 
-def _verify_ignore_scalar_coords(ignore_scalar_coords):
+def _verify_ignore_scalar_coords(ignore_scalar_coords: bool) -> None:
     if not isinstance(ignore_scalar_coords, bool):
-        raise RecipeError(
+        msg = (
             f"Invalid value encountered for `ignore_scalar_coords`."
             f"Must be defined as a boolean (true or false). Got "
             f"{ignore_scalar_coords}."
         )
+        raise RecipeError(msg)
 
 
-def multimodel_statistics_preproc(settings):
+def multimodel_statistics_preproc(settings: dict[str, Any]) -> None:
     """Check that the multi-model settings are valid."""
-    span = settings.get("span", None)  # optional, default: overlap
+    span = settings.get("span")  # optional, default: overlap
     if span:
         _verify_span_value(span)
 
-    groupby = settings.get("groupby", None)  # optional, default: None
+    groupby = settings.get("groupby")  # optional, default: None
     if groupby:
         _verify_groupby(groupby)
 
@@ -345,7 +413,7 @@ def multimodel_statistics_preproc(settings):
     _verify_ignore_scalar_coords(ignore_scalar_coords)
 
 
-def ensemble_statistics_preproc(settings):
+def ensemble_statistics_preproc(settings: dict[str, Any]) -> None:
     """Check that the ensemble settings are valid."""
     span = settings.get("span", "overlap")  # optional, default: overlap
     if span:
@@ -355,54 +423,54 @@ def ensemble_statistics_preproc(settings):
     _verify_ignore_scalar_coords(ignore_scalar_coords)
 
 
-def _check_delimiter(timerange):
+def _check_delimiter(timerange: Sequence[str]) -> None:
     if len(timerange) != 2:
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `timerange`. "
             "Valid values must be separated by `/`. "
             f"Got {timerange} instead."
         )
+        raise RecipeError(msg)
 
 
-def _check_duration_periods(timerange):
+def _check_duration_periods(timerange: list[str]) -> None:
     # isodate duration must always start with P
     if timerange[0].startswith("P") and timerange[1].startswith("P"):
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `timerange`. "
             "Cannot set both the beginning and the end "
             "as duration periods."
         )
+        raise RecipeError(msg)
 
     if timerange[0].startswith("P"):
         try:
             isodate.parse_duration(timerange[0])
         except isodate.isoerror.ISO8601Error as exc:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                f"{timerange[0]} is not valid duration according to ISO 8601."
-                + "\n"
-                + str(exc)
-            ) from exc
+            msg = (
+                f"Invalid value encountered for `timerange`. {timerange[0]} is "
+                f"not valid duration according to ISO 8601.\n{exc}"
+            )
+            raise RecipeError(msg) from exc
     elif timerange[1].startswith("P"):
         try:
             isodate.parse_duration(timerange[1])
         except isodate.isoerror.ISO8601Error as exc:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                f"{timerange[1]} is not valid duration according to ISO 8601."
-                + "\n"
-                + str(exc)
-            ) from exc
+            msg = (
+                f"Invalid value encountered for `timerange`. {timerange[1]} is "
+                f"not valid duration according to ISO 8601.\n{exc}"
+            )
+            raise RecipeError(msg) from exc
 
 
-def _check_format_years(date):
+def _format_years(date: str) -> str:
     if date != "*" and not date.startswith("P"):
         if len(date) < 4:
             date = date.zfill(4)
     return date
 
 
-def _check_timerange_values(date, timerange):
+def _check_timerange_values(date: str, timerange: Iterable[str]) -> None:
     # Wildcards are fine
     if date == "*":
         return
@@ -416,34 +484,38 @@ def _check_timerange_values(date, timerange):
         else:
             isodate.parse_date(date)
     except isodate.isoerror.ISO8601Error as exc:
-        raise RecipeError(
+        msg = (
             "Invalid value encountered for `timerange`. "
             "Valid value must follow ISO 8601 standard "
             "for dates and duration periods, or be "
             "set to '*' to load available years. "
-            f"Got {timerange} instead." + "\n" + str(exc)
-        ) from exc
+            f"Got {timerange} instead.\n{exc}"
+        )
+        raise RecipeError(msg) from exc
 
 
-def valid_time_selection(timerange):
+def valid_time_selection(timerange: str) -> None:
     """Check that `timerange` tag is well defined."""
     if timerange != "*":
-        timerange = timerange.split("/")
-        _check_delimiter(timerange)
-        _check_duration_periods(timerange)
-        for date in timerange:
-            date = _check_format_years(date)
-            _check_timerange_values(date, timerange)
+        timerange_list: list[str] = timerange.split("/")
+        _check_delimiter(timerange_list)
+        _check_duration_periods(timerange_list)
+        for date in timerange_list:
+            _check_timerange_values(_format_years(date), timerange_list)
 
 
-def differing_timeranges(timeranges, required_vars):
+def differing_timeranges(
+    timeranges: set[str],
+    required_vars: list[Facets],
+) -> None:
     """Log error if required variables have differing timeranges."""
     if len(timeranges) > 1:
-        raise ValueError(
+        msg = (
             f"Differing timeranges with values {timeranges} "
             f"found for required variables {required_vars}. "
             "Set `timerange` to a common value."
         )
+        raise ValueError(msg)
 
 
 def _check_literal(
@@ -458,10 +530,11 @@ def _check_literal(
         return
     user_value = settings[step].get(option, allowed_values[0])
     if user_value not in allowed_values:
-        raise RecipeError(
+        msg = (
             f"Expected one of {allowed_values} for option `{option}` of "
             f"preprocessor `{step}`, got '{user_value}'"
         )
+        raise RecipeError(msg)
 
 
 bias_type = partial(
@@ -524,17 +597,20 @@ def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
             ref_products_str = (
                 f":\n{pformat([p.filename for p in reference_products])}.\n"
             )
-        raise RecipeError(
+        msg = (
             f"Expected exactly 1 dataset with '{attr_name}: true' in "
             f"products\n{pformat(products_str)},\nfound "
             f"{len(reference_products):d}{ref_products_str}Please also "
             f"ensure that the reference dataset is not excluded with the "
             f"'exclude' option"
         )
+        raise RecipeError(msg)
 
 
 reference_for_bias_preproc = partial(
-    _check_ref_attributes, step="bias", attr_name="reference_for_bias"
+    _check_ref_attributes,
+    step="bias",
+    attr_name="reference_for_bias",
 )
 
 
@@ -561,7 +637,7 @@ def statistics_preprocessors(settings: dict) -> None:
             _check_regular_stat(step, step_settings)
 
 
-def _check_regular_stat(step, step_settings):
+def _check_regular_stat(step: str, step_settings: dict[str, Any]) -> None:
     """Check regular statistics (non-multi-model statistics) step."""
     step_settings = dict(step_settings)
 
@@ -593,10 +669,11 @@ def _check_regular_stat(step, step_settings):
     try:
         get_iris_aggregator(operator, **operator_kwargs)
     except ValueError as exc:
-        raise RecipeError(f"Invalid options for {step}: {exc}") from exc
+        msg = f"Invalid options for {step}: {exc}"
+        raise RecipeError(msg) from exc
 
 
-def _check_mm_stat(step, step_settings):
+def _check_mm_stat(step: str, step_settings: dict[str, Any]) -> None:
     """Check multi-model statistic step."""
     statistics = step_settings.get("statistics", [])
     for stat in statistics:
@@ -607,10 +684,11 @@ def _check_mm_stat(step, step_settings):
         try:
             get_iris_aggregator(operator, **kwargs)
         except ValueError as exc:
-            raise RecipeError(f"Invalid options for {step}: {exc}") from exc
+            msg = f"Invalid options for {step}: {exc}"
+            raise RecipeError(msg) from exc
 
 
-def regridding_schemes(settings: dict):
+def regridding_schemes(settings: dict[str, Any]) -> None:
     """Check :obj:`str` regridding schemes."""
     if "regrid" not in settings:
         return
@@ -623,35 +701,31 @@ def regridding_schemes(settings: dict):
     if isinstance(scheme, str):
         scheme = settings["regrid"]["scheme"]
 
-        # Also allow deprecated 'linear_extrapolate' and 'unstructured_nearest'
-        # schemes (the corresponding deprecation warnings will be raised in the
-        # regrid() preprocessor) TODO: Remove in v2.13.0
-        if scheme in ("linear_extrapolate", "unstructured_nearest"):
-            return
-
         allowed_regridding_schemes = list(
             set(
                 list(HORIZONTAL_SCHEMES_IRREGULAR)
                 + list(HORIZONTAL_SCHEMES_REGULAR)
-                + list(HORIZONTAL_SCHEMES_UNSTRUCTURED)
-            )
+                + list(HORIZONTAL_SCHEMES_UNSTRUCTURED),
+            ),
         )
         if scheme not in allowed_regridding_schemes:
-            raise RecipeError(
+            msg = (
                 f"Got invalid built-in regridding scheme '{scheme}', expected "
                 f"one of {allowed_regridding_schemes} or a generic scheme "
                 f"(see https://docs.esmvaltool.org/projects/ESMValCore/en/"
                 f"latest/recipe/preprocessor.html#generic-regridding-schemes)."
             )
+            raise RecipeError(msg)
 
     # Check generic regridding schemes (given as dict)
     if isinstance(scheme, dict):
         try:
             _load_generic_scheme(scheme)
         except ValueError as exc:
-            raise RecipeError(
-                f"Failed to load generic regridding scheme: {str(exc)} See "
+            msg = (
+                f"Failed to load generic regridding scheme: {exc!s} See "
                 f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
                 f"/recipe/preprocessor.html#generic-regridding-schemes for "
                 f"details."
-            ) from exc
+            )
+            raise RecipeError(msg) from exc
