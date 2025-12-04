@@ -51,7 +51,7 @@ dependencies:
   - xcube
   - xcube-cci
   - yamale
-  - zarr >3
+  - zarr >2
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
   - ipython
