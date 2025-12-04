@@ -840,40 +840,44 @@ class Dataset:
         )
 
         settings: dict[str, dict[str, Any]] = {}
-        settings["fix_file"] = {
-            "output_dir": fix_dir_prefix,
-            "add_unique_suffix": True,
-            "session": self.session,
-            **self.facets,
-        }
+        if self.facets["project"] != "external":
+            settings["fix_file"] = {
+                "output_dir": fix_dir_prefix,
+                "add_unique_suffix": True,
+                "session": self.session,
+                **self.facets,
+            }
         settings["load"] = {}
-        settings["fix_metadata"] = {
-            "session": self.session,
-            **self.facets,
-        }
+        if self.facets["project"] != "external":
+            settings["fix_metadata"] = {
+                "session": self.session,
+                **self.facets,
+            }
         settings["concatenate"] = {"check_level": self.session["check_level"]}
-        settings["cmor_check_metadata"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-        }
+        if self.facets["project"] != "external":
+            settings["cmor_check_metadata"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+            }
         if "timerange" in self.facets:
             settings["clip_timerange"] = {
                 "timerange": self.facets["timerange"],
             }
-        settings["fix_data"] = {
-            "session": self.session,
-            **self.facets,
-        }
-        settings["cmor_check_data"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-        }
+        if self.facets["project"] != "external":
+            settings["fix_data"] = {
+                "session": self.session,
+                **self.facets,
+            }
+            settings["cmor_check_data"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+            }
 
         result: Sequence[PreprocessorItem] = self.files
         for step, kwargs in settings.items():
