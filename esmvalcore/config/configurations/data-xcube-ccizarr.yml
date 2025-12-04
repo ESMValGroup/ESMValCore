@@ -1,4 +1,4 @@
-# Read ESA Climate Data Centre (ESA CCI) using xcube.
+# Read data from the ESA Climate Data Centre (ESA CCI) using xcube.
 # https://xcube.readthedocs.io/en/latest/dataaccess.html#esa-climate-data-centre-esa-cci-cciodp-ccizarr-esa-cci-kc
 projects:
   external:
