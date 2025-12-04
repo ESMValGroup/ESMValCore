@@ -26,6 +26,8 @@
 #   cmor_path: ~/my/own/custom_tables
 ###############################################################################
 ---
+external:
+  output_file: "{dataset}_{short_name}"
 
 CMIP6:
   cmor_strict: true
