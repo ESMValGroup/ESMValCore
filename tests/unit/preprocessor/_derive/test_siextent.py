@@ -23,7 +23,7 @@ def cubes_sic():
 
 
 @pytest.fixture
-def cubes_siconca():
+def cubes_siconc():
     sic_name = "sea_ice_area_fraction"
     time_coord = iris.coords.DimCoord([0.0, 1.0, 2.0], standard_name="time")
     sic_cube = iris.cube.Cube(
@@ -49,13 +49,13 @@ def test_siextent_calculation_sic(cubes_sic):
     np.testing.assert_array_equal(out_data[0][0][0], expected[0][0][0])
 
 
-def test_siextent_calculation_siconc(cubes_siconca):
+def test_siextent_calculation_siconc(cubes_siconc):
     """Test function ``calculate`` when siconc is available."""
     derived_var = siextent.DerivedVariable()
-    out_cube = derived_var.calculate(cubes_siconca)
+    out_cube = derived_var.calculate(cubes_siconc)
     assert out_cube.units == cf_units.Unit("1")
     out_data = out_cube.data
-    expected = np.ma.ones_like(cubes_siconca[0].data)
+    expected = np.ma.ones_like(cubes_siconc[0].data)
     expected.mask = True
     expected[0][0][0] = 1.0
     np.testing.assert_array_equal(out_data.mask, expected.mask)
