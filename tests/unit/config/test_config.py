@@ -1,3 +1,4 @@
+import re
 from importlib.resources import files as importlib_files
 from pathlib import Path
 
@@ -14,6 +15,37 @@ from esmvalcore.config._config import (
     load_extra_facets,
 )
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+
+BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
+    "configurations",
+)
+
+
+@pytest.mark.parametrize(
+    "config_file",
+    [
+        pytest.param(f, id=f.relative_to(BUILTIN_CONFIG_DIR).as_posix())
+        for f in BUILTIN_CONFIG_DIR.rglob("*.yml")
+    ],
+)
+def test_builtin_config_files_have_description(config_file: Path) -> None:
+    """Test that all built-in config files have a description."""
+    # Use the same code to find the description as in the
+    # `esmvaltool config list` command.
+    first_comment = re.search(
+        r"\A((?: *#.*\r?\n)+)",
+        config_file.read_text(encoding="utf-8"),
+        flags=re.MULTILINE,
+    )
+    assert first_comment
+    description = " ".join(
+        line.lstrip(" #").strip()
+        for line in first_comment.group(1).split("\n")
+    ).strip()
+    # Add a basic check that the description is meaningful
+    assert len(description) > 15
+    assert description.endswith(".")
+
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),
@@ -138,6 +170,14 @@ def test_load_default_config(cfg_default, monkeypatch):
         paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
         env={},
     )["projects"]
+    # Add in projects without extra facets from the config developer file
+    # until we have transitioned all of its content to the new configuration
+    # system.
+    for project in yaml.safe_load(
+        default_dev_file.read_text(encoding="utf-8"),
+    ):
+        if project not in default_project_settings:
+            default_project_settings[project] = {}
 
     session = cfg_default.start_session("recipe_example")
 
@@ -163,14 +203,6 @@ def test_load_default_config(cfg_default, monkeypatch):
             "use": "local_threaded",
         },
         "diagnostics": None,
-        "download_dir": Path.home() / "climate_data",
-        "drs": {
-            "CMIP3": "ESGF",
-            "CMIP5": "ESGF",
-            "CMIP6": "ESGF",
-            "CORDEX": "ESGF",
-            "obs4MIPs": "ESGF",
-        },
         "exit_on_warning": False,
         "log_level": "info",
         "logging": {"log_progress_interval": 0.0},
@@ -183,9 +215,8 @@ def test_load_default_config(cfg_default, monkeypatch):
         "projects": default_project_settings,
         "remove_preproc_dir": True,
         "resume_from": [],
-        "rootpath": {"default": [Path.home() / "climate_data"]},
         "run_diagnostic": True,
-        "search_esgf": "never",
+        "search_data": "quick",
         "skip_nonexistent": False,
         "save_intermediary_cubes": False,
     }
@@ -196,7 +227,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "preproc_dir",
         "run_dir",
         "work_dir",
-        "config_dir",
     }
     # Check that only allowed keys are in it
     assert set(default_cfg) == set(session)
@@ -215,8 +245,6 @@ def test_load_default_config(cfg_default, monkeypatch):
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        assert session.config_dir is None
 
     # Check that projects were configured
     assert project_cfg

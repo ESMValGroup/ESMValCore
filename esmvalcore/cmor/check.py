@@ -14,6 +14,7 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+import yaml
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -21,7 +22,7 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
 )
-from esmvalcore.cmor.table import CoordinateInfo, get_var_info
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
@@ -29,6 +30,8 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord
     from iris.cube import Cube
+
+    from esmvalcore.cmor.table import CoordinateInfo
 
 
 class CheckLevels(IntEnum):
@@ -48,6 +51,12 @@ class CheckLevels(IntEnum):
 
     IGNORE = 5
     """Do not fail for any discrepancy with CMOR standards."""
+
+
+yaml.representer.SafeRepresenter.add_representer(
+    CheckLevels,
+    lambda dumper, data: dumper.represent_str(data.name.lower()),
+)
 
 
 class CMORCheckError(Exception):
@@ -533,7 +542,10 @@ class CMORCheck:
 
         self._check_coord_ranges(coords)
 
-    def _check_coord_ranges(self, coords: list[tuple[CoordinateInfo, Coord]]):
+    def _check_coord_ranges(
+        self,
+        coords: list[tuple[CoordinateInfo, Coord]],
+    ) -> None:
         """Check coordinate value are inside valid ranges."""
 
         class Limit(NamedTuple):

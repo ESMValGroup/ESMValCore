@@ -2,6 +2,7 @@
 
 import inspect
 import warnings
+from pathlib import Path
 
 import dask.array as da
 import iris.analysis
@@ -384,17 +385,17 @@ def test_compute_area_weights(lazy):
     )
 
 
-def test_group_products_string_list():
+def test_group_products_string_list() -> None:
     products = [
         PreprocessorFile(
-            filename="A_B.nc",
+            filename=Path("A_B.nc"),
             attributes={
                 "project": "A",
                 "dataset": "B",
             },
         ),
         PreprocessorFile(
-            filename="A_C.nc",
+            filename=Path("A_C.nc"),
             attributes={
                 "project": "A",
                 "dataset": "C",

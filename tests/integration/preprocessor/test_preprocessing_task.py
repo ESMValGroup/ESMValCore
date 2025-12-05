@@ -9,7 +9,7 @@ from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
 from esmvalcore.dataset import Dataset
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 

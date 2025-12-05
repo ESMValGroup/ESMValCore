@@ -40,13 +40,13 @@ jobs:
     if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: esmvalcore
@@ -79,12 +79,12 @@ jobs:
     if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13"]
         architecture: ["x64"]  # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: conda-incubator/setup-miniconda@v3
         with:
           architecture: ${{ matrix.architecture }}

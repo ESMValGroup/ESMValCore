@@ -26,6 +26,7 @@ from esmvalcore.config._config_validators import (
     validate_positive,
     validate_projects,
     validate_rootpath,
+    validate_search_data,
     validate_search_esgf,
     validate_string,
     validate_string_or_none,
@@ -203,6 +204,16 @@ def generate_validator_testcases(valid):
             "fail": (),
         },
         {
+            "validator": validate_search_data,
+            "success": (
+                ("quick", "quick"),
+                ("QUICK", "quick"),
+                ("complete", "complete"),
+                ("Complete", "complete"),
+            ),
+            "fail": (0, 3.14, True, "fail"),
+        },
+        {
             "validator": validate_search_esgf,
             "success": (
                 ("never", "never"),
@@ -335,7 +346,7 @@ def test_validate_config_developer(tmp_path):
     validate_config_developer(None)
 
 
-# TODO: remove in v2.14.0
+# TODO: remove in v2.15.0
 def test_extra_facets_dir_tuple_deprecated(monkeypatch):
     """Test extra_facets_dir."""
     with pytest.warns(ESMValCoreDeprecationWarning):

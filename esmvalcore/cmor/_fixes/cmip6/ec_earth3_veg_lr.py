@@ -1,11 +1,16 @@
 """Fixes for EC-Earth3-Veg-LR model."""
 
-from collections.abc import Sequence
+from __future__ import annotations
 
-import iris.cube
+from typing import TYPE_CHECKING
 
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor._fixes.fix import Fix
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import iris.cube
 
 
 class AllVars(Fix):

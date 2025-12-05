@@ -1,8 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask
 import pytest
 
 from esmvalcore import _task
 from esmvalcore.preprocessor import PreprocessingTask
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.mark.parametrize(
@@ -24,7 +31,7 @@ from esmvalcore.preprocessor import PreprocessingTask
     ],
 )
 def test_taskset_get_dask_config(
-    mocker,
+    mocker: MockerFixture,
     max_parallel_tasks: int,
     available_cpu_cores: int,
     n_preproc_tasks: int,
@@ -53,7 +60,7 @@ def test_taskset_get_dask_config(
         assert config == {"num_workers": expected_workers}
 
 
-def test_taskset_get_dask_config_noop(mocker) -> None:
+def test_taskset_get_dask_config_noop(mocker: MockerFixture) -> None:
     tasks = _task.TaskSet()
 
     with dask.config.set({"num_workers": 4, "scheduler": "threads"}):

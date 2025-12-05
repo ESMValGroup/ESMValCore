@@ -1,10 +1,15 @@
+from __future__ import annotations
+
+import importlib.resources
 import inspect
 import os
 import re
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
+from typing import TYPE_CHECKING
 from unittest.mock import create_autospec
 
 import iris
@@ -13,22 +18,69 @@ import yaml
 from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
-import esmvalcore
 import esmvalcore._task
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_datasets,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
-from esmvalcore.config import Session
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _get_output_file
+from esmvalcore.io.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from tests.integration.test_provenance import check_provenance
+
+if TYPE_CHECKING:
+    from esmvalcore._recipe.recipe import (
+        Recipe,
+    )
+    from esmvalcore.config import Session
+    from esmvalcore.typing import Facets
+
+
+@lru_cache
+def _load_data_sources(
+    filename: str,
+) -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load data source configurations."""
+    with importlib.resources.as_file(
+        importlib.resources.files(esmvalcore.config)
+        / "configurations"
+        / filename,
+    ) as config_file:
+        return yaml.safe_load(config_file.read_text(encoding="utf-8"))
+
+
+def update_data_sources(
+    session: Session,
+    filename: str,
+    rootpath: Path,
+) -> None:
+    """Update the data sources in `session` using config file `filename`."""
+    cfg = _load_data_sources(filename)
+    projects = cfg["projects"]
+    for project in projects:
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(rootpath)
+        session["projects"][project]["data"] = data_sources
+
+
+@pytest.fixture
+def session(tmp_path: Path, session: Session) -> Session:
+    """Session fixture with default data sources."""
+    update_data_sources(session, "data-local.yml", tmp_path)
+    update_data_sources(session, "data-local-esmvaltool.yml", tmp_path)
+    return session
+
 
 TAGS_FOR_TESTING = {
     "authors": {
@@ -147,7 +199,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     """)
 
 
-def get_recipe(tempdir: Path, content: str, session: Session):
+def get_recipe(tempdir: Path, content: str, session: Session) -> Recipe:
     """Save and load recipe content."""
     recipe_file = tempdir / "recipe_test.yml"
     # Add mandatory documentation section
@@ -692,7 +744,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         "remove_supplementary_variables": {},
         "save": {
             "compress": False,
-            "filename": product.filename,
+            "filename": Path(product.filename),
             "compute": False,
         },
     }
@@ -1539,7 +1591,7 @@ def test_diagnostic_task_provenance(
     # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
         iter(
-            p for p in diagnostic_task.products if p.filename.endswith(".nc")
+            p for p in diagnostic_task.products if p.filename.suffix == ".nc"
         ),
     )
     cube = iris.load_cube(product.filename)
@@ -2460,12 +2512,15 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
                   - {dataset: BNU-ESM}
             scripts: null
         """)
-    session["download_dir"] = tmp_path / "download_dir"
-    session["search_esgf"] = "when_missing"
 
     mocker.patch.object(
-        esmvalcore._recipe.recipe.esgf,
+        esmvalcore.io.esgf,
         "download",
+        create_autospec=True,
+    )
+    mocker.patch.object(
+        esmvalcore.io.local.LocalFile,
+        "prepare",
         create_autospec=True,
     )
 
@@ -2476,10 +2531,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
-        set(),
-        session["download_dir"],
-    )
+    esmvalcore.io.esgf.download.assert_called()
+    esmvalcore.io.local.LocalFile.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )
@@ -2487,8 +2540,14 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary.assert_called_once()
 
 
-def test_representative_dataset_regular_var(patched_datafinder, session):
+def test_representative_dataset_regular_var(
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+) -> None:
     """Test ``_representative_dataset`` with regular variable."""
+    update_data_sources(session, "data-native-icon.yml", tmp_path)
+
     variable = {
         "dataset": "ICON",
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
@@ -2505,18 +2564,20 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     datasets = _representative_datasets(dataset)
     assert len(datasets) == 1
     filename = datasets[0].files[0]
-    path = Path(filename)
-    assert path.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc"
+    assert filename.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990-1999.nc"
 
 
 @pytest.mark.parametrize("force_derivation", [True, False])
 def test_representative_dataset_derived_var(
-    patched_datafinder,
-    session,
-    force_derivation,
-):
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+    force_derivation: bool,
+) -> None:
     """Test ``_representative_dataset`` with derived variable."""
-    variable = {
+    update_data_sources(session, "data-native-icon.yml", tmp_path)
+
+    variable: Facets = {
         "dataset": "ICON",
         "derive": True,
         "exp": "atm_amip-rad_R2B4_r1i1p1f1",
@@ -2533,7 +2594,7 @@ def test_representative_dataset_derived_var(
     dataset.session = session
     representative_datasets = _representative_datasets(dataset)
 
-    expected_facets = {
+    expected_facets: Facets = {
         # Already present in variable
         "dataset": "ICON",
         "derive": True,

@@ -1,5 +1,7 @@
 """API for recipe metadata."""
 
+from __future__ import annotations
+
 import pybtex
 from pybtex.database.input import bibtex
 
@@ -23,7 +25,12 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: str | None = None):
+    def __init__(
+        self,
+        name: str,
+        institute: str,
+        orcid: str | None = None,
+    ) -> None:
         self.name = name
         self.institute = institute
         self.orcid = orcid
@@ -48,7 +55,7 @@ class Contributor:
         return str(self)
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Contributor":
+    def from_tag(cls, tag: str) -> Contributor:
         """Return an instance of Contributor from a tag (``TAGS``).
 
         Parameters
@@ -89,7 +96,7 @@ class Project:
         The project title.
     """
 
-    def __init__(self, project: str):
+    def __init__(self, project: str) -> None:
         self.project = project
 
     def __repr__(self) -> str:
@@ -101,7 +108,7 @@ class Project:
         return f"{self.project}"
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Project":
+    def from_tag(cls, tag: str) -> Project:
         """Return an instance of Project from a tag (``TAGS``).
 
         Parameters
@@ -127,7 +134,7 @@ class Reference:
         If the bibtex file contains more than 1 entry.
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
 
@@ -145,7 +152,7 @@ class Reference:
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag: str) -> "Reference":
+    def from_tag(cls, tag: str) -> Reference:
         """Return an instance of Reference from a bibtex tag.
 
         Parameters
