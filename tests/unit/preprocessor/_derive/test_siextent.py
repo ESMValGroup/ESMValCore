@@ -5,7 +5,6 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor._derive import siextent
 
 
@@ -70,7 +69,7 @@ def test_siextent_no_data(cubes_sic):
         "Derivation of siextent failed due to missing variables "
         "sic and siconc."
     )
-    with pytest.raises(RecipeError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         derived_var.calculate(cubes_sic)
 
 
