@@ -5,9 +5,9 @@ import logging
 import numpy as np
 from iris.util import promote_aux_coord_to_dim_coord
 
-from ..common import OceanFixGrid
-from ..fix import Fix
-from ..shared import round_coordinates
+from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import round_coordinates
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,9 @@ class Omon(Fix):
         iris.cube.CubeList
         """
         round_coordinates(
-            cubes, decimals=6, coord_names=["longitude", "latitude"]
+            cubes,
+            decimals=6,
+            coord_names=["longitude", "latitude"],
         )
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "

@@ -14,6 +14,7 @@ variable) as single argument.
 import logging
 import warnings
 from shutil import copyfile
+from typing import ClassVar
 
 import dask.array as da
 import iris.analysis
@@ -24,9 +25,9 @@ from iris.cube import CubeList
 from netCDF4 import Dataset
 from scipy import constants
 
+from esmvalcore.cmor._fixes.shared import add_aux_coords_from_cubes
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 
-from ..shared import add_aux_coords_from_cubes
 from ._base_fixes import EmacFix, NegateData
 
 logger = logging.getLogger(__name__)
@@ -36,11 +37,11 @@ class AllVars(EmacFix):
     """Fixes for all variables."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS = {
+    INVALID_UNITS: ClassVar[dict[str, str]] = {
         "kg/m**2s": "kg m-2 s-1",
     }
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(self, file, output_dir, add_unique_suffix=False):
         """Fix file.
 
         Fixes hybrid pressure level coordinate.
@@ -53,11 +54,13 @@ class AllVars(EmacFix):
 
         """
         if "alevel" not in self.vardef.dimensions:
-            return filepath
+            return file
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            file,
+            add_unique_suffix=add_unique_suffix,
         )
-        copyfile(filepath, new_path)
+        copyfile(file, new_path)
         with Dataset(new_path, mode="a") as dataset:
             if "formula_terms" in dataset.variables["lev"].ncattrs():
                 del dataset.variables["lev"].formula_terms
@@ -71,7 +74,8 @@ class AllVars(EmacFix):
 
         # Fix time, latitude, and longitude coordinates
         if cube.coords("time") and self.extra_facets.get(
-            "reset_time_bounds", False
+            "reset_time_bounds",
+            False,
         ):
             cube.coord("time").bounds = None
         self.fix_regular_time(cube)
@@ -108,10 +112,13 @@ class AllVars(EmacFix):
 
             return
 
-        raise ValueError(
+        msg = (
             f"Cannot find requested pressure level coordinate for variable "
             f"'{self.vardef.short_name}', searched for Z-coordinates with "
             f"units that are convertible to Pa"
+        )
+        raise ValueError(
+            msg,
         )
 
     @staticmethod
@@ -181,11 +188,13 @@ class AllVars(EmacFix):
         # Convert arrays to float64
         for coord in (ap_coord, b_coord, ps_coord):
             coord.points = coord.core_points().astype(
-                float, casting="same_kind"
+                float,
+                casting="same_kind",
             )
             if coord.has_bounds():
                 coord.bounds = coord.core_bounds().astype(
-                    float, casting="same_kind"
+                    float,
+                    casting="same_kind",
                 )
 
         # Fix values of lev coordinate
@@ -214,7 +223,8 @@ class Clwvi(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["xlvi_cav", "xlvi_ave", "xlvi"]
+            cubes,
+            var_name=["xlvi_cav", "xlvi_ave", "xlvi"],
         ) + self.get_cube(cubes, var_name=["xivi_cav", "xivi_ave", "xivi"])
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -226,10 +236,12 @@ class Prodlnox(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         noxcg_cube = self.get_cube(
-            cubes, var_name=["NOxcg_cav", "NOxcg_ave", "NOxcg"]
+            cubes,
+            var_name=["NOxcg_cav", "NOxcg_ave", "NOxcg"],
         )
         noxic_cube = self.get_cube(
-            cubes, var_name=["NOxic_cav", "NOxic_ave", "NOxic"]
+            cubes,
+            var_name=["NOxic_cav", "NOxic_ave", "NOxic"],
         )
         dt_cube = self.get_cube(cubes, var_name="dt")
 
@@ -243,10 +255,14 @@ class Prodlnox(EmacFix):
             )
             cube = (
                 noxcg_cube.collapsed(
-                    ["longitude", "latitude"], iris.analysis.SUM, weights=None
+                    ["longitude", "latitude"],
+                    iris.analysis.SUM,
+                    weights=None,
                 )
                 + noxic_cube.collapsed(
-                    ["longitude", "latitude"], iris.analysis.SUM, weights=None
+                    ["longitude", "latitude"],
+                    iris.analysis.SUM,
+                    weights=None,
                 )
             ) / dt_cube
         cube.units = "kg s-1"
@@ -283,7 +299,8 @@ class Pr(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["aprl_cav", "aprl_ave", "aprl"]
+            cubes,
+            var_name=["aprl_cav", "aprl_ave", "aprl"],
         ) + self.get_cube(cubes, var_name=["aprc_cav", "aprc_ave", "aprc"])
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -295,9 +312,11 @@ class Rlds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["flxtbot_cav", "flxtbot_ave", "flxsbot"]
+            cubes,
+            var_name=["flxtbot_cav", "flxtbot_ave", "flxsbot"],
         ) - self.get_cube(
-            cubes, var_name=["tradsu_cav", "tradsu_ave", "tradsu"]
+            cubes,
+            var_name=["tradsu_cav", "tradsu_ave", "tradsu"],
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -318,9 +337,11 @@ class Rsds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["flxsbot_cav", "flxsbot_ave", "flxsbot"]
+            cubes,
+            var_name=["flxsbot_cav", "flxsbot_ave", "flxsbot"],
         ) - self.get_cube(
-            cubes, var_name=["sradsu_cav", "sradsu_ave", "sradsu"]
+            cubes,
+            var_name=["sradsu_cav", "sradsu_ave", "sradsu"],
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -332,9 +353,11 @@ class Rsdt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["flxstop_cav", "flxstop_ave", "flxstop"]
+            cubes,
+            var_name=["flxstop_cav", "flxstop_ave", "flxstop"],
         ) - self.get_cube(
-            cubes, var_name=["srad0u_cav", "srad0u_ave", "srad0u"]
+            cubes,
+            var_name=["srad0u_cav", "srad0u_ave", "srad0u"],
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -355,9 +378,11 @@ class Rtmt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = self.get_cube(
-            cubes, var_name=["flxttop_cav", "flxttop_ave", "flxttop"]
+            cubes,
+            var_name=["flxttop_cav", "flxttop_ave", "flxttop"],
         ) + self.get_cube(
-            cubes, var_name=["flxstop_cav", "flxstop_ave", "flxstop"]
+            cubes,
+            var_name=["flxstop_cav", "flxstop_ave", "flxstop"],
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -415,16 +440,20 @@ class MP_BC_tot(EmacFix):  # noqa: N801
         """Fix metadata."""
         cube = (
             self.get_cube(
-                cubes, var_name=["MP_BC_ki_cav", "MP_BC_ki_ave", "MP_BC_ki"]
+                cubes,
+                var_name=["MP_BC_ki_cav", "MP_BC_ki_ave", "MP_BC_ki"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_BC_ks_cav", "MP_BC_ks_ave", "MP_BC_ks"]
+                cubes,
+                var_name=["MP_BC_ks_cav", "MP_BC_ks_ave", "MP_BC_ks"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_BC_as_cav", "MP_BC_as_ave", "MP_BC_as"]
+                cubes,
+                var_name=["MP_BC_as_cav", "MP_BC_as_ave", "MP_BC_as"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_BC_cs_cav", "MP_BC_cs_ave", "MP_BC_cs"]
+                cubes,
+                var_name=["MP_BC_cs_cav", "MP_BC_cs_ave", "MP_BC_cs"],
             )
         )
         cube.var_name = self.vardef.short_name
@@ -438,16 +467,20 @@ class MP_DU_tot(EmacFix):  # noqa: N801
         """Fix metadata."""
         cube = (
             self.get_cube(
-                cubes, var_name=["MP_DU_ai_cav", "MP_DU_ai_ave", "MP_DU_ai"]
+                cubes,
+                var_name=["MP_DU_ai_cav", "MP_DU_ai_ave", "MP_DU_ai"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_DU_as_cav", "MP_DU_as_ave", "MP_DU_as"]
+                cubes,
+                var_name=["MP_DU_as_cav", "MP_DU_as_ave", "MP_DU_as"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_DU_ci_cav", "MP_DU_ci_ave", "MP_DU_ci"]
+                cubes,
+                var_name=["MP_DU_ci_cav", "MP_DU_ci_ave", "MP_DU_ci"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_DU_cs_cav", "MP_DU_cs_ave", "MP_DU_cs"]
+                cubes,
+                var_name=["MP_DU_cs_cav", "MP_DU_cs_ave", "MP_DU_cs"],
             )
         )
         cube.var_name = self.vardef.short_name
@@ -488,13 +521,16 @@ class MP_SS_tot(EmacFix):  # noqa: N801
         """Fix metadata."""
         cube = (
             self.get_cube(
-                cubes, var_name=["MP_SS_ks_cav", "MP_SS_ks_ave", "MP_SS_ks"]
+                cubes,
+                var_name=["MP_SS_ks_cav", "MP_SS_ks_ave", "MP_SS_ks"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_SS_as_cav", "MP_SS_as_ave", "MP_SS_as"]
+                cubes,
+                var_name=["MP_SS_as_cav", "MP_SS_as_ave", "MP_SS_as"],
             )
             + self.get_cube(
-                cubes, var_name=["MP_SS_cs_cav", "MP_SS_cs_ave", "MP_SS_cs"]
+                cubes,
+                var_name=["MP_SS_cs_cav", "MP_SS_cs_ave", "MP_SS_cs"],
             )
         )
         cube.var_name = self.vardef.short_name

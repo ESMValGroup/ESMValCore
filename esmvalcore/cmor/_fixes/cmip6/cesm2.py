@@ -1,14 +1,18 @@
 """Fixes for CESM2 model."""
 
+from __future__ import annotations
+
 from shutil import copyfile
+from typing import TYPE_CHECKING
 
 import iris
+import iris.coords
 import numpy as np
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
-from ..fix import Fix
-from ..shared import (
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_typeland_coord,
@@ -16,30 +20,39 @@ from ..shared import (
     fix_ocean_depth_coord,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 class Cl(Fix):
     """Fixes for ``cl``."""
 
     def _fix_formula_terms(
         self,
-        filepath,
-        output_dir,
-        add_unique_suffix=False,
-    ):
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(
-            output_dir, filepath, add_unique_suffix=add_unique_suffix
+            output_dir,
+            file,
+            add_unique_suffix=add_unique_suffix,
         )
-        copyfile(filepath, new_path)
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
-        dataset.variables[
-            "lev"
-        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
-        dataset.close()
+        copyfile(file, new_path)
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
+            dataset.variables[
+                "lev"
+            ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         return new_path
 
-    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        file: str | Path,
+        output_dir: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -53,7 +66,7 @@ class Cl(Fix):
 
         Parameters
         ----------
-        filepath : str
+        file : str
             Path to the original file.
         output_dir: Path
             Output directory for fixed files.
@@ -67,12 +80,19 @@ class Cl(Fix):
 
         """
         new_path = self._fix_formula_terms(
-            filepath, output_dir, add_unique_suffix=add_unique_suffix
+            file,
+            output_dir,
+            add_unique_suffix=add_unique_suffix,
         )
-        dataset = Dataset(new_path, mode="a")
-        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][::-1, :]
-        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][::-1, :]
-        dataset.close()
+        with Dataset(new_path, mode="a") as dataset:
+            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
+                ::-1,
+                :,
+            ]
+            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
+                ::-1,
+                :,
+            ]
         return new_path
 
     def fix_metadata(self, cubes):
@@ -150,7 +170,8 @@ class Prw(Fix):
                 if not coord.has_bounds():
                     coord.guess_bounds()
                 coord.bounds = np.round(
-                    coord.core_bounds().astype(np.float64), 4
+                    coord.core_bounds().astype(np.float64),
+                    4,
                 )
 
         return cubes
@@ -217,7 +238,8 @@ class Tas(Prw):
                     )
                     data = cube.data
                     new_data = np.ma.append(
-                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
                     )
                     new_data = new_data.reshape(dims)
 
@@ -310,7 +332,8 @@ class Tos(Fix):
         for cube in cubes:
             if cube.attributes["mipTable"] == "Omon":
                 cube.coord("time").points = np.round(
-                    cube.coord("time").points, 1
+                    cube.coord("time").points,
+                    1,
                 )
         return cubes
 
@@ -398,7 +421,8 @@ class Pr(Fix):
                     )
                     data = cube.data
                     new_data = np.ma.append(
-                        data[: dims[0] - 1, :, :], data[-1, :, :]
+                        data[: dims[0] - 1, :, :],
+                        data[-1, :, :],
                     )
                     new_data = new_data.reshape(dims)
 
@@ -464,4 +488,69 @@ class Tasmax(Pr):
         """
         for cube in cubes:
             add_scalar_height_coord(cube, height=2.0)
+        return cubes
+
+
+class Msftmz(Fix):
+    """Fixes for discrete DimCoord."""
+
+    @staticmethod
+    def transform_region_coord(
+        coord: iris.coords.DimCoord,
+    ) -> iris.coords.AuxCoord:
+        """Transform a DimCoord to AuxCoord.
+
+        indexes as points to names as points.
+
+        Parameters
+        ----------
+        coord: iris.coords.DimCoord
+               DimCoord to be transformed
+
+        Returns
+        -------
+        iris.coords.AuxCoord
+
+        """
+        # parses string like: 'atlantic_arctic_ocean=0, indian_pacific_ocean=1, global_ocean=2'
+        region_string = coord.attributes["requested"]
+        lookup = {
+            int(split_point[1]): split_point[0]
+            for split_point in [
+                point.strip().split("=") for point in region_string.split(",")
+            ]
+        }
+        new_points = [""] * len(lookup)
+        for old_label in coord.points:
+            new_points[old_label] = lookup[old_label]
+        return iris.coords.AuxCoord(
+            new_points,
+            standard_name="region",
+            var_name="basin",
+            long_name="ocean basin",
+            units="no unit",
+        )
+
+    def fix_metadata(self, cubes: iris.cube.CubeList) -> iris.cube.CubeList:
+        """Transform a DimCoord to AuxCoord.
+
+        indexes as points to names as points.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+               List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        coord = cube.coord("region")
+        new_coord = self.transform_region_coord(coord=coord)
+        dims = cube.coord_dims("region")
+        for cube in cubes:
+            cube.remove_coord("region")
+            cube.add_aux_coord(new_coord, dims)
         return cubes

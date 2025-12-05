@@ -14,13 +14,12 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `alb`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rsdscs"},
             {"short_name": "rsuscs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):
@@ -28,6 +27,4 @@ class DerivedVariable(DerivedVariableBase):
         rsdscs_cube = cubes.extract_cube(NameConstraint(var_name="rsdscs"))
         rsuscs_cube = cubes.extract_cube(NameConstraint(var_name="rsuscs"))
 
-        rsnscs_cube = rsuscs_cube / rsdscs_cube
-
-        return rsnscs_cube
+        return rsuscs_cube / rsdscs_cube

@@ -2,6 +2,7 @@
 
 import os
 import unittest
+from pathlib import Path
 
 import pytest
 
@@ -95,7 +96,8 @@ class TestCMIP6Info(unittest.TestCase):
     def test_get_table_frequency(self):
         """Test get table frequency."""
         self.assertEqual(
-            self.variables_info.get_table("Amon").frequency, "mon"
+            self.variables_info.get_table("Amon").frequency,
+            "mon",
         )
         self.assertEqual(self.variables_info.get_table("day").frequency, "day")
 
@@ -157,6 +159,12 @@ class TestCMIP6Info(unittest.TestCase):
         activity = self.variables_info.activities["1pctCO2"]
         self.assertListEqual(activity, ["CMIP"])
 
+    def test_invalid_path(self):
+        path = Path(__file__) / "path" / "does" / "not" / "exist"
+        msg = r"CMOR tables not found in"
+        with pytest.raises(ValueError, match=msg):
+            CMIP6Info(path)
+
 
 class Testobs4mipsInfo(unittest.TestCase):
     """Test for the obs$mips info class."""
@@ -197,7 +205,8 @@ class Testobs4mipsInfo(unittest.TestCase):
         Note table name obs4MIPs_[mip]
         """
         var = self.variables_info.get_variable(
-            "obs4MIPs_monStderr", "ndviStderr"
+            "obs4MIPs_monStderr",
+            "ndviStderr",
         )
         self.assertEqual(var.short_name, "ndviStderr")
         self.assertEqual(var.frequency, "mon")
@@ -220,7 +229,8 @@ class Testobs4mipsInfo(unittest.TestCase):
         Note table name obs4MIPs_[mip]
         """
         var = self.variables_info.get_variable(
-            "obs4MIPs_monStderr", "prStderr"
+            "obs4MIPs_monStderr",
+            "prStderr",
         )
         self.assertEqual(var.short_name, "prStderr")
         self.assertEqual(var.frequency, "mon")
@@ -228,13 +238,17 @@ class Testobs4mipsInfo(unittest.TestCase):
     def test_get_variable_from_custom_deriving(self):
         """Get a variable from default."""
         var = self.variables_info.get_variable(
-            "obs4MIPs_Amon", "swcre", derived=True
+            "obs4MIPs_Amon",
+            "swcre",
+            derived=True,
         )
         self.assertEqual(var.short_name, "swcre")
         self.assertEqual(var.frequency, "mon")
 
         var = self.variables_info.get_variable(
-            "obs4MIPs_Aday", "swcre", derived=True
+            "obs4MIPs_Aday",
+            "swcre",
+            derived=True,
         )
         self.assertEqual(var.short_name, "swcre")
         self.assertEqual(var.frequency, "day")
@@ -503,7 +517,8 @@ class TestCustomInfo(unittest.TestCase):
         var = self.variables_info.get_variable("Amon", "tasConf5")
         self.assertEqual(var.short_name, "tasConf5")
         self.assertEqual(
-            var.long_name, "Near-Surface Air Temperature Uncertainty Range"
+            var.long_name,
+            "Near-Surface Air Temperature Uncertainty Range",
         )
         self.assertEqual(var.units, "K")
 
@@ -513,7 +528,8 @@ class TestCustomInfo(unittest.TestCase):
         var = self.variables_info.get_variable("Amon", "tasConf95")
         self.assertEqual(var.short_name, "tasConf95")
         self.assertEqual(
-            var.long_name, "Near-Surface Air Temperature Uncertainty Range"
+            var.long_name,
+            "Near-Surface Air Temperature Uncertainty Range",
         )
         self.assertEqual(var.units, "K")
 
@@ -523,7 +539,8 @@ class TestCustomInfo(unittest.TestCase):
         var = self.variables_info.get_variable("Amon", "tasaga")
         self.assertEqual(var.short_name, "tasaga")
         self.assertEqual(
-            var.long_name, "Global-mean Near-Surface Air Temperature Anomaly"
+            var.long_name,
+            "Global-mean Near-Surface Air Temperature Anomaly",
         )
         self.assertEqual(var.units, "K")
 
@@ -545,7 +562,7 @@ class TestCustomInfo(unittest.TestCase):
 
 
 @pytest.mark.parametrize(
-    "project,mip,short_name,frequency",
+    ("project", "mip", "short_name", "frequency"),
     [
         ("CMIP5", "Amon", "tas", "mon"),
         ("CMIP5", "day", "tas", "day"),
@@ -563,7 +580,7 @@ def test_get_var_info(project, mip, short_name, frequency):
 
 
 @pytest.mark.parametrize(
-    "mip,short_name",
+    ("mip", "short_name"),
     [
         ("INVALID_MIP", "tas"),
         ("Amon", "INVALID_VAR"),

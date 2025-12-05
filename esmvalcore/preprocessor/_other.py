@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import logging
 import string
-from collections.abc import Iterable, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import dask
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import Coord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
@@ -28,37 +28,128 @@ from esmvalcore.preprocessor._shared import (
     preserve_float_dtype,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from iris.coords import Coord
+
+    from esmvalcore.cmor.table import VariableInfo
+
 logger = logging.getLogger(__name__)
 
 
-def clip(cube, minimum=None, maximum=None):
-    """Clip values at a specified minimum and/or maximum value.
+def align_metadata(
+    cube: Cube,
+    target_project: str,
+    target_mip: str,
+    target_short_name: str,
+    strict: bool = True,
+) -> Cube:
+    """Set cube metadata to entries from a specific target project.
 
-    Values lower than minimum are set to minimum and values
-    higher than maximum are set to maximum.
+    This is useful to align variable metadata of different projects prior to
+    performing multi-model operations (e.g.,
+    :func:`~esmvalcore.preprocessor.multi_model_statistics`). For example,
+    standard names differ for some variables between CMIP5 and CMIP6 which
+    would prevent the calculation of multi-model statistics between CMIP5 and
+    CMIP6 data.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        iris cube to be clipped
-    minimum: float
-        lower threshold to be applied on input cube data.
-    maximum: float
-        upper threshold to be applied on input cube data.
+    cube:
+        Input cube.
+    target_project:
+        Project from which target metadata is read.
+    target_mip:
+        MIP table from which target metadata is read.
+    target_short_name:
+        Variable short name from which target metadata is read.
+    strict:
+        If ``True``, raise an error if desired metadata cannot be read for
+        variable ``target_short_name`` of MIP table ``target_mip`` and project
+        ``target_project``. If ``False``, no error is raised.
 
     Returns
     -------
     iris.cube.Cube
-        clipped cube.
+        Cube with updated metadata.
+
+    Raises
+    ------
+    KeyError
+        Invalid ``target_project`` given.
+    ValueError
+        If ``strict=True``: Variable ``target_short_name`` not available for
+        MIP table ``target_mip`` of project ``target_project``.
+
+    """
+    cube = cube.copy()
+
+    try:
+        var_info = _get_var_info(target_project, target_mip, target_short_name)
+    except ValueError as exc:
+        if strict:
+            raise
+        logger.debug(exc)
+        return cube
+
+    cube.long_name = var_info.long_name
+    cube.standard_name = var_info.standard_name
+    cube.var_name = var_info.short_name
+    cube.convert_units(var_info.units)
+
+    return cube
+
+
+def _get_var_info(project: str, mip: str, short_name: str) -> VariableInfo:
+    """Get variable information."""
+    var_info = get_var_info(project, mip, short_name)
+    if var_info is None:
+        msg = (
+            f"Variable '{short_name}' not available for table '{mip}' of "
+            f"project '{project}'"
+        )
+        raise ValueError(msg)
+    return var_info
+
+
+def clip(
+    cube: Cube,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> Cube:
+    """Clip values at a specified minimum and/or maximum value.
+
+    Values lower than minimum are set to minimum and values higher than maximum
+    are set to maximum.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    minimum:
+        Lower threshold to be applied on input cube data.
+    maximum:
+        Upper threshold to be applied on input cube data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Clipped cube.
+
+    Raises
+    ------
+    ValueError
+        ``minimum`` and ``maximum`` are set to ``None``.
+
     """
     if minimum is None and maximum is None:
-        raise ValueError(
-            "Either minimum, maximum or both have to be\
-                          specified."
-        )
-    elif minimum is not None and maximum is not None:
+        msg = "Either minimum, maximum or both have to be specified"
+        raise ValueError(msg)
+    if minimum is not None and maximum is not None:
         if maximum < minimum:
-            raise ValueError("Maximum should be equal or larger than minimum.")
+            msg = "Maximum should be equal or larger than minimum"
+            raise ValueError(msg)
     cube.data = da.clip(cube.core_data(), minimum, maximum)
     return cube
 
@@ -127,7 +218,9 @@ def cumulative_sum(
     if axes:
         if cube.has_lazy_data():
             cube.data = da.cumsum(
-                cube.core_data(), axis=axes[0], method=method
+                cube.core_data(),
+                axis=axes[0],
+                method=method,
             )
         else:
             cube.data = np.cumsum(cube.core_data(), axis=axes[0])
@@ -225,16 +318,18 @@ def histogram(
     """
     # Check arguments
     if isinstance(bins, str):
-        raise TypeError(
+        msg = (
             f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
             f"int"
         )
+        raise TypeError(msg)
     allowed_norms = (None, "sum", "integral")
     if normalization is not None and normalization not in allowed_norms:
-        raise ValueError(
+        msg = (
             f"Expected one of {allowed_norms} for normalization, got "
             f"'{normalization}'"
         )
+        raise ValueError(msg)
 
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
@@ -261,11 +356,13 @@ def histogram(
     )
 
     # Get final cube
-    hist_cube = _get_histogram_cube(
-        cube, hist_data, coords, bin_edges, normalization
+    return _get_histogram_cube(
+        cube,
+        hist_data,
+        coords,
+        bin_edges,
+        normalization,
     )
-
-    return hist_cube
 
 
 def _get_bins(
@@ -276,21 +373,26 @@ def _get_bins(
     """Calculate bin range and edges."""
     if bin_range is None:
         bin_range = dask.compute(
-            cube.core_data().min(), cube.core_data().max()
+            cube.core_data().min(),
+            cube.core_data().max(),
         )
     if isinstance(bins, int):
         bin_edges = np.linspace(
-            bin_range[0], bin_range[1], bins + 1, dtype=np.float64
+            bin_range[0],
+            bin_range[1],
+            bins + 1,
+            dtype=np.float64,
         )
     else:
         bin_edges = np.array(bins, dtype=np.float64)
 
     finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
     if not all(finite_bin_range):
-        raise ValueError(
+        msg = (
             f"Cannot calculate histogram for bin_range={bin_range} (or for "
             f"fully masked data when `bin_range` is not given)"
         )
+        raise ValueError(msg)
 
     return (bin_range, bin_edges)
 
@@ -352,7 +454,10 @@ def _calculate_histogram_lazy(
         data = data[~mask]
         weights = weights[~mask]
         hist = da.histogram(
-            data, bins=bin_edges, range=bin_range, weights=weights
+            data,
+            bins=bin_edges,
+            range=bin_range,
+            weights=weights,
         )[0]
         hist_sum = hist.sum()
         hist = da.ma.masked_array(hist, mask=da.allclose(hist_sum, 0.0))
@@ -413,7 +518,8 @@ def _calculate_histogram_eager(
     remaining_dims = tuple(a for a in range(data.ndim) if a not in along_axes)
     reshaped_data = np.transpose(data, axes=(*remaining_dims, *along_axes))
     reshaped_weights = np.transpose(
-        weights, axes=(*remaining_dims, *along_axes)
+        weights,
+        axes=(*remaining_dims, *along_axes),
     )
     shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
     reshaped_data = reshaped_data.reshape(*shape_rem_dims, -1)
@@ -425,7 +531,10 @@ def _calculate_histogram_eager(
         arr = arr[~mask]
         wgts = wgts[~mask]
         return np.histogram(
-            arr, bins=bin_edges, range=bin_range, weights=wgts
+            arr,
+            bins=bin_edges,
+            range=bin_range,
+            weights=wgts,
         )[0]
 
     v_histogram = np.vectorize(_get_hist_values, signature="(n),(n)->(m)")
@@ -456,7 +565,7 @@ def _get_histogram_cube(
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
     normalization: Literal["sum", "integral"] | None,
-):
+) -> Cube:
     """Get cube with correct metadata for histogram."""
     # Calculate bin centers using 2-window running mean and get corresponding
     # coordinate
@@ -470,8 +579,7 @@ def _get_histogram_cube(
         units=cube.units,
     )
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     cell_methods = cube.cell_methods
     with ignore_iris_vague_metadata_warnings():
         cube = cube.collapsed(coords, iris.analysis.MAX)
@@ -482,7 +590,7 @@ def _get_histogram_cube(
     )
     var_name_suffix = "" if cube.var_name is None else f"_{cube.var_name}"
     dim_spec = [(d, cube.coord_dims(d)) for d in cube.dim_coords] + [
-        (bin_coord, cube.ndim)
+        (bin_coord, cube.ndim),
     ]
     if normalization == "sum":
         long_name = f"Relative Frequency{long_name_suffix}"
@@ -496,7 +604,7 @@ def _get_histogram_cube(
         long_name = f"Frequency{long_name_suffix}"
         var_name = f"frequency{var_name_suffix}"
         units = "1"
-    hist_cube = Cube(
+    return Cube(
         data,
         standard_name=None,
         long_name=long_name,
@@ -515,5 +623,3 @@ def _get_histogram_cube(
             (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()
         ],
     )
-
-    return hist_cube

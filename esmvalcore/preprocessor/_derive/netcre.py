@@ -9,15 +9,14 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `netcre`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "rlut"},
             {"short_name": "rlutcs"},
             {"short_name": "rsut"},
             {"short_name": "rsutcs"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes):

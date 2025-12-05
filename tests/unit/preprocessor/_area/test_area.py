@@ -90,7 +90,10 @@ class Test(tests.Test):
         cube = guess_bounds(self.grid, ["longitude", "latitude"])
         grid_areas = iris.analysis.cartography.area_weights(cube)[0]
         measure = iris.coords.CellMeasure(
-            grid_areas, standard_name="cell_area", units="m2", measure="area"
+            grid_areas,
+            standard_name="cell_area",
+            units="m2",
+            measure="area",
         )
         self.grid.add_cell_measure(measure, (1, 2))
 
@@ -240,9 +243,12 @@ class Test(tests.Test):
         cube = guess_bounds(self.grid, ["longitude", "latitude"])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
-            grid_areas, standard_name="cell_area", units="m2", measure="area"
+            grid_areas,
+            standard_name="cell_area",
+            units="m2",
+            measure="area",
         )
-        self.grid.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid.add_cell_measure(measure, range(measure.ndim))
         region = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
         # expected outcome
         expected = np.ones((2, 2, 2))
@@ -312,10 +318,16 @@ def create_irregular_grid_cube(data, lons, lats):
     nlat = iris.coords.DimCoord(range(data.shape[1]), var_name="nlat")
     nlon = iris.coords.DimCoord(range(data.shape[2]), var_name="nlon")
     lat = iris.coords.AuxCoord(
-        lats, var_name="lat", standard_name="latitude", units="degrees"
+        lats,
+        var_name="lat",
+        standard_name="latitude",
+        units="degrees",
     )
     lon = iris.coords.AuxCoord(
-        lons, var_name="lon", standard_name="longitude", units="degrees"
+        lons,
+        var_name="lon",
+        standard_name="longitude",
+        units="degrees",
     )
     dim_coord_spec = [
         (times, 0),
@@ -326,14 +338,13 @@ def create_irregular_grid_cube(data, lons, lats):
         (lat, [1, 2]),
         (lon, [1, 2]),
     ]
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         data,
         var_name="tos",
         units="K",
         dim_coords_and_dims=dim_coord_spec,
         aux_coords_and_dims=aux_coord_spec,
     )
-    return cube
 
 
 IRREGULAR_EXTRACT_REGION_TESTS = [
@@ -347,7 +358,9 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
             dtype=bool,
         ),
         "data": np.arange(18, dtype=np.float32).reshape((2, 3, 3))[
-            :, 1:3, 1:2
+            :,
+            1:3,
+            1:2,
         ],
     },
     {
@@ -360,7 +373,9 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
             dtype=bool,
         ),
         "data": np.arange(18, dtype=np.float32).reshape((2, 3, 3))[
-            :, 0:2, 1:3
+            :,
+            0:2,
+            1:3,
         ],
     },
     {
@@ -431,8 +446,7 @@ def irregular_extract_region_cube():
         ],
         dtype=np.float64,
     )
-    cube = create_irregular_grid_cube(data, lons, lats)
-    return cube
+    return create_irregular_grid_cube(data, lons, lats)
 
 
 @pytest.mark.parametrize("case", IRREGULAR_EXTRACT_REGION_TESTS)
@@ -477,7 +491,8 @@ def create_rotated_grid_cube(data):
     )
 
     coord_sys_rotated = iris.coord_systems.RotatedGeogCS(
-        grid_north_pole_latitude, grid_north_pole_longitude
+        grid_north_pole_latitude,
+        grid_north_pole_longitude,
     )
     grid_lat = iris.coords.DimCoord(
         grid_lats,
@@ -525,14 +540,13 @@ def create_rotated_grid_cube(data):
         (lat, [0, 1]),
         (lon, [0, 1]),
     ]
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         data,
         var_name="tos",
         units="K",
         dim_coords_and_dims=dim_coord_spec,
         aux_coords_and_dims=aux_coord_spec,
     )
-    return cube
 
 
 ROTATED_AREA_STATISTICS_TEST = [
@@ -609,13 +623,12 @@ def create_unstructured_grid_cube():
         standard_name="longitude",
         units="degrees",
     )
-    cube = iris.cube.Cube(
+    return iris.cube.Cube(
         [0, 10, 20],
         var_name="tas",
         units="K",
         aux_coords_and_dims=[(lat, 0), (lon, 0)],
     )
-    return cube
 
 
 def test_area_statistics_max_irregular_grid():
@@ -691,7 +704,7 @@ def write_shapefile(shape, path, negative_bounds=False):
                     {
                         "geometry": mapping(s),
                         "properties": {"id": id_},
-                    }
+                    },
                 )
             else:
                 file.write(
@@ -699,7 +712,7 @@ def write_shapefile(shape, path, negative_bounds=False):
                         "geometry": mapping(s),
                         "properties": {"id": id_},
                         "bounds": [-180, 180, -90, 90],
-                    }
+                    },
                 )
 
 
@@ -714,7 +727,7 @@ def square_shape(request, tmp_path):
             (1.0, 1.0),
             (1.0 + slon, 1.0),
             (1.0 + slon, 1.0 + slat),
-        ]
+        ],
     )
 
     write_shapefile(polyg, tmp_path / "test_shape.shp")
@@ -747,8 +760,8 @@ def square_composite_shape(request, tmp_path):
                     (1.0 + n, 1.0),
                     (1.0 + n + slon, 1.0),
                     (1.0 + n + slon, 1.0 + slat),
-                ]
-            )
+                ],
+            ),
         )
     write_shapefile(polyg, tmp_path / "test_shape.shp")
     write_shapefile(
@@ -854,7 +867,10 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
         original[: expected.shape[0], : expected.shape[1]] = expected
         expected = original
     result = extract_shape(
-        make_testcube, tmp_path / "test_shape.shp", crop=crop, ids=ids
+        make_testcube,
+        tmp_path / "test_shape.shp",
+        crop=crop,
+        ids=ids,
     )
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
@@ -873,7 +889,9 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
 
 @pytest.mark.parametrize("lazy", [True, False])
 def test_extract_shape_with_supplementaries(
-    make_testcube, ne_ocean_shapefile, lazy
+    make_testcube,
+    ne_ocean_shapefile,
+    lazy,
 ):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
@@ -914,7 +932,8 @@ def test_extract_shape_with_supplementaries(
     result_ancillary_var = result.ancillary_variable("land_ice_area_fraction")
     assert result_ancillary_var.has_lazy_data() is lazy
     np.testing.assert_array_equal(
-        ancillary_var.data, result_ancillary_var.data
+        ancillary_var.data,
+        result_ancillary_var.data,
     )
 
 
@@ -927,7 +946,10 @@ def test_extract_shape_ne_check_nans(ne_ocean_shapefile):
 
 @pytest.mark.parametrize("crop", [True, False])
 def test_extract_shape_negative_bounds(
-    make_testcube, square_shape, tmp_path, crop
+    make_testcube,
+    square_shape,
+    tmp_path,
+    crop,
 ):
     """Test for extr a reg with shapefile w/neg ie bound ie (-180, 180)."""
     expected = square_shape
@@ -943,7 +965,7 @@ def test_extract_shape_negative_bounds(
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
-def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
+def test_extract_shape_neg_lon(make_testcube, tmp_path):
     """Test for extr a reg with shapefile w/negative lon."""
     (slat, slon) = (2, -2)
     polyg = Polygon(
@@ -952,10 +974,12 @@ def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
             (1.0, 1.0),
             (1.0 + slon, 1.0),
             (1.0 + slon, 1.0 + slat),
-        ]
+        ],
     )
     write_shapefile(
-        polyg, tmp_path / "test_shape_negative_lon.shp", negative_bounds=True
+        polyg,
+        tmp_path / "test_shape_negative_lon.shp",
+        negative_bounds=True,
     )
 
     expected_data = np.ones((5, 5))
@@ -964,7 +988,11 @@ def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
     expected_mask[2, 0] = False
     expected = np.ma.array(expected_data, mask=expected_mask)
     negative_bounds_shapefile = tmp_path / "test_shape_negative_lon.shp"
-    result = extract_shape(make_testcube, negative_bounds_shapefile, crop=crop)
+    result = extract_shape(
+        make_testcube,
+        negative_bounds_shapefile,
+        crop=False,
+    )
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
@@ -972,7 +1000,11 @@ def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
 @pytest.mark.parametrize("crop", [True, False])
 @pytest.mark.parametrize("decomposed", [True, False])
 def test_extract_composite_shape(
-    make_testcube, square_composite_shape, tmp_path, crop, decomposed
+    make_testcube,
+    square_composite_shape,
+    tmp_path,
+    crop,
+    decomposed,
 ):
     """Test for extracting a region with shapefile."""
     expected = square_composite_shape
@@ -1014,8 +1046,8 @@ def test_extract_specific_shape(make_testcube, tmp_path, ids):
                     (1.0 + n, 1.0),
                     (1.0 + n + slon, 1.0),
                     (1.0 + n + slon, 1.0 + slat),
-                ]
-            )
+                ],
+            ),
         )
     write_shapefile(polyg, tmp_path / "test_shape.shp")
 
@@ -1056,8 +1088,8 @@ def test_extract_specific_shape_raises_if_not_present(make_testcube, tmp_path):
                     (1.0 + n, 1.0),
                     (1.0 + n + slon, 1.0),
                     (1.0 + n + slon, 1.0 + slat),
-                ]
-            )
+                ],
+            ),
         )
     write_shapefile(polyg, tmp_path / "test_shape.shp")
 
@@ -1074,7 +1106,11 @@ def test_extract_specific_shape_raises_if_not_present(make_testcube, tmp_path):
 @pytest.mark.parametrize("crop", [True, False])
 @pytest.mark.parametrize("decomposed", [True, False])
 def test_extract_composite_shape_negative_bounds(
-    make_testcube, square_composite_shape, tmp_path, crop, decomposed
+    make_testcube,
+    square_composite_shape,
+    tmp_path,
+    crop,
+    decomposed,
 ):
     """Test for extr a reg with shapefile w/neg bounds ie (-180, 180)."""
     expected = square_composite_shape
@@ -1122,8 +1158,7 @@ def irreg_extract_shape_cube():
         ],
         dtype=np.float64,
     )
-    cube = create_irregular_grid_cube(data, lons, lats)
-    return cube
+    return create_irregular_grid_cube(data, lons, lats)
 
 
 @pytest.mark.parametrize("method", ["contains", "representative"])
@@ -1136,7 +1171,7 @@ def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
             (0.5, 3.0),
             (1.5, 3.0),
             (1.5, 0.5),
-        ]
+        ],
     )
 
     shapefile = tmp_path / "shapefile.shp"
@@ -1317,12 +1352,11 @@ def test_extract_shape_invalid_dict(make_testcube, ids):
 @pytest.fixture
 def ar6_shapefile():
     """Path to AR6 shapefile."""
-    shapefile = (
+    return (
         Path(esmvalcore.preprocessor.__file__).parent
         / "shapefiles"
         / "ar6.shp"
     )
-    return shapefile
 
 
 def test_get_requested_geometries_invalid_ids(ar6_shapefile):
@@ -1331,7 +1365,9 @@ def test_get_requested_geometries_invalid_ids(ar6_shapefile):
     with fiona.open(ar6_shapefile) as geometries:
         with pytest.raises(ValueError, match=msg):
             _get_requested_geometries(
-                geometries, {"wrong_attr": [1, 2]}, Path("shape.shp")
+                geometries,
+                {"wrong_attr": [1, 2]},
+                Path("shape.shp"),
             )
 
 
@@ -1351,11 +1387,15 @@ def test_update_shapefile_path_abs(session, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "shapefile", ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"]
+    "shapefile",
+    ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"],
 )
 @pytest.mark.parametrize("session", [{}, None])
 def test_update_shapefile_path_rel(
-    shapefile, session, ar6_shapefile, tmp_path
+    shapefile,
+    session,
+    ar6_shapefile,
+    tmp_path,
 ):
     """Test ``update_shapefile_path``."""
     if session is not None:
@@ -1517,12 +1557,15 @@ def test_time_dependent_volcello(lazy):
     coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
     cube = iris.cube.Cube(data, dim_coords_and_dims=coords_spec4)
     volcello = iris.coords.CellMeasure(
-        data, standard_name="ocean_volume", units="m3", measure="volume"
+        data,
+        standard_name="ocean_volume",
+        units="m3",
+        measure="volume",
     )
     if lazy:
         cube.data = cube.lazy_data()
         volcello.data = volcello.lazy_data()
-    cube.add_cell_measure(volcello, range(0, volcello.ndim))
+    cube.add_cell_measure(volcello, range(volcello.ndim))
     result = extract_shape(
         cube,
         "AR6",

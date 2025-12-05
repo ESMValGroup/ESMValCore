@@ -1,9 +1,12 @@
 """Shared functions for fixes."""
 
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime, timedelta
-from functools import lru_cache
+from functools import cache
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import iris
@@ -11,10 +14,12 @@ import numpy as np
 import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import Coord
 from scipy.interpolate import interp1d
 
 from esmvalcore.iris_helpers import date2num
+
+if TYPE_CHECKING:
+    from iris.coords import Coord
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +48,12 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
     for coord_name, coord_dims in coord_dict.items():
         coord_cube = cubes.extract(NameConstraint(var_name=coord_name))
         if len(coord_cube) != 1:
-            raise ValueError(
+            msg = (
                 f"Expected exactly one coordinate cube '{coord_name}' in "
                 f"list of cubes {cubes}, got {len(coord_cube):d}"
+            )
+            raise ValueError(
+                msg,
             )
         coord_cube = coord_cube[0]
         aux_coord = cube_to_aux_coord(coord_cube)
@@ -61,10 +69,7 @@ def _map_on_filled(function, array):
     # We support dask and numpy arrays
     # Note: numpy's dispatch mechanism does not work here because of the usage
     # of `np.ma.filled` and `np.ma.masked_array`.
-    if isinstance(array, da.core.Array):
-        num_module = da
-    else:
-        num_module = np
+    num_module = da if isinstance(array, da.core.Array) else np
 
     mask = num_module.ma.getmaskarray(array)
 
@@ -108,13 +113,15 @@ def add_plev_from_altitude(cube):
             height_coord.convert_units("m")
         altitude_to_pressure = get_altitude_to_pressure_func()
         pressure_points = _map_on_filled(
-            altitude_to_pressure, height_coord.core_points()
+            altitude_to_pressure,
+            height_coord.core_points(),
         )
         if height_coord.core_bounds() is None:
             pressure_bounds = None
         else:
             pressure_bounds = _map_on_filled(
-                altitude_to_pressure, height_coord.core_bounds()
+                altitude_to_pressure,
+                height_coord.core_bounds(),
             )
         pressure_coord = iris.coords.AuxCoord(
             pressure_points,
@@ -126,9 +133,12 @@ def add_plev_from_altitude(cube):
         )
         cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
         return
-    raise ValueError(
+    msg = (
         "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
         "available"
+    )
+    raise ValueError(
+        msg,
     )
 
 
@@ -151,13 +161,15 @@ def add_altitude_from_plev(cube):
             plev_coord.convert_units("Pa")
         pressure_to_altitude = get_pressure_to_altitude_func()
         altitude_points = _map_on_filled(
-            pressure_to_altitude, plev_coord.core_points()
+            pressure_to_altitude,
+            plev_coord.core_points(),
         )
         if plev_coord.core_bounds() is None:
             altitude_bounds = None
         else:
             altitude_bounds = _map_on_filled(
-                pressure_to_altitude, plev_coord.core_bounds()
+                pressure_to_altitude,
+                plev_coord.core_bounds(),
             )
         altitude_coord = iris.coords.AuxCoord(
             altitude_points,
@@ -169,9 +181,12 @@ def add_altitude_from_plev(cube):
         )
         cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
         return
-    raise ValueError(
+    msg = (
         "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
         "available"
+    )
+    raise ValueError(
+        msg,
     )
 
 
@@ -290,7 +305,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_altitude_to_pressure_func():
     """Get function converting altitude [m] to air pressure [Pa].
 
@@ -302,13 +317,12 @@ def get_altitude_to_pressure_func():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    func = interp1d(
+    return interp1d(
         data_frame["Altitude [m]"],
         data_frame["Pressure [Pa]"],
         kind="cubic",
         fill_value="extrapolate",
     )
-    return func
 
 
 def get_bounds_cube(cubes, coord_var_name):
@@ -340,16 +354,20 @@ def get_bounds_cube(cubes, coord_var_name):
         if len(cube) == 1:
             return cube[0]
         if len(cube) > 1:
+            msg = f"Multiple cubes with var_name '{bound_var}' found"
             raise ValueError(
-                f"Multiple cubes with var_name '{bound_var}' found"
+                msg,
             )
-    raise ValueError(
+    msg = (
         f"No bounds for coordinate variable '{coord_var_name}' available in "
         f"cubes\n{cubes}"
     )
+    raise ValueError(
+        msg,
+    )
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_pressure_to_altitude_func():
     """Get function converting air pressure [Pa] to altitude [m].
 
@@ -361,13 +379,12 @@ def get_pressure_to_altitude_func():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    func = interp1d(
+    return interp1d(
         data_frame["Pressure [Pa]"],
         data_frame["Altitude [m]"],
         kind="cubic",
         fill_value="extrapolate",
     )
-    return func
 
 
 def fix_bounds(cube, cubes, coord_var_names):
@@ -521,20 +538,21 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
             max_bound = date + timedelta(hours=12.0)
         elif "hr" in freq:
             (n_hours_str, _, _) = freq.partition("hr")
-            if not n_hours_str:
-                n_hours = 1
-            else:
-                n_hours = int(n_hours_str)
+            n_hours = 1 if not n_hours_str else int(n_hours_str)
             if 24 % n_hours:
-                raise NotImplementedError(
+                msg = (
                     f"For `n`-hourly data, `n` must be a divisor of 24, got "
                     f"'{freq}'"
+                )
+                raise NotImplementedError(
+                    msg,
                 )
             min_bound = date - timedelta(hours=n_hours / 2.0)
             max_bound = date + timedelta(hours=n_hours / 2.0)
         else:
+            msg = f"Cannot guess time bounds for frequency '{freq}'"
             raise NotImplementedError(
-                f"Cannot guess time bounds for frequency '{freq}'"
+                msg,
             )
         bounds.append([min_bound, max_bound])
 

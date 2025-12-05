@@ -11,8 +11,8 @@ import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.esgf._download import ESGFFile
 from tests import PreprocessorFile
 
 
@@ -39,7 +39,7 @@ TEST_ALLOW_SKIPPING = [
 ]
 
 
-@pytest.mark.parametrize("var,cfg,out", TEST_ALLOW_SKIPPING)
+@pytest.mark.parametrize(("var", "cfg", "out"), TEST_ALLOW_SKIPPING)
 def test_allow_skipping(var, cfg, out):
     """Test ``_allow_skipping``."""
     dataset = Dataset(**var)
@@ -78,7 +78,11 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
-        recipe, diagnostic_name, diagnostic, [], True
+        recipe,
+        diagnostic_name,
+        diagnostic,
+        [],
+        True,
     )
 
     assert tasks == [resume_task]
@@ -115,8 +119,8 @@ def create_esgf_search_results():
                     ],
                 },
                 context=None,
-            )
-        ]
+            ),
+        ],
     )
     file1 = ESGFFile(
         [
@@ -137,58 +141,11 @@ def create_esgf_search_results():
                     ],
                 },
                 context=None,
-            )
-        ]
+            ),
+        ],
     )
 
     return [file0, file1]
-
-
-@pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
-def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
-    """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""
-    esgf_files = create_esgf_search_results()
-    download_dir = tmp_path / "download_dir"
-    local_dir = Path("/local_dir")
-
-    # Local files can cover the entire period, part of it, or nothing
-    local_file_options = {
-        "all": [f.local_file(local_dir) for f in esgf_files],
-        "partial": [esgf_files[1].local_file(local_dir)],
-        "none": [],
-    }
-    local_files = local_file_options[local_availability]
-
-    variable = {
-        "project": "CMIP6",
-        "mip": "Amon",
-        "frequency": "mon",
-        "short_name": "tas",
-        "dataset": "EC.-Earth3",
-        "exp": "historical",
-        "ensemble": "r1i1p1f1",
-        "grid": "gr",
-        "timerange": "1850/1851",
-        "alias": "CMIP6_EC-Eeath3_tas",
-    }
-    dataset = Dataset(**variable)
-    files = {
-        "all": local_files,
-        "partial": local_files + esgf_files[:1],
-        "none": esgf_files,
-    }
-    dataset.session = {"download_dir": download_dir}
-    dataset.files = list(files[local_availability])
-
-    monkeypatch.setattr(_recipe, "DOWNLOAD_FILES", set())
-    _recipe._schedule_for_download([dataset])
-    print(esgf_files)
-    expected = {
-        "all": set(),
-        "partial": set(esgf_files[:1]),
-        "none": set(esgf_files),
-    }
-    assert _recipe.DOWNLOAD_FILES == expected[local_availability]
 
 
 def test_write_html_summary(mocker, caplog):
@@ -312,7 +269,10 @@ def test_update_multiproduct_multi_model_statistics():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 2
@@ -327,9 +287,9 @@ def test_update_multiproduct_multi_model_statistics():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -401,17 +361,20 @@ def test_update_multiproduct_no_timerange():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
 
     assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert "dataset" in product.attributes
     assert "multi_model_statistics" in product.attributes
@@ -438,7 +401,7 @@ def test_update_multiproduct_multi_model_statistics_percentile():
             "statistics": [
                 {"operator": "percentile", "percent": 5.0},
                 {"operator": "percentile", "percent": 95.0},
-            ]
+            ],
         },
         "save": {"compute": False},
     }
@@ -494,7 +457,10 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     preproc_dir = "/preproc"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 2
@@ -510,9 +476,9 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -564,34 +530,49 @@ def test_update_multiproduct_ensemble_statistics():
     cube = iris.cube.Cube(np.array([1]))
     products = [
         PreprocessorFile(
-            cube, "A", attributes=common_attributes, settings=settings
+            cube,
+            "A",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "B", attributes=common_attributes, settings=settings
+            cube,
+            "B",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "C", attributes=common_attributes, settings=settings
+            cube,
+            "C",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "D", attributes=common_attributes, settings=settings
+            cube,
+            "D",
+            attributes=common_attributes,
+            settings=settings,
         ),
     ]
     order = ("load", "ensemble_statistics", "save")
     preproc_dir = "/preproc"
     step = "ensemble_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsembleMedian"
     assert "dataset" in product.attributes
@@ -610,7 +591,7 @@ def test_update_multiproduct_ensemble_statistics():
     assert len(stats) == 1
     assert "median" in stats
     assert stats["median"].filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
 
@@ -636,34 +617,49 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     cube = iris.cube.Cube(np.array([1]))
     products = [
         PreprocessorFile(
-            cube, "A", attributes=common_attributes, settings=settings
+            cube,
+            "A",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "B", attributes=common_attributes, settings=settings
+            cube,
+            "B",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "C", attributes=common_attributes, settings=settings
+            cube,
+            "C",
+            attributes=common_attributes,
+            settings=settings,
         ),
         PreprocessorFile(
-            cube, "D", attributes=common_attributes, settings=settings
+            cube,
+            "D",
+            attributes=common_attributes,
+            settings=settings,
         ),
     ]
     order = ("load", "ensemble_statistics", "save")
     preproc_dir = "/preproc"
     step = "ensemble_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
 
     assert len(output) == 1
-    product = list(output)[0]
+    product = next(iter(output))
     assert product.filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsemblePercentile5"
     assert "dataset" in product.attributes
@@ -682,20 +678,23 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     assert len(stats) == 1
     assert "percentile5" in stats
     assert stats["percentile5"].filename == Path(
-        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc"
+        "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
 
 def test_update_multiproduct_no_product():
     cube = iris.cube.Cube(np.array([1]))
     products = [
-        PreprocessorFile(cube, "A", attributes=None, settings={"step": {}})
+        PreprocessorFile(cube, "A", attributes=None, settings={"step": {}}),
     ]
     order = ("load", "save")
     preproc_dir = "/preproc_dir"
     step = "multi_model_statistics"
     output, settings = _recipe._update_multiproduct(
-        products, order, preproc_dir, step
+        products,
+        order,
+        preproc_dir,
+        step,
     )
     assert output == products
     assert settings == {}
@@ -709,7 +708,7 @@ SCRIPTS_CFG = {
 DIAGNOSTICS = {
     "d1": {"scripts": {"s1": {"ancestors": [], **SCRIPTS_CFG}}},
     "d2": {
-        "scripts": {"s1": {"ancestors": ["d1/pr", "d1/s1"], **SCRIPTS_CFG}}
+        "scripts": {"s1": {"ancestors": ["d1/pr", "d1/s1"], **SCRIPTS_CFG}},
     },
     "d3": {"scripts": {"s1": {"ancestors": ["d2/s1"], **SCRIPTS_CFG}}},
     "d4": {
@@ -717,7 +716,7 @@ DIAGNOSTICS = {
             "s1": {"ancestors": "d1/pr d1/tas", **SCRIPTS_CFG},
             "s2": {"ancestors": ["d4/pr", "d4/tas"], **SCRIPTS_CFG},
             "s3": {"ancestors": ["d3/s1"], **SCRIPTS_CFG},
-        }
+        },
     },
 }
 TEST_GET_TASKS_TO_RUN = [
@@ -756,7 +755,8 @@ TEST_GET_TASKS_TO_RUN = [
 
 
 @pytest.mark.parametrize(
-    "diags_to_run,tasknames_to_run", TEST_GET_TASKS_TO_RUN
+    ("diags_to_run", "tasknames_to_run"),
+    TEST_GET_TASKS_TO_RUN,
 )
 def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
     """Test ``Recipe._get_tasks_to_run``."""
@@ -780,7 +780,8 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 
 @pytest.mark.parametrize(
-    "tasks_to_run,tasks_run", TEST_CREATE_DIAGNOSTIC_TASKS
+    ("tasks_to_run", "tasks_run"),
+    TEST_CREATE_DIAGNOSTIC_TASKS,
 )
 @mock.patch("esmvalcore._recipe.recipe.DiagnosticTask", autospec=True)
 def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
@@ -917,7 +918,8 @@ def test_update_extract_shape_abs_shapefile(session, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "shapefile", ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"]
+    "shapefile",
+    ["aux_dir/ar6.shp", "ar6.shp", "ar6", "AR6", "aR6"],
 )
 def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
     """Test ``_update_extract_shape``."""
@@ -938,3 +940,19 @@ def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
             / "ar6.shp"
         )
         assert settings["extract_shape"]["shapefile"] == ar6_file
+
+
+def test_special_name_to_dataset_invalid_special_name_type():
+    facets = {
+        "preprocessor": "preproc",
+        "variable_group": "var",
+        "diagnostic": "diag",
+        "reference_dataset": 1,
+    }
+    msg = (
+        r"Preprocessor 'preproc' uses 'reference_dataset', but "
+        r"'reference_dataset' is not a `str` for variable 'var' of diagnostic "
+        r"'diag', got '1' \(<class 'int'>\)"
+    )
+    with pytest.raises(RecipeError, match=msg):
+        _recipe._special_name_to_dataset(facets, "reference_dataset")

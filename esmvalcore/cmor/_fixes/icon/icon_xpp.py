@@ -22,7 +22,8 @@ class Clwvi(IconFix):
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="tqc_dia") + self.get_cube(
-            cubes, var_name="tqi_dia"
+            cubes,
+            var_name="tqi_dia",
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -86,7 +87,8 @@ class Rtmt(IconFix):
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
         cube = self.get_cube(cubes, var_name="sob_t") + self.get_cube(
-            cubes, var_name="thb_t"
+            cubes,
+            var_name="thb_t",
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])

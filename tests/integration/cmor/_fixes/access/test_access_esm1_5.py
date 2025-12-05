@@ -14,7 +14,6 @@ import esmvalcore.cmor._fixes.access.access_esm1_5
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 time_coord = DimCoord(
@@ -71,7 +70,7 @@ depth_ocn_coord = DimCoord(
 lat_ocn_aux_coord = AuxCoord(
     np.tile(
         np.concatenate(
-            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80))
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80)),
         ),
         (300, 1),
     ),
@@ -86,7 +85,7 @@ lat_ocn_aux_coord = AuxCoord(
 lon_ocn_aux_coord = AuxCoord(
     np.tile(
         np.concatenate(
-            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80))
+            (np.linspace(80.5, 359.5, 280), np.linspace(0.5, 79.5, 80)),
         ),
         (300, 1),
     ),
@@ -132,13 +131,12 @@ def _get_fix(mip, frequency, short_name, fix_name):
         mip=mip,
         short_name=short_name,
     )
-    extra_facets = get_extra_facets(dataset, ())
+    extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = frequency
     extra_facets["exp"] = "amip"
     vardef = get_var_info(project="ACCESS", mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.access.access_esm1_5, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets, session={}, frequency="")
-    return fix
+    return cls(vardef, extra_facets=extra_facets, session={}, frequency="")
 
 
 def get_fix(mip, frequency, short_name):
@@ -155,8 +153,7 @@ def get_fix_allvar(mip, frequency, short_name):
 def fix_metadata(cubes, mip, frequency, short_name):
     """Fix metadata of cubes."""
     fix = get_fix(mip, frequency, short_name)
-    cubes = fix.fix_metadata(cubes)
-    return cubes
+    return fix.fix_metadata(cubes)
 
 
 def check_tas_metadata(cubes):
@@ -371,10 +368,16 @@ def test_get_tas_fix():
     fix = Fix.get_fixes("ACCESS", "ACCESS_ESM1_5", "Amon", "tas")
     assert fix == [
         esmvalcore.cmor._fixes.access.access_esm1_5.Tas(
-            vardef={}, extra_facets={}, session={}, frequency=""
+            vardef={},
+            extra_facets={},
+            session={},
+            frequency="",
         ),
         esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(
-            vardef={}, extra_facets={}, session={}, frequency=""
+            vardef={},
+            extra_facets={},
+            session={},
+            frequency="",
         ),
         GenericFix(None),
     ]
@@ -588,7 +591,10 @@ def test_so_fix(test_data_path):
 
     cube_so = Cube(
         da.arange(12 * 2 * 300 * 360, dtype=np.float32).reshape(
-            12, 2, 300, 360
+            12,
+            2,
+            300,
+            360,
         ),
         var_name="salt",
         units="unknown",

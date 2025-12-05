@@ -6,15 +6,19 @@ Allows for unit conversions.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import iris
 import numpy as np
-from cf_units import Unit
-from iris.coords import AuxCoord, DimCoord
-from iris.cube import Cube
+from iris.coords import AuxCoord
 
 from esmvalcore.iris_helpers import _try_special_unit_conversions
+
+if TYPE_CHECKING:
+    from cf_units import Unit
+    from iris.coords import DimCoord
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +122,18 @@ def accumulate_coordinate(
     try:
         coord = cube.coord(coordinate)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
+        msg = (
             f"Requested coordinate {coordinate} not found in cube "
-            f"{cube.summary(shorten=True)}",
+            f"{cube.summary(shorten=True)}"
+        )
+        raise ValueError(
+            msg,
         ) from err
 
     if coord.ndim > 1:
+        msg = f"Multidimensional coordinate {coord} not supported."
         raise NotImplementedError(
-            f"Multidimensional coordinate {coord} not supported."
+            msg,
         )
 
     array_module = da if coord.has_lazy_bounds() else np

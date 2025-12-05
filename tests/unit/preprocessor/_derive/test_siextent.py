@@ -5,8 +5,8 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.siextent as siextent
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.preprocessor._derive import siextent
 
 
 @pytest.fixture
@@ -81,5 +81,5 @@ def test_siextent_required():
     assert output == [
         {
             "short_name": "sic",
-        }
+        },
     ]

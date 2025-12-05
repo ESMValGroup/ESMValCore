@@ -1,28 +1,35 @@
 """Derivation of variable `qep`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from iris import Constraint
-from iris.cube import Cube, CubeList
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project: str) -> list[dict[str, str]]:
+    def required(project: str) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
-        required = [
+        return [
             {"short_name": "evspsbl"},
             {"short_name": "pr"},
         ]
-        return required
 
     @staticmethod
     def calculate(cubes: CubeList) -> Cube:
         """Compute net moisture flux into atmosphere."""
         evspsbl_cube = cubes.extract_cube(
-            Constraint(name="water_evapotranspiration_flux")
+            Constraint(name="water_evapotranspiration_flux"),
         )
         pr_cube = cubes.extract_cube(Constraint(name="precipitation_flux"))
 

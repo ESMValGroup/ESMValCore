@@ -1,0 +1,26 @@
+# Read native6, OBS6, and OBS data from the filesystem on a personal computer.
+projects:
+  # Data that can be read in its native format by ESMValCore.
+  native6:
+    data:
+      local:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
+        filename_template: "*.nc"
+  # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
+  OBS6:
+    data:
+      local:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+  # Data that has been CMORized by ESMValTool according to the CMIP5 standard.
+  OBS:
+    data:
+      local:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

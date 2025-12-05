@@ -6,8 +6,6 @@ import dask.array as da
 import iris
 from iris import Constraint
 
-from esmvalcore.exceptions import RecipeError
-
 from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)
@@ -17,13 +15,11 @@ class DerivedVariable(DerivedVariableBase):
     """Create mask for derivation of variable `siextent`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variable needed for derivation."""
         # 'sic' is sufficient as there is already an entry
         # in the mapping table esmvalcore/cmor/variable_alt_names.yml
-        required = [{"short_name": "sic"}]
-
-        return required
+        return [{"short_name": "sic"}]
 
     @staticmethod
     def calculate(cubes):
@@ -50,10 +46,11 @@ class DerivedVariable(DerivedVariableBase):
             try:
                 sic = cubes.extract_cube(Constraint(name="siconc"))
             except iris.exceptions.ConstraintMismatchError as exc:
-                raise RecipeError(
+                msg = (
                     "Derivation of siextent failed due to missing variables "
                     "sic and siconc."
-                ) from exc
+                )
+                raise ValueError(msg) from exc
 
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)

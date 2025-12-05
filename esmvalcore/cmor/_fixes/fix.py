@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import inspect
 import logging
 import tempfile
-from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import dask
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord, CoordExtent
-from iris.cube import Cube, CubeList
+from iris.coords import CoordExtent
+from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
@@ -27,9 +27,19 @@ from esmvalcore.cmor._utils import (
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import has_unstructured_grid, safe_convert_units
+from esmvalcore.iris_helpers import (
+    has_unstructured_grid,
+    safe_convert_units,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import ncdata
+    import xarray as xr
+    from iris.coords import Coord
+    from iris.cube import Cube
+
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
 
@@ -43,9 +53,9 @@ class Fix:
     def __init__(
         self,
         vardef: VariableInfo,
-        extra_facets: Optional[dict] = None,
-        session: Optional[Session] = None,
-        frequency: Optional[str] = None,
+        extra_facets: dict | None = None,
+        session: Session | None = None,
+        frequency: str | None = None,
     ) -> None:
         """Initialize fix object.
 
@@ -54,8 +64,7 @@ class Fix:
         vardef:
             CMOR table entry of the variable.
         extra_facets:
-            Extra facets are mainly used for data outside of the big projects
-            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+            Extra facets. For details, see :ref:`config-extra-facets`.
         session:
             Current session which includes configuration and directory
             information.
@@ -75,34 +84,43 @@ class Fix:
 
     def fix_file(
         self,
-        filepath: Path,
-        output_dir: Path,
-        add_unique_suffix: bool = False,
-    ) -> str | Path:
-        """Apply fixes to the files prior to creating the cube.
+        file: str | Path | xr.Dataset | ncdata.NcData,
+        output_dir: Path,  # noqa: ARG002
+        add_unique_suffix: bool = False,  # noqa: ARG002
+    ) -> str | Path | xr.Dataset | ncdata.NcData:
+        """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-        Should be used only to fix errors that prevent loading or cannot be
-        fixed in the cube (e.g., those related to `missing_value` or
-        `_FillValue`).
+        This is mainly intended to fix errors that prevent loading the data
+        with Iris (e.g., those related to ``missing_value`` or ``_FillValue``)
+        or operations that are more efficient with other packages (e.g.,
+        loading files with lots of variables is much faster with Xarray than
+        Iris).
+
+        Warning
+        -------
+        A path should only be returned if it points to the original (unchanged)
+        file (i.e., a fix was not necessary). If a fix is necessary, this
+        function should return a :class:`~ncdata.NcData` or
+        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
+        input data should be created (this is very inefficient).
 
         Parameters
         ----------
-        filepath:
-            File to fix.
+        file:
+            Data to fix or path to them. Original files should not be
+            overwritten.
         output_dir:
             Output directory for fixed files.
         add_unique_suffix:
-            Adds a unique suffix to `output_dir` for thread safety.
+            Adds a unique suffix to ``output_dir`` for thread safety.
 
         Returns
         -------
-        str or pathlib.Path
-            Path to the corrected file. It can be different from the original
-            filepath if a fix has been applied, but if not it should be the
-            original filepath.
+        str | pathlib.Path | xr.Dataset | ncdata.NcData:
+            Fixed data or a path to them.
 
         """
-        return filepath
+        return file
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         """Apply fixes to the metadata of the cube.
@@ -118,7 +136,7 @@ class Fix:
 
         Returns
         -------
-        Iterable[iris.cube.Cube]
+        Sequence[iris.cube.Cube]
             Fixed cubes. They can be different instances.
 
         """
@@ -127,7 +145,7 @@ class Fix:
     def get_cube_from_list(
         self,
         cubes: CubeList,
-        short_name: Optional[str] = None,
+        short_name: str | None = None,
     ) -> Cube:
         """Get a cube from the list with a given short name.
 
@@ -155,7 +173,8 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise ValueError(f'Cube for variable "{short_name}" not found')
+        msg = f'Cube for variable "{short_name}" not found'
+        raise ValueError(msg)
 
     def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
@@ -175,11 +194,11 @@ class Fix:
         """
         return cube
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Fix equality."""
         return isinstance(self, other.__class__)
 
-    def __ne__(self, other: Any) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Fix inequality."""
         return not self.__eq__(other)
 
@@ -189,9 +208,9 @@ class Fix:
         dataset: str,
         mip: str,
         short_name: str,
-        extra_facets: Optional[dict] = None,
-        session: Optional[Session] = None,
-        frequency: Optional[str] = None,
+        extra_facets: dict | None = None,
+        session: Session | None = None,
+        frequency: str | None = None,
     ) -> list:
         """Get the fixes that must be applied for a given dataset.
 
@@ -219,8 +238,7 @@ class Fix:
         short_name:
             Variable's short name.
         extra_facets:
-            Extra facets are mainly used for data outside of the big projects
-            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+            Extra facets. For details, see :ref:`config-extra-facets`.
         session:
             Current session which includes configuration and directory
             information.
@@ -249,36 +267,33 @@ class Fix:
         if project == "cordex":
             driver = extra_facets["driver"].replace("-", "_").lower()
             extra_facets["dataset"] = dataset
-            try:
+            with contextlib.suppress(ImportError):
                 fixes_modules.append(
                     importlib.import_module(
-                        f"esmvalcore.cmor._fixes.{project}.{driver}.{dataset}"
-                    )
+                        f"esmvalcore.cmor._fixes.{project}.{driver}.{dataset}",
+                    ),
                 )
-            except ImportError:
-                pass
             fixes_modules.append(
                 importlib.import_module(
-                    "esmvalcore.cmor._fixes.cordex.cordex_fixes"
-                )
+                    "esmvalcore.cmor._fixes.cordex.cordex_fixes",
+                ),
             )
         else:
-            try:
+            with contextlib.suppress(ImportError):
                 fixes_modules.append(
                     importlib.import_module(
-                        f"esmvalcore.cmor._fixes.{project}.{dataset}"
-                    )
+                        f"esmvalcore.cmor._fixes.{project}.{dataset}",
+                    ),
                 )
-            except ImportError:
-                pass
 
         for fixes_module in fixes_modules:
-            classes = dict(
-                (name.lower(), value)
+            classes = {
+                name.lower(): value
                 for (name, value) in inspect.getmembers(
-                    fixes_module, inspect.isclass
+                    fixes_module,
+                    inspect.isclass,
                 )
-            )
+            }
             for fix_name in (short_name, mip.lower(), "allvars"):
                 if fix_name in classes:
                     fixes.append(
@@ -287,7 +302,7 @@ class Fix:
                             extra_facets=extra_facets,
                             session=session,
                             frequency=frequency,
-                        )
+                        ),
                     )
 
         # Always perform generic fixes for all datasets
@@ -297,7 +312,7 @@ class Fix:
                 extra_facets=extra_facets,
                 session=session,
                 frequency=frequency,
-            )
+            ),
         )
 
         return fixes
@@ -368,7 +383,9 @@ class GenericFix(Fix):
         # by prior dataset-specific fixes) that the cubes here contain only one
         # relevant cube.
         cube = _get_single_cube(
-            cubes, self.vardef.short_name, dataset_str=dataset_str
+            cubes,
+            self.vardef.short_name,
+            dataset_str=dataset_str,
         )
 
         cube = self._fix_standard_name(cube)
@@ -406,12 +423,12 @@ class GenericFix(Fix):
             return f"\n(for file {cube.attributes['source_file']})"
         return f"\n(for variable {cube.var_name})"
 
-    def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _debug_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.debug(msg, *args)
 
-    def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _warning_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.warning(msg, *args)
@@ -524,7 +541,9 @@ class GenericFix(Fix):
             if cube.coords(cmor_coord.standard_name):
                 cube_coord = cube.coord(cmor_coord.standard_name)
                 self._fix_cmip6_multidim_lat_lon_coord(
-                    cube, cmor_coord, cube_coord
+                    cube,
+                    cmor_coord,
+                    cube_coord,
                 )
         return cube
 
@@ -541,7 +560,8 @@ class GenericFix(Fix):
             # Extract names of the actual generic level coordinates present in
             # the cube (e.g., `hybrid_height`, `standard_hybrid_sigma`)
             (standard_name, out_name, name) = _get_generic_lev_coord_names(
-                cube, cmor_coord
+                cube,
+                cmor_coord,
             )
 
             # Make sure to update variable information with actual generic
@@ -549,7 +569,10 @@ class GenericFix(Fix):
             # subsequent fixes
             if standard_name:
                 new_generic_level_coord = _get_new_generic_level_coord(
-                    self.vardef, cmor_coord, coord_name, name
+                    self.vardef,
+                    cmor_coord,
+                    coord_name,
+                    name,
                 )
                 self.vardef.coordinates[coord_name] = new_generic_level_coord
                 self._debug_msg(
@@ -570,7 +593,9 @@ class GenericFix(Fix):
             try:
                 (alternative_coord, cube_coord) = (
                     _get_alternative_generic_lev_coord(
-                        cube, coord_name, self.vardef.table_type
+                        cube,
+                        coord_name,
+                        self.vardef.table_type,
                     )
                 )
             except ValueError:  # no alternatives found
@@ -578,7 +603,9 @@ class GenericFix(Fix):
 
             # Fix alternative coord
             (cube, cube_coord) = self._fix_coord(
-                cube, alternative_coord, cube_coord
+                cube,
+                alternative_coord,
+                cube_coord,
             )
 
         return cube
@@ -595,7 +622,7 @@ class GenericFix(Fix):
                 "CMIP6" in self.vardef.table_type,
                 cube_coord.ndim > 1,
                 cube_coord.standard_name in ("latitude", "longitude"),
-            ]
+            ],
         )
         if is_cmip6_multidim_lat_lon:
             self._debug_msg(
@@ -688,7 +715,7 @@ class GenericFix(Fix):
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
         """Fix longitude coordinate to be in [0, 360]."""
-        if not cube_coord.standard_name == "longitude":
+        if cube_coord.standard_name != "longitude":
             return (cube, cube_coord)
 
         points = cube_coord.core_points()
@@ -808,11 +835,12 @@ class GenericFix(Fix):
             Unit(
                 "days since 1850-1-1 00:00:00",
                 calendar=cube_coord.units.calendar,
-            )
+            ),
         )
         simplified_cal = _get_simplified_calendar(cube_coord.units.calendar)
         cube_coord.units = Unit(
-            cube_coord.units.origin, calendar=simplified_cal
+            cube_coord.units.origin,
+            calendar=simplified_cal,
         )
 
         # Fix units of time-related cube attributes
@@ -831,23 +859,21 @@ class GenericFix(Fix):
 
                     branch_parent = "branch_time_in_parent"
                     if branch_parent in attrs:
-                        try:
+                        # Overflow happens when the time is very large.
+                        with contextlib.suppress(OverflowError):
                             attrs[branch_parent] = parent_units.convert(
-                                attrs[branch_parent], cube_coord.units
+                                attrs[branch_parent],
+                                cube_coord.units,
                             )
-                        except OverflowError:
-                            # This happens when the time is very large.
-                            pass
 
                     branch_child = "branch_time_in_child"
                     if branch_child in attrs:
-                        try:
+                        # Overflow happens when the time is very large.
+                        with contextlib.suppress(OverflowError):
                             attrs[branch_child] = old_units.convert(
-                                attrs[branch_child], cube_coord.units
+                                attrs[branch_child],
+                                cube_coord.units,
                             )
-                        except OverflowError:
-                            # This happens when the time is very large.
-                            pass
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
@@ -898,11 +924,15 @@ class GenericFix(Fix):
         """Fix non-time coordinate."""
         self._fix_coord_units(cube, cmor_coord, cube_coord)
         (cube, cube_coord) = self._fix_longitude_0_360(
-            cube, cmor_coord, cube_coord
+            cube,
+            cmor_coord,
+            cube_coord,
         )
         self._fix_coord_bounds(cube, cmor_coord, cube_coord)
         (cube, cube_coord) = self._fix_coord_direction(
-            cube, cmor_coord, cube_coord
+            cube,
+            cmor_coord,
+            cube_coord,
         )
         self._fix_requested_coord_values(cube, cmor_coord, cube_coord)
         return (cube, cube_coord)

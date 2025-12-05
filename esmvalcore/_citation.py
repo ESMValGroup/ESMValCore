@@ -104,7 +104,9 @@ def _save_citation_bibtex(product_name, tags, json_urls):
     citation_entries.extend(sorted(entries))
 
     with open(
-        f"{product_name}_citation.bibtex", "w", encoding="utf-8"
+        f"{product_name}_citation.bibtex",
+        "w",
+        encoding="utf-8",
     ) as file:
         file.write("\n".join(citation_entries))
 
@@ -115,7 +117,7 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
     # Save CMIP6 url_info
     if info_urls:
         lines.append(
-            "Follow the links below to find more information about CMIP6 data:"
+            "Follow the links below to find more information about CMIP6 data:",
         )
         lines.extend(f"- {url}" for url in sorted(info_urls))
 
@@ -126,7 +128,7 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
             lines.append("")
         lines.append(
             "Additional data citation information was found, for "
-            "which no entry is available in the bibtex file:"
+            "which no entry is available in the bibtex file:",
         )
         lines.extend(
             "- " + str(t).replace("\n", " ") for t in sorted(other_info)
@@ -134,7 +136,9 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
 
     if lines:
         with open(
-            f"{product_name}_data_citation_info.txt", "w", encoding="utf-8"
+            f"{product_name}_data_citation_info.txt",
+            "w",
+            encoding="utf-8",
         ) as file:
             file.write("\n".join(lines) + "\n")
 
@@ -160,10 +164,10 @@ def _get_response(url):
                 json_data = response.json()
             else:
                 logger.warning("Error in the CMIP6 citation link: %s", url)
-        except IOError:
+        except OSError:
             logger.info(
                 "No network connection, "
-                "unable to retrieve CMIP6 citation information"
+                "unable to retrieve CMIP6 citation information",
             )
     return json_data
 
@@ -189,7 +193,7 @@ def _json_to_bibtex(data):
         doi = data["identifier"].get("id", "doi not found")
         url = f"https://doi.org/{doi}"
 
-    bibtex_entry = textwrap.dedent(f"""
+    return textwrap.dedent(f"""
         @misc{{{url},
         \turl = {{{url}}},
         \ttitle = {{{title}}},
@@ -199,7 +203,6 @@ def _json_to_bibtex(data):
         \tdoi = {{{doi}}},
         }}
         """).lstrip()
-    return bibtex_entry
 
 
 @lru_cache(maxsize=1024)
@@ -222,11 +225,7 @@ def _collect_bibtex_citation(tag):
 def _collect_cmip_citation(json_url):
     """Collect information from CMIP6 Data Citation Service."""
     json_data = _get_response(json_url)
-    if json_data:
-        bibtex_entry = _json_to_bibtex(json_data)
-    else:
-        bibtex_entry = ""
-    return bibtex_entry
+    return _json_to_bibtex(json_data) if json_data else ""
 
 
 def _make_url_prefix(attribute):
@@ -242,17 +241,14 @@ def _make_url_prefix(attribute):
     for key, value in attribute:
         if key.localpart in localpart:
             localpart[key.localpart] = value
-    url_prefix = ".".join(localpart.values())
-    return url_prefix
+    return ".".join(localpart.values())
 
 
 def _make_json_url(url_prefix):
     """Make json url based on CMIP6 Data Citation Service."""
-    json_url = f"{CMIP6_URL_STEM}/cerarest/exportcmip6?input={url_prefix}"
-    return json_url
+    return f"{CMIP6_URL_STEM}/cerarest/exportcmip6?input={url_prefix}"
 
 
 def _make_info_url(url_prefix):
     """Make info url based on CMIP6 Data Citation Service."""
-    info_url = f"{CMIP6_URL_STEM}/cmip6?input={url_prefix}"
-    return info_url
+    return f"{CMIP6_URL_STEM}/cmip6?input={url_prefix}"

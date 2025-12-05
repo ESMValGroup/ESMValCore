@@ -1,4 +1,3 @@
-# flake8: noqa
 from unittest.mock import sentinel
 
 import esmvalcore.cmor.check
@@ -6,9 +5,6 @@ import esmvalcore.cmor.fix
 import esmvalcore.cmor.fixes
 import esmvalcore.cmor.table
 from esmvalcore.cmor.check import (
-    CheckLevels,
-    CMORCheck,
-    CMORCheckError,
     cmor_check,
     cmor_check_data,
     cmor_check_metadata,
@@ -16,9 +12,11 @@ from esmvalcore.cmor.check import (
 
 
 def test_cmor_check_metadata(mocker):
-    """Test ``cmor_check_metadata``"""
+    """Test ``cmor_check_metadata``."""
     mock_get_cmor_checker = mocker.patch.object(
-        esmvalcore.cmor.check, "_get_cmor_checker", autospec=True
+        esmvalcore.cmor.check,
+        "_get_cmor_checker",
+        autospec=True,
     )
     (
         mock_get_cmor_checker.return_value.return_value.check_metadata.return_value
@@ -48,9 +46,11 @@ def test_cmor_check_metadata(mocker):
 
 
 def test_cmor_check_data(mocker):
-    """Test ``cmor_check_data``"""
+    """Test ``cmor_check_data``."""
     mock_get_cmor_checker = mocker.patch.object(
-        esmvalcore.cmor.check, "_get_cmor_checker", autospec=True
+        esmvalcore.cmor.check,
+        "_get_cmor_checker",
+        autospec=True,
     )
     (
         mock_get_cmor_checker.return_value.return_value.check_data.return_value
@@ -80,7 +80,7 @@ def test_cmor_check_data(mocker):
 
 
 def test_cmor_check(mocker):
-    """Test ``cmor_check``"""
+    """Test ``cmor_check``."""
     mock_cmor_check_metadata = mocker.patch.object(
         esmvalcore.cmor.check,
         "cmor_check_metadata",

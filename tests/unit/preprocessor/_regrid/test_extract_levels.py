@@ -23,10 +23,10 @@ class Test(tests.Test):
         self.z = self.shape[0]
         self.dtype = np.int32
         data = np.arange(np.prod(self.shape), dtype=self.dtype).reshape(
-            self.shape
+            self.shape,
         )
         self.cube = _make_cube(data, dtype=self.dtype)
-        self.created_cube = mock.Mock(var_name="created_cube")
+        self.created_cube = mock.Mock(var_name="created_cube", shape=())
         self.created_cube.astype.return_value = mock.sentinel.astype_result
         self.mock_create_cube = self.patch(
             "esmvalcore.preprocessor._regrid._create_cube",
@@ -73,7 +73,10 @@ class Test(tests.Test):
         result = extract_levels(self.cube, levels, "linear")
         data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
         expected = _make_cube(
-            data, aux_coord=False, dim_coord=False, dtype=self.dtype
+            data,
+            aux_coord=False,
+            dim_coord=False,
+            dtype=self.dtype,
         )
         coord = self.cube.coord("Pressure Slice").copy()
         expected.add_aux_coord(coord[levels], (0, 1))
@@ -120,7 +123,10 @@ class Test(tests.Test):
 
         data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
         expected = _make_cube(
-            data, aux_coord=False, dim_coord=False, dtype=self.dtype
+            data,
+            aux_coord=False,
+            dim_coord=False,
+            dtype=self.dtype,
         )
         coord = self.cube.coord("Pressure Slice").copy()
         expected.add_aux_coord(coord[levels], (0, 1))
@@ -145,7 +151,8 @@ class Test(tests.Test):
         levels = np.array([0.5, 1.5])
         scheme = "linear"
         with mock.patch(
-            "stratify.interpolate", return_value=new_data
+            "stratify.interpolate",
+            return_value=new_data,
         ) as mocker:
             result = extract_levels(self.cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
@@ -155,13 +162,15 @@ class Test(tests.Test):
             self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis="z", dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), self.cube.shape
+                pts.reshape(self.z, 1, 1),
+                self.cube.shape,
             )
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(axis=0, interpolation=scheme, extrapolation="nan")
+                kwargs,
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
@@ -169,11 +178,12 @@ class Test(tests.Test):
         self.assertEqual(args[0], self.cube)
         self.assert_array_equal(args[1], np.ma.array(new_data))
         self.assert_array_equal(
-            args[2], self.cube.coord(axis="z", dim_coords=True)
+            args[2],
+            self.cube.coord(axis="z", dim_coords=True),
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})
 
     def test_preserve_2d_fx_interpolation(self):
         area_data = np.ones((2, 1))
@@ -197,7 +207,8 @@ class Test(tests.Test):
         _preserve_fx_vars(self.cube, result)
         self.assertEqual(self.cube.cell_measures(), result.cell_measures())
         self.assertEqual(
-            self.cube.ancillary_variables(), result.ancillary_variables()
+            self.cube.ancillary_variables(),
+            result.ancillary_variables(),
         )
 
     def test_preserve_2d_fx_interpolation_single_level(self):
@@ -221,7 +232,8 @@ class Test(tests.Test):
         _preserve_fx_vars(self.cube, result)
         self.assertEqual(self.cube.cell_measures(), result.cell_measures())
         self.assertEqual(
-            self.cube.ancillary_variables(), result.ancillary_variables()
+            self.cube.ancillary_variables(),
+            result.ancillary_variables(),
         )
 
     def test_do_not_preserve_3d_fx_interpolation(self):
@@ -261,7 +273,8 @@ class Test(tests.Test):
         levels = [0.5, 1.5]
         scheme = "nearest"
         with mock.patch(
-            "stratify.interpolate", return_value=new_data
+            "stratify.interpolate",
+            return_value=new_data,
         ) as mocker:
             result = extract_levels(self.cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
@@ -271,13 +284,15 @@ class Test(tests.Test):
             self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis="z", dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), self.cube.shape
+                pts.reshape(self.z, 1, 1),
+                self.cube.shape,
             )
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(axis=0, interpolation=scheme, extrapolation="nan")
+                kwargs,
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
@@ -289,15 +304,16 @@ class Test(tests.Test):
         new_data = np.ma.array(new_data, mask=new_data_mask)
         self.assert_array_equal(args[1], new_data)
         self.assert_array_equal(
-            args[2], self.cube.coord(axis="z", dim_coords=True)
+            args[2],
+            self.cube.coord(axis="z", dim_coords=True),
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})
 
     def test_interpolation__masked(self):
         levels = np.array([0.5, 1.5])
-        new_data = np.empty([len(levels)] + list(self.shape[1:]), dtype=float)
+        new_data = np.empty([len(levels), *list(self.shape[1:])], dtype=float)
         new_data[:, 0, :] = np.nan
         new_data_mask = np.isnan(new_data)
         scheme = "linear"
@@ -306,7 +322,8 @@ class Test(tests.Test):
         masked.mask = mask
         cube = _make_cube(masked, dtype=self.dtype)
         with mock.patch(
-            "stratify.interpolate", return_value=new_data
+            "stratify.interpolate",
+            return_value=new_data,
         ) as mocker:
             result = extract_levels(cube, levels, scheme)
             self.assertEqual(result, mock.sentinel.astype_result)
@@ -316,13 +333,15 @@ class Test(tests.Test):
             self.assert_array_equal(args[0], levels)
             pts = cube.coord(axis="z", dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), cube.shape
+                pts.reshape(self.z, 1, 1),
+                cube.shape,
             )
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], np.ma.filled(masked, np.nan))
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(axis=0, interpolation=scheme, extrapolation="nan")
+                kwargs,
+                {"axis": 0, "interpolation": scheme, "extrapolation": "nan"},
             )
         args, kwargs = self.mock_create_cube.call_args
         input_cube = args[0]
@@ -341,8 +360,9 @@ class Test(tests.Test):
         self.assertTrue(ma.isMaskedArray(args[1]))
         self.assert_array_equal(args[1].mask, new_data_mask)
         self.assert_array_equal(
-            args[2], self.cube.coord(axis="z", dim_coords=True)
+            args[2],
+            self.cube.coord(axis="z", dim_coords=True),
         )
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
-        self.assertEqual(kwargs, dict())
+        self.assertEqual(kwargs, {})

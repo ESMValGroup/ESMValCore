@@ -31,21 +31,18 @@ from esmvalcore import __version__
 # docs.readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
-# This is used for linking and such so we link to the thing we're building
-rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 if on_rtd:
     # On Readthedocs, the conda environment used for building the documentation
     # is not `activated`. As a consequence, a few critical environment variables
     # are not set. Here, we hardcode them instead.
     # In a normal environment, i.e. a local build of the documentation, the
     # normal environment activation takes care of this.
+    rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
     rtd_project = os.environ.get("READTHEDOCS_PROJECT")
     rtd_conda_prefix = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}"
     os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
     os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
     os.environ["PROJ_NETWORK"] = "OFF"
-if rtd_version not in ["latest", "stable", "doc"]:
-    rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
 
@@ -57,7 +54,7 @@ if rtd_version not in ["latest", "stable", "doc"]:
 # ones.
 extensions = [
     'autodocsumm',
-    'nbsphinx',
+    'myst_nb',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.extlinks',
@@ -77,6 +74,9 @@ autodoc_default_options = {
     'show-inheritance': True,
     'autosummary': True,
 }
+
+# Don't execute notebooks
+nb_execution_mode = "off"
 
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
@@ -180,6 +180,9 @@ html_theme_options = {
         "image_light": "figures/ESMValTool-logo-2.png",
         "image_dark": "figures/ESMValTool-logo-2-dark.png",
     },
+    "navbar_center": ["cross_proj_navbar"],
+    "search_bar_text": "Search docs... (hint: also try search in ESMValTool docs)",
+    # "content_footer_items" : ["footer_custom"],
 }
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -219,7 +222,9 @@ html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+html_sidebars = {
+    "**": ["sidebar_nav_lv1", "sidebar-ethical-ads"]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -449,21 +454,21 @@ numfig = True
 intersphinx_mapping = {
     'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
     'cftime': ('https://unidata.github.io/cftime/', None),
-    'esmvalcore':
-    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
-     None),
-    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/latest/', None),
     'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
               None),
     'dask': ('https://docs.dask.org/en/stable/', None),
     'distributed': ('https://distributed.dask.org/en/stable/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
+    'intake_esgf': ('https://intake-esgf.readthedocs.io/en/stable/', None),
     'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
+    'ncdata': ('https://ncdata.readthedocs.io/en/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'xarray': ('https://docs.xarray.dev/en/stable/', None),
 }
 
 # -- Extlinks extension -------------------------------------------------------
@@ -497,8 +502,3 @@ extlinks = {
 }
 
 # -- Custom Document processing ----------------------------------------------
-
-sys.path.append(os.path.dirname(__file__))
-from gensidebar import generate_sidebar
-
-generate_sidebar(globals(), "esmvalcore")
