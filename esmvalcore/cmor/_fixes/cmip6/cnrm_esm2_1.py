@@ -4,6 +4,7 @@ from .cnrm_cm6_1 import Cl as BaseCl
 from .cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from .cnrm_cm6_1 import Cli as BaseCli
 from .cnrm_cm6_1 import Clw as BaseClw
+from .cnrm_cm6_1 import O3 as BaseO3
 from .cnrm_cm6_1 import Omon as BaseOmon
 
 Cl = BaseCl
@@ -16,6 +17,9 @@ Cli = BaseCli
 
 
 Clw = BaseClw
+
+
+O3 = BaseO3
 
 
 Omon = BaseOmon
