@@ -105,3 +105,5 @@ class Omon(Fix):
 Cli = Cl
 
 Clw = Cl
+
+O3 = Cl
