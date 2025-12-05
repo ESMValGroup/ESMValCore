@@ -103,6 +103,25 @@ class Clt(Fix):
 
         return cubes
 
+class Clivi(Fix):
+    """Fixes for prw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg m-2"
+        return cubes
+
+
+class Lwp(Fix):
+    """Fixes for prw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "kg m-2"
+        return cubes
+
 
 class Od550aer(Fix):
     """Fixes for od550aer."""
@@ -111,19 +130,6 @@ class Od550aer(Fix):
         """Fix metadata."""
         for cube in cubes:
             cube.units = "1"
-        return cubes
-
-
-class Pr(Fix):
-    """Fixes for pr."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        for cube in cubes:
-            fix_hourly_time_coordinate(cube, self.frequency)
-            fix_accumulated_units(cube, self.frequency)
-            multiply_with_density(cube)
-
         return cubes
 
 
@@ -140,8 +146,6 @@ class Prw(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
     def _fix_coordinates(  # noqa: C901
         self,
         cube,
@@ -155,15 +159,9 @@ class AllVars(Fix):
         if "lambda550nm" in self.vardef.dimensions:
             add_scalar_lambda550nm_coord(cube)
 
-        print(cube)
-
         # Fix coord metadata
         for coord_def in self.vardef.coordinates.values():
-            print(coord_def.axis)
-            print("------------------")
             axis = coord_def.axis
-            print(axis)
-            print("ccccccccccccccccccccc")
             # ERA5 uses regular pressure level coordinate. In case the cmor
             # variable requires a hybrid level coordinate, we replace this with
             # a regular pressure level coordinate.
@@ -171,14 +169,9 @@ class AllVars(Fix):
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
                 coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]  # noqa: PLW2901
-            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-            print(coord_def.name)
             if axis == "" and coord_def.name == "lambda550nm":
                 continue
             coord = cube.coord(axis=axis)
-            print(":::::::::::::::::")
-            print(coord)
-            print(":::::::::::::::::")
             if axis == "T":
                 coord.convert_units("days since 1850-1-1 00:00:00.0")
             if axis in ("X", "Y", "Z"):
@@ -187,7 +180,6 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype("float64")
-            print(coord.var_name)
             if (
                 not coord.has_bounds()
                 and len(coord.core_points()) > 1
@@ -200,9 +192,7 @@ class AllVars(Fix):
                 ):
                     coord.guess_bounds()
 
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         self._fix_monthly_time_coord(cube, self.frequency)
-        print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 
         # Fix coordinate increasing direction
         if cube.coords("latitude") and not has_unstructured_grid(cube):
