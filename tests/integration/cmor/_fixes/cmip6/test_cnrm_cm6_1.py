@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (
+    O3,
     Cl,
     Clcalipso,
     Cli,
@@ -154,3 +155,9 @@ def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1", "Omon", "thetao")
     assert fix == [Omon(None), GenericFix(None)]
+
+
+def test_o3_fix():
+    """Test fix for ``o3`` from mip: AERmon."""
+    fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1", "AERmon", "o3")
+    assert fix == [O3(None), GenericFix(None)]
