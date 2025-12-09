@@ -116,4 +116,5 @@ class O3(Cl):
             if "table_id" in cube.attributes:
                 if cube.attributes["table_id"] == "AERmon":
                     cubes = Cl.fix_metadata(self, cubes)
+                    break
         return cubes
