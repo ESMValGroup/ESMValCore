@@ -87,6 +87,29 @@ def test_get_preprocessor_filename(
     assert result == expected
 
 
+def test_get_preprocessor_filename_default(
+    session: Session,
+) -> None:
+    """Test the function `_get_preprocessor_filename`."""
+    session["projects"]["CMIP6"].pop("preprocessor_filename_template")
+    dataset = Dataset(
+        project="TestProject",
+        mip="Amon",
+        short_name="tas",
+        dataset="TestModel",
+        version="v20191115",
+        grid="gn",
+        timerange="1850/2100",
+        ignore=[1, 2],  # type: ignore[list-item]
+        ignore_too={"a": 1},  # type: ignore[arg-type]
+    )
+    dataset.session = session
+    result = _get_preprocessor_filename(dataset)
+    filename = "TestModel_gn_Amon_TestProject_tas_v20191115_1850-2100.nc"
+    expected = session.preproc_dir / filename
+    assert result == expected
+
+
 def test_get_preprocessor_filename_falls_back_to_config_developer(
     session: Session,
 ) -> None:
