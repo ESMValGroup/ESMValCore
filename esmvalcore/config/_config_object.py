@@ -263,12 +263,26 @@ class Session(ValidatedConfig):
     _deprecated_defaults = _deprecated_options_defaults
 
     relative_preproc_dir = Path("preproc")
+    """Relative path to the preprocessor output directory, with respect to :attr:`session_dir`."""
+
     relative_work_dir = Path("work")
+    """Relative path to diagnostic script output directory, with respect to :attr:`session_dir`."""
+
     relative_plot_dir = Path("plots")
+    """Relative path to diagnostic script plot directory, with respect to :attr:`session_dir`."""
+
     relative_run_dir = Path("run")
+    """Relative path to the directory with information about the run, with respect to :attr:`session_dir`."""
+
     relative_main_log = Path("run", "main_log.txt")
+    """Relative path to the log file, with respect to :attr:`session_dir`."""
+
     relative_main_log_debug = Path("run", "main_log_debug.txt")
+    """Relative path to the debug log file, with respect to :attr:`session_dir`."""
+
     relative_cmor_log = Path("run", "cmor_log.txt")
+    """Relative path to the log file with CMOR check messages, with respect to :attr:`session_dir`."""
+
     _relative_fixed_file_dir = Path("preproc", "fixed_files")
 
     def __init__(self, config: dict, name: str = "session") -> None:
@@ -299,42 +313,45 @@ class Session(ValidatedConfig):
 
     @property
     def session_dir(self):
-        """Return session directory."""
+        """Session directory.
+
+        This is a uniquely named directory inside the :ref:`output directory <outputdata>`.
+        """
         return self["output_dir"] / self.session_name
 
     @property
     def preproc_dir(self):
-        """Return preproc directory."""
+        """Directory with preprocessor output files."""
         return self.session_dir / self.relative_preproc_dir
 
     @property
     def work_dir(self):
-        """Return work directory."""
+        """Directory with diagnostic script output files."""
         return self.session_dir / self.relative_work_dir
 
     @property
     def plot_dir(self):
-        """Return plot directory."""
+        """Directory with diagnostic script plot files."""
         return self.session_dir / self.relative_plot_dir
 
     @property
     def run_dir(self):
-        """Return run directory."""
+        """Directory containing information about the run."""
         return self.session_dir / self.relative_run_dir
 
     @property
     def main_log(self):
-        """Return main log file."""
+        """Path to the log file."""
         return self.session_dir / self.relative_main_log
 
     @property
     def main_log_debug(self):
-        """Return main log debug file."""
+        """Path to the debug log file."""
         return self.session_dir / self.relative_main_log_debug
 
     @property
     def cmor_log(self):
-        """Return CMOR log file."""
+        """Path to the log file with CMOR check messages."""
         return self.session_dir / self.relative_cmor_log
 
     @property
