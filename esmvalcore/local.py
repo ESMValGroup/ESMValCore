@@ -259,23 +259,23 @@ def find_files(
     return files
 
 
-_GET_OUTPUT_PATH_WARNED: set[str] = set()
+_GET_OUTPUT_FILE_WARNED: set[str] = set()
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     """Return the full path to the output (preprocessed) file."""
     project = variable["project"]
     cfg = get_project_config(project)
-    if project not in _GET_OUTPUT_PATH_WARNED:
-        _GET_OUTPUT_PATH_WARNED.add(project)
+    if project not in _GET_OUTPUT_FILE_WARNED:
+        _GET_OUTPUT_FILE_WARNED.add(project)
         msg = textwrap.dedent(
             f"""
-            Defining 'output_file' in config-develop.yml is deprecated and will be removed in version 2.16.0. Please use the following configuration instead:
+            Defining 'output_file' in config-developer.yml is deprecated and will be removed in version 2.16.0. Please use the following configuration instead:
             projects:
               {variable["project"]}:
                 preprocessor_filename_template: "{cfg["output_file"]}"
-            """.rstrip(),
-        )
+            """,
+        ).rstrip()
         logger.warning(msg)
 
     # Join different experiment names

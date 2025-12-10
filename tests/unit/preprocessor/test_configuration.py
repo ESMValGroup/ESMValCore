@@ -59,6 +59,19 @@ def test_multimodel_functions_in_default_order():
             },
             "CMIP6_GFDL-ESM4_Amon_historical-ssp585_r1i1p1f1_tas_gn_18500101-21000101.nc",
         ),
+        (
+            {
+                "project": "CMIP6",
+                "mip": "fx",
+                "short_name": "areacella",
+                "dataset": "GFDL-ESM4",
+                "ensemble": "r1i1p1f1",
+                "exp": "historical",
+                "version": "v20191115",
+                "grid": "gn",
+            },
+            "CMIP6_GFDL-ESM4_fx_historical_r1i1p1f1_areacella_gn.nc",
+        ),
     ],
 )
 def test_get_preprocessor_filename(
@@ -70,5 +83,30 @@ def test_get_preprocessor_filename(
     dataset = Dataset(**facets)
     dataset.session = session
     result = _get_preprocessor_filename(dataset)
+    expected = session.preproc_dir / filename
+    assert result == expected
+
+
+def test_get_preprocessor_filename_falls_back_to_config_developer(
+    session: Session,
+) -> None:
+    """Test the function `_get_preprocessor_filename`."""
+    session["projects"]["CMIP6"].pop("preprocessor_filename_template")
+    dataset = Dataset(
+        project="CMIP6",
+        mip="Amon",
+        short_name="tas",
+        dataset="GFDL-ESM4",
+        ensemble="r1i1p1f1",
+        exp=["historical", "ssp585"],
+        version="v20191115",
+        grid="gn",
+        timerange="1850/2100",
+    )
+    dataset.session = session
+    result = _get_preprocessor_filename(dataset)
+    filename = (
+        "CMIP6_GFDL-ESM4_Amon_historical-ssp585_r1i1p1f1_tas_gn_1850-2100.nc"
+    )
     expected = session.preproc_dir / filename
     assert result == expected
