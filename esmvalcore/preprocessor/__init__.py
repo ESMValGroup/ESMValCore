@@ -650,7 +650,7 @@ class PreprocessorFile(TrackedFile):
         }
         self.entity.add_attributes(settings)  # type: ignore[attr-defined]
 
-    def group(self, keys: list) -> str:
+    def group(self, keys: Sequence[str] | str | None) -> str:
         """Generate group keyword.
 
         Returns a string that identifies a group. Concatenates a list of

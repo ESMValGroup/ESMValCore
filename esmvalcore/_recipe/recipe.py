@@ -520,7 +520,14 @@ def _update_multiproduct(
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
-        grouping = ["project", "dataset", "exp", "sub_experiment"]
+        grouping = sorted(
+            {
+                k
+                for p in input_products
+                for k in p.attributes
+                if k != "ensemble"
+            },
+        )
     else:
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
@@ -543,14 +550,11 @@ def _update_multiproduct(
             statistic_attributes = dict(common_attributes)
             stat_id = _get_stat_identifier(statistic)
             statistic_attributes[step] = _get_tag(step, identifier, stat_id)
-            statistic_attributes.setdefault(
-                "alias",
-                statistic_attributes[step],
-            )
-            statistic_attributes.setdefault(
-                "dataset",
-                statistic_attributes[step],
-            )
+            statistic_attributes["alias"] = statistic_attributes[step]
+            if step == "ensemble_statistics":
+                statistic_attributes["ensemble"] = statistic_attributes[step]
+            elif step == "multi_model_statistics":
+                statistic_attributes["dataset"] = statistic_attributes[step]
             filename = _get_multiproduct_filename(
                 statistic_attributes,
                 preproc_dir,

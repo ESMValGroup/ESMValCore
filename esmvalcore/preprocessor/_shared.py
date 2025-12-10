@@ -27,10 +27,11 @@ from esmvalcore.iris_helpers import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from iris.coords import Coord
 
+    from esmvalcore.preprocessor import PreprocessorFile
     from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
@@ -307,22 +308,22 @@ def preserve_float_dtype(func: Callable) -> Callable:
     return wrapper
 
 
-def _groupby(iterable, keyfunc):
+def _groupby(iterable: Iterable, keyfunc: Callable) -> defaultdict:
     """Group iterable by key function.
 
     The items are grouped by the value that is returned by the `keyfunc`
 
     Parameters
     ----------
-    iterable : list, tuple or iterable
+    iterable:
         List of items to group
-    keyfunc : callable
+    keyfunc:
         Used to determine the group of each item. These become the keys
         of the returned dictionary
 
     Returns
     -------
-    dict
+    :
         Returns a dictionary with the grouped values.
     """
     grouped = defaultdict(set)
@@ -333,10 +334,13 @@ def _groupby(iterable, keyfunc):
     return grouped
 
 
-def _group_products(products, by_key):
+def _group_products(
+    products: Iterable[PreprocessorFile],
+    by_key: Sequence[str] | str | None,
+) -> Iterable[tuple[str, set[PreprocessorFile]]]:
     """Group products by the given list of attributes."""
 
-    def grouper(product):
+    def grouper(product: PreprocessorFile) -> str:
         return product.group(by_key)
 
     grouped = _groupby(products, keyfunc=grouper)
