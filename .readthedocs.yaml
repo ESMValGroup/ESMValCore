@@ -21,8 +21,6 @@ build:
       - git fetch --all
     pre_install:
       - git stash
-    post_create_environment:
-      - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
     post_install:
       - git stash pop
 
@@ -34,6 +32,11 @@ conda:
 sphinx:
   configuration: doc/conf.py
   fail_on_warning: true
+
+python:
+  install:
+    - method: pip
+      path: .
 
 # If using Sphinx, optionally build your docs in additional formats such as PDF
 formats:
