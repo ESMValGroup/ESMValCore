@@ -977,9 +977,7 @@ for example:
 
 The facet names from the template are replaced with the facet values from the
 recipe to create a filename. The extension ``.nc`` (and if applicable, a start
-and end time) will automatically be appended to the filename. The preprocessed
-files will be stored in the directory :attr:`esmvalcore.config.Session.preproc_dir`,
-under a subdirectory per :ref:`diagnostic <Diagnostics>` and variable name.
+and end time) will automatically be appended to the filename.
 
 If no ``preprocessor_filename_template`` is configured for a project, the facets
 describing the dataset in the recipe, as stored in
