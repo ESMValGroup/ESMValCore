@@ -100,9 +100,12 @@ def test_get_preprocessor_filename_default(
         version="v20191115",
         grid="gn",
         timerange="1850/2100",
+        # Add some facets of the wrong type that are not used in the filename.
         ignore=[1, 2],  # type: ignore[list-item]
         ignore_too={"a": 1},  # type: ignore[arg-type]
     )
+    # Add a facet that is not used in the filename.
+    dataset.facets["long_name"] = "Surface Air Temperature"
     dataset.session = session
     result = _get_preprocessor_filename(dataset)
     filename = "TestModel_gn_Amon_TestProject_tas_v20191115_1850-2100.nc"
