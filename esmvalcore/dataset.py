@@ -27,8 +27,8 @@ from esmvalcore.config._config import (
 )
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.io.local import _dates_to_timerange, _get_output_file
-from esmvalcore.preprocessor import preprocess
+from esmvalcore.io.local import _dates_to_timerange
+from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -815,7 +815,7 @@ class Dataset:
             supplementary_cube = supplementary_dataset._load()  # noqa: SLF001
             supplementary_cubes.append(supplementary_cube)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         cubes = preprocess(
             [cube],
             "add_supplementary_variables",
@@ -833,7 +833,7 @@ class Dataset:
             msg = check.get_no_data_message(self)
             raise InputFilesNotFound(msg)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         fix_dir_prefix = Path(
             self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",

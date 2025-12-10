@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import dask.config
 
 import esmvalcore
-from esmvalcore.config._config import load_config_developer
 from esmvalcore.config._config_validators import (
     _deprecated_options_defaults,
     _deprecators,
@@ -129,10 +128,6 @@ class Config(ValidatedConfig):
         new_config_dict = self._get_config_dict_from_dirs(dirs)
         self.clear()
         self.update(new_config_dict)
-        # Add known projects from config-developer file while we still have it.
-        for project in load_config_developer(self["config_developer_file"]):
-            if project not in self["projects"]:
-                self["projects"][project] = {}
         self.check_missing()
 
     def reload(self) -> None:

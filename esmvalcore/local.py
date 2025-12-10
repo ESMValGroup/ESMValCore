@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import logging
 import os.path
+import textwrap
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from esmvalcore.config import CFG
 from esmvalcore.config._config import get_ignored_warnings, get_project_config
@@ -19,6 +20,7 @@ from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
     _filter_versions_called_latest,
+    _replace_tags,
     _select_latest_version,
 )
 
@@ -255,3 +257,39 @@ def find_files(
             globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
         return files, sorted(globs)
     return files
+
+
+_GET_OUTPUT_PATH_WARNED: set[str] = set()
+
+
+def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
+    """Return the full path to the output (preprocessed) file."""
+    project = variable["project"]
+    cfg = get_project_config(project)
+    if project not in _GET_OUTPUT_PATH_WARNED:
+        _GET_OUTPUT_PATH_WARNED.add(project)
+        msg = textwrap.dedent(
+            f"""
+            Defining 'output_file' in config-develop.yml is deprecated and will be removed in version 2.16.0. Please use the following configuration instead:
+            projects:
+              {variable["project"]}:
+                preprocessor_filename_template: "{cfg["output_file"]}"
+            """.rstrip(),
+        )
+        logger.warning(msg)
+
+    # Join different experiment names
+    if isinstance(variable.get("exp"), (list, tuple)):
+        variable = dict(variable)
+        variable["exp"] = "-".join(variable["exp"])
+    outfile = _replace_tags(cfg["output_file"], variable)[0]
+    if "timerange" in variable:
+        timerange = variable["timerange"].replace("/", "-")
+        outfile = Path(f"{outfile}_{timerange}")
+    outfile = Path(f"{outfile}.nc")
+    return Path(
+        preproc_dir,
+        variable.get("diagnostic", ""),
+        variable.get("variable_group", ""),
+        outfile,
+    )

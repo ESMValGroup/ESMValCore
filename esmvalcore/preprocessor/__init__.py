@@ -5,6 +5,9 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
+import re
+from collections.abc import Sequence
+from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any
 
@@ -14,7 +17,10 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
+from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -102,14 +108,14 @@ from esmvalcore.preprocessor._volume import (
 from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
-    from pathlib import Path
+    from collections.abc import Callable, Iterable
 
     import prov.model
     from dask.delayed import Delayed
     from iris.cube import CubeList
 
     from esmvalcore.dataset import Dataset
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -252,6 +258,71 @@ MULTI_MODEL_FUNCTIONS: set[str] = {
     "mask_multimodel",
     "mask_fillvalues",
 }
+
+
+def _get_preprocessor_filename(dataset: Dataset) -> Path:
+    """Get a filename for storing a preprocessed dataset.
+
+    Parameters
+    ----------
+    dataset:
+        The dataset that will be preprocessed.
+
+    Returns
+    -------
+    :
+        A path for storing a preprocessed file.
+    """
+
+    def is_facet_value(value: Any) -> bool:  # noqa: ANN401
+        """Check if a value is of type `esmvalcore.typing.FacetValue`."""
+        return isinstance(value, str | int) or (
+            isinstance(value, Sequence)
+            and all(isinstance(v, str) for v in value)
+        )
+
+    default_template = "_".join(
+        f"{{{k}}}"
+        for k in sorted(dataset.minimal_facets)
+        if is_facet_value(dataset.minimal_facets[k])
+        and k
+        not in ("timerange", "diagnostic", "variable_group", "preprocessor")
+    )
+    template = (
+        dataset.session["projects"]
+        .get(dataset.facets["project"], {})
+        .get("preprocessor_filename_template", default_template)
+    )
+    if template is default_template:
+        try:
+            # Use config-developer.yml for backward compatibility, remove in v2.16.
+            return _get_output_file(
+                dataset.facets,
+                dataset.session.preproc_dir,
+            )
+        except RecipeError:
+            pass
+
+    def normalize(value: FacetValue) -> str:
+        """Normalize a facet value to a string that can be used in a filename."""
+        if isinstance(value, str | int):
+            return re.sub("[^a-zA-Z0-9]+", "-", str(value))[:25]
+        return "-".join(normalize(v) for v in value)
+
+    normalized_facets = {
+        k: normalize(v) for k, v in dataset.facets.items() if is_facet_value(v)
+    }
+    filename = template.format(**normalized_facets)
+    if "timerange" in dataset.facets:
+        start_time, end_time = _parse_period(dataset.facets["timerange"])
+        filename += f"_{start_time}-{end_time}"
+    filename += ".nc"
+    return Path(
+        dataset.session.preproc_dir,
+        dataset.facets.get("diagnostic", ""),  # type: ignore[arg-type]
+        dataset.facets.get("variable_group", ""),  # type: ignore[arg-type]
+        filename,
+    )
 
 
 def _get_itype(step: str) -> str:
@@ -520,7 +591,7 @@ class PreprocessorFile(TrackedFile):
         filename: Path,
         attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
-        datasets: list | None = None,
+        datasets: list[Dataset] | None = None,
     ) -> None:
         if datasets is not None:
             # Load data using a Dataset

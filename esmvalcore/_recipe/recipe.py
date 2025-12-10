@@ -27,7 +27,6 @@ from esmvalcore.io.local import (
     GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
-    _get_output_file,
     _parse_period,
     _truncate_dates,
 )
@@ -38,6 +37,7 @@ from esmvalcore.preprocessor import (
     MULTI_MODEL_FUNCTIONS,
     PreprocessingTask,
     PreprocessorFile,
+    _get_preprocessor_filename,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
@@ -678,11 +678,7 @@ def _get_preprocessor_products(
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
-
-        filename = _get_output_file(
-            dataset.facets,
-            dataset.session.preproc_dir,
-        )
+        filename = _get_preprocessor_filename(dataset)
         product = PreprocessorFile(
             filename=filename,
             attributes=dataset.facets,

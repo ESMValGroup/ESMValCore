@@ -13,10 +13,9 @@ from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
-    _get_output_file,
     _parse_period,
 )
-from esmvalcore.local import _select_drs, find_files
+from esmvalcore.local import _get_output_file, _select_drs, find_files
 
 # Load test configuration
 with open(

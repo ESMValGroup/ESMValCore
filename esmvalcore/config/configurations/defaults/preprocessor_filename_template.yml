@@ -1,0 +1,33 @@
+# Templates for the filenames used to write preprocessor output.
+projects:
+  # ESGF projects.
+  CMIP3:
+    preprocessor_filename_template: "{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}"
+  CMIP5:
+    preprocessor_filename_template: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}"
+  CMIP6:
+    preprocessor_filename_template: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}"
+  CORDEX:
+    preprocessor_filename_template: "{project}_{institute}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}"
+  obs4MIPs:
+    preprocessor_filename_template: "{project}_{dataset}_{short_name}"
+  # Observational and reanalysis data that has been CMORized by ESMValTool according to the CMIP5 standard.
+  OBS:
+    preprocessor_filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}"
+  # Observational and reanalysis data that has been CMORized by ESMValTool according to the CMIP6 standard.
+  OBS6:
+    preprocessor_filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}"
+  # Observational and reanalysis data that can be read in its native format by ESMValCore.
+  native6:
+    preprocessor_filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}"
+  # Data from various climate models in their native output format.
+  ACCESS:
+    preprocessor_filename_template: "{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{freq_attribute}_{short_name}"
+  CESM:
+    preprocessor_filename_template: "{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}"
+  EMAC:
+    preprocessor_filename_template: "{project}_{dataset}_{exp}_{channel}_{mip}_{short_name}"
+  ICON:
+    preprocessor_filename_template: "{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}"
+  IPSLCM:
+    preprocessor_filename_template: "{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}"
