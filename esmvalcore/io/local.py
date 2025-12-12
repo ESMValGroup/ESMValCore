@@ -58,7 +58,6 @@ from cf_units import Unit
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
-from esmvalcore.config._config import get_project_config
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.iris_helpers import ignore_warnings_context
 
@@ -701,27 +700,6 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             pattern = pattern.replace(rf"\[{chars}\]", f"[{chars}]")
 
         return pattern
-
-
-def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
-    """Return the full path to the output (preprocessed) file."""
-    cfg = get_project_config(variable["project"])
-
-    # Join different experiment names
-    if isinstance(variable.get("exp"), (list, tuple)):
-        variable = dict(variable)
-        variable["exp"] = "-".join(variable["exp"])
-    outfile = _replace_tags(cfg["output_file"], variable)[0]
-    if "timerange" in variable:
-        timerange = variable["timerange"].replace("/", "-")
-        outfile = Path(f"{outfile}_{timerange}")
-    outfile = Path(f"{outfile}.nc")
-    return Path(
-        preproc_dir,
-        variable.get("diagnostic", ""),
-        variable.get("variable_group", ""),
-        outfile,
-    )
 
 
 def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:

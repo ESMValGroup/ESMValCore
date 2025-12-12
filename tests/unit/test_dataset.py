@@ -1737,9 +1737,9 @@ def test_load(mocker, session):
         "fixed_files",
         "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
     )
-    _get_output_file = mocker.patch.object(
+    _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         create_autospec=True,
         return_value=output_file,
     )
@@ -1846,7 +1846,7 @@ def test_load(mocker, session):
 
     assert args == load_args
 
-    _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    _get_preprocessor_filename.assert_called_with(dataset)
     items[0].prepare.assert_called_once()
 
 
