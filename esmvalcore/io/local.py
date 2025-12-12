@@ -589,7 +589,13 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
+            found_files = bool(files)
             files = _select_files(files, facets["timerange"])
+            if not files and found_files:
+                self.debug_info += (
+                    f" within the requested timerange {facets['timerange']}"
+                )
+
         return files
 
     def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
