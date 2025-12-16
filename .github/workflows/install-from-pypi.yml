@@ -69,7 +69,7 @@ jobs:
           esmvaltool version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: PIP_Install_Linux_python_${{ matrix.python-version }}
           path: pip_install_linux_artifacts_python_${{ matrix.python-version }}
@@ -107,7 +107,7 @@ jobs:
           esmvaltool version 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: PIP_Install_OSX_python_${{ matrix.python-version }}
           path: pip_install_osx_artifacts_python_${{ matrix.python-version }}
