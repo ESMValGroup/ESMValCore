@@ -196,3 +196,40 @@ projects:
         SImon:
           '*':
             tres: 1M
+
+      ORAS5:
+        '*':
+          '*':
+            tier: 3
+        #'*':
+          # Variable names and units
+          uo:
+            raw_name: vozocrte
+            raw_units: m/s
+          vo:
+            raw_name: vomecrtn
+            raw_units: m/s
+          tos:
+            raw_name: sosstsst
+            raw_units: degC
+          sos:
+            raw_name: sosaline
+            raw_units: '0.001'
+          zos:
+            raw_name: sossheig
+            raw_units: m
+          mlotst:
+            raw_name: somxl010
+            raw_units: m
+          thetao:
+            raw_name: votemper
+            raw_units: degC
+          so:
+            raw_name: vosaline
+            raw_units: '0.001'
+          hfds:
+            raw_name: sohefldo
+            raw_units: W/m^2
+          tauuo:
+            raw_name: sozotaux
+            raw_units: N/m^2
