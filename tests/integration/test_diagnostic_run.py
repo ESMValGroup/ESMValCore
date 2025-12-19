@@ -110,18 +110,6 @@ SCRIPTS = {
         print(paste0("INFO    Writing settings to ", settings$setting_name))
         yaml::write_yaml(settings, settings$setting_name)
         """),
-    # TODO: make independent of YAML library
-    #     'diagnostic.jl':
-    #     dedent("""
-    #         import YAML
-    #         @info "Starting diagnostic script with" ARGS
-    #         config_file = ARGS[1]
-    #         cfg = YAML.load_file(config_file)
-    #         out_file = cfg["setting_name"]
-    #         @info "Copying file to" out_file
-    #         Base.Filesystem.cp(config_file, out_file)
-    #         @info "Done"
-    #     """),
 }
 
 
@@ -195,71 +183,6 @@ def test_diagnostic_run(tmp_path, script_file, script):
         "run",
         "--config_dir",
         str(config_dir),
-        str(recipe_file),
-    ):
-        run()
-
-    check(result_file)
-
-
-# TODO: remove in v2.14.0
-@pytest.mark.parametrize(
-    ("script_file", "script"),
-    [
-        pytest.param(
-            script_file,
-            script,
-            marks=[
-                pytest.mark.installation,
-                pytest.mark.xfail(
-                    interpreter_not_installed(script_file),
-                    run=False,
-                    reason="Interpreter not available",
-                ),
-            ],
-        )
-        for script_file, script in SCRIPTS.items()
-        if script_file != "null"
-    ],
-)
-def test_diagnostic_run_old_config(tmp_path, script_file, script):
-    recipe_file = tmp_path / "recipe_test.yml"
-    script_file = tmp_path / script_file
-    result_file = tmp_path / "result.yml"
-
-    # Write script to file
-    script_file.write_text(str(script))
-
-    # Create recipe
-    recipe = dedent(
-        f"""
-        documentation:
-          title: Recipe without data
-          description: Recipe with no data.
-          authors: [andela_bouwe]
-
-        diagnostics:
-          diagnostic_name:
-            scripts:
-              script_name:
-                script: {script_file}
-                setting_name: {result_file}
-        """,
-    )
-    recipe_file.write_text(str(recipe))
-
-    # ensure that tags are cleared
-    TAGS.clear()
-
-    config_dir = tmp_path / "config"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = write_config_user_file(config_dir)
-
-    with arguments(
-        "esmvaltool",
-        "run",
-        "--config_file",
-        str(config_file),
         str(recipe_file),
     ):
         run()

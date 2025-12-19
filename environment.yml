@@ -5,6 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
+  - aiohttp
   - cartopy
   - cf-units
   - cftime
@@ -12,13 +13,15 @@ dependencies:
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy
+  - esmvaltool-sample-data
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
-  - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
+  - intake-esgf >=2025.10.22
+  - intake-esm
+  - iris >=3.12.2,<3.14.1 # https://github.com/SciTools/iris/issues/6417, https://github.com/ESMValGroup/ESMValCore/issues/2921
   - iris-esmf-regrid >=0.11.0
   - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
   - isodate >=0.7.0  # incompatible with very old 0.6.1
@@ -37,7 +40,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.11
+  - python >=3.12
   - python-stratify >=0.3
   - pyyaml
   - requests
@@ -46,13 +49,15 @@ dependencies:
   - shapely >=2.0.0
   - xarray
   - yamale
+  - zarr >3
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
-  - ipython <9.0  # github.com/ESMValGroup/ESMValCore/issues/2680
-  - nbsphinx >=0.9.7  # github.com/ESMValGroup/ESMValCore/issues/2669
+  - ipython
+  - myst-nb
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
+  - pre-commit
   - pytest >6.0.0
   - pytest-cov >=2.10.1
   - pytest-env
@@ -60,11 +65,4 @@ dependencies:
   - pytest-metadata >=1.5.1
   - pytest-mock
   - pytest-xdist
-  # Not on conda-forge - ESMValTool_sample_data==0.0.3
-  # Python packages needed for installing in development mode
-  - pre-commit
-  - pydocstyle
-  - pylint
   # Not on conda forge - vprof
-  - pip:
-      - ESMValTool_sample_data

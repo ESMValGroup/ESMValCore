@@ -8,16 +8,17 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import fiona
+import fiona.collection
 import iris
 import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
 from iris.coords import AuxCoord
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
@@ -39,6 +40,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.cube import Cube
 
     from esmvalcore.config import Session
 
@@ -89,9 +92,8 @@ def extract_region(  # noqa: C901
         msg = f"Invalid end_latitude: {end_latitude}"
         raise ValueError(msg)
     if cube.coord("latitude").ndim == 1:
-        # Iris check if any point of the cell is inside the region
-        # To check only the center, ignore_bounds must be set to
-        # True (default) is False
+        # Iris checks if any point of the cell is inside the region.
+        # To check only the center, ignore_bounds must be set to True.
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
             latitude=(start_latitude, end_latitude),
@@ -212,7 +214,7 @@ def zonal_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute zonal statistics.
 
@@ -264,7 +266,7 @@ def meridional_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute meridional statistics.
 
@@ -319,7 +321,7 @@ def area_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
@@ -478,7 +480,7 @@ def _crop_cube(
 
 
 def _select_representative_point(
-    shape,
+    shape: shapely.geometry.base.BaseGeometry,
     lon: np.ndarray,
     lat: np.ndarray,
 ) -> np.ndarray:
@@ -520,7 +522,10 @@ def _correct_coords_from_shapefile(
     return lon, lat
 
 
-def _process_ids(geometries, ids: list | dict | None) -> tuple:
+def _process_ids(
+    geometries: fiona.collection.Collection,
+    ids: list | dict | None,
+) -> tuple:
     """Read requested IDs and ID keys."""
     # If ids is a dict, it needs to have length 1 and all geometries needs to
     # have the requested attribute key
@@ -530,9 +535,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                 f"If `ids` is given as dict, it needs exactly one entry, got "
                 f"{ids}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         key = next(iter(ids.keys()))
         for geometry in geometries:
             if key not in geometry["properties"]:
@@ -540,9 +543,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                     f"Geometry {dict(geometry['properties'])} does not have "
                     f"requested attribute {key}"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
         id_keys: tuple[str, ...] = (key,)
         ids = ids[key]
 
@@ -560,7 +561,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
 
 
 def _get_requested_geometries(
-    geometries,
+    geometries: fiona.collection.Collection,
     ids: list | dict | None,
     shapefile: Path,
 ) -> dict[str, dict]:
@@ -595,9 +596,7 @@ def _get_requested_geometries(
                 f"Requested shapes {missing} not found in shapefile "
                 f"{shapefile}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
     return requested_geometries
 
@@ -895,10 +894,9 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
     for measure in cube.cell_measures():
-        # Cell measures that are time-dependent, with 4 dimension and
-        # an original shape of (time, depth, lat, lon), need to be
-        # broadcast to the cube with 5 dimensions and shape
-        # (time, shape_id, depth, lat, lon)
+        # Cell measures that are time-dependent, with 4 dimensions and an
+        # original shape of (time, depth, lat, lon), need to be broadcast to
+        # the cube with 5 dimensions and shape (time, shape_id, depth, lat, lon)
         if measure.ndim > 3 and result.ndim > 4:
             data = measure.core_data()
             if result.has_lazy_data():
@@ -919,7 +917,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
                 dim_map=dim_map,
                 chunks=chunks,
             )
-            measure = iris.coords.CellMeasure(
+            measure = iris.coords.CellMeasure(  # noqa: PLW2901
                 data,
                 standard_name=measure.standard_name,
                 long_name=measure.long_name,

@@ -13,8 +13,6 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.dataset import Dataset
 
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
-
 
 @pytest.fixture
 def cubes_2d(test_data_path):

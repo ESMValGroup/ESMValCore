@@ -94,7 +94,7 @@ def warn_if_old_extra_facets_exist() -> None:
         )
 
 
-def load_config_developer(cfg_file):
+def load_config_developer(cfg_file: Path) -> dict:
     """Read the developer's configuration file."""
     with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
@@ -111,13 +111,16 @@ def load_config_developer(cfg_file):
         for site, drs in settings.get("input_dir", {}).items():
             # Since v2.8, 'version' can be used instead of 'latestversion'
             if isinstance(drs, list):
-                drs = [d.replace("{latestversion}", "{version}") for d in drs]
+                normalized_drs = [
+                    d.replace("{latestversion}", "{version}") for d in drs
+                ]
             else:
-                drs = drs.replace("{latestversion}", "{version}")
-            settings["input_dir"][site] = drs
+                normalized_drs = drs.replace("{latestversion}", "{version}")
+            settings["input_dir"][site] = normalized_drs
         CFG[project] = settings
 
     read_cmor_tables(cfg_file)
+    return cfg
 
 
 def get_project_config(project):

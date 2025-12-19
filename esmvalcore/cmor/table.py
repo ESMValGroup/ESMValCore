@@ -53,9 +53,7 @@ def _update_cmor_facets(facets):
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'"
         )
-        raise RecipeError(
-            msg,
-        )
+        raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
     for key in _CMOR_KEYS:
         if key not in facets:
@@ -115,9 +113,7 @@ def get_var_info(
             f"No CMOR tables available for project '{project}'. The following "
             f"tables are available: {', '.join(CMOR_TABLES)}."
         )
-        raise KeyError(
-            msg,
-        )
+        raise KeyError(msg)
 
     # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
     if project == "CORDEX" and mip.endswith("hr"):
@@ -151,7 +147,10 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
 
 
 @lru_cache
-def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
+def _read_cmor_tables(
+    cfg_file: Path,
+    mtime: float,  # noqa: ARG001
+) -> dict[str, CMORTable]:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -432,7 +431,7 @@ class CMIP6Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -444,9 +443,7 @@ class CMIP6Info(InfoBase):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         msg = f"CMOR tables not found in {cmor_tables_path}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def _load_table(self, json_file):
         with open(json_file, encoding="utf-8") as inf:
@@ -875,7 +872,7 @@ class CMIP5Info(InfoBase):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     @staticmethod
@@ -1060,9 +1057,7 @@ class CustomInfo(CMIP5Info):
                     f"Custom CMOR tables path {self._user_table_folder} is "
                     f"not a directory"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
             self._read_table_dir(self._user_table_folder)
         else:
             self._user_table_folder = None
@@ -1086,14 +1081,14 @@ class CustomInfo(CMIP5Info):
                 if logger.handlers:
                     logger.error(msg)
                 else:
-                    print(msg)
+                    print(msg)  # noqa: T201
                 raise
 
     def get_variable(
         self,
-        table: str,
+        table: str,  # noqa: ARG002
         short_name: str,
-        derived: bool = False,
+        derived: bool = False,  # noqa: ARG002
     ) -> VariableInfo | None:
         """Search and return the variable info.
 

@@ -14,11 +14,13 @@ import logging
 from datetime import datetime
 from functools import reduce
 from pprint import pformat
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cf_units
 import iris
-import iris.coord_categorisation
+import iris.analysis
+import iris.coords
+import iris.cube
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
@@ -494,8 +496,8 @@ def _compute_eager(
     cubes: list,
     *,
     operator: iris.analysis.Aggregator,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> iris.cube.Cube:
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
@@ -532,8 +534,8 @@ def _compute(
     cube: iris.cube.Cube,
     *,
     operator: iris.analysis.Aggregator,
-    **kwargs,
-):
+    **kwargs: Any,
+) -> iris.cube.Cube:
     """Compute statistic."""
     # This will always return a masked array
     with ignore_iris_vague_metadata_warnings():
@@ -701,7 +703,7 @@ def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     span: str,
     statistics: list[str | dict],
-    output_products=None,
+    output_products: dict[str, PreprocessorFile] | None = None,
     groupby: tuple | None = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
@@ -781,7 +783,7 @@ def multi_model_statistics(
         additional keyword arguments, e.g., ``[{'operator': 'percentile',
         'percent': 20}]``. All supported options are are given in
         :ref:`this table <supported_stat_operator>`.
-    output_products: dict
+    output_products:
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
@@ -822,7 +824,8 @@ def multi_model_statistics(
         # Avoid circular input: https://stackoverflow.com/q/16964467
         statistics_products = set()
         for group, input_prods in _group_products(products, by_key=groupby):
-            sub_output_products = output_products[group]
+            # Assume that output_products is not None if products are PreprocessorFiles.
+            sub_output_products = output_products[group]  # type: ignore[index]
 
             # Compute statistics on a single group
             group_statistics = _multiproduct_statistics(
@@ -850,7 +853,7 @@ def multi_model_statistics(
 def ensemble_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     statistics: list[str | dict],
-    output_products,
+    output_products: dict[str, PreprocessorFile] | None,
     span: str = "overlap",
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
@@ -871,7 +874,7 @@ def ensemble_statistics(
         additional keyword arguments, e.g., ``[{'operator': 'percentile',
         'percent': 20}]``. All supported options are are given in
         :ref:`this table <supported_stat_operator>`.
-    output_products: dict
+    output_products:
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.

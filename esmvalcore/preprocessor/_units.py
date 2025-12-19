@@ -11,12 +11,13 @@ from typing import TYPE_CHECKING
 import dask.array as da
 import iris
 import numpy as np
-from iris.coords import AuxCoord, DimCoord
+from iris.coords import AuxCoord
 
 from esmvalcore.iris_helpers import _try_special_unit_conversions
 
 if TYPE_CHECKING:
     from cf_units import Unit
+    from iris.coords import DimCoord
     from iris.cube import Cube
 
 logger = logging.getLogger(__name__)

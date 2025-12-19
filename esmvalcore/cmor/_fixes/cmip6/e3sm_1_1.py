@@ -1,9 +1,14 @@
 """Fixes for E3SM-1-1 model."""
 
-from iris.cube import Cube
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.preprocessor._shared import get_array_module
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 
 def _mask_greater(cube: Cube, value: float) -> Cube:
