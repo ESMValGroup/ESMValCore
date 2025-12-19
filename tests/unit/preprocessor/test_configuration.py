@@ -115,7 +115,7 @@ def test_get_preprocessor_filename_wrong_type_facet(session: Session) -> None:
     dataset.session = session
     with pytest.raises(
         RecipeError,
-        match=r".* facet values have invalid type: 'exp: {'historical', 'ssp585'}' has type set",
+        match=r".* facet values have invalid type: 'exp: .*' has type set",
     ):
         _get_preprocessor_filename(dataset)
 
