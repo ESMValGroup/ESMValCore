@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from esmvalcore.dataset import Dataset
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -85,6 +86,38 @@ def test_get_preprocessor_filename(
     result = _get_preprocessor_filename(dataset)
     expected = session.preproc_dir / filename
     assert result == expected
+
+
+def test_get_preprocessor_filename_missing_facet(session: Session) -> None:
+    dataset = Dataset(
+        project="CMIP6",
+        mip="Amon",
+        short_name="tas",
+    )
+    dataset.session = session
+    with pytest.raises(
+        RecipeError,
+        match=r"missing facets: 'dataset', 'ensemble', 'exp', 'grid'.",
+    ):
+        _get_preprocessor_filename(dataset)
+
+
+def test_get_preprocessor_filename_wrong_type_facet(session: Session) -> None:
+    dataset = Dataset(
+        project="CMIP6",
+        mip="Amon",
+        short_name="tas",
+        dataset="GFDL-ESM4",
+        ensemble="r1i1p1f1",
+        exp={"historical", "ssp585"},  # type: ignore[arg-type]
+        grid="gn",
+    )
+    dataset.session = session
+    with pytest.raises(
+        RecipeError,
+        match=r".* facet values have invalid type: 'exp: {'historical', 'ssp585'}' has type set",
+    ):
+        _get_preprocessor_filename(dataset)
 
 
 def test_get_preprocessor_filename_default(
