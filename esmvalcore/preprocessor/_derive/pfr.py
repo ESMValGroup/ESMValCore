@@ -26,7 +26,6 @@ class DerivedVariable(DerivedVariableBase):
         return [
             {"short_name": "tsl", "mip": "Lmon"},
             {"short_name": "sftlf", "mip": "fx"},
-            # {'short_name': 'sftgif', 'mip': 'fx'},
             {"short_name": "mrsos", "mip": "Lmon"},
         ]
 
@@ -44,22 +43,6 @@ class DerivedVariable(DerivedVariableBase):
         sensitivity to climate change, The Cryosphere, 14,
         3155-3174, doi: 10.5194/tc-14-3155-2020, 2020.
         """
-        """
-        # create a mask of land fraction (%) over ice-free grid cells
-        # use ice fraction (sftgif) --- only available from very few models
-        #   1) annual mean of fraction of grid cell covered with ice (%)
-        icefrac = cubes.extract_cube(NameConstraint(var_name='sftgif'))
-        iris.coord_categorisation.add_year(icefrac, 'time')
-        icefrac_yr = icefrac.aggregated_by(['year'], iris.analysis.MEAN)
-        #   2) fraction of land cover of grid cell (%) (constant)
-        landfrac = cubes.extract_cube(NameConstraint(var_name='sftlf'))
-        #   3) create mask with fraction of ice-free land (%)
-        mask = iris.analysis.maths.subtract(landfrac, icefrac_yr)
-        # remove slightly negative values that might occur because of
-        # rounding errors between ice and land fractions
-        mask.data = da.where(mask.data < 0.0, 0.0, mask.data)
-        """
-
         # create a mask of land fraction (%) over ice-free grid cells
         # use soil moisture as proxy for ice / ice-free grid cells
         #   1) annual mean of fraction of grid cell covered with ice (%)
