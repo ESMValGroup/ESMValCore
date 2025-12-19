@@ -28,7 +28,7 @@ jobs:
         with:
           auto-update-conda: true
           activate-environment: esmvaltool-fromlock
-          python-version: "3.13"
+          python-version: "3.14"
           miniforge-version: "latest"
           use-mamba: true
       - name: Update and show conda config
