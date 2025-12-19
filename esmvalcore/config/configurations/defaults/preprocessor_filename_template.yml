@@ -11,6 +11,8 @@ projects:
     preprocessor_filename_template: "{project}_{institute}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}"
   obs4MIPs:
     preprocessor_filename_template: "{project}_{dataset}_{short_name}"
+  ana4MIPs:
+    preprocessor_filename_template: "{project}_{mip}_{type}_{dataset}_{short_name}"
   # Observational and reanalysis data that has been CMORized by ESMValTool according to the CMIP5 standard.
   OBS:
     preprocessor_filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}"
