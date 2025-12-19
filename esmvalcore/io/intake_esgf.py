@@ -225,7 +225,9 @@ class IntakeESGFDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)] if isinstance(values, str | int) else values
+            facet: [str(values)]
+            if isinstance(values, str | int | float)
+            else values
             for facet, values in facets.items()
             if facet in self.facets
         }

@@ -220,7 +220,7 @@ def _get_supplementary_short_names(
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
     realms = var_facets.get("modeling_realm", [])
-    if isinstance(realms, (str, int)):
+    if isinstance(realms, str | int | float):
         realms = [str(realms)]
     ocean_realms = {"ocean", "seaIce", "ocnBgchem"}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
@@ -296,13 +296,15 @@ def _get_dataset_facets_from_recipe(
     # Legacy: support start_year and end_year instead of timerange
     _replace_years_with_timerange(facets)
 
-    # Legacy: support wrong capitalization of obs4MIPs
-    if facets["project"] == "obs4mips":
+    # Legacy: support wrong capitalization of obs4MIPs and ana4MIPs
+    if (lower_case_project := facets["project"]) in ("obs4mips", "ana4mips"):
+        facets["project"] = f"{lower_case_project[:3]}4MIPs"
         logger.warning(
-            "Correcting capitalization, project 'obs4mips' "
-            "should be written as 'obs4MIPs'",
+            "Corrected capitalization, project '%s' should be written as '%s'."
+            "Support for automatically correcting this will be removed in v2.16.0.",
+            lower_case_project,
+            facets["project"],
         )
-        facets["project"] = "obs4MIPs"
 
     check.variable(
         facets,
