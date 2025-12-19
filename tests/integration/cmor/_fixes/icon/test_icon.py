@@ -1,6 +1,5 @@
 """Test the ICON on-the-fly CMORizer."""
 
-from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
@@ -26,7 +25,6 @@ from esmvalcore.cmor._fixes.icon.icon import (
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
-from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 
 TEST_GRID_FILE_URI = (
@@ -34,12 +32,6 @@ TEST_GRID_FILE_URI = (
     "cmor/_fixes/test_data/icon_grid.nc"
 )
 TEST_GRID_FILE_NAME = "icon_grid.nc"
-
-
-@pytest.fixture(autouse=True)
-def tmp_cache_dir(monkeypatch, tmp_path):
-    """Use temporary path as cache directory for all tests in this module."""
-    monkeypatch.setattr(IconFix, "CACHE_DIR", tmp_path)
 
 
 @pytest.fixture
@@ -572,9 +564,10 @@ def test_get_areacella_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_areacella_fix(cubes_grid):
+@pytest.mark.online
+def test_areacella_fix(cubes_grid, session):
     """Test fix."""
-    fix = get_allvars_fix("fx", "areacella")
+    fix = get_allvars_fix("fx", "areacella", session=session)
     fix.extra_facets["var_type"] = "fx"
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
@@ -595,9 +588,10 @@ def test_get_areacello_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_areacello_fix(cubes_grid):
+@pytest.mark.online
+def test_areacello_fix(cubes_grid, session):
     """Test fix."""
-    fix = get_allvars_fix("Ofx", "areacello")
+    fix = get_allvars_fix("Ofx", "areacello", session=session)
     fix.extra_facets["var_type"] = "fx"
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
@@ -655,9 +649,10 @@ def test_get_lwp_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_lwp_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_lwp_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("AERmon", "lwp")
+    fix = get_allvars_fix("AERmon", "lwp", session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -683,9 +678,10 @@ def test_get_rsdt_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsdt_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_rsdt_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "rsdt")
+    fix = get_allvars_fix("Amon", "rsdt", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -706,9 +702,10 @@ def test_get_rsut_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_rsut_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_rsut_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "rsut")
+    fix = get_allvars_fix("Amon", "rsut", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -732,9 +729,10 @@ def test_get_siconc_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconc_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_siconc_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("SImon", "siconc")
+    fix = get_allvars_fix("SImon", "siconc", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
@@ -758,9 +756,10 @@ def test_get_siconca_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_siconca_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_siconca_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("SImon", "siconca")
+    fix = get_allvars_fix("SImon", "siconca", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_siconc_metadata(
@@ -787,9 +786,10 @@ def test_get_ta_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_ta_fix(cubes_atm_3d):
+@pytest.mark.online
+def test_ta_fix(cubes_atm_3d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "ta")
+    fix = get_allvars_fix("Amon", "ta", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_3d)
 
     cube = check_ta_metadata(fixed_cubes)
@@ -798,9 +798,10 @@ def test_ta_fix(cubes_atm_3d):
     check_lat_lon(cube)
 
 
-def test_ta_fix_no_plev_bounds(cubes_atm_3d):
+@pytest.mark.online
+def test_ta_fix_no_plev_bounds(cubes_atm_3d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "ta")
+    fix = get_allvars_fix("Amon", "ta", session=session)
     cubes = CubeList(
         [
             cubes_atm_3d.extract_cube(NameConstraint(var_name="ta")),
@@ -824,9 +825,10 @@ def test_get_tas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_tas_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -835,9 +837,10 @@ def test_tas_fix(cubes_atm_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_spatial_index_coord_already_present(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_spatial_index_coord_already_present(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     index_coord = DimCoord(np.arange(8), var_name="ncells")
     cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
@@ -849,9 +852,10 @@ def test_tas_spatial_index_coord_already_present(cubes_atm_2d):
     check_lat_lon(cube)
 
 
-def test_tas_scalar_height2m_already_present(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_scalar_height2m_already_present(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     # Scalar height (with wrong metadata) already present
     height_coord = AuxCoord(2.0, var_name="h", standard_name="height")
@@ -901,9 +905,10 @@ def test_tas_no_mesh(cubes_atm_2d):
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
 
 
-def test_tas_dim_height2m_already_present(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_dim_height2m_already_present(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     # Dimensional coordinate height (with wrong metadata) already present
     height_coord = AuxCoord(2.0, var_name="h", standard_name="height")
@@ -920,9 +925,10 @@ def test_tas_dim_height2m_already_present(cubes_atm_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_no_shift_time(cubes_atm_2d):
+@pytest.mark.online
+def test_tas_no_shift_time(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets["shift_time"] = False
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
@@ -944,9 +950,10 @@ def test_tas_no_shift_time(cubes_atm_2d):
     assert time.attributes == {}
 
 
-def test_fix_does_not_change_cached_grid(cubes_atm_2d):
+@pytest.mark.online
+def test_fix_does_not_change_cached_grid(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     assert not fix._horizontal_grids
     assert not fix._meshes
 
@@ -975,9 +982,10 @@ def test_get_uas_fix():
     assert fix == [AllVars(None), GenericFix(None)]
 
 
-def test_uas_fix(cubes_atm_2d):
+@pytest.mark.online
+def test_uas_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "uas")
+    fix = get_allvars_fix("Amon", "uas", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -1001,9 +1009,10 @@ def test_uas_fix(cubes_atm_2d):
     assert height.bounds is None
 
 
-def test_uas_scalar_height10m_already_present(cubes_atm_2d):
+@pytest.mark.online
+def test_uas_scalar_height10m_already_present(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "uas")
+    fix = get_allvars_fix("Amon", "uas", session=session)
 
     # Scalar height (with wrong metadata) already present
     height_coord = AuxCoord(10.0, var_name="h", standard_name="height")
@@ -1017,9 +1026,10 @@ def test_uas_scalar_height10m_already_present(cubes_atm_2d):
     check_heightxm(cube, 10.0)
 
 
-def test_uas_dim_height10m_already_present(cubes_atm_2d):
+@pytest.mark.online
+def test_uas_dim_height10m_already_present(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "uas")
+    fix = get_allvars_fix("Amon", "uas", session=session)
 
     # Dimensional coordinate height (with wrong metadata) already present
     height_coord = AuxCoord(10.0, var_name="h", standard_name="height")
@@ -1108,9 +1118,10 @@ def test_ch4clim_fix(cubes_regular_grid):
 # Test fix with empty standard_name
 
 
-def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch):
+@pytest.mark.online
+def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     # We know that tas has a standard name, but this being native model output
     # there may be variables with no standard name. The code is designed to
     # handle this gracefully and here we test it with an artificial, but
@@ -1130,7 +1141,8 @@ def test_empty_standard_name_fix(cubes_atm_2d, monkeypatch):
 # Test automatic addition of missing coordinates
 
 
-def test_add_time(cubes_atm_2d):
+@pytest.mark.online
+def test_add_time(cubes_atm_2d, session):
     """Test fix."""
     # Remove time from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
@@ -1139,7 +1151,7 @@ def test_add_time(cubes_atm_2d):
     tas_cube.remove_coord("time")
     cubes = CubeList([tas_cube, uas_cube])
 
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -1162,13 +1174,14 @@ def test_add_time_fail():
         fix._add_time(cube, cubes)
 
 
-def test_add_latitude(cubes_atm_2d):
+@pytest.mark.online
+def test_add_latitude(cubes_atm_2d, session):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     cubes = CubeList([tas_cube])
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -1180,13 +1193,14 @@ def test_add_latitude(cubes_atm_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_longitude(cubes_atm_2d):
+@pytest.mark.online
+def test_add_longitude(cubes_atm_2d, session):
     """Test fix."""
     # Remove longitude from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("longitude")
     cubes = CubeList([tas_cube])
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -1198,14 +1212,15 @@ def test_add_longitude(cubes_atm_2d):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_latitude_longitude(cubes_atm_2d):
+@pytest.mark.online
+def test_add_latitude_longitude(cubes_atm_2d, session):
     """Test fix."""
     # Remove latitude and longitude from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     tas_cube.remove_coord("longitude")
     cubes = CubeList([tas_cube])
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -1259,14 +1274,15 @@ def test_add_coord_from_grid_file_fail_no_url():
         fix._add_coord_from_grid_file(Cube(0), "clat")
 
 
-def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d):
+@pytest.mark.online
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d, session):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     index_coord = DimCoord(np.arange(8), var_name="ncells")
     tas_cube.add_dim_coord(index_coord, 1)
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     msg = (
         "Cannot determine coordinate dimension for coordinate 'clat', "
@@ -1276,13 +1292,14 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_atm_2d):
         fix._add_coord_from_grid_file(tas_cube, "clat")
 
 
-def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_atm_2d):
+@pytest.mark.online
+def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_atm_2d, session):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
     tas_cube.remove_coord("latitude")
     tas_cube = iris.util.new_axis(tas_cube)
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     msg = (
         "Cannot determine coordinate dimension for coordinate 'clat', "
@@ -1321,19 +1338,16 @@ def test_get_horizontal_grid_from_attr_cached_in_dict(
 @mock.patch.object(IconFix, "_get_grid_from_facet", autospec=True)
 def test_get_horizontal_grid_from_attr_rootpath(
     mock_get_grid_from_facet,
-    monkeypatch,
     tmp_path,
+    session,
 ):
     """Test fix."""
-    rootpath = deepcopy(CFG["rootpath"])
-    rootpath["ICON"] = str(tmp_path)
-    monkeypatch.setitem(CFG, "rootpath", rootpath)
     cube = Cube(0, attributes={"grid_file_uri": "grid.nc"})
     grid_cube = Cube(0, var_name="test_grid_cube")
     (tmp_path / "amip").mkdir(parents=True, exist_ok=True)
     iris.save(grid_cube, tmp_path / "amip" / "grid.nc")
 
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fix._horizontal_grids["grid_from_facet.nc"] = mock.sentinel.wrong_grid
 
     grid = fix.get_horizontal_grid(cube)
@@ -1353,6 +1367,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     mock_requests,
     mock_get_grid_from_facet,
     tmp_path,
+    session,
 ):
     """Test fix."""
     cube = Cube(
@@ -1361,7 +1376,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
             "grid_file_uri": "https://temporary.url/this/is/the/grid_file.nc",
         },
     )
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     assert len(fix._horizontal_grids) == 0
 
     # Save temporary grid file
@@ -1380,15 +1395,17 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     mock_get_grid_from_facet.assert_not_called()
 
 
+@pytest.mark.online
 @mock.patch.object(IconFix, "_get_grid_from_facet", autospec=True)
 def test_get_horizontal_grid_from_attr_cache_file_too_old(
     mock_get_grid_from_facet,
     tmp_path,
     monkeypatch,
+    session,
 ):
     """Test fix."""
     cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     assert len(fix._horizontal_grids) == 0
 
     # Save temporary grid file
@@ -1417,11 +1434,9 @@ def test_get_horizontal_grid_from_attr_cache_file_too_old(
 def test_get_horizontal_grid_from_facet_cached_in_dict(
     mock_get_grid_from_cube_attr,
     tmp_path,
+    session,
 ):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-
     # Save temporary grid file (this will not be used; however, it is necessary
     # to not raise a FileNotFoundError)
     grid_path = "grid.nc"
@@ -1451,11 +1466,9 @@ def test_get_horizontal_grid_from_facet(
     mock_get_grid_from_cube_attr,
     grid_path,
     tmp_path,
+    session,
 ):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-
     # Make sure that grid specified by cube attribute is NOT used
     cube = Cube(0, attributes={"grid_file_uri": "cached_grid_url.nc"})
 
@@ -1479,11 +1492,8 @@ def test_get_horizontal_grid_from_facet(
     mock_get_grid_from_cube_attr.assert_not_called()
 
 
-def test_get_horizontal_grid_from_facet_fail(tmp_path):
+def test_get_horizontal_grid_from_facet_fail(session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-
     cube = Cube(0)
     fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets["horizontal_grid"] = "/this/does/not/exist.nc"
@@ -1742,9 +1752,10 @@ def test_invalid_time_units(cubes_atm_2d):
 # Test fix with (sub-)hourly data
 
 
-def test_hourly_data(cubes_atm_2d):
+@pytest.mark.online
+def test_hourly_data(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets["frequency"] = "1hr"
     for cube in cubes_atm_2d:
         cube.coord("time").points = [20041104.5833333]
@@ -2093,8 +2104,9 @@ def test_get_previous_timestep(frequency, datetime_in, datetime_out):
 # Test mesh creation raises warning because bounds do not match vertices
 
 
+@pytest.mark.online
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
-def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
+def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d, session):
     """Test fix."""
     # Slightly modify latitude bounds from tas cube to make mesh creation fail
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
@@ -2102,7 +2114,7 @@ def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
     lat_bnds[0, 0] = 40.0
     tas_cube.coord("latitude").bounds = lat_bnds
     cubes = CubeList([tas_cube])
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     fixed_cubes = fix.fix_metadata(cubes)
     cube = check_tas_metadata(fixed_cubes)
@@ -2117,8 +2129,9 @@ def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_atm_2d):
     )
 
 
+@pytest.mark.online
 @mock.patch("esmvalcore.cmor._fixes.icon._base_fixes.logger", autospec=True)
-def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d):
+def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d, session):
     """Test fix."""
     # Slightly modify longitude bounds from tas cube to make mesh creation fail
     tas_cube = cubes_atm_2d.extract_cube(NameConstraint(var_name="tas"))
@@ -2126,7 +2139,7 @@ def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_atm_2d):
     lon_bnds[0, 1] = 40.0
     tas_cube.coord("longitude").bounds = lon_bnds
     cubes = CubeList([tas_cube])
-    fix = get_allvars_fix("Amon", "tas")
+    fix = get_allvars_fix("Amon", "tas", session=session)
 
     fixed_cubes = fix.fix_metadata(cubes)
     cube = check_tas_metadata(fixed_cubes)
@@ -2189,11 +2202,8 @@ def test_get_mesh_not_cached_from_attr(monkeypatch):
     fix._create_mesh.assert_called_once_with(cube)
 
 
-def test_get_mesh_cached_from_facet(monkeypatch, tmp_path):
+def test_get_mesh_cached_from_facet(monkeypatch, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-
     # Save temporary grid file (this will not be used; however, it is necessary
     # to not raise a FileNotFoundError)
     grid_path = "grid.nc"
@@ -2213,11 +2223,8 @@ def test_get_mesh_cached_from_facet(monkeypatch, tmp_path):
     fix._create_mesh.assert_not_called()
 
 
-def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
+def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-
     # Save temporary grid file (this will not be used; however, it is necessary
     # to not raise a FileNotFoundError)
     grid_path = "grid.nc"
@@ -2245,10 +2252,8 @@ def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
         ("b.nc", "Grid file", "{tmp_path}/b.nc"),
     ],
 )
-def test_get_path_from_facet(path, description, output, tmp_path):
+def test_get_path_from_facet(path, description, output, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets["test_path"] = path
@@ -2271,10 +2276,8 @@ def test_get_path_from_facet(path, description, output, tmp_path):
         ("b.nc", "Grid file"),
     ],
 )
-def test_get_path_from_facet_fail(path, description, tmp_path):
+def test_get_path_from_facet_fail(path, description, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets["test_path"] = path
@@ -2288,10 +2291,8 @@ def test_get_path_from_facet_fail(path, description, tmp_path):
 
 @pytest.mark.parametrize("facet", ["zg_file", "zghalf_file"])
 @pytest.mark.parametrize("path", ["{tmp_path}/a.nc", "a.nc"])
-def test_add_additional_cubes(path, facet, tmp_path):
+def test_add_additional_cubes(path, facet, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets[facet] = path
@@ -2310,10 +2311,8 @@ def test_add_additional_cubes(path, facet, tmp_path):
 
 @pytest.mark.parametrize("facet", ["zg_file", "zghalf_file"])
 @pytest.mark.parametrize("path", ["{tmp_path}/a.nc", "a.nc"])
-def test_add_additional_cubes_fail(path, facet, tmp_path):
+def test_add_additional_cubes_fail(path, facet, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Amon", "tas", session=session)
     fix.extra_facets[facet] = path

@@ -1,0 +1,30 @@
+# Read CMIP and OBS data from the filesystem at ETHZ.
+projects:
+  CMIP6:
+    data:
+      ethz:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: /net/atmos/data
+        dirname_template: "{project.lower}/{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+  CMIP5:
+    data:
+      ethz:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: /net/atmos/data
+        dirname_template: "{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
+  CMIP3:
+    data:
+      ethz:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: /net/atmos/data
+        dirname_template: "{project.lower}/{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}"
+        filename_template: "{short_name}_*.nc"
+  OBS:
+    data:
+      ethz:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

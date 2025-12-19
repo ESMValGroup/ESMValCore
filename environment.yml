@@ -13,15 +13,15 @@ dependencies:
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy
   - esmvaltool-sample-data
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
+  - intake-esgf >=2025.10.22
   - intake-esm
-  - iris >=3.12.2  # https://github.com/SciTools/iris/issues/6417
+  - iris >=3.12.2,<3.14.1 # https://github.com/SciTools/iris/issues/6417, https://github.com/ESMValGroup/ESMValCore/issues/2921
   - iris-esmf-regrid >=0.11.0
   - iris-grib >=0.20.0  # github.com/ESMValGroup/ESMValCore/issues/2535
   - isodate >=0.7.0  # incompatible with very old 0.6.1
@@ -40,7 +40,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.11
+  - python >=3.12
   - python-stratify >=0.3
   - pyyaml
   - requests

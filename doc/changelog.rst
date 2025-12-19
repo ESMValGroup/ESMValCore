@@ -812,7 +812,7 @@ Backwards incompatible changes
 Bug fixes
 ~~~~~~~~~
 
--  Respect ``ignore_warnings`` settings from the :ref:`project configuration <filterwarnings_config-developer>` in :func:`esmvalcore.dataset.Dataset.load` (:pull:`2046`) by :user:`schlunma`
+-  Respect ``ignore_warnings`` settings from the project configuration in config-developer.yml in :func:`esmvalcore.dataset.Dataset.load` (:pull:`2046`) by :user:`schlunma`
 -  Fixed usage of custom location for :ref:`custom CMOR tables <custom_cmor_tables>` (:pull:`2052`) by :user:`schlunma`
 -  Fix issue with writing index.html when :ref:`running a recipe <running>` with ``--resume-from`` (:pull:`2055`) by :user:`bouweandela`
 -  Fixed bug in ICON CMORizer that lead to shifted time coordinates (:pull:`2038`) by :user:`schlunma`

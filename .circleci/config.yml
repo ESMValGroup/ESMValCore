@@ -66,7 +66,7 @@ commands:
       - run:
           name: Install git+ssh
           environment:
-            DEBIAN_FRONTEND: noninteractive  # needed to install tzdata
+            DEBIAN_FRONTEND: noninteractive # needed to install tzdata
           command: apt update && apt install -y git ssh
       - checkout
       - check_changes
@@ -155,7 +155,7 @@ jobs:
           name: Install gpg (required by codecov orb)
           command: apt update && apt install -y gpg
       - codecov/upload:
-          files: 'test-reports/coverage.xml'
+          files: "test-reports/coverage.xml"
           disable_search: true
 
   test_installation_from_source_test_mode:
@@ -209,7 +209,7 @@ jobs:
             # Install prerequisites
             mkdir /logs
             # Create and activate conda environment
-            mamba create -y --name esmvaltool 'python=3.11'
+            mamba create -y --name esmvaltool 'python=3.12'
             set +x; conda activate esmvaltool; set -x
             # Install
             mamba install -y esmvalcore
