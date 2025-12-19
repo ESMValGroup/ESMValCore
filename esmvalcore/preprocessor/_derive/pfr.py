@@ -110,7 +110,7 @@ class DerivedVariable(DerivedVariableBase):
         z_coord = soiltemp.coord(axis="Z")
         zmax = np.amax(z_coord.core_points())
         soiltemp = soiltemp.extract(iris.Constraint(depth=zmax))
-        soiltemp.data = da.where(soiltemp.data < THRESH_TEMPERATURE, 1, 0)
+        soiltemp.data = da.where(soiltemp.core_data() < THRESH_TEMPERATURE, 1, 0)
         iris.coord_categorisation.add_year(soiltemp, "time")
 
         # prepare cube for permafrost extent with yearly time steps
