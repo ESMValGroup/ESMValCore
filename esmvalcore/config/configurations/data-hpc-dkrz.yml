@@ -60,6 +60,13 @@ projects:
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project}/{dataset}/{version}"
         filename_template: "{short_name}_*.nc"
+  ana4MIPs:
+    data:
+      dkrz:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: /work/bd0854/DATA/ESMValTool2/OBS
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{short_name}_{mip}_{type}_{dataset}_*.nc"
   native6:
     data:
       dkrz:
