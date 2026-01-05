@@ -1,0 +1,1272 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: 5739b557bba4b9d648d45332424c6840",
+        "cmor_version": "3.12",
+        "generic_levels": "alevel alevhalf",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "atmosChem",
+        "table_date": "2025-10-17 11:13:22",
+        "table_id": "atmosChem",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "variable_entry": {
+        "c2h4_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "C2H4  volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "c2h4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ethene_in_air",
+            "units": "mol mol-1"
+        },
+        "c2h5oh_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "C2H5OH  volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "c2h5oh",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ethanol_in_air",
+            "units": "mol mol-1"
+        },
+        "c4h10_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "C4H10  volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "c4h10",
+            "positive": "",
+            "standard_name": "mole_fraction_of_butane_in_air",
+            "units": "mol mol-1"
+        },
+        "cfc113_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of CFC113",
+            "modeling_realm": "atmosChem",
+            "out_name": "cfc113",
+            "positive": "",
+            "standard_name": "mole_fraction_of_cfc113_in_air",
+            "units": "1E-12"
+        },
+        "cfc11_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of CFC11",
+            "modeling_realm": "atmosChem",
+            "out_name": "cfc11",
+            "positive": "",
+            "standard_name": "mole_fraction_of_cfc11_in_air",
+            "units": "1E-12"
+        },
+        "cfc12_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of CFC12",
+            "modeling_realm": "atmosChem",
+            "out_name": "cfc12",
+            "positive": "",
+            "standard_name": "mole_fraction_of_cfc12_in_air",
+            "units": "1E-12"
+        },
+        "ch3oh_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "CH3OH  volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "ch3oh",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methanol_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Mole Fraction of CH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4_tavg-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time"
+            ],
+            "long_name": "Mole Fraction of CH4",
+            "modeling_realm": "atmosChem",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4_tavg-p39-hy-air": {
+            "cell_measures": "",
+            "cell_methods": "longitude: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "plev39",
+                "time"
+            ],
+            "long_name": "Mole Fraction of CH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of CH4",
+            "modeling_realm": "atmosChem",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "1E-09"
+        },
+        "ch4_tclm-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where air time: mean within years time: mean over years",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time2"
+            ],
+            "long_name": "Mole Fraction of CH4",
+            "modeling_realm": "atmosChem",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4_tclm-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time2"
+            ],
+            "long_name": "Global Mean Mole Fraction of CH4",
+            "modeling_realm": "atmosChem",
+            "out_name": "ch4",
+            "positive": "",
+            "standard_name": "mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "ch4losssoil_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "loss of methane from the atmosphere due to biological consumption in the soil",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "ch4losssoil",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_methane_due_to_soil_biological_consumption",
+            "units": "kg m-2 s-1"
+        },
+        "ch4ref_ti-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel"
+            ],
+            "long_name": "Reference mole fraction of methane in air",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "ch4ref",
+            "positive": "",
+            "standard_name": "reference_mole_fraction_of_methane_in_air",
+            "units": "mol mol-1"
+        },
+        "chegph2oo1d_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Primary production of OH (H2O+O1D)",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "chegph2oo1d",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_hydroxyl_radical_due_to_chemical_production_from_atomic_singlet_oxygen_and_water_vapor",
+            "units": "mol m-3 s-1"
+        },
+        "chepnh4_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Net chemical production of ammonium aerosol",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "chepnh4",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_particles_due_to_net_chemical_production",
+            "units": "kg m-2 s-1"
+        },
+        "chepno3_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Net chemical production of nitrate aerosol",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "chepno3",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nitrate_dry_aerosol_particles_due_to_net_chemical_production",
+            "units": "kg m-2 s-1"
+        },
+        "dms_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Dimethyl Sulphide (DMS) Mole Fraction",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "dms",
+            "positive": "",
+            "standard_name": "mole_fraction_of_dimethyl_sulfide_in_air",
+            "units": "mol mol-1"
+        },
+        "do3chm_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Net Chemistry Tendency of O3",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "do3chm",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_ozone_due_to_net_chemical_production",
+            "units": "mol m-3 s-1"
+        },
+        "dryh2_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total loss rate of molecular hydrogen (H2) from the atmosphere via soil sink",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "dryh2",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_molecular_hydrogen_due_to_dry_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "dryhno3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Dry deposition of HNO3",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "dryhno3",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nitric_acid_due_to_dry_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "drynh3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Dry Deposition Rate of NH3",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "drynh3",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_ammonia_due_to_dry_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "drynh4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Dry Deposition Rate of NH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "drynh4",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_particles_due_to_dry_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "drynoy_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Dry Deposition Rate of NOy",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "drynoy",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_noy_expressed_as_nitrogen_due_to_dry_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "e90inst_tpt-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time1"
+            ],
+            "long_name": "Artificial tracer with 90 day lifetime",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "e90inst",
+            "positive": "",
+            "standard_name": "mole_fraction_of_artificial_tracer_with_fixed_lifetime_in_air",
+            "units": "mol mol-1"
+        },
+        "emiach4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "anthropogenic emission rate of CH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emiach4",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_methane_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emiavnox_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Emission rate of NOx from aviation",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emiavnox",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_nox_expressed_as_nitrogen",
+            "units": "mol m-2 s-1"
+        },
+        "emic2h4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C2H4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic2h4",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_ethene_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emic2h5oh_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C2H5OH",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic2h5oh",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_ethanol_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emic2h6_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C2H6",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic2h6",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_ethane_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emic3h6_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C3H6",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic3h6",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_propene_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emic3h8_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C3H8",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic3h8",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_propane_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emic4h10_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of C4H10",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emic4h10",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_butane_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emich3oh_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of CH3OH",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emich3oh",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_methanol_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emich4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "total emission rate of CH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emich4",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_methane_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emih2_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total emission rate of molecular hydrogen (H2)",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emih2",
+            "positive": "up",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_molecular_hydrogen_due_to_emission",
+            "units": "kg m-2 s-1"
+        },
+        "emilkch4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "lake emission rate of CH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "emilkch4",
+            "positive": "",
+            "standard_name": "surface_net_upward_mass_flux_of_methane_due_to_emission_from_freshwater_lakes",
+            "units": "kg m-2 s-1"
+        },
+        "flashrate_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Lightning Flash Rate",
+            "modeling_realm": "atmosChem",
+            "out_name": "flashrate",
+            "positive": "",
+            "standard_name": "frequency_of_lightning_flashes_per_unit_area",
+            "units": "km-2 s-1"
+        },
+        "h2_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "H2 volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "h2",
+            "positive": "",
+            "standard_name": "mole_fraction_of_molecular_hydrogen_in_air",
+            "units": "mol mol-1"
+        },
+        "h2loss_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Chemical destruction of atmospheric H2",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "h2loss",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_molecular_hydrogen_due_to_chemical_destruction",
+            "units": "mol m-3 s-1"
+        },
+        "h2prod_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "chemical production of atmospheric H2",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "h2prod",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_molecular_hydrogen_due_to_chemical_production",
+            "units": "mol m-3 s-1"
+        },
+        "hcfc22_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of HCFC22",
+            "modeling_realm": "atmosChem",
+            "out_name": "hcfc22",
+            "positive": "",
+            "standard_name": "mole_fraction_of_hcfc22_in_air",
+            "units": "1E-12"
+        },
+        "meanage_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Mean Age of Stratospheric Air",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "meanage",
+            "positive": "",
+            "standard_name": "age_of_stratospheric_air",
+            "units": "yr"
+        },
+        "meanage_tavg-p39-hy-air": {
+            "cell_measures": "",
+            "cell_methods": "longitude: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "plev39",
+                "time"
+            ],
+            "long_name": "Mean Age of Stratospheric Air",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "meanage",
+            "positive": "",
+            "standard_name": "age_of_stratospheric_air",
+            "units": "yr"
+        },
+        "n2o_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "mol mol-1"
+        },
+        "n2o_tavg-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time"
+            ],
+            "long_name": "Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "mol mol-1"
+        },
+        "n2o_tavg-p39-hy-air": {
+            "cell_measures": "",
+            "cell_methods": "longitude: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "plev39",
+                "time"
+            ],
+            "long_name": "Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "mol mol-1"
+        },
+        "n2o_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "1E-09"
+        },
+        "n2o_tclm-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where air time: mean within years time: mean over years",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time2"
+            ],
+            "long_name": "Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "mol mol-1"
+        },
+        "n2o_tclm-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
+            "comment": "",
+            "dimensions": [
+                "time2"
+            ],
+            "long_name": "Global Mean Mole Fraction of N2O",
+            "modeling_realm": "atmosChem",
+            "out_name": "n2o",
+            "positive": "",
+            "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+            "units": "mol mol-1"
+        },
+        "o3_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Mole Fraction of O3",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3_tavg-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time"
+            ],
+            "long_name": "Mole Fraction of O3",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3_tavg-p39-hy-air": {
+            "cell_measures": "",
+            "cell_methods": "longitude: time: mean where air",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "plev39",
+                "time"
+            ],
+            "long_name": "Mole Fraction of O3",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3_tclm-p19-hxy-air": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where air time: mean within years time: mean over years",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "plev19",
+                "time2"
+            ],
+            "long_name": "Mole Fraction of O3",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3_tpt-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time1"
+            ],
+            "long_name": "O3 volume mixing ratio",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "o3",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3ref_tclm-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean time: mean within years time: mean over years",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time2"
+            ],
+            "long_name": "Fixed Reference Climatology of Mole Fraction of Ozone in Air",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3ref",
+            "positive": "",
+            "standard_name": "reference_mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3ref_ti-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel"
+            ],
+            "long_name": "Fixed Reference Mole Fraction of Ozone in Air",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "o3ref",
+            "positive": "",
+            "standard_name": "reference_mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "o3ste_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Stratospheric Ozone Tracer Volume Mixing Ratio",
+            "modeling_realm": "atmosChem",
+            "out_name": "o3ste",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "rlutch4ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA outgoing longwave flux assuming reference methane field",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rlutch4ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_longwave_flux_assuming_reference_mole_fraction_of_methane_in_air",
+            "units": "W m-2"
+        },
+        "rlutcsch4ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA outgoing longwave flux assuming clear sky and reference methane field",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rlutcsch4ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky_and_reference_mole_fraction_of_methane_in_air",
+            "units": "W m-2"
+        },
+        "rlutcso3ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA outgoing longwave flux assuming clear sky and reference ozone field",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rlutcso3ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky_and_reference_mole_fraction_of_ozone_in_air",
+            "units": "W m-2"
+        },
+        "rluto3ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "toa_outgoing_longwave_flux_assuming_reference_mole_fraction_of_ozone_in_air",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rluto3ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_longwave_flux_assuming_reference_mole_fraction_of_ozone_in_air",
+            "units": "W m-2"
+        },
+        "rsutch4ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA outgoing shortwave flux assuming reference methane",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rsutch4ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_shortwave_flux_assuming_reference_mole_fraction_of_methane_in_air",
+            "units": "W m-2"
+        },
+        "rsutcsch4ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA outgoing shortwave flux assuming clear-sky and reference methane field",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rsutcsch4ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_reference_mole_fraction_of_methane_in_air",
+            "units": "W m-2"
+        },
+        "rsutcso3ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA shortwave flux assuming clear sky and reference ozone",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rsutcso3ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_reference_mole_fraction_of_ozone_in_air",
+            "units": "W m-2"
+        },
+        "rsuto3ref_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "TOA shortwave flux assuming reference ozone field",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "rsuto3ref",
+            "positive": "",
+            "standard_name": "toa_outgoing_shortwave_flux_assuming_reference_mole_fraction_of_ozone_in_air",
+            "units": "W m-2"
+        },
+        "stratch4loss_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Loss of Stratospheric Methane by all chemical destruction",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "stratch4loss",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_methane_due_to_chemical_destruction",
+            "units": "mol m-3 s-1"
+        },
+        "tropch4loss_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Loss of Tropospheric Methane by all chemical destruction",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "tropch4loss",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_methane_due_to_chemical_destruction",
+            "units": "mol m-3 s-1"
+        },
+        "tropch4lossoh_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Tropospheric loss of methane by OH",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "tropch4lossoh",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_methane_due_to_chemical_destruction_by_hydroxyl_radical",
+            "units": "mol m-3 s-1"
+        },
+        "tropdo3chm_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Net Chemistry Tendency of O3 in troposphere",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "tropdo3chm",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mole_concentration_of_ozone_due_to_net_chemical_production",
+            "units": "mol m-3 s-1"
+        },
+        "tropo3ste_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Tropospheric ozone volume mixing ratio due to stratosphere-troposphere exchange (STE)",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "tropo3ste",
+            "positive": "",
+            "standard_name": "mole_fraction_of_ozone_in_air",
+            "units": "mol mol-1"
+        },
+        "wethno3_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "wet deposition of HNO3",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "wethno3",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nitric_acid_due_to_wet_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "wetnh3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wet Deposition Rate of NH3",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "wetnh3",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_ammonia_due_to_wet_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "wetnh4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wet Deposition Rate of NH4",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "wetnh4",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_particles_due_to_wet_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "wetno3_tavg-al-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "alevel",
+                "time"
+            ],
+            "long_name": "Wet deposition of nitrate aerosol",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "wetno3",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nitrate_dry_aerosol_particles_due_to_wet_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "wetnoy_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wet Deposition Rate of NOy Including Aerosol Nitrate",
+            "modeling_realm": "atmosChem aerosol",
+            "out_name": "wetnoy",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_noy_expressed_as_nitrogen_due_to_wet_deposition",
+            "units": "kg m-2 s-1"
+        }
+    }
+}

@@ -858,6 +858,7 @@ class Dataset:
             "mip": self.facets["mip"],
             "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
+            "branding_suffix": self.facets.get("branding_suffix"),
         }
         if "timerange" in self.facets:
             settings["clip_timerange"] = {
@@ -873,6 +874,7 @@ class Dataset:
             "mip": self.facets["mip"],
             "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
+            "branding_suffix": self.facets.get("branding_suffix"),
         }
 
         result: Sequence[PreprocessorItem] = self.files

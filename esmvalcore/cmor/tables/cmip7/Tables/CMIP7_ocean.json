@@ -1,0 +1,3321 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: fcc5683f1b2ffaa9ac051584feab2c3d",
+        "cmor_version": "3.12",
+        "generic_levels": "olevel olevhalf",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "ocean",
+        "table_date": "2025-10-17 11:13:22",
+        "table_id": "ocean",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "variable_entry": {
+        "absscint_tavg-op4-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "oplayer4",
+                "time"
+            ],
+            "long_name": "Integral wrt depth of seawater absolute salinity expressed as salt mass content",
+            "modeling_realm": "ocean",
+            "out_name": "absscint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_sea_water_absolute_salinity_expressed_as_salt_mass_content",
+            "units": "kg m-2"
+        },
+        "agessc_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Age Since Surface Contact",
+            "modeling_realm": "ocean",
+            "out_name": "agessc",
+            "positive": "",
+            "standard_name": "sea_water_age_since_surface_contact",
+            "units": "yr"
+        },
+        "areacello_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Grid-Cell Area for Ocean Variables",
+            "modeling_realm": "ocean",
+            "out_name": "areacello",
+            "positive": "",
+            "standard_name": "cell_area",
+            "units": "m2"
+        },
+        "basin_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Region Selection Index",
+            "modeling_realm": "ocean",
+            "out_name": "basin",
+            "positive": "",
+            "standard_name": "region",
+            "units": "1"
+        },
+        "bigthetao_tavg-ol-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "olevel",
+                "time"
+            ],
+            "long_name": "Global Average Sea Water Conservative Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "bigthetao",
+            "positive": "",
+            "standard_name": "sea_water_conservative_temperature",
+            "units": "degC"
+        },
+        "bigthetao_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Conservative Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "bigthetao",
+            "positive": "",
+            "standard_name": "sea_water_conservative_temperature",
+            "units": "degC"
+        },
+        "bigthetao_tavg-op20bar-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "op20bar"
+            ],
+            "long_name": "Sea Water Conservative Temperature at 200 meters",
+            "modeling_realm": "ocean",
+            "out_name": "bigthetao",
+            "positive": "",
+            "standard_name": "sea_water_conservative_temperature",
+            "units": "degC"
+        },
+        "chcint_tavg-op4-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "oplayer4",
+                "time"
+            ],
+            "long_name": "Depth Integrated Seawater Conservative Temperature Expressed As Heat Content",
+            "modeling_realm": "ocean",
+            "out_name": "chcint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_sea_water_conservative_temperature_expressed_as_heat_content",
+            "units": "J m-2"
+        },
+        "deptho_ti-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Sea Floor Depth Below Geoid",
+            "modeling_realm": "ocean",
+            "out_name": "deptho",
+            "positive": "",
+            "standard_name": "sea_floor_depth_below_geoid",
+            "units": "m"
+        },
+        "difmxybo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Momentum XY Biharmonic Diffusivity",
+            "modeling_realm": "ocean",
+            "out_name": "difmxybo",
+            "positive": "",
+            "standard_name": "ocean_momentum_xy_biharmonic_diffusivity",
+            "units": "m4 s-1"
+        },
+        "difmxylo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Momentum XY Laplacian Diffusivity",
+            "modeling_realm": "ocean",
+            "out_name": "difmxylo",
+            "positive": "",
+            "standard_name": "ocean_momentum_xy_laplacian_diffusivity",
+            "units": "m2 s-1"
+        },
+        "diftrblo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Tracer Diffusivity Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "diftrblo",
+            "positive": "",
+            "standard_name": "ocean_tracer_laplacian_diffusivity_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "m2 s-1"
+        },
+        "diftrelo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Tracer Epineutral Laplacian Diffusivity",
+            "modeling_realm": "ocean",
+            "out_name": "diftrelo",
+            "positive": "",
+            "standard_name": "ocean_tracer_epineutral_laplacian_diffusivity",
+            "units": "m2 s-1"
+        },
+        "difvho_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Vertical Heat Diffusivity",
+            "modeling_realm": "ocean",
+            "out_name": "difvho",
+            "positive": "",
+            "standard_name": "ocean_vertical_heat_diffusivity",
+            "units": "m2 s-1"
+        },
+        "difvso_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Vertical Salt Diffusivity",
+            "modeling_realm": "ocean",
+            "out_name": "difvso",
+            "positive": "",
+            "standard_name": "ocean_vertical_salt_diffusivity",
+            "units": "m2 s-1"
+        },
+        "dispkexyfo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ocean Kinetic Energy Dissipation per Unit Area Due to XY Friction",
+            "modeling_realm": "ocean",
+            "out_name": "dispkexyfo",
+            "positive": "",
+            "standard_name": "ocean_kinetic_energy_dissipation_per_unit_area_due_to_xy_friction",
+            "units": "W m-2"
+        },
+        "dxto_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the X Direction at t-points",
+            "modeling_realm": "ocean",
+            "out_name": "dxto",
+            "positive": "",
+            "standard_name": "cell_x_length",
+            "units": "m"
+        },
+        "dxuo_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the X Direction at u-points",
+            "modeling_realm": "ocean",
+            "out_name": "dxuo",
+            "positive": "",
+            "standard_name": "cell_x_length",
+            "units": "m"
+        },
+        "dxvo_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the X Direction at v-points",
+            "modeling_realm": "ocean",
+            "out_name": "dxvo",
+            "positive": "",
+            "standard_name": "cell_x_length",
+            "units": "m"
+        },
+        "dyto_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the Y Direction at t-points",
+            "modeling_realm": "ocean",
+            "out_name": "dyto",
+            "positive": "",
+            "standard_name": "cell_y_length",
+            "units": "m"
+        },
+        "dyuo_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the Y Direction at u-points",
+            "modeling_realm": "ocean",
+            "out_name": "dyuo",
+            "positive": "",
+            "standard_name": "cell_y_length",
+            "units": "m"
+        },
+        "dyvo_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Cell Length in the Y Direction at v-points",
+            "modeling_realm": "ocean",
+            "out_name": "dyvo",
+            "positive": "",
+            "standard_name": "cell_y_length",
+            "units": "m"
+        },
+        "evspsbl_tavg-u-hxy-ifs": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where ice_free_sea over sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Evaporation Flux Where Ice Free Ocean over Sea",
+            "modeling_realm": "ocean",
+            "out_name": "evspsbl",
+            "positive": "",
+            "standard_name": "water_evapotranspiration_flux",
+            "units": "kg m-2 s-1"
+        },
+        "ficeberg_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water from Icebergs",
+            "modeling_realm": "ocean",
+            "out_name": "ficeberg",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_from_icebergs",
+            "units": "kg m-2 s-1"
+        },
+        "ficeberg_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water from Icebergs",
+            "modeling_realm": "ocean",
+            "out_name": "ficeberg",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_from_icebergs",
+            "units": "kg m-2 s-1"
+        },
+        "flandice_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water from Land Ice",
+            "modeling_realm": "ocean",
+            "out_name": "flandice",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_from_land_ice",
+            "units": "kg m-2 s-1"
+        },
+        "friver_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water from Rivers",
+            "modeling_realm": "ocean",
+            "out_name": "friver",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_from_rivers",
+            "units": "kg m-2 s-1"
+        },
+        "hfacrossline_tavg-u-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea depth: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "oline",
+                "time"
+            ],
+            "long_name": "Ocean Heat Transport across Lines",
+            "modeling_realm": "ocean",
+            "out_name": "hfacrossline",
+            "positive": "",
+            "standard_name": "ocean_heat_transport_across_line",
+            "units": "W"
+        },
+        "hfbasin_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin) where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport",
+            "modeling_realm": "ocean",
+            "out_name": "hfbasin",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport",
+            "units": "W"
+        },
+        "hfbasinpadv_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin) where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Parameterized Eddy Advection",
+            "modeling_realm": "ocean",
+            "out_name": "hfbasinpadv",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_parameterized_eddy_advection",
+            "units": "W"
+        },
+        "hfbasinpmadv_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin) where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "hfbasinpmadv",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "W"
+        },
+        "hfbasinpmdiff_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin) where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Parameterized Mesoscale Diffusion",
+            "modeling_realm": "ocean",
+            "out_name": "hfbasinpmdiff",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_parameterized_mesoscale_eddy_diffusion",
+            "units": "W"
+        },
+        "hfbasinpsmadv_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin) where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Parameterized Submesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "hfbasinpsmadv",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_parameterized_submesoscale_eddy_advection",
+            "units": "W"
+        },
+        "hfds_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downward Heat Flux at Sea Water Surface",
+            "modeling_realm": "ocean",
+            "out_name": "hfds",
+            "positive": "down",
+            "standard_name": "surface_downward_heat_flux_in_sea_water",
+            "units": "W m-2"
+        },
+        "hfevapds_tavg-u-hxy-ifs": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_free_sea over sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature Flux Due to Evaporation Expressed as Heat Flux out of Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "hfevapds",
+            "positive": "up",
+            "standard_name": "temperature_flux_due_to_evaporation_expressed_as_heat_flux_out_of_sea_water",
+            "units": "W m-2"
+        },
+        "hfgeou_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Upward Geothermal Heat Flux at Sea Floor",
+            "modeling_realm": "ocean",
+            "out_name": "hfgeou",
+            "positive": "up",
+            "standard_name": "upward_geothermal_heat_flux_at_sea_floor",
+            "units": "W m-2"
+        },
+        "hfgeou_ti-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Upward Geothermal Heat Flux at Sea Floor",
+            "modeling_realm": "ocean",
+            "out_name": "hfgeou",
+            "positive": "up",
+            "standard_name": "upward_geothermal_heat_flux_at_sea_floor",
+            "units": "W m-2"
+        },
+        "hfibthermds_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Heat Flux into Sea Water Due to Iceberg Thermodynamics",
+            "modeling_realm": "ocean",
+            "out_name": "hfibthermds",
+            "positive": "",
+            "standard_name": "heat_flux_into_sea_water_due_to_iceberg_thermodynamics",
+            "units": "W m-2"
+        },
+        "hfibthermds_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Heat Flux into Sea Water Due to Iceberg Thermodynamics",
+            "modeling_realm": "ocean",
+            "out_name": "hfibthermds",
+            "positive": "",
+            "standard_name": "heat_flux_into_sea_water_due_to_iceberg_thermodynamics",
+            "units": "W m-2"
+        },
+        "hfrainds_tavg-u-hxy-ifs": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_free_sea over sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature Flux Due to Rainfall Expressed as Heat Flux into Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "hfrainds",
+            "positive": "down",
+            "standard_name": "temperature_flux_due_to_rainfall_expressed_as_heat_flux_into_sea_water",
+            "units": "W m-2"
+        },
+        "hfrunoffds_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Temperature Flux Due to Runoff Expressed as Heat Flux into Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "hfrunoffds",
+            "positive": "",
+            "standard_name": "temperature_flux_due_to_runoff_expressed_as_heat_flux_into_sea_water",
+            "units": "W m-2"
+        },
+        "hfrunoffds_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature Flux Due to Runoff Expressed as Heat Flux into Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "hfrunoffds",
+            "positive": "",
+            "standard_name": "temperature_flux_due_to_runoff_expressed_as_heat_flux_into_sea_water",
+            "units": "W m-2"
+        },
+        "hfsnthermds_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Heat Flux into Sea Water Due to Snow Thermodynamics",
+            "modeling_realm": "ocean",
+            "out_name": "hfsnthermds",
+            "positive": "",
+            "standard_name": "heat_flux_into_sea_water_due_to_snow_thermodynamics",
+            "units": "W m-2"
+        },
+        "hfsnthermds_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Heat Flux into Sea Water Due to Snow Thermodynamics",
+            "modeling_realm": "ocean",
+            "out_name": "hfsnthermds",
+            "positive": "",
+            "standard_name": "heat_flux_into_sea_water_due_to_snow_thermodynamics",
+            "units": "W m-2"
+        },
+        "hfx_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "3D Ocean Heat X Transport",
+            "modeling_realm": "ocean",
+            "out_name": "hfx",
+            "positive": "",
+            "standard_name": "ocean_heat_x_transport",
+            "units": "W"
+        },
+        "hfx_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea depth: sum where sea (over entire ocean column) time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Vertically Integrated Ocean Heat X Transport",
+            "modeling_realm": "ocean",
+            "out_name": "hfx",
+            "positive": "",
+            "standard_name": "ocean_heat_x_transport",
+            "units": "W"
+        },
+        "hfy_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "3D Ocean Heat Y Transport",
+            "modeling_realm": "ocean",
+            "out_name": "hfy",
+            "positive": "",
+            "standard_name": "ocean_heat_y_transport",
+            "units": "W"
+        },
+        "hfy_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea depth: sum where sea (over entire ocean column) time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Vertically Integrated Ocean Heat Y Transport",
+            "modeling_realm": "ocean",
+            "out_name": "hfy",
+            "positive": "",
+            "standard_name": "ocean_heat_y_transport",
+            "units": "W"
+        },
+        "htovgyre_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Gyre",
+            "modeling_realm": "ocean",
+            "out_name": "htovgyre",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_gyre",
+            "units": "W"
+        },
+        "htovovrt_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Heat Transport Due to Overturning",
+            "modeling_realm": "ocean",
+            "out_name": "htovovrt",
+            "positive": "",
+            "standard_name": "northward_ocean_heat_transport_due_to_overturning",
+            "units": "W"
+        },
+        "masscello_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Grid-Cell Mass per Area",
+            "modeling_realm": "ocean",
+            "out_name": "masscello",
+            "positive": "",
+            "standard_name": "sea_water_mass_per_unit_area",
+            "units": "kg m-2"
+        },
+        "masscello_ti-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel"
+            ],
+            "long_name": "Ocean Grid-Cell Mass per Area",
+            "modeling_realm": "ocean",
+            "out_name": "masscello",
+            "positive": "",
+            "standard_name": "sea_water_mass_per_unit_area",
+            "units": "kg m-2"
+        },
+        "masso_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Sea Water Mass",
+            "modeling_realm": "ocean",
+            "out_name": "masso",
+            "positive": "",
+            "standard_name": "sea_water_mass",
+            "units": "kg"
+        },
+        "mfo_tavg-u-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "oline",
+                "time"
+            ],
+            "long_name": "Sea Water Transport",
+            "modeling_realm": "ocean",
+            "out_name": "mfo",
+            "positive": "",
+            "standard_name": "sea_water_transport_across_line",
+            "units": "kg s-1"
+        },
+        "mlotst_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "deltasigt"
+            ],
+            "long_name": "Ocean Mixed Layer Thickness Defined by Delta Sigma T of 0.03 kg m-3 referenced to the model level closest to 10 m depth",
+            "modeling_realm": "ocean",
+            "out_name": "mlotst",
+            "positive": "",
+            "standard_name": "ocean_mixed_layer_thickness_defined_by_sigma_t",
+            "units": "m"
+        },
+        "mlotst_tmax-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: maximum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "deltasigt"
+            ],
+            "long_name": "Maximum Ocean Mixed Layer Thickness Defined by Delta Sigma T of 0.03 kg m-3 referenced to the model level closest to 10 m depth",
+            "modeling_realm": "ocean",
+            "out_name": "mlotst",
+            "positive": "",
+            "standard_name": "ocean_mixed_layer_thickness_defined_by_sigma_t",
+            "units": "m"
+        },
+        "mlotst_tmin-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: minimum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "deltasigt"
+            ],
+            "long_name": "Minimum Ocean Mixed Layer Thickness Defined by Delta Sigma T of 0.03 kg m-3 referenced to the model level closest to 10 m depth",
+            "modeling_realm": "ocean",
+            "out_name": "mlotst",
+            "positive": "",
+            "standard_name": "ocean_mixed_layer_thickness_defined_by_sigma_t",
+            "units": "m"
+        },
+        "mlotstsq_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "deltasigt"
+            ],
+            "long_name": "Square of Ocean Mixed Layer Thickness Defined by Delta Sigma T of 0.03 kg m-3 referenced to the model level closest to 10 m depth",
+            "modeling_realm": "ocean",
+            "out_name": "mlotstsq",
+            "positive": "",
+            "standard_name": "square_of_ocean_mixed_layer_thickness_defined_by_sigma_t",
+            "units": "m2"
+        },
+        "mpw_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpw",
+            "positive": "",
+            "standard_name": "sea_surface_wave_mean_period",
+            "units": "s"
+        },
+        "mpw_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Total Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpw",
+            "positive": "",
+            "standard_name": "sea_surface_wave_mean_period",
+            "units": "s"
+        },
+        "mpwswell_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Swell Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpwswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_mean_period",
+            "units": "s"
+        },
+        "mpwswell_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Swell Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpwswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_mean_period",
+            "units": "s"
+        },
+        "mpwwindsea_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wind Sea Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpwwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_mean_period",
+            "units": "s"
+        },
+        "mpwwindsea_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Wind Sea Wave Mean Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "mpwwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_mean_period",
+            "units": "s"
+        },
+        "msftbarot_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ocean Barotropic Mass Streamfunction",
+            "modeling_realm": "ocean",
+            "out_name": "msftbarot",
+            "positive": "",
+            "standard_name": "ocean_barotropic_mass_streamfunction",
+            "units": "kg s-1"
+        },
+        "msftm_tavg-ol-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "olevel",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+            "modeling_realm": "ocean",
+            "out_name": "msftm",
+            "positive": "",
+            "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+            "units": "kg s-1"
+        },
+        "msftm_tavg-rho-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "rho",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+            "modeling_realm": "ocean",
+            "out_name": "msftm",
+            "positive": "",
+            "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+            "units": "kg s-1"
+        },
+        "msftmmpa_tavg-ol-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "olevel",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "msftmmpa",
+            "positive": "",
+            "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "kg s-1"
+        },
+        "msftmmpa_tavg-rho-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "rho",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "msftmmpa",
+            "positive": "",
+            "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "kg s-1"
+        },
+        "msftmsmpa_tavg-ol-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "olevel",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Submesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "msftmsmpa",
+            "positive": "",
+            "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_submesoscale_eddy_advection",
+            "units": "kg s-1"
+        },
+        "msfty_tavg-ol-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "grid_longitude: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "gridlatitude",
+                "olevel",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Y Overturning Mass Streamfunction",
+            "modeling_realm": "ocean",
+            "out_name": "msfty",
+            "positive": "",
+            "standard_name": "ocean_y_overturning_mass_streamfunction",
+            "units": "kg s-1"
+        },
+        "msfty_tavg-rho-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "grid_longitude: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "gridlatitude",
+                "rho",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Y Overturning Mass Streamfunction",
+            "modeling_realm": "ocean",
+            "out_name": "msfty",
+            "positive": "",
+            "standard_name": "ocean_y_overturning_mass_streamfunction",
+            "units": "kg s-1"
+        },
+        "msftypa_tavg-ol-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "grid_longitude: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "gridlatitude",
+                "olevel",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Y Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "msftypa",
+            "positive": "",
+            "standard_name": "ocean_y_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "kg s-1"
+        },
+        "msftypa_tavg-rho-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "grid_longitude: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "gridlatitude",
+                "rho",
+                "basin",
+                "time"
+            ],
+            "long_name": "Ocean Y Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "msftypa",
+            "positive": "",
+            "standard_name": "ocean_y_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+            "units": "kg s-1"
+        },
+        "obvfsq_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Square of Brunt Vaisala Frequency in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "obvfsq",
+            "positive": "",
+            "standard_name": "square_of_brunt_vaisala_frequency_in_sea_water",
+            "units": "s-2"
+        },
+        "ocontempdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Dianeutral Mixing",
+            "modeling_realm": "ocean",
+            "out_name": "ocontempdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing",
+            "units": "W m-2"
+        },
+        "ocontempmint_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Depth Integral of Product of Sea Water Density and Conservative Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "ocontempmint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_product_of_conservative_temperature_and_sea_water_density",
+            "units": "degC kg m-2"
+        },
+        "ocontemppadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Eddy Advection",
+            "modeling_realm": "ocean",
+            "out_name": "ocontemppadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_eddy_advection",
+            "units": "W m-2"
+        },
+        "ocontemppmdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Mesoscale Diffusion",
+            "modeling_realm": "ocean",
+            "out_name": "ocontemppmdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_mesoscale_eddy_diffusion",
+            "units": "W m-2"
+        },
+        "ocontemppsmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Submesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "ocontemppsmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_submesoscale_eddy_advection",
+            "units": "W m-2"
+        },
+        "ocontemprmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Residual Mean Advection",
+            "modeling_realm": "ocean",
+            "out_name": "ocontemprmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_residual_mean_advection",
+            "units": "W m-2"
+        },
+        "ocontemptend_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content",
+            "modeling_realm": "ocean",
+            "out_name": "ocontemptend",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content",
+            "units": "W m-2"
+        },
+        "opottempdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Dianeutral Mixing",
+            "modeling_realm": "ocean",
+            "out_name": "opottempdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing",
+            "units": "W m-2"
+        },
+        "opottempmint_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Integral with Respect to Depth of Product of Sea Water Density and Potential Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "opottempmint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_product_of_potential_temperature_and_sea_water_density",
+            "units": "degC kg m-2"
+        },
+        "opottemppadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Eddy Advection",
+            "modeling_realm": "ocean",
+            "out_name": "opottemppadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_eddy_advection",
+            "units": "W m-2"
+        },
+        "opottemppmdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Mesoscale Diffusion",
+            "modeling_realm": "ocean",
+            "out_name": "opottemppmdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_mesoscale_eddy_diffusion",
+            "units": "W m-2"
+        },
+        "opottemppsmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Submesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "opottemppsmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_submesoscale_eddy_advection",
+            "units": "W m-2"
+        },
+        "opottemprmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Residual Mean Advection",
+            "modeling_realm": "ocean",
+            "out_name": "opottemprmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_residual_mean_advection",
+            "units": "W m-2"
+        },
+        "opottemptend_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content",
+            "modeling_realm": "ocean",
+            "out_name": "opottemptend",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content",
+            "units": "W m-2"
+        },
+        "osaltdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Dianeutral Mixing",
+            "modeling_realm": "ocean",
+            "out_name": "osaltdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_dianeutral_mixing",
+            "units": "kg m-2 s-1"
+        },
+        "osaltpadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Eddy Advection",
+            "modeling_realm": "ocean",
+            "out_name": "osaltpadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_eddy_advection",
+            "units": "kg m-2 s-1"
+        },
+        "osaltpmdiff_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Mesoscale Diffusion",
+            "modeling_realm": "ocean",
+            "out_name": "osaltpmdiff",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_mesoscale_eddy_diffusion",
+            "units": "kg m-2 s-1"
+        },
+        "osaltpsmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Submesoscale Advection",
+            "modeling_realm": "ocean",
+            "out_name": "osaltpsmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_submesoscale_eddy_advection",
+            "units": "kg m-2 s-1"
+        },
+        "osaltrmadvect_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Residual Mean Advection",
+            "modeling_realm": "ocean",
+            "out_name": "osaltrmadvect",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_residual_mean_advection",
+            "units": "kg m-2 s-1"
+        },
+        "osalttend_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content",
+            "modeling_realm": "ocean",
+            "out_name": "osalttend",
+            "positive": "",
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content",
+            "units": "kg m-2 s-1"
+        },
+        "pbo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Pressure at Sea Floor",
+            "modeling_realm": "ocean",
+            "out_name": "pbo",
+            "positive": "",
+            "standard_name": "sea_water_pressure_at_sea_floor",
+            "units": "Pa"
+        },
+        "pfscint_tavg-op4-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "oplayer4",
+                "time"
+            ],
+            "long_name": "Integral wrt depth of seawater preformed salinity expressed as salt mass content",
+            "modeling_realm": "ocean",
+            "out_name": "pfscint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_sea_water_preformed_salinity_expressed_as_salt_mass_content",
+            "units": "kg m-2"
+        },
+        "phcint_tavg-op4-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "oplayer4",
+                "time"
+            ],
+            "long_name": "Integrated Ocean Heat Content from Potential Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "phcint",
+            "positive": "down",
+            "standard_name": "integral_wrt_depth_of_sea_water_potential_temperature_expressed_as_heat_content",
+            "units": "J m-2"
+        },
+        "pso_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Pressure at Sea Water Surface",
+            "modeling_realm": "ocean",
+            "out_name": "pso",
+            "positive": "",
+            "standard_name": "sea_water_pressure_at_sea_water_surface",
+            "units": "Pa"
+        },
+        "rsdo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Downwelling Shortwave Radiation in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "rsdo",
+            "positive": "down",
+            "standard_name": "downwelling_shortwave_flux_in_sea_water",
+            "units": "W m-2"
+        },
+        "rsdoabsorb_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Net Rate of Absorption of Shortwave Energy in Ocean Layer",
+            "modeling_realm": "ocean",
+            "out_name": "rsdoabsorb",
+            "positive": "",
+            "standard_name": "net_rate_of_absorption_of_shortwave_energy_in_ocean_layer",
+            "units": "W m-2"
+        },
+        "rsds_tavg-u-hxy-ifs": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_free_sea over sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Downwelling Shortwave Radiation over Ocean Not Covered by Sea Ice",
+            "modeling_realm": "ocean",
+            "out_name": "rsds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsntds_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Downward Shortwave Radiation at Sea Water Surface",
+            "modeling_realm": "ocean",
+            "out_name": "rsntds",
+            "positive": "down",
+            "standard_name": "net_downward_shortwave_flux_at_sea_water_surface",
+            "units": "W m-2"
+        },
+        "rsus_tavg-u-hxy-ifs": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_free_sea over sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upwelling Shortwave Radiation over Ocean Not Covered by Sea Ice",
+            "modeling_realm": "ocean",
+            "out_name": "rsus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "scint_tavg-op4-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "oplayer4",
+                "time"
+            ],
+            "long_name": "Integral wrt depth of seawater practical salinity expressed as salt mass content",
+            "modeling_realm": "ocean",
+            "out_name": "scint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_sea_water_practical_salinity_expressed_as_salt_mass_content",
+            "units": "kg m-2"
+        },
+        "sduo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Eastward Surface Stokes Drift",
+            "modeling_realm": "ocean atmos",
+            "out_name": "sduo",
+            "positive": "",
+            "standard_name": "sea_surface_wave_stokes_drift_eastward_velocity",
+            "units": "m s-1"
+        },
+        "sduo_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Eastward Surface Stokes Drift",
+            "modeling_realm": "ocean atmos",
+            "out_name": "sduo",
+            "positive": "",
+            "standard_name": "sea_surface_wave_stokes_drift_eastward_velocity",
+            "units": "m s-1"
+        },
+        "sdvo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Northward Surface Stokes Drift",
+            "modeling_realm": "ocean atmos",
+            "out_name": "sdvo",
+            "positive": "",
+            "standard_name": "sea_surface_wave_stokes_drift_northward_velocity",
+            "units": "m s-1"
+        },
+        "sdvo_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Northward Surface Stokes Drift",
+            "modeling_realm": "ocean atmos",
+            "out_name": "sdvo",
+            "positive": "",
+            "standard_name": "sea_surface_wave_stokes_drift_northward_velocity",
+            "units": "m s-1"
+        },
+        "sf6_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Mole Concentration of SF6 in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "sf6",
+            "positive": "",
+            "standard_name": "mole_concentration_of_sulfur_hexafluoride_in_sea_water",
+            "units": "mol m-3"
+        },
+        "sfacrossline_tavg-u-ht-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "oline",
+                "time"
+            ],
+            "long_name": "Ocean Salt Mass Transport across Lines",
+            "modeling_realm": "ocean",
+            "out_name": "sfacrossline",
+            "positive": "",
+            "standard_name": "ocean_salt_transport_across_line",
+            "units": "W"
+        },
+        "sfdsi_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downward Sea Ice Basal Salt Flux",
+            "modeling_realm": "ocean seaIce",
+            "out_name": "sfdsi",
+            "positive": "down",
+            "standard_name": "downward_sea_ice_basal_salt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "sfriver_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Salt Flux into Sea Water from Rivers",
+            "modeling_realm": "ocean",
+            "out_name": "sfriver",
+            "positive": "",
+            "standard_name": "salt_flux_into_sea_water_from_rivers",
+            "units": "kg m-2 s-1"
+        },
+        "sftof_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Sea Area Percentage",
+            "modeling_realm": "ocean",
+            "out_name": "sftof",
+            "positive": "",
+            "standard_name": "sea_area_fraction",
+            "units": "%"
+        },
+        "sfx_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "3D Ocean Salt Mass X Transport",
+            "modeling_realm": "ocean",
+            "out_name": "sfx",
+            "positive": "",
+            "standard_name": "ocean_salt_x_transport",
+            "units": "kg s-1"
+        },
+        "sfx_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea depth: sum where sea (over entire ocean column) time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Vertically Integrated Ocean Salt Mass X Transport",
+            "modeling_realm": "ocean",
+            "out_name": "sfx",
+            "positive": "",
+            "standard_name": "ocean_salt_x_transport",
+            "units": "kg s-1"
+        },
+        "sfy_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "3D Ocean Salt Mass Y Transport",
+            "modeling_realm": "ocean",
+            "out_name": "sfy",
+            "positive": "",
+            "standard_name": "ocean_salt_y_transport",
+            "units": "kg s-1"
+        },
+        "sfy_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea depth: sum where sea (over entire ocean column) time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Vertically Integrated Ocean Salt Mass Y Transport",
+            "modeling_realm": "ocean",
+            "out_name": "sfy",
+            "positive": "",
+            "standard_name": "ocean_salt_y_transport",
+            "units": "kg s-1"
+        },
+        "siflfwbot_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water Due to Sea Ice Thermodynamics",
+            "modeling_realm": "ocean seaIce",
+            "out_name": "siflfwbot",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_due_to_sea_ice_thermodynamics",
+            "units": "kg m-2 s-1"
+        },
+        "sltbasin_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Salt Transport",
+            "modeling_realm": "ocean",
+            "out_name": "sltbasin",
+            "positive": "",
+            "standard_name": "northward_ocean_salt_transport",
+            "units": "kg s-1"
+        },
+        "sltovgyre_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Salt Transport Due to Gyre",
+            "modeling_realm": "ocean",
+            "out_name": "sltovgyre",
+            "positive": "",
+            "standard_name": "northward_ocean_salt_transport_due_to_gyre",
+            "units": "kg s-1"
+        },
+        "sltovovrt_tavg-u-hyb-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: longitude: sum where sea (along a zig-zag grid path spanning a basin)  time: mean",
+            "comment": "",
+            "dimensions": [
+                "latitude",
+                "basin",
+                "time"
+            ],
+            "long_name": "Northward Ocean Salt Transport Due to Overturning",
+            "modeling_realm": "ocean",
+            "out_name": "sltovovrt",
+            "positive": "",
+            "standard_name": "northward_ocean_salt_transport_due_to_overturning",
+            "units": "kg s-1"
+        },
+        "so_tavg-ol-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "olevel",
+                "time"
+            ],
+            "long_name": "Global Mean Sea Water Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "so",
+            "positive": "",
+            "standard_name": "sea_water_salinity",
+            "units": "1E-03"
+        },
+        "so_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "so",
+            "positive": "",
+            "standard_name": "sea_water_salinity",
+            "units": "1E-03"
+        },
+        "sob_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Salinity at Sea Floor",
+            "modeling_realm": "ocean",
+            "out_name": "sob",
+            "positive": "",
+            "standard_name": "sea_water_salinity_at_sea_floor",
+            "units": "1E-03"
+        },
+        "somint_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Depth Integral of Product of Sea Water Density and Prognostic Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "somint",
+            "positive": "",
+            "standard_name": "integral_wrt_depth_of_product_of_salinity_and_sea_water_density",
+            "units": "g m-2"
+        },
+        "sos_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Average Sea Surface Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "sos",
+            "positive": "",
+            "standard_name": "sea_surface_salinity",
+            "units": "1E-03"
+        },
+        "sos_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Surface Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "sos",
+            "positive": "",
+            "standard_name": "sea_surface_salinity",
+            "units": "1E-03"
+        },
+        "sossq_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Square of Sea Surface Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "sossq",
+            "positive": "",
+            "standard_name": "square_of_sea_surface_salinity",
+            "units": "1E-06"
+        },
+        "sw17O_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Isotopic Ratio of Oxygen-17 in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "sw17O",
+            "positive": "",
+            "standard_name": "isotope_ratio_of_17O_to_16O_in_sea_water_excluding_solutes_and_solids",
+            "units": "1"
+        },
+        "sw18O_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Isotopic Ratio of Oxygen-18 in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "sw18O",
+            "positive": "",
+            "standard_name": "isotope_ratio_of_18O_to_16O_in_sea_water_excluding_solutes_and_solids",
+            "units": "1"
+        },
+        "sw2H_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Isotopic Ratio of Deuterium in Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "sw2H",
+            "positive": "",
+            "standard_name": "isotope_ratio_of_2H_to_1H_in_sea_water_excluding_solutes_and_solids",
+            "units": "1"
+        },
+        "swh_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swh",
+            "positive": "",
+            "standard_name": "sea_surface_wave_significant_height",
+            "units": "m"
+        },
+        "swh_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Total Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swh",
+            "positive": "",
+            "standard_name": "sea_surface_wave_significant_height",
+            "units": "m"
+        },
+        "swhmax_tmax-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: maximum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Maximum Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhmax",
+            "positive": "",
+            "standard_name": "sea_surface_wave_significant_height",
+            "units": "m"
+        },
+        "swhmax_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Maximum Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhmax",
+            "positive": "",
+            "standard_name": "sea_surface_wave_significant_height",
+            "units": "m"
+        },
+        "swhswell_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Swell Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_significant_height",
+            "units": "m"
+        },
+        "swhswell_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Swell Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_significant_height",
+            "units": "m"
+        },
+        "swhwindsea_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wind Sea Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_significant_height",
+            "units": "m"
+        },
+        "swhwindsea_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Wind Sea Significant Wave Height",
+            "modeling_realm": "ocean atmos",
+            "out_name": "swhwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_significant_height",
+            "units": "m"
+        },
+        "t17d_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Depth of 17 degree Celsius Isotherm",
+            "modeling_realm": "ocean",
+            "out_name": "t17d",
+            "positive": "",
+            "standard_name": "depth_of_isosurface_of_sea_water_potential_temperature",
+            "units": "m"
+        },
+        "t20d_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Depth of 20 degree Celsius Isotherm",
+            "modeling_realm": "ocean",
+            "out_name": "t20d",
+            "positive": "",
+            "standard_name": "depth_of_isosurface_of_sea_water_potential_temperature",
+            "units": "m"
+        },
+        "tauuo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Surface Downward X Stress",
+            "modeling_realm": "ocean",
+            "out_name": "tauuo",
+            "positive": "down",
+            "standard_name": "downward_x_stress_at_sea_water_surface",
+            "units": "N m-2"
+        },
+        "tauvo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Surface Downward Y Stress",
+            "modeling_realm": "ocean",
+            "out_name": "tauvo",
+            "positive": "down",
+            "standard_name": "downward_y_stress_at_sea_water_surface",
+            "units": "N m-2"
+        },
+        "thetao_tavg-d2000m-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: depth: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "olayer2000m"
+            ],
+            "long_name": "Depth Average Potential Temperature of Upper 2000m",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-d300m-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: depth: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "olayer300m"
+            ],
+            "long_name": "Depth Average Potential Temperature of Upper 300m",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-d700m-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: depth: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "olayer700m"
+            ],
+            "long_name": "Depth Average Potential Temperature of Upper 700m",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-ol-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "olevel",
+                "time"
+            ],
+            "long_name": "Global Average Sea Water Potential Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Potential Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-op20bar-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "op20bar"
+            ],
+            "long_name": "Sea Water Potential Temperature at 200 meters",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetaot_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: depth: time: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Vertically Averaged Sea Water Potential Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "thetaot",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thkcello_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Model Cell Thickness",
+            "modeling_realm": "ocean",
+            "out_name": "thkcello",
+            "positive": "",
+            "standard_name": "cell_thickness",
+            "units": "m"
+        },
+        "thkcello_ti-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel"
+            ],
+            "long_name": "Ocean Model Cell Thickness",
+            "modeling_realm": "ocean",
+            "out_name": "thkcello",
+            "positive": "",
+            "standard_name": "cell_thickness",
+            "units": "m"
+        },
+        "thkcelluo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Model Cell Thickness at u-points",
+            "modeling_realm": "ocean",
+            "out_name": "thkcelluo",
+            "positive": "",
+            "standard_name": "cell_thickness",
+            "units": "m"
+        },
+        "thkcellvo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Model Cell Thickness at v-points",
+            "modeling_realm": "ocean",
+            "out_name": "thkcellvo",
+            "positive": "",
+            "standard_name": "cell_thickness",
+            "units": "m"
+        },
+        "tnkebto_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Tendency of Ocean Eddy Kinetic Energy Content Due to Parameterized Eddy Advection",
+            "modeling_realm": "ocean",
+            "out_name": "tnkebto",
+            "positive": "",
+            "standard_name": "tendency_of_ocean_eddy_kinetic_energy_content_due_to_parameterized_eddy_advection",
+            "units": "W m-2"
+        },
+        "tnpeo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Tendency of Ocean Potential Energy Content",
+            "modeling_realm": "ocean",
+            "out_name": "tnpeo",
+            "positive": "",
+            "standard_name": "tendency_of_ocean_potential_energy_content",
+            "units": "W m-2"
+        },
+        "tob_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Water Potential Temperature at Sea Floor",
+            "modeling_realm": "ocean",
+            "out_name": "tob",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature_at_sea_floor",
+            "units": "degC"
+        },
+        "tos_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Average Sea Surface Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "tos",
+            "positive": "",
+            "standard_name": "sea_surface_temperature",
+            "units": "degC"
+        },
+        "tos_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Surface Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "tos",
+            "positive": "",
+            "standard_name": "sea_surface_temperature",
+            "units": "degC"
+        },
+        "tos_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Sea Surface Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "tos",
+            "positive": "",
+            "standard_name": "sea_surface_temperature",
+            "units": "degC"
+        },
+        "tossq_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Square of Sea Surface Temperature",
+            "modeling_realm": "ocean",
+            "out_name": "tossq",
+            "positive": "",
+            "standard_name": "square_of_sea_surface_temperature",
+            "units": "degC2"
+        },
+        "umo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Mass X Transport",
+            "modeling_realm": "ocean",
+            "out_name": "umo",
+            "positive": "",
+            "standard_name": "ocean_mass_x_transport",
+            "units": "kg s-1"
+        },
+        "uo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water X Velocity",
+            "modeling_realm": "ocean",
+            "out_name": "uo",
+            "positive": "",
+            "standard_name": "sea_water_x_velocity",
+            "units": "m s-1"
+        },
+        "uos_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Daily Surface Sea Water X Velocity",
+            "modeling_realm": "ocean",
+            "out_name": "uos",
+            "positive": "",
+            "standard_name": "surface_sea_water_x_velocity",
+            "units": "m s-1"
+        },
+        "vmo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Mass Y Transport",
+            "modeling_realm": "ocean",
+            "out_name": "vmo",
+            "positive": "",
+            "standard_name": "ocean_mass_y_transport",
+            "units": "kg s-1"
+        },
+        "vo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Y Velocity",
+            "modeling_realm": "ocean",
+            "out_name": "vo",
+            "positive": "",
+            "standard_name": "sea_water_y_velocity",
+            "units": "m s-1"
+        },
+        "volcello_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Ocean Grid-Cell Volume",
+            "modeling_realm": "ocean",
+            "out_name": "volcello",
+            "positive": "",
+            "standard_name": "ocean_volume",
+            "units": "m3"
+        },
+        "volcello_ti-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where sea",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel"
+            ],
+            "long_name": "Ocean Grid-Cell Volume",
+            "modeling_realm": "ocean",
+            "out_name": "volcello",
+            "positive": "",
+            "standard_name": "ocean_volume",
+            "units": "m3"
+        },
+        "volo_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "depth: area: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Sea Water Volume",
+            "modeling_realm": "ocean",
+            "out_name": "volo",
+            "positive": "",
+            "standard_name": "sea_water_volume",
+            "units": "m3"
+        },
+        "vos_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Daily Surface Sea Water Y Velocity",
+            "modeling_realm": "ocean",
+            "out_name": "vos",
+            "positive": "",
+            "standard_name": "surface_sea_water_y_velocity",
+            "units": "m s-1"
+        },
+        "vsf_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux into Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "vsf",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_into_sea_water",
+            "units": "kg m-2 s-1"
+        },
+        "vsfcorr_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux Correction",
+            "modeling_realm": "ocean",
+            "out_name": "vsfcorr",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_correction",
+            "units": "kg m-2 s-1"
+        },
+        "vsfevap_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux into Sea Water Due to Evaporation",
+            "modeling_realm": "ocean",
+            "out_name": "vsfevap",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_into_sea_water_due_to_evaporation",
+            "units": "kg m-2 s-1"
+        },
+        "vsfpr_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux into Sea Water Due to Rainfall",
+            "modeling_realm": "ocean",
+            "out_name": "vsfpr",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_into_sea_water_due_to_rainfall",
+            "units": "kg m-2 s-1"
+        },
+        "vsfriver_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux into Sea Water from Rivers",
+            "modeling_realm": "ocean",
+            "out_name": "vsfriver",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_into_sea_water_from_rivers",
+            "units": "kg m-2 s-1"
+        },
+        "vsfsit_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Virtual Salt Flux into Sea Water Due to Sea Ice Thermodynamics",
+            "modeling_realm": "ocean seaIce",
+            "out_name": "vsfsit",
+            "positive": "",
+            "standard_name": "virtual_salt_flux_into_sea_water_due_to_sea_ice_thermodynamics",
+            "units": "kg m-2 s-1"
+        },
+        "wdir_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Wave Direction",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wdir",
+            "positive": "",
+            "standard_name": "sea_surface_wave_from_direction",
+            "units": "degree"
+        },
+        "wdir_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Total Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wdir",
+            "positive": "",
+            "standard_name": "sea_surface_wave_from_direction",
+            "units": "degree"
+        },
+        "wdirswell_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Swell Wave Direction",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wdirswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_from_direction",
+            "units": "degree"
+        },
+        "wdirswell_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Swell Wave Direction",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wdirswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_from_direction",
+            "units": "degree"
+        },
+        "wdirwindsea_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Wave Direction",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wdirwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_from_direction",
+            "units": "degree"
+        },
+        "wdirwindsea_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Sea Wave Direction",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wdirwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_from_direction",
+            "units": "degree"
+        },
+        "wfcorr_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux Correction",
+            "modeling_realm": "ocean",
+            "out_name": "wfcorr",
+            "positive": "down",
+            "standard_name": "water_flux_correction",
+            "units": "kg m-2 s-1"
+        },
+        "wfo_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Flux into Sea Water",
+            "modeling_realm": "ocean",
+            "out_name": "wfo",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water",
+            "units": "kg m-2 s-1"
+        },
+        "wmo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Upward Ocean Mass Transport",
+            "modeling_realm": "ocean",
+            "out_name": "wmo",
+            "positive": "",
+            "standard_name": "upward_ocean_mass_transport",
+            "units": "kg s-1"
+        },
+        "wo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Sea Water Vertical Velocity",
+            "modeling_realm": "ocean",
+            "out_name": "wo",
+            "positive": "",
+            "standard_name": "upward_sea_water_velocity",
+            "units": "m s-1"
+        },
+        "wpdir_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdir",
+            "positive": "",
+            "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpdir_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Total Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdir",
+            "positive": "",
+            "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpdirswell_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Swell Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdirswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpdirswell_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Swell Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdirswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpdirwindsea_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wind Sea Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdirwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpdirwindsea_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Wind Sea Peak Wave Direction",
+            "modeling_realm": "ocean",
+            "out_name": "wpdirwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_from_direction_at_variance_spectral_density_maximum",
+            "units": "degree"
+        },
+        "wpp_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wpp",
+            "positive": "",
+            "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "wpp_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Total Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wpp",
+            "positive": "",
+            "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "wppswell_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Swell Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wppswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "wppswell_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Swell Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wppswell",
+            "positive": "",
+            "standard_name": "sea_surface_swell_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "wppwindsea_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Wind Sea Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wppwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "wppwindsea_tpt-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Wind Sea Wave Peak Period",
+            "modeling_realm": "ocean atmos",
+            "out_name": "wppwindsea",
+            "positive": "",
+            "standard_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum",
+            "units": "s"
+        },
+        "zfullo_tavg-ol-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "olevel",
+                "time"
+            ],
+            "long_name": "Depth Below Geoid of Ocean Layer",
+            "modeling_realm": "ocean",
+            "out_name": "zfullo",
+            "positive": "",
+            "standard_name": "depth_below_geoid",
+            "units": "m"
+        },
+        "zos_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea Surface Height Above Geoid",
+            "modeling_realm": "ocean",
+            "out_name": "zos",
+            "positive": "",
+            "standard_name": "sea_surface_height_above_geoid",
+            "units": "m"
+        },
+        "zossq_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Square of Sea Surface Height Above Geoid",
+            "modeling_realm": "ocean",
+            "out_name": "zossq",
+            "positive": "",
+            "standard_name": "square_of_sea_surface_height_above_geoid",
+            "units": "m2"
+        },
+        "zostoga_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Average Thermosteric Sea Level Change",
+            "modeling_realm": "ocean",
+            "out_name": "zostoga",
+            "positive": "",
+            "standard_name": "global_average_thermosteric_sea_level_change",
+            "units": "m"
+        }
+    }
+}

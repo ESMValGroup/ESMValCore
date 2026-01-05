@@ -45,7 +45,12 @@ def _update_cmor_facets(facets):
     derive = facets.get("derive", False)
     table = CMOR_TABLES.get(project)
     if table:
-        table_entry = table.get_variable(mip, short_name, derive)
+        table_entry = table.get_variable(
+            mip,
+            short_name,
+            branding_suffix=facets.get("branding_suffix"),
+            derived=derive,
+        )
     else:
         table_entry = None
     if table_entry is None:
@@ -78,6 +83,7 @@ def get_var_info(
     project: str,
     mip: str,
     short_name: str,
+    branding_suffix: str | None = None,
 ) -> VariableInfo | None:
     """Get variable information.
 
@@ -119,7 +125,11 @@ def get_var_info(
     if project == "CORDEX" and mip.endswith("hr"):
         mip = mip.replace("hr", "h")
 
-    return CMOR_TABLES[project].get_variable(mip, short_name)
+    return CMOR_TABLES[project].get_variable(
+        mip,
+        short_name,
+        branding_suffix=branding_suffix,
+    )
 
 
 def read_cmor_tables(cfg_developer: Path | None = None) -> None:
@@ -278,6 +288,8 @@ class InfoBase:
         self,
         table_name: str,
         short_name: str,
+        *,
+        branding_suffix: str | None = None,
         derived: bool = False,
     ) -> VariableInfo | None:
         """Search and return the variable information.
@@ -288,6 +300,9 @@ class InfoBase:
             Table name, i.e., the variable's MIP.
         short_name:
             Variable's short name.
+        branding_suffix:
+            A suffix that will be appended to ``short_name`` when looking up the
+            variable in the CMOR table. Used by the CMIP7 project.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
@@ -301,6 +316,10 @@ class InfoBase:
 
         """
         alt_names_list = self._get_alt_names_list(short_name)
+        if branding_suffix:
+            alt_names_list = [
+                f"{name}_{branding_suffix}" for name in alt_names_list
+            ]
 
         # First, look in requested table
         table = self.get_table(table_name)
@@ -625,12 +644,15 @@ class JsonInfo:
 
         Returns
         -------
-        str
+        list
             Option's value or empty list if parameter is not present
         """
         if parameter not in self._json_data:
             return []
-        return self._json_data[parameter]
+        value = self._json_data[parameter]
+        if isinstance(value, str):
+            value = value.split()
+        return value
 
 
 class VariableInfo(JsonInfo):
@@ -701,6 +723,7 @@ class VariableInfo(JsonInfo):
         """
         self._json_data = json_data
 
+        self.short_name = self._read_json_variable("out_name")
         self.standard_name = self._read_json_variable("standard_name")
         self.long_name = self._read_json_variable("long_name")
         self.units = self._read_json_variable("units")
@@ -712,7 +735,8 @@ class VariableInfo(JsonInfo):
         ).split()
         self.frequency = self._read_json_variable("frequency", default_freq)
 
-        self.dimensions = self._read_json_variable("dimensions").split()
+        # "dimensions" is a list of str in CMIP7 and a space separated str in CMIP6 CMOR tables.
+        self.dimensions = self._read_json_list_variable("dimensions")
 
     def has_coord_with_standard_name(self, standard_name: str) -> bool:
         """Check if a coordinate with a given `standard_name` exists.
@@ -964,6 +988,8 @@ class CMIP5Info(InfoBase):
                 setattr(var, key, value.split())
             elif hasattr(var, key):
                 setattr(var, key, value)
+            elif key == "out_name":
+                var.short_name = value
         for dim in var.dimensions:
             var.coordinates[dim] = self.coords[dim]
         return var
@@ -1086,8 +1112,10 @@ class CustomInfo(CMIP5Info):
 
     def get_variable(
         self,
-        table: str,  # noqa: ARG002
+        table_name: str,  # noqa: ARG002
         short_name: str,
+        *,
+        branding_suffix: str | None = None,  # noqa: ARG002
         derived: bool = False,  # noqa: ARG002
     ) -> VariableInfo | None:
         """Search and return the variable info.
@@ -1098,6 +1126,9 @@ class CustomInfo(CMIP5Info):
             Table name. Ignored for custom tables.
         short_name:
             Variable's short name.
+        branding_suffix:
+            A suffix that will be appended to ``short_name`` when looking up the
+            variable in the CMOR table. Used by the CMIP7 project. Ignored for custom tables.
         derived:
             Variable is derived. Info retrieval for derived variables always
             looks on the default tables if variable is not found in the
@@ -1115,7 +1146,7 @@ class CustomInfo(CMIP5Info):
     def _read_table_file(
         self,
         table_file: str,
-        _: TableInfo | None = None,
+        table: TableInfo | None = None,  # noqa: ARG002
     ) -> None:
         """Read a single table file."""
         with open(table_file, encoding="utf-8") as self._current_table:

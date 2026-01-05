@@ -1,5 +1,12 @@
 # Read CMIP, CORDEX, and obs4MIPs data from the filesystem on a personal computer.
 projects:
+  CMIP7:
+    data:
+      local:
+        type: "esmvalcore.io.local.LocalDataSource"
+        rootpath: ~/climate_data
+        dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{region}/{frequency}/{short_name}/{branding_suffix}/{grid}/{version}"
+        filename_template: "{short_name}_{branding_suffix}_{frequency}_{region}_{grid}_{dataset}_{exp}_{ensemble}*.nc"
   CMIP6:
     data:
       local:

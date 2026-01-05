@@ -937,12 +937,19 @@ def _get_cmor_checker(
     project: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: None | str = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker."""
-    var_info = get_var_info(project, mip, short_name)
+    var_info = get_var_info(
+        project,
+        mip,
+        short_name,
+        branding_suffix=branding_suffix,
+    )
 
     def _checker(cube: Cube) -> CMORCheck:
         return CMORCheck(
@@ -961,6 +968,8 @@ def cmor_check_metadata(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -978,6 +987,9 @@ def cmor_check_metadata(
         Variable's MIP.
     short_name:
         Variable's short name.
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -994,6 +1006,7 @@ def cmor_check_metadata(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -1005,6 +1018,8 @@ def cmor_check_data(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -1020,6 +1035,9 @@ def cmor_check_data(
         Variable's MIP.
     short_name:
         Variable's short name
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -1036,6 +1054,7 @@ def cmor_check_data(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -1047,6 +1066,8 @@ def cmor_check(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -1065,6 +1086,9 @@ def cmor_check(
         Variable's MIP.
     short_name:
         Variable's short name.
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -1082,6 +1106,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -1090,6 +1115,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )

@@ -1813,6 +1813,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "clip_timerange": {
@@ -1834,6 +1835,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "concatenate": {

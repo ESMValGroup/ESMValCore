@@ -1,0 +1,1137 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: 7337d39e2f1ecc19f18b7e324f3c211c",
+        "cmor_version": "3.12",
+        "generic_levels": "",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "landIce",
+        "table_date": "2025-10-17 11:13:22",
+        "table_id": "landIce",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "variable_entry": {
+        "acabf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Mass Balance Flux",
+            "modeling_realm": "landIce",
+            "out_name": "acabf",
+            "positive": "",
+            "standard_name": "land_ice_surface_specific_mass_balance_flux",
+            "units": "kg m-2 s-1"
+        },
+        "agesno_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean (weighted by snow mass on land)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mean Age of Snow",
+            "modeling_realm": "landIce land",
+            "out_name": "agesno",
+            "positive": "",
+            "standard_name": "age_of_surface_snow",
+            "units": "day"
+        },
+        "hfdsn_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downward Heat Flux into Snow Where Land over Land",
+            "modeling_realm": "landIce land",
+            "out_name": "hfdsn",
+            "positive": "down",
+            "standard_name": "surface_downward_heat_flux_in_snow",
+            "units": "W m-2"
+        },
+        "hfgeoubed_tavg-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where grounded_ice_sheet (mask=sfgrlf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Geothermal Heat Flux Beneath Land Ice",
+            "modeling_realm": "landIce",
+            "out_name": "hfgeoubed",
+            "positive": "",
+            "standard_name": "upward_geothermal_heat_flux_at_ground_level_in_land_ice",
+            "units": "W m-2"
+        },
+        "hfgeoubed_ti-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where grounded_ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Geothermal Heat Flux Beneath Land Ice",
+            "modeling_realm": "landIce",
+            "out_name": "hfgeoubed",
+            "positive": "",
+            "standard_name": "upward_geothermal_heat_flux_at_ground_level_in_land_ice",
+            "units": "W m-2"
+        },
+        "hfls_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upward Latent Heat Flux",
+            "modeling_realm": "landIce",
+            "out_name": "hfls",
+            "positive": "up",
+            "standard_name": "surface_upward_latent_heat_flux",
+            "units": "W m-2"
+        },
+        "hfss_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upward Sensible Heat Flux",
+            "modeling_realm": "landIce",
+            "out_name": "hfss",
+            "positive": "up",
+            "standard_name": "surface_upward_sensible_heat_flux",
+            "units": "W m-2"
+        },
+        "iareafl_tavg-u-hm-fis": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where floating_ice_shelf (mask=sftflf) time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Area Covered by Floating Ice Shelves",
+            "modeling_realm": "landIce",
+            "out_name": "iareafl",
+            "positive": "",
+            "standard_name": "floating_ice_shelf_area",
+            "units": "m2"
+        },
+        "iareagr_tavg-u-hm-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where grounded_ice_sheet (mask=sfgrlf) time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Area Covered by Grounded Ice Sheet",
+            "modeling_realm": "landIce",
+            "out_name": "iareagr",
+            "positive": "",
+            "standard_name": "grounded_ice_sheet_area",
+            "units": "m2"
+        },
+        "icem_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Ice Melt Flux",
+            "modeling_realm": "landIce",
+            "out_name": "icem",
+            "positive": "",
+            "standard_name": "land_ice_surface_melt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "libmassbf_tavg-u-hxy-fis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where floating_ice_shelf (mask=sftflf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Basal Specific Mass Balance Flux of Floating Ice Shelf",
+            "modeling_realm": "landIce",
+            "out_name": "libmassbf",
+            "positive": "",
+            "standard_name": "land_ice_basal_specific_mass_balance_flux",
+            "units": "kg m-2 s-1"
+        },
+        "libmassbf_tavg-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where grounded_ice_sheet (mask=sfgrlf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Basal Specific Mass Balance Flux of Grounded Ice Sheet",
+            "modeling_realm": "landIce",
+            "out_name": "libmassbf",
+            "positive": "",
+            "standard_name": "land_ice_basal_specific_mass_balance_flux",
+            "units": "kg m-2 s-1"
+        },
+        "licalvf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Land Ice Calving Flux",
+            "modeling_realm": "landIce",
+            "out_name": "licalvf",
+            "positive": "",
+            "standard_name": "land_ice_specific_mass_flux_due_to_calving",
+            "units": "kg m-2 s-1"
+        },
+        "lifmassbf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Land Ice Vertical Front Mass Balance Flux",
+            "modeling_realm": "landIce",
+            "out_name": "lifmassbf",
+            "positive": "",
+            "standard_name": "land_ice_specific_mass_flux_due_to_calving_and_ice_front_melting",
+            "units": "kg m-2 s-1"
+        },
+        "lim_tavg-u-hm-is": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where ice_sheet time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Ice Sheet Mass",
+            "modeling_realm": "landIce",
+            "out_name": "lim",
+            "positive": "",
+            "standard_name": "land_ice_mass",
+            "units": "kg"
+        },
+        "limnsw_tavg-u-hm-is": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where ice_sheet time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Ice Sheet Mass That Does not Displace Sea Water",
+            "modeling_realm": "landIce",
+            "out_name": "limnsw",
+            "positive": "",
+            "standard_name": "land_ice_mass_not_displacing_sea_water",
+            "units": "kg"
+        },
+        "litempbot_tavg-u-hxy-fis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where floating_ice_shelf (mask=sftflf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Basal Temperature of Floating Ice Shelf",
+            "modeling_realm": "landIce",
+            "out_name": "litempbot",
+            "positive": "",
+            "standard_name": "land_ice_basal_temperature",
+            "units": "K"
+        },
+        "litempbot_tavg-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where grounded_ice_sheet (mask=sfgrlf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Basal Temperature of Grounded Ice Sheet",
+            "modeling_realm": "landIce",
+            "out_name": "litempbot",
+            "positive": "",
+            "standard_name": "land_ice_basal_temperature",
+            "units": "K"
+        },
+        "litemptop_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature at Top of Ice Sheet Model",
+            "modeling_realm": "landIce",
+            "out_name": "litemptop",
+            "positive": "",
+            "standard_name": "temperature_at_top_of_ice_sheet_model",
+            "units": "K"
+        },
+        "lithk_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ice Sheet Thickness",
+            "modeling_realm": "landIce land",
+            "out_name": "lithk",
+            "positive": "",
+            "standard_name": "land_ice_thickness",
+            "units": "m"
+        },
+        "lithk_ti-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Ice Sheet Thickness",
+            "modeling_realm": "landIce land",
+            "out_name": "lithk",
+            "positive": "",
+            "standard_name": "land_ice_thickness",
+            "units": "m"
+        },
+        "lithk_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Ice sheet thickness",
+            "modeling_realm": "landIce land",
+            "out_name": "lithk",
+            "positive": "",
+            "standard_name": "land_ice_thickness",
+            "units": "m"
+        },
+        "lwsnl_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Liquid Water Content of Snow Layer",
+            "modeling_realm": "landIce land",
+            "out_name": "lwsnl",
+            "positive": "",
+            "standard_name": "liquid_water_content_of_surface_snow",
+            "units": "kg m-2"
+        },
+        "modelcellareai_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "The Cell Area of the Ice Sheet Model",
+            "modeling_realm": "landIce",
+            "out_name": "modelcellareai",
+            "positive": "",
+            "standard_name": "cell_area",
+            "units": "m2"
+        },
+        "mrfso_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Soil Frozen Water Content",
+            "modeling_realm": "landIce land",
+            "out_name": "mrfso",
+            "positive": "",
+            "standard_name": "soil_frozen_water_content",
+            "units": "kg m-2"
+        },
+        "mrroLi_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Land Ice Runoff Flux",
+            "modeling_realm": "landIce land",
+            "out_name": "mrroLi",
+            "positive": "",
+            "standard_name": "land_ice_runoff_flux",
+            "units": "kg m-2 s-1"
+        },
+        "mrro_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ice Sheet Total Runoff",
+            "modeling_realm": "landIce",
+            "out_name": "mrro",
+            "positive": "",
+            "standard_name": "runoff_flux",
+            "units": "kg m-2 s-1"
+        },
+        "orog_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Altitude",
+            "modeling_realm": "landIce",
+            "out_name": "orog",
+            "positive": "",
+            "standard_name": "surface_altitude",
+            "units": "m"
+        },
+        "pflw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Liquid Water Content of Permafrost Layer",
+            "modeling_realm": "landIce land",
+            "out_name": "pflw",
+            "positive": "",
+            "standard_name": "liquid_water_content_of_permafrost_layer",
+            "units": "kg m-2"
+        },
+        "prra_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Rainfall Flux over Land Ice",
+            "modeling_realm": "landIce",
+            "out_name": "prra",
+            "positive": "",
+            "standard_name": "rainfall_flux",
+            "units": "kg m-2 s-1"
+        },
+        "prsn_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snowfall Flux",
+            "modeling_realm": "landIce",
+            "out_name": "prsn",
+            "positive": "",
+            "standard_name": "snowfall_flux",
+            "units": "kg m-2 s-1"
+        },
+        "rlds_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Downwelling Longwave Radiation",
+            "modeling_realm": "landIce",
+            "out_name": "rlds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_longwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rlus_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upwelling Longwave Radiation",
+            "modeling_realm": "landIce",
+            "out_name": "rlus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_longwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsds_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Downwelling Shortwave Radiation",
+            "modeling_realm": "landIce land",
+            "out_name": "rsds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsus_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upwelling Shortwave Radiation",
+            "modeling_realm": "landIce land",
+            "out_name": "rsus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "sbl_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow and Ice Sublimation Flux",
+            "modeling_realm": "landIce",
+            "out_name": "sbl",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sbl_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow and Ice Sublimation Flux",
+            "modeling_realm": "landIce",
+            "out_name": "sbl",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sbl_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow and Ice Sublimation Flux",
+            "modeling_realm": "landIce",
+            "out_name": "sbl",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sbl_tpt-u-hs-u": {
+            "cell_measures": "",
+            "cell_methods": "area: point time: point",
+            "comment": "",
+            "dimensions": [
+                "site",
+                "time1"
+            ],
+            "long_name": "Surface Snow and Ice Sublimation Flux",
+            "modeling_realm": "landIce",
+            "out_name": "sbl",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sftflf_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Floating Ice Shelf Area Percentage",
+            "modeling_realm": "landIce",
+            "out_name": "sftflf",
+            "positive": "",
+            "standard_name": "floating_ice_shelf_area_fraction",
+            "units": "%"
+        },
+        "sftflf_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Floating Ice Shelf Area Percentage",
+            "modeling_realm": "landIce",
+            "out_name": "sftflf",
+            "positive": "",
+            "standard_name": "floating_ice_shelf_area_fraction",
+            "units": "%"
+        },
+        "sftgrf_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Grounded Ice Sheet Area Percentage",
+            "modeling_realm": "landIce",
+            "out_name": "sftgrf",
+            "positive": "",
+            "standard_name": "grounded_ice_sheet_area_fraction",
+            "units": "%"
+        },
+        "sftgrf_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Grounded Ice Sheet Area Percentage",
+            "modeling_realm": "landIce",
+            "out_name": "sftgrf",
+            "positive": "",
+            "standard_name": "grounded_ice_sheet_area_fraction",
+            "units": "%"
+        },
+        "snc_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Area Percentage",
+            "modeling_realm": "landIce land",
+            "out_name": "snc",
+            "positive": "",
+            "standard_name": "surface_snow_area_fraction",
+            "units": "%"
+        },
+        "snc_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Area Percentage",
+            "modeling_realm": "landIce land",
+            "out_name": "snc",
+            "positive": "",
+            "standard_name": "surface_snow_area_fraction",
+            "units": "%"
+        },
+        "snd_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Depth",
+            "modeling_realm": "landIce land",
+            "out_name": "snd",
+            "positive": "",
+            "standard_name": "surface_snow_thickness",
+            "units": "m"
+        },
+        "snicem_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow and Ice Melt Flux",
+            "modeling_realm": "landIce",
+            "out_name": "snicem",
+            "positive": "",
+            "standard_name": "surface_snow_and_ice_melt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "snm_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow Melt",
+            "modeling_realm": "landIce land",
+            "out_name": "snm",
+            "positive": "",
+            "standard_name": "surface_snow_melt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "snm_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow Melt",
+            "modeling_realm": "landIce land",
+            "out_name": "snm",
+            "positive": "",
+            "standard_name": "surface_snow_melt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "snrefr_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow and Ice Refreeze Flux",
+            "modeling_realm": "landIce",
+            "out_name": "snrefr",
+            "positive": "",
+            "standard_name": "surface_snow_and_ice_refreezing_flux",
+            "units": "kg m-2 s-1"
+        },
+        "snw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Snow Amount",
+            "modeling_realm": "landIce land",
+            "out_name": "snw",
+            "positive": "",
+            "standard_name": "surface_snow_amount",
+            "units": "kg m-2"
+        },
+        "sootsn_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Soot Content",
+            "modeling_realm": "landIce land",
+            "out_name": "sootsn",
+            "positive": "",
+            "standard_name": "soot_content_of_surface_snow",
+            "units": "kg m-2"
+        },
+        "strbasemag_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Land Ice Basal Drag",
+            "modeling_realm": "landIce",
+            "out_name": "strbasemag",
+            "positive": "",
+            "standard_name": "land_ice_basal_drag",
+            "units": "Pa"
+        },
+        "tas_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ice Sheet Near-Surface Air Temperature",
+            "modeling_realm": "landIce",
+            "out_name": "tas",
+            "positive": "",
+            "standard_name": "air_temperature",
+            "units": "K"
+        },
+        "tendacabf_tavg-u-hm-is": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where ice_sheet time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Total Surface Mass Balance Flux",
+            "modeling_realm": "landIce",
+            "out_name": "tendacabf",
+            "positive": "",
+            "standard_name": "tendency_of_land_ice_mass_due_to_surface_mass_balance",
+            "units": "kg s-1"
+        },
+        "tendlibmassbf_tavg-u-hm-is": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where ice_sheet time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Total Basal Mass Balance Flux",
+            "modeling_realm": "landIce",
+            "out_name": "tendlibmassbf",
+            "positive": "",
+            "standard_name": "tendency_of_land_ice_mass_due_to_basal_mass_balance",
+            "units": "kg s-1"
+        },
+        "tendlicalvf_tavg-u-hm-is": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where ice_sheet time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Total Calving Flux",
+            "modeling_realm": "landIce",
+            "out_name": "tendlicalvf",
+            "positive": "",
+            "standard_name": "tendency_of_land_ice_mass_due_to_calving",
+            "units": "kg s-1"
+        },
+        "topg_tavg-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where grounded_ice_sheet (mask=sfgrlf)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Bedrock Altitude",
+            "modeling_realm": "landIce",
+            "out_name": "topg",
+            "positive": "",
+            "standard_name": "bedrock_altitude",
+            "units": "m"
+        },
+        "topg_ti-u-hxy-gis": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where grounded_ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Bedrock Altitude",
+            "modeling_realm": "landIce",
+            "out_name": "topg",
+            "positive": "",
+            "standard_name": "bedrock_altitude",
+            "units": "m"
+        },
+        "tpf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Permafrost Layer Thickness",
+            "modeling_realm": "landIce land",
+            "out_name": "tpf",
+            "positive": "",
+            "standard_name": "permafrost_layer_thickness",
+            "units": "m"
+        },
+        "ts_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Temperature",
+            "modeling_realm": "landIce",
+            "out_name": "ts",
+            "positive": "",
+            "standard_name": "surface_temperature",
+            "units": "K"
+        },
+        "tsn_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "depth: area: time: mean where ice_sheet (weighted by snow mass on ice_sheet)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Internal Temperature on Land Ice",
+            "modeling_realm": "landIce land",
+            "out_name": "tsn",
+            "positive": "",
+            "standard_name": "temperature_in_surface_snow",
+            "units": "K"
+        },
+        "tsn_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "depth: area: time: mean where land (weighted by snow mass on land)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Internal Temperature",
+            "modeling_realm": "landIce land",
+            "out_name": "tsn",
+            "positive": "",
+            "standard_name": "temperature_in_surface_snow",
+            "units": "K"
+        },
+        "xvelbase_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Land Ice Basal Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "xvelbase",
+            "positive": "",
+            "standard_name": "land_ice_basal_x_velocity",
+            "units": "m s-1"
+        },
+        "xvelmean_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Land Ice Vertical Mean Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "xvelmean",
+            "positive": "",
+            "standard_name": "land_ice_vertical_mean_x_velocity",
+            "units": "m s-1"
+        },
+        "xvelsurf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Land Ice Surface Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "xvelsurf",
+            "positive": "",
+            "standard_name": "land_ice_surface_x_velocity",
+            "units": "m s-1"
+        },
+        "yvelbase_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Land Ice Basal Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "yvelbase",
+            "positive": "",
+            "standard_name": "land_ice_basal_y_velocity",
+            "units": "m s-1"
+        },
+        "yvelmean_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Land Ice Vertical Mean Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "yvelmean",
+            "positive": "",
+            "standard_name": "land_ice_vertical_mean_y_velocity",
+            "units": "m s-1"
+        },
+        "yvelsurf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Land Ice Surface Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "yvelsurf",
+            "positive": "",
+            "standard_name": "land_ice_surface_y_velocity",
+            "units": "m s-1"
+        },
+        "zvelbase_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Upward Component of Land-Ice Basal Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "zvelbase",
+            "positive": "",
+            "standard_name": "land_ice_basal_upward_velocity",
+            "units": "m s-1"
+        },
+        "zvelsurf_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Upward Component of Land-Ice Surface Velocity",
+            "modeling_realm": "landIce",
+            "out_name": "zvelsurf",
+            "positive": "",
+            "standard_name": "land_ice_surface_upward_velocity",
+            "units": "m s-1"
+        }
+    }
+}

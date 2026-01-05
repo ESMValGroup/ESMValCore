@@ -1,0 +1,3835 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: c25888aa9d61e4e5fd7153549a1019e7",
+        "cmor_version": "3.12",
+        "generic_levels": "",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "land",
+        "table_date": "2025-10-17 11:13:22",
+        "table_id": "land",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "variable_entry": {
+        "albc_tavg-u-hxy-veg": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where vegetation (weighted by canopy area and by downwelling shortwave radiation at the surface)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Canopy Albedo",
+            "modeling_realm": "land",
+            "out_name": "albc",
+            "positive": "",
+            "standard_name": "canopy_albedo",
+            "units": "1"
+        },
+        "areacellg_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Grid-Cell Area for Ice Sheet Variables",
+            "modeling_realm": "land",
+            "out_name": "areacellg",
+            "positive": "",
+            "standard_name": "cell_area",
+            "units": "m2"
+        },
+        "areacellr_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Grid-Cell Area for River Model Variables",
+            "modeling_realm": "land",
+            "out_name": "areacellr",
+            "positive": "",
+            "standard_name": "cell_area",
+            "units": "m2"
+        },
+        "baresoilFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typebare"
+            ],
+            "long_name": "Bare Soil Percentage Area Coverage",
+            "modeling_realm": "land",
+            "out_name": "baresoilFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "burntFractionAll_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typeburnt"
+            ],
+            "long_name": "Percentage of Entire Grid Cell That Is Covered by Burnt Vegetation (All Classes)",
+            "modeling_realm": "land",
+            "out_name": "burntFractionAll",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "c13Land_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 13C in All Terrestrial Carbon Pools",
+            "modeling_realm": "land",
+            "out_name": "c13Land",
+            "positive": "",
+            "standard_name": "mass_content_of_13C_in_vegetation_and_litter_and_soil_and_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "c13Litter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 13C in Litter Pool",
+            "modeling_realm": "land",
+            "out_name": "c13Litter",
+            "positive": "",
+            "standard_name": "litter_mass_content_of_13C",
+            "units": "kg m-2"
+        },
+        "c13Soil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 13C in Soil Pool",
+            "modeling_realm": "land",
+            "out_name": "c13Soil",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_13C",
+            "units": "kg m-2"
+        },
+        "c13Veg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 13C in Vegetation",
+            "modeling_realm": "land",
+            "out_name": "c13Veg",
+            "positive": "",
+            "standard_name": "vegetation_mass_content_of_13C",
+            "units": "kg m-2"
+        },
+        "c14Land_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 14C in All Terrestrial Carbon Pools",
+            "modeling_realm": "land",
+            "out_name": "c14Land",
+            "positive": "",
+            "standard_name": "mass_content_of_14C_in_vegetation_and_litter_and_soil_and_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "c14Litter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 14C in Litter Pool",
+            "modeling_realm": "land",
+            "out_name": "c14Litter",
+            "positive": "",
+            "standard_name": "litter_mass_content_of_14C",
+            "units": "kg m-2"
+        },
+        "c14Soil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 14C in Soil Pool",
+            "modeling_realm": "land",
+            "out_name": "c14Soil",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_14C",
+            "units": "kg m-2"
+        },
+        "c14Veg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of 14C in Vegetation",
+            "modeling_realm": "land",
+            "out_name": "c14Veg",
+            "positive": "",
+            "standard_name": "vegetation_mass_content_of_14C",
+            "units": "kg m-2"
+        },
+        "c3PftFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec3pft"
+            ],
+            "long_name": "Percentage Cover by C3 Plant Functional Type",
+            "modeling_realm": "land",
+            "out_name": "c3PftFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "c4PftFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec4pft"
+            ],
+            "long_name": "Percentage Cover by C4 Plant Functional Type",
+            "modeling_realm": "land",
+            "out_name": "c4PftFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "cGeologicStorage_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Geologic Storage",
+            "modeling_realm": "land",
+            "out_name": "cGeologicStorage",
+            "positive": "",
+            "standard_name": "carbon_mass_content_of_geological_storage",
+            "units": "kg m-2"
+        },
+        "cLand_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon in All Terrestrial Carbon Pools",
+            "modeling_realm": "land",
+            "out_name": "cLand",
+            "positive": "",
+            "standard_name": "mass_content_of_carbon_in_vegetation_and_litter_and_soil_and_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "cLeaf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Leaves",
+            "modeling_realm": "land",
+            "out_name": "cLeaf",
+            "positive": "",
+            "standard_name": "leaf_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cLitterCwd_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Coarse Woody Debris",
+            "modeling_realm": "land",
+            "out_name": "cLitterCwd",
+            "positive": "",
+            "standard_name": "wood_debris_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cLitterLut_tpt-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sector time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time1"
+            ],
+            "long_name": "Carbon  in Above and Below-Ground Litter Pools on Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "cLitterLut",
+            "positive": "",
+            "standard_name": "litter_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cLitterSubSurf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Below-Ground Litter",
+            "modeling_realm": "land",
+            "out_name": "cLitterSubSurf",
+            "positive": "",
+            "standard_name": "subsurface_litter_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cLitterSurf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Above-Ground Litter",
+            "modeling_realm": "land",
+            "out_name": "cLitterSurf",
+            "positive": "",
+            "standard_name": "surface_litter_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cLitter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Litter Pool",
+            "modeling_realm": "land",
+            "out_name": "cLitter",
+            "positive": "",
+            "standard_name": "litter_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cOther_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Vegetation Components Other than Leaves, Stems and Roots",
+            "modeling_realm": "land",
+            "out_name": "cOther",
+            "positive": "",
+            "standard_name": "miscellaneous_living_matter_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cProductLut_tpt-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sector time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time1"
+            ],
+            "long_name": "Wood and Agricultural Product Pool Carbon Associated with Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "cProductLut",
+            "positive": "",
+            "standard_name": "carbon_mass_content_of_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "cProduct_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Products of Land-Use Change",
+            "modeling_realm": "land",
+            "out_name": "cProduct",
+            "positive": "",
+            "standard_name": "carbon_mass_content_of_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "cRoot_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Roots",
+            "modeling_realm": "land",
+            "out_name": "cRoot",
+            "positive": "",
+            "standard_name": "root_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cSoilLut_tpt-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sector time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time1"
+            ],
+            "long_name": "Carbon in Soil Pool on Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "cSoilLut",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cSoilPools_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "soilpools",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Each Model Soil Pool (Summed over Vertical Levels)",
+            "modeling_realm": "land",
+            "out_name": "cSoilPools",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cSoil_tavg-d100cm-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "sdepth100cm"
+            ],
+            "long_name": "Carbon Mass in Soil Pool Above 1m Depth",
+            "modeling_realm": "land",
+            "out_name": "cSoil",
+            "positive": "",
+            "standard_name": "carbon_mass_content_of_soil_layer",
+            "units": "kg m-2"
+        },
+        "cSoil_tavg-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Each Model Soil Level (Summed over All Soil Carbon Pools in That Level)",
+            "modeling_realm": "land",
+            "out_name": "cSoil",
+            "positive": "",
+            "standard_name": "carbon_mass_content_of_soil_layer",
+            "units": "kg m-2"
+        },
+        "cSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Model Soil Pool",
+            "modeling_realm": "land",
+            "out_name": "cSoil",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cStem_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Stem",
+            "modeling_realm": "land",
+            "out_name": "cStem",
+            "positive": "",
+            "standard_name": "stem_mass_content_of_carbon",
+            "units": "kg m-2"
+        },
+        "cVegLut_tpt-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sector time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time1"
+            ],
+            "long_name": "Carbon in Vegetation on Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "cVegLut",
+            "positive": "",
+            "standard_name": "vegetation_carbon_content",
+            "units": "kg m-2"
+        },
+        "cVeg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Vegetation",
+            "modeling_realm": "land",
+            "out_name": "cVeg",
+            "positive": "",
+            "standard_name": "vegetation_carbon_content",
+            "units": "kg m-2"
+        },
+        "cVeg_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Vegetation on Grass Tiles",
+            "modeling_realm": "land",
+            "out_name": "cVeg",
+            "positive": "",
+            "standard_name": "vegetation_carbon_content",
+            "units": "kg m-2"
+        },
+        "cVeg_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Vegetation on Shrub Tiles",
+            "modeling_realm": "land",
+            "out_name": "cVeg",
+            "positive": "",
+            "standard_name": "vegetation_carbon_content",
+            "units": "kg m-2"
+        },
+        "cVeg_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass in Vegetation on Tree Tiles",
+            "modeling_realm": "land",
+            "out_name": "cVeg",
+            "positive": "",
+            "standard_name": "vegetation_carbon_content",
+            "units": "kg m-2"
+        },
+        "cnc_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Canopy Covered Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "cnc",
+            "positive": "",
+            "standard_name": "vegetation_area_fraction",
+            "units": "%"
+        },
+        "cropFracC3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec3crop"
+            ],
+            "long_name": "Percentage Cover by C3 Crops",
+            "modeling_realm": "land",
+            "out_name": "cropFracC3",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "cropFracC4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec4crop"
+            ],
+            "long_name": "Percentage Cover by C4 Crops",
+            "modeling_realm": "land",
+            "out_name": "cropFracC4",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "cropFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typecrop"
+            ],
+            "long_name": "Percentage Crop Cover",
+            "modeling_realm": "land",
+            "out_name": "cropFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "dcw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in Interception Storage",
+            "modeling_realm": "land",
+            "out_name": "dcw",
+            "positive": "",
+            "standard_name": "change_over_time_in_canopy_water_amount",
+            "units": "kg m-2"
+        },
+        "depthl_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Depth of Lake Below the Surface",
+            "modeling_realm": "land",
+            "out_name": "depthl",
+            "positive": "",
+            "standard_name": "depth",
+            "units": "m"
+        },
+        "depthsl_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Total (Cumulative) Thickness of All Soil Layers",
+            "modeling_realm": "land",
+            "out_name": "depthsl",
+            "positive": "",
+            "standard_name": "depth",
+            "units": "m"
+        },
+        "dgw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in Groundwater",
+            "modeling_realm": "land",
+            "out_name": "dgw",
+            "positive": "",
+            "standard_name": "change_over_time_in_groundwater_amount",
+            "units": "kg m-2"
+        },
+        "drivw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in River Storage",
+            "modeling_realm": "land",
+            "out_name": "drivw",
+            "positive": "",
+            "standard_name": "change_over_time_in_river_water_amount",
+            "units": "kg m-2"
+        },
+        "dslw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in Soil Moisture",
+            "modeling_realm": "land",
+            "out_name": "dslw",
+            "positive": "",
+            "standard_name": "change_over_time_in_mass_content_of_water_in_soil",
+            "units": "kg m-2"
+        },
+        "dsn_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in Snow Water Equivalent",
+            "modeling_realm": "land",
+            "out_name": "dsn",
+            "positive": "",
+            "standard_name": "change_over_time_in_amount_of_ice_and_snow_on_land",
+            "units": "kg m-2"
+        },
+        "dsw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Change in Surface Water Storage",
+            "modeling_realm": "land",
+            "out_name": "dsw",
+            "positive": "",
+            "standard_name": "change_over_time_in_land_water_amount",
+            "units": "kg m-2"
+        },
+        "esn_tavg-u-hxy-sn": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where snow (on land only) time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Evaporation",
+            "modeling_realm": "land",
+            "out_name": "esn",
+            "positive": "",
+            "standard_name": "water_evapotranspiration_flux",
+            "units": "kg m-2 s-1"
+        },
+        "evspsblpot_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Potential Evapotranspiration",
+            "modeling_realm": "land",
+            "out_name": "evspsblpot",
+            "positive": "",
+            "standard_name": "water_potential_evaporation_flux",
+            "units": "kg m-2 s-1"
+        },
+        "evspsblsoi_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Evaporation from Soil",
+            "modeling_realm": "land",
+            "out_name": "evspsblsoi",
+            "positive": "",
+            "standard_name": "water_evaporation_flux_from_soil",
+            "units": "kg m-2 s-1"
+        },
+        "evspsblsoi_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water evaporation from soil",
+            "modeling_realm": "land",
+            "out_name": "evspsblsoi",
+            "positive": "up",
+            "standard_name": "water_evaporation_flux_from_soil",
+            "units": "kg m-2 s-1"
+        },
+        "evspsblveg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Evaporation from Canopy",
+            "modeling_realm": "land",
+            "out_name": "evspsblveg",
+            "positive": "",
+            "standard_name": "water_evaporation_flux_from_canopy",
+            "units": "kg m-2 s-1"
+        },
+        "evspsblveg_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water evaporation from canopy",
+            "modeling_realm": "land",
+            "out_name": "evspsblveg",
+            "positive": "up",
+            "standard_name": "water_evaporation_flux_from_canopy",
+            "units": "kg m-2 s-1"
+        },
+        "fAnthDisturb_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux from Vegetation, Litter or Soil Pools into the Atmosphere Due to any Human Activity [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fAnthDisturb",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_anthropogenic_land_use_or_land_cover_change_excluding_forestry_and_agricultural_products",
+            "units": "kg m-2 s-1"
+        },
+        "fBNF_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Biological Nitrogen Fixation",
+            "modeling_realm": "land",
+            "out_name": "fBNF",
+            "positive": "",
+            "standard_name": "tendency_of_soil_and_vegetation_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_fixation",
+            "units": "kg m-2 s-1"
+        },
+        "fCLandToOcean_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Lateral Transfer of Carbon out of Grid Cell That Eventually Goes into Ocean",
+            "modeling_realm": "land",
+            "out_name": "fCLandToOcean",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_sea_water_from_rivers",
+            "units": "kg m-2 s-1"
+        },
+        "fDeforestToAtmos_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Deforested Biomass That Goes into Atmosphere as a Result of Anthropogenic Land-Use Change [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fDeforestToAtmos",
+            "positive": "",
+            "standard_name": "surface_net_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_anthropogenic_land_use_change",
+            "units": "kg m-2 s-1"
+        },
+        "fDeforestToProduct_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Deforested Biomass That Goes into Product Pool as a Result of Anthropogenic Land-Use Change",
+            "modeling_realm": "land",
+            "out_name": "fDeforestToProduct",
+            "positive": "",
+            "standard_name": "carbon_mass_flux_into_forestry_and_agricultural_products_due_to_anthropogenic_land_use_or_land_cover_change",
+            "units": "kg m-2 s-1"
+        },
+        "fFireAll_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to CO2 Emission from Fire Including All Sources [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fFireAll",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fFireNat_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to CO2 Emission from Natural Fire [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fFireNat",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_natural_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fFire_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to CO2 Emission from Fire Excluding Land-Use Change [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fFire",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires_excluding_anthropogenic_land_use_change",
+            "units": "kg m-2 s-1"
+        },
+        "fHarvestToAtmos_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Harvested Biomass That Goes Straight into Atmosphere as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fHarvestToAtmos",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_crop_harvesting",
+            "units": "kg m-2 s-1"
+        },
+        "fHarvestToGeologicStorage_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Harvested Biomass That Goes into Geological Storage",
+            "modeling_realm": "land",
+            "out_name": "fHarvestToGeologicStorage",
+            "positive": "down",
+            "standard_name": "mass_flux_of_carbon_from_biomass_into_geological_storage",
+            "units": "kg m-2 s-1"
+        },
+        "fHarvestToProduct_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Harvested Biomass That Goes into Product Pool",
+            "modeling_realm": "land",
+            "out_name": "fHarvestToProduct",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_forestry_and_agricultural_products_due_to_crop_harvesting",
+            "units": "kg m-2 s-1"
+        },
+        "fLitterFire_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux from Litter, CWD or any non-Living Pool into Atmosphere Due to CO2 Emission from All Fire [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fLitterFire",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_litter_in_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fLitterSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Litter to Soil",
+            "modeling_realm": "land",
+            "out_name": "fLitterSoil",
+            "positive": "",
+            "standard_name": "carbon_mass_flux_into_soil_from_litter",
+            "units": "kg m-2 s-1"
+        },
+        "fLuc_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Carbon Mass Flux into Atmosphere Due to Land-Use Change [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fLuc",
+            "positive": "up",
+            "standard_name": "surface_net_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_anthropogenic_land_use_change",
+            "units": "kg m-2 s-1"
+        },
+        "fLulccAtmLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Carbon Transferred Directly to Atmosphere Due to any Land-Use or Land-Cover Change Activities [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fLulccAtmLut",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_anthropogenic_land_use_or_land_cover_change_excluding_forestry_and_agricultural_products",
+            "units": "kg m-2 s-1"
+        },
+        "fN2O_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Land N2O Flux",
+            "modeling_realm": "land",
+            "out_name": "fN2O",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_nitrous_oxide_expressed_as_nitrogen_out_of_vegetation_and_litter_and_soil",
+            "units": "kg m-2 s-1"
+        },
+        "fNAnthDisturb_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass Flux out of Land Due to any Human Activity",
+            "modeling_realm": "land",
+            "out_name": "fNAnthDisturb",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_anthropogenic_emission",
+            "units": "kg m-2 s-1"
+        },
+        "fNLandToOcean_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Lateral Transfer of Nitrogen out of Grid Cell That Eventually Goes into Ocean",
+            "modeling_realm": "land",
+            "out_name": "fNLandToOcean",
+            "positive": "",
+            "standard_name": "mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_into_sea_from_rivers",
+            "units": "kg m-2 s-1"
+        },
+        "fNLitterSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Mass Flux from Litter to Soil",
+            "modeling_realm": "land",
+            "out_name": "fNLitterSoil",
+            "positive": "",
+            "standard_name": "nitrogen_mass_flux_into_soil_from_litter",
+            "units": "kg m-2 s-1"
+        },
+        "fNOx_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Land NOx Flux",
+            "modeling_realm": "land",
+            "out_name": "fNOx",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_nox_expressed_as_nitrogen_out_of_vegetation_and_litter_and_soil",
+            "units": "kg m-2 s-1"
+        },
+        "fNProduct_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Deforested or Harvested Biomass as a Result of Anthropogenic Land-Use or Change",
+            "modeling_realm": "land",
+            "out_name": "fNProduct",
+            "positive": "",
+            "standard_name": "nitrogen_mass_flux_into_forestry_and_agricultural_products_due_to_anthropogenic_land_use_or_land_cover_change",
+            "units": "kg m-2 s-1"
+        },
+        "fNVegLitter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Mass Flux from Vegetation to Litter",
+            "modeling_realm": "land",
+            "out_name": "fNVegLitter",
+            "positive": "",
+            "standard_name": "nitrogen_mass_flux_into_litter_from_vegetation",
+            "units": "kg m-2 s-1"
+        },
+        "fNVegSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Mass Flux from Vegetation Directly to Soil",
+            "modeling_realm": "land",
+            "out_name": "fNVegSoil",
+            "positive": "",
+            "standard_name": "nitrogen_mass_flux_into_soil_from_vegetation_excluding_litter",
+            "units": "kg m-2 s-1"
+        },
+        "fNdep_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Dry and Wet Deposition of Reactive Nitrogen onto Land",
+            "modeling_realm": "land",
+            "out_name": "fNdep",
+            "positive": "",
+            "standard_name": "minus_tendency_of_atmosphere_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_deposition",
+            "units": "kg m-2 s-1"
+        },
+        "fNfert_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Added for Cropland Fertilisation (Artificial and Manure)",
+            "modeling_realm": "land",
+            "out_name": "fNfert",
+            "positive": "",
+            "standard_name": "tendency_of_soil_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_fertilization",
+            "units": "kg m-2 s-1"
+        },
+        "fNgasFire_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Lost to the Atmosphere (Including NHx, NOx, N2O, N2) from Fire",
+            "modeling_realm": "land",
+            "out_name": "fNgasFire",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_due_to_emission_from_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fNgasNonFire_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Lost to the Atmosphere (Including NHx, NOx, N2O, N2) from All Processes Except Fire",
+            "modeling_realm": "land",
+            "out_name": "fNgasNonFire",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_due_to_all_land_processes_excluding_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fNgas_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Lost to the Atmosphere (Sum of NHx, NOx, N2O, N2)",
+            "modeling_realm": "land",
+            "out_name": "fNgas",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen",
+            "units": "kg m-2 s-1"
+        },
+        "fNleach_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Loss to Leaching or Runoff (Sum of Ammonium, Nitrite and Nitrate)",
+            "modeling_realm": "land",
+            "out_name": "fNleach",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_out_of_soil_due_to_leaching_and_runoff",
+            "units": "kg m-2 s-1"
+        },
+        "fNloss_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen Lost (Including NHx, NOx, N2O, N2 and Leaching)",
+            "modeling_realm": "land",
+            "out_name": "fNloss",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_out_of_vegetation_and_litter_and_soil",
+            "units": "kg m-2 s-1"
+        },
+        "fNnetmin_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Nitrogen Release from Soil and Litter as the Outcome of Nitrogen Immobilisation and Gross Mineralisation",
+            "modeling_realm": "land",
+            "out_name": "fNnetmin",
+            "positive": "",
+            "standard_name": "mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_out_of_litter_and_soil_due_to_immobilisation_and_remineralization",
+            "units": "kg m-2 s-1"
+        },
+        "fNup_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Plant Nitrogen Uptake (Sum of Ammonium and Nitrate) Irrespective of the Source of Nitrogen",
+            "modeling_realm": "land",
+            "out_name": "fNup",
+            "positive": "",
+            "standard_name": "tendency_of_vegetation_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_fixation",
+            "units": "kg m-2 s-1"
+        },
+        "fProductDecomp_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Decomposition out of Product Pools to CO2 in Atmosphere as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fProductDecomp",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_forestry_and_agricultural_products",
+            "units": "kg m-2 s-1"
+        },
+        "fVegFire_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux from Vegetation into Atmosphere Due to CO2 Emission from All Fire [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "fVegFire",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_vegetation_in_fires",
+            "units": "kg m-2 s-1"
+        },
+        "fVegLitterMortality_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation to Litter as a Result of Mortality",
+            "modeling_realm": "land",
+            "out_name": "fVegLitterMortality",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_litter_from_vegetation_due_to_mortality",
+            "units": "kg m-2 s-1"
+        },
+        "fVegLitterSenescence_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation to Litter as a Result of Leaf, Branch, and Root Senescence",
+            "modeling_realm": "land",
+            "out_name": "fVegLitterSenescence",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_litter_from_vegetation_due_to_senescence",
+            "units": "kg m-2 s-1"
+        },
+        "fVegLitter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation to Litter",
+            "modeling_realm": "land",
+            "out_name": "fVegLitter",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_litter_from_vegetation",
+            "units": "kg m-2 s-1"
+        },
+        "fVegSoilMortality_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation to Soil as a Result of Mortality",
+            "modeling_realm": "land",
+            "out_name": "fVegSoilMortality",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_soil_from_vegetation_due_to_mortality",
+            "units": "kg m-2 s-1"
+        },
+        "fVegSoilSenescence_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation to Soil as a Result of Leaf, Branch, and Root Senescence",
+            "modeling_realm": "land",
+            "out_name": "fVegSoilSenescence",
+            "positive": "",
+            "standard_name": "mass_flux_of_carbon_into_soil_from_vegetation_due_to_senescence",
+            "units": "kg m-2 s-1"
+        },
+        "fVegSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Carbon Mass Flux from Vegetation Directly to Soil",
+            "modeling_realm": "land",
+            "out_name": "fVegSoil",
+            "positive": "",
+            "standard_name": "carbon_mass_flux_into_soil_from_vegetation_excluding_litter",
+            "units": "kg m-2 s-1"
+        },
+        "fracInLut_tsum-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land over all_area_types time: sum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Annual Gross Percentage That Was Transferred into This Tile from Other Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "fracInLut",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "fracLut_tpt-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time1"
+            ],
+            "long_name": "Percentage of Grid Cell for Each Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "fracLut",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "fracOutLut_tsum-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land over all_area_types time: sum",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Annual Gross Percentage of Land-Use Tile That Was Transferred into Other Land-Use Tiles",
+            "modeling_realm": "land",
+            "out_name": "fracOutLut",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "gppLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Gross Primary Production on Land-Use Tile as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gppLut",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gppVgt_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Gross Primary Production on Vegetation type as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gppVgt",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gpp_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux out of Atmosphere Due to Gross Primary Production on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gpp",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gpp_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Gross Primary Production on Grass Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gpp",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gpp_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Gross Primary Production on Shrub Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gpp",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gpp_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Gross Primary Production on Tree Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gpp",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "gppc13_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-13 Mass Flux out of Atmosphere Due to Gross Primary Production on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gppc13",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_13C",
+            "units": "kg m-2 s-1"
+        },
+        "gppc14_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-14 Mass Flux out of Atmosphere Due to Gross Primary Production on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "gppc14",
+            "positive": "",
+            "standard_name": "gross_primary_productivity_of_biomass_expressed_as_14C",
+            "units": "kg m-2 s-1"
+        },
+        "grassFracC3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec3natg"
+            ],
+            "long_name": "C3 Natural Grass Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "grassFracC3",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "grassFracC4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec4natg"
+            ],
+            "long_name": "C4 Natural Grass Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "grassFracC4",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "grassFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typenatgr"
+            ],
+            "long_name": "Natural Grass Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "grassFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "hfdsl_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ground heat flux at 3hr",
+            "modeling_realm": "land",
+            "out_name": "hfdsl",
+            "positive": "up",
+            "standard_name": "surface_downward_heat_flux_in_air",
+            "units": "W m-2"
+        },
+        "hflsLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Latent Heat Flux on Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "hflsLut",
+            "positive": "up",
+            "standard_name": "surface_upward_latent_heat_flux",
+            "units": "W m-2"
+        },
+        "hfssLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Sensible Heat Flux on Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "hfssLut",
+            "positive": "up",
+            "standard_name": "surface_upward_sensible_heat_flux",
+            "units": "W m-2"
+        },
+        "irrDem_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "irrigation water demand",
+            "modeling_realm": "land",
+            "out_name": "irrDem",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
+            "units": "kg m-2 s-1"
+        },
+        "irrGw_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "irrigation water withdrawal from groundwater",
+            "modeling_realm": "land",
+            "out_name": "irrGw",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
+            "units": "kg m-2 s-1"
+        },
+        "irrLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Irrigation Flux Including any Irrigation for Crops, Trees, Pasture, or Urban Lawns",
+            "modeling_realm": "land",
+            "out_name": "irrLut",
+            "positive": "down",
+            "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
+            "units": "kg m-2 s-1"
+        },
+        "irrLut_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "irrigation water withdrawal",
+            "modeling_realm": "land",
+            "out_name": "irrLut",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
+            "units": "kg m-2 s-1"
+        },
+        "irrSurf_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "irrigation water withdrawal from surface water",
+            "modeling_realm": "land",
+            "out_name": "irrSurf",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
+            "units": "kg m-2 s-1"
+        },
+        "laiLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Leaf Area Index on Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "laiLut",
+            "positive": "",
+            "standard_name": "leaf_area_index",
+            "units": "1"
+        },
+        "laiVgt_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Leaf Area Index on Vegetation type",
+            "modeling_realm": "land",
+            "out_name": "laiVgt",
+            "positive": "",
+            "standard_name": "leaf_area_index",
+            "units": "1"
+        },
+        "lai_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Leaf Area Index",
+            "modeling_realm": "land",
+            "out_name": "lai",
+            "positive": "",
+            "standard_name": "leaf_area_index",
+            "units": "1"
+        },
+        "landCoverFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Percentage of Area by Vegetation or Land-Cover Category",
+            "modeling_realm": "land",
+            "out_name": "landCoverFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "mrro_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Runoff",
+            "modeling_realm": "land",
+            "out_name": "mrro",
+            "positive": "",
+            "standard_name": "runoff_flux",
+            "units": "kg m-2 s-1"
+        },
+        "mrrob_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Subsurface Runoff",
+            "modeling_realm": "land",
+            "out_name": "mrrob",
+            "positive": "",
+            "standard_name": "subsurface_runoff_flux",
+            "units": "kg m-2 s-1"
+        },
+        "mrros_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Runoff",
+            "modeling_realm": "land",
+            "out_name": "mrros",
+            "positive": "",
+            "standard_name": "surface_runoff_flux",
+            "units": "kg m-2 s-1"
+        },
+        "mrsfl_tavg-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth",
+                "time"
+            ],
+            "long_name": "Frozen Water Content of Soil Layer",
+            "modeling_realm": "land",
+            "out_name": "mrsfl",
+            "positive": "",
+            "standard_name": "frozen_water_content_of_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsll_tavg-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth",
+                "time"
+            ],
+            "long_name": "Liquid Water Content of Soil Layer",
+            "modeling_realm": "land",
+            "out_name": "mrsll",
+            "positive": "",
+            "standard_name": "liquid_water_content_of_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrso_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Soil Moisture Content",
+            "modeling_realm": "land",
+            "out_name": "mrso",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil",
+            "units": "kg m-2"
+        },
+        "mrsofc_ti-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Capacity of Soil to Store Water (Field Capacity)",
+            "modeling_realm": "land",
+            "out_name": "mrsofc",
+            "positive": "",
+            "standard_name": "soil_moisture_content_at_field_capacity",
+            "units": "kg m-2"
+        },
+        "mrsolLut_tavg-d10cm-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time",
+                "sdepth10cm"
+            ],
+            "long_name": "Moisture in Upper Portion of Soil Column of Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "mrsolLut",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsol_tavg-d100cm-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "sdepth100cm"
+            ],
+            "long_name": "Soil moisture in the top 1 m of the soil column",
+            "modeling_realm": "land",
+            "out_name": "mrsol",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsol_tavg-d10cm-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "sdepth10cm"
+            ],
+            "long_name": "Moisture in Upper Portion of Soil Column",
+            "modeling_realm": "land",
+            "out_name": "mrsol",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsol_tavg-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth",
+                "time"
+            ],
+            "long_name": "Total Water Content of Soil Layer",
+            "modeling_realm": "land",
+            "out_name": "mrsol",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsol_tpt-d10cm-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1",
+                "sdepth10cm"
+            ],
+            "long_name": "Moisture in Upper Portion of Soil Column",
+            "modeling_realm": "land",
+            "out_name": "mrsol",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer",
+            "units": "kg m-2"
+        },
+        "mrsow_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Soil Wetness",
+            "modeling_realm": "land",
+            "out_name": "mrsow",
+            "positive": "",
+            "standard_name": "volume_fraction_of_condensed_water_in_soil_at_field_capacity",
+            "units": "1"
+        },
+        "mrtws_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Terrestrial Water Storage",
+            "modeling_realm": "land",
+            "out_name": "mrtws",
+            "positive": "",
+            "standard_name": "land_water_amount",
+            "units": "kg m-2"
+        },
+        "nLand_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Nitrogen in All Terrestrial Nitrogen Pools",
+            "modeling_realm": "land",
+            "out_name": "nLand",
+            "positive": "",
+            "standard_name": "mass_content_of_nitrogen_in_vegetation_and_litter_and_soil_and_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "nLeaf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Leaves",
+            "modeling_realm": "land",
+            "out_name": "nLeaf",
+            "positive": "",
+            "standard_name": "leaf_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nLitterCwd_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Coarse Woody Debris",
+            "modeling_realm": "land",
+            "out_name": "nLitterCwd",
+            "positive": "",
+            "standard_name": "wood_debris_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nLitterSubSurf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Below-Ground Litter (non CWD)",
+            "modeling_realm": "land",
+            "out_name": "nLitterSubSurf",
+            "positive": "",
+            "standard_name": "subsurface_litter_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nLitterSurf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Above-Ground Litter (non CWD)",
+            "modeling_realm": "land",
+            "out_name": "nLitterSurf",
+            "positive": "",
+            "standard_name": "surface_litter_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nLitter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Litter Pool",
+            "modeling_realm": "land",
+            "out_name": "nLitter",
+            "positive": "",
+            "standard_name": "litter_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nMineralNH4_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mineral Ammonium in the Soil",
+            "modeling_realm": "land",
+            "out_name": "nMineralNH4",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_inorganic_ammonium_expressed_as_nitrogen",
+            "units": "kg m-2"
+        },
+        "nMineralNO3_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mineral Nitrate in the Soil",
+            "modeling_realm": "land",
+            "out_name": "nMineralNO3",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_inorganic_nitrate_expressed_as_nitrogen",
+            "units": "kg m-2"
+        },
+        "nMineral_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mineral Nitrogen in the Soil",
+            "modeling_realm": "land",
+            "out_name": "nMineral",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_inorganic_nitrogen_expressed_as_nitrogen",
+            "units": "kg m-2"
+        },
+        "nOther_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Vegetation Components Other than Leaves, Stem and Root",
+            "modeling_realm": "land",
+            "out_name": "nOther",
+            "positive": "",
+            "standard_name": "miscellaneous_living_matter_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nProduct_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Products of Land-Use Change",
+            "modeling_realm": "land",
+            "out_name": "nProduct",
+            "positive": "",
+            "standard_name": "nitrogen_mass_content_of_forestry_and_agricultural_products",
+            "units": "kg m-2"
+        },
+        "nRoot_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Roots",
+            "modeling_realm": "land",
+            "out_name": "nRoot",
+            "positive": "",
+            "standard_name": "root_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Soil Pool",
+            "modeling_realm": "land",
+            "out_name": "nSoil",
+            "positive": "",
+            "standard_name": "soil_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nStem_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Stem",
+            "modeling_realm": "land",
+            "out_name": "nStem",
+            "positive": "",
+            "standard_name": "stem_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nVeg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Nitrogen Mass in Vegetation",
+            "modeling_realm": "land",
+            "out_name": "nVeg",
+            "positive": "",
+            "standard_name": "vegetation_mass_content_of_nitrogen",
+            "units": "kg m-2"
+        },
+        "nbpLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Net Carbon Mass Flux into Land-Use Tile [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nbpLut",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_all_land_processes",
+            "units": "kg m-2 s-1"
+        },
+        "nbp_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux out of Atmosphere Due to Net Biospheric Production on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nbp",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_all_land_processes",
+            "units": "kg m-2 s-1"
+        },
+        "nep_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Carbon Mass Flux out of Atmosphere Due to Net Ecosystem Productivity on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nep",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_all_land_processes_excluding_anthropogenic_land_use_change",
+            "units": "kg m-2 s-1"
+        },
+        "netAtmosLandC13Flux_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Mass Flux of 13C Between Atmosphere and Land (Positive into Land) as a Result of All Processes [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "netAtmosLandC13Flux",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_13C_due_to_all_land_processes",
+            "units": "kg m-2 s-1"
+        },
+        "netAtmosLandC14Flux_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Mass Flux of 14C Between Atmosphere and Land (Positive into Land) as a Result of All Processes [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "netAtmosLandC14Flux",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_14C_due_to_all_land_processes",
+            "units": "kg m-2 s-1"
+        },
+        "nppLeaf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production Allocated to Leaves as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppLeaf",
+            "positive": "down",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon_accumulated_in_leaves",
+            "units": "kg m-2 s-1"
+        },
+        "nppLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Land-Use Tile as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppLut",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "nppOther_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production Allocated to Other Pools (not Leaves Stem or Roots) as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppOther",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon_accumulated_in_miscellaneous_living_matter",
+            "units": "kg m-2 s-1"
+        },
+        "nppRoot_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production Allocated to Roots as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppRoot",
+            "positive": "down",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon_accumulated_in_roots",
+            "units": "kg m-2 s-1"
+        },
+        "nppStem_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production Allocated to Stem as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppStem",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon_accumulated_in_stems",
+            "units": "kg m-2 s-1"
+        },
+        "nppVgt_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Vegetation type as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "nppVgt",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "npp_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Land as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "npp",
+            "positive": "down",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "npp_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Grass Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "npp",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "npp_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Shrub Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "npp",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "npp_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Primary Production on Tree Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "npp",
+            "positive": "",
+            "standard_name": "net_primary_productivity_of_biomass_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
+        "orog_tavg-u-hxy-is": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where ice_sheet",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Altitude",
+            "modeling_realm": "land",
+            "out_name": "orog",
+            "positive": "",
+            "standard_name": "surface_altitude",
+            "units": "m"
+        },
+        "orog_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Surface Altitude",
+            "modeling_realm": "land",
+            "out_name": "orog",
+            "positive": "",
+            "standard_name": "surface_altitude",
+            "units": "m"
+        },
+        "pastureFracC3_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec3pastures"
+            ],
+            "long_name": "C3 Pasture Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "pastureFracC3",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "pastureFracC4_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typec4pastures"
+            ],
+            "long_name": "C4 Pasture Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "pastureFracC4",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "pastureFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typepasture"
+            ],
+            "long_name": "Percentage of Land Which Is Anthropogenic Pasture",
+            "modeling_realm": "land",
+            "out_name": "pastureFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "prveg_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Precipitation onto Canopy",
+            "modeling_realm": "land",
+            "out_name": "prveg",
+            "positive": "",
+            "standard_name": "precipitation_flux_onto_canopy",
+            "units": "kg m-2 s-1"
+        },
+        "qgwr_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Groundwater Recharge from Soil Layer",
+            "modeling_realm": "land",
+            "out_name": "qgwr",
+            "positive": "",
+            "standard_name": "downward_liquid_water_mass_flux_into_groundwater",
+            "units": "kg m-2 s-1"
+        },
+        "raLeaf_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Respiration from Leaves as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raLeaf",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration_in_leaves",
+            "units": "kg m-2 s-1"
+        },
+        "raLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Autotrophic Respiration on Land-Use Tile as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raLut",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "raOther_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Respiration from Other Pools (not Leaves Stem or Roots) as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raOther",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration_in_miscellaneous_living_matter",
+            "units": "kg m-2 s-1"
+        },
+        "raRoot_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Respiration from Roots as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raRoot",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration_in_roots",
+            "units": "kg m-2 s-1"
+        },
+        "raStem_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Respiration from Stem as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raStem",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration_in_stems",
+            "units": "kg m-2 s-1"
+        },
+        "raVgt_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Autotrophic Respiration on Vegetation type as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "raVgt",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "ra_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to Autotrophic (Plant) Respiration on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "ra",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "ra_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Autotrophic Respiration on Grass Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "ra",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "ra_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Autotrophic Respiration on Shrub Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "ra",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "ra_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Autotrophic Respiration on Tree Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "ra",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rac13_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-13 Mass Flux into Atmosphere Due to Autotrophic (Plant) Respiration on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rac13",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_13C_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rac14_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-14 Mass Flux into Atmosphere Due to Autotrophic (Plant) Respiration on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rac14",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_14C_due_to_plant_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "residualFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typeresidual"
+            ],
+            "long_name": "Percentage of Grid Cell That Is Land but neither Vegetation Covered nor Bare Soil",
+            "modeling_realm": "land",
+            "out_name": "residualFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "rhLitter_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to Heterotrophic Respiration from Litter on Land",
+            "modeling_realm": "land",
+            "out_name": "rhLitter",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_due_to_heterotrophic_respiration_in_litter",
+            "units": "kg m-2 s-1"
+        },
+        "rhLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Heterotrophic Respiration on Land-Use Tile as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rhLut",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rhSoil_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon Mass Flux into Atmosphere Due to Heterotrophic Respiration from Soil on Land",
+            "modeling_realm": "land",
+            "out_name": "rhSoil",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_due_to_heterotrophic_respiration_in_soil",
+            "units": "kg m-2 s-1"
+        },
+        "rhVgt_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "vegtype",
+                "time"
+            ],
+            "long_name": "Heterotrophic Respiration on Vegetation type as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rhVgt",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rh_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Total Heterotrophic Respiration on Land as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rh",
+            "positive": "up",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rh_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Heterotrophic Respiration on Grass Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rh",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rh_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Heterotrophic Respiration on Shrub Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rh",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rh_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Heterotrophic Respiration on Tree Tiles as Carbon Mass Flux [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rh",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rhc13_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-13 Mass Flux into Atmosphere Due to Heterotrophic Respiration on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rhc13",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_13C_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rhc14_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Carbon-14 Mass Flux into Atmosphere Due to Heterotrophic Respiration on Land [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "rhc14",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_14C_due_to_heterotrophic_respiration",
+            "units": "kg m-2 s-1"
+        },
+        "rivi_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "River Inflow",
+            "modeling_realm": "land",
+            "out_name": "rivi",
+            "positive": "",
+            "standard_name": "incoming_water_volume_transport_along_river_channel",
+            "units": "m3 s-1"
+        },
+        "rivo_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "River Discharge",
+            "modeling_realm": "land",
+            "out_name": "rivo",
+            "positive": "",
+            "standard_name": "outgoing_water_volume_transport_along_river_channel",
+            "units": "m3 s-1"
+        },
+        "rootd_ti-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Maximum Root Depth",
+            "modeling_realm": "land",
+            "out_name": "rootd",
+            "positive": "",
+            "standard_name": "root_depth",
+            "units": "m"
+        },
+        "rsds_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where land",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Downwelling Shortwave Radiation over Land",
+            "modeling_realm": "land",
+            "out_name": "rsds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsds_tavg-u-hxy-sn": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where snow (mask=snc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Downwelling Shortwave Radiation over Snow",
+            "modeling_realm": "land ocean",
+            "out_name": "rsds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsus_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upwelling Shortwave Radiation over Land",
+            "modeling_realm": "land",
+            "out_name": "rsus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsus_tavg-u-hxy-sn": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where snow (mask=snc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Upwelling Shortwave Radiation over Snow",
+            "modeling_realm": "land ocean",
+            "out_name": "rsus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rzwc_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Root Zone Soil Moisture",
+            "modeling_realm": "land",
+            "out_name": "rzwc",
+            "positive": "",
+            "standard_name": "mass_content_of_water_in_soil_layer_defined_by_root_depth",
+            "units": "kg m-2"
+        },
+        "sftgif_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Land Ice Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "sftgif",
+            "positive": "",
+            "standard_name": "land_ice_area_fraction",
+            "units": "%"
+        },
+        "sftgif_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude"
+            ],
+            "long_name": "Land Ice Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "sftgif",
+            "positive": "",
+            "standard_name": "land_ice_area_fraction",
+            "units": "%"
+        },
+        "sftlaf_ti-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "typelkins"
+            ],
+            "long_name": "Fraction of the Grid Cell Occupied by Lake",
+            "modeling_realm": "land",
+            "out_name": "sftlaf",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "shrubFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typeshrub"
+            ],
+            "long_name": "Percentage Cover by Shrub",
+            "modeling_realm": "land",
+            "out_name": "shrubFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "slthick_ti-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth"
+            ],
+            "long_name": "Thickness of Soil Layers",
+            "modeling_realm": "land",
+            "out_name": "slthick",
+            "positive": "",
+            "standard_name": "cell_thickness",
+            "units": "m"
+        },
+        "srfrad_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net radiative flux at surface",
+            "modeling_realm": "land",
+            "out_name": "srfrad",
+            "positive": "down",
+            "standard_name": "surface_net_downward_radiative_flux",
+            "units": "W m-2"
+        },
+        "sw_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Water Storage",
+            "modeling_realm": "land",
+            "out_name": "sw",
+            "positive": "",
+            "standard_name": "land_surface_liquid_water_amount",
+            "units": "kg m-2"
+        },
+        "sweLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Snow Water Equivalent on Land-Use Tile",
+            "modeling_realm": "land",
+            "out_name": "sweLut",
+            "positive": "",
+            "standard_name": "lwe_thickness_of_surface_snow_amount",
+            "units": "m"
+        },
+        "tasLut_tavg-h2m-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time",
+                "height2m"
+            ],
+            "long_name": "Near-Surface Air Temperature on Land Use Tile",
+            "modeling_realm": "land",
+            "out_name": "tasLut",
+            "positive": "",
+            "standard_name": "air_temperature",
+            "units": "K"
+        },
+        "tas_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Hourly Temperature at Surface",
+            "modeling_realm": "land",
+            "out_name": "tas",
+            "positive": "",
+            "standard_name": "air_temperature",
+            "units": "K"
+        },
+        "tran_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Transpiration",
+            "modeling_realm": "land",
+            "out_name": "tran",
+            "positive": "up",
+            "standard_name": "transpiration_flux",
+            "units": "kg m-2 s-1"
+        },
+        "tran_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Transpiration",
+            "modeling_realm": "land",
+            "out_name": "tran",
+            "positive": "up",
+            "standard_name": "transpiration_flux",
+            "units": "kg m-2 s-1"
+        },
+        "treeFracBdlDcd_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typetreebd"
+            ],
+            "long_name": "Broadleaf Deciduous Tree Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "treeFracBdlDcd",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "treeFracBdlEvg_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typetreebe"
+            ],
+            "long_name": "Broadleaf Evergreen Tree Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "treeFracBdlEvg",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "treeFracNdlDcd_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typetreend"
+            ],
+            "long_name": "Needleleaf Deciduous Tree Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "treeFracNdlDcd",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "treeFracNdlEvg_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typetreene"
+            ],
+            "long_name": "Needleleaf Evergreen Tree Area Percentage",
+            "modeling_realm": "land",
+            "out_name": "treeFracNdlEvg",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "treeFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typetree"
+            ],
+            "long_name": "Tree Cover Percentage",
+            "modeling_realm": "land",
+            "out_name": "treeFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "tsLut_tavg-u-hxy-multi": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sector",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "landuse",
+                "time"
+            ],
+            "long_name": "Surface Temperature on Landuse Tile",
+            "modeling_realm": "land",
+            "out_name": "tsLut",
+            "positive": "",
+            "standard_name": "surface_temperature",
+            "units": "K"
+        },
+        "tsl_tavg-sl-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "sdepth",
+                "time"
+            ],
+            "long_name": "Temperature of Soil",
+            "modeling_realm": "land",
+            "out_name": "tsl",
+            "positive": "",
+            "standard_name": "soil_temperature",
+            "units": "K"
+        },
+        "tslsi_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean (over land and sea ice)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Temperature Where Land or Sea Ice",
+            "modeling_realm": "land",
+            "out_name": "tslsi",
+            "positive": "",
+            "standard_name": "surface_temperature",
+            "units": "K"
+        },
+        "tslsi_tpt-u-hxy-lsi": {
+            "cell_measures": "",
+            "cell_methods": "area: mean (over land and sea ice) time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Surface Temperature Where Land or Sea Ice",
+            "modeling_realm": "land",
+            "out_name": "tslsi",
+            "positive": "",
+            "standard_name": "surface_temperature",
+            "units": "K"
+        },
+        "vegFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typeveg"
+            ],
+            "long_name": "Total Vegetated Percentage Cover",
+            "modeling_realm": "land",
+            "out_name": "vegFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "vegHeight_tavg-u-hxy-ng": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where natural_grasses (mask=grassFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Height of Grass",
+            "modeling_realm": "land",
+            "out_name": "vegHeight",
+            "positive": "",
+            "standard_name": "canopy_height",
+            "units": "m"
+        },
+        "vegHeight_tavg-u-hxy-shb": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where shrubs (mask=shrubFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Height of Shrubs",
+            "modeling_realm": "land",
+            "out_name": "vegHeight",
+            "positive": "",
+            "standard_name": "canopy_height",
+            "units": "m"
+        },
+        "vegHeight_tavg-u-hxy-tree": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where trees (mask=treeFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Height of Trees",
+            "modeling_realm": "land",
+            "out_name": "vegHeight",
+            "positive": "",
+            "standard_name": "canopy_height",
+            "units": "m"
+        },
+        "vegHeight_tavg-u-hxy-veg": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where vegetation (mask=vegFrac)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Height of the Vegetation Canopy",
+            "modeling_realm": "land",
+            "out_name": "vegHeight",
+            "positive": "",
+            "standard_name": "canopy_height",
+            "units": "m"
+        },
+        "wetlandCH4_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Grid Averaged Methane Emissions from Wetlands",
+            "modeling_realm": "land",
+            "out_name": "wetlandCH4",
+            "positive": "",
+            "standard_name": "surface_net_upward_mass_flux_of_methane_due_to_emission_from_wetland_biological_processes",
+            "units": "kg m-2 s-1"
+        },
+        "wetlandCH4cons_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Grid Averaged Methane Consumption (Methanotrophy) from Wetlands",
+            "modeling_realm": "land",
+            "out_name": "wetlandCH4cons",
+            "positive": "",
+            "standard_name": "surface_downward_mass_flux_of_methane_due_to_wetland_biological_consumption",
+            "units": "kg m-2 s-1"
+        },
+        "wetlandCH4prod_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Grid Averaged Methane Production (Methanogenesis) from Wetlands",
+            "modeling_realm": "land",
+            "out_name": "wetlandCH4prod",
+            "positive": "",
+            "standard_name": "surface_upward_mass_flux_of_methane_due_to_emission_from_wetland_biological_production",
+            "units": "kg m-2 s-1"
+        },
+        "wetlandFrac_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typewetla"
+            ],
+            "long_name": "Wetland Percentage Cover",
+            "modeling_realm": "land",
+            "out_name": "wetlandFrac",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "wtd_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Water Table Depth",
+            "modeling_realm": "land",
+            "out_name": "wtd",
+            "positive": "",
+            "standard_name": "water_table_depth",
+            "units": "m"
+        }
+    }
+}
