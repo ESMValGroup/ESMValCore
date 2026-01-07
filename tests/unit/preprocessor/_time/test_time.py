@@ -998,8 +998,8 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([3.0, 6.0, 9.0])
         assert_array_equal(result.data, expected)
 
-        assert result.coords("clim_season")
-        assert result.coords("season_year")
+        assert not result.coords("clim_season")
+        assert not result.coords("season_year")
 
     def test_season_mean_no_keep_group_coordinates(self):
         """Test for season average of a 1D field."""
@@ -1187,8 +1187,8 @@ class TestMonthlyStatistics(tests.Test):
         )
         assert_array_equal(result.data, expected)
 
-        assert result.coords("month_number")
-        assert result.coords("year")
+        assert not result.coords("month_number")
+        assert not result.coords("year")
 
     def test_mean_no_keep_group_coordinates(self):
         """Test average of a 1D field."""
