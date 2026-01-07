@@ -317,9 +317,18 @@ class InfoBase:
         """
         alt_names_list = self._get_alt_names_list(short_name)
         if branding_suffix:
+            # The branding suffix was introduced for CMIP7. The branded variable
+            # name used in the CMOR tables is the short_name followed by an
+            # an underscore and the branding suffix.
+            #
+            # For projects prior to CMIP7 the name used in the CMOR table may
+            # also contain a suffix, but without an underscore. For example
+            # ch4Clim in the CMIP6 Amon table, where ch4 is the short_name and
+            # Clim is the suffix. This is not a branding suffix, but we can
+            # use it to select the correct variable in the CMOR table anyway.
             alt_names_list = [
                 f"{name}_{branding_suffix}" for name in alt_names_list
-            ]
+            ] + [f"{name}{branding_suffix}" for name in alt_names_list]
 
         # First, look in requested table
         table = self.get_table(table_name)
