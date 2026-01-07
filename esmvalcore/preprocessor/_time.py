@@ -1051,8 +1051,18 @@ def anomalies(
     cube = _compute_anomalies(cube, reference, period, seasons)
 
     # standardize results or compute relative anomalies if requested
-    if standardize or relative:
-        cube = _apply_scaling(cube, reference, period, standardize, relative)
+    if standardize:
+        cube_stddev = climate_statistics(
+            cube,
+            operator="std_dev",
+            period=period,
+        )
+        cube = _apply_scaling(cube, cube_stddev, period)
+        cube.units = "1"
+    elif relative:
+        cube = _apply_scaling(cube, reference, period)
+        cube.units = "1"
+        cube.convert_units("%")
 
     return cube
 
@@ -1061,39 +1071,22 @@ def _apply_scaling(
     cube: Cube,
     reference: Cube,
     period: str,
-    standardize: bool,
-    relative: bool,
 ) -> Cube:
-    """Apply standardization or relative scaling."""
-    if standardize:
-        cube_div = climate_statistics(
-            cube,
-            operator="std_dev",
-            period=period,
-        )
-    elif relative:
-        cube_div = reference
-
+    """Apply scaling."""
     tdim = cube.coord_dims("time")[0]
-    reps = cube.shape[tdim] / cube_div.shape[tdim]
+    reps = cube.shape[tdim] / reference.shape[tdim]
     if reps % 1 != 0:
         msg = (
-            f"Cannot safely apply preprocessor to this dataset, since the "
+            f"Cannot safely apply preprocessor to this dataset since the "
             f"full time period of this dataset is not a multiple of the "
             f"period '{period}'"
         )
         raise ValueError(msg)
 
     cube.data = cube.core_data() / da.concatenate(
-        [cube_div.core_data() for _ in range(int(reps))],
+        [reference.core_data() for _ in range(int(reps))],
         axis=tdim,
     )
-
-    if standardize:
-        cube.units = "1"
-    elif relative:
-        cube.data = cube.core_data() * 100.0
-        cube.units = "%"
 
     return cube
 
