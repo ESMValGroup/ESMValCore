@@ -101,6 +101,9 @@ def get_var_info(
         Variable's CMOR table, i.e., MIP.
     short_name:
         Variable's short name.
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table.
 
     Returns
     -------
