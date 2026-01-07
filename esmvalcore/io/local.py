@@ -661,7 +661,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         )
 
         # Remove all tags that are in between other tags, e.g.,
-        # {tag1}{tag2}{tag3} -> {tag1}{tag2} (there is no way to reliably
+        # {tag1}{tag2}{tag3} -> {tag1}{tag3} (there is no way to reliably
         # extract facets from those)
         pattern = re.sub(r"(?<=\})\\\{[^\}]+?\\\}(?=\\(?=\{))", "", pattern)
 
