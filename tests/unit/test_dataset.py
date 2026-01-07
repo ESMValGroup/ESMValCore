@@ -107,10 +107,10 @@ def test_repr_supplementary():
 @pytest.mark.parametrize(
     ("separator", "join_lists", "output"),
     [
-        ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
-        ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
-        (" ", False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
-        (" ", True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+        ("_", False, "1_d_dom_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ("_", True, "1_d_dom_e1-e2_ens2-ens1_g1_v1"),
+        (" ", False, "1 d dom ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (" ", True, "1 d dom e1-e2 ens2-ens1 g1 v1"),
     ],
 )
 def test_get_joined_summary_facet(separator, join_lists, output):
@@ -1735,7 +1735,7 @@ def test_load(mocker, session):
     fix_dir_prefix = Path(
         session.preproc_dir,
         "fixed_files",
-        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
+        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_yr_",
     )
     _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,

@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 INHERITED_FACETS: list[str] = [
     "dataset",
+    "region",
     "domain",
     "driver",
     "grid",
@@ -113,9 +114,11 @@ class Dataset:
         "rcm_version",
         "driver",
         "domain",
-        "activity",
         "exp",
         "ensemble",
+        "branding_suffix",
+        "frequency",
+        "region",
         "grid",
         "version",
     )

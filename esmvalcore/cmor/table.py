@@ -302,7 +302,7 @@ class InfoBase:
             Variable's short name.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table. Used by the CMIP7 project.
+            variable in the CMOR table.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
@@ -1137,7 +1137,7 @@ class CustomInfo(CMIP5Info):
             Variable's short name.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table. Used by the CMIP7 project. Ignored for custom tables.
+            variable in the CMOR table. Ignored for custom tables.
         derived:
             Variable is derived. Info retrieval for derived variables always
             looks on the default tables if variable is not found in the
