@@ -1058,10 +1058,8 @@ def anomalies(
             period=period,
         )
         cube = _apply_scaling(cube, cube_stddev, period)
-        cube.units = "1"
     elif relative:
         cube = _apply_scaling(cube, reference, period)
-        cube.units = "1"
         cube.convert_units("%")
 
     return cube
@@ -1087,6 +1085,7 @@ def _apply_scaling(
         [reference.core_data() for _ in range(int(reps))],
         axis=tdim,
     )
+    cube.units = "1"
 
     return cube
 
