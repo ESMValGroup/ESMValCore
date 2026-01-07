@@ -770,7 +770,7 @@ class Dataset:
             self._used_data_sources.append(data_source)
             # 'quick' mode: if files are available from a higher
             # priority source, do not search lower priority sources.
-            if self.session["search_data"] == "complete":
+            if self.session["search_data"] == "quick":
                 try:
                     check.data_availability(self, log=False)
                 except InputFilesNotFound:
