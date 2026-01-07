@@ -11,8 +11,8 @@ import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.esgf._download import ESGFFile
 from tests import PreprocessorFile
 
 
@@ -146,53 +146,6 @@ def create_esgf_search_results():
     )
 
     return [file0, file1]
-
-
-@pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
-def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
-    """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""
-    esgf_files = create_esgf_search_results()
-    download_dir = tmp_path / "download_dir"
-    local_dir = Path("/local_dir")
-
-    # Local files can cover the entire period, part of it, or nothing
-    local_file_options = {
-        "all": [f.local_file(local_dir) for f in esgf_files],
-        "partial": [esgf_files[1].local_file(local_dir)],
-        "none": [],
-    }
-    local_files = local_file_options[local_availability]
-
-    variable = {
-        "project": "CMIP6",
-        "mip": "Amon",
-        "frequency": "mon",
-        "short_name": "tas",
-        "dataset": "EC.-Earth3",
-        "exp": "historical",
-        "ensemble": "r1i1p1f1",
-        "grid": "gr",
-        "timerange": "1850/1851",
-        "alias": "CMIP6_EC-Eeath3_tas",
-    }
-    dataset = Dataset(**variable)
-    files = {
-        "all": local_files,
-        "partial": local_files + esgf_files[:1],
-        "none": esgf_files,
-    }
-    dataset.session = {"download_dir": download_dir}
-    dataset.files = list(files[local_availability])
-
-    monkeypatch.setattr(_recipe, "DOWNLOAD_FILES", set())
-    _recipe._schedule_for_download([dataset])
-    print(esgf_files)
-    expected = {
-        "all": set(),
-        "partial": set(esgf_files[:1]),
-        "none": set(esgf_files),
-    }
-    assert expected[local_availability] == _recipe.DOWNLOAD_FILES
 
 
 def test_write_html_summary(mocker, caplog):
@@ -334,9 +287,9 @@ def test_update_multiproduct_multi_model_statistics():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -419,9 +372,9 @@ def test_update_multiproduct_no_timerange():
 
     assert product.filename == Path("/preproc/d/var/CMIP6_MultiModelMean.nc")
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert "dataset" in product.attributes
     assert "multi_model_statistics" in product.attributes
@@ -523,9 +476,9 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     )
 
     for product in output:
-        for attr in common_attributes:
+        for attr, value in common_attributes.items():
             assert attr in product.attributes
-            assert product.attributes[attr] == common_attributes[attr]
+            assert product.attributes[attr] == value
         assert "alias" in product.attributes
         assert "dataset" in product.attributes
         assert "multi_model_statistics" in product.attributes
@@ -617,9 +570,9 @@ def test_update_multiproduct_ensemble_statistics():
         "/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsembleMedian"
     assert "dataset" in product.attributes
@@ -704,9 +657,9 @@ def test_update_multiproduct_ensemble_statistics_percentile():
         "/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc",
     )
 
-    for attr in common_attributes:
+    for attr, value in common_attributes.items():
         assert attr in product.attributes
-        assert product.attributes[attr] == common_attributes[attr]
+        assert product.attributes[attr] == value
     assert "alias" in product.attributes
     assert product.attributes["alias"] == "EnsemblePercentile5"
     assert "dataset" in product.attributes
@@ -886,7 +839,7 @@ def test_limit_datasets():
 def test_get_default_settings(mocker):
     mocker.patch.object(
         _recipe,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         autospec=True,
         return_value=Path("/path/to/file.nc"),
     )

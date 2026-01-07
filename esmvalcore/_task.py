@@ -1,5 +1,7 @@
 """ESMValtool task definition."""
 
+from __future__ import annotations
+
 import abc
 import contextlib
 import datetime
@@ -81,12 +83,12 @@ def _get_resource_usage(process, start_time, children=True):
                 processes = [process]
 
             # Update resource usage
-            for proc in cache:
+            for proc, cached_value in cache.items():
                 # Set cpu percent and memory usage to 0 for old processes
                 if proc not in processes:
-                    cache[proc][1] = 0
-                    cache[proc][2] = 0
-                    cache[proc][3] = 0
+                    cached_value[1] = 0
+                    cached_value[2] = 0
+                    cached_value[3] = 0
             for proc in processes:
                 # Update current processes
                 cache[proc] = [
@@ -206,9 +208,9 @@ def write_ncl_settings(settings, filename, mode="wt"):
             int: "int64",
             dict: "logical",
         }
-        for type_ in typemap:
+        for type_, ncl_type in typemap.items():
             if isinstance(value, type_):
-                return typemap[type_]
+                return ncl_type
         msg = f"Unable to map {type(value)} to an NCL type"
         raise ValueError(msg)
 
@@ -283,7 +285,7 @@ class BaseTask:
         tasks.add(self)
         return tasks
 
-    def run(self, input_files=None):
+    def run(self, input_files: list[str] | None = None) -> None:
         """Run task."""
         if not self.output_files:
             if input_files is None:
@@ -308,7 +310,7 @@ class BaseTask:
         return self.output_files
 
     @abc.abstractmethod
-    def _run(self, input_files):
+    def _run(self, input_files: list[str]) -> list[str]:
         """Run task."""
 
     def get_product_attributes(self) -> dict:
@@ -351,7 +353,7 @@ class ResumeTask(BaseTask):
         for prov_filename, attributes in prev_metadata.items():
             # Update the filename in case the output directory was moved
             # since the original run
-            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            filename = prev_preproc_dir / Path(prov_filename).name
             attributes["filename"] = filename
             product = TrackedFile(
                 filename,
@@ -362,7 +364,7 @@ class ResumeTask(BaseTask):
 
         super().__init__(ancestors=None, name=name, products=products)
 
-    def _run(self, _):
+    def _run(self, _: list[str]) -> list[str]:
         """Return the result of a previous run."""
         metadata = self.get_product_attributes()
 
@@ -676,7 +678,7 @@ class DiagnosticTask(BaseTask):
             msg,
         )
 
-    def _collect_provenance(self):
+    def _collect_provenance(self) -> None:
         """Process provenance information provided by the diagnostic script."""
         provenance_file = (
             Path(self.settings["run_dir"]) / "diagnostic_provenance.yml"
@@ -722,9 +724,9 @@ class DiagnosticTask(BaseTask):
         }
 
         valid = True
-        for filename, attributes in table.items():
+        for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(attributes)
+            attributes = deepcopy(orig_attributes)
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
@@ -766,7 +768,7 @@ class DiagnosticTask(BaseTask):
 
             TAGS.replace_tags_in_dict(attributes)
 
-            product = TrackedFile(filename, attributes, ancestors)
+            product = TrackedFile(Path(filename), attributes, ancestors)
             product.initialize_provenance(self.activity)
             _write_citation_files(product.filename, product.provenance)
             product.save_provenance()
@@ -810,11 +812,11 @@ def available_cpu_count() -> int:
 class TaskSet(set):
     """Container for tasks."""
 
-    def flatten(self) -> "TaskSet":
+    def flatten(self) -> TaskSet:
         """Flatten the list of tasks."""
         return TaskSet(t for task in self for t in task.flatten())
 
-    def get_independent(self) -> "TaskSet":
+    def get_independent(self) -> TaskSet:
         """Return a set of independent tasks."""
         independent_tasks = TaskSet()
         all_tasks = self.flatten()

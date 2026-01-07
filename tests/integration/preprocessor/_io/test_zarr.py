@@ -48,6 +48,7 @@ def test_load_zarr2_local(input_type):
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr2_remote():
     """Test loading a Zarr2 store from a https Object Store."""
     zarr_path = (
@@ -88,6 +89,7 @@ def test_load_zarr2_remote():
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr3_remote():
     """Test loading a Zarr3 store from a https Object Store."""
     zarr_path = (
@@ -114,6 +116,7 @@ def test_load_zarr3_remote():
     assert "latitude" in coord_names
 
 
+@pytest.mark.online
 def test_load_zarr3_cmip6_metadata():
     """
     Test loading a Zarr3 store from a https Object Store.
@@ -196,26 +199,6 @@ def test_load_zarr_local_not_file():
     But file doesn't exist (on local FS).
     """
     zarr_path = "esmvaltool-zarr/example_field_0.zarr22"
-
-    # "Unable to find group" or "No group found"
-    # Zarr keeps changing the exception string so matching
-    # is bound to fail the test
-    with pytest.raises(FileNotFoundError):
-        load(zarr_path)
-
-
-def test_load_zarr_local_not_zarr_file():
-    """
-    Test loading something that has a zarr extension.
-
-    But file is plaintext (on local FS).
-    """
-    zarr_path = (
-        Path(importlib_files("tests"))
-        / "sample_data"
-        / "zarr-sample-data"
-        / "example_field_0.zarr17"
-    )
 
     # "Unable to find group" or "No group found"
     # Zarr keeps changing the exception string so matching

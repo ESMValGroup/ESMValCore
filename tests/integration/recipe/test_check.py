@@ -1,20 +1,25 @@
 """Integration tests for :mod:`esmvalcore._recipe.check`."""
 
-import os.path
+from __future__ import annotations
+
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe.check
-import esmvalcore.esgf
+import esmvalcore.io.esgf
 from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessorFile
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 def test_ncl_version(mocker):
@@ -50,7 +55,7 @@ def test_ncl_version_too_low(mocker):
     )
     with pytest.raises(
         RecipeError,
-        match="NCL version 6.4 or higher is required",
+        match=r"NCL version 6.4 or higher is required",
     ):
         check.ncl_version()
 
@@ -142,7 +147,12 @@ DATA_AVAILABILITY_DATA = [
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
     dataset = Dataset(**var)
-    dataset.files = [Path(f) for f in input_files]
+    files = []
+    for filename in input_files:
+        file = LocalFile(filename)
+        file.facets["timerange"] = filename.split("_")[-1].replace("-", "/")
+        files.append(file)
+    dataset.files = files
     if error is None:
         check.data_availability(dataset)
         mock_logger.error.assert_not_called()
@@ -153,51 +163,39 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert dataset.facets == var
 
 
-DATA_AVAILABILITY_NO_DATA: list[Any] = [
-    ([], [], None),
-    ([""], ["a*.nc"], (ERR_ALL, ": a*.nc")),
-    ([""], ["a*.nc", "b*.nc"], (ERR_ALL, "\na*.nc\nb*.nc")),
-    (["1"], ["a"], (ERR_ALL, ": 1/a")),
-    (["1"], ["a", "b"], (ERR_ALL, "\n1/a\n1/b")),
-    (["1", "2"], ["a"], (ERR_ALL, "\n1/a\n2/a")),
-    (["1", "2"], ["a", "b"], (ERR_ALL, "\n1/a\n1/b\n2/a\n2/b")),
-]
-
-
-@pytest.mark.parametrize(
-    ("dirnames", "filenames", "error"),
-    DATA_AVAILABILITY_NO_DATA,
-)
-@mock.patch("esmvalcore._recipe.check.logger", autospec=True)
-def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
+def test_data_availability_no_data(
+    caplog: pytest.LogCaptureFixture,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
     """Test check for data when no data is present."""
-    facets = {
-        "frequency": "mon",
-        "short_name": "tas",
-        "timerange": "2020/2025",
-        "alias": "alias",
-        "start_year": 2020,
-        "end_year": 2025,
-    }
-    dataset = Dataset(**facets)
+    dataset = Dataset(
+        frequency="mon",
+        short_name="tas",
+        timerange="2020/2025",
+        alias="alias",
+        start_year=2020,
+        end_year=2025,
+    )
     dataset.files = []
-    dataset._file_globs = [
-        os.path.join(d, f) for d in dirnames for f in filenames
-    ]
-    error_first = ("No input files found for %s", dataset)
-    error_last = ("Set 'log_level' to 'debug' to get more information",)
-    with pytest.raises(RecipeError) as rec_err:
+    mock_data_source = mocker.Mock()
+    mock_data_source.debug_info = "debug info"
+    dataset._used_data_sources = [mock_data_source]
+    with pytest.raises(RecipeError) as exc:
         check.data_availability(dataset)
-    assert str(rec_err.value) == "Missing data for Dataset: tas"
-    if error is None:
-        assert mock_logger.error.call_count == 2
-        errors = [error_first, error_last]
-    else:
-        assert mock_logger.error.call_count == 3
-        errors = [error_first, error, error_last]
-    calls = [mock.call(*e) for e in errors]
-    assert mock_logger.error.call_args_list == calls
-    assert dataset.facets == facets
+    assert str(exc.value) == "Missing data for Dataset: tas"
+    assert len(caplog.records) == 2
+    assert caplog.records[0].message == "\n".join(
+        [
+            f"No files were found for {dataset},",
+            "using data sources:",
+            f"- data source: {mock_data_source}",
+            "  message: debug info",
+        ],
+    )
+    assert (
+        caplog.records[1].message
+        == "Set 'log_level' to 'debug' to get more information"
+    )
 
 
 GOOD_TIMERANGES = [
@@ -315,7 +313,9 @@ def test_data_availability_nonexistent(tmp_path):
         context=None,
     )
     dest_folder = tmp_path
-    input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
+    input_files = [
+        esmvalcore.io.esgf.ESGFFile([result]).local_file(dest_folder),
+    ]
     dataset = Dataset(**var)
     dataset.files = input_files
     check.data_availability(dataset)
@@ -324,9 +324,9 @@ def test_data_availability_nonexistent(tmp_path):
 def test_reference_for_bias_preproc_empty():
     """Test ``reference_for_bias_preproc``."""
     products = {
-        PreprocessorFile(filename=10),
-        PreprocessorFile(filename=20),
-        PreprocessorFile(filename=30),
+        PreprocessorFile(filename=Path("10")),
+        PreprocessorFile(filename=Path("20")),
+        PreprocessorFile(filename=Path("30")),
     }
     check.reference_for_bias_preproc(products)
 
@@ -334,11 +334,11 @@ def test_reference_for_bias_preproc_empty():
 def test_reference_for_bias_preproc_one_ref():
     """Test ``reference_for_bias_preproc`` with one reference."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
-        PreprocessorFile(filename=20, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("20"), settings={"bias": {}}),
         PreprocessorFile(
-            filename=30,
+            filename=Path("30"),
             settings={"bias": {}},
             attributes={"reference_for_bias": True},
         ),
@@ -349,10 +349,10 @@ def test_reference_for_bias_preproc_one_ref():
 def test_reference_for_bias_preproc_no_ref():
     """Test ``reference_for_bias_preproc`` with no reference."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
-        PreprocessorFile(filename=20, settings={"bias": {}}),
-        PreprocessorFile(filename=30, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("20"), settings={"bias": {}}),
+        PreprocessorFile(filename=Path("30"), settings={"bias": {}}),
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)
@@ -376,15 +376,15 @@ def test_reference_for_bias_preproc_no_ref():
 def test_reference_for_bias_preproc_two_refs():
     """Test ``reference_for_bias_preproc`` with two references."""
     products = {
-        PreprocessorFile(filename=90),
-        PreprocessorFile(filename=10, settings={"bias": {}}),
+        PreprocessorFile(filename=Path("90")),
+        PreprocessorFile(filename=Path("10"), settings={"bias": {}}),
         PreprocessorFile(
-            filename=20,
+            filename=Path("20"),
             attributes={"reference_for_bias": True},
             settings={"bias": {}},
         ),
         PreprocessorFile(
-            filename=30,
+            filename=Path("30"),
             attributes={"reference_for_bias": True},
             settings={"bias": {}},
         ),

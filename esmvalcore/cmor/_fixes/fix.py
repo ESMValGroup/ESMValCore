@@ -8,13 +8,13 @@ import inspect
 import logging
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord, CoordExtent
-from iris.cube import Cube, CubeList
+from iris.coords import CoordExtent
+from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
@@ -37,6 +37,8 @@ if TYPE_CHECKING:
 
     import ncdata
     import xarray as xr
+    from iris.coords import Coord
+    from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
@@ -83,8 +85,8 @@ class Fix:
     def fix_file(
         self,
         file: str | Path | xr.Dataset | ncdata.NcData,
-        output_dir: Path,
-        add_unique_suffix: bool = False,
+        output_dir: Path,  # noqa: ARG002
+        add_unique_suffix: bool = False,  # noqa: ARG002
     ) -> str | Path | xr.Dataset | ncdata.NcData:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
@@ -421,12 +423,12 @@ class GenericFix(Fix):
             return f"\n(for file {cube.attributes['source_file']})"
         return f"\n(for variable {cube.var_name})"
 
-    def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _debug_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.debug(msg, *args)
 
-    def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _warning_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.warning(msg, *args)

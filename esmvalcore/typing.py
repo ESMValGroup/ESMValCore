@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from numbers import Number
 
 import dask.array as da
 import numpy as np
 from iris.cube import Cube
 
-FacetValue = str | Sequence[str] | Number | bool
+FacetValue = str | Sequence[str] | int | float
 """Type describing a single facet."""
 
 Facets = dict[str, FacetValue]
 """Type describing a collection of facets."""
 
-NetCDFAttr = str | Number | Iterable
+NetCDFAttr = str | int | float | Iterable
 """Type describing netCDF attributes.
 
 `NetCDF attributes

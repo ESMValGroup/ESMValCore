@@ -1,0 +1,22 @@
+SOURCE: CMIP5
+!============
+variable_entry:    agb
+!============
+modeling_realm:    land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg m-2
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Above-Ground Biomass
+comment:           Amount of living biomass (organic matter) stored in vegetation above the soil including stem, stump, branches, bark, seeds and foliage, expressed as dry weight
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+valid_min:         0.0
+!----------------------------------
+!

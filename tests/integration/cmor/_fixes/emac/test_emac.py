@@ -854,7 +854,6 @@ def test_only_longitude(monkeypatch):
 
 
 # Tests with sample data
-# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
 
 def test_sample_data_tas(test_data_path, tmp_path):

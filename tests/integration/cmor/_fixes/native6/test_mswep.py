@@ -26,8 +26,6 @@ def test_get_pr_fix(mip_table):
 @pytest.fixture
 def cube_month():
     """Return extract from mswep monthly data (shape 3x5x5)."""
-    # out = cube[0:3, 0:360:72, 0:720:144]
-    # iris.save(out, 'mswep_month.nc')
     path = Path(__file__).with_name("mswep_month.nc")
     return iris.load_cube(str(path))
 
@@ -35,8 +33,6 @@ def cube_month():
 @pytest.fixture
 def cube_day():
     """Return extract from mswep daily data (shape 3x5x5)."""
-    # out = cube[0:3, 0:360:72, 0:720:144]
-    # iris.save(out, 'mswep_day.nc')
     path = Path(__file__).with_name("mswep_day.nc")
     return iris.load_cube(str(path))
 

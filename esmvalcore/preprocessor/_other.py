@@ -10,7 +10,7 @@ import dask
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import Coord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
@@ -30,6 +30,8 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
+
+    from iris.coords import Coord
 
     from esmvalcore.cmor.table import VariableInfo
 
@@ -563,7 +565,7 @@ def _get_histogram_cube(
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
     normalization: Literal["sum", "integral"] | None,
-):
+) -> Cube:
     """Get cube with correct metadata for histogram."""
     # Calculate bin centers using 2-window running mean and get corresponding
     # coordinate
@@ -577,8 +579,7 @@ def _get_histogram_cube(
         units=cube.units,
     )
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     cell_methods = cube.cell_methods
     with ignore_iris_vague_metadata_warnings():
         cube = cube.collapsed(coords, iris.analysis.MAX)

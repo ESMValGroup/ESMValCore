@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, Generator, Mapping, MutableMapping
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -15,6 +15,9 @@ from esmvalcore.exceptions import (
 )
 
 from ._config_validators import ValidationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Mapping
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -121,9 +124,9 @@ class ValidatedConfig(MutableMapping):
         """Check and warn for missing variables."""
         for key, more_info in self._warn_if_missing:
             if key not in self:
-                more_info = f" ({more_info})" if more_info else ""
+                more_info_msg = f" ({more_info})" if more_info else ""
                 warnings.warn(
-                    f"`{key}` is not defined{more_info}",
+                    f"`{key}` is not defined{more_info_msg}",
                     MissingConfigParameter,
                     stacklevel=1,
                 )

@@ -792,7 +792,7 @@ Regridding on a reference dataset grid
 
 The example below shows how to regrid on the reference dataset
 ``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
-or ana4mips datasets can be used); in this case the `scheme` is
+or ana4MIPs datasets can be used); in this case the `scheme` is
 `linear`.
 
 .. code-block:: yaml
@@ -1294,7 +1294,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * climate_statistics_: Compute statistics for the full period
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
-* anomalies_: Compute (standardized) anomalies
+* anomalies_: Compute (standardized or relative) anomalies
 * regrid_time_: Aligns the time coordinate of each dataset, against a standardized time axis.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
@@ -1683,6 +1683,7 @@ Parameters:
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
+    * relative: if true, calculate relative (in percent) anomalies (default: false)
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
@@ -2029,15 +2030,15 @@ Examples:
         .. code-block:: yaml
 
             extract_shape:
-            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
-            decomposed: True
-            method: contains
-            ids:
-              - Spain
-              - France
-              - Italy
-              - United Kingdom
-              - Taiwan
+              shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+              decomposed: true
+              method: contains
+              ids:
+                - Spain
+                - France
+                - Italy
+                - United Kingdom
+                - Taiwan
 
     * Extract European AR6 regions:
 
@@ -2526,9 +2527,10 @@ precipitation sum.
 
   preprocessors:
     preproc_rolling_window:
-      coordinate: time
-      operator: sum
-      window_length: 2
+      rolling_window_statistics:
+        coordinate: time
+        operator: sum
+        window_length: 2
 
 See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
 

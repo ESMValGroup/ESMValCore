@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools >= 40.6.0",
-    "setuptools_scm>=6.2",
+    "setuptools>=80",
+    "setuptools_scm>=8",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -14,11 +14,9 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
@@ -39,12 +37,12 @@ dependencies = [
     "dask-jobqueue",
     "esgf-pyclient>=0.3.1",
     "esmf-regrid>=0.11.0",
-    "esmpy",  # not on PyPI
     "filelock",
     "fiona",
     "fire",
     "geopy",
     "humanfriendly",
+    "intake-esgf>=2025.10.22",
     "intake-esm",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",
@@ -65,7 +63,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris>=3.12.2",  # github.com/SciTools/iris/issues/6417
+    "scitools-iris",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",
@@ -73,12 +71,14 @@ dependencies = [
     "zarr>3",
 ]
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
-license = {text = "Apache License, Version 2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 name = "ESMValCore"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 [project.optional-dependencies]
 test = [
+    "pre-commit",
     "pytest>6.0.0",
     "pytest-cov>=2.10.1",
     "pytest-env",
@@ -90,16 +90,13 @@ test = [
 ]
 doc = [
     "autodocsumm>=0.2.2",
-    "ipython<9.0",  # github.com/ESMValGroup/ESMValCore/issues/2680
-    "nbsphinx>=0.9.7",  # github.com/ESMValGroup/ESMValCore/issues/2669
+    "ipython",
+    "myst-nb",
     "sphinx>=6.1.3",
     "pydata_sphinx_theme",
 ]
 develop = [
     "esmvalcore[test,doc]",
-    "pre-commit",
-    "pylint",
-    "pydocstyle",
     "vprof",
 ]
 
@@ -115,7 +112,6 @@ Issues = "https://github.com/ESMValGroup/ESMValCore/issues"
 
 [tool.setuptools]
 include-package-data = true
-license-files = ["LICENSE"]
 packages = ["esmvalcore"]
 zip-safe = false
 
@@ -138,13 +134,17 @@ addopts = [
     "--cov-report=html:test-reports/coverage_html",
     "--html=test-reports/report.html",
 ]
-log_cli_level = "INFO"
 env = {MPLBACKEND = "Agg"}
+filterwarnings = [
+    "ignore:Do not instantiate `Config` objects directly:UserWarning"
+]
+log_cli_level = "INFO"
 log_level = "WARNING"
 minversion = "6"
 markers = [
     "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
+    "online: Run tests that require internet access",
 ]
 testpaths = ["tests"]
 xfail_strict = true
@@ -181,25 +181,18 @@ line-length = 79
 select = ["ALL"]
 ignore = [
     # Ignore until someone has time to fix this:
-    "ANN",      # Adding type hints
-    "ARG",      # Unused argument
     "DTZ",      # add tzinfo to datetimes
-    "ERA001",   # Found commented-out code
     "FBT",      # avoid boolean positional arguments
     "N818",     # Exception name should be named with an Error suffix
     "PERF",     # Use comprehensions
     "PGH003",   # Use specific rule codes when ignoring type issues
-    "PLC0206",  # Extracting value from dictionary without calling `.items()`
     "PLR2004",  # Don't use magic values
-    "PLW2901",  # Don't overwrite a loop variable
     "PT009",    # Use a regular `assert` instead of unittest-style `assertListEqual`
     "PT011",    # pytest.raises without match argument
     "PT027",    # Use `pytest.raises` instead of unittest-style `assertRaises`
     "PTH",      # Use pathlib everywhere
-    "RUF022",   # `__all__` definitions that are not ordered according to an "isort-style" sort.
     "SIM102",   # Use a single `if` statement instead of nested `if` statements
     "SIM117",   # Use a single `with` statement with multiple contexts instead of nested `with` statements
-    "T201",     # `print` statements.
     "TD003",    # Missing issue link on the line following this TODO
     "TRY400",   # Uses of `logging.error` instead of `logging.exception` when logging an exception
     # Really ignore:
@@ -211,11 +204,13 @@ ignore = [
     "TD002",    # Missing author in TODO: can be seen from git history
     "TRY003",   # Fixing this would require many exceptions
 ]
+future-annotations = true
 [tool.ruff.lint.per-file-ignores]
 "**.ipynb" = [
     "T20",      # Printing things in notebooks is fine.
 ]
 "tests/**.py" = [
+    "ARG",      # Fixtures that set up some state are wrongly identified as unused arguments.
     "S101",     # Use of assert in tests code is required.
     "T20",      # Printing things can help with debugging tests.
     "SLF001",   # Testing private members is ok
@@ -226,41 +221,14 @@ ignore = [
     "D102",     # Missing docstring in public method
     "D103",     # Missing docstring in public function
     "D104",     # Missing docstring in public package
+    "PT013",    # Allow importing fixtures from pytest to avoid repeating 'pytest' many times
 ]
-"doc/gensidebar.py" = [
-    "INP001",   # File is part of an implicit namespace package
-]
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+ignore-fully-untyped = true
 [tool.ruff.lint.isort]
 known-first-party = ["esmvalcore"]
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 [tool.ruff.lint.pylint]
 max-args = 7
-
-# Configure linters that are run by Prospector
-# TODO: remove once we have enabled all ruff rules for the tools provided by
-# Prospector, see https://github.com/ESMValGroup/ESMValCore/issues/2528.
-
-[tool.pylint.main]
-jobs = 1  # Running more than one job in parallel crashes prospector.
-ignore-paths = [
-    "doc/conf.py",  # Sphinx configuration file
-]
-[tool.pylint.basic]
-good-names = [
-    "_",            # Used by convention for unused variables
-    "i", "j", "k",  # Used by convention for indices
-    "logger",       # Our preferred name for the logger
-]
-[tool.pylint.format]
-max-line-length = 79
-[tool.pylint."messages control"]
-disable = [
-    "import-error",      # Needed because Codacy does not install dependencies
-    "file-ignored",      # Disable messages about disabling checks
-    "line-too-long",     # Disable line-too-long as this is taken care of by the formatter.
-    "locally-disabled",  # Disable messages about disabling checks
-]
-
-[tool.pydocstyle]
-convention = "numpy"

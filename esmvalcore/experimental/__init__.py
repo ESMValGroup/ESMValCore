@@ -17,9 +17,9 @@ logging.basicConfig(
 
 __all__ = [
     "CFG",
-    "get_all_recipes",
-    "get_recipe",
     "Recipe",
     "RecipeList",
+    "get_all_recipes",
+    "get_recipe",
     "warnings",
 ]

@@ -16,7 +16,7 @@ import yamale
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
@@ -178,18 +178,26 @@ def variable(
         raise RecipeError(msg)
 
 
+def get_no_data_message(dataset: Dataset) -> str:
+    """Generate a message for debugging missing data in dataset."""
+    lines = [
+        f"No files were found for {dataset},\nusing data sources:",
+        "\n".join(
+            f"- data source: {data_source}\n  message: {data_source.debug_info}"
+            for data_source in sorted(
+                dataset._used_data_sources,  # noqa: SLF001
+                key=lambda d: d.priority,
+            )
+        ),
+    ]
+    return "\n".join(lines)
+
+
 def _log_data_availability_errors(dataset: Dataset) -> None:
     """Check if the required input data is available."""
-    input_files = dataset.files
-    patterns = dataset._file_globs  # noqa: SLF001
-    if not input_files:
-        logger.error("No input files found for %s", dataset)
-        if patterns:
-            if len(patterns) == 1:
-                msg = f": {patterns[0]}"
-            else:
-                msg = "\n{}".format("\n".join(str(p) for p in patterns))
-            logger.error("Looked for files matching%s", msg)
+    if not dataset.files:
+        msg = get_no_data_message(dataset)
+        logger.error(msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
@@ -231,7 +239,10 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets:
+    if (
+        "*" in facets.get("timerange", "*")  # type: ignore[operator]
+        or any("timerange" not in f.facets for f in input_files)
+    ):
         return
 
     start_date, end_date = _parse_period(facets["timerange"])
@@ -241,8 +252,10 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
     available_years: set[int] = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file)
-        available_years.update(range(start, end + 1))
+        start_date, end_date = file.facets["timerange"].split("/")  # type: ignore[union-attr]
+        start_year = int(start_date[:4])
+        end_year = int(end_date[:4])
+        available_years.update(range(start_year, end_year + 1))
 
     missing_years = required_years - available_years
     if missing_years:
@@ -329,13 +342,13 @@ def extract_shape(settings: dict[str, Any]) -> None:
         "crop": {True, False},
         "decomposed": {True, False},
     }
-    for key in valid:
+    for key, valid_values in valid.items():
         value = settings.get(key)
-        if not (value is None or value in valid[key]):
+        if not (value is None or value in valid_values):
             msg = (
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
-                "{}".format(", ".join(f"'{k}'".lower() for k in valid[key]))
+                "{}".format(", ".join(f"'{k}'".lower() for k in valid_values))
             )
             raise RecipeError(msg)
 
@@ -352,7 +365,7 @@ def _verify_span_value(span: str) -> None:
         raise RecipeError(msg)
 
 
-def _verify_groupby(groupby: Any) -> None:
+def _verify_groupby(groupby: list[str]) -> None:
     """Raise error if groupby arguments cannot be verified."""
     if not isinstance(groupby, list):
         msg = (
@@ -363,7 +376,7 @@ def _verify_groupby(groupby: Any) -> None:
         raise RecipeError(msg)
 
 
-def _verify_keep_input_datasets(keep_input_datasets: Any) -> None:
+def _verify_keep_input_datasets(keep_input_datasets: bool) -> None:
     if not isinstance(keep_input_datasets, bool):
         msg = (
             f"Invalid value encountered for `keep_input_datasets`."
@@ -373,7 +386,7 @@ def _verify_keep_input_datasets(keep_input_datasets: Any) -> None:
         raise RecipeError(msg)
 
 
-def _verify_ignore_scalar_coords(ignore_scalar_coords: Any) -> None:
+def _verify_ignore_scalar_coords(ignore_scalar_coords: bool) -> None:
     if not isinstance(ignore_scalar_coords, bool):
         msg = (
             f"Invalid value encountered for `ignore_scalar_coords`."
@@ -450,7 +463,7 @@ def _check_duration_periods(timerange: list[str]) -> None:
             raise RecipeError(msg) from exc
 
 
-def _check_format_years(date: str) -> str:
+def _format_years(date: str) -> str:
     if date != "*" and not date.startswith("P"):
         if len(date) < 4:
             date = date.zfill(4)
@@ -488,8 +501,7 @@ def valid_time_selection(timerange: str) -> None:
         _check_delimiter(timerange_list)
         _check_duration_periods(timerange_list)
         for date in timerange_list:
-            date = _check_format_years(date)
-            _check_timerange_values(date, timerange_list)
+            _check_timerange_values(_format_years(date), timerange_list)
 
 
 def differing_timeranges(
