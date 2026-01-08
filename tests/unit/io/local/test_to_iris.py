@@ -1,10 +1,16 @@
-from pathlib import Path
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import iris.cube
 import pytest
-from pytest_mock import MockerFixture
 
-from esmvalcore.local import LocalFile, _get_attr_from_field_coord
+from esmvalcore.io.local import LocalFile, _get_attr_from_field_coord
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture

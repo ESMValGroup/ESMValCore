@@ -24,12 +24,12 @@ import yaml
 from humanfriendly import format_size, format_timespan
 
 from esmvalcore.config import CFG
-from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
     _get_start_end_date_from_filename,
 )
+from esmvalcore.io.protocol import DataElement
 
 from .facets import DATASET_MAP, FACETS
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     import iris.cube
-    from pyesgf.search.results import FileResult
+    from pyesgf.search.results import FileResult, ResultSet
 
     from esmvalcore.typing import Facets
 
@@ -185,7 +185,7 @@ def sort_hosts(urls):
 class ESGFFile(DataElement):
     """File on the ESGF.
 
-    This is the object returned by :func:`esmvalcore.esgf.find_files`.
+    This is the object returned by :func:`esmvalcore.io.esgf.find_files`.
 
     Attributes
     ----------
@@ -331,7 +331,7 @@ class ESGFFile(DataElement):
         return facets
 
     @staticmethod
-    def _get_facets_from_dataset_id(results) -> Facets:
+    def _get_facets_from_dataset_id(results: ResultSet) -> Facets:
         """Read the facets from the `dataset_id`."""
         # This reads the facets from the dataset_id because the facets
         # provided by ESGF are unreliable.
@@ -450,7 +450,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         dest_folder = self.dest_folder if dest_folder is None else dest_folder
@@ -473,7 +473,7 @@ class ESGFFile(DataElement):
 
         Returns
         -------
-        LocalFile
+        :
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)
@@ -610,7 +610,7 @@ def download(files, dest_folder=None, n_jobs=4):
     files = sorted(files)
     logger.info(get_download_message(files))
 
-    def _download(file: ESGFFile):
+    def _download(file: ESGFFile) -> None:
         """Download file to dest_folder."""
         file.download(dest_folder)
 

@@ -1,4 +1,6 @@
-"""Test `esmvalcore.esgf._download`."""
+"""Test `esmvalcore.io.esgf._download`."""
+
+from __future__ import annotations
 
 import datetime
 import logging
@@ -6,15 +8,18 @@ import os
 import re
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import requests
 import yaml
 from pyesgf.search.results import FileResult
-from pytest_mock import MockerFixture
 
-import esmvalcore.esgf
-from esmvalcore.esgf import _download
+import esmvalcore.io.esgf
+from esmvalcore.io.esgf import _download
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_log_speed(monkeypatch, tmp_path):
@@ -286,12 +291,12 @@ def test_to_iris(mocker: MockerFixture, esgf_file: _download.ESGFFile) -> None:
     """Test `ESGFFile.prepare`."""
     prepare = mocker.patch.object(_download.ESGFFile, "prepare")
     local_file_to_iris = mocker.patch.object(
-        esmvalcore.esgf._download.LocalFile,
+        esmvalcore.io.esgf._download.LocalFile,
         "to_iris",
         return_value=mocker.sentinel.iris_cubes,
     )
     mocker.patch.object(
-        esmvalcore.esgf._download.LocalFile,
+        esmvalcore.io.esgf._download.LocalFile,
         "attributes",
         new_callable=mocker.PropertyMock,
         return_value={"attribute": "value"},
@@ -632,10 +637,10 @@ def test_get_download_message():
 
 
 def test_download(mocker, tmp_path, caplog):
-    """Test `esmvalcore.esgf.download`."""
+    """Test `esmvalcore.io.esgf.download`."""
     dest_folder = tmp_path
     test_files = [
-        mocker.create_autospec(esmvalcore.esgf.ESGFFile, instance=True)
+        mocker.create_autospec(esmvalcore.io.esgf.ESGFFile, instance=True)
         for _ in range(5)
     ]
     for i, file in enumerate(test_files):
@@ -645,7 +650,7 @@ def test_download(mocker, tmp_path, caplog):
         file.__lt__.return_value = False
 
     caplog.set_level(logging.INFO)
-    esmvalcore.esgf.download(test_files, dest_folder)
+    esmvalcore.io.esgf.download(test_files, dest_folder)
 
     for file in test_files:
         file.download.assert_called_with(dest_folder)
@@ -655,10 +660,10 @@ def test_download(mocker, tmp_path, caplog):
 
 
 def test_download_fail(mocker, tmp_path, caplog):
-    """Test `esmvalcore.esgf.download`."""
+    """Test `esmvalcore.io.esgf.download`."""
     dest_folder = tmp_path
     test_files = [
-        mocker.create_autospec(esmvalcore.esgf.ESGFFile, instance=True)
+        mocker.create_autospec(esmvalcore.io.esgf.ESGFFile, instance=True)
         for _ in range(5)
     ]
     for i, file in enumerate(test_files):
@@ -678,7 +683,7 @@ def test_download_fail(mocker, tmp_path, caplog):
         error messages for third file
         """).strip()
     with pytest.raises(_download.DownloadError, match=re.escape(msg)):
-        esmvalcore.esgf.download(test_files, dest_folder)
+        esmvalcore.io.esgf.download(test_files, dest_folder)
     assert error0 in caplog.text
     assert error1 in caplog.text
     for file in test_files:
@@ -688,5 +693,5 @@ def test_download_fail(mocker, tmp_path, caplog):
 def test_download_noop(mocker: MockerFixture) -> None:
     """Test downloading no files."""
     mock_download = mocker.patch.object(_download.ESGFFile, "_download")
-    esmvalcore.esgf.download([], dest_folder="/does/not/exist")
+    esmvalcore.io.esgf.download([], dest_folder="/does/not/exist")
     mock_download.assert_not_called()

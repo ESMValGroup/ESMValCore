@@ -28,7 +28,7 @@ BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
         for f in BUILTIN_CONFIG_DIR.rglob("*.yml")
     ],
 )
-def test_builtin_config_files_have_description(config_file) -> None:
+def test_builtin_config_files_have_description(config_file: Path) -> None:
     """Test that all built-in config files have a description."""
     # Use the same code to find the description as in the
     # `esmvaltool config list` command.
@@ -167,17 +167,10 @@ def test_load_default_config(cfg_default, monkeypatch):
     default_dev_file = root_path / "config-developer.yml"
     config_dir = root_path / "config" / "configurations" / "defaults"
     default_project_settings = dask.config.collect(
-        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
+        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")]
+        + [str(config_dir / "preprocessor_filename_template.yml")],
         env={},
     )["projects"]
-    # Add in projects without extra facets from the config developer file
-    # until we have transitioned all of its content to the new configuration
-    # system.
-    for project in yaml.safe_load(
-        default_dev_file.read_text(encoding="utf-8"),
-    ):
-        if project not in default_project_settings:
-            default_project_settings[project] = {}
 
     session = cfg_default.start_session("recipe_example")
 
@@ -237,6 +230,27 @@ def test_load_default_config(cfg_default, monkeypatch):
     # Check default values
     for key, value in default_cfg.items():
         assert session[key] == value
+
+    # Check that project settings were loaded
+    assert set(session["projects"]) == {
+        # ESGF
+        "CMIP3",
+        "CMIP5",
+        "CMIP6",
+        "CORDEX",
+        "obs4MIPs",
+        "ana4MIPs",
+        # ESMValCore supported projects
+        "native6",
+        "ACCESS",
+        "CESM",
+        "EMAC",
+        "ICON",
+        "IPSLCM",
+        # ESMValTool CMORizers
+        "OBS",
+        "OBS6",
+    }
 
     # Check output directories
     assert str(session.session_dir).startswith(

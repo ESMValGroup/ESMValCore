@@ -1,6 +1,6 @@
 import pytest
 
-from esmvalcore.local import _select_files
+from esmvalcore.io.local import _select_files
 
 
 def test_select_files():

@@ -4,7 +4,7 @@ projects:
   native6:
     data:
       local:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: ~/climate_data
         dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
@@ -12,7 +12,7 @@ projects:
   OBS6:
     data:
       local:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: ~/climate_data
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
@@ -20,7 +20,7 @@ projects:
   OBS:
     data:
       local:
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: ~/climate_data
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

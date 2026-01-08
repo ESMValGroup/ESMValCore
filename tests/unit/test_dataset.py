@@ -1,22 +1,27 @@
+from __future__ import annotations
+
 import importlib.resources
 import textwrap
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyesgf
 import pytest
 import yaml
 
 import esmvalcore.dataset
-import esmvalcore.esgf
-import esmvalcore.local
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.typing import Facets
+from esmvalcore.io.esgf import ESGFFile
+
+if TYPE_CHECKING:
+    from esmvalcore.typing import Facets
 
 
 @lru_cache
@@ -557,7 +562,7 @@ def test_from_recipe_with_automatic_supplementary(
 ):
     def _find_files(self):
         if self.facets["short_name"] == "areacello":
-            file = esmvalcore.local.LocalFile()
+            file = esmvalcore.io.local.LocalFile()
             file.facets = {
                 "short_name": "areacello",
                 "mip": "fx",
@@ -658,7 +663,7 @@ def mock_find_files(*files):
 
 def test_from_files(session, monkeypatch):
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -683,7 +688,7 @@ def test_from_files(session, monkeypatch):
         "grid": "gn",
         "version": "v20190827",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -698,7 +703,7 @@ def test_from_files(session, monkeypatch):
         "tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_200001-200912.nc",
     )
     file2.facets = dict(file1.facets)
-    file3 = esmvalcore.local.LocalFile(
+    file3 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -758,7 +763,7 @@ def test_from_files(session, monkeypatch):
 
 def test_from_files_with_supplementary(session, monkeypatch):
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -783,7 +788,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20190827",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -808,7 +813,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
         "grid": "gn",
         "version": "v20210615",
     }
-    file3 = esmvalcore.local.LocalFile(
+    file3 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP5",
         "CMIP",
@@ -892,7 +897,7 @@ def test_from_files_with_supplementary(session, monkeypatch):
 def test_from_files_with_globs(monkeypatch, session):
     """Test `from_files` with wildcards in dataset and supplementary."""
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -919,7 +924,7 @@ def test_from_files_with_globs(monkeypatch, session):
         "timerange": "185001/201412",
         "version": "v20181126",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "GMMIP",
@@ -1004,7 +1009,7 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     Tests a combination of files with complete facets and missing facets.
     """
     rootpath = Path("/path/to/data")
-    file1 = esmvalcore.local.LocalFile(
+    file1 = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -1031,7 +1036,7 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
         "timerange": "185001/201412",
         "version": "v20181126",
     }
-    file2 = esmvalcore.local.LocalFile(
+    file2 = esmvalcore.io.local.LocalFile(
         rootpath,
         "tas",
         "tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc",
@@ -1089,7 +1094,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
     added.
     """
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "BCC-CSM2-MR",
@@ -1158,7 +1163,7 @@ def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
 def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and only files with missing facets."""
     rootpath = Path("/path/to/data")
-    file = esmvalcore.local.LocalFile(
+    file = esmvalcore.io.local.LocalFile(
         rootpath,
         "CMIP6",
         "CMIP",
@@ -1477,14 +1482,14 @@ def dataset():
             "CMIP6": {
                 "data": {
                     "local": {
-                        "type": "esmvalcore.local.LocalDataSource",
+                        "type": "esmvalcore.io.local.LocalDataSource",
                         "rootpath": Path("/local_dir"),
                         "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
                         "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
                         "priority": 1,
                     },
                     "esgf": {
-                        "type": "esmvalcore.esgf.ESGFDataSource",
+                        "type": "esmvalcore.io.esgf.ESGFDataSource",
                         "download_dir": Path("/download_dir"),
                         "priority": 2,
                     },
@@ -1520,13 +1525,13 @@ def test_find_files(mocker, dataset, local_availability):
     )
 
     mocker.patch.object(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.esgf.ESGFDataSource,
+        esmvalcore.io.esgf.ESGFDataSource,
         "find_data",
         autospec=True,
         return_value=list(esgf_files),
@@ -1557,13 +1562,13 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.esgf.ESGFDataSource,
+        esmvalcore.io.esgf.ESGFDataSource,
         "find_data",
         autospec=True,
         return_value=list(esgf_files),
@@ -1594,13 +1599,13 @@ def test_find_files_outdated_local(mocker, dataset):
     )
 
     mocker.patch.object(
-        esmvalcore.local.LocalDataSource,
+        esmvalcore.io.local.LocalDataSource,
         "find_data",
         autospec=True,
         return_value=list(local_files),
     )
     mocker.patch.object(
-        esmvalcore.esgf.ESGFDataSource,
+        esmvalcore.io.esgf.ESGFDataSource,
         "find_data",
         autospec=True,
         return_value=list(esgf_files),
@@ -1612,11 +1617,11 @@ def test_find_files_outdated_local(mocker, dataset):
 def test_set_version():
     dataset = Dataset(short_name="tas")
     dataset.add_supplementary(short_name="areacella")
-    file_v1 = esmvalcore.local.LocalFile("/path/to/v1/tas.nc")
+    file_v1 = esmvalcore.io.local.LocalFile("/path/to/v1/tas.nc")
     file_v1.facets["version"] = "v1"
-    file_v2 = esmvalcore.local.LocalFile("/path/to/v2/tas.nc")
+    file_v2 = esmvalcore.io.local.LocalFile("/path/to/v2/tas.nc")
     file_v2.facets["version"] = "v2"
-    areacella_file = esmvalcore.local.LocalFile("/path/to/v3/areacella.nc")
+    areacella_file = esmvalcore.io.local.LocalFile("/path/to/v3/areacella.nc")
     areacella_file.facets["version"] = "v3"
     dataset.files = [file_v2, file_v1]
     dataset.supplementaries[0].files = [areacella_file]
@@ -1732,9 +1737,9 @@ def test_load(mocker, session):
         "fixed_files",
         "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
     )
-    _get_output_file = mocker.patch.object(
+    _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         create_autospec=True,
         return_value=output_file,
     )
@@ -1755,7 +1760,9 @@ def test_load(mocker, session):
 
     mocker.patch.object(esmvalcore.dataset, "preprocess", mock_preprocess)
 
-    items = [mocker.create_autospec(esmvalcore.local.LocalFile, instance=True)]
+    items = [
+        mocker.create_autospec(esmvalcore.io.local.LocalFile, instance=True),
+    ]
     dataset.files = items
 
     cube = dataset.load()
@@ -1839,7 +1846,7 @@ def test_load(mocker, session):
 
     assert args == load_args
 
-    _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    _get_preprocessor_filename.assert_called_with(dataset)
     items[0].prepare.assert_called_once()
 
 
@@ -2203,7 +2210,7 @@ def test_derivation_necessary_no_force_derivation(tmp_path, session):
 
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
-    lwcre_file = esmvalcore.local.LocalFile(
+    lwcre_file = esmvalcore.io.local.LocalFile(
         input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
     )
     lwcre_file.touch()
@@ -2222,7 +2229,7 @@ def test_derivation_necessary_force_derivation(tmp_path, session):
 
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
-    lwcre_file = esmvalcore.local.LocalFile(
+    lwcre_file = esmvalcore.io.local.LocalFile(
         input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
     )
     lwcre_file.touch()

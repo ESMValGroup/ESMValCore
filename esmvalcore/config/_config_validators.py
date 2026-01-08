@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 import os.path
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from functools import lru_cache, partial
 from importlib.resources import files as importlib_files
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from packaging import version
 
@@ -22,6 +22,8 @@ from esmvalcore.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from esmvalcore.config._validated_config import ValidatedConfig
 
 logger = logging.getLogger(__name__)
@@ -47,7 +49,11 @@ class ValidationError(ValueError):
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-def _make_type_validator(cls: Any, *, allow_none: bool = False) -> Any:
+def _make_type_validator(
+    cls: Any,  # noqa: ANN401
+    *,
+    allow_none: bool = False,
+) -> Callable:
     """Construct a type validator for `cls`.
 
     Return a validator that converts inputs to *cls* or raises (and
@@ -230,12 +236,15 @@ def validate_rootpath(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, paths in mapping.items():
-        if key == "obs4mips":
+        if key in ("obs4mips", "ana4mips"):
+            lower_case_key = key
+            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
             logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'rootpath'",
+                "Correcting capitalization, project '%s' should be "
+                "written as '%s' in configured 'rootpath'",
+                lower_case_key,
+                key,
             )
-            key = "obs4MIPs"  # noqa: PLW2901
         if isinstance(paths, Path):
             paths = str(paths)  # noqa: PLW2901
         if isinstance(paths, (str, list)):
@@ -260,12 +269,15 @@ def validate_drs(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, drs in mapping.items():
-        if key == "obs4mips":
+        if key in ("obs4mips", "ana4mips"):
+            lower_case_key = key
+            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
             logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'drs'",
+                "Correcting capitalization, project '%s' should be "
+                "written as '%s' in configured 'drs'",
+                lower_case_key,
+                key,
             )
-            key = "obs4MIPs"  # noqa: PLW2901
         new_mapping[key] = validate_string(drs)
     return new_mapping
 
@@ -361,12 +373,15 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
-def validate_projects(value: Any) -> Any:
+def validate_projects(
+    value: dict,
+) -> dict[str, dict[str, Any]]:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
+        "preprocessor_filename_template": validate_string,
     }
     for project, project_config in mapping.items():
         for option, val in project_config.items():
@@ -444,8 +459,8 @@ def _handle_deprecation(
 # TODO: remove in v2.15.0
 def deprecate_extra_facets_dir(
     validated_config: ValidatedConfig,
-    value: Any,
-    validated_value: Any,
+    value: str | Path,
+    validated_value: str | Path,
 ) -> None:
     """Deprecate ``extra_facets_dir`` option.
 
@@ -481,8 +496,8 @@ def deprecate_extra_facets_dir(
 
 def deprecate_rootpath(
     validated_config: ValidatedConfig,
-    value: Any,
-    validated_value: Any,
+    value: dict,
+    validated_value: dict,
 ) -> None:
     """Deprecate ``rootpath`` option.
 
@@ -508,8 +523,8 @@ def deprecate_rootpath(
 
 def deprecate_drs(
     validated_config: ValidatedConfig,  # noqa: ARG001
-    value: Any,  # noqa: ARG001
-    validated_value: Any,  # noqa: ARG001
+    value: dict,  # noqa: ARG001
+    validated_value: dict,  # noqa: ARG001
 ) -> None:
     """Deprecate ``drs`` option.
 
@@ -529,8 +544,8 @@ def deprecate_drs(
 
 def deprecate_download_dir(
     validated_config: ValidatedConfig,  # noqa: ARG001
-    value: Any,  # noqa: ARG001
-    validated_value: Any,  # noqa: ARG001
+    value: str | Path,  # noqa: ARG001
+    validated_value: str | Path,  # noqa: ARG001
 ) -> None:
     """Deprecate ``download_dir`` option.
 
@@ -550,8 +565,8 @@ def deprecate_download_dir(
 
 def deprecate_search_esgf(
     validated_config: ValidatedConfig,
-    value: Any,  # noqa: ARG001
-    validated_value: Any,
+    value: Literal["never", "when_missing", "always"],  # noqa: ARG001
+    validated_value: Literal["never", "when_missing", "always"],
 ) -> None:
     """Deprecate ``search_esgf`` option.
 

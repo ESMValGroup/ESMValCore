@@ -1,9 +1,12 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
+from __future__ import annotations
+
 import pickle
 import platform
 from itertools import groupby
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import cf_units
 import iris
@@ -13,6 +16,9 @@ from iris.coords import AuxCoord
 
 from esmvalcore.preprocessor import extract_time
 from esmvalcore.preprocessor._multimodel import multi_model_statistics
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -30,7 +36,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
     np.testing.assert_allclose(this, other, rtol=rtol)
 
 
-def assert_coords_equal(this: list, other: list):
+def assert_coords_equal(this: list, other: list) -> None:
     """Assert coords list `this` equals coords list `other`."""
     for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)
@@ -53,7 +59,10 @@ def fix_metadata(cubes):
         cube.coord("air_pressure").bounds = None
 
 
-def preprocess_data(cubes, time_slice: dict | None = None):
+def preprocess_data(
+    cubes: Sequence[iris.cube.Cube],
+    time_slice: dict | None = None,
+) -> list[iris.cube.Cube]:
     """Regrid the data to the first cube and optional time-slicing."""
     # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:

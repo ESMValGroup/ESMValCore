@@ -1,9 +1,12 @@
 """Shared functions for fixes."""
 
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime, timedelta
 from functools import cache
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import iris
@@ -11,10 +14,12 @@ import numpy as np
 import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import Coord
 from scipy.interpolate import interp1d
 
 from esmvalcore.iris_helpers import date2num
+
+if TYPE_CHECKING:
+    from iris.coords import Coord
 
 logger = logging.getLogger(__name__)
 

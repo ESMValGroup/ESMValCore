@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import iris
@@ -19,14 +19,18 @@ import pandas as pd
 import requests
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import AuxCoord, Coord, DimCoord
-from iris.cube import Cube, CubeList
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import CubeList
 from iris.mesh import Connectivity, MeshXY
 
-import esmvalcore.local
+import esmvalcore.io.local
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
+
+if TYPE_CHECKING:
+    from iris.coords import Coord
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -324,7 +328,7 @@ class IconFix(NativeDatasetFix):
         """Try to get grid from the ICON rootpath."""
         glob_patterns: list[Path] = []
         for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
-            if isinstance(data_source, esmvalcore.local.LocalDataSource):
+            if isinstance(data_source, esmvalcore.io.local.LocalDataSource):
                 glob_patterns.extend(
                     data_source._get_glob_patterns(**self.extra_facets),  # noqa: SLF001
                 )

@@ -139,7 +139,7 @@ class TrackedFile:
         attributes: dict[str, Any] | None = None,
         ancestors: Iterable[TrackedFile] | None = None,
         prov_filename: str | None = None,
-    ):
+    ) -> None:
         """Create an instance of a file with provenance tracking.
 
         Arguments
@@ -182,7 +182,7 @@ class TrackedFile:
         return self._attributes
 
     @attributes.setter
-    def attributes(self, value: dict[str, Any] | None):
+    def attributes(self, value: dict[str, Any] | None) -> None:
         """Set attributes describing the file."""
         self._attributes = value
 
@@ -194,11 +194,11 @@ class TrackedFile:
         """Return representation string (e.g., used by ``pformat``)."""
         return f"{self.__class__.__name__}: {self.filename}"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if `other` equals `self`."""
         return hasattr(other, "filename") and self.filename == other.filename
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: object) -> bool:
         """Check if `other` should be sorted before `self`."""
         return hasattr(other, "filename") and self.filename < other.filename
 

@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-import pytest_mock
 
 from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import validate_config_developer
-from esmvalcore.local import DataSource, LocalDataSource, _get_data_sources
+from esmvalcore.io.local import LocalDataSource
+from esmvalcore.local import DataSource, _get_data_sources
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 @pytest.mark.parametrize(

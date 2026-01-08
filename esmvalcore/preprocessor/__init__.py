@@ -5,16 +5,23 @@ from __future__ import annotations
 import copy
 import inspect
 import logging
+import re
+import string
+from collections.abc import Sequence
+from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any
 
-from iris.cube import Cube, CubeList
+from iris.cube import Cube
 
 from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
+from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -102,17 +109,18 @@ from esmvalcore.preprocessor._volume import (
 from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
-    from pathlib import Path
+    from collections.abc import Callable, Iterable
 
     import prov.model
     from dask.delayed import Delayed
+    from iris.cube import CubeList
 
     from esmvalcore.dataset import Dataset
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # File reformatting/CMORization
     "fix_file",
     # Load cubes from file
@@ -253,6 +261,99 @@ MULTI_MODEL_FUNCTIONS: set[str] = {
 }
 
 
+def _get_preprocessor_filename(dataset: Dataset) -> Path:
+    """Get a filename for storing a preprocessed dataset.
+
+    Parameters
+    ----------
+    dataset:
+        The dataset that will be preprocessed.
+
+    Returns
+    -------
+    :
+        A path for storing a preprocessed file.
+    """
+
+    def is_facet_value(value: Any) -> bool:  # noqa: ANN401
+        """Check if a value is of type `esmvalcore.typing.FacetValue`."""
+        return isinstance(value, str | int | float) or (
+            isinstance(value, Sequence)
+            and all(isinstance(v, str) for v in value)
+        )
+
+    default_template = "_".join(
+        f"{{{k}}}"
+        for k in sorted(dataset.minimal_facets)
+        if is_facet_value(dataset.minimal_facets[k])
+        and k
+        not in ("timerange", "diagnostic", "variable_group", "preprocessor")
+    )
+    template = (
+        dataset.session["projects"]
+        .get(dataset.facets["project"], {})
+        .get("preprocessor_filename_template", default_template)
+    )
+    if template is default_template:
+        try:
+            # Use config-developer.yml for backward compatibility, remove in v2.16.
+            return _get_output_file(
+                dataset.facets,
+                dataset.session.preproc_dir,
+            )
+        except RecipeError:
+            pass
+
+    def normalize(value: FacetValue) -> str:
+        """Normalize a facet value to a string that can be used in a filename."""
+        if isinstance(value, str | int | float):
+            return re.sub("[^a-zA-Z0-9]+", "-", str(value))[:25]
+        return "-".join(normalize(v) for v in value)
+
+    normalized_facets = {
+        k: normalize(v) for k, v in dataset.facets.items() if is_facet_value(v)
+    }
+    required_facets = [
+        field[1] for field in string.Formatter().parse(template) if field[1]
+    ]
+    missing_facets = [f for f in required_facets if f not in dataset.facets]
+    if missing_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, missing facets: "
+            + ", ".join(f"'{f}'" for f in sorted(missing_facets))
+            + "."
+        )
+        raise RecipeError(msg)
+    wrong_type_facets = [
+        f
+        for f in required_facets
+        if (f in dataset.facets and f not in normalized_facets)
+    ]
+    if wrong_type_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, facet values have invalid type: "
+            + ", ".join(
+                f"'{f}: {dataset.facets[f]}' has type {type(dataset.facets[f]).__name__}"
+                for f in sorted(wrong_type_facets)
+            )
+            + ", allowed types are str, int, float, or a sequence of str."
+        )
+        raise RecipeError(msg)
+    filename = template.format(**normalized_facets)
+    if "timerange" in dataset.facets:
+        start_time, end_time = _parse_period(dataset.facets["timerange"])
+        filename += f"_{start_time}-{end_time}"
+    filename += ".nc"
+    return Path(
+        dataset.session.preproc_dir,
+        dataset.facets.get("diagnostic", ""),  # type: ignore[arg-type]
+        dataset.facets.get("variable_group", ""),  # type: ignore[arg-type]
+        filename,
+    )
+
+
 def _get_itype(step: str) -> str:
     """Get the input type of a preprocessor function."""
     function = globals()[step]
@@ -374,7 +475,7 @@ def _get_multi_model_settings(
 def _run_preproc_function(
     function: Callable,
     items: PreprocessorItem | Sequence[PreprocessorItem],
-    kwargs: Any,
+    kwargs: dict[str, Any],
     input_files: Sequence[DataElement] | None = None,
 ) -> PreprocessorItem | Sequence[PreprocessorItem]:
     """Run preprocessor function."""
@@ -519,7 +620,7 @@ class PreprocessorFile(TrackedFile):
         filename: Path,
         attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
-        datasets: list | None = None,
+        datasets: list[Dataset] | None = None,
     ) -> None:
         if datasets is not None:
             # Load data using a Dataset
@@ -672,7 +773,7 @@ class PreprocessorFile(TrackedFile):
         return "_".join(identifier)
 
 
-PreprocessorItem: TypeAlias = PreprocessorFile | Cube | DataElement
+type PreprocessorItem = PreprocessorFile | Cube | DataElement
 
 
 def _apply_multimodel(
@@ -728,7 +829,7 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _run(self, _) -> list[str]:  # noqa: C901,PLR0912
+    def _run(self, _: list[str]) -> list[str]:  # noqa: C901,PLR0912
         """Run the preprocessor."""
         for product in self.products:
             product.activity = self.activity

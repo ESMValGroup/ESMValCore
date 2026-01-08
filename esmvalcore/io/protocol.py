@@ -11,19 +11,23 @@ described in :mod:`esmvalcore.io`.
 
 """
 
-from collections.abc import Iterable
-from typing import Any, Protocol, runtime_checkable
+from __future__ import annotations
 
-import iris.cube
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from esmvalcore.typing import FacetValue
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import iris.cube
+
+    from esmvalcore.typing import FacetValue
 
 
 @runtime_checkable
 class DataElement(Protocol):
     """A data element represents some data that can be loaded.
 
-    An :class:`esmvalcore.local.LocalFile` is an example of a data element.
+    An :class:`esmvalcore.io.local.LocalFile` is an example of a data element.
     """
 
     name: str

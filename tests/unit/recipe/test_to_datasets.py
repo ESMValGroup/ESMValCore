@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-import pytest_mock
 import yaml
 
 from esmvalcore._recipe import to_datasets
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 def test_from_recipe(session):

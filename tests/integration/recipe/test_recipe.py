@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.resources
 import inspect
 import os
@@ -16,30 +18,37 @@ import yaml
 from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
-import esmvalcore
 import esmvalcore._task
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_datasets,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
-from esmvalcore.config import Session
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _get_output_file
-from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
+from esmvalcore.preprocessor import (
+    DEFAULT_ORDER,
+    PreprocessingTask,
+    _get_preprocessor_filename,
+)
 from tests.integration.test_provenance import check_provenance
 
 if TYPE_CHECKING:
+    from esmvalcore._recipe.recipe import (
+        Recipe,
+    )
+    from esmvalcore.config import Session
     from esmvalcore.typing import Facets
 
 
 @lru_cache
 def _load_data_sources(
-    filename,
+    filename: str,
 ) -> dict[
     str,
     dict[str, dict[str, dict[str, dict[str, str]]]],
@@ -193,7 +202,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     """)
 
 
-def get_recipe(tempdir: Path, content: str, session: Session):
+def get_recipe(tempdir: Path, content: str, session: Session) -> Recipe:
     """Save and load recipe content."""
     recipe_file = tempdir / "recipe_test.yml"
     # Add mandatory documentation section
@@ -462,8 +471,7 @@ def test_simple_recipe(
             dataset = next(
                 d
                 for d in datasets
-                if _get_output_file(d.facets, session.preproc_dir)
-                == product.filename
+                if _get_preprocessor_filename(d) == product.filename
             )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
@@ -782,21 +790,21 @@ TEST_ISO_TIMERANGE = [
     ),
     ("1990/*", "1990-2019"),
     ("*/1992", "1990-1992"),
-    ("1990/P2Y", "1990-P2Y"),
-    ("19900101/P2Y2M1D", "19900101-P2Y2M1D"),
+    ("1990/P2Y", "19900101-19920101"),
+    ("19900101/P2Y2M1D", "19900101-19920302"),
     (
         "19900101T0000/P2Y2M1DT12H00M00S",
-        "19900101T0000-P2Y2M1DT12H00M00S",
+        "19900101T000000-19920302T120000",
     ),
-    ("P2Y/1992", "P2Y-1992"),
-    ("P1Y2M1D/19920101", "P1Y2M1D-19920101"),
-    ("P1Y2M1D/19920101T120000", "P1Y2M1D-19920101T120000"),
-    ("P2Y/*", "P2Y-2019"),
-    ("P2Y2M1D/*", "P2Y2M1D-2019"),
-    ("P2Y21DT12H00M00S/*", "P2Y21DT12H00M00S-2019"),
-    ("*/P2Y", "1990-P2Y"),
-    ("*/P2Y2M1D", "1990-P2Y2M1D"),
-    ("*/P2Y21DT12H00M00S", "1990-P2Y21DT12H00M00S"),
+    ("P2Y/1992", "19900101-19920101"),
+    ("P1Y2M1D/19920101", "19901031-19920101"),
+    ("P1Y2M1D/19920101T120000", "19901031T120000-19920101T120000"),
+    ("P2Y/*", "20170101-20190101"),
+    ("P2Y2M1D/*", "20161031-20190101"),
+    ("P2Y21DT12H00M00S/*", "20161211-20190101"),
+    ("*/P2Y", "19900101-19920101"),
+    ("*/P2Y2M1D", "19900101-19920302"),
+    ("*/P2Y21DT12H00M00S", "19900101-19920122"),
 ]
 
 
@@ -2508,12 +2516,12 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
         """)
 
     mocker.patch.object(
-        esmvalcore.esgf,
+        esmvalcore.io.esgf,
         "download",
         create_autospec=True,
     )
     mocker.patch.object(
-        esmvalcore.local.LocalFile,
+        esmvalcore.io.local.LocalFile,
         "prepare",
         create_autospec=True,
     )
@@ -2525,8 +2533,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore.esgf.download.assert_called()
-    esmvalcore.local.LocalFile.prepare.assert_called()
+    esmvalcore.io.esgf.download.assert_called()
+    esmvalcore.io.local.LocalFile.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )
@@ -2538,7 +2546,7 @@ def test_representative_dataset_regular_var(
     tmp_path: Path,
     patched_datafinder: None,
     session: Session,
-):
+) -> None:
     """Test ``_representative_dataset`` with regular variable."""
     update_data_sources(session, "data-native-icon.yml", tmp_path)
 
@@ -2567,7 +2575,7 @@ def test_representative_dataset_derived_var(
     patched_datafinder: None,
     session: Session,
     force_derivation: bool,
-):
+) -> None:
     """Test ``_representative_dataset`` with derived variable."""
     update_data_sources(session, "data-native-icon.yml", tmp_path)
 
@@ -3818,7 +3826,7 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
         "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
-        "OBS6, native6, obs4MIPs, ana4mips, EMAC, CORDEX, IPSLCM, ICON, CESM, "
+        "OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, ICON, CESM, "
         'ACCESS."'
     )
     with pytest.raises(RecipeError) as exc:

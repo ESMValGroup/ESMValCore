@@ -3,7 +3,7 @@ projects:
   CESM:
     data:
       run: &cesm
-        type: "esmvalcore.local.LocalDataSource"
+        type: "esmvalcore.io.local.LocalDataSource"
         rootpath: ~/climate_data
         dirname_template: "" # run directory
         filename_template: "{case}.{scomp}.{type}.{string}*nc"

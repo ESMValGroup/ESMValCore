@@ -19,7 +19,7 @@ from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG
 from esmvalcore.config._config import (
     get_activity,
     get_institutes,
@@ -27,24 +27,22 @@ from esmvalcore.config._config import (
 )
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
-    _dates_to_timerange,
-    _get_output_file,
-)
-from esmvalcore.preprocessor import preprocess
+from esmvalcore.io.local import _dates_to_timerange
+from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     from iris.cube import Cube
 
+    from esmvalcore.config import Session
     from esmvalcore.io.protocol import DataElement, DataSource
     from esmvalcore.preprocessor import PreprocessorItem
     from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
-    "Dataset",
     "INHERITED_FACETS",
+    "Dataset",
     "datasets_to_recipe",
 ]
 
@@ -96,7 +94,7 @@ class Dataset:
     ----------
     **facets
         Facets describing the dataset. See
-        :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
+        :obj:`esmvalcore.io.esgf.facets.FACETS` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes
@@ -232,10 +230,6 @@ class Dataset:
         """
         dataset_template = self.copy()
         dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
@@ -673,7 +667,7 @@ class Dataset:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
@@ -686,16 +680,16 @@ class Dataset:
             .get(self["project"], {})
             .get("extra_facets", {})
         )
-        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])
+        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 raw_extra_facets[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     raw_extra_facets[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = raw_extra_facets[dataset_name][mip][var]
@@ -709,16 +703,16 @@ class Dataset:
             self.facets["project"],
             tuple(self.session["extra_facets_dir"]),
         )
-        dataset_names = self._pattern_filter(project_details, self["dataset"])
+        dataset_names = self._pattern_filter(project_details, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 project_details[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     project_details[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = project_details[dataset_name][mip][var]
@@ -821,7 +815,7 @@ class Dataset:
             supplementary_cube = supplementary_dataset._load()  # noqa: SLF001
             supplementary_cubes.append(supplementary_cube)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         cubes = preprocess(
             [cube],
             "add_supplementary_variables",
@@ -839,7 +833,7 @@ class Dataset:
             msg = check.get_no_data_message(self)
             raise InputFilesNotFound(msg)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         fix_dir_prefix = Path(
             self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",
@@ -927,7 +921,7 @@ class Dataset:
         expanded: list[FacetValue] = []
         regex = re.compile(r"\(\d+:\d+\)")
 
-        def expand_range(input_range) -> None:
+        def expand_range(input_range: str) -> None:
             match = regex.search(input_range)
             if match:
                 start, end = match.group(0)[1:-1].split(":")
@@ -948,7 +942,7 @@ class Dataset:
                     raise RecipeError(msg)
             expanded.append(tag)
         else:
-            expand_range(tag)
+            expand_range(tag)  # type: ignore[arg-type]
 
         return expanded
 
@@ -962,6 +956,7 @@ class Dataset:
         dataset.supplementaries = []
         dataset.augment_facets()
         if "timerange" not in dataset.facets:
+            # timerange facet may be removed in augment_facets for time-independent data.
             self.facets.pop("timerange", None)
             return
 

@@ -685,22 +685,26 @@ Example:
 
 The following project-specific options are available:
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``data``                      | Data sources are used to find input    | :obj:`dict`                 | {}                                     |
-|                               | data and have to be configured before  |                             |                                        |
-|                               | running the tool. See                  |                             |                                        |
-|                               | :ref:`config-data-sources` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
-|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
-|                               | facets defined in the recipe. See      |                             |                                        |
-|                               | :ref:`config-extra-facets` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
 
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``data``
+     - Data sources are used to find input data and have to be configured before running the tool. Refer to :ref:`config-data-sources` for details.
+     - :obj:`dict`
+     - ``{}``
+   * - ``extra_facets``
+     - Extra key-value pairs ("*facets*") added to datasets in addition to the facets defined in the recipe. Refer to  :ref:`config-extra-facets` for details.
+     - :obj:`dict`
+     - Refer to :ref:`config-extra-facets-defaults`.
+   * - ``preprocessor_filename_template``
+     - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
+     - :obj:`str`
+     - Refer to :ref:`config-preprocessor-filename-template`.
 
 .. _config-data-sources:
 
@@ -732,8 +736,8 @@ There are three modules available as part of ESMValCore that provide data source
 - :mod:`esmvalcore.io.intake_esgf`: Use the
   `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
   is available from ESGF.
-- :mod:`esmvalcore.local`: Use :mod:`glob` patterns to find files on a filesystem.
-- :mod:`esmvalcore.esgf`: Use the legacy `esgf-pyclient
+- :mod:`esmvalcore.io.local`: Use :mod:`glob` patterns to find files on a filesystem.
+- :mod:`esmvalcore.io.esgf`: Use the legacy `esgf-pyclient
   <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
   from ESGF.
 
@@ -755,7 +759,7 @@ commands:
     esmvaltool config copy data-local-esmvaltool.yml
 
 This will use the :mod:`esmvalcore.io.intake_esgf` module to access data
-that is available through ESGF and use :mod:`esmvalcore.local` to find
+that is available through ESGF and use :mod:`esmvalcore.io.local` to find
 observational and reanalysis datasets that have been
 :ref:`CMORized with ESMValTool <esmvaltool:inputdata_observations>`
 (``OBS6`` and ``OBS`` projects for CMIP6- and CMIP5-style CMORization
@@ -805,7 +809,7 @@ and tailor it for your system.
 .. note::
 
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
-    and the :mod:`esmvalcore.local` data sources has not yet been implemented.
+    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
     Therefore it is recommended not to use the configuration option
     ``search_data: complete`` when using both data sources for the same project.
     The ``search_data: quick`` option can be safely used.
@@ -831,7 +835,7 @@ This is particularly useful for native datasets which do not follow the CMOR
 standard by default and consequently produce a lot of warnings when handled by
 Iris.
 This can be configured using the ``ignore_warnings`` argument to
-:class:`esmvalcore.local.LocalDataSource`.
+:class:`esmvalcore.io.local.LocalDataSource`.
 
 Here is an example on how to ignore specific warnings when loading data from
 the ``EMAC`` model in its native format:
@@ -954,6 +958,30 @@ Default extra facets are specified in ``extra_facets_*.yml`` files located in
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
 directory.
 
+.. _config-preprocessor-filename-template:
+
+Preprocessor output filenames
+-----------------------------
+
+The filename to use for saving :ref:`preprocessed data <preprocessed_datasets>`
+when running a :ref:`recipe <recipe>` is configured using ``preprocessor_filename_template``,
+similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
+
+Default values are provided in ``defaults/preprocessor_filename_template.yml``,
+for example:
+
+.. literalinclude:: ../configurations/defaults/preprocessor_filename_template.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/preprocessor_filename_template.yml``
+    :end-before: # Observational
+
+The facet names from the template are replaced with the facet values from the
+recipe to create a filename. The extension ``.nc`` (and if applicable, a start
+and end time) will automatically be appended to the filename.
+
+If no ``preprocessor_filename_template`` is configured for a project, the facets
+describing the dataset in the recipe, as stored in
+:attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
 
 .. _config-esgf:
 
@@ -964,7 +992,7 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 Refer to :ref:`config-data-sources` for instructions on how to set this up. This
-section describes additional configuration options for the :mod:`esmvalcore.esgf`
+section describes additional configuration options for the :mod:`esmvalcore.io.esgf`
 module, which is based on the legacy esgf-pyclient_ library. Most users
 will not need this.
 
@@ -987,7 +1015,7 @@ will not need this.
 Configuration file
 ------------------
 An optional configuration file can be created for configuring how the
-:class:`esmvalcore.esgf.ESGFDataSource` uses esgf-pyclient_
+:class:`esmvalcore.io.esgf.ESGFDataSource` uses esgf-pyclient_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
 
@@ -1076,7 +1104,7 @@ but it may be useful to understand its content.
 The settings from this file are being moved to the
 :ref:`new configuration system <config_overview>`. In particular, the
 ``input_dir``, ``input_file``, and ``ignore_warnings`` settings have already
-been replaced by the :class:`esmvalcore.local.LocalDataSource` that can be
+been replaced by the :class:`esmvalcore.io.local.LocalDataSource` that can be
 configured via :ref:`data sources <config-data-sources>`.
 The developer configuration file will be installed along with ESMValCore and can
 also be viewed on GitHub:
@@ -1113,17 +1141,8 @@ Example of the CMIP6 project configuration:
 .. code-block:: yaml
 
    CMIP6:
-     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_strict: true
-
-Preprocessor output files
--------------------------
-
-The filename to use for preprocessed data is configured using ``output_file``,
-similar to the filename template in :class:`esmvalcore.local.LocalDataSource`.
-Note that the extension ``.nc`` (and if applicable, a start and end time) will
-automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
@@ -1233,13 +1252,11 @@ Example:
 
    native6:
      cmor_strict: false
-     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 
    ICON:
      cmor_strict: false
-     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 

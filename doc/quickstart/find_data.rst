@@ -810,7 +810,7 @@ file name than for the netCDF4 variable name.
 
 To apply the extra facets for this purpose, simply use the corresponding tag in
 the applicable ``filename_template`` or ``dirname_template`` in
-:class:`esmvalcore.local.LocalDataSource`.
+:class:`esmvalcore.io.local.LocalDataSource`.
 
 For example, given the extra facets
 
@@ -834,5 +834,5 @@ a corresponding entry in the configuration file could look like:
 
 The same replacement mechanism can be employed everywhere where tags can be
 used, particularly in ``dirname_template`` and ``filename_template`` in
-:class:`esmvalcore.local.LocalDataSource`, and in ``output_file`` in
-:ref:`config-developer.yml <config-developer>`.
+:class:`esmvalcore.io.local.LocalDataSource`, and in ``preprocessor_filename_template``
+under :ref:`config-projects`.

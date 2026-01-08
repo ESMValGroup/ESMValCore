@@ -1,11 +1,11 @@
-"""Tests for `_replace_tags` in `esmvalcore.local`."""
+"""Tests for `_replace_tags` in `esmvalcore.io.local`."""
 
 from pathlib import Path
 
 import pytest
 
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _replace_tags
+from esmvalcore.io.local import _replace_tags
 
 VARIABLE = {
     "project": "CMIP6",
@@ -43,6 +43,17 @@ def test_replace_tags():
     ]
     assert output_file == [
         Path("CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas"),
+    ]
+
+
+def test_replace_tags_with_caps():
+    """Test for `_replace_tags` function with .lower and .upper feature."""
+    input_file = _replace_tags(
+        "{short_name.upper}_{mip}_{dataset.lower}_{exp}_{ensemble}_{grid}*.nc",
+        VARIABLE,
+    )
+    assert input_file == [
+        Path("TAS_Amon_accurate-model_experiment_r1i1p1f1_gr*.nc"),
     ]
 
 

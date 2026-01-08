@@ -7,7 +7,7 @@ An input data source can be defined in the configuration by using
 
     >>> from esmvalcore.config import CFG
     >>> CFG["projects"]["CMIP6"]["data"]["local"] = {
-            "type": "esmvalcore.local.LocalDataSource",
+            "type": "esmvalcore.io.local.LocalDataSource",
             "rootpath": "~/climate_data",
             "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
             "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
@@ -21,14 +21,14 @@ or as a :ref:`YAML configuration file <config_overview>`:
       CMIP6:
         data:
           local:
-            type: "esmvalcore.local.LocalDataSource"
+            type: "esmvalcore.io.local.LocalDataSource"
             rootpath: "~/climate_data"
             dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
             filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
 
 where ``CMIP6`` is a project, and ``local`` is a unique name describing the
 data source. The data source type,
-:class:`esmvalcore.local.LocalDataSource`, in the example above, needs to
+:class:`esmvalcore.io.local.LocalDataSource`, in the example above, needs to
 implement the :class:`esmvalcore.io.protocol.DataSource` protocol. Any
 remaining key-value pairs in the configuration, ``rootpath``,
 ``dirname_template``, and ``filename_template`` in this example, are passed
@@ -44,11 +44,16 @@ provided by the data source with the lowest value of
 :attr:`esmvalcore.io.protocol.DataSource.priority` is chosen.
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
+from typing import TYPE_CHECKING
 
-from esmvalcore.config import Session
-from esmvalcore.io.protocol import DataSource
+import esmvalcore.io.protocol
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +61,7 @@ logger = logging.getLogger(__name__)
 def load_data_sources(
     session: Session,
     project: str | None = None,
-) -> list[DataSource]:
+) -> list[esmvalcore.io.protocol.DataSource]:
     """Get the list of available data sources.
 
     If no ``priority`` is configured for a data source, the default priority
@@ -71,7 +76,7 @@ def load_data_sources(
 
     Returns
     -------
-    :obj:`list` of :obj:`DataSource`:
+    :
         A list of available data sources.
 
     Raises
@@ -80,7 +85,7 @@ def load_data_sources(
         If the project or its settings are not found in the configuration.
 
     """
-    data_sources: list[DataSource] = []
+    data_sources: list[esmvalcore.io.protocol.DataSource] = []
     if project is not None and project not in session["projects"]:
         msg = f"Unknown project '{project}', please configure it under 'projects'."
         raise ValueError(msg)
@@ -102,7 +107,7 @@ def load_data_sources(
                 priority=priority,
                 **kwargs,
             )
-            if not isinstance(data_source, DataSource):
+            if not isinstance(data_source, esmvalcore.io.protocol.DataSource):
                 msg = (
                     "Expected a data source of type `esmvalcore.io.protocol.DataSource`, "
                     f"but your configuration for project '{project_}' contains "

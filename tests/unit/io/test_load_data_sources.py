@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import pytest
 
 import esmvalcore.config
-import esmvalcore.io
+import esmvalcore.io.protocol
 
 
 def test_configurations_valid(cfg_default: esmvalcore.config.Config) -> None:
@@ -19,7 +19,7 @@ def test_configurations_valid(cfg_default: esmvalcore.config.Config) -> None:
     session = cfg_default.start_session("test")
     data_sources = esmvalcore.io.load_data_sources(session)
     for data_source in data_sources:
-        assert isinstance(data_source, esmvalcore.io.DataSource)
+        assert isinstance(data_source, esmvalcore.io.protocol.DataSource)
 
 
 def test_load_data_sources_unknown_project(

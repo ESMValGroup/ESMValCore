@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 import esmvalcore.config._data_sources
 import esmvalcore.local
-from esmvalcore.config import Session
 from esmvalcore.exceptions import InvalidConfigParameter
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 
 def test_load_data_sources_no_project_data_sources_configured(

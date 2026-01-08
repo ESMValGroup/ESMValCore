@@ -14,19 +14,19 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from esmvalcore import __version__, esgf
+import esmvalcore.io.esgf
+from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
-from esmvalcore._task import BaseTask, DiagnosticTask, ResumeTask, TaskSet
+from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
-    _get_output_file,
     _parse_period,
     _truncate_dates,
 )
@@ -37,6 +37,7 @@ from esmvalcore.preprocessor import (
     MULTI_MODEL_FUNCTIONS,
     PreprocessingTask,
     PreprocessorFile,
+    _get_preprocessor_filename,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
@@ -59,6 +60,9 @@ from .to_datasets import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from prov.model import ProvEntity
+
+    from esmvalcore._task import BaseTask
     from esmvalcore.config import Session
     from esmvalcore.io.protocol import DataElement
     from esmvalcore.typing import Facets
@@ -674,11 +678,7 @@ def _get_preprocessor_products(
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
-
-        filename = _get_output_file(
-            dataset.facets,
-            dataset.session.preproc_dir,
-        )
+        filename = _get_preprocessor_filename(dataset)
         product = PreprocessorFile(
             filename=filename,
             attributes=dataset.facets,
@@ -964,7 +964,10 @@ class Recipe:
                     return True
         return False
 
-    def _initialize_provenance(self, raw_documentation: dict[str, Any]):
+    def _initialize_provenance(
+        self,
+        raw_documentation: dict[str, Any],
+    ) -> ProvEntity:
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
 
@@ -1321,7 +1324,7 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
-        esgf.download(self._download_files)
+        esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
 
@@ -1380,10 +1383,10 @@ class Recipe:
                 RecipeOutput,
             )
 
-            output = self.get_output()
-
             try:
-                output = RecipeOutput.from_core_recipe_output(output)
+                output = RecipeOutput.from_core_recipe_output(
+                    self.get_output(),
+                )
             except LookupError as error:
                 # See https://github.com/ESMValGroup/ESMValCore/issues/28
                 logger.warning("Could not write HTML report: %s", error)

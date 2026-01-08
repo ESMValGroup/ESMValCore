@@ -32,9 +32,9 @@ import intake_esgf.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob, _ismatch
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.local import _parse_period
 
 if TYPE_CHECKING:
     import iris.cube
@@ -225,7 +225,9 @@ class IntakeESGFDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)] if isinstance(values, str | int) else values
+            facet: [str(values)]
+            if isinstance(values, str | int | float)
+            else values
             for facet, values in facets.items()
             if facet in self.facets
         }

@@ -99,7 +99,7 @@ source_suffix = {'.rst': 'restructuredtext'}
 master_doc = 'index'
 
 # General information about the project.
-project = u'ESMValTool'
+project = u'ESMValCore'
 copyright = u'{0}, ESMValTool Development Team'.format(datetime.now().year)
 
 # The version info for the project you're documenting, acts as replacement for
