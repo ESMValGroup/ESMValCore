@@ -15,24 +15,20 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from esmvalcore import esgf, local
+from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG
 from esmvalcore.config._config import (
     get_activity,
-    get_ignored_warnings,
     get_institutes,
     load_extra_facets,
 )
+from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
-    _dates_to_timerange,
-    _get_output_file,
-    _get_start_end_date,
-)
-from esmvalcore.preprocessor import preprocess
+from esmvalcore.io.local import _dates_to_timerange
+from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 from esmvalcore.preprocessor._derive import get_required
 
 if TYPE_CHECKING:
@@ -40,17 +36,18 @@ if TYPE_CHECKING:
 
     from iris.cube import Cube
 
+    from esmvalcore.config import Session
+    from esmvalcore.io.protocol import DataElement, DataSource
+    from esmvalcore.preprocessor import PreprocessorItem
     from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
-    "Dataset",
     "INHERITED_FACETS",
+    "Dataset",
     "datasets_to_recipe",
 ]
 
 logger = logging.getLogger(__name__)
-
-File = esgf.ESGFFile | local.LocalFile
 
 INHERITED_FACETS: list[str] = [
     "dataset",
@@ -70,9 +67,9 @@ the main dataset.
 
 def _augment(base: dict, update: dict) -> None:
     """Update dict `base` with values from dict `update`."""
-    for key in update:
+    for key, value in update.items():
         if key not in base:
-            base[key] = update[key]
+            base[key] = value
 
 
 def _isglob(facet_value: FacetValue | None) -> bool:
@@ -98,7 +95,7 @@ class Dataset:
     ----------
     **facets
         Facets describing the dataset. See
-        :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
+        :obj:`esmvalcore.io.esgf.facets.FACETS` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes
@@ -131,8 +128,8 @@ class Dataset:
 
         self._persist: set[str] = set()
         self._session: Session | None = None
-        self._files: Sequence[File] | None = None
-        self._file_globs: Sequence[Path] | None = None
+        self._files: Sequence[DataElement] | None = None
+        self._used_data_sources: Sequence[DataSource] = []
         self._input_datasets: list[Dataset] = []
 
         for key, value in facets.items():
@@ -248,7 +245,7 @@ class Dataset:
     @staticmethod
     def _file_to_dataset(
         dataset: Dataset,
-        file: esgf.ESGFFile | local.LocalFile,
+        file: DataElement,
     ) -> Dataset:
         """Create a dataset from a file with a `facets` attribute."""
         facets = dict(file.facets)
@@ -355,16 +352,18 @@ class Dataset:
         """
         dataset_template = dataset.copy()
         dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
         expanded = False
         for file in dataset_template.files:
             new_dataset = self._file_to_dataset(dataset, file)
+            # Do not use the timerange facet from the file because there may be
+            # multiple files per dataset.
+            new_dataset.facets.pop("timerange", None)
+            # Restore the original timerange facet if it was specified.
+            if "timerange" in self.facets:
+                new_dataset.facets["timerange"] = self.facets["timerange"]
 
             # Filter out identical datasets
             facetset = frozenset(
@@ -388,10 +387,11 @@ class Dataset:
         for new_dataset, file in partially_defined:
             msg = (
                 f"{new_dataset} with unexpanded wildcards, created from file "
-                f"{file} with facets {file.facets}. Are the missing facets "
-                "in the path to the file?"
-                if isinstance(file, local.LocalFile)
-                else "available on ESGF?"
+                f"{file} with facets {file.facets}. Please check why "
+                "the missing facets are not available for the file."
+                "This will depend on the data source they come from, e.g. can "
+                "they be extracted from the path for local files, or are they "
+                "available from ESGF when when searching ESGF for files?"
             )
             if expanded:
                 logger.info("Ignoring %s", msg)
@@ -431,7 +431,7 @@ class Dataset:
 
         Examples
         --------
-        See :ref:`/notebooks/discovering-data.ipynb` for example use cases.
+        See :doc:`/notebooks/discovering-data` notebook for example use cases.
 
         Yields
         ------
@@ -798,14 +798,16 @@ class Dataset:
         """Add additional facets.
 
         This function will update the dataset with additional facets from
-        various sources.
+        various sources. These include :ref:`config-extra-facets` as well as
+        facets read from the controlled voculary included in the CMOR tables
+        if applicable.
         """
         self._augment_facets()
         for supplementary in self.supplementaries:
             supplementary._augment_facets()  # noqa: SLF001
 
     @staticmethod
-    def _pattern_filter(patterns: Iterable[str], name) -> list[str]:
+    def _pattern_filter(patterns: Iterable[str], name: str) -> list[str]:
         """Get the subset of the list `patterns` that `name` matches."""
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
@@ -818,16 +820,16 @@ class Dataset:
             .get(self["project"], {})
             .get("extra_facets", {})
         )
-        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])
+        dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 raw_extra_facets[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     raw_extra_facets[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = raw_extra_facets[dataset_name][mip][var]
@@ -841,16 +843,16 @@ class Dataset:
             self.facets["project"],
             tuple(self.session["extra_facets_dir"]),
         )
-        dataset_names = self._pattern_filter(project_details, self["dataset"])
+        dataset_names = self._pattern_filter(project_details, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
             mips = self._pattern_filter(
                 project_details[dataset_name],
-                self["mip"],
+                self["mip"],  # type: ignore[arg-type]
             )
             for mip in mips:
                 variables = self._pattern_filter(
                     project_details[dataset_name][mip],
-                    self["short_name"],
+                    self["short_name"],  # type: ignore[arg-type]
                 )
                 for var in variables:
                     facets = project_details[dataset_name][mip][var]
@@ -889,56 +891,43 @@ class Dataset:
             supplementary.find_files()
 
     def _find_files(self) -> None:
-        self.files, self._file_globs = local.find_files(
-            debug=True,
-            **self.facets,
-        )
+        def version(file: DataElement) -> str:
+            return str(file.facets.get("version", ""))
 
-        # If project does not support automatic downloads from ESGF, stop here
-        if self.facets["project"] not in esgf.facets.FACETS:
-            return
-
-        # 'never' mode: never download files from ESGF and stop here
-        if self.session["search_esgf"] == "never":
-            return
-
-        # 'when_missing' mode: if files are available locally, do not check
-        # ESGF
-        if self.session["search_esgf"] == "when_missing":
-            try:
-                check.data_availability(self, log=False)
-            except InputFilesNotFound:
-                pass  # search ESGF for files
-            else:
-                return  # use local files
-
-        # Local files are not available in 'when_missing' mode or 'always' mode
-        # is used: check ESGF
-        local_files = {f.name: f for f in self.files}
-        search_result = esgf.find_files(**self.facets)
-        for file in search_result:
-            if file.name not in local_files:
-                # Use ESGF files that are not available locally.
-                self.files.append(file)
-            else:
-                # Use ESGF files that are newer than the locally available
-                # files.
-                local_file = local_files[file.name]
-                if "version" in local_file.facets:
-                    if file.facets["version"] > local_file.facets["version"]:
-                        idx = self.files.index(local_file)
-                        self.files[idx] = file
+        self._used_data_sources = []
+        files: dict[str, DataElement] = {}
+        for data_source in sorted(
+            _get_data_sources(self.session, self.facets["project"]),  # type: ignore[arg-type]
+            key=lambda ds: ds.priority,
+        ):
+            result = data_source.find_data(**self.facets)
+            for file in result:
+                if file.name not in files:
+                    files[file.name] = file
+                if version(files[file.name]) < version(file):
+                    files[file.name] = file
+            self.files = list(files.values())
+            self._used_data_sources.append(data_source)
+            # 'quick' mode: if files are available from a higher
+            # priority source, do not search lower priority sources.
+            if self.session["search_data"] == "complete":
+                try:
+                    check.data_availability(self, log=False)
+                except InputFilesNotFound:
+                    pass  # continue search for data
+                else:
+                    return  # use what has been found so far
 
     @property
-    def files(self) -> list[File]:
+    def files(self) -> list[DataElement]:
         """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
         return self._files  # type: ignore
 
     @files.setter
-    def files(self, value: Sequence[File]) -> None:
-        self._files = value
+    def files(self, value: Sequence[DataElement]) -> None:
+        self._files = list(value)
 
     def load(self) -> Cube:
         """Load dataset.
@@ -956,7 +945,9 @@ class Dataset:
         input_files = list(self.files)
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
-        esgf.download(input_files, self.session["download_dir"])
+        esgf.download(input_files)
+        for file in input_files:
+            file.prepare()
 
         cube = self._load()
         supplementary_cubes = []
@@ -964,7 +955,7 @@ class Dataset:
             supplementary_cube = supplementary_dataset._load()  # noqa: SLF001
             supplementary_cubes.append(supplementary_cube)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         cubes = preprocess(
             [cube],
             "add_supplementary_variables",
@@ -979,17 +970,10 @@ class Dataset:
     def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
-            lines = [
-                f"No files were found for {self}",
-                "locally using glob patterns:",
-                "\n".join(str(f) for f in self._file_globs or []),
-            ]
-            if self.session["search_esgf"] != "never":
-                lines.append("or on ESGF.")
-            msg = "\n".join(lines)
+            msg = check.get_no_data_message(self)
             raise InputFilesNotFound(msg)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         fix_dir_prefix = Path(
             self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",
@@ -1002,12 +986,7 @@ class Dataset:
             "session": self.session,
             **self.facets,
         }
-        settings["load"] = {
-            "ignore_warnings": get_ignored_warnings(
-                self.facets["project"],
-                "load",
-            ),
-        }
+        settings["load"] = {}
         settings["fix_metadata"] = {
             "session": self.session,
             **self.facets,
@@ -1036,12 +1015,7 @@ class Dataset:
             "short_name": self.facets["short_name"],
         }
 
-        result = [
-            file.local_file(self.session["download_dir"])
-            if isinstance(file, esgf.ESGFFile)
-            else file
-            for file in self.files
-        ]
+        result: Sequence[PreprocessorItem] = self.files
         for step, kwargs in settings.items():
             result = preprocess(
                 result,
@@ -1087,7 +1061,7 @@ class Dataset:
         expanded: list[FacetValue] = []
         regex = re.compile(r"\(\d+:\d+\)")
 
-        def expand_range(input_range) -> None:
+        def expand_range(input_range: str) -> None:
             match = regex.search(input_range)
             if match:
                 start, end = match.group(0)[1:-1].split(":")
@@ -1108,7 +1082,7 @@ class Dataset:
                     raise RecipeError(msg)
             expanded.append(tag)
         else:
-            expand_range(tag)
+            expand_range(tag)  # type: ignore[arg-type]
 
         return expanded
 
@@ -1122,6 +1096,7 @@ class Dataset:
         dataset.supplementaries = []
         dataset.augment_facets()
         if "timerange" not in dataset.facets:
+            # timerange facet may be removed in augment_facets for time-independent data.
             self.facets.pop("timerange", None)
             return
 
@@ -1132,25 +1107,37 @@ class Dataset:
         check.valid_time_selection(timerange)
 
         if "*" in timerange:
+            # Replace wildcards in timerange with "timerange" from DataElements,
+            # but only if all DataElements have the "timerange" facet.
             dataset = self.copy()
             dataset.facets.pop("timerange")
             dataset.supplementaries = []
             check.data_availability(dataset)
-            intervals = [_get_start_end_date(f) for f in dataset.files]
+            if all("timerange" in f.facets for f in dataset.files):
+                # "timerange" can only be reliably computed when all DataElements
+                # provide it.
+                intervals = [
+                    f.facets["timerange"].split("/")  # type: ignore[union-attr]
+                    for f in dataset.files
+                ]
 
-            min_date = min(interval[0] for interval in intervals)
-            max_date = max(interval[1] for interval in intervals)
+                min_date = min(interval[0] for interval in intervals)
+                max_date = max(interval[1] for interval in intervals)
 
-            if timerange == "*":
-                timerange = f"{min_date}/{max_date}"
-            if "*" in timerange.split("/")[0]:
-                timerange = timerange.replace("*", min_date)
-            if "*" in timerange.split("/")[1]:
-                timerange = timerange.replace("*", max_date)
+                if timerange == "*":
+                    timerange = f"{min_date}/{max_date}"
+                if "*" in timerange.split("/")[0]:
+                    timerange = timerange.replace("*", min_date)
+                if "*" in timerange.split("/")[1]:
+                    timerange = timerange.replace("*", max_date)
 
-        # Make sure that years are in format YYYY
-        start_date, end_date = timerange.split("/")
-        timerange = _dates_to_timerange(start_date, end_date)
-        check.valid_time_selection(timerange)
-
-        self.set_facet("timerange", timerange)
+        if "*" in timerange:
+            # Drop the timerange facet if it still contains wildcards.
+            self.facets.pop("timerange")
+        else:
+            # Make sure that years are in format YYYY
+            start_date, end_date = timerange.split("/")
+            timerange = _dates_to_timerange(start_date, end_date)
+            # Update the timerange
+            check.valid_time_selection(timerange)
+            self.set_facet("timerange", timerange)

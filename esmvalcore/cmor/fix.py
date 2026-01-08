@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     import ncdata
     import xarray as xr
+    from iris.cube import Cube
 
     from esmvalcore.config import Session
 
@@ -37,7 +38,7 @@ def fix_file(  # noqa: PLR0913
     add_unique_suffix: bool = False,
     session: Session | None = None,
     frequency: str | None = None,
-    **extra_facets,
+    **extra_facets: Any,
 ) -> str | Path | xr.Dataset | ncdata.NcData:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
@@ -120,7 +121,7 @@ def fix_metadata(
     mip: str,
     frequency: str | None = None,
     session: Session | None = None,
-    **extra_facets,
+    **extra_facets: Any,
 ) -> CubeList:
     """Fix cube metadata if fixes are required.
 
@@ -181,8 +182,8 @@ def fix_metadata(
     for cube in cubes:
         by_file[cube.attributes.get("source_file", "")].append(cube)
 
-    for cube_list in by_file.values():
-        cube_list = CubeList(cube_list)
+    for group in by_file.values():
+        cube_list = CubeList(group)
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
@@ -204,7 +205,7 @@ def fix_data(
     mip: str,
     frequency: str | None = None,
     session: Session | None = None,
-    **extra_facets,
+    **extra_facets: Any,
 ) -> Cube:
     """Fix cube data if fixes are required.
 

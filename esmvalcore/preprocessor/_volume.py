@@ -7,7 +7,7 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
@@ -250,7 +250,7 @@ def volume_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operation over a volume.
 
@@ -346,7 +346,7 @@ def axis_statistics(
     axis: str,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Perform statistics along a given axis.
 
@@ -689,9 +689,9 @@ def extract_surface_from_atm(
     iris.cube.Cube
         Collapsed cube.
     """
-    # Declare required variables
-    #   - 3D atmo variable to extract at the surface
-    #   - surface_air_pressure (ps)
+    # Declare the required variables:
+    #   - 3D atmospheric variable to extract at the surface
+    #   - surface air pressure (ps)
     try:
         ps_cube = cube.ancillary_variable("surface_air_pressure")
     except iris.exceptions.AncillaryVariableNotFoundError as exc:

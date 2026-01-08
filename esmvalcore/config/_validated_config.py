@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, MutableMapping
-from typing import Any, ClassVar
+from collections.abc import MutableMapping
+from contextlib import contextmanager
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -13,6 +15,9 @@ from esmvalcore.exceptions import (
 )
 
 from ._config_validators import ValidationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator, Mapping
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -55,9 +60,9 @@ class ValidatedConfig(MutableMapping):
     """
 
     # validate values on the way in
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__()
-        self._mapping = {}
+        self._mapping: dict[str, Any] = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
@@ -119,17 +124,43 @@ class ValidatedConfig(MutableMapping):
         """Check and warn for missing variables."""
         for key, more_info in self._warn_if_missing:
             if key not in self:
-                more_info = f" ({more_info})" if more_info else ""
+                more_info_msg = f" ({more_info})" if more_info else ""
                 warnings.warn(
-                    f"`{key}` is not defined{more_info}",
+                    f"`{key}` is not defined{more_info_msg}",
                     MissingConfigParameter,
                     stacklevel=1,
                 )
 
-    def copy(self):
+    def copy(self) -> dict[str, Any]:
         """Copy the keys/values of this object to a dict."""
         return {k: self._mapping[k] for k in self}
 
-    def clear(self):
-        """Clear Config."""
+    def clear(self) -> None:
+        """Clear contents of configuration object."""
         self._mapping.clear()
+
+    @contextmanager
+    def context(
+        self,
+        mapping: Mapping | None = None,
+        **kwargs: Any,
+    ) -> Generator[None, None, None]:
+        """Set configuration options temporarily inside a ``with`` statement.
+
+        This configuration will only be effective inside the context manager.
+
+        Parameters
+        ----------
+        mapping:
+            Mapping with temporary configuration options.
+        **kwargs:
+            Temporary configuration options.
+
+        """
+        original_mapping = self._mapping
+        self._mapping = deepcopy(self._mapping)
+        if mapping is not None:
+            self.update(mapping)
+        self.update(kwargs)
+        yield
+        self._mapping = original_mapping

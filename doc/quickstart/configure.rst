@@ -56,8 +56,7 @@ A file could look like this (for example, located at
 .. code-block:: yaml
 
   output_dir: ~/esmvaltool_output
-  search_esgf: when_missing
-  download_dir: ~/downloaded_data
+  max_parallel_tasks: 1
 
 ESMValCore searches for **all** YAML files in **each** of the following
 locations and merges them together:
@@ -80,32 +79,19 @@ Within a directory, files are sorted lexicographically, and later files (e.g.,
   files (like the old ``config-developer.yml`` files) will lead to errors.
   Make sure to move these files to a different directory.
 
-.. deprecated:: 2.12.0
+The minimal required configuration for the tool is that you configure where
+it can find :ref:`input data <config-data-sources>`. In addition to that, you
+may copy the default configuration file with :ref:`top level options <config_options>`
 
-  If a single configuration file is present at its deprecated location
-  ``~/.esmvaltool/config-user.yml`` or specified via the deprecated command
-  line argument ``--config_file``, all potentially available new configuration
-  files at ``~/.config/esmvaltool/`` and/or the location specified via
-  ``--config_dir`` are ignored.
-  This ensures full backwards-compatibility.
-  To switch to the new configuration system outlined here, move your old
-  configuration file to ``~/.config/esmvaltool/`` or to the location specified
-  via ``--config_dir``, remove ``~/.esmvaltool/config-user.yml``, and omit the
-  command line argument ``--config_file``.
-  Alternatively, specifying the environment variable ``ESMVALTOOL_CONFIG_DIR``
-  will also force the usage of the new configuration system regardless of the
-  presence of any potential old configuration files.
-  Support for the deprecated configuration will be removed in version 2.14.0.
-
-To get a copy of the default configuration file, you can run
+To get a copy of the default configuration file, you can run the command:
 
 .. code-block:: bash
 
-  esmvaltool config get_config_user --path=/target/file.yml
+  esmvaltool config copy defaults/config-user.yml
 
-If the option ``--path`` is omitted, the file will be copied to
-``~/.config/esmvaltool/config-user.yml``.
-
+This will copy the file to your configuration directory and you can tailor it
+for your system, e.g. set the ``output_dir`` to a path where ESMValTool can
+store its output files.
 
 Command line arguments
 ----------------------
@@ -117,7 +103,7 @@ Example:
 
 .. code-block:: bash
 
-  esmvaltool run --search_esgf=when_missing --max_parallel_tasks=2 /path/to/recipe.yml
+  esmvaltool run --max_parallel_tasks=2 /path/to/recipe.yml
 
 Options given via command line arguments will always take precedence over
 options specified via YAML files.
@@ -140,6 +126,16 @@ For example:
   >>> CFG['output_dir']
   PosixPath('/home/user/esmvaltool_output')
 
+Or, alternatively, via a context manager:
+
+.. code-block:: python
+
+  >>> with CFG.context(log_level="debug"):
+  ...     print(CFG["log_level"])
+  debug
+  >>> print(CFG["log_level"])
+  info
+
 This will also consider YAML configuration files in the user configuration
 directory (by default ``~/.config/esmvaltool``, but this can be changed with
 the ``ESMVALTOOL_CONFIG_DIR`` environment variable).
@@ -156,86 +152,120 @@ Note: the following entries use Python syntax.
 For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 ``true``, and Python's ``False`` is YAML's ``false``.
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
-|                               | stored. [#f1]_                         |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
-|                               | (``debug``, ``strict``, ``default``    |                             |                                        |
-|                               | ``relaxed``, ``ignore``), see          |                             |                                        |
-|                               | :ref:`cmor_check_strictness`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``compress_netcdf``           | Use netCDF compression.                | :obj:`bool`                 | ``False``                              |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``config_developer_file``     | Path to custom                         | :obj:`str`                  | ``None`` (default file)                |
-|                               | :ref:`config-developer`.               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``dask``                      | :ref:`config-dask`.                    | :obj:`dict`                 | See :ref:`config-dask-defaults`        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``diagnostics``               | Only run the selected diagnostics from | :obj:`list` or :obj:`str`   | ``None`` (all diagnostics)             |
-|                               | the recipe, see :ref:`running`.        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
-|                               | be stored. [#f4]_                      |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``drs``                       | Directory structure for input data.    | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
-|                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic scripts).                   |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
-|                               | ``info``, ``warning``, ``error``).     |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``logging``                   | :ref:`config-logging`.                 | :obj:`dict`                 | See :ref:`config-logging`              |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see :ref:`task_priority`. [#f5]_       |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``output_dir``                | Directory where all output will be     | :obj:`str`                  | ``~/esmvaltool_output``                |
-|                               | written, see :ref:`outputdata`.        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``output_file_type``          | Plot file type.                        | :obj:`str`                  | ``png``                                |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
-|                               | diagnostic run. [#f3]_                 |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``projects``                  | :ref:`config-projects`.                | :obj:`dict`                 | See table in :ref:`config-projects`    |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
-|                               | the run was successful, see also       |                             |                                        |
-|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``resume_from``               | Resume previous run(s) by using        | :obj:`list` of :obj:`str`   | ``[]``                                 |
-|                               | preprocessor output files from these   |                             |                                        |
-|                               | output directories, see                |                             |                                        |
-|                               | ref:`running`.                         |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
-|                               | projects. [#f2]_                       |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``save_intermediary_cubes``   | Save intermediary cubes from the       | :obj:`bool`                 | ``False``                              |
-|                               | preprocessor, see also                 |                             |                                        |
-|                               | :ref:`preprocessed_datasets`.          |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
-|                               | (``never``, ``when_missing``,          |                             |                                        |
-|                               | ``always``). [#f4]_                    |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
-|                               | :ref:`running`.                        |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
+
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``auxiliary_data_dir``
+     - Directory where auxiliary data is stored. [#f1]_
+     - :obj:`str`
+     - ``~/auxiliary_data``
+   * - ``check_level``
+     - Sensitivity of the CMOR check (``debug``, ``strict``, ``default``, ``relaxed``, ``ignore``), see :ref:`cmor_check_strictness`.
+     - :obj:`str`
+     - ``default``
+   * - ``compress_netcdf``
+     - Use netCDF compression.
+     - :obj:`bool`
+     - ``False``
+   * - ``config_developer_file``
+     - Path to custom :ref:`config-developer`.
+     - :obj:`str`
+     - ``None`` (default file)
+   * - ``dask``
+     - :ref:`config-dask`.
+     - :obj:`dict`
+     - See :ref:`config-dask-defaults`
+   * - ``diagnostics``
+     - Only run the selected diagnostics from the recipe, see :ref:`running`.
+     - :obj:`list` or :obj:`str`
+     - ``None`` (all diagnostics)
+   * - ``download_dir``
+     - [deprecated] Directory where downloaded data will be stored. [#f2]_
+     - :obj:`str`
+     - ``~/climate_data``
+   * - ``drs``
+     - [deprecated] Directory structure for input data. [#f2]_
+     - :obj:`dict`
+     - ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6: ESGF, CORDEX: ESGF, obs4MIPs: ESGF}``
+   * - ``exit_on_warning``
+     - Exit on warning (only used in NCL diagnostic scripts).
+     - :obj:`bool`
+     - ``False``
+   * - ``log_level``
+     - Log level of the console (``debug``, ``info``, ``warning``, ``error``).
+     - :obj:`str`
+     - ``info``
+   * - ``logging``
+     - :ref:`config-logging`.
+     - :obj:`dict`
+     - See :ref:`config-logging`
+   * - ``max_datasets``
+     - Maximum number of datasets to use, see :ref:`running`.
+     - :obj:`int`
+     - ``None`` (all datasets from recipe)
+   * - ``max_parallel_tasks``
+     - Maximum number of parallel processes, see :ref:`task_priority`. [#f5]_
+     - :obj:`int`
+     - ``None`` (number of available CPUs)
+   * - ``max_years``
+     - Maximum number of years to use, see :ref:`running`.
+     - :obj:`int`
+     - ``None`` (all years from recipe)
+   * - ``output_dir``
+     - Directory where all output will be written, see :ref:`outputdata`.
+     - :obj:`str`
+     - ``~/esmvaltool_output``
+   * - ``output_file_type``
+     - Plot file type.
+     - :obj:`str`
+     - ``png``
+   * - ``profile_diagnostic``
+     - Use a profiling tool for the diagnostic run. [#f3]_
+     - :obj:`bool`
+     - ``False``
+   * - ``projects``
+     - :ref:`config-projects`.
+     - :obj:`dict`
+     - See table in :ref:`config-projects`
+   * - ``remove_preproc_dir``
+     - Remove the ``preproc`` directory if the run was successful, see :ref:`preprocessed_datasets`.
+     - :obj:`bool`
+     - ``True``
+   * - ``resume_from``
+     - Resume previous run(s) by using preprocessor output files from these output directories, see :ref:`running`.
+     - :obj:`list` of :obj:`str`
+     - ``[]``
+   * - ``rootpath``
+     - [deprecated] Rootpaths to the data from different projects. [#f2]_
+     - :obj:`dict`
+     - ``{default: ~/climate_data}``
+   * - ``run_diagnostic``
+     - Run diagnostic scripts, see :ref:`running`.
+     - :obj:`bool`
+     - ``True``
+   * - ``save_intermediary_cubes``
+     - Save intermediary cubes from the preprocessor, see also :ref:`preprocessed_datasets`.
+     - :obj:`bool`
+     - ``False``
+   * - ``search_data``
+     - Perform a quick or complete search for input data. When set to ``quick``,
+       search will stop as soon as a result is found. :ref:`Data sources <config-data-sources>`
+       with a lower value for ``priority`` will be searched first. (``quick``, ``complete``)
+     - :obj:`str`
+     - ``quick``
+   * - ``search_esgf``
+     - [deprecated] Automatic data download from ESGF (``never``, ``when_missing``, ``always``). [#f2]_
+     - :obj:`str`
+     - ``never``
+   * - ``skip_nonexistent``
+     - Skip non-existent datasets, see :ref:`running`.
+     - :obj:`bool`
+     - ``False``
 
 .. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
     additional auxiliary data files.
@@ -258,10 +288,8 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
        This setting is not for model or observational datasets, rather it is
        for extra data files such as shapefiles or other data sources needed by
        the diagnostics.
-.. [#f2] A detailed explanation of the data finding-related options ``drs``
-    and ``rootpath`` is presented in the :ref:`data-retrieval` section.
-    These sections relate directly to the data finding capabilities of
-    ESMValCore and are very important to be understood by the user.
+.. [#f2] This option is scheduled for removal in v2.14.0. Please use
+    :ref:`data sources <config-data-sources>` to configure data finding instead.
 .. [#f3] The ``profile_diagnostic`` setting triggers profiling of Python
     diagnostics, this will tell you which functions in the diagnostic took most
     time to run.
@@ -278,19 +306,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
     Note that it is also possible to use vprof to understand other resources
     used while running the diagnostic, including execution time of different
     code blocks and memory usage.
-.. [#f4] The ``search_esgf`` setting can be used to disable or enable automatic
-   downloads from ESGF.
-   If ``search_esgf`` is set to ``never``, the tool does not download any data
-   from the ESGF.
-   If ``search_esgf`` is set to ``when_missing``, the tool will download any
-   CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a
-   recipe but not available locally and store it in ``download_dir`` using the
-   ``ESGF`` directory structure defined in the :ref:`config-developer`.
-   If ``search_esgf`` is set to ``always``, the tool will first check the ESGF
-   for the needed data, regardless of any local data availability; if the data
-   found on ESGF is newer than the local data (if any) or the user specifies a
-   version of the data that is available only from the ESGF, then that data
-   will be downloaded; otherwise, local data will be used.
 .. [#f5] When using ``max_parallel_tasks`` with a value larger than 1 with the
    Dask threaded scheduler, every task will start ``num_workers`` threads.
    To avoid running out of memory or slowing down computations due to competition
@@ -361,6 +376,13 @@ Available predefined Dask profiles:
   <https://docs.dask.org/en/stable/scheduling.html#single-thread>`__ for
   debugging purposes.
   Best used with ``max_parallel_tasks: 1``.
+
+To copy these predefined profiles to your configuration directory for further
+customization, run the command:
+
+.. code:: bash
+
+  esmvaltool config copy defaults/dask.yml
 
 Dask distributed scheduler configuration
 ----------------------------------------
@@ -663,15 +685,166 @@ Example:
 
 The following project-specific options are available:
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
-|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
-|                               | facets defined in the recipe. See      |                             |                                        |
-|                               | :ref:`config-extra-facets` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
+
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``data``
+     - Data sources are used to find input data and have to be configured before running the tool. Refer to :ref:`config-data-sources` for details.
+     - :obj:`dict`
+     - ``{}``
+   * - ``extra_facets``
+     - Extra key-value pairs ("*facets*") added to datasets in addition to the facets defined in the recipe. Refer to  :ref:`config-extra-facets` for details.
+     - :obj:`dict`
+     - Refer to :ref:`config-extra-facets-defaults`.
+   * - ``preprocessor_filename_template``
+     - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
+     - :obj:`str`
+     - Refer to :ref:`config-preprocessor-filename-template`.
+
+.. _config-data-sources:
+
+Data sources
+------------
+The ``data`` section defines sources of input data. The easiest way to get
+started with these is to copy one of the example configuration files and tailor
+it to your needs.
+
+To list the available example configuration files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list
+
+To use one of the example configuration files, copy it to
+your configuration directory by running the command:
+
+.. code-block:: bash
+
+  esmvaltool config copy data-intake-esgf.yml
+
+where ``data-intake-esgf.yml`` needs to be replaced by the name of the example
+configuration you would like to use. The format of the configuration file
+is described in :mod:`esmvalcore.io`.
+
+There are three modules available as part of ESMValCore that provide data sources:
+
+- :mod:`esmvalcore.io.intake_esgf`: Use the
+  `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
+  is available from ESGF.
+- :mod:`esmvalcore.io.local`: Use :mod:`glob` patterns to find files on a filesystem.
+- :mod:`esmvalcore.io.esgf`: Use the legacy `esgf-pyclient
+  <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
+  from ESGF.
+
+Adding a custom data source is relatively easy and is explained in
+:mod:`esmvalcore.io.protocol`.
+
+There are various use cases and we provide example configurations for each of
+them below.
+
+Personal computer
+`````````````````
+
+On a personal computer, the recommended setup can be obtained by running the
+commands:
+
+.. code-block:: bash
+
+    esmvaltool config copy data-intake-esgf.yml
+    esmvaltool config copy data-local-esmvaltool.yml
+
+This will use the :mod:`esmvalcore.io.intake_esgf` module to access data
+that is available through ESGF and use :mod:`esmvalcore.io.local` to find
+observational and reanalysis datasets that have been
+:ref:`CMORized with ESMValTool <esmvaltool:inputdata_observations>`
+(``OBS6`` and ``OBS`` projects for CMIP6- and CMIP5-style CMORization
+respectively) or are supported in their :ref:`native format <read_native_datasets>`
+through the ``native6`` project.
+
+.. warning::
+
+    It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
+    for your system before using it. Make sure to set ``local_cache`` to a path
+    where it can store downloaded files, and if (some) ESGF data is already
+    available on your system, point ``esg_dataroot`` to it. If you are
+    missing certain search results, you may want to choose a different
+    index node for searching the ESGF.
+
+HPC system
+``````````
+
+On HPC systems, data is often stored in large shared filesystems. We have
+several example configurations for popular HPC systems. To list the available
+example files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list data-hpc
+
+If you are using one of the supported HPC systems, for example Jasmin, you can
+copy the example configuration file by running the command:
+
+.. code-block:: bash
+
+  esmvaltool config copy data-hpc-badc.yml
+
+and you should be good to go. If your HPC system is not supported yet, you can
+copy one of the other example configuration files, e.g. ``data-hpc-dkrz.yml``
+and tailor it for your system.
+
+.. warning::
+
+    It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
+    for your system before using it. Make sure to set ``local_cache`` to a path
+    where it can store downloaded files, and if (some) ESGF data is already
+    available on your system, point ``esg_dataroot`` to it. If you are
+    missing certain search results, you may want to choose a different
+    index node for searching the ESGF.
+
+.. note::
+
+    Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
+    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
+    Therefore it is recommended not to use the configuration option
+    ``search_data: complete`` when using both data sources for the same project.
+    The ``search_data: quick`` option can be safely used.
+
+Climate model data in its native format
+```````````````````````````````````````
+
+For each of the climate models that are supported in their
+native format as described in :ref:`read_native_models`, an example configuration
+file is available. To list the available example files, run the command:
+
+.. code-block:: bash
+
+  esmvaltool config list data-native
+
+.. _filter_load_warnings:
+
+Filter Iris load warnings
+`````````````````````````
+
+It is possible to ignore specific warnings when loading data with Iris.
+This is particularly useful for native datasets which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured using the ``ignore_warnings`` argument to
+:class:`esmvalcore.io.local.LocalDataSource`.
+
+Here is an example on how to ignore specific warnings when loading data from
+the ``EMAC`` model in its native format:
+
+.. literalinclude:: ../configurations/data-native-emac.yml
+    :language: yaml
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore``.
 
 .. _config-extra-facets:
 
@@ -785,6 +958,30 @@ Default extra facets are specified in ``extra_facets_*.yml`` files located in
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
 directory.
 
+.. _config-preprocessor-filename-template:
+
+Preprocessor output filenames
+-----------------------------
+
+The filename to use for saving :ref:`preprocessed data <preprocessed_datasets>`
+when running a :ref:`recipe <recipe>` is configured using ``preprocessor_filename_template``,
+similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
+
+Default values are provided in ``defaults/preprocessor_filename_template.yml``,
+for example:
+
+.. literalinclude:: ../configurations/defaults/preprocessor_filename_template.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/preprocessor_filename_template.yml``
+    :end-before: # Observational
+
+The facet names from the template are replaced with the facet values from the
+recipe to create a filename. The extension ``.nc`` (and if applicable, a start
+and end time) will automatically be appended to the filename.
+
+If no ``preprocessor_filename_template`` is configured for a project, the facets
+describing the dataset in the recipe, as stored in
+:attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
 
 .. _config-esgf:
 
@@ -793,10 +990,11 @@ ESGF configuration
 
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
-The downloaded files will be stored in the directory specified via the
-:ref:`configuration option <config_options>` ``download_dir``.
-To enable automatic downloads from ESGF, use the :ref:`configuration options
-<config_options>` ``search_esgf: when_missing`` or ``search_esgf: always``.
+
+Refer to :ref:`config-data-sources` for instructions on how to set this up. This
+section describes additional configuration options for the :mod:`esmvalcore.io.esgf`
+module, which is based on the legacy esgf-pyclient_ library. Most users
+will not need this.
 
 .. note::
 
@@ -816,8 +1014,8 @@ To enable automatic downloads from ESGF, use the :ref:`configuration options
 
 Configuration file
 ------------------
-An optional configuration file can be created for configuring how the tool uses
-`esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_
+An optional configuration file can be created for configuring how the
+:class:`esmvalcore.io.esgf.ESGFDataSource` uses esgf-pyclient_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
 
@@ -837,27 +1035,37 @@ The default settings are:
 
 .. code-block:: yaml
 
-    urls:
-      - 'https://esgf.ceda.ac.uk/esg-search'
-      - 'https://esgf-node.llnl.gov/esg-search'
-      - 'https://esgf-data.dkrz.de/esg-search'
-      - 'https://esgf-node.ipsl.upmc.fr/esg-search'
-      - 'https://esg-dn1.nsc.liu.se/esg-search'
-      - 'https://esgf.nci.org.au/esg-search'
-      - 'https://esgf.nccs.nasa.gov/esg-search'
-      - 'https://esgdata.gfdl.noaa.gov/esg-search'
-    distrib: true
-    timeout: 120  # seconds
-    cache: '~/.esmvaltool/cache/pyesgf-search-results'
-    expire_after: 86400  # cache expires after 1 day
+    search_connection:
+      urls:
+        .. - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
+        - 'https://esgf.ceda.ac.uk/esg-search'
+        - 'https://esgf-data.dkrz.de/esg-search'
+        - 'https://esgf-node.ipsl.upmc.fr/esg-search'
+        - 'https://esg-dn1.nsc.liu.se/esg-search'
+        - 'https://esgf.nci.org.au/esg-search'
+        - 'https://esgf.nccs.nasa.gov/esg-search'
+        - 'https://esgdata.gfdl.noaa.gov/esg-search'
+      distrib: true
+      timeout: 120  # seconds
+      cache: '~/.esmvaltool/cache/pyesgf-search-results'
+      expire_after: 86400  # cache expires after 1 day
 
-Note that by default the tool will try the
+Note that by default the tool will try searching the
 `ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
 in the order provided in the configuration file and use the first one that is
 online.
 Some ESGF index nodes may return search results faster than others, so you may
 be able to speed up the search for files by experimenting with placing different
 index nodes at the top of the list.
+
+.. warning::
+
+   ESGF is currently
+   `transitioning to new server technology <https://github.com/ESGF/esgf-roadmap/blob/main/status/README.md>`__
+   and all of the above indices are expected to go offline except the first one.
+
+Issues with https://esgf-node.ornl.gov/esgf-1-5-bridge can be reported
+`here <https://github.com/esgf2-us/esg_fastapi/issues>`__.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.
@@ -893,18 +1101,18 @@ Developer configuration file
 
 Most users and diagnostic developers will not need to change this file,
 but it may be useful to understand its content.
-It will be installed along with ESMValCore and can also be viewed on GitHub:
+The settings from this file are being moved to the
+:ref:`new configuration system <config_overview>`. In particular, the
+``input_dir``, ``input_file``, and ``ignore_warnings`` settings have already
+been replaced by the :class:`esmvalcore.io.local.LocalDataSource` that can be
+configured via :ref:`data sources <config-data-sources>`.
+The developer configuration file will be installed along with ESMValCore and can
+also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
-This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
-ETHZ, SMHI, BSC), and for native output data for some
+This configuration file describes the CMOR tables for several
+key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS), and for native output data for some
 models (ICON, IPSL, ... see :ref:`configure_native_models`).
-CMIP data is stored as part of the Earth System Grid
-Federation (ESGF) and the standards for file naming and paths to files are set
-out by CMOR and DRS. For a detailed description of these standards and their
-adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
-relate these standards to the data retrieval mechanism of the ESMValCore.
 
 Users can get a copy of this file with default values by running
 
@@ -933,64 +1141,8 @@ Example of the CMIP6 project configuration:
 .. code-block:: yaml
 
    CMIP6:
-     input_dir:
-       default: '/'
-       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-       ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
-     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_strict: true
-
-Input file paths
-----------------
-
-When looking for input files, the ``esmvaltool`` command provided by
-ESMValCore replaces the placeholders ``{item}`` in
-``input_dir`` and ``input_file`` with the values supplied in the recipe.
-ESMValCore will try to automatically fill in the values for institute, frequency,
-and modeling_realm based on the information provided in the CMOR tables
-and/or :ref:`config-extra-facets` when reading the recipe.
-If this fails for some reason, these values can be provided in the recipe too.
-
-The data directory structure of the CMIP projects is set up differently
-at each site. As an example, the CMIP6 directory path on BADC would be:
-
-.. code-block:: yaml
-
-   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
-
-The resulting directory path would look something like this:
-
-.. code-block:: bash
-
-    CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
-
-Please, bear in mind that ``input_dirs`` can also be a list for those cases in
-which may be needed:
-
-.. code-block:: yaml
-
-  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{version}'
-  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{version}'
-
-In that case, the resultant directories will be:
-
-.. code-block:: bash
-
-  historical/r1i1p1f3/original/Omon/tos/gn/latest
-  historical/r1i1p1f3/computed/Omon/tos/gn/latest
-
-For a more in-depth description of how to configure ESMValCore so it can find
-your data please see :ref:`CMOR-DRS`.
-
-Preprocessor output files
--------------------------
-
-The filename to use for preprocessed data is configured in a similar manner
-using ``output_file``. Note that the extension ``.nc`` (and if applicable,
-a start and end time) will automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
@@ -1083,38 +1235,6 @@ which will extend the entries from the default one
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
 
 
-.. _filterwarnings_config-developer:
-
-Filter preprocessor warnings
-----------------------------
-
-It is possible to ignore specific warnings of the preprocessor for a given
-``project``.
-This is particularly useful for native datasets which do not follow the CMOR
-standard by default and consequently produce a lot of warnings when handled by
-Iris.
-This can be configured in the ``config-developer.yml`` file for some steps of
-the preprocessing chain.
-
-Currently supported preprocessor steps:
-
-* :func:`~esmvalcore.preprocessor.load`
-
-Here is an example on how to ignore specific warnings during the preprocessor
-step ``load`` for all datasets of project ``EMAC`` (taken from the default
-``config-developer.yml`` file):
-
-.. code-block:: yaml
-
-   ignore_warnings:
-     load:
-       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
-       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
-
-The keyword arguments specified in the list items are directly passed to
-:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
-overwritten in ``config-developer.yml``).
-
 .. _configure_native_models:
 
 Configuring datasets in native format
@@ -1132,24 +1252,11 @@ Example:
 
    native6:
      cmor_strict: false
-     input_dir:
-       default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
-     input_file:
-       default: '*.nc'
-     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 
    ICON:
      cmor_strict: false
-     input_dir:
-       default:
-         - '{exp}'
-         - '{exp}/outdata'
-         - '{exp}/output'
-     input_file:
-       default: '{exp}_{var_type}*.nc'
-     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 

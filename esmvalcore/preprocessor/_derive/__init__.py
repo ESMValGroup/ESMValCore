@@ -1,17 +1,25 @@
 """Automatically derive variables."""
 
+from __future__ import annotations
+
 import importlib
 import logging
-from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cf_units import Unit
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 
-from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 from esmvalcore.preprocessor._units import convert_units
-from esmvalcore.typing import Facets
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from cf_units import Unit
+    from iris.cube import Cube
+
+    from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 

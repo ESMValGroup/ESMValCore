@@ -11,7 +11,7 @@ import datetime
 import logging
 import warnings
 from functools import partial
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from warnings import filterwarnings
 
 import dask.array as da
@@ -24,8 +24,8 @@ import isodate
 import numpy as np
 from cf_units import Unit
 from cftime import datetime as cf_datetime
-from iris.coords import AuxCoord, Coord, DimCoord
-from iris.cube import Cube, CubeList
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 from iris.util import broadcast_to_shape
@@ -46,6 +46,8 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from iris.coords import Coord
+    from iris.cube import Cube
     from numpy.typing import DTypeLike
 
 logger = logging.getLogger(__name__)
@@ -462,9 +464,11 @@ def _aggregate_time_fx(result_cube, source_cube):
                     measure.core_data(),
                     axis=tuple(time_dim),
                 )
-                measure = measure.copy(result_measure)
                 measure_dims = tuple(measure_dims - time_dim)
-                result_cube.add_cell_measure(measure, measure_dims)
+                result_cube.add_cell_measure(
+                    measure.copy(result_measure),
+                    measure_dims,
+                )
 
     if source_cube.ancillary_variables():
         for ancillary_var in source_cube.ancillary_variables():
@@ -480,10 +484,9 @@ def _aggregate_time_fx(result_cube, source_cube):
                     ancillary_var.core_data(),
                     axis=tuple(time_dim),
                 )
-                ancillary_var = ancillary_var.copy(result_ancillary_var)
                 ancillary_dims = tuple(ancillary_dims - time_dim)
                 result_cube.add_ancillary_variable(
-                    ancillary_var,
+                    ancillary_var.copy(result_ancillary_var),
                     ancillary_dims,
                 )
 
@@ -493,7 +496,7 @@ def hourly_statistics(
     cube: Cube,
     hours: int,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute hourly statistics.
 
@@ -551,7 +554,7 @@ def hourly_statistics(
 def daily_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute daily statistics.
 
@@ -592,7 +595,7 @@ def daily_statistics(
 def monthly_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute monthly statistics.
 
@@ -636,7 +639,7 @@ def seasonal_statistics(
     cube: Cube,
     operator: str = "mean",
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute seasonal statistics.
 
@@ -746,7 +749,7 @@ def seasonal_statistics(
 def annual_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute annual statistics.
 
@@ -788,7 +791,7 @@ def annual_statistics(
 def decadal_statistics(
     cube: Cube,
     operator: str = "mean",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute decadal statistics.
 
@@ -843,7 +846,7 @@ def climate_statistics(
     operator: str = "mean",
     period: str = "full",
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute climate statistics with the specified granularity.
 
@@ -950,6 +953,7 @@ def anomalies(
     period: str,
     reference: dict | None = None,
     standardize: bool = False,
+    relative: bool = False,
     seasons: Iterable[str] = ("DJF", "MAM", "JJA", "SON"),
 ) -> Cube:
     """Compute anomalies using a mean with the specified granularity.
@@ -969,6 +973,8 @@ def anomalies(
         Period of time to use a reference, as needed for the
         :func:`~esmvalcore.preprocessor.extract_time` preprocessor function.
         If ``None``, all available data is used as a reference.
+    relative: optional
+        If ``True`` relative anomalies are calculated.
     standardize: optional
         If ``True`` standardized anomalies are calculated.
     seasons: optional
@@ -1001,33 +1007,61 @@ def anomalies(
             )
             cube = cube / cube_stddev
             cube.units = "1"
+        elif relative:
+            cube = cube / reference * 100.0
+            cube.metadata = metadata
+            cube.units = "%"
         return cube
 
     cube = _compute_anomalies(cube, reference, period, seasons)
 
-    # standardize the results if requested
+    # standardize results or compute relative anomalies if requested
+    if standardize or relative:
+        cube = _apply_scaling(cube, reference, period, standardize, relative)
+
+    return cube
+
+
+def _apply_scaling(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    standardize: bool,
+    relative: bool,
+) -> Cube:
+    """Apply standardization or relative scaling."""
     if standardize:
-        cube_stddev = climate_statistics(
+        cube_div = climate_statistics(
             cube,
             operator="std_dev",
             period=period,
         )
-        tdim = cube.coord_dims("time")[0]
-        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
-        if reps % 1 != 0:
-            msg = (
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
-            )
-            raise ValueError(
-                msg,
-            )
-        cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))],
-            axis=tdim,
+    elif relative:
+        cube_div = reference
+
+    tdim = cube.coord_dims("time")[0]
+    reps = cube.shape[tdim] / cube_div.shape[tdim]
+    if reps % 1 != 0:
+        msg = (
+            "Cannot safely apply preprocessor to this dataset, "
+            "since the full time period of this dataset is not "
+            f"a multiple of the period '{period}'"
         )
+        raise ValueError(
+            msg,
+        )
+
+    cube.data = cube.core_data() / da.concatenate(
+        [cube_div.core_data() for _ in range(int(reps))],
+        axis=tdim,
+    )
+
+    if standardize:
         cube.units = "1"
+    elif relative:
+        cube.data = cube.core_data() * 100.0
+        cube.units = "%"
+
     return cube
 
 
@@ -1036,7 +1070,7 @@ def _compute_anomalies(
     reference: Cube,
     period: str,
     seasons: Iterable[str],
-):
+) -> Cube:
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
     indices = np.empty_like(cube_coord.points, dtype=np.int32)
@@ -1308,7 +1342,7 @@ def timeseries_filter(
     span: int,
     filter_type: str = "lowpass",
     filter_stats: str = "sum",
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a timeseries filter.
 
@@ -1691,7 +1725,7 @@ def _transform_to_lst_eager(
     *,
     time_dim: int,
     lon_dim: int,
-    **__,
+    **__: Any,
 ) -> np.ndarray:
     """Transform array with UTC coord to local solar time (LST) coord.
 

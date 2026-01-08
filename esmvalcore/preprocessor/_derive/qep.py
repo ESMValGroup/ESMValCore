@@ -1,18 +1,24 @@
 """Derivation of variable `qep`."""
 
-from iris import Constraint
-from iris.cube import Cube, CubeList
+from __future__ import annotations
 
-from esmvalcore.typing import Facets
+from typing import TYPE_CHECKING
+
+from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `qep`."""
 
     @staticmethod
-    def required(project: str) -> list[Facets]:
+    def required(project: str) -> list[Facets]:  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
             {"short_name": "evspsbl"},
