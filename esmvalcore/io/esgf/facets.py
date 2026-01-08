@@ -1,4 +1,9 @@
-"""Module containing mappings from our names to ESGF names."""
+"""Module containing mappings from our names to ESGF names.
+
+Note that only a subset of the available facets is used for searching, to
+minimize issues due to wrong facet values on ESGF. A complete mapping from
+ESMValCore facet names to the names used on ESGF is available in :ref:`facets`.
+"""
 
 import pyesgf.search
 

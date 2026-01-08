@@ -94,8 +94,7 @@ class Dataset:
     Parameters
     ----------
     **facets
-        Facets describing the dataset. See
-        :obj:`esmvalcore.io.esgf.facets.FACETS` for the mapping between
+        Facets describing the dataset. See :ref:`facets` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes

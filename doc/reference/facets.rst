@@ -3,30 +3,38 @@
 Facets
 ======
 
+A facet is a key-value pair that describes a certain property of a dataset and
+enables `faceted search <https://en.wikipedia.org/wiki/Faceted_search>`_, for
+example as provided by `ESGF <https://esgf-node.ornl.gov/search>`__.
+The facets used on ESGF are closely related to the global attributes defined by
+the `controlled vocubulary <https://en.wikipedia.org/wiki/Controlled_vocabulary>`__
+used by the various "project"s hosted on ESGF. A "project" is a collection of
+datasets that share certain properties, e.g.
+`CMIP7 <https://wcrp-cmip.org/cmip-phases/cmip7/>`__ is a project.
+Each project has its own set of facets that are relevant for that project.
+The documents linked below provide an overview of the official facets for
+various projects. They also provide a reference directory structure and file naming
+convention based on facets, which is used to organise data on local filesystems.
+
 ESMValCore uses "facets" to search for and define input data, both in the
 :ref:`recipe <recipe>` and in the :class:`esmvalcore.dataset.Dataset` object.
-This allows specifying data without relying on e.g. file names or directory structures.
-
-A facet is a key-value pair that describes a certain property of the data and
-enables `faceted search <https://en.wikipedia.org/wiki/Faceted_search>`_. For
-example, the ``dataset`` facet can be used to specify the climate model from
-which data should be taken, e.g. ``dataset: HadGEM3-GC31-LM``.
-
-ESMValCore uses its own set of facets which is consistent across all projects
-it supports. A project is a collection of datasets that share certain
-properties, e.g. CMIP7 or CORDEX. Each project has its own set of facets that
-are relevant for that project.
+This allows specifying data without relying on e.g. file names or directory
+structures, which may vary between computers. ESMValCore uses its own set of
+facets, which is consistent across all projects it supports.
 
 Here is a mapping from the facet names used in ESMValCore to the corresponding
-project specific facet names.
+project specific facet names used on ESGF.
 
 CMIP7
 -----
 
 `Official CMIP7 facets <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/global_attributes/>`__.
 
+.. note::
+    This mapping is prelimary as no CMIP7 data bas been published on ESGF yet.
+
 +------------------+-----------------------+
-| ESMValCore facet | CMIP7 facet name      |
+| ESMValCore facet | ESGF facet            |
 +==================+=======================+
 | activity         | activity_id           |
 +------------------+-----------------------+
@@ -48,9 +56,11 @@ CMIP7
 +------------------+-----------------------+
 | region           | region                |
 +------------------+-----------------------+
-| project          | mip_era               |
+| project          | project / mip_era     |
 +------------------+-----------------------+
 | short_name       | variable_id           |
++------------------+-----------------------+
+| version          | version               |
 +------------------+-----------------------+
 
 CMIP6
@@ -59,7 +69,7 @@ CMIP6
 `Official CMIP6 facets <https://wcrp-cmip.github.io/WGCM_Infrastructure_Panel/Papers/CMIP6_global_attributes_filenames_CVs_v6.2.7.pdf>`__.
 
 +------------------+-----------------------+
-| ESMValCore facet | CMIP6 facet name      |
+| ESMValCore facet | ESGF facet            |
 +==================+=======================+
 | activity         | activity_id           |
 +------------------+-----------------------+
@@ -79,7 +89,7 @@ CMIP6
 +------------------+-----------------------+
 | realm            | realm                 |
 +------------------+-----------------------+
-| project          | mip_era               |
+| project          | project / mip_era     |
 +------------------+-----------------------+
 | short_name       | variable_id           |
 +------------------+-----------------------+
@@ -88,11 +98,11 @@ CMIP5
 -----
 
 `Official CMIP5 facets <https://pcmdi.github.io/mips/cmip5/docs/CMIP5_output_metadata_requirements.pdf>`__.
-Note that there appear to be difference between the official facets and those
-used on ESGF. Below we present the values used on ESGF.
+Note that there appear to be differences between the official facets and those
+used on ESGF. Below we present the facets used on ESGF.
 
 +------------------+-----------------------+
-| ESMValCore facet | CMIP5 facet name      |
+| ESMValCore facet | ESGF facet            |
 +==================+=======================+
 | dataset          | model                 |
 +------------------+-----------------------+
@@ -120,7 +130,7 @@ CMIP3
 -----
 
 +------------------+-----------------------+
-| ESMValCore facet | CMIP3 facet name      |
+| ESMValCore facet | ESGF facet            |
 +==================+=======================+
 | dataset          | model                 |
 +------------------+-----------------------+
@@ -137,11 +147,11 @@ CORDEX
 -------
 
 `Official CORDEX-CMIP5 facets <https://zenodo.org/records/15223120>`__.
-Note that there appear to be difference between the official facets and those
-used on ESGF. Below we present the values used on ESGF.
+Note that there appear to be differences between the official facets and those
+used on ESGF. Below we present the facets used on ESGF.
 
 +------------------+-----------------------+
-| ESMValCore facet | CORDEX facet name     |
+| ESMValCore facet | ESGF facet            |
 +==================+=======================+
 | dataset          | rcm_name              |
 +------------------+-----------------------+
