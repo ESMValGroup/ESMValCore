@@ -851,8 +851,9 @@ The keyword arguments specified in the list items are directly passed to
 Extra Facets
 ------------
 
-It can be useful to automatically add extra key-value pairs to variables or
-datasets without explicitly specifying them in the recipe.
+It can be useful to automatically add extra key-value pairs or
+:ref:`facets <facets>` to variables or datasets without explicitly specifying
+them in the recipe.
 These key-value pairs can be used for :ref:`finding data
 <extra-facets-data-finder>` or for providing extra information to the functions
 that :ref:`fix data <extra-facets-fixes>` before passing it on to the
