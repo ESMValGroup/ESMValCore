@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - v[0-9]+.[0-9]+.x # matches release branches like v2.12.x
+      - update-publish-action
 
 jobs:
   build:
