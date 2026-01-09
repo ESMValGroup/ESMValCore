@@ -435,7 +435,7 @@ Recipe section: ``diagnostics``
 The diagnostics section includes one or more diagnostics. Each diagnostic
 section will include:
 
-- the variable(s) to preprocess, including the preprocessor to be applied to each variable;
+- the :ref:`variable <cmor_tables>`(s) to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
@@ -563,7 +563,7 @@ running the tool (a lower number means higher priority).
 
 Variable and dataset definitions
 --------------------------------
-To define a variable/dataset combination that corresponds to an actual
+To define a :ref:`variable <cmor_tables>`/dataset combination that corresponds to an actual
 variable from a dataset, the keys in each variable section
 are combined with the keys of each dataset definition. If two versions of the same
 key are provided, then the key in the datasets section will take precedence

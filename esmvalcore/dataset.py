@@ -95,7 +95,8 @@ class Dataset:
     ----------
     **facets
         Facets describing the dataset. See :ref:`facets` for the mapping between
-        the facet names used by ESMValCore and those used on ESGF.
+        the facet names used by ESMValCore and those used on ESGF and
+        :ref:`cmor_tables` to find out which variables are available.
 
     Attributes
     ----------

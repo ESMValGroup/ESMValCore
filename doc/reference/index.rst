@@ -13,4 +13,5 @@ Reference guides
 .. toctree::
    :maxdepth: 1
 
+   Variables and CMOR Tables <cmor_tables>
    Facets <facets>

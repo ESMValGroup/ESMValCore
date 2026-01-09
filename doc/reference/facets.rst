@@ -167,8 +167,6 @@ used on ESGF. Below we present the facets used on ESGF.
 +------------------+-----------------------+
 | institute        | institute             |
 +------------------+-----------------------+
-| product          | product               |
-+------------------+-----------------------+
 | short_name       | variable              |
 +------------------+-----------------------+
 

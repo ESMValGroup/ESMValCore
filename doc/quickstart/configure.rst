@@ -1150,7 +1150,7 @@ Example of the CMIP6 project configuration:
 Project CMOR table configuration
 --------------------------------
 
-ESMValCore comes bundled with several CMOR tables, which are stored in the directory
+ESMValCore comes bundled with several :ref:`CMOR tables <cmor_tables>`, which are stored in the directory
 `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_.
 These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
 
