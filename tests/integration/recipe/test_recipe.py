@@ -1707,7 +1707,7 @@ def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901,
                 assert dataset["alias"] == "CORDEX_ICHEC-EC-EARTH"
             else:
                 assert dataset["alias"] == "CORDEX_MIROC-MIROC5"
-        elif dataset["version"] == 1:
+        elif dataset["version"] == "1":
             assert dataset["alias"] == "OBS_1"
         else:
             assert dataset["alias"] == "OBS_2"
