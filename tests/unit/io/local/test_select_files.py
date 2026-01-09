@@ -42,6 +42,14 @@ def test_select_files() -> None:
     assert result == expected
 
 
+def test_select_files_no_timerange() -> None:
+    file = LocalFile("areacella_fx_MPI-ESM1-2-HR_historical_r1i1p1f1_gn.nc")
+
+    result = _select_files([file], "1962/1967")
+
+    assert result == [file]
+
+
 @pytest.mark.parametrize("timerange", ["196201/1967", "1962/196706"])
 def test_select_files_different_length_start_end(timerange: str) -> None:
     files = to_local_files(
