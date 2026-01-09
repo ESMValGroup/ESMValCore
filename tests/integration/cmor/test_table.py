@@ -12,6 +12,8 @@ from esmvalcore.cmor.table import (
     CMIP5Info,
     CMIP6Info,
     CustomInfo,
+    _get_branding_suffixes,
+    _get_mips,
     _update_cmor_facets,
     get_var_info,
 )
@@ -597,3 +599,34 @@ def test_get_var_info_invalid_project():
     """Test ``get_var_info``."""
     with pytest.raises(KeyError):
         get_var_info("INVALID_PROJECT", "Amon", "tas")
+
+
+def test_get_mips_cmip5() -> None:
+    """Test ``_get_mips``."""
+    mips = _get_mips(project="CMIP5", short_name="tas")
+    expected = {
+        "3hr",
+        "Amon",
+        "cf3hr",
+        "cfSites",
+        "day",
+    }
+    assert set(mips) == expected
+
+
+def test_get_mips_cmip7() -> None:
+    """Test ``_get_mips``."""
+    mips = _get_mips(project="CMIP7", short_name="tas")
+    expected = {"atmos", "land", "landIce"}
+    assert set(mips) == expected
+
+
+def test_get_branding_suffixes() -> None:
+    """Test ``_get_branding_suffixes``."""
+    suffixes = _get_branding_suffixes(
+        project="CMIP7",
+        mip="atmos",
+        short_name="areacella",
+    )
+    expected = {"ti-u-hxy-u"}
+    assert set(suffixes) == expected
