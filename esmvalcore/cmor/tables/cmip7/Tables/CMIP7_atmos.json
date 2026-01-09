@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: d745b897b966e7dde2c99b5df7057d78",
-        "cmor_version": "3.12",
+        "checksum": "md5: a3ef69f7603b6477904a52fceab5b618",
+        "cmor_version": "3.13",
         "generic_levels": "alevel alevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "atmos",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "atmos",
         "type": "real",
         "valid_max": "",
@@ -75,7 +75,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Boundary layer depth",
+            "long_name": "Boundary Layer Depth",
             "modeling_realm": "atmos aerosol land",
             "out_name": "bldep",
             "positive": "",
@@ -1181,7 +1181,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Atmosphere CO2",
+            "long_name": "Near-surface atmosphere CO2",
             "modeling_realm": "atmos",
             "out_name": "co2",
             "positive": "",
@@ -1564,7 +1564,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upward Latent Heat Flux",
+            "long_name": "Ice Sheet Surface Upward Latent Heat Flux",
             "modeling_realm": "atmos land landIce",
             "out_name": "hfls",
             "positive": "up",
@@ -1611,7 +1611,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upward Sensible Heat Flux",
+            "long_name": "Ice Sheet Surface Upward Sensible Heat Flux",
             "modeling_realm": "atmos land landIce",
             "out_name": "hfss",
             "positive": "up",
@@ -2758,7 +2758,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Rainfall Flux over Land Ice",
+            "long_name": "Ice Sheet Rainfall Flux",
             "modeling_realm": "atmos land landIce",
             "out_name": "prra",
             "positive": "",
@@ -2854,7 +2854,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Snowfall Flux",
+            "long_name": "Ice Sheet Snowfall Flux",
             "modeling_realm": "atmos land landIce",
             "out_name": "prsn",
             "positive": "",
@@ -3438,7 +3438,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Downwelling Longwave Radiation",
+            "long_name": "Ice Sheet Surface Downwelling Longwave Radiation",
             "modeling_realm": "atmos land landIce",
             "out_name": "rlds",
             "positive": "down",
@@ -3664,7 +3664,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upwelling Longwave Radiation",
+            "long_name": "Ice Sheet Surface Upwelling Longwave Radiation",
             "modeling_realm": "atmos land landIce",
             "out_name": "rlus",
             "positive": "up",
@@ -3985,7 +3985,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Downwelling Shortwave Radiation",
+            "long_name": "Ice Sheet Surface Downwelling Shortwave Radiation",
             "modeling_realm": "atmos land",
             "out_name": "rsds",
             "positive": "down",
@@ -4290,7 +4290,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upwelling Shortwave Radiation",
+            "long_name": "Ice Sheet Surface Upwelling Shortwave Radiation",
             "modeling_realm": "atmos land landIce",
             "out_name": "rsus",
             "positive": "up",
@@ -4853,7 +4853,7 @@
                 "plev39",
                 "time"
             ],
-            "long_name": "Air Temperature",
+            "long_name": "Zonal Mean Air Temperature",
             "modeling_realm": "atmos",
             "out_name": "ta",
             "positive": "",
@@ -5842,7 +5842,7 @@
                 "plev39",
                 "time"
             ],
-            "long_name": "Tendency of Air Temperature Due to Model Physics",
+            "long_name": "Zonal Mean Tendency of Air Temperature Due to Model Physics",
             "modeling_realm": "atmos",
             "out_name": "tntmp",
             "positive": "",
@@ -5989,7 +5989,7 @@
                 "plev39",
                 "time"
             ],
-            "long_name": "Tendency of Air Temperature Due to Longwave Radiative Heating",
+            "long_name": "Zonal Mean Tendency of Air Temperature Due to Longwave Radiative Heating",
             "modeling_realm": "atmos",
             "out_name": "tntrl",
             "positive": "",
@@ -6087,7 +6087,7 @@
                 "plev39",
                 "time"
             ],
-            "long_name": "Tendency of Air Temperature Due to Shortwave Radiative Heating",
+            "long_name": "Zonal Mean Tendency of Air Temperature Due to Shortwave Radiative Heating",
             "modeling_realm": "atmos",
             "out_name": "tntrs",
             "positive": "",
@@ -6250,14 +6250,14 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Temperature",
+            "long_name": "Ice Sheet Surface Temperature",
             "modeling_realm": "atmos land landIce",
             "out_name": "ts",
             "positive": "",
             "standard_name": "surface_temperature",
             "units": "K"
         },
-        "ts_tavg-u-hxy-sn": {
+        "ts_tavg-u-hxy-lnd": {
             "cell_measures": "",
             "cell_methods": "area: time: mean where snow (on land)",
             "comment": "",
@@ -6598,7 +6598,7 @@
                 "plev19",
                 "time"
             ],
-            "long_name": "Eastward Acceleration Due to Non-Orographic Gravity Wave Drag",
+            "long_name": "Tendency of eastward wind due to non-orographic gravity waves",
             "modeling_realm": "atmos",
             "out_name": "utendnogw",
             "positive": "",
@@ -6631,7 +6631,7 @@
                 "plev19",
                 "time"
             ],
-            "long_name": "Eastward Acceleration Due to Orographic Gravity Wave Drag",
+            "long_name": "Tendency of eastward wind due to orographic gravity waves",
             "modeling_realm": "atmos",
             "out_name": "utendogw",
             "positive": "",
@@ -6964,7 +6964,7 @@
                 "plev19",
                 "time"
             ],
-            "long_name": "Northward Acceleration Due to Non-Orographic Gravity Wave Drag",
+            "long_name": "Tendency of northward wind due to non-orographic gravity waves",
             "modeling_realm": "atmos",
             "out_name": "vtendnogw",
             "positive": "",
@@ -6981,7 +6981,7 @@
                 "plev19",
                 "time"
             ],
-            "long_name": "Northward Acceleration Due to Orographic Gravity Wave Drag",
+            "long_name": "Tendency of northward wind due to orographic gravity waves",
             "modeling_realm": "atmos",
             "out_name": "vtendogw",
             "positive": "",

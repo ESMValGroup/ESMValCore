@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: c25888aa9d61e4e5fd7153549a1019e7",
-        "cmor_version": "3.12",
+        "checksum": "md5: 89aaa165cf5f763c1e23869b096baa29",
+        "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "land",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "land",
         "type": "real",
         "valid_max": "",
@@ -828,7 +828,7 @@
             "standard_name": "change_over_time_in_land_water_amount",
             "units": "kg m-2"
         },
-        "esn_tavg-u-hxy-sn": {
+        "esn_tavg-u-hxy-lnd": {
             "cell_measures": "",
             "cell_methods": "area: mean where snow (on land only) time: mean",
             "comment": "",
@@ -885,7 +885,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Water evaporation from soil",
+            "long_name": "Water Evaporation from Soil",
             "modeling_realm": "land",
             "out_name": "evspsblsoi",
             "positive": "up",
@@ -3470,16 +3470,17 @@
             "standard_name": "air_temperature",
             "units": "K"
         },
-        "tas_tavg-u-hxy-u": {
+        "tas_tavg-h2m-hxy-u": {
             "cell_measures": "",
             "cell_methods": "area: time: mean",
             "comment": "",
             "dimensions": [
                 "longitude",
                 "latitude",
-                "time"
+                "time",
+                "height2m"
             ],
-            "long_name": "Hourly Temperature at Surface",
+            "long_name": "Near-Surface Air Temperature",
             "modeling_realm": "land",
             "out_name": "tas",
             "positive": "",
@@ -3637,7 +3638,7 @@
             "standard_name": "soil_temperature",
             "units": "K"
         },
-        "tslsi_tavg-u-hxy-u": {
+        "tslsi_tavg-u-hxy-lsi": {
             "cell_measures": "",
             "cell_methods": "area: time: mean (over land and sea ice)",
             "comment": "",

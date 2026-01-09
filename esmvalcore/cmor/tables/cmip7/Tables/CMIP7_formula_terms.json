@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: ba87291f2c184ccc33f243b3e386349c",
-        "cmor_version": "3.12",
+        "checksum": "md5: 0af80a44ed81b8f04d73f98ad86a19eb",
+        "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "forumula_terms",
         "type": "real",
         "valid_max": "",

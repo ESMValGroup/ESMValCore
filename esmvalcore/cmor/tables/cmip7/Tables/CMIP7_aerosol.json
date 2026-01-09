@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: dca94d196427134c072f981aee6fa0f8",
-        "cmor_version": "3.12",
+        "checksum": "md5: c4a2ca44c7555306bce99121c2066395",
+        "cmor_version": "3.13",
         "generic_levels": "alevel alevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "aerosol",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "aerosol",
         "type": "real",
         "valid_max": "",
@@ -484,7 +484,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface CO",
+            "long_name": "Daily mean near-surface CO",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "co",
             "positive": "",
@@ -701,13 +701,14 @@
             "standard_name": "volume_extinction_coefficient_in_air_due_to_ambient_aerosol_particles",
             "units": "m-1"
         },
-        "ec550aer_tpt-u-hxy-u": {
+        "ec550aer_tpt-al-hxy-u": {
             "cell_measures": "",
             "cell_methods": "area: mean (weighted by downwelling solar radiation) time: point",
             "comment": "",
             "dimensions": [
                 "longitude",
                 "latitude",
+                "alevel",
                 "time1",
                 "lambda550nm"
             ],
@@ -747,7 +748,7 @@
             "modeling_realm": "aerosol",
             "out_name": "emianox",
             "positive": "",
-            "standard_name": "tendency_of_atmosphere_mole_concentration_of_nox_expressed_as_nitrogen",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nox_expressed_as_nitrogen_due_to_emission",
             "units": "kg m-2 s-1"
         },
         "emiaoa_tavg-u-hxy-u": {
@@ -1006,22 +1007,21 @@
             "standard_name": "tendency_of_atmosphere_mass_content_of_isoprene_due_to_emission",
             "units": "kg m-2 s-1"
         },
-        "emilnox_tavg-al-hxy-u": {
+        "emilnox_tavg-u-hxy-u": {
             "cell_measures": "",
             "cell_methods": "area: time: mean",
             "comment": "",
             "dimensions": [
                 "longitude",
                 "latitude",
-                "alevel",
                 "time"
             ],
             "long_name": "Layer-Integrated Lightning Production of NOx",
             "modeling_realm": "aerosol",
             "out_name": "emilnox",
             "positive": "",
-            "standard_name": "tendency_of_atmosphere_mole_concentration_of_nox_expressed_as_nitrogen",
-            "units": "mol s-1"
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nox_expressed_as_nitrogen_due_to_emission",
+            "units": "kg m-2 s-1"
         },
         "eminh3_tavg-u-hxy-u": {
             "cell_measures": "",
@@ -1446,7 +1446,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface Aerosol water mass mixing ratio in lowest model layer",
+            "long_name": "Daily mean near-surface Aerosol water mass mixing ratio",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmraerh2o",
             "positive": "",
@@ -1462,7 +1462,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous surface aerosol water mass mixing ratio at CF sites",
+            "long_name": "Instantaneous near-surface aerosol water mass mixing ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmraerh2o",
             "positive": "",
@@ -1496,7 +1496,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface BC",
+            "long_name": "Daily mean near-surface BC",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrbc",
             "positive": "",
@@ -1546,7 +1546,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface dust aerosol",
+            "long_name": "Daily mean near-surface dust aerosol",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrdust",
             "positive": "",
@@ -1562,7 +1562,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous surface Dust Aerosol Mass Mixing Ratio at CF sites",
+            "long_name": "Instantaneous near-surface Dust Aerosol Mass Mixing Ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrdust",
             "positive": "",
@@ -1596,7 +1596,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface NH4",
+            "long_name": "Daily mean near-surface NH4",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrnh4",
             "positive": "",
@@ -1612,7 +1612,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous surface NH4 aerosol mass mixing ratio at CF sites",
+            "long_name": "Instantaneous near-surface NH4 aerosol mass mixing ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrnh4",
             "positive": "",
@@ -1646,7 +1646,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface NO3 aerosol",
+            "long_name": "Daily mean near-surface NO3 aerosol",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrno3",
             "positive": "",
@@ -1662,7 +1662,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous surface NO3 aerosol mass mixing ratio at CF sites",
+            "long_name": "Instantaneous near-surface NO3 aerosol mass mixing ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrno3",
             "positive": "",
@@ -1696,7 +1696,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Total surface organic aerosol",
+            "long_name": "Total near-surface organic aerosol",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmroa",
             "positive": "",
@@ -1712,7 +1712,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous surface total organic aerosol mass mixing ratio at CF sites",
+            "long_name": "Instantaneous near-surface total organic aerosol mass mixing ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmroa",
             "positive": "",
@@ -1780,7 +1780,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface sulfate aerosol",
+            "long_name": "Daily mean near-surface sulfate aerosol",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrso4",
             "positive": "",
@@ -1796,7 +1796,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Instantaneous Aerosol Sulfate Mass Mixing Ratio at CF sites",
+            "long_name": "Instantaneous near-surface Aerosol Sulfate Mass Mixing Ratio at CF sites",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrso4",
             "positive": "",
@@ -1830,7 +1830,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface SOA",
+            "long_name": "Daily mean near-surface SOA",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrsoa",
             "positive": "",
@@ -1864,7 +1864,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily mean surface Sea Salt",
+            "long_name": "Daily mean near-surface Sea Salt",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrss",
             "positive": "",
@@ -1880,7 +1880,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Sea salt Aerosol Mass Mixing Ratio at CF sites",
+            "long_name": "Sea salt Aerosol Mass Mixing Ratio at CF sites near-surface",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "mmrss",
             "positive": "",
@@ -1931,7 +1931,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "NO2 Volume Mixing Ratio in Lowest Model Layer",
+            "long_name": "NO2 Volume Mixing Ratio near surface",
             "modeling_realm": "aerosol",
             "out_name": "no2",
             "positive": "",
@@ -1981,7 +1981,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "O3 Volume Mixing Ratio in Lowest Model Layer",
+            "long_name": "O3 Volume Mixing Ratio near surface",
             "modeling_realm": "aerosol",
             "out_name": "o3",
             "positive": "",
@@ -1998,7 +1998,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Daily Maximum O3 Volume Mixing Ratio in Lowest Model Layer",
+            "long_name": "Daily Maximum O3 Volume Mixing Ratio near-surface",
             "modeling_realm": "aerosol",
             "out_name": "o3",
             "positive": "",
@@ -2499,7 +2499,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Surface PM10 Mixing Ratio",
+            "long_name": "Near-surface PM10 Mixing Ratio",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "sfpm10",
             "positive": "",
@@ -2516,7 +2516,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Surface PM1.0 Mixing Ratio",
+            "long_name": "Near-surface PM1.0 Mixing Ratio",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "sfpm1",
             "positive": "",
@@ -2533,7 +2533,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Surface PM2.5 Mixing Ratio",
+            "long_name": "Near-surface PM2.5 Mixing Ratio",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "sfpm25",
             "positive": "",
@@ -2567,7 +2567,7 @@
                 "time",
                 "height2m"
             ],
-            "long_name": "Surface daily mean SO2",
+            "long_name": "Near-surface daily mean SO2",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "so2",
             "positive": "",
@@ -2583,7 +2583,7 @@
                 "time1",
                 "height2m"
             ],
-            "long_name": "Surface SO2 volume mixing ratio at CF sites",
+            "long_name": "Surface SO2 volume mixing ratio at CF sites near-surface",
             "modeling_realm": "aerosol atmosChem",
             "out_name": "so2",
             "positive": "",

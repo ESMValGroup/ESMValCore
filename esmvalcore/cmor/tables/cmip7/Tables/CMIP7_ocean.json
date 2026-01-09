@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: fcc5683f1b2ffaa9ac051584feab2c3d",
-        "cmor_version": "3.12",
+        "checksum": "md5: 8ef0fdc2f6114c24d2d80a95da654a67",
+        "cmor_version": "3.13",
         "generic_levels": "olevel olevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "ocean",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "ocean",
         "type": "real",
         "valid_max": "",
@@ -75,6 +75,8 @@
                 "longitude",
                 "latitude"
             ],
+            "flag_meanings": "global_land southern_ocean atlantic_ocean pacific_ocean arctic_ocean indian_ocean mediterranean_sea black_sea hudson_bay baltic_sea red_sea",
+            "flag_values": "0 1 2 3 4 5 6 7 8 9 10",
             "long_name": "Region Selection Index",
             "modeling_realm": "ocean",
             "out_name": "basin",

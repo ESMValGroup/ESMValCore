@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: 5ef4686403e593af37705d02558c2a30",
-        "cmor_version": "3.12",
+        "checksum": "md5: b5ca0635d7c666d8be101836025ad9f4",
+        "cmor_version": "3.13",
         "generic_levels": "olevel olevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,30 +11,13 @@
         "positive": "",
         "product": "model-output",
         "realm": "ocnBgchem",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "ocnBgchem",
         "type": "real",
         "valid_max": "",
         "valid_min": ""
     },
     "variable_entry": {
-        "arag_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Aragonite Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "arag",
-            "positive": "",
-            "standard_name": "mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
         "arag_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -52,7 +35,7 @@
             "standard_name": "mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "bacc_tavg-d0m-hxy-sea": {
+        "arag_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -60,30 +43,30 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
+            ],
+            "long_name": "Surface Aragonite Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "arag",
+            "positive": "",
+            "standard_name": "mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "bacc_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
             ],
             "long_name": "Surface Bacterial Carbon Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "bacc",
             "positive": "",
             "standard_name": "mole_concentration_of_bacteria_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
-        "calc_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Calcite Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "calc",
-            "positive": "",
-            "standard_name": "mole_concentration_of_calcite_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "calc_tavg-ol-hxy-sea": {
@@ -103,7 +86,7 @@
             "standard_name": "mole_concentration_of_calcite_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "chl_tavg-d0m-hxy-sea": {
+        "calc_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -111,14 +94,14 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mass Concentration of Total Phytoplankton Expressed as Chlorophyll in Sea Water",
+            "long_name": "Surface Calcite Concentration",
             "modeling_realm": "ocnBgchem",
-            "out_name": "chl",
+            "out_name": "calc",
             "positive": "",
-            "standard_name": "mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water",
-            "units": "kg m-3"
+            "standard_name": "mole_concentration_of_calcite_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
         },
         "chl_tavg-ol-hxy-sea": {
             "cell_measures": "",
@@ -131,6 +114,23 @@
                 "time"
             ],
             "long_name": "Mass Concentration of Total Phytoplankton Expressed as Chlorophyll in Sea Water",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "chl",
+            "positive": "",
+            "standard_name": "mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+            "units": "kg m-3"
+        },
+        "chl_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Mass Concentration of Total Phytoplankton Expressed as Chlorophyll in Sea Water",
             "modeling_realm": "ocnBgchem",
             "out_name": "chl",
             "positive": "",
@@ -154,23 +154,6 @@
             "standard_name": "mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "chlcalc_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Mass Concentration of Calcareous Phytoplankton Expressed as Chlorophyll in Sea Water",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "chlcalc",
-            "positive": "",
-            "standard_name": "mass_concentration_of_calcareous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
-            "units": "kg m-3"
-        },
         "chlcalc_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -188,7 +171,7 @@
             "standard_name": "mass_concentration_of_calcareous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "chldiat_tavg-d0m-hxy-sea": {
+        "chlcalc_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -196,13 +179,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mass Concentration of Diatoms Expressed as Chlorophyll in Sea Water",
+            "long_name": "Surface Mass Concentration of Calcareous Phytoplankton Expressed as Chlorophyll in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "chldiat",
+            "out_name": "chlcalc",
             "positive": "",
-            "standard_name": "mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water",
+            "standard_name": "mass_concentration_of_calcareous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
         "chldiat_tavg-ol-hxy-sea": {
@@ -222,7 +205,7 @@
             "standard_name": "mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "chldiaz_tavg-d0m-hxy-sea": {
+        "chldiat_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -230,13 +213,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mass Concentration of Diazotrophs Expressed as Chlorophyll in Sea Water",
+            "long_name": "Surface Mass Concentration of Diatoms Expressed as Chlorophyll in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "chldiaz",
+            "out_name": "chldiat",
             "positive": "",
-            "standard_name": "mass_concentration_of_diazotrophic_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+            "standard_name": "mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
         "chldiaz_tavg-ol-hxy-sea": {
@@ -256,7 +239,7 @@
             "standard_name": "mass_concentration_of_diazotrophic_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "chlmisc_tavg-d0m-hxy-sea": {
+        "chldiaz_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -264,13 +247,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mass Concentration of Other Phytoplankton Expressed as Chlorophyll in Sea Water",
+            "long_name": "Surface Mass Concentration of Diazotrophs Expressed as Chlorophyll in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "chlmisc",
+            "out_name": "chldiaz",
             "positive": "",
-            "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+            "standard_name": "mass_concentration_of_diazotrophic_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
         "chlmisc_tavg-ol-hxy-sea": {
@@ -290,7 +273,7 @@
             "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "chlpico_tavg-d0m-hxy-sea": {
+        "chlmisc_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -298,13 +281,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mass Concentration of Picophytoplankton Expressed as Chlorophyll in Sea Water",
+            "long_name": "Surface Mass Concentration of Other Phytoplankton Expressed as Chlorophyll in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "chlpico",
+            "out_name": "chlmisc",
             "positive": "",
-            "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
+            "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
         "chlpico_tavg-ol-hxy-sea": {
@@ -324,7 +307,7 @@
             "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
             "units": "kg m-3"
         },
-        "co3_tavg-d0m-hxy-sea": {
+        "chlpico_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -332,7 +315,24 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
+            ],
+            "long_name": "Surface Mass Concentration of Picophytoplankton Expressed as Chlorophyll in Sea Water",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "chlpico",
+            "positive": "",
+            "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
+            "units": "kg m-3"
+        },
+        "co3_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
             ],
             "long_name": "Surface Carbonate Ion Concentration",
             "modeling_realm": "ocnBgchem",
@@ -358,7 +358,7 @@
             "standard_name": "mole_concentration_of_carbonate_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "co3satarag_tavg-d0m-hxy-sea": {
+        "co3satarag_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -366,7 +366,7 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
             "long_name": "Surface Mole Concentration of Carbonate Ion in Equilibrium with Pure Aragonite in Sea Water",
             "modeling_realm": "ocnBgchem",
@@ -409,23 +409,6 @@
             "standard_name": "mole_concentration_of_organic_detritus_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "dfe_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Dissolved Iron Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "dfe",
-            "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_iron_in_sea_water",
-            "units": "mol m-3"
-        },
         "dfe_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -443,7 +426,7 @@
             "standard_name": "mole_concentration_of_dissolved_iron_in_sea_water",
             "units": "mol m-3"
         },
-        "dissi13c_tavg-d0m-hxy-sea": {
+        "dfe_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -451,13 +434,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Dissolved Inorganic Carbon-13 Concentration",
+            "long_name": "Surface Dissolved Iron Concentration",
             "modeling_realm": "ocnBgchem",
-            "out_name": "dissi13c",
+            "out_name": "dfe",
             "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_inorganic_13C_in_sea_water",
+            "standard_name": "mole_concentration_of_dissolved_iron_in_sea_water",
             "units": "mol m-3"
         },
         "dissi13c_tavg-ol-hxy-sea": {
@@ -471,6 +454,23 @@
                 "time"
             ],
             "long_name": "Dissolved Inorganic Carbon-13 Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "dissi13c",
+            "positive": "",
+            "standard_name": "mole_concentration_of_dissolved_inorganic_13C_in_sea_water",
+            "units": "mol m-3"
+        },
+        "dissi13c_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Dissolved Inorganic Carbon-13 Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "dissi13c",
             "positive": "",
@@ -494,23 +494,6 @@
             "standard_name": "mole_concentration_of_dissolved_inorganic_14C_in_sea_water",
             "units": "mol m-3"
         },
-        "dissi14cabio_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Abiotic Dissolved Inorganic Carbon-14 Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "dissi14cabio",
-            "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_inorganic_14C_in_sea_water",
-            "units": "mol m-3"
-        },
         "dissi14cabio_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -528,7 +511,7 @@
             "standard_name": "mole_concentration_of_dissolved_inorganic_14C_in_sea_water",
             "units": "mol m-3"
         },
-        "dissic_tavg-d0m-hxy-sea": {
+        "dissi14cabio_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -536,13 +519,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Dissolved Inorganic Carbon Concentration",
+            "long_name": "Surface Abiotic Dissolved Inorganic Carbon-14 Concentration",
             "modeling_realm": "ocnBgchem",
-            "out_name": "dissic",
+            "out_name": "dissi14cabio",
             "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_inorganic_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_dissolved_inorganic_14C_in_sea_water",
             "units": "mol m-3"
         },
         "dissic_tavg-ol-hxy-sea": {
@@ -556,6 +539,23 @@
                 "time"
             ],
             "long_name": "Dissolved Inorganic Carbon Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "dissic",
+            "positive": "",
+            "standard_name": "mole_concentration_of_dissolved_inorganic_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "dissic_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Dissolved Inorganic Carbon Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "dissic",
             "positive": "",
@@ -579,23 +579,6 @@
             "standard_name": "mole_concentration_of_dissolved_organic_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "dmso_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Mole Concentration of Dimethyl Sulphide in Sea Water",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "dmso",
-            "positive": "",
-            "standard_name": "mole_concentration_of_dimethyl_sulfide_in_sea_water",
-            "units": "mol m-3"
-        },
         "dmso_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -607,6 +590,23 @@
                 "time"
             ],
             "long_name": "Mole Concentration of Dimethyl Sulphide in Sea Water",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "dmso",
+            "positive": "",
+            "standard_name": "mole_concentration_of_dimethyl_sulfide_in_sea_water",
+            "units": "mol m-3"
+        },
+        "dmso_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Mole Concentration of Dimethyl Sulphide in Sea Water",
             "modeling_realm": "ocnBgchem",
             "out_name": "dmso",
             "positive": "",
@@ -1631,23 +1631,6 @@
             "standard_name": "nitrogen_growth_limitation_of_picophytoplankton",
             "units": "1"
         },
-        "nh4_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Dissolved Ammonium Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "nh4",
-            "positive": "",
-            "standard_name": "mole_concentration_of_ammonium_in_sea_water",
-            "units": "mol m-3"
-        },
         "nh4_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -1665,7 +1648,7 @@
             "standard_name": "mole_concentration_of_ammonium_in_sea_water",
             "units": "mol m-3"
         },
-        "no3_tavg-d0m-hxy-sea": {
+        "nh4_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -1673,13 +1656,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Dissolved Nitrate Concentration",
+            "long_name": "Surface Dissolved Ammonium Concentration",
             "modeling_realm": "ocnBgchem",
-            "out_name": "no3",
+            "out_name": "nh4",
             "positive": "",
-            "standard_name": "mole_concentration_of_nitrate_in_sea_water",
+            "standard_name": "mole_concentration_of_ammonium_in_sea_water",
             "units": "mol m-3"
         },
         "no3_tavg-ol-hxy-sea": {
@@ -1699,7 +1682,7 @@
             "standard_name": "mole_concentration_of_nitrate_in_sea_water",
             "units": "mol m-3"
         },
-        "o2_tavg-d0m-hxy-sea": {
+        "no3_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -1707,13 +1690,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Dissolved Oxygen Concentration",
+            "long_name": "Surface Dissolved Nitrate Concentration",
             "modeling_realm": "ocnBgchem",
-            "out_name": "o2",
+            "out_name": "no3",
             "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+            "standard_name": "mole_concentration_of_nitrate_in_sea_water",
             "units": "mol m-3"
         },
         "o2_tavg-ol-hxy-sea": {
@@ -1727,6 +1710,23 @@
                 "time"
             ],
             "long_name": "Dissolved Oxygen Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "o2",
+            "positive": "",
+            "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+            "units": "mol m-3"
+        },
+        "o2_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Dissolved Oxygen Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "o2",
             "positive": "",
@@ -1799,23 +1799,6 @@
             "standard_name": "tendency_of_ocean_mole_content_of_organic_carbon_due_to_runoff_and_sediment_dissolution",
             "units": "mol m-2 s-1"
         },
-        "ph_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface pH",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "ph",
-            "positive": "",
-            "standard_name": "sea_water_ph_reported_on_total_scale",
-            "units": "1"
-        },
         "ph_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -1827,6 +1810,23 @@
                 "time"
             ],
             "long_name": "pH",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "ph",
+            "positive": "",
+            "standard_name": "sea_water_ph_reported_on_total_scale",
+            "units": "1"
+        },
+        "ph_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface pH",
             "modeling_realm": "ocnBgchem",
             "out_name": "ph",
             "positive": "",
@@ -1850,23 +1850,6 @@
             "standard_name": "sea_water_ph_reported_on_total_scale",
             "units": "1"
         },
-        "phyc_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Sea Surface Phytoplankton Carbon Concentration",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "phyc",
-            "positive": "",
-            "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
         "phyc_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -1878,6 +1861,23 @@
                 "time"
             ],
             "long_name": "Phytoplankton Carbon Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "phyc",
+            "positive": "",
+            "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "phyc_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Sea Surface Phytoplankton Carbon Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "phyc",
             "positive": "",
@@ -1901,23 +1901,6 @@
             "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "phycalc_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Mole Concentration of Calcareous Phytoplankton Expressed as Carbon in Sea Water",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "phycalc",
-            "positive": "",
-            "standard_name": "mole_concentration_of_calcareous_phytoplankton_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
         "phycalc_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -1935,7 +1918,7 @@
             "standard_name": "mole_concentration_of_calcareous_phytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "phydiat_tavg-d0m-hxy-sea": {
+        "phycalc_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -1943,13 +1926,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mole Concentration of Diatoms Expressed as Carbon in Sea Water",
+            "long_name": "Surface Mole Concentration of Calcareous Phytoplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "phydiat",
+            "out_name": "phycalc",
             "positive": "",
-            "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_calcareous_phytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "phydiat_tavg-ol-hxy-sea": {
@@ -1969,7 +1952,7 @@
             "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "phydiaz_tavg-d0m-hxy-sea": {
+        "phydiat_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -1977,13 +1960,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water",
+            "long_name": "Surface Mole Concentration of Diatoms Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "phydiaz",
+            "out_name": "phydiat",
             "positive": "",
-            "standard_name": "mole_concentration_of_diazotrophic_phytoplankton_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "phydiaz_tavg-ol-hxy-sea": {
@@ -2003,7 +1986,7 @@
             "standard_name": "mole_concentration_of_diazotrophic_phytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "phymisc_tavg-d0m-hxy-sea": {
+        "phydiaz_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -2011,13 +1994,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mole Concentration of Miscellaneous Phytoplankton Expressed as Carbon in Sea Water",
+            "long_name": "Surface Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "phymisc",
+            "out_name": "phydiaz",
             "positive": "",
-            "standard_name": "mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_diazotrophic_phytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "phymisc_tavg-ol-hxy-sea": {
@@ -2031,6 +2014,23 @@
                 "time"
             ],
             "long_name": "Mole Concentration of Miscellaneous Phytoplankton Expressed as Carbon in Sea Water",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "phymisc",
+            "positive": "",
+            "standard_name": "mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "phymisc_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Mole Concentration of Miscellaneous Phytoplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
             "out_name": "phymisc",
             "positive": "",
@@ -2053,23 +2053,6 @@
             "standard_name": "mole_concentration_of_nanophytoplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "phypico_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Mole Concentration of Picophytoplankton Expressed as Carbon in Sea Water",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "phypico",
-            "positive": "",
-            "standard_name": "mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
         "phypico_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -2081,6 +2064,23 @@
                 "time"
             ],
             "long_name": "Mole Concentration of Picophytoplankton Expressed as Carbon in Sea Water",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "phypico",
+            "positive": "",
+            "standard_name": "mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "phypico_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Mole Concentration of Picophytoplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
             "out_name": "phypico",
             "positive": "",
@@ -2104,23 +2104,6 @@
             "standard_name": "mole_concentration_of_dissolved_inorganic_phosphorus_in_sea_water",
             "units": "mol m-3"
         },
-        "pp_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Primary Carbon Production by Phytoplankton",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "pp",
-            "positive": "",
-            "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production",
-            "units": "mol m-3 s-1"
-        },
         "pp_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -2138,7 +2121,7 @@
             "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production",
             "units": "mol m-3 s-1"
         },
-        "si_tavg-d0m-hxy-sea": {
+        "pp_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -2146,14 +2129,14 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Total Dissolved Inorganic Silicon Concentration",
+            "long_name": "Primary Carbon Production by Phytoplankton",
             "modeling_realm": "ocnBgchem",
-            "out_name": "si",
+            "out_name": "pp",
             "positive": "",
-            "standard_name": "mole_concentration_of_dissolved_inorganic_silicon_in_sea_water",
-            "units": "mol m-3"
+            "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production",
+            "units": "mol m-3 s-1"
         },
         "si_tavg-ol-hxy-sea": {
             "cell_measures": "",
@@ -2166,6 +2149,23 @@
                 "time"
             ],
             "long_name": "Total Dissolved Inorganic Silicon Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "si",
+            "positive": "",
+            "standard_name": "mole_concentration_of_dissolved_inorganic_silicon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "si_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Total Dissolved Inorganic Silicon Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "si",
             "positive": "",
@@ -2285,23 +2285,6 @@
             "standard_name": "sea_water_alkalinity_expressed_as_mole_equivalent",
             "units": "mol m-3"
         },
-        "zmeso_tavg-d0m-hxy-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "depth0m"
-            ],
-            "long_name": "Surface Mole Concentration of Mesozooplankton Expressed as Carbon in Sea Water",
-            "modeling_realm": "ocnBgchem",
-            "out_name": "zmeso",
-            "positive": "",
-            "standard_name": "mole_concentration_of_mesozooplankton_expressed_as_carbon_in_sea_water",
-            "units": "mol m-3"
-        },
         "zmeso_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -2319,7 +2302,7 @@
             "standard_name": "mole_concentration_of_mesozooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "zmicro_tavg-d0m-hxy-sea": {
+        "zmeso_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -2327,13 +2310,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mole Concentration of Microzooplankton Expressed as Carbon in Sea Water",
+            "long_name": "Surface Mole Concentration of Mesozooplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "zmicro",
+            "out_name": "zmeso",
             "positive": "",
-            "standard_name": "mole_concentration_of_microzooplankton_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_mesozooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "zmicro_tavg-ol-hxy-sea": {
@@ -2353,7 +2336,7 @@
             "standard_name": "mole_concentration_of_microzooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "zmisc_tavg-d0m-hxy-sea": {
+        "zmicro_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -2361,13 +2344,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Mole Concentration of Other Zooplankton Expressed as Carbon in Sea Water",
+            "long_name": "Surface Mole Concentration of Microzooplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "zmisc",
+            "out_name": "zmicro",
             "positive": "",
-            "standard_name": "mole_concentration_of_miscellaneous_zooplankton_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_microzooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "zmisc_tavg-ol-hxy-sea": {
@@ -2387,7 +2370,7 @@
             "standard_name": "mole_concentration_of_miscellaneous_zooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
-        "zooc_tavg-d0m-hxy-sea": {
+        "zmisc_tavg-ols-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
             "comment": "",
@@ -2395,13 +2378,13 @@
                 "longitude",
                 "latitude",
                 "time",
-                "depth0m"
+                "osurf"
             ],
-            "long_name": "Surface Zooplankton Carbon Concentration",
+            "long_name": "Surface Mole Concentration of Other Zooplankton Expressed as Carbon in Sea Water",
             "modeling_realm": "ocnBgchem",
-            "out_name": "zooc",
+            "out_name": "zmisc",
             "positive": "",
-            "standard_name": "mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water",
+            "standard_name": "mole_concentration_of_miscellaneous_zooplankton_expressed_as_carbon_in_sea_water",
             "units": "mol m-3"
         },
         "zooc_tavg-ol-hxy-sea": {
@@ -2415,6 +2398,23 @@
                 "time"
             ],
             "long_name": "Zooplankton Carbon Concentration",
+            "modeling_realm": "ocnBgchem",
+            "out_name": "zooc",
+            "positive": "",
+            "standard_name": "mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water",
+            "units": "mol m-3"
+        },
+        "zooc_tavg-ols-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "osurf"
+            ],
+            "long_name": "Surface Zooplankton Carbon Concentration",
             "modeling_realm": "ocnBgchem",
             "out_name": "zooc",
             "positive": "",

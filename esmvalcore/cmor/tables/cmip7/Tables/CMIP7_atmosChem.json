@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: 5739b557bba4b9d648d45332424c6840",
-        "cmor_version": "3.12",
+        "checksum": "md5: f54b963f5794af69620a60dac1cf3aa7",
+        "cmor_version": "3.13",
         "generic_levels": "alevel alevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "atmosChem",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "atmosChem",
         "type": "real",
         "valid_max": "",
@@ -69,7 +69,7 @@
             "standard_name": "mole_fraction_of_butane_in_air",
             "units": "mol mol-1"
         },
-        "cfc113_tavg-u-hm-u": {
+        "cfc113_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -83,7 +83,7 @@
             "standard_name": "mole_fraction_of_cfc113_in_air",
             "units": "1E-12"
         },
-        "cfc11_tavg-u-hm-u": {
+        "cfc11_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -97,7 +97,7 @@
             "standard_name": "mole_fraction_of_cfc11_in_air",
             "units": "1E-12"
         },
-        "cfc12_tavg-u-hm-u": {
+        "cfc12_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -178,7 +178,7 @@
             "standard_name": "mole_fraction_of_methane_in_air",
             "units": "mol mol-1"
         },
-        "ch4_tavg-u-hm-u": {
+        "ch4_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -209,7 +209,7 @@
             "standard_name": "mole_fraction_of_methane_in_air",
             "units": "mol mol-1"
         },
-        "ch4_tclm-u-hm-u": {
+        "ch4_tclm-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -453,22 +453,21 @@
             "standard_name": "tendency_of_atmosphere_mass_content_of_methane_due_to_emission",
             "units": "kg m-2 s-1"
         },
-        "emiavnox_tavg-al-hxy-u": {
+        "emiavnox_tavg-u-hxy-u": {
             "cell_measures": "",
             "cell_methods": "area: time: mean",
             "comment": "",
             "dimensions": [
                 "longitude",
                 "latitude",
-                "alevel",
                 "time"
             ],
             "long_name": "Emission rate of NOx from aviation",
             "modeling_realm": "atmosChem aerosol",
             "out_name": "emiavnox",
             "positive": "",
-            "standard_name": "tendency_of_atmosphere_mole_concentration_of_nox_expressed_as_nitrogen",
-            "units": "mol m-2 s-1"
+            "standard_name": "tendency_of_atmosphere_mass_content_of_nox_expressed_as_nitrogen_due_to_emission",
+            "units": "kg m-2 s-1"
         },
         "emic2h4_tavg-u-hxy-u": {
             "cell_measures": "",
@@ -697,7 +696,7 @@
             "standard_name": "tendency_of_atmosphere_mole_concentration_of_molecular_hydrogen_due_to_chemical_production",
             "units": "mol m-3 s-1"
         },
-        "hcfc22_tavg-u-hm-u": {
+        "hcfc22_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -794,7 +793,7 @@
             "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
             "units": "mol mol-1"
         },
-        "n2o_tavg-u-hm-u": {
+        "n2o_tavg-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",
@@ -825,7 +824,7 @@
             "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
             "units": "mol mol-1"
         },
-        "n2o_tclm-u-hm-u": {
+        "n2o_tclm-u-hm-air": {
             "cell_measures": "",
             "cell_methods": "height: area: time: mean (with all samples weighted by the number of moles of air in the sample)",
             "comment": "",

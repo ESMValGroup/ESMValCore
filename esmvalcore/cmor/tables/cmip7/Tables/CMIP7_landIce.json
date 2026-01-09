@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: 7337d39e2f1ecc19f18b7e324f3c211c",
-        "cmor_version": "3.12",
+        "checksum": "md5: 639b8a5de8ec292e1b2696f4a87c562d",
+        "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "landIce",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "landIce",
         "type": "real",
         "valid_max": "",
@@ -27,7 +27,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Mass Balance Flux",
+            "long_name": "Ice Sheet Surface Mass Balance Flux",
             "modeling_realm": "landIce",
             "out_name": "acabf",
             "positive": "",
@@ -106,7 +106,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upward Latent Heat Flux",
+            "long_name": "Ice Sheet Surface Upward Latent Heat Flux",
             "modeling_realm": "landIce",
             "out_name": "hfls",
             "positive": "up",
@@ -122,7 +122,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upward Sensible Heat Flux",
+            "long_name": "Ice Sheet Surface Upward Sensible Heat Flux",
             "modeling_realm": "landIce",
             "out_name": "hfss",
             "positive": "up",
@@ -166,7 +166,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Ice Melt Flux",
+            "long_name": "Ice Sheet Surface Ice Melt Flux",
             "modeling_realm": "landIce",
             "out_name": "icem",
             "positive": "",
@@ -306,7 +306,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Temperature at Top of Ice Sheet Model",
+            "long_name": "Ice Sheet Temperature at Top of Ice Sheet Model",
             "modeling_realm": "landIce",
             "out_name": "litemptop",
             "positive": "",
@@ -480,7 +480,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Rainfall Flux over Land Ice",
+            "long_name": "Ice Sheet Rainfall Flux",
             "modeling_realm": "landIce",
             "out_name": "prra",
             "positive": "",
@@ -496,7 +496,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Snowfall Flux",
+            "long_name": "Ice Sheet Snowfall Flux",
             "modeling_realm": "landIce",
             "out_name": "prsn",
             "positive": "",
@@ -512,7 +512,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Downwelling Longwave Radiation",
+            "long_name": "Ice Sheet Surface Downwelling Longwave Radiation",
             "modeling_realm": "landIce",
             "out_name": "rlds",
             "positive": "down",
@@ -528,7 +528,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upwelling Longwave Radiation",
+            "long_name": "Ice Sheet Surface Upwelling Longwave Radiation",
             "modeling_realm": "landIce",
             "out_name": "rlus",
             "positive": "up",
@@ -544,7 +544,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Downwelling Shortwave Radiation",
+            "long_name": "Ice Sheet Surface Downwelling Shortwave Radiation",
             "modeling_realm": "landIce land",
             "out_name": "rsds",
             "positive": "down",
@@ -560,7 +560,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Upwelling Shortwave Radiation",
+            "long_name": "Ice Sheet Surface Upwelling Shortwave Radiation",
             "modeling_realm": "landIce land",
             "out_name": "rsus",
             "positive": "up",
@@ -576,7 +576,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Snow and Ice Sublimation Flux",
+            "long_name": "Ice Sheet Surface Snow and Ice Sublimation Flux",
             "modeling_realm": "landIce",
             "out_name": "sbl",
             "positive": "",
@@ -701,7 +701,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Snow Area Percentage",
+            "long_name": "Ice Sheet Snow Cover Percentage",
             "modeling_realm": "landIce land",
             "out_name": "snc",
             "positive": "",
@@ -749,7 +749,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Snow and Ice Melt Flux",
+            "long_name": "Ice Sheet Surface Snow and Ice Melt Flux",
             "modeling_realm": "landIce",
             "out_name": "snicem",
             "positive": "",
@@ -765,7 +765,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Snow Melt",
+            "long_name": "Ice Sheet Surface Snow Melt",
             "modeling_realm": "landIce land",
             "out_name": "snm",
             "positive": "",
@@ -797,7 +797,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Snow and Ice Refreeze Flux",
+            "long_name": "Ice Sheet Surface Snow and Ice Refreeze Flux",
             "modeling_realm": "landIce",
             "out_name": "snrefr",
             "positive": "",
@@ -852,14 +852,15 @@
             "standard_name": "land_ice_basal_drag",
             "units": "Pa"
         },
-        "tas_tavg-u-hxy-is": {
+        "tas_tavg-h2m-hxy-is": {
             "cell_measures": "",
             "cell_methods": "area: time: mean where ice_sheet",
             "comment": "",
             "dimensions": [
                 "longitude",
                 "latitude",
-                "time"
+                "time",
+                "height2m"
             ],
             "long_name": "Ice Sheet Near-Surface Air Temperature",
             "modeling_realm": "landIce",
@@ -966,7 +967,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Surface Temperature",
+            "long_name": "Ice Sheet Surface Temperature",
             "modeling_realm": "landIce",
             "out_name": "ts",
             "positive": "",
@@ -982,7 +983,7 @@
                 "latitude",
                 "time"
             ],
-            "long_name": "Snow Internal Temperature on Land Ice",
+            "long_name": "Ice Sheet Snow Internal Temperature",
             "modeling_realm": "landIce land",
             "out_name": "tsn",
             "positive": "",

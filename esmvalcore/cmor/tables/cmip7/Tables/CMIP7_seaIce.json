@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: b17ef272d563ad1164fd31a6d75680ee",
-        "cmor_version": "3.12",
+        "checksum": "md5: 8d957f160aa44e67d52c4a550faaf8fb",
+        "cmor_version": "3.13",
         "generic_levels": "olevel olevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "seaIce",
-        "table_date": "2025-10-17 11:13:22",
+        "table_date": "2026-01-07 10:30:23",
         "table_id": "seaIce",
         "type": "real",
         "valid_max": "",
@@ -671,7 +671,7 @@
         },
         "siforcecoriolx_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -687,7 +687,7 @@
         },
         "siforcecorioly_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -703,7 +703,7 @@
         },
         "siforceintstrx_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -719,7 +719,7 @@
         },
         "siforceintstry_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -735,7 +735,7 @@
         },
         "siforcetiltx_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -751,7 +751,7 @@
         },
         "siforcetilty_tavg-u-hxy-si": {
             "cell_measures": "",
-            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -1091,9 +1091,9 @@
             "standard_name": "thermal_energy_content_of_surface_snow",
             "units": "J m-2"
         },
-        "sisnmass_tavg-u-hm-u": {
+        "sisnmass_tavg-u-hm-si": {
             "cell_measures": "",
-            "cell_methods": "area: sum time: mean",
+            "cell_methods": "area: sum where sea_ice time: mean",
             "comment": "",
             "dimensions": [
                 "time"
