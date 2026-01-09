@@ -1,9 +1,9 @@
 """Test derivation of ``pfr``."""
 
+import cf_units
 import iris
 import numpy as np
 import pytest
-import cf_units
 
 from esmvalcore.preprocessor._derive import pfr
 
@@ -11,9 +11,32 @@ from esmvalcore.preprocessor._derive import pfr
 @pytest.fixture
 def cubes():
     time_coord = iris.coords.DimCoord(
-        [0.0, 31.0, 59.0, 90.0, 120.0, 151.0, 181.0, 212.0, 243.0, 273.0,
-         304.0, 334.0, 365.0, 396.0, 424.0, 455.0, 485.0, 516.0, 546.0,
-         577.0, 608.0, 638.0, 669.0, 699.0],
+        [
+            0.0,
+            31.0,
+            59.0,
+            90.0,
+            120.0,
+            151.0,
+            181.0,
+            212.0,
+            243.0,
+            273.0,
+            304.0,
+            334.0,
+            365.0,
+            396.0,
+            424.0,
+            455.0,
+            485.0,
+            516.0,
+            546.0,
+            577.0,
+            608.0,
+            638.0,
+            669.0,
+            699.0,
+        ],
         standard_name="time",
         var_name="time",
         units="days since 1950-01-01 00:00:00",
@@ -42,7 +65,7 @@ def cubes():
         (dpth_coord, 1),
         (lat_coord, 2),
         (lon_coord, 3),
-        ]
+    ]
     tsl_data = np.zeros(shape=(24, 3, 2, 2))
     tsl_data[:, 0, :, :] = 280.0
     tsl_data[:, 1, :, :] = 270.0
@@ -58,9 +81,9 @@ def cubes():
         (time_coord, 0),
         (lat_coord, 1),
         (lon_coord, 2),
-        ]
+    ]
     mrsos_data = np.zeros(shape=(24, 2, 2))
-    mrsos_data[:, :, :] = 10.0 
+    mrsos_data[:, :, :] = 10.0
     mrsos_cube = iris.cube.Cube(
         mrsos_data,
         dim_coords_and_dims=coord_specs,
@@ -71,10 +94,9 @@ def cubes():
     coord_specs = [
         (lat_coord, 0),
         (lon_coord, 1),
-        ]
+    ]
     sftlf_data = np.zeros(shape=(2, 2))
     sftlf_data[:, :] = 100.0
-    
     sftlf_cube = iris.cube.Cube(
         sftlf_data,
         dim_coords_and_dims=coord_specs,
