@@ -1,51 +1,88 @@
 """Test derivation of ``pfr``."""
 
-import dask.array as da
 import iris
 import numpy as np
 import pytest
+import cf_units
 
 from esmvalcore.preprocessor._derive import pfr
-
-from .test_shared import get_cube
 
 
 @pytest.fixture
 def cubes():
-    time_coord = iris.coords.DimCoord([0.0, 1.0, 2.0], standard_name="time")
-#    tsl_cube = iris.cube.Cube(
-#        [[[20, 10, 0], [10, 10, 10]], [[10, 10, 0], [10, 10, 20]], [[10, 10, 20], [10, 10, 10]]],
-#        units="K",
-#        standard_name="soil_temperature",
-#        var_name="tsl",
-#        dim_coords_and_dims=[(time_coord, 0, 1)],
-#    )
-    tsl_cube = get_cube(
-        [[[[270.0]], [[260.0]], [[250.0]]]],
-        air_pressure_coord=False,
-        depth_coord=True,
-        standard_name="soil_temperature",
+    time_coord = iris.coords.DimCoord(
+        [0.0, 31.0, 59.0, 90.0, 120.0, 151.0, 181.0, 212.0, 243.0, 273.0,
+         304.0, 334.0, 365.0, 396.0, 424.0, 455.0, 485.0, 516.0, 546.0,
+         577.0, 608.0, 638.0, 669.0, 699.0],
+        standard_name="time",
+        var_name="time",
+        units="days since 1950-01-01 00:00:00",
+    )
+    dpth_coord = iris.coords.DimCoord(
+        [1.0, 2.0, 5.0],
+        standard_name="depth",
+        var_name="depth",
+        units="m",
+        attributes={"positive": "down"},
+    )
+    lat_coord = iris.coords.DimCoord(
+        [45.0, 60.0],
+        standard_name="latitude",
+        var_name="lat",
+        units="degrees",
+    )
+    lon_coord = iris.coords.DimCoord(
+        [10.0, 20.0],
+        standard_name="longitude",
+        var_name="lon",
+        units="degrees",
+    )
+    coord_specs = [
+        (time_coord, 0),
+        (dpth_coord, 1),
+        (lat_coord, 2),
+        (lon_coord, 3),
+        ]
+    tsl_data = np.zeros(shape=(24, 3, 2, 2))
+    tsl_data[:, 0, :, :] = 280.0
+    tsl_data[:, 1, :, :] = 270.0
+    tsl_data[:, 2, :, :] = 260.0
+    tsl_cube = iris.cube.Cube(
+        tsl_data,
+        dim_coords_and_dims=coord_specs,
         var_name="tsl",
         units="K",
+        standard_name="soil_temperature",
     )
-    sftlf_cube = get_cube(
-        [[[20, 10], [10, 10]], [[10, 10], [10, 10]], [[10, 10], [10, 10]]],
-        air_pressure_coord=False,
-        depth_coord=False,
-        units="%",
-        standard_name="land_area_fraction",
-        var_name="sftlf",
-        dim_coords_and_dims=[(time_coord, 0)],
-    )
+    coord_specs = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+        ]
+    mrsos_data = np.zeros(shape=(24, 2, 2))
+    mrsos_data[:, :, :] = 10.0 
     mrsos_cube = iris.cube.Cube(
-        [[[20, 10], [10, 10]], [[10, 10], [10, 10]], [[10, 10], [10, 10]]],
-        air_pressure_coord=False,
-        depth_coord=False,
+        mrsos_data,
+        dim_coords_and_dims=coord_specs,
+        var_name="mrsos",
         units="kg m-2",
         standard_name="mass_content_of_water_in_soil_layer",
-        var_name="mrsos",
-        dim_coords_and_dims=[(time_coord, 0)],
     )
+    coord_specs = [
+        (lat_coord, 0),
+        (lon_coord, 1),
+        ]
+    sftlf_data = np.zeros(shape=(2, 2))
+    sftlf_data[:, :] = 100.0
+    
+    sftlf_cube = iris.cube.Cube(
+        sftlf_data,
+        dim_coords_and_dims=coord_specs,
+        var_name="sftlf",
+        units="%",
+        standard_name="land_area_fraction",
+    )
+
     return iris.cube.CubeList([tsl_cube, sftlf_cube, mrsos_cube])
 
 
@@ -53,12 +90,11 @@ def test_pfr_calculation(cubes):
     """Test function ``calculate``."""
     derived_var = pfr.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
+    iris.save(out_cube, "./pfr.nc")
     assert out_cube.units == cf_units.Unit("%")
     out_data = out_cube.data
-    expected = np.ma.ones_like(cubes[0].data)
-    expected[0][0][0] = 1.0
-    np.testing.assert_array_equal(out_data.mask, expected.mask)
-    np.testing.assert_array_equal(out_data[0][0][0], expected[0][0][0])
+    expected = 100.0 * np.ones_like(out_cube.data)
+    np.testing.assert_array_equal(out_data, expected)
 
 
 def test_pfr_required():
