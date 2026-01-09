@@ -489,30 +489,33 @@ def _report_unexpanded_globs(
     return msg
 
 
-def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
-    """Determine the input datasets needed for deriving `dataset`."""
+def _get_required_datasets(dataset: Dataset) -> list[Dataset]:
+    """Determine the datasets required for deriving `dataset`."""
     if not dataset._derivation_necessary():  # noqa: SLF001
-        return dataset.input_datasets
+        return dataset.required_datasets
 
     # Skip optional datasets if no data is available
-    input_datasets: list[Dataset] = []
-    for input_dataset in dataset.input_datasets:
-        if input_dataset.facets.get("optional") and not input_dataset.files:
+    required_datasets: list[Dataset] = []
+    for required_dataset in dataset.required_datasets:
+        if (
+            required_dataset.facets.get("optional")
+            and not required_dataset.files
+        ):
             logger.info(
                 "Skipping: no data found for %s which is marked as 'optional'",
-                input_dataset,
+                required_dataset,
             )
         else:
-            input_datasets.append(input_dataset)
+            required_datasets.append(required_dataset)
 
-    return input_datasets
+    return required_datasets
 
 
 def _representative_datasets(dataset: Dataset) -> list[Dataset]:
     """Find representative datasets for all input variables."""
     copy = dataset.copy()
     copy.supplementaries = []
-    representative_datasets = _get_input_datasets(copy)
+    representative_datasets = _get_required_datasets(copy)
     for representative_dataset in representative_datasets:
         representative_dataset.supplementaries = dataset.supplementaries
     return representative_datasets

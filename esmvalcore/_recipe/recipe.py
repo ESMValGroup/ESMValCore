@@ -52,7 +52,7 @@ from esmvalcore.preprocessor._shared import _group_products
 from . import check
 from .from_datasets import datasets_to_recipe
 from .to_datasets import (
-    _get_input_datasets,
+    _get_required_datasets,
     _representative_datasets,
 )
 
@@ -670,8 +670,8 @@ def _get_preprocessor_products(
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         _add_dataset_specific_settings(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
-        input_datasets = _get_input_datasets(dataset)
-        missing = _check_input_files(input_datasets)
+        required_datasets = _get_required_datasets(dataset)
+        missing = _check_input_files(required_datasets)
         if missing:
             if _allow_skipping(dataset):
                 logger.info("Skipping: %s", missing)
@@ -680,15 +680,15 @@ def _get_preprocessor_products(
             continue
         dataset.set_version()
         USED_DATASETS.append(dataset)
-        _schedule_for_download(input_datasets)
-        _log_input_files(input_datasets)
+        _schedule_for_download(required_datasets)
+        _log_input_files(required_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
         filename = _get_preprocessor_filename(dataset)
         product = PreprocessorFile(
             filename=filename,
             attributes=dataset.facets,
             settings=settings,
-            datasets=input_datasets,
+            datasets=required_datasets,
         )
 
         products.add(product)

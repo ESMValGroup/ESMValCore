@@ -285,7 +285,7 @@ def test_merge_supplementaries_missing_short_name_fails(session):
         Dataset.from_recipe(recipe_txt, session)
 
 
-def test_get_input_datasets_derive(session):
+def test_get_required_datasets_derive(session):
     dataset = Dataset(
         dataset="ERA5",
         project="native6",
@@ -300,7 +300,7 @@ def test_get_input_datasets_derive(session):
         type="reanaly",
         version="v1",
     )
-    rlds, rlns = to_datasets._get_input_datasets(dataset)
+    rlds, rlns = to_datasets._get_required_datasets(dataset)
     assert rlds["short_name"] == "rlds"
     assert rlds["long_name"] == "Surface Downwelling Longwave Radiation"
     assert rlds["frequency"] == "1hr"
@@ -309,7 +309,7 @@ def test_get_input_datasets_derive(session):
     assert rlns["frequency"] == "1hr"
 
 
-def test_get_input_datasets_derive_optional(caplog, tmp_path, session):
+def test_get_required_datasets_optional(caplog, tmp_path, session):
     facets = {
         "project": "OBS6",
         "dataset": "SAT",
@@ -333,7 +333,7 @@ def test_get_input_datasets_derive_optional(caplog, tmp_path, session):
     dataset.session = session
 
     with caplog.at_level(logging.INFO):
-        datasets = to_datasets._get_input_datasets(dataset)
+        datasets = to_datasets._get_required_datasets(dataset)
 
     expected = Dataset(
         dataset="SAT",

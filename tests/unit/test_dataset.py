@@ -1317,7 +1317,7 @@ def test_from_files_with_derived_no_derivation(lwcre_file, session):
     assert datasets[0].files == [lwcre_file]
     assert datasets[0].supplementaries[0].files == []
 
-    expected_input_dataset = Dataset(
+    expected_required_dataset = Dataset(
         **OBS6_SAT_FACETS,
         short_name="lwcre",
         derive=True,
@@ -1328,7 +1328,7 @@ def test_from_files_with_derived_no_derivation(lwcre_file, session):
         standard_name="",
         units="W m-2",
     )
-    expected_input_dataset.supplementaries = [
+    expected_required_dataset.supplementaries = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="pr",
@@ -1341,10 +1341,11 @@ def test_from_files_with_derived_no_derivation(lwcre_file, session):
             units="kg m-2 s-1",
         ),
     ]
-    expected_input_dataset.session = session
+    expected_required_dataset.session = session
 
-    assert datasets[0].input_datasets == [expected_input_dataset]
-    assert datasets[0].input_datasets[0].files == [lwcre_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == [expected_required_dataset]
+    assert required_datasets[0].files == [lwcre_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1384,7 +1385,7 @@ def test_from_files_with_derived_no_derivation_glob(
     assert datasets[1].files == [lwcre_file]
     assert datasets[1].supplementaries[0].files == [pr_file]
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **{**OBS6_SAT_FACETS, "type": "ground"},
             short_name="lwcre",
@@ -1408,7 +1409,7 @@ def test_from_files_with_derived_no_derivation_glob(
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.supplementaries = [
             Dataset(
                 **OBS6_SAT_FACETS,
@@ -1426,12 +1427,12 @@ def test_from_files_with_derived_no_derivation_glob(
 
     for dataset, expected in zip(
         datasets,
-        expected_input_datasets,
+        expected_required_datasets,
         strict=True,
     ):
-        assert dataset.input_datasets == [expected]
-    assert datasets[0].input_datasets[0].files == [lwcre_file_ground]
-    assert datasets[1].input_datasets[0].files == [lwcre_file]
+        assert dataset.required_datasets == [expected]
+    assert datasets[0].required_datasets[0].files == [lwcre_file_ground]
+    assert datasets[1].required_datasets[0].files == [lwcre_file]
 
 
 def test_from_files_with_derived(rlut_file, rlutcs_file, session):
@@ -1450,7 +1451,7 @@ def test_from_files_with_derived(rlut_file, rlutcs_file, session):
     assert datasets[0].files == []
     assert datasets[0].supplementaries[0].files == []
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="rlut",
@@ -1474,12 +1475,13 @@ def test_from_files_with_derived(rlut_file, rlutcs_file, session):
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.session = session
 
-    assert datasets[0].input_datasets == expected_input_datasets
-    assert dataset.input_datasets[0].files == [rlut_file]
-    assert dataset.input_datasets[1].files == [rlutcs_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == [rlut_file]
+    assert required_datasets[1].files == [rlutcs_file]
 
 
 def test_from_files_with_derived_unavailable_years(
@@ -1507,7 +1509,7 @@ def test_from_files_with_derived_unavailable_years(
     assert datasets == [expected]
     assert datasets[0].files == []
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **{**OBS6_SAT_FACETS, "timerange": "2010/2015"},
             short_name="rlut",
@@ -1531,12 +1533,13 @@ def test_from_files_with_derived_unavailable_years(
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.session = session
 
-    assert datasets[0].input_datasets == expected_input_datasets
-    assert dataset.input_datasets[0].files == []
-    assert dataset.input_datasets[1].files == []
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == []
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1569,7 +1572,7 @@ def test_from_files_with_derived_glob(
     assert datasets[0].files == []
     assert datasets[0].supplementaries[0].files == [pr_file]
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="rlut",
@@ -1593,15 +1596,16 @@ def test_from_files_with_derived_glob(
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.session = session
 
-    assert datasets[0].input_datasets == expected_input_datasets
-    assert datasets[0].input_datasets[0].files == [rlut_file]
-    assert datasets[0].input_datasets[1].files == [rlutcs_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == [rlut_file]
+    assert required_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = "Not all necessary input variables to derive 'lwcre' are available"
+    msg = "Not all variables required to derive 'lwcre' are available"
     for log_debug in log_debugs:
         if msg in log_debug:
             break
@@ -1630,7 +1634,7 @@ def test_from_files_with_derived_no_force_derivation(
     assert datasets[0].files == [lwcre_file]
     assert datasets[0].supplementaries[0].files == []
 
-    expected_input_dataset = Dataset(
+    expected_required_dataset = Dataset(
         **OBS6_SAT_FACETS,
         short_name="lwcre",
         derive=True,
@@ -1641,7 +1645,7 @@ def test_from_files_with_derived_no_force_derivation(
         standard_name="",
         units="W m-2",
     )
-    expected_input_dataset.supplementaries = [
+    expected_required_dataset.supplementaries = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="pr",
@@ -1654,10 +1658,11 @@ def test_from_files_with_derived_no_force_derivation(
             units="kg m-2 s-1",
         ),
     ]
-    expected_input_dataset.session = session
+    expected_required_dataset.session = session
 
-    assert datasets[0].input_datasets == [expected_input_dataset]
-    assert datasets[0].input_datasets[0].files == [lwcre_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == [expected_required_dataset]
+    assert required_datasets[0].files == [lwcre_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1700,7 +1705,7 @@ def test_from_files_with_derived_no_force_derivation_glob(  # noqa: PLR0913
     assert datasets[1].files == [lwcre_file]
     assert datasets[1].supplementaries[0].files == [pr_file]
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **{**OBS6_SAT_FACETS, "type": "ground"},
             short_name="lwcre",
@@ -1724,7 +1729,7 @@ def test_from_files_with_derived_no_force_derivation_glob(  # noqa: PLR0913
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.supplementaries = [
             Dataset(
                 **OBS6_SAT_FACETS,
@@ -1742,12 +1747,12 @@ def test_from_files_with_derived_no_force_derivation_glob(  # noqa: PLR0913
 
     for dataset, expected in zip(
         datasets,
-        expected_input_datasets,
+        expected_required_datasets,
         strict=True,
     ):
-        assert dataset.input_datasets == [expected]
-    assert datasets[0].input_datasets[0].files == [lwcre_file_ground]
-    assert datasets[1].input_datasets[0].files == [lwcre_file]
+        assert dataset.required_datasets == [expected]
+    assert datasets[0].required_datasets[0].files == [lwcre_file_ground]
+    assert datasets[1].required_datasets[0].files == [lwcre_file]
 
 
 def test_from_files_with_derived_force_derivation(
@@ -1781,7 +1786,7 @@ def test_from_files_with_derived_force_derivation(
     assert datasets[0].files == [lwcre_file]
     assert datasets[0].supplementaries[0].files == []
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="rlut",
@@ -1807,12 +1812,13 @@ def test_from_files_with_derived_force_derivation(
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.session = session
 
-    assert datasets[0].input_datasets == expected_input_datasets
-    assert dataset.input_datasets[0].files == [rlut_file]
-    assert dataset.input_datasets[1].files == [rlutcs_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == [rlut_file]
+    assert required_datasets[1].files == [rlutcs_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1853,7 +1859,7 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     assert datasets[0].files == [lwcre_file]
     assert datasets[0].supplementaries[0].files == [pr_file]
 
-    expected_input_datasets = [
+    expected_required_datasets = [
         Dataset(
             **OBS6_SAT_FACETS,
             short_name="rlut",
@@ -1879,15 +1885,16 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
             units="W m-2",
         ),
     ]
-    for expected_ds in expected_input_datasets:
+    for expected_ds in expected_required_datasets:
         expected_ds.session = session
 
-    assert datasets[0].input_datasets == expected_input_datasets
-    assert datasets[0].input_datasets[0].files == [rlut_file]
-    assert datasets[0].input_datasets[1].files == [rlutcs_file]
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == [rlut_file]
+    assert required_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = "Not all necessary input variables to derive 'lwcre' are available"
+    msg = "Not all variables required to derive 'lwcre' are available"
     for log_debug in log_debugs:
         if msg in log_debug:
             break
@@ -2302,7 +2309,7 @@ def test_set_version_derived_var(monkeypatch, session):
     areacella_file.facets["version"] = "v4"
     dataset.supplementaries[0].files = [areacella_file]
 
-    def _get_input_datasets():
+    def _get_required_datasets():
         rlut_file = esmvalcore.local.LocalFile("/path/to/rlut.nc")
         rlut_file.facets["version"] = "v1"
         rlut_dataset = Dataset(
@@ -2323,7 +2330,11 @@ def test_set_version_derived_var(monkeypatch, session):
         rlutcs_dataset.files = [rlutcs_file_1, rlutcs_file_2]
         return [rlut_dataset, rlutcs_dataset]
 
-    monkeypatch.setattr(dataset, "_get_input_datasets", _get_input_datasets)
+    monkeypatch.setattr(
+        dataset,
+        "_get_required_datasets",
+        _get_required_datasets,
+    )
 
     dataset.set_version()
 
@@ -2978,7 +2989,7 @@ def test_add_derived_supplementary_to_derived():
     assert dataset.supplementaries[0] == expected_supplementary
 
 
-def test_input_datasets_derivation(session):
+def test_required_datasets_derivation(session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.add_supplementary(short_name="pr")
 
@@ -3009,17 +3020,17 @@ def test_input_datasets_derivation(session):
     for expected_dataset in expected_datasets:
         expected_dataset.session = dataset.session
 
-    assert dataset.input_datasets == expected_datasets
+    assert dataset.required_datasets == expected_datasets
 
 
-def test_input_datasets_no_derivation():
+def test_required_datasets_no_derivation():
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
     dataset.add_supplementary(short_name="pr")
 
-    assert dataset.input_datasets == [dataset]
+    assert dataset.required_datasets == [dataset]
 
 
-def test_input_datasets_no_force_derivation(tmp_path, session):
+def test_required_datasets_no_force_derivation(tmp_path, session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.add_supplementary(short_name="pr")
     dataset.session = session
@@ -3031,12 +3042,12 @@ def test_input_datasets_no_force_derivation(tmp_path, session):
     )
     lwcre_file.touch()
 
-    assert dataset.input_datasets == [dataset]
+    assert dataset.required_datasets == [dataset]
 
 
-def test_input_datasets_no_derivation_available(session):
+def test_required_datasets_no_derivation_available(session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas", derive=True)
 
     msg = r"Cannot derive variable 'tas': no derivation script available"
     with pytest.raises(NotImplementedError, match=msg):
-        dataset.input_datasets  # noqa: B018
+        dataset.required_datasets  # noqa: B018

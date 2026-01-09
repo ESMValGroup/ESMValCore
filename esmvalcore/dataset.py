@@ -130,7 +130,7 @@ class Dataset:
         self._session: Session | None = None
         self._files: Sequence[DataElement] | None = None
         self._used_data_sources: Sequence[DataSource] = []
-        self._input_datasets: list[Dataset] = []
+        self._required_datasets: list[Dataset] | None = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -195,29 +195,29 @@ class Dataset:
 
         return not ds_copy.files
 
-    def _get_input_datasets(self) -> list[Dataset]:
-        """Get input datasets."""
-        input_datasets: list[Dataset] = []
+    def _get_required_datasets(self) -> list[Dataset]:
+        """Get required datasets for derivation."""
+        required_datasets: list[Dataset] = []
         required_vars_facets = get_required(
             self.facets["short_name"],  # type: ignore
             self.facets["project"],  # type: ignore
         )
 
         for required_facets in required_vars_facets:
-            input_dataset = self._copy(derive=False, force_derivation=False)
+            required_dataset = self._copy(derive=False, force_derivation=False)
             keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
-            input_dataset.facets = {
-                k: v for k, v in input_dataset.facets.items() if k in keep
+            required_dataset.facets = {
+                k: v for k, v in required_dataset.facets.items() if k in keep
             }
-            input_dataset.facets.update(required_facets)
-            input_dataset.augment_facets()
-            input_datasets.append(input_dataset)
+            required_dataset.facets.update(required_facets)
+            required_dataset.augment_facets()
+            required_datasets.append(required_dataset)
 
-        return input_datasets
+        return required_datasets
 
     @property
-    def input_datasets(self) -> list[Dataset]:
-        """Get input datasets.
+    def required_datasets(self) -> list[Dataset]:
+        """Get required datasets.
 
         For non-derived variables (i.e., those with facet ``derive=False``),
         this will simply return the dataset itself in a list.
@@ -231,15 +231,15 @@ class Dataset:
         See also :func:`esmvalcore.preprocessor.derive` for an example usage.
 
         """
-        if self._input_datasets:
-            return self._input_datasets
+        if self._required_datasets is not None:
+            return self._required_datasets
 
         if not self._derivation_necessary():
-            self._input_datasets = [self]
+            self._required_datasets = [self]
         else:
-            self._input_datasets = self._get_input_datasets()
+            self._required_datasets = self._get_required_datasets()
 
-        return self._input_datasets
+        return self._required_datasets
 
     @staticmethod
     def _file_to_dataset(
@@ -304,13 +304,13 @@ class Dataset:
 
         # If forced derivation is requested or no datasets based on files from
         # dataset have been found, search for datasets based on files from
-        # input datasets
+        # required datasets
         if dataset._is_force_derived() or not datasets_found:
             all_datasets: list[list[tuple[dict, Dataset]]] = []
-            for input_dataset in dataset._get_input_datasets():
+            for required_dataset in dataset.required_datasets:
                 all_datasets.append([])
                 for expanded_ds in Dataset._get_available_datasets(
-                    input_dataset,
+                    required_dataset,
                 ):
                     updated_facets = {}
                     for key, value in dataset.facets.items():
@@ -334,7 +334,7 @@ class Dataset:
                     yield new_ds
                 else:
                     logger.debug(
-                        "Not all necessary input variables to derive '%s' are "
+                        "Not all variables required to derive '%s' are "
                         "available for %s with facets %s",
                         dataset["short_name"],
                         new_ds.summary(shorten=True),
@@ -429,8 +429,8 @@ class Dataset:
         dataset for those facets listed in :obj:`INHERITED_FACETS`.
 
         This also works for :ref:`derived variables <Variable derivation>`. The
-        input datasets that are necessary for derivation can be accessed via
-        :attr:`Dataset.input_datasets`.
+        datasets required for derivation can be accessed via
+        :attr:`Dataset.required_datasets`.
 
         Examples
         --------
@@ -748,8 +748,8 @@ class Dataset:
     def set_version(self) -> None:
         """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
-        for input_dataset in self.input_datasets:
-            version = self._get_version(input_dataset)
+        for required_dataset in self.required_datasets:
+            version = self._get_version(required_dataset)
             if version:
                 if isinstance(version, list):
                     versions.update(version)

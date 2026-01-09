@@ -22,7 +22,7 @@ import esmvalcore._task
 import esmvalcore.io.esgf
 import esmvalcore.io.local
 from esmvalcore._recipe.recipe import (
-    _get_input_datasets,
+    _get_required_datasets,
     _representative_datasets,
     read_recipe_file,
 )
@@ -2609,7 +2609,7 @@ def test_representative_dataset_derived_var(
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
-        # Added/changed by Dataset._get_input_datasets()
+        # Added/changed by Dataset._get_required_datasets()
         "derive": False,
         "force_derivation": False,
     }
@@ -2679,7 +2679,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
-        # Added/changed by Dataset._get_input_datasets()
+        # Added/changed by Dataset._get_required_datasets()
         "derive": False,
         "force_derivation": False,
     }
@@ -2704,14 +2704,14 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "units": "W m-2",
         # Added by _add_extra_facets
         "var_type": "atm_2d_ml",
-        # Added/changed by Dataset._get_input_datasets()
+        # Added/changed by Dataset._get_required_datasets()
         "derive": False,
         "force_derivation": False,
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session
 
-    alb_derive_input = _get_input_datasets(alb)
+    alb_derive_input = _get_required_datasets(alb)
     assert alb_derive_input == [rsdscs, rsuscs]
 
 

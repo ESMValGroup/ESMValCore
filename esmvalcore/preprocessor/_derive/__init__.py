@@ -107,8 +107,8 @@ def derive(
 
     Examples
     --------
-    Input variables for derivation can be obtained via
-    :attr:`esmvalcore.dataset.Dataset.input_datasets`.
+    Required variables for derivation can be obtained via
+    :attr:`esmvalcore.dataset.Dataset.required_datasets`.
 
     For example, to derive the longwave cloud radiative effect (LWCRE) for the
     model CESM2, you can use:
@@ -126,7 +126,7 @@ def derive(
     ...     mip="Amon",
     ...     derive=True,
     ... )
-    >>> cubes = [d.load() for d in dataset.input_datasets]
+    >>> cubes = [d.load() for d in dataset.required_datasets]
     >>> cube = derive(
     ...     cubes,
     ...     short_name="lwcre",
