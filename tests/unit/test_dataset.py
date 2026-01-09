@@ -1254,6 +1254,18 @@ def rlut_file(tmp_path):
 
 
 @pytest.fixture
+def rlut_file_future(tmp_path):
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    rlut = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_Amon_rlut_2100-2101.nc",
+    )
+    rlut.touch()
+    return rlut
+
+
+@pytest.fixture
 def rlut_file_ground(tmp_path):
     input_dir = tmp_path / "Tier2" / "SAT"
     input_dir.mkdir(parents=True, exist_ok=True)
@@ -1332,7 +1344,7 @@ def test_from_files_with_derived_no_derivation(lwcre_file, session):
     expected_input_dataset.session = session
 
     assert datasets[0].input_datasets == [expected_input_dataset]
-    assert expected_input_dataset.files == [lwcre_file]
+    assert datasets[0].input_datasets[0].files == [lwcre_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1418,8 +1430,8 @@ def test_from_files_with_derived_no_derivation_glob(
         strict=True,
     ):
         assert dataset.input_datasets == [expected]
-    assert expected_input_datasets[0].files == [lwcre_file_ground]
-    assert expected_input_datasets[1].files == [lwcre_file]
+    assert datasets[0].input_datasets[0].files == [lwcre_file_ground]
+    assert datasets[1].input_datasets[0].files == [lwcre_file]
 
 
 def test_from_files_with_derived(rlut_file, rlutcs_file, session):
@@ -1466,8 +1478,65 @@ def test_from_files_with_derived(rlut_file, rlutcs_file, session):
         expected_ds.session = session
 
     assert datasets[0].input_datasets == expected_input_datasets
-    assert expected_input_datasets[0].files == [rlut_file]
-    assert expected_input_datasets[1].files == [rlutcs_file]
+    assert dataset.input_datasets[0].files == [rlut_file]
+    assert dataset.input_datasets[1].files == [rlutcs_file]
+
+
+def test_from_files_with_derived_unavailable_years(
+    rlut_file,
+    rlutcs_file,
+    session,
+):
+    """Test `from_files` with derived variable and supplementary."""
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "timerange": "2010/2015"},
+        short_name="lwcre",
+        derive=True,
+    )
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **{**OBS6_SAT_FACETS, "timerange": "2010/2015"},
+        short_name="lwcre",
+        derive=True,
+    )
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+
+    expected_input_datasets = [
+        Dataset(
+            **{**OBS6_SAT_FACETS, "timerange": "2010/2015"},
+            short_name="rlut",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **{**OBS6_SAT_FACETS, "timerange": "2010/2015"},
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+    ]
+    for expected_ds in expected_input_datasets:
+        expected_ds.session = session
+
+    assert datasets[0].input_datasets == expected_input_datasets
+    assert dataset.input_datasets[0].files == []
+    assert dataset.input_datasets[1].files == []
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1528,8 +1597,8 @@ def test_from_files_with_derived_glob(
         expected_ds.session = session
 
     assert datasets[0].input_datasets == expected_input_datasets
-    assert expected_input_datasets[0].files == [rlut_file]
-    assert expected_input_datasets[1].files == [rlutcs_file]
+    assert datasets[0].input_datasets[0].files == [rlut_file]
+    assert datasets[0].input_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
     msg = "Not all necessary input variables to derive 'lwcre' are available"
@@ -1677,8 +1746,8 @@ def test_from_files_with_derived_no_force_derivation_glob(  # noqa: PLR0913
         strict=True,
     ):
         assert dataset.input_datasets == [expected]
-    assert expected_input_datasets[0].files == [lwcre_file_ground]
-    assert expected_input_datasets[1].files == [lwcre_file]
+    assert datasets[0].input_datasets[0].files == [lwcre_file_ground]
+    assert datasets[1].input_datasets[0].files == [lwcre_file]
 
 
 def test_from_files_with_derived_force_derivation(
@@ -1742,8 +1811,8 @@ def test_from_files_with_derived_force_derivation(
         expected_ds.session = session
 
     assert datasets[0].input_datasets == expected_input_datasets
-    assert expected_input_datasets[0].files == [rlut_file]
-    assert expected_input_datasets[1].files == [rlutcs_file]
+    assert dataset.input_datasets[0].files == [rlut_file]
+    assert dataset.input_datasets[1].files == [rlutcs_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
@@ -1814,8 +1883,8 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
         expected_ds.session = session
 
     assert datasets[0].input_datasets == expected_input_datasets
-    assert expected_input_datasets[0].files == [rlut_file]
-    assert expected_input_datasets[1].files == [rlutcs_file]
+    assert datasets[0].input_datasets[0].files == [rlut_file]
+    assert datasets[0].input_datasets[1].files == [rlutcs_file]
 
     log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
     msg = "Not all necessary input variables to derive 'lwcre' are available"

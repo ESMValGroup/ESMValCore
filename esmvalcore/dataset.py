@@ -325,7 +325,7 @@ class Dataset:
                     all_datasets[-1].append((updated_facets, new_ds))
 
             # Only consider those datasets that contain all input variables
-            # necessary for derivation
+            # necessary for derivation with the same facets (e.g., skip those where provided timeranges are different)
             for updated_facets, new_ds in all_datasets[0]:
                 other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
                 if all(updated_facets in facets for facets in other_facets):
