@@ -1112,8 +1112,9 @@ class Dataset:
             dataset = self.copy()
             dataset.facets.pop("timerange")
             dataset.supplementaries = []
-            check.data_availability(dataset)
-            if all("timerange" in f.facets for f in dataset.files):
+            if dataset.files and all(
+                "timerange" in f.facets for f in dataset.files
+            ):
                 # "timerange" can only be reliably computed when all DataElements
                 # provide it.
                 intervals = [

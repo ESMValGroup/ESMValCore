@@ -2333,9 +2333,8 @@ def test_update_timerange_no_files(session, search_data):
     }
     dataset = Dataset(**variable)
     dataset.files = []
-    msg = r"Missing data for Dataset: tas, Amon, CMIP6, HadGEM3-GC31-LL.*"
-    with pytest.raises(InputFilesNotFound, match=msg):
-        dataset._update_timerange()
+    dataset._update_timerange()
+    assert "timerange" not in dataset.facets
 
 
 def test_update_timerange_typeerror():
