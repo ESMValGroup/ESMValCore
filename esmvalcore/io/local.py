@@ -51,6 +51,8 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+# imported for grib fix
+import eccodes
 import iris.cube
 import iris.fileformats.cf
 import isodate
@@ -815,6 +817,22 @@ def _restore_lat_lon_units(
                 coord.units = units
 
 
+def _modify_units_in_grib(
+    cubelist: iris.cube.CubeList,
+    file: Path,
+) -> iris.cube.CubeList:
+    """Modify units in GRIB files to CF-compliant ones."""
+    with open(file, "rb") as f:
+        gid = eccodes.codes_grib_new_from_file(f)
+
+    for cube in cubelist:
+        cube.units = eccodes.codes_get(gid, "units")
+        cube.var_name = eccodes.codes_get(gid, "shortName")
+        cube.long_name = eccodes.codes_get(gid, "name")
+
+    return cubelist
+
+
 class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
     """File on the local filesystem."""
 
@@ -879,6 +897,8 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
             # level, etc.
             if file.suffix in GRIB_FORMATS:
                 cubes = iris.load(file, callback=_restore_lat_lon_units)
+                if cubes[0].units == "unknown":
+                    cubes = _modify_units_in_grib(cubes, file)
             else:
                 cubes = iris.load_raw(file, callback=_restore_lat_lon_units)
 
