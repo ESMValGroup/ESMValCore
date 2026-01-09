@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import importlib.resources
 import logging
 import textwrap
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pyesgf
 import pytest
-import yaml
 
 import esmvalcore.dataset
 import esmvalcore.io.esgf
@@ -23,45 +20,6 @@ from esmvalcore.io.esgf import ESGFFile
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
-
-
-@lru_cache
-def _load_default_data_sources() -> dict[
-    str,
-    dict[str, dict[str, dict[str, dict[str, str]]]],
-]:
-    """Load default data sources for local users."""
-    cfg: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = {
-        "projects": {},
-    }
-    for file in (
-        "data-local.yml",
-        "data-local-esmvaltool.yml",
-        "data-native-cesm.yml",
-        "data-native-emac.yml",
-        "data-native-icon.yml",
-        "data-native-ipslcm.yml",
-    ):
-        with importlib.resources.as_file(
-            importlib.resources.files(esmvalcore.config)
-            / "configurations"
-            / file,
-        ) as config_file:
-            content = config_file.read_text(encoding="utf-8")
-            cfg["projects"].update(yaml.safe_load(content)["projects"])
-    return cfg
-
-
-@pytest.fixture
-def session(tmp_path: Path, session: Session) -> Session:
-    """Session fixture with default local data sources."""
-    projects = _load_default_data_sources()["projects"]
-    for project in projects:
-        data_sources = projects[project]["data"]
-        for data_source in data_sources.values():
-            data_source["rootpath"] = str(tmp_path)
-        session["projects"][project]["data"] = data_sources
-    return session
 
 
 def test_repr():
@@ -2267,7 +2225,7 @@ def test_set_version_non_derived_var():
     assert dataset.supplementaries[0].facets["version"] == "v3"
 
 
-def test_set_version_derived_var(monkeypatch):
+def test_set_version_derived_var(monkeypatch, session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.add_supplementary(short_name="areacella")
     dataset.files = []
@@ -2868,7 +2826,7 @@ def test_derivation_necessary_no_force_derivation_no_files(
     assert dataset._derivation_necessary() is True
 
 
-def test_derivation_necessary_no_force_derivation_no_files_glob():
+def test_derivation_necessary_no_force_derivation_no_files_glob(session):
     dataset = Dataset(
         **{**OBS6_SAT_FACETS, "timerange": "*"},
         short_name="lwcre",
@@ -2952,7 +2910,7 @@ def test_add_derived_supplementary_to_derived():
     assert dataset.supplementaries[0] == expected_supplementary
 
 
-def test_input_datasets_derivation():
+def test_input_datasets_derivation(session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     dataset.add_supplementary(short_name="pr")
 
@@ -3008,7 +2966,7 @@ def test_input_datasets_no_force_derivation(tmp_path, session):
     assert dataset.input_datasets == [dataset]
 
 
-def test_input_datasets_no_derivation_available():
+def test_input_datasets_no_derivation_available(session):
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas", derive=True)
 
     msg = r"Cannot derive variable 'tas': no derivation script available"
