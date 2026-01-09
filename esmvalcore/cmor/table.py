@@ -76,7 +76,26 @@ def _update_cmor_facets(facets):
 def _get_mips(project: str, short_name: str) -> list[str]:
     """Get all available MIP tables in a project."""
     tables = CMOR_TABLES[project].tables
-    return [mip for mip in tables if short_name in tables[mip]]
+    return [
+        mip
+        for mip, table in tables.items()
+        if short_name in table
+        or any(short_name == vardef.short_name for vardef in table.values())
+    ]
+
+
+def _get_branding_suffixes(
+    project: str,
+    mip: str,
+    short_name: str,
+) -> list[str]:
+    """Get all available branding suffixes for a variable in a MIP table."""
+    table = CMOR_TABLES[project].tables[mip]
+    return [
+        branded_name.split("_", 1)[1]
+        for branded_name, vardef in table.items()
+        if short_name == vardef.short_name and "_" in branded_name
+    ]
 
 
 def get_var_info(

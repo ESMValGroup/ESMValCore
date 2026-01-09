@@ -18,7 +18,11 @@ from typing import TYPE_CHECKING, Any
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
-from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
+from esmvalcore.cmor.table import (
+    _get_branding_suffixes,
+    _get_mips,
+    _update_cmor_facets,
+)
 from esmvalcore.config import CFG
 from esmvalcore.config._config import (
     get_activity,
@@ -213,7 +217,13 @@ class Dataset:
         # If possible, remove unexpanded facets that can be automatically
         # populated.
         unexpanded = {f for f, v in dataset.facets.items() if _isglob(v)}
-        required_for_augment = {"project", "mip", "short_name", "dataset"}
+        required_for_augment = {
+            "project",
+            "mip",
+            "short_name",
+            "branding_suffix",
+            "dataset",
+        }
         if unexpanded and not unexpanded & required_for_augment:
             copy = dataset.copy()
             copy.supplementaries = []
@@ -332,10 +342,30 @@ class Dataset:
                 mips = [self.facets["mip"]]  # type: ignore
 
             for mip in mips:
-                dataset_template = self.copy(mip=mip)
-                for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
-                    expanded = True
-                    yield dataset
+                if _isglob(self.facets.get("branding_suffix", "")):
+                    available_branding_suffixes = _get_branding_suffixes(
+                        project=self.facets["project"],  # type: ignore[arg-type]
+                        mip=mip,
+                        short_name=self.facets["short_name"],  # type: ignore[arg-type]
+                    )
+                    branding_suffixes = [
+                        branding_suffix
+                        for branding_suffix in available_branding_suffixes
+                        if _ismatch(
+                            branding_suffix,
+                            self.facets["branding_suffix"],
+                        )
+                    ]
+                    dataset_templates = [
+                        self.copy(mip=mip, branding_suffix=branding_suffix)
+                        for branding_suffix in branding_suffixes
+                    ]
+                else:
+                    dataset_templates = [self.copy(mip=mip)]
+                for dataset_template in dataset_templates:
+                    for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
+                        expanded = True
+                        yield dataset
 
         if not expanded:
             # If the definition contains no wildcards, no files were found,

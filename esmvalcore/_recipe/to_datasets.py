@@ -255,8 +255,11 @@ def _append_missing_supplementaries(
                 for facet in FACETS.get(project, ["mip"])
                 if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
-            if "version" in facets:
-                supplementary_facets["version"] = "*"
+            for key in ("frequency", "version"):
+                # Do not inherit these facets as they tend to differ from the
+                # main variable.
+                if key in facets:
+                    supplementary_facets[key] = "*"
             supplementary_facets["short_name"] = short_name
             supplementaries.append(supplementary_facets)
 
