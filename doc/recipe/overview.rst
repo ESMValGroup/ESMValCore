@@ -435,7 +435,7 @@ Recipe section: ``diagnostics``
 The diagnostics section includes one or more diagnostics. Each diagnostic
 section will include:
 
-- the :ref:`variable <cmor_tables>`(s) to preprocess, including the preprocessor to be applied to each variable;
+- the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
