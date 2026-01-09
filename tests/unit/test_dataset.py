@@ -1657,7 +1657,7 @@ def test_from_files_with_derived_no_force_derivation(
     expected_input_dataset.session = session
 
     assert datasets[0].input_datasets == [expected_input_dataset]
-    assert expected_input_dataset.files == [lwcre_file]
+    assert datasets[0].input_datasets[0].files == [lwcre_file]
 
 
 @pytest.mark.parametrize("timerange", ["1980/2000", "*"])
