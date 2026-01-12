@@ -68,7 +68,7 @@ dependencies = [
     "stratify>=0.3",
     "xarray",
     "yamale",
-    "zarr>3",
+    "zarr>2",
 ]
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
 license = "Apache-2.0"
