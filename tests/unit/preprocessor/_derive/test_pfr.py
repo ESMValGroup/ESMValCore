@@ -127,7 +127,7 @@ def test_pfr_calculation(cubes):
             cube.remove_coord("year")
     sftlf_cube = in_cubes.extract_cube(NameConstraint(var_name="sftlf"))
     x_coord = sftlf_cube.coord(axis="X")
-    y_coord = sftlf_cube.coord(axis="X")
+    y_coord = sftlf_cube.coord(axis="Y")
     x_coord.points = x_coord.core_points() + 1.0e-5
     y_coord.points = y_coord.core_points() + 1.0e-5
     out_cube = derived_var.calculate(in_cubes)
@@ -140,6 +140,7 @@ def test_pfr_calculation(cubes):
     for cube in in_cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
+    org_y_pts = copy.deepcopy(y_coord.core_points())
     y_coord.points = y_coord.core_points() + 1.0e-2
     with pytest.raises(ValueError):
         derived_var.calculate(in_cubes)
@@ -148,6 +149,7 @@ def test_pfr_calculation(cubes):
         if cube.coords("year"):
             cube.remove_coord("year")
     x_coord.points = x_coord.core_points() + 1.0e-2
+    y_coord.points = org_y_pts
     with pytest.raises(ValueError):
         derived_var.calculate(in_cubes)
 
