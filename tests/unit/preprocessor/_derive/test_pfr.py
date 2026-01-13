@@ -1,9 +1,12 @@
 """Test derivation of ``pfr``."""
 
+import copy
+
 import cf_units
 import iris
 import numpy as np
 import pytest
+from iris import NameConstraint
 
 from esmvalcore.preprocessor._derive import pfr
 
@@ -79,8 +82,8 @@ def cubes():
     )
     coord_specs = [
         (time_coord, 0),
-        (lat_coord, 1),
-        (lon_coord, 2),
+        (copy.deepcopy(lat_coord), 1),
+        (copy.deepcopy(lon_coord), 2),
     ]
     mrsos_data = np.zeros(shape=(24, 2, 2))
     mrsos_data[:, :, :] = 10.0
@@ -92,8 +95,8 @@ def cubes():
         standard_name="mass_content_of_water_in_soil_layer",
     )
     coord_specs = [
-        (lat_coord, 0),
-        (lon_coord, 1),
+        (copy.deepcopy(lat_coord), 0),
+        (copy.deepcopy(lon_coord), 1),
     ]
     sftlf_data = np.zeros(shape=(2, 2))
     sftlf_data[:, :] = 100.0
@@ -110,13 +113,43 @@ def cubes():
 
 def test_pfr_calculation(cubes):
     """Test function ``calculate``."""
+    in_cubes = cubes
     derived_var = pfr.DerivedVariable()
-    out_cube = derived_var.calculate(cubes)
-    iris.save(out_cube, "./pfr.nc")
+    out_cube = derived_var.calculate(in_cubes)
     assert out_cube.units == cf_units.Unit("%")
     out_data = out_cube.data
     expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
+    # test small differences in lat/lon coordinates in sftlf and mrsos
+    # (1) small deviations (< 1.0e-4)
+    for cube in in_cubes:
+        if cube.coords("year"):
+            cube.remove_coord("year")
+    sftlf_cube = in_cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    x_coord = sftlf_cube.coord(axis="X")
+    y_coord = sftlf_cube.coord(axis="X")
+    x_coord.points = x_coord.core_points() + 1.0e-5
+    y_coord.points = y_coord.core_points() + 1.0e-5
+    out_cube = derived_var.calculate(in_cubes)
+    # small differences are corrected automatically --> expect same results
+    out_data = out_cube.data
+    np.testing.assert_array_equal(out_data, expected)
+    # (2) larger deviations in coordinates should trigger an error
+    #     and thus need to be checked separately
+    # (a) latitudes
+    for cube in in_cubes:
+        if cube.coords("year"):
+            cube.remove_coord("year")
+    y_coord.points = y_coord.core_points() + 1.0e-2
+    with pytest.raises(ValueError):
+        derived_var.calculate(in_cubes)
+    # (b) longitudes
+    for cube in in_cubes:
+        if cube.coords("year"):
+            cube.remove_coord("year")
+    x_coord.points = x_coord.core_points() + 1.0e-2
+    with pytest.raises(ValueError):
+        derived_var.calculate(in_cubes)
 
 
 def test_pfr_required():
