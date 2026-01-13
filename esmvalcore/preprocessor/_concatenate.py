@@ -164,7 +164,9 @@ def _fix_calendars(cubes: Sequence[Cube]) -> None:
         [calendars.count(calendar) for calendar in unique_calendars],
     )
     calendar_index = int(
-        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()),
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()).ravel()[
+            0
+        ],
     )
 
     for cube in cubes:
