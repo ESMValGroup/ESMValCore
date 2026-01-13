@@ -279,7 +279,23 @@ class Dataset:
         return new_dataset
 
     @staticmethod
-    def _get_all_available_datasets(dataset: Dataset) -> Iterator[Dataset]:  # noqa: C901
+    def _get_expanded_globs(
+        dataset_with_globs: Dataset,
+        dataset_with_expanded_globs: Dataset,
+    ) -> tuple[tuple[str, FacetValue], ...]:
+        """Get facets that have been updated by expanding globs."""
+        expanded_globs: dict[str, FacetValue] = {}
+        for key, value in dataset_with_globs.facets.items():
+            if (
+                _isglob(value)
+                and key in dataset_with_expanded_globs.facets
+                and not _isglob(dataset_with_expanded_globs[key])
+            ):
+                expanded_globs[key] = dataset_with_expanded_globs[key]
+        return tuple(expanded_globs.items())
+
+    @staticmethod
+    def _get_all_available_datasets(dataset: Dataset) -> Iterator[Dataset]:
         """Yield datasets based on the available files.
 
         This function requires that dataset.facets['mip'] is not a glob
@@ -303,43 +319,48 @@ class Dataset:
             return
 
         # If forced derivation is requested or no datasets based on files from
-        # dataset have been found, search for datasets based on files from
+        # dataset have been found, search for datasets based on files from the
         # required datasets
         if dataset._is_force_derived() or not datasets_found:
-            all_datasets: list[list[tuple[dict, Dataset]]] = []
+            # Record all expanded globs from first non-optional required
+            # dataset (called "reference_dataset" hereafter)
+            non_optional_datasets = [
+                d
+                for d in dataset.required_datasets
+                if not d.facets.get("optional", False)
+            ]
+            if not non_optional_datasets:
+                msg = (
+                    f"Unable to retrieve available datasets for derived "
+                    f"variable '{dataset.facets['short_name']}', all "
+                    f"variables required for dervation are marked as "
+                    f"'optional'"
+                )
+                raise ValueError(msg)
+            reference_dataset = non_optional_datasets[0]
+            reference_expanded_globs = {
+                Dataset._get_expanded_globs(dataset, ds)
+                for ds in Dataset._get_available_datasets(reference_dataset)
+            }
+
+            # Iterate through all other required datasets and only keep those
+            # expanded globs which are present for all other non-optional
+            # required datasets
             for required_dataset in dataset.required_datasets:
-                all_datasets.append([])
-                for expanded_ds in Dataset._get_available_datasets(
-                    required_dataset,
-                ):
-                    updated_facets = {}
-                    for key, value in dataset.facets.items():
-                        if _isglob(value):
-                            if key in expanded_ds.facets and not _isglob(
-                                expanded_ds[key],
-                            ):
-                                updated_facets[key] = expanded_ds.facets[key]
-                    new_ds = dataset.copy()
-                    new_ds.facets.update(updated_facets)
-                    new_ds.supplementaries = dataset.supplementaries
+                if required_dataset is reference_dataset:
+                    continue
+                new_expanded_globs = {
+                    Dataset._get_expanded_globs(dataset, ds)
+                    for ds in Dataset._get_available_datasets(required_dataset)
+                }
+                reference_expanded_globs &= new_expanded_globs
 
-                    all_datasets[-1].append((updated_facets, new_ds))
-
-            # Only consider those datasets that contain all required variables
-            # with identical facets (e.g., skip those with different
-            # timeranges)
-            for updated_facets, new_ds in all_datasets[0]:
-                other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
-                if all(updated_facets in facets for facets in other_facets):
-                    yield new_ds
-                else:
-                    logger.debug(
-                        "Not all variables required to derive '%s' are "
-                        "available for %s with facets %s",
-                        dataset["short_name"],
-                        new_ds.summary(shorten=True),
-                        updated_facets,
-                    )
+            # Use the final expanded globs to create new datasets
+            for expanded_globs in reference_expanded_globs:
+                new_ds = dataset.copy()
+                new_ds.facets.update(expanded_globs)
+                new_ds.supplementaries = dataset.supplementaries
+                yield new_ds
 
     @staticmethod
     def _get_available_datasets(dataset: Dataset) -> Iterator[Dataset]:

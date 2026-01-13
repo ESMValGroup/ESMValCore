@@ -1604,14 +1604,6 @@ def test_from_files_with_derived_glob(
     assert required_datasets[0].files == [rlut_file]
     assert required_datasets[1].files == [rlutcs_file]
 
-    log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = "Not all variables required to derive 'lwcre' are available"
-    for log_debug in log_debugs:
-        if msg in log_debug:
-            break
-    else:
-        pytest.fail(f"No debug message '{msg}'")
-
 
 def test_from_files_with_derived_no_force_derivation(
     lwcre_file,
@@ -1892,14 +1884,6 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     assert required_datasets == expected_required_datasets
     assert required_datasets[0].files == [rlut_file]
     assert required_datasets[1].files == [rlutcs_file]
-
-    log_debugs = [r.message for r in caplog.records if r.levelname == "DEBUG"]
-    msg = "Not all variables required to derive 'lwcre' are available"
-    for log_debug in log_debugs:
-        if msg in log_debug:
-            break
-    else:
-        pytest.fail(f"No debug message '{msg}'")
 
 
 def test_match():
