@@ -21,7 +21,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `pfr` (permafrost extent)."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
             {"short_name": "tsl", "mip": "Lmon"},

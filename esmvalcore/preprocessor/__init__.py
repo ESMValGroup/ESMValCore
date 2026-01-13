@@ -6,6 +6,7 @@ import copy
 import inspect
 import logging
 import re
+import string
 from collections.abc import Sequence
 from pathlib import Path
 from pprint import pformat
@@ -276,7 +277,7 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
 
     def is_facet_value(value: Any) -> bool:  # noqa: ANN401
         """Check if a value is of type `esmvalcore.typing.FacetValue`."""
-        return isinstance(value, str | int) or (
+        return isinstance(value, str | int | float) or (
             isinstance(value, Sequence)
             and all(isinstance(v, str) for v in value)
         )
@@ -305,13 +306,41 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
 
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""
-        if isinstance(value, str | int):
+        if isinstance(value, str | int | float):
             return re.sub("[^a-zA-Z0-9]+", "-", str(value))[:25]
         return "-".join(normalize(v) for v in value)
 
     normalized_facets = {
         k: normalize(v) for k, v in dataset.facets.items() if is_facet_value(v)
     }
+    required_facets = [
+        field[1] for field in string.Formatter().parse(template) if field[1]
+    ]
+    missing_facets = [f for f in required_facets if f not in dataset.facets]
+    if missing_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, missing facets: "
+            + ", ".join(f"'{f}'" for f in sorted(missing_facets))
+            + "."
+        )
+        raise RecipeError(msg)
+    wrong_type_facets = [
+        f
+        for f in required_facets
+        if (f in dataset.facets and f not in normalized_facets)
+    ]
+    if wrong_type_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, facet values have invalid type: "
+            + ", ".join(
+                f"'{f}: {dataset.facets[f]}' has type {type(dataset.facets[f]).__name__}"
+                for f in sorted(wrong_type_facets)
+            )
+            + ", allowed types are str, int, float, or a sequence of str."
+        )
+        raise RecipeError(msg)
     filename = template.format(**normalized_facets)
     if "timerange" in dataset.facets:
         start_time, end_time = _parse_period(dataset.facets["timerange"])

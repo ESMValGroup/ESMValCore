@@ -63,7 +63,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris>=3.12.2,<3.14.1",  # github.com/SciTools/iris/issues/6417, https://github.com/ESMValGroup/ESMValCore/issues/2921
+    "scitools-iris",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",

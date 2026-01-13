@@ -239,6 +239,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "CMIP6",
         "CORDEX",
         "obs4MIPs",
+        "ana4MIPs",
         # ESMValCore supported projects
         "native6",
         "ACCESS",
