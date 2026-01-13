@@ -20,8 +20,8 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
-            {"short_name": "sic", "optional": "true"},
-            {"short_name": "siconca", "optional": "true"},
+            {"short_name": "sic", "optional": True},
+            {"short_name": "siconca", "optional": True},
         ]
 
     @staticmethod
