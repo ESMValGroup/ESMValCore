@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-import intake_esgf
 import iris.cube
 import pytest
 
@@ -13,13 +12,15 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 
-def create_temporary_data(tgt_dir: Path) -> None:
+@pytest.fixture
+def local_data_source(tmp_path: Path) -> dict[str, str]:
     cwd = Path(__file__).parent
     tas_src = cwd / "tas.nc"
     areacella_src = cwd / "areacella.nc"
 
-    tas_tgt = Path(
-        tgt_dir
+    rootpath = tmp_path / "climate_data"
+    tas_tgt = (
+        rootpath
         / "CMIP6"
         / "CMIP"
         / "CCCma"
@@ -30,10 +31,10 @@ def create_temporary_data(tgt_dir: Path) -> None:
         / "tas"
         / "gn"
         / "v20190429"
-        / "tas_Amon_CanESM5_historical_r1i1p1f1_gn_185001-201412.nc",
+        / "tas_Amon_CanESM5_historical_r1i1p1f1_gn_185001-201412.nc"
     )
-    areacella_tgt = Path(
-        tgt_dir
+    areacella_tgt = (
+        rootpath
         / "CMIP6"
         / "CMIP"
         / "CCCma"
@@ -44,7 +45,7 @@ def create_temporary_data(tgt_dir: Path) -> None:
         / "areacella"
         / "gn"
         / "v20190429"
-        / "areacella_fx_CanESM5_historical_r1i1p1f1_gn.nc",
+        / "areacella_fx_CanESM5_historical_r1i1p1f1_gn.nc"
     )
 
     tas_tgt.parent.mkdir(parents=True, exist_ok=True)
@@ -53,11 +54,6 @@ def create_temporary_data(tgt_dir: Path) -> None:
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
 
-
-@pytest.fixture
-def local_data_source(tmp_path: Path) -> dict[str, str]:
-    rootpath = tmp_path / "climate_data"
-    create_temporary_data(rootpath)
     return {
         "type": "esmvalcore.io.local.LocalDataSource",
         "rootpath": str(rootpath),
@@ -67,11 +63,7 @@ def local_data_source(tmp_path: Path) -> dict[str, str]:
 
 
 @pytest.fixture
-def intake_esgf_data_source(
-    tmp_path: Path,
-) -> dict[str, str | dict[str, str] | int]:
-    rootpath = tmp_path / "local_esgf_cache"
-    create_temporary_data(rootpath)
+def intake_esgf_data_source() -> dict[str, str | dict[str, str] | int]:
     facets = {
         "activity": "activity_drs",
         "dataset": "source_id",
@@ -83,12 +75,11 @@ def intake_esgf_data_source(
         "project": "project",
         "short_name": "variable_id",
     }
-    with intake_esgf.conf.set(esg_dataroot=[rootpath], local_cache=[rootpath]):
-        return {
-            "type": "esmvalcore.io.intake_esgf.IntakeESGFDataSource",
-            "facets": facets,
-            "priority": 2,
-        }
+    return {
+        "type": "esmvalcore.io.intake_esgf.IntakeESGFDataSource",
+        "facets": facets,
+        "priority": 2,
+    }
 
 
 @pytest.mark.parametrize("timerange", ["1850/185002", "*", "*/P2M", "1860/*"])
