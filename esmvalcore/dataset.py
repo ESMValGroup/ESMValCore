@@ -183,7 +183,7 @@ class Dataset:
         if self._is_force_derived():
             return True
 
-        # Otherwise, derivation is necessary of no files for the self dataset
+        # Otherwise, derivation is necessary if no files for the self dataset
         # are found
         ds_copy = self.copy()
         ds_copy.supplementaries = []
@@ -305,62 +305,44 @@ class Dataset:
         through variable derivation are returned.
 
         """
-        datasets_found = False
-
-        # If no forced derivation is requested, search for datasets based on
-        # files from dataset
-        if not dataset._is_force_derived():
-            for available_ds in Dataset._get_available_datasets(dataset):
-                datasets_found = True
-                yield available_ds
-
-        # For variables that cannot be derived, we are done here
-        if not dataset._is_derived():
+        if not dataset._derivation_necessary():
+            yield from Dataset._get_available_datasets(dataset)
             return
 
-        # If forced derivation is requested or no datasets based on files from
-        # dataset have been found, search for datasets based on files from the
-        # required datasets
-        if dataset._is_force_derived() or not datasets_found:
-            # Record all expanded globs from first non-optional required
-            # dataset (called "reference_dataset" hereafter)
-            non_optional_datasets = [
-                d
-                for d in dataset.required_datasets
-                if not d.facets.get("optional", False)
-            ]
-            if not non_optional_datasets:
-                msg = (
-                    f"Unable to retrieve available datasets for derived "
-                    f"variable '{dataset.facets['short_name']}', all "
-                    f"variables required for dervation are marked as "
-                    f"'optional'"
-                )
-                raise ValueError(msg)
-            reference_dataset = non_optional_datasets[0]
-            reference_expanded_globs = {
+        # Since we are in full control of the derived variables (the module is
+        # private; no custom derivation functions are possible), we can be sure
+        # that the following list is never empty
+        non_optional_datasets = [
+            d
+            for d in dataset.required_datasets
+            if not d.facets.get("optional", False)
+        ]
+
+        # Record all expanded globs from first non-optional required dataset
+        # (called "reference_dataset" hereafter)
+        reference_dataset = non_optional_datasets[0]
+        reference_expanded_globs = {
+            Dataset._get_expanded_globs(dataset, ds)
+            for ds in Dataset._get_available_datasets(reference_dataset)
+        }
+
+        # Iterate through all other non-optional required datasets and only
+        # keep those expanded globs which are present for all other
+        # non-optional required datasets
+        for required_dataset in non_optional_datasets:
+            if required_dataset is reference_dataset:
+                continue
+            new_expanded_globs = {
                 Dataset._get_expanded_globs(dataset, ds)
-                for ds in Dataset._get_available_datasets(reference_dataset)
+                for ds in Dataset._get_available_datasets(required_dataset)
             }
+            reference_expanded_globs &= new_expanded_globs
 
-            # Iterate through all other required datasets and only keep those
-            # expanded globs which are present for all other non-optional
-            # required datasets
-            for required_dataset in dataset.required_datasets:
-                if required_dataset is reference_dataset:
-                    continue
-                new_expanded_globs = {
-                    Dataset._get_expanded_globs(dataset, ds)
-                    for ds in Dataset._get_available_datasets(required_dataset)
-                }
-                reference_expanded_globs &= new_expanded_globs
-
-            # Use the final expanded globs to create new datasets
-            for expanded_globs in reference_expanded_globs:
-                new_ds = dataset.copy()
-                new_ds.facets.update(expanded_globs)
-                new_ds.supplementaries = dataset.supplementaries
-                yield new_ds
+        # Use the final expanded globs to create new dataset(s)
+        for expanded_globs in reference_expanded_globs:
+            new_ds = dataset.copy()
+            new_ds.facets.update(expanded_globs)
+            yield new_ds
 
     @staticmethod
     def _get_available_datasets(dataset: Dataset) -> Iterator[Dataset]:

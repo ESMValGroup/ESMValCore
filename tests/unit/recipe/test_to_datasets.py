@@ -344,7 +344,7 @@ def test_get_required_datasets_optional(caplog, tmp_path, session):
         frequency="mon",
         long_name="Sea-Ice Area Percentage (Atmospheric Grid)",
         modeling_realm=["seaIce"],
-        optional="true",
+        optional=True,
         original_short_name="siconca",
         standard_name="sea_ice_area_fraction",
         tier=2,

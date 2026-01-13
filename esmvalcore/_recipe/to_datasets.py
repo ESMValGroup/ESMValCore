@@ -419,16 +419,13 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             dataset.summary(shorten=True),
         )
 
+    # All the magic happens in Dataset.from_files. Here, we simply check if any
+    # wildcards have not been expanded and raise proper errors if necessary.
     for expanded_ds in dataset.from_files():
-        updated_facets = {}
         unexpanded_globs = {}
         for key, value in dataset.facets.items():
             if _isglob(value):
-                if key in expanded_ds.facets and not _isglob(
-                    expanded_ds[key],
-                ):
-                    updated_facets[key] = expanded_ds.facets[key]
-                else:
+                if key not in expanded_ds.facets or _isglob(expanded_ds[key]):
                     unexpanded_globs[key] = value
 
         if unexpanded_globs:
@@ -440,11 +437,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             errors.append(msg)
             continue
 
-        new_ds = dataset.copy()
-        new_ds.facets.update(updated_facets)
-        new_ds.supplementaries = expanded_ds.supplementaries
-
-        result.append(new_ds)
+        result.append(expanded_ds)
 
     if errors:
         raise RecipeError("\n".join(errors))
