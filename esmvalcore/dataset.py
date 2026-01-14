@@ -221,7 +221,7 @@ class Dataset:
     def required_datasets(self) -> list[Dataset]:
         """Get required datasets.
 
-        For non-derived variables (i.e., those with facet ``derive=False``),
+        For non-derived variables (i.e., those without a ``derive`` facet or with facet ``derive=False``),
         this will simply return the dataset itself in a list.
 
         For derived variables (i.e., those with facet ``derive=True``), this
