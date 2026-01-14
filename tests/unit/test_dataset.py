@@ -16,6 +16,7 @@ from esmvalcore.config import CFG, Session
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.esgf import ESGFFile
+from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets
@@ -1643,6 +1644,7 @@ def test_from_files_with_derived_glob(
 def test_from_files_with_derived_glob_differing_timerange(
     rlut_file_future,
     rlutcs_file,
+    pr_file,
     session,
 ):
     """Test `from_files` with derived variable and supplementary."""
@@ -1651,6 +1653,7 @@ def test_from_files_with_derived_glob_differing_timerange(
         short_name="lwcre",
         derive=True,
     )
+    dataset.add_supplementary(short_name="pr")
     dataset.session = session
 
     datasets = list(dataset.from_files())
@@ -1660,6 +1663,7 @@ def test_from_files_with_derived_glob_differing_timerange(
         short_name="lwcre",
         derive=True,
     )
+    expected.add_supplementary(short_name="pr", timerange="1980/2000")
     expected.session = session
     assert datasets == [expected]
     assert datasets[0].files == []
@@ -1689,6 +1693,19 @@ def test_from_files_with_derived_glob_differing_timerange(
         ),
     ]
     for expected_ds in expected_required_datasets:
+        expected_ds.supplementaries = [
+            Dataset(
+                **OBS6_SAT_FACETS,
+                short_name="pr",
+                derive=False,
+                frequency="mon",
+                long_name="Precipitation",
+                modeling_realm=["atmos"],
+                original_short_name="pr",
+                standard_name="precipitation_flux",
+                units="kg m-2 s-1",
+            ),
+        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2002,6 +2019,286 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     assert required_datasets == expected_required_datasets
     assert required_datasets[0].files == [rlut_file]
     assert required_datasets[1].files == [rlutcs_file]
+
+
+class DerivedVariable(DerivedVariableBase):
+    """Derivation of dummy variable."""
+
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        return [
+            {"short_name": "rlut", "optional": True},
+            {"short_name": "rlutcs"},
+            {"short_name": "pr"},
+        ]
+
+
+def test_from_files_with_derived_optional(
+    monkeypatch,
+    rlutcs_file,
+    pr_file,
+    session,
+):
+    """Test `from_files` with derived variable and supplementary."""
+    monkeypatch.setattr(
+        esmvalcore.preprocessor._derive,
+        "ALL_DERIVED_VARIABLES",
+        {"tas": DerivedVariable},
+    )
+    dataset = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="pr")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="pr")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+    assert datasets[0].supplementaries[0].files == [pr_file]
+
+    expected_required_datasets = [
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlut",
+            derive=False,
+            optional=True,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="pr",
+            derive=False,
+            frequency="mon",
+            long_name="Precipitation",
+            modeling_realm=["atmos"],
+            original_short_name="pr",
+            standard_name="precipitation_flux",
+            units="kg m-2 s-1",
+        ),
+    ]
+    for expected_ds in expected_required_datasets:
+        expected_ds.supplementaries = [
+            Dataset(
+                **OBS6_SAT_FACETS,
+                short_name="pr",
+                derive=False,
+                frequency="mon",
+                long_name="Precipitation",
+                modeling_realm=["atmos"],
+                original_short_name="pr",
+                standard_name="precipitation_flux",
+                units="kg m-2 s-1",
+            ),
+        ]
+        expected_ds.session = session
+
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == [rlutcs_file]
+    assert required_datasets[2].files == [pr_file]
+
+
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
+def test_from_files_with_derived_glob_optional(
+    timerange,
+    monkeypatch,
+    rlutcs_file,
+    pr_file,
+    session,
+):
+    """Test `from_files` with derived variable and supplementary."""
+    monkeypatch.setattr(
+        esmvalcore.preprocessor._derive,
+        "ALL_DERIVED_VARIABLES",
+        {"tas": DerivedVariable},
+    )
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+        short_name="tas",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="pr")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **OBS6_SAT_FACETS,
+        short_name="tas",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="pr")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+    assert datasets[0].supplementaries[0].files == [pr_file]
+
+    expected_required_datasets = [
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlut",
+            derive=False,
+            optional=True,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+        Dataset(
+            **OBS6_SAT_FACETS,
+            short_name="pr",
+            derive=False,
+            frequency="mon",
+            long_name="Precipitation",
+            modeling_realm=["atmos"],
+            original_short_name="pr",
+            standard_name="precipitation_flux",
+            units="kg m-2 s-1",
+        ),
+    ]
+    for expected_ds in expected_required_datasets:
+        expected_ds.supplementaries = [
+            Dataset(
+                **OBS6_SAT_FACETS,
+                short_name="pr",
+                derive=False,
+                frequency="mon",
+                long_name="Precipitation",
+                modeling_realm=["atmos"],
+                original_short_name="pr",
+                standard_name="precipitation_flux",
+                units="kg m-2 s-1",
+            ),
+        ]
+        expected_ds.session = session
+
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == [rlutcs_file]
+    assert required_datasets[2].files == [pr_file]
+
+
+@pytest.mark.parametrize("timerange", ["1980/2000", "*"])
+def test_from_files_with_derived_glob_optional_missing(
+    timerange,
+    monkeypatch,
+    rlut_file,
+    session,
+):
+    """Test `from_files` with derived variable and supplementary."""
+    monkeypatch.setattr(
+        esmvalcore.preprocessor._derive,
+        "ALL_DERIVED_VARIABLES",
+        {"tas": DerivedVariable},
+    )
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+        short_name="tas",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="pr")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+        short_name="tas",
+        derive=True,
+    )
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+
+    expected_required_datasets = [
+        Dataset(
+            **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+            short_name="rlut",
+            derive=False,
+            optional=True,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+        Dataset(
+            **{**OBS6_SAT_FACETS, "type": "*", "timerange": timerange},
+            short_name="pr",
+            derive=False,
+            frequency="mon",
+            long_name="Precipitation",
+            modeling_realm=["atmos"],
+            original_short_name="pr",
+            standard_name="precipitation_flux",
+            units="kg m-2 s-1",
+        ),
+    ]
+    for expected_ds in expected_required_datasets:
+        expected_ds.session = session
+
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == []
+    assert required_datasets[2].files == []
 
 
 def test_from_files_with_derived_only_optional(siconca_file, pr_file, session):
