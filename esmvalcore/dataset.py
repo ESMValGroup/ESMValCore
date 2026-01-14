@@ -205,6 +205,8 @@ class Dataset:
 
         for required_facets in required_vars_facets:
             required_dataset = self._copy(derive=False, force_derivation=False)
+            for supplementary in self.supplementaries:
+                required_dataset.supplementaries.append(supplementary.copy())
             keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
             required_dataset.facets = {
                 k: v for k, v in required_dataset.facets.items() if k in keep
