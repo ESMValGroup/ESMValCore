@@ -348,7 +348,7 @@ class Dataset:
         # Use the final expanded globs to create new dataset(s)
         for expanded_globs in reference_expanded_globs:
             new_ds = dataset.copy()
-            new_ds.facets.update(expanded_globs)
+            new_ds.facets.update(dict(expanded_globs))
             yield new_ds
 
     @staticmethod

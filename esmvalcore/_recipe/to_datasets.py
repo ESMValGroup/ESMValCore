@@ -419,7 +419,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             dataset.summary(shorten=True),
         )
 
-    # All the magic happens in Dataset.from_files. Here, we simply check if any
+    # The magic happens in Dataset.from_files. Here, we simply check if any
     # wildcards have not been expanded and raise proper errors if necessary.
     for expanded_ds in dataset.from_files():
         unexpanded_globs = {}
