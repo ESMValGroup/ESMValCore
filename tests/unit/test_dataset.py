@@ -1614,6 +1614,63 @@ def test_from_files_with_derived_glob(
     assert required_datasets[1].files == [rlutcs_file]
 
 
+def test_from_files_with_derived_glob_differing_timerange(
+    rlut_file_future,
+    rlutcs_file,
+    session,
+):
+    """Test `from_files` with derived variable and supplementary."""
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "timerange": "*"},
+        short_name="lwcre",
+        derive=True,
+    )
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **{**OBS6_SAT_FACETS, "timerange": "*"},
+        short_name="lwcre",
+        derive=True,
+    )
+    expected.session = session
+    assert datasets == [expected]
+    assert datasets[0].files == []
+
+    expected_required_datasets = [
+        Dataset(
+            **{**OBS6_SAT_FACETS, "timerange": "*"},
+            short_name="rlut",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlut",
+            standard_name="toa_outgoing_longwave_flux",
+            units="W m-2",
+        ),
+        Dataset(
+            **{**OBS6_SAT_FACETS, "timerange": "*"},
+            short_name="rlutcs",
+            derive=False,
+            frequency="mon",
+            long_name="TOA Outgoing Clear-Sky Longwave Radiation",
+            modeling_realm=["atmos"],
+            original_short_name="rlutcs",
+            standard_name="toa_outgoing_longwave_flux_assuming_clear_sky",
+            units="W m-2",
+        ),
+    ]
+    for expected_ds in expected_required_datasets:
+        expected_ds.session = session
+
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == []
+
+
 def test_from_files_with_derived_no_force_derivation(
     lwcre_file,
     rlut_file,

@@ -451,35 +451,46 @@ class Dataset:
         Dataset
             Datasets representing the available files.
         """
-        expanded = False
-        if any(_isglob(v) for v in self.facets.values()):
-            if _isglob(self.facets["mip"]):
-                available_mips = _get_mips(
-                    self.facets["project"],  # type: ignore
-                    self.facets["short_name"],  # type: ignore
-                )
-                mips = [
-                    mip
-                    for mip in available_mips
-                    if _ismatch(mip, self.facets["mip"])
-                ]
-            else:
-                mips = [self.facets["mip"]]  # type: ignore
-
-            for mip in mips:
-                dataset_template = self.copy(mip=mip)
-                for dataset in self._get_all_available_datasets(
-                    dataset_template,
-                ):
-                    dataset._supplementaries_from_files()  # noqa: SLF001
-                    expanded = True
-                    yield dataset
-
-        if not expanded:
-            # If the definition contains no wildcards, no files were found,
-            # or the file facets didn't match the specification, yield the
-            # original, but do expand any supplementary globs.
+        # No wildcards present -> simply return self with expanded
+        # supplementaries
+        if not any(_isglob(v) for v in self.facets.values()):
             self._supplementaries_from_files()
+            yield self
+            return
+
+        # Wildcards present -> expand them
+        expanded = False
+        if _isglob(self.facets["mip"]):
+            available_mips = _get_mips(
+                self.facets["project"],  # type: ignore
+                self.facets["short_name"],  # type: ignore
+            )
+            mips = [
+                mip
+                for mip in available_mips
+                if _ismatch(mip, self.facets["mip"])
+            ]
+        else:
+            mips = [self.facets["mip"]]  # type: ignore
+
+        for mip in mips:
+            dataset_template = self.copy(mip=mip)
+            for dataset in self._get_all_available_datasets(
+                dataset_template,
+            ):
+                dataset._supplementaries_from_files()  # noqa: SLF001
+                expanded = True
+                yield dataset
+
+        # If files were found, or the file facets didn't match the
+        # specification, yield the original, but do expand any supplementary
+        # globs. For derived variables, make sure to purge any files found for
+        # required variables; those won't match in their facets.
+        if not expanded:
+            self._supplementaries_from_files()
+            if self._derivation_necessary():
+                for required_dataset in self.required_datasets:
+                    required_dataset.files = []
             yield self
 
     def _supplementaries_from_files(self) -> None:
