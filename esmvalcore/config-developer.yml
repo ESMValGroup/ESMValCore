@@ -27,7 +27,6 @@
 ###############################################################################
 ---
 CMIP7:
-  cmor_default_table_prefix: "CMIP7_"
   cmor_path: "cmip7"
   cmor_strict: true
   cmor_type: "CMIP6"

@@ -15,9 +15,11 @@ provided by the projects it supports. `CMOR <https://github.com/PCMDI/cmor>`__
 centers to format their model output according to community standards.
 The CMOR tables define the standardized variable names, units,
 coordinates, and other metadata for various climate variables and are typically
-compiled from a Data Request, e.g. the
+compiled from a Data Request and a Controlled Vocabulary, e.g. the
+`CMIP7 CMOR tables <https://github.com/WCRP-CMIP/cmip7-cmor-tables/>`__ are
+based on the
 `CMIP7 Data Request <https://wcrp-cmip.org/cmip-phases/cmip7/cmip7-data-request/>`__,
-and a Controlled Vocabulary, e.g. the
+and the
 `CMIP7 Controlled Vocabulary <https://github.com/WCRP-CMIP/CMIP7-CVs>`__
 .
 ESMValCore comes bundled with several CMOR tables, which are stored in the directory
@@ -40,8 +42,9 @@ define the near-surface air temperature variable in the CMIP6 Amon table:
 
 In some cases the ``short_name`` (called ``out_name`` in the CMOR tables) of a
 variable may differ from the name used as a key in the CMOR table.
-This is always the case for CMIP7, where the branded name of the variable is
-used, which is composed of the ``short_name`` followed
+This is always the case for CMIP7, where the
+`branded variable name <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__
+is used, which is composed of the ``short_name`` followed
 by an underscore and the ``branding_suffix``. For example, the facets
 ``project: CMIP7, mip: atmos, short_name: tas, branding_suffix: tavg-h2m-hxy-u``
 select one of the near-surface air temperature variables in the CMIP7 atmos table:

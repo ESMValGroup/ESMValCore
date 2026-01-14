@@ -73,8 +73,8 @@ the following:
 Recipe section: ``datasets``
 ============================
 
-The ``datasets`` section includes dictionaries that, via key-value pairs or
-:ref:`facets <facets>`, define standardized data specifications:
+The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
+define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,

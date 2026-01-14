@@ -3,7 +3,7 @@ projects:
   CMIP7:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         # Directory structure and file name template from https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/global_attributes/
         dirname_template: "{drs_specs}/{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{region}/{frequency}/{short_name}/{branding_suffix}/{grid}/{version}"
@@ -11,35 +11,35 @@ projects:
   CMIP6:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
   CMIP3:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}"
         filename_template: "{short_name}_*.nc"
   CORDEX:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
   obs4MIPs:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{project}/{dataset}/{version}"
         filename_template: "{short_name}_*.nc"
