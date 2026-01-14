@@ -26,6 +26,12 @@ release candidate to test the recipes in ESMValTool. If bugs are found
 during the testing phase of the release candidate, make as many release
 candidates for ESMValCore as needed in order to fix them.
 
+.. figure:: /figures/release-timeline-doodle-esmvalcore.png
+   :width: 95%
+   :align:   center
+
+   Example of a release timeline for ESMValCore (in this case for 2.11.0)
+
 To make a new release of the package, be it a release candidate or the final release,
 follow these steps:
 
@@ -131,11 +137,13 @@ on that branch.
 
 The package is automatically uploaded to the
 `PyPI <https://pypi.org/project/ESMValCore/>`__
-by a GitHub action.
-If has failed for some reason, build and upload the package manually by
-following the instructions below.
+by a GitHub action. Note that for security reasons, the upload needs to be
+approved by someone from the
+`ESMValGroup/technical-lead-development-team <https://github.com/orgs/ESMValGroup/teams/technical-lead-development-team>`__
+who is not the author of the release.
 
-Follow these steps to create a new Python package:
+If the automatic build and upload has failed for some reason, do it manually by
+following these instructions:
 
 -  Check out the tag corresponding to the release,
    e.g. ``git checkout tags/v2.1.0``
@@ -143,9 +151,9 @@ Follow these steps to create a new Python package:
    of ``git status`` and by running ``git clean -xdf`` to remove any files
    ignored by git.
 -  Install the required packages:
-   ``python3 -m pip install --upgrade pep517 twine``
+   ``python3 -m pip install --upgrade build twine``
 -  Build the package:
-   ``python3 -m pep517.build --source --binary --out-dir dist/ .``
+   ``python3 -m build``
    This command should generate two files in the ``dist`` directory, e.g.
    ``ESMValCore-2.3.1-py3-none-any.whl`` and ``ESMValCore-2.3.1.tar.gz``.
 -  Upload the package:
