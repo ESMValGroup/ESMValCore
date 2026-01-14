@@ -317,6 +317,13 @@ class Dataset:
             for d in dataset.required_datasets
             if not d.facets.get("optional", False)
         ]
+        if not non_optional_datasets:
+            msg = (
+                f"Using wildcards to derive {dataset.summary(shorten=True)} "
+                f"is not possible, derivation function only requires optional "
+                f"variables"
+            )
+            raise RecipeError(msg)
 
         # Record all expanded globs from first non-optional required dataset
         # (called "reference_dataset" hereafter)

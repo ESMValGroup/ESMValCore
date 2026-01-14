@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import textwrap
 from collections import defaultdict
 from pathlib import Path
@@ -1301,6 +1300,18 @@ def pr_file(tmp_path):
     return pr
 
 
+@pytest.fixture
+def siconca_file(tmp_path):
+    input_dir = tmp_path / "Tier2" / "SAT"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    rlut = esmvalcore.local.LocalFile(
+        input_dir,
+        "OBS6_SAT_sat_1_SImon_siconca_1980-2000.nc",
+    )
+    rlut.touch()
+    return rlut
+
+
 def test_from_files_with_derived_no_derivation(lwcre_file, session):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
@@ -1550,7 +1561,6 @@ def test_from_files_with_derived_glob(
     rlutcs_file,
     pr_file,
     session,
-    caplog,
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
@@ -1561,8 +1571,7 @@ def test_from_files_with_derived_glob(
     dataset.add_supplementary(short_name="pr")
     dataset.session = session
 
-    with caplog.at_level(logging.DEBUG):
-        datasets = list(dataset.from_files())
+    datasets = list(dataset.from_files())
 
     expected = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
     expected.add_supplementary(short_name="pr")
@@ -1823,7 +1832,6 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     rlutcs_file,
     pr_file,
     session,
-    caplog,
 ):
     """Test `from_files` with derived variable and supplementary."""
     dataset = Dataset(
@@ -1835,8 +1843,7 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     dataset.add_supplementary(short_name="pr")
     dataset.session = session
 
-    with caplog.at_level(logging.DEBUG):
-        datasets = list(dataset.from_files())
+    datasets = list(dataset.from_files())
 
     expected = Dataset(
         **OBS6_SAT_FACETS,
@@ -1884,6 +1891,80 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
     assert required_datasets == expected_required_datasets
     assert required_datasets[0].files == [rlut_file]
     assert required_datasets[1].files == [rlutcs_file]
+
+
+def test_from_files_with_derived_only_optional(siconca_file, pr_file, session):
+    """Test `from_files` with derived variable and supplementary."""
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "mip": "SImon"},
+        short_name="siextent",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="pr", mip="Amon")
+    dataset.session = session
+
+    datasets = list(dataset.from_files())
+
+    expected = Dataset(
+        **{**OBS6_SAT_FACETS, "mip": "SImon"},
+        short_name="siextent",
+        derive=True,
+    )
+    expected.add_supplementary(short_name="pr", mip="Amon")
+    expected.session = session
+
+    assert datasets == [expected]
+    assert datasets[0].files == []
+    assert datasets[0].supplementaries[0].files == [pr_file]
+
+    expected_required_datasets = [
+        Dataset(
+            **{**OBS6_SAT_FACETS, "mip": "SImon"},
+            short_name="sic",
+            derive=False,
+            frequency="mon",
+            long_name="Sea-Ice Area Percentage (Ocean Grid)",
+            modeling_realm=["seaIce"],
+            original_short_name="siconc",
+            standard_name="sea_ice_area_fraction",
+            units="%",
+            optional=True,
+        ),
+        Dataset(
+            **{**OBS6_SAT_FACETS, "mip": "SImon"},
+            short_name="siconca",
+            derive=False,
+            frequency="mon",
+            long_name="Sea-Ice Area Percentage (Atmospheric Grid)",
+            modeling_realm=["seaIce"],
+            original_short_name="siconca",
+            standard_name="sea_ice_area_fraction",
+            units="%",
+            optional=True,
+        ),
+    ]
+    for expected_ds in expected_required_datasets:
+        expected_ds.session = session
+
+    required_datasets = datasets[0].required_datasets
+    assert required_datasets == expected_required_datasets
+    assert required_datasets[0].files == []
+    assert required_datasets[1].files == [siconca_file]
+
+
+def test_from_files_with_derived_only_optional_glob_fail(session):
+    """Test `from_files` with derived variable and supplementary."""
+    dataset = Dataset(
+        **{**OBS6_SAT_FACETS, "mip": "SImon", "type": "*"},
+        short_name="siextent",
+        derive=True,
+    )
+    dataset.add_supplementary(short_name="pr", mip="Amon")
+    dataset.session = session
+
+    msg = r"Using wildcards to derive .* is not possible"
+    with pytest.raises(RecipeError, match=msg):
+        next(dataset.from_files())
 
 
 def test_match():

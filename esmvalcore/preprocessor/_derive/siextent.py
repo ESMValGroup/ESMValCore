@@ -53,9 +53,7 @@ class DerivedVariable(DerivedVariableBase):
                     "Derivation of siextent failed due to missing variables "
                     "sic and siconca."
                 )
-                raise RecipeError(
-                    msg,
-                ) from exc
+                raise RecipeError(msg) from exc
 
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)
