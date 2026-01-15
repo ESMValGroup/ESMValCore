@@ -113,45 +113,64 @@ def cubes():
 
 def test_pfr_calculation(cubes):
     """Test function ``calculate``."""
-    in_cubes = cubes
     derived_var = pfr.DerivedVariable()
-    out_cube = derived_var.calculate(in_cubes)
+    out_cube = derived_var.calculate(cubes)
     assert out_cube.units == cf_units.Unit("%")
     out_data = out_cube.data
     expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
-    # test small differences in lat/lon coordinates in sftlf and mrsos
-    # (1) small deviations (< 1.0e-4)
-    for cube in in_cubes:
+
+
+def test_pfr_calculation_minor_latlon_differences(cubes):
+    """Test function ``calculate``."""
+    # small differences (i.e. < 1.0e-4) in lat/lon coordinates
+    # in sftlf and mrsos
+    derived_var = pfr.DerivedVariable()
+    for cube in cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
-    sftlf_cube = in_cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
     x_coord = sftlf_cube.coord(axis="X")
     y_coord = sftlf_cube.coord(axis="Y")
     x_coord.points = x_coord.core_points() + 1.0e-5
     y_coord.points = y_coord.core_points() + 1.0e-5
-    out_cube = derived_var.calculate(in_cubes)
+    out_cube = derived_var.calculate(cubes)
     # small differences are corrected automatically --> expect same results
     out_data = out_cube.data
+    expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
-    # (2) larger deviations in coordinates should trigger an error
-    #     and thus need to be checked separately
-    # (a) latitudes
-    for cube in in_cubes:
+
+
+def test_pfr_calculation_major_lat_differences(cubes):
+    """Test function ``calculate``."""
+    # larger deviations in latitudes should trigger an error
+    derived_var = pfr.DerivedVariable()
+    for cube in cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
+    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    y_coord = sftlf_cube.coord(axis="Y")
     org_y_pts = copy.deepcopy(y_coord.core_points())
     y_coord.points = y_coord.core_points() + 1.0e-2
     with pytest.raises(ValueError):
-        derived_var.calculate(in_cubes)
-    # (b) longitudes
-    for cube in in_cubes:
+        derived_var.calculate(cubes)
+    y_coord.points = org_y_pts
+
+
+def test_pfr_calculation_major_lon_differences(cubes):
+    """Test function ``calculate``."""
+    # larger deviations in longitudes should trigger an error
+    derived_var = pfr.DerivedVariable()
+    for cube in cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
+    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    x_coord = sftlf_cube.coord(axis="X")
+    org_x_pts = copy.deepcopy(x_coord.core_points())
     x_coord.points = x_coord.core_points() + 1.0e-2
-    y_coord.points = org_y_pts
     with pytest.raises(ValueError):
-        derived_var.calculate(in_cubes)
+        derived_var.calculate(cubes)
+    x_coord.points = org_x_pts
 
 
 def test_pfr_required():
