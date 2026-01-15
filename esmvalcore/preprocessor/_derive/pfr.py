@@ -50,7 +50,7 @@ class DerivedVariable(DerivedVariableBase):
         mrsos = cubes.extract_cube(NameConstraint(var_name="mrsos"))
         iris.coord_categorisation.add_year(mrsos, "time")
         mrsos_yr = mrsos.aggregated_by(["year"], iris.analysis.MEAN)
-        mrsos_yr.data = da.where(mrsos_yr.data < 0.001, 0.0, 1.0)
+        mrsos_yr.data = da.where(mrsos_yr.core_data() < 0.001, 0.0, 1.0)
         #   2) fraction of land cover of grid cell (%) (constant)
         landfrac = cubes.extract_cube(NameConstraint(var_name="sftlf"))
         #   3) create mask with fraction of ice-free land (%)
