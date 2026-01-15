@@ -109,10 +109,10 @@ def test_repr_supplementary():
 @pytest.mark.parametrize(
     ("separator", "join_lists", "output"),
     [
-        ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
-        ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
-        (" ", False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
-        (" ", True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+        ("_", False, "1_d_dom_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ("_", True, "1_d_dom_e1-e2_ens2-ens1_g1_v1"),
+        (" ", False, "1 d dom ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (" ", True, "1 d dom e1-e2 ens2-ens1 g1 v1"),
     ],
 )
 def test_get_joined_summary_facet(separator, join_lists, output):
@@ -1005,6 +1005,138 @@ def test_from_files_with_globs(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_with_globs_cmip7(
+    monkeypatch: pytest.MonkeyPatch,
+    session: Session,
+) -> None:
+    """Test `from_files` with wildcards in dataset and supplementary."""
+    rootpath = Path("/path/to/data")
+    file1 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f3",
+        "glb",
+        "mon",
+        "tas",
+        "tavg-h2m-hxy-u",
+        "gn",
+        "v20260109",
+        "tas_tavg-h2m-hxy-u_mon_glb_gn_PCMDI-test-1-0_historical_r1i1p1f3_185001-201412.nc",
+    )
+    file1.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f3",
+        "frequency": "mon",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "tas",
+        "timerange": "185001/201412",
+        "version": "v20260109",
+    }
+    file2 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f1",
+        "glb",
+        "fx",
+        "areacella",
+        "ti-u-hxy-u",
+        "gn",
+        "v20260110",
+        "areacella_ti-u-hxy-u_fx_glb_gn_PCMDI-test-1-0_historical_r1i1p1f1.nc",
+    )
+    file2.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f1",
+        "frequency": "fx",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "areacella",
+        "version": "v20260109",
+    }
+    dataset = Dataset(
+        activity="*",
+        dataset="*",
+        ensemble="*",
+        exp="historical",
+        frequency="mon",
+        grid="*",
+        institute="*",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+        branding_suffix="tavg-h2m-hxy-u",
+    )
+    dataset.add_supplementary(
+        short_name="areacella",
+        frequency="fx",
+        branding_suffix="*",
+        ensemble="*",
+    )
+    dataset.facets["timerange"] = "*"
+    dataset.session = session
+    print(dataset)
+
+    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
+
+    datasets = list(dataset.from_files())
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(
+        ads.session == session for ds in datasets for ads in ds.supplementaries
+    )
+
+    expected = Dataset(
+        activity="CMIP",
+        branding_suffix="tavg-h2m-hxy-u",
+        dataset="PCMDI-test-1-0",
+        ensemble="r1i1p1f3",
+        exp="historical",
+        frequency="mon",
+        grid="gn",
+        institute="PCMDI",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+    )
+    expected.add_supplementary(
+        short_name="areacella",
+        branding_suffix="ti-u-hxy-u",
+        frequency="fx",
+        ensemble="r1i1p1f1",
+    )
+    expected.facets["timerange"] = "185001/201412"
+    expected.session = session
+
+    assert datasets == [expected]
+
+
 def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and files with missing facets.
 
@@ -1755,7 +1887,7 @@ def test_load(mocker, session):
     fix_dir_prefix = Path(
         session.preproc_dir,
         "fixed_files",
-        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
+        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_yr_",
     )
     _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,
@@ -1833,6 +1965,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "clip_timerange": {
@@ -1854,6 +1987,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "concatenate": {
