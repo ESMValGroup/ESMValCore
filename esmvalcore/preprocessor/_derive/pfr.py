@@ -88,7 +88,7 @@ class DerivedVariable(DerivedVariableBase):
                     delta_y_max,
                 )
 
-        mask = iris.analysis.maths.multiply(mrsos_yr, landfrac)
+        mask = mrsos_yr * landfrac
 
         # extract deepest soil level
         soiltemp = cubes.extract_cube(NameConstraint(var_name="tsl"))
