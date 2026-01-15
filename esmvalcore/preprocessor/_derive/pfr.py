@@ -63,32 +63,34 @@ class DerivedVariable(DerivedVariableBase):
         # fix longitudes if maximum differences are smaller than 1.0e-4
         x_coord1 = mrsos.coord(axis="X")
         x_coord2 = landfrac.coord(axis="X")
-        delta_x_max = np.amax(x_coord1.core_points() - x_coord2.core_points())
-        if delta_x_max != 0.0:
-            if abs(delta_x_max) < 1.0e-4:
-                x_coord2.points = x_coord1.points
-                x_coord2.bounds = x_coord1.bounds
-            else:
-                logger.error(
-                    "Longitudes of mrsos and stflf fields differ (max = %f).",
-                    delta_x_max,
-                )
+        if np.allclose(
+            x_coord1.core_points(),
+            x_coord2.core_points(),
+            atol=1.0e-4,
+        ):
+            x_coord2.points = x_coord1.points
+            x_coord2.bounds = x_coord1.bounds
+        else:
+            logger.error(
+                "Longitudes of mrsos and stflf fields differ more than 1e-4 degrees.",
+            )
 
         # fix latitudes if maximum differences are smaller than 1.0e-4
         y_coord1 = mrsos.coord(axis="Y")
         y_coord2 = landfrac.coord(axis="Y")
-        delta_y_max = np.amax(y_coord1.core_points() - y_coord2.core_points())
-        if delta_y_max != 0.0:
-            if abs(delta_y_max) < 1.0e-4:
-                y_coord2.points = y_coord1.points
-                y_coord2.bounds = y_coord1.bounds
-            else:
-                logger.error(
-                    "Latitudes of mrsos and stflf fields differ (max = %f).",
-                    delta_y_max,
-                )
+        if np.allclose(
+            y_coord1.core_points(),
+            y_coord2.core_points(),
+            atol=1.0e-4,
+        ):
+            y_coord2.points = y_coord1.points
+            y_coord2.bounds = y_coord1.bounds
+        else:
+            logger.error(
+                "Latitudes of mrsos and stflf fields differ more than 1e-4 degrees.",
+            )
 
-        mask = mrsos_yr * landfrac
+        mask = iris.analysis.maths.multiply(mrsos_yr, landfrac)
 
         # extract deepest soil level
         soiltemp = cubes.extract_cube(NameConstraint(var_name="tsl"))
@@ -100,8 +102,8 @@ class DerivedVariable(DerivedVariableBase):
             1,
             0,
         )
-        iris.coord_categorisation.add_year(soiltemp, "time")
 
+        iris.coord_categorisation.add_year(soiltemp, "time")
         # prepare cube for permafrost extent with yearly time steps
         pfr_yr = soiltemp.aggregated_by(["year"], iris.analysis.MEAN)
         # get years to process
