@@ -21,6 +21,8 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.esgf import ESGFFile
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from esmvalcore.typing import Facets
 
 
@@ -1462,7 +1464,7 @@ def create_esgf_file(timerange, version):
 
 
 @pytest.fixture
-def dataset():
+def dataset() -> Dataset:
     dataset = Dataset(
         project="CMIP6",
         mip="Amon",
@@ -1475,33 +1477,39 @@ def dataset():
         timerange="1850/1851",
         alias="CMIP6_EC-Earth3_tas",
     )
-    dataset.session = {
-        "search_data": "complete",
-        "download_dir": Path("/download_dir"),
-        "projects": {
-            "CMIP6": {
-                "data": {
-                    "local": {
-                        "type": "esmvalcore.io.local.LocalDataSource",
-                        "rootpath": Path("/local_dir"),
-                        "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
-                        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
-                        "priority": 1,
-                    },
-                    "esgf": {
-                        "type": "esmvalcore.io.esgf.ESGFDataSource",
-                        "download_dir": Path("/download_dir"),
-                        "priority": 2,
+    dataset.session.clear()
+    dataset.session.update(
+        {
+            "search_data": "quick",
+            "projects": {
+                "CMIP6": {
+                    "data": {
+                        "local": {
+                            "type": "esmvalcore.io.local.LocalDataSource",
+                            "rootpath": Path("/local_dir"),
+                            "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+                            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                            "priority": 1,
+                        },
+                        "esgf": {
+                            "type": "esmvalcore.io.esgf.ESGFDataSource",
+                            "download_dir": Path("/download_dir"),
+                            "priority": 2,
+                        },
                     },
                 },
             },
         },
-    }
+    )
     return dataset
 
 
 @pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
-def test_find_files(mocker, dataset, local_availability):
+def test_find_files(
+    mocker: MockerFixture,
+    dataset: Dataset,
+    local_availability: str,
+) -> None:
     """Test `find_files`."""
     esgf_files = [
         create_esgf_file(version="v1", timerange="185001-185012"),
@@ -1578,16 +1586,27 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     assert dataset.facets["timerange"] == "185001/185112"
 
 
-def test_find_files_outdated_local(mocker, dataset):
-    """Test newer files from ESGF are found when local data is incomplete."""
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_find_files_outdated_local(
+    mocker: MockerFixture,
+    dataset: Dataset,
+    search_data: str,
+) -> None:
+    """Test newer files from ESGF are found when local data is an older version.
+
+    With `search_data="quick"` the expected behaviour is to stop searching as
+    soon as a result covering the expected timerange is found.
+    With `search_data="complete", the expected behaviour is to search all data
+    sources and use the most up to date version.
+    """
+    dataset.session["search_data"] = search_data
     esgf_files = [
-        create_esgf_file(version="v2", timerange="185001-185012"),
-        create_esgf_file(version="v2", timerange="185101-185112"),
+        create_esgf_file(version="v2", timerange="185001-185112"),
     ]
 
     local_dir = Path("/local_dir")
     local_files = [
-        create_esgf_file(version="v1", timerange="185001-185012").local_file(
+        create_esgf_file(version="v1", timerange="185001-185112").local_file(
             local_dir,
         ),
     ]
@@ -1611,7 +1630,8 @@ def test_find_files_outdated_local(mocker, dataset):
         return_value=list(esgf_files),
     )
 
-    assert dataset.files == esgf_files
+    expected = esgf_files if search_data == "complete" else local_files
+    assert dataset.files == expected
 
 
 def test_set_version():

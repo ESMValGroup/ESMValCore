@@ -111,9 +111,7 @@ Homepage = "https://esmvaltool.org"
 Issues = "https://github.com/ESMValGroup/ESMValCore/issues"
 
 [tool.setuptools]
-include-package-data = true
 packages = ["esmvalcore"]
-zip-safe = false
 
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}
