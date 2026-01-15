@@ -93,7 +93,7 @@ class DerivedVariable(DerivedVariableBase):
         # extract deepest soil level
         soiltemp = cubes.extract_cube(NameConstraint(var_name="tsl"))
         z_coord = soiltemp.coord(axis="Z")
-        zmax = np.amax(z_coord.core_points())
+        zmax = np.max(z_coord.core_points())
         soiltemp = soiltemp.extract(iris.Constraint(depth=zmax))
         soiltemp.data = da.where(
             soiltemp.core_data() < THRESH_TEMPERATURE,
