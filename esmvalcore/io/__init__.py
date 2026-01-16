@@ -67,8 +67,8 @@ def load_data_sources(
     If no ``priority`` is configured for a data source, the default priority
     of 1 is used.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     session:
         The configuration.
     project:

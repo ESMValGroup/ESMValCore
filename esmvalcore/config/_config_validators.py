@@ -7,14 +7,13 @@ import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache, partial
-from importlib.resources import files as importlib_files
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from packaging import version
 
 from esmvalcore import __version__ as current_version
-from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.cmor.table import load_cmor_tables
 from esmvalcore.config._config import TASKSEP, load_config_developer
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
@@ -284,29 +283,30 @@ def validate_drs(value):
 
 def validate_config_developer(value):
     """Validate and load config developer path."""
+    # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
     path = validate_path_or_none(value)
-    if path is None:
-        path = importlib_files("esmvalcore") / "config-developer.yml"
-    load_config_developer(path)
+    if path is not None:
+        load_config_developer(path)
 
     return path
 
 
 def validate_check_level(value):
     """Validate CMOR level check."""
-    msg = f"`{value}` is not a valid strictness level"
+    valid_levels = (
+        "debug",
+        "strict",
+        "default",
+        "relaxed",
+        "ignore",
+    )
+    msg = (
+        f"'{value}' is not a valid CMOR check strictness level, choose from: "
+        + ", ".join(f"'{level}'" for level in valid_levels)
+    )
 
-    if isinstance(value, str):
-        try:
-            value = CheckLevels[value.upper()]
-        except KeyError:
-            raise ValidationError(msg) from None
-
-    else:
-        try:
-            value = CheckLevels(value)
-        except (ValueError, TypeError) as err:
-            raise ValidationError(msg) from err
+    if not isinstance(value, str) or value.lower() not in valid_levels:
+        raise ValidationError(msg) from None
 
     return value
 
@@ -373,12 +373,19 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
+def validate_cmor_tables(value: dict) -> None:
+    """Validate the CMOR table configuration."""
+    # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
+    load_cmor_tables({"projects": value})  # type: ignore[arg-type]
+
+
 def validate_projects(
     value: dict,
 ) -> dict[str, dict[str, Any]]:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
+        "cmor_table": validate_dict,
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
         "preprocessor_filename_template": validate_string,
@@ -393,6 +400,7 @@ def validate_projects(
                 )
                 raise ValidationError(msg) from None
             mapping[project][option] = options_for_project[option](val)
+    validate_cmor_tables(mapping)
     return mapping
 
 
