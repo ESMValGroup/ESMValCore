@@ -73,8 +73,8 @@ the following:
 Recipe section: ``datasets``
 ============================
 
-The ``datasets`` section includes dictionaries that, via key-value pairs or
-"facets", define standardized data specifications:
+The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
+define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
@@ -435,7 +435,7 @@ Recipe section: ``diagnostics``
 The diagnostics section includes one or more diagnostics. Each diagnostic
 section will include:
 
-- the variable(s) to preprocess, including the preprocessor to be applied to each variable;
+- the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
@@ -563,7 +563,7 @@ running the tool (a lower number means higher priority).
 
 Variable and dataset definitions
 --------------------------------
-To define a variable/dataset combination that corresponds to an actual
+To define a :ref:`variable <cmor_tables>`/dataset combination that corresponds to an actual
 variable from a dataset, the keys in each variable section
 are combined with the keys of each dataset definition. If two versions of the same
 key are provided, then the key in the datasets section will take precedence

@@ -3828,9 +3828,9 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
-        "OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, ICON, CESM, "
-        'ACCESS."'
+        "The following tables are available: custom, CMIP7, CMIP6, CMIP5, "
+        "CMIP3, OBS, OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, "
+        'ICON, CESM, ACCESS."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)

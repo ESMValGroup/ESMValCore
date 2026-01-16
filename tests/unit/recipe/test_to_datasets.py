@@ -431,8 +431,13 @@ def test_append_missing_supplementaries():
     ]
     facets = {
         "short_name": "tas",
-        "project": "CMIP6",
-        "mip": "Amon",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "project": "CMIP7",
+        "mip": "atmos",
+        "frequency": "mon",
+        "version": "v20240101",
+        "region": "glb",
+        "grid": "gn",
     }
 
     settings = {
@@ -445,12 +450,25 @@ def test_append_missing_supplementaries():
         facets,
         settings,
     )
-    short_names = {f["short_name"] for f in supplementaries}
-    assert short_names == {"areacella", "sftlf"}
-    sftlf = supplementaries[1]
-    assert (
-        "dataset" not in sftlf
-    )  # dataset will be inherited from the main variable
+
+    assert supplementaries == [
+        # Existing supplementary variable should be unchanged.
+        {"short_name": "areacella"},
+        # Missing supplementary variable for land mask should be added. The
+        # facets listed here are typically different from the main variable's
+        # facets.
+        {
+            "activity": "*",
+            "branding_suffix": "*",
+            "ensemble": "*",
+            "exp": "*",
+            "institute": "*",
+            "mip": "*",
+            "short_name": "sftlf",
+            "frequency": "*",
+            "version": "*",
+        },
+    ]
 
 
 @pytest.mark.parametrize("files", [False, True])

@@ -18,7 +18,11 @@ from typing import TYPE_CHECKING, Any
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
-from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
+from esmvalcore.cmor.table import (
+    _get_branding_suffixes,
+    _get_mips,
+    _update_cmor_facets,
+)
 from esmvalcore.config import CFG
 from esmvalcore.config._config import (
     get_activity,
@@ -51,6 +55,7 @@ logger = logging.getLogger(__name__)
 
 INHERITED_FACETS: list[str] = [
     "dataset",
+    "region",
     "domain",
     "driver",
     "grid",
@@ -94,9 +99,9 @@ class Dataset:
     Parameters
     ----------
     **facets
-        Facets describing the dataset. See
-        :obj:`esmvalcore.io.esgf.facets.FACETS` for the mapping between
-        the facet names used by ESMValCore and those used on ESGF.
+        Facets describing the dataset. See :ref:`facets` for the mapping between
+        the facet names used by ESMValCore and those used on ESGF and
+        :ref:`cmor_tables` to find out which variables are available.
 
     Attributes
     ----------
@@ -114,9 +119,11 @@ class Dataset:
         "rcm_version",
         "driver",
         "domain",
-        "activity",
         "exp",
         "ensemble",
+        "branding_suffix",
+        "frequency",
+        "region",
         "grid",
         "version",
     )
@@ -268,7 +275,13 @@ class Dataset:
         # If possible, remove unexpanded facets that can be automatically
         # populated.
         unexpanded = {f for f, v in new_dataset.facets.items() if _isglob(v)}
-        required_for_augment = {"project", "mip", "short_name", "dataset"}
+        required_for_augment = {
+            "project",
+            "mip",
+            "short_name",
+            "branding_suffix",
+            "dataset",
+        }
         if unexpanded and not unexpanded & required_for_augment:
             copy = new_dataset.copy()
             copy.supplementaries = []
@@ -477,13 +490,33 @@ class Dataset:
             mips = [self.facets["mip"]]  # type: ignore
 
         for mip in mips:
-            dataset_template = self.copy(mip=mip)
-            for dataset in self._get_all_available_datasets(
-                dataset_template,
-            ):
-                dataset._supplementaries_from_files()  # noqa: SLF001
-                expanded = True
-                yield dataset
+            if _isglob(self.facets.get("branding_suffix", "")):
+                available_branding_suffixes = _get_branding_suffixes(
+                    project=self.facets["project"],  # type: ignore[arg-type]
+                    mip=mip,
+                    short_name=self.facets["short_name"],  # type: ignore[arg-type]
+                )
+                branding_suffixes = [
+                    branding_suffix
+                    for branding_suffix in available_branding_suffixes
+                    if _ismatch(
+                        branding_suffix,
+                        self.facets["branding_suffix"],
+                    )
+                ]
+                dataset_templates = [
+                    self.copy(mip=mip, branding_suffix=branding_suffix)
+                    for branding_suffix in branding_suffixes
+                ]
+            else:
+                dataset_templates = [self.copy(mip=mip)]
+            for dataset_template in dataset_templates:
+                for dataset in self._get_all_available_datasets(
+                    dataset_template,
+                ):
+                    dataset._supplementaries_from_files()  # noqa: SLF001
+                    expanded = True
+                    yield dataset
 
         # If files were found, or the file facets didn't match the
         # specification, yield the original, but do expand any supplementary
@@ -939,7 +972,7 @@ class Dataset:
             self._used_data_sources.append(data_source)
             # 'quick' mode: if files are available from a higher
             # priority source, do not search lower priority sources.
-            if self.session["search_data"] == "complete":
+            if self.session["search_data"] == "quick":
                 try:
                     check.data_availability(self, log=False)
                 except InputFilesNotFound:
@@ -1027,6 +1060,7 @@ class Dataset:
             "mip": self.facets["mip"],
             "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
+            "branding_suffix": self.facets.get("branding_suffix"),
         }
         if "timerange" in self.facets:
             settings["clip_timerange"] = {
@@ -1042,6 +1076,7 @@ class Dataset:
             "mip": self.facets["mip"],
             "frequency": self.facets["frequency"],
             "short_name": self.facets["short_name"],
+            "branding_suffix": self.facets.get("branding_suffix"),
         }
 
         result: Sequence[PreprocessorItem] = self.files

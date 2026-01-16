@@ -1,0 +1,38 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: d9adebf4a1c0433c3df29a567236c502",
+        "cmor_version": "3.13",
+        "generic_levels": "",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "",
+        "table_date": "2026-01-07 10:30:23",
+        "table_id": "long_name_overrides",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "long_name_overrides": {
+        "seaIce.siarea.tavg-u-hm-u.day.nh": "Sea-Ice Area North",
+        "seaIce.siarea.tavg-u-hm-u.day.sh": "Sea-Ice Area South",
+        "seaIce.siarea.tavg-u-hm-u.mon.nh": "Sea-Ice Area North",
+        "seaIce.siarea.tavg-u-hm-u.mon.sh": "Sea-Ice Area South",
+        "seaIce.siextent.tavg-u-hm-u.day.nh": "Sea-Ice Extent North",
+        "seaIce.siextent.tavg-u-hm-u.day.sh": "Sea-Ice Extent South",
+        "seaIce.siextent.tavg-u-hm-u.mon.nh": "Sea-Ice Extent North",
+        "seaIce.siextent.tavg-u-hm-u.mon.sh": "Sea-Ice Extent South",
+        "seaIce.sisnmass.tavg-u-hm-si.day.nh": "Snow Mass on Sea Ice North",
+        "seaIce.sisnmass.tavg-u-hm-si.day.sh": "Snow Mass on Sea Ice South",
+        "seaIce.sisnmass.tavg-u-hm-si.mon.nh": "Snow Mass on Sea Ice North",
+        "seaIce.sisnmass.tavg-u-hm-si.mon.sh": "Snow Mass on Sea Ice South",
+        "seaIce.sivol.tavg-u-hm-u.day.nh": "Sea-Ice Volume North",
+        "seaIce.sivol.tavg-u-hm-u.day.sh": "Sea-Ice Volume South",
+        "seaIce.sivol.tavg-u-hm-u.mon.nh": "Sea-Ice Volume North",
+        "seaIce.sivol.tavg-u-hm-u.mon.sh": "Sea-Ice Volume South"
+    }
+}
