@@ -13,6 +13,8 @@ from iris.cube import CubeList
 from esmvalcore.preprocessor._units import convert_units
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cf_units import Unit
     from iris.cube import Cube
 
@@ -77,7 +79,7 @@ def get_required(short_name: str, project: str) -> list[Facets]:
 
 
 def derive(
-    cubes: CubeList,
+    cubes: Sequence[Cube],
     short_name: str,
     long_name: str,
     units: str | Unit,
@@ -88,8 +90,7 @@ def derive(
     Parameters
     ----------
     cubes:
-        Includes all the needed variables for derivation defined in
-        :func:`get_required`.
+        Includes all the needed variables for derivation.
     short_name:
         short_name
     long_name:
@@ -103,6 +104,38 @@ def derive(
     -------
     iris.cube.Cube
         The new derived variable.
+
+    Examples
+    --------
+    Required variables for derivation can be obtained via
+    :attr:`esmvalcore.dataset.Dataset.required_datasets`.
+
+    For example, to derive the longwave cloud radiative effect (LWCRE) for the
+    model CESM2, you can use:
+
+    >>> from esmvalcore.dataset import Dataset
+    >>> from esmvalcore.preprocessor import derive
+    >>> dataset = Dataset(
+    ...     project="CMIP6",
+    ...     dataset="CESM2",
+    ...     exp="historical",
+    ...     ensemble="r1i1p1f1",
+    ...     grid="gn",
+    ...     timerange="2000/2014",
+    ...     short_name="lwcre",
+    ...     mip="Amon",
+    ...     derive=True,
+    ... )
+    >>> cubes = [d.load() for d in dataset.required_datasets]
+    >>> cube = derive(
+    ...     cubes,
+    ...     short_name="lwcre",
+    ...     long_name="TOA Longwave Cloud Radiative Effect",
+    ...     units="W m-2",
+    ... )
+    >>> print(cube.var_name)
+    lwcre  # doctest: +SKIP
+
     """
     if short_name == cubes[0].var_name:
         return cubes[0]

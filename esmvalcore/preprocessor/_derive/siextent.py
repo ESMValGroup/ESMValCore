@@ -20,8 +20,8 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [
-            {"short_name": "sic", "optional": "true"},
-            {"short_name": "siconca", "optional": "true"},
+            {"short_name": "sic", "optional": True},
+            {"short_name": "siconca", "optional": True},
         ]
 
     @staticmethod
@@ -53,9 +53,7 @@ class DerivedVariable(DerivedVariableBase):
                     "Derivation of siextent failed due to missing variables "
                     "sic and siconca."
                 )
-                raise RecipeError(
-                    msg,
-                ) from exc
+                raise RecipeError(msg) from exc
 
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15.0, ones)

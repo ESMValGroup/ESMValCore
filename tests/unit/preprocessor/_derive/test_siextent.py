@@ -113,6 +113,6 @@ def test_siextent_required():
     derived_var = siextent.DerivedVariable()
     output = derived_var.required(None)
     assert output == [
-        {"short_name": "sic", "optional": "true"},
-        {"short_name": "siconca", "optional": "true"},
+        {"short_name": "sic", "optional": True},
+        {"short_name": "siconca", "optional": True},
     ]
