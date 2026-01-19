@@ -187,7 +187,12 @@ def test_find_data(root, cfg):
         assert str(pattern) in data_source.debug_info
 
 
-def test_select_invalid_drs_structure():
+def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     msg = (
         r"drs _INVALID_STRUCTURE_ for CMIP6 project not specified in "
         r"config-developer file"
