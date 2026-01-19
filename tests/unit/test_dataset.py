@@ -1622,19 +1622,6 @@ def test_from_files_with_derived(rlut_file, rlutcs_file, session):
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -1754,19 +1741,6 @@ def test_from_files_with_derived_glob(
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -1827,19 +1801,6 @@ def test_from_files_with_derived_glob_differing_timerange(
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2048,20 +2009,6 @@ def test_from_files_with_derived_force_derivation(
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                force_derivation=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2133,20 +2080,6 @@ def test_from_files_with_derived_force_derivation_glob(  # noqa: PLR0913
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                force_derivation=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2239,19 +2172,6 @@ def test_from_files_with_derived_optional(
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2334,19 +2254,6 @@ def test_from_files_with_derived_glob_optional(
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -2486,19 +2393,6 @@ def test_from_files_with_derived_only_optional(siconca_file, pr_file, session):
         ),
     ]
     for expected_ds in expected_required_datasets:
-        expected_ds.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_ds.session = session
 
     required_datasets = datasets[0].required_datasets
@@ -3658,19 +3552,6 @@ def test_required_datasets_derivation(session):
         ),
     ]
     for expected_dataset in expected_datasets:
-        expected_dataset.supplementaries = [
-            Dataset(
-                **OBS6_SAT_FACETS,
-                short_name="pr",
-                derive=False,
-                frequency="mon",
-                long_name="Precipitation",
-                modeling_realm=["atmos"],
-                original_short_name="pr",
-                standard_name="precipitation_flux",
-                units="kg m-2 s-1",
-            ),
-        ]
         expected_dataset.session = dataset.session
 
     assert dataset.required_datasets == expected_datasets
