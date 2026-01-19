@@ -49,10 +49,10 @@ by an underscore and the ``branding_suffix``. For example, the facets
 ``project: CMIP7, mip: atmos, short_name: tas, branding_suffix: tavg-h2m-hxy-u``
 select one of the near-surface air temperature variables in the CMIP7 atmos table:
 
-.. literalinclude:: ../../esmvalcore/cmor/tables/cmip7/Tables/CMIP7_atmos.json
+.. literalinclude:: ../../esmvalcore/cmor/tables/cmip7/tables/CMIP7_atmos.json
    :start-at: "tas_tavg-h2m-hxy-u": {
    :end-at: },
-   :caption: One of the ``tas`` variable definitions in the CMIP7 atmos table at `esmvalcore/cmor/tables/cmip7/Tables/CMIP7_atmos.json <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip7/Tables/CMIP7_atmos.json>`__.
+   :caption: One of the ``tas`` variable definitions in the CMIP7 atmos table at `esmvalcore/cmor/tables/cmip7/tables/CMIP7_atmos.json <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip7/Tables/CMIP7_atmos.json>`__.
 
 For other projects, the facet ``branding_suffix`` can also be used to distinguish
 between variables from the same CMOR table that share the same ``short_name``,

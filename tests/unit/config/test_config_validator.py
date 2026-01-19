@@ -311,13 +311,13 @@ def test_handle_deprecation(remove_version):
 def test_validate_config_developer_none():
     """Test ``validate_config_developer``."""
     path = validate_config_developer(None)
-    assert path == Path(esmvalcore.__file__).parent / "config-developer.yml"
+    assert path is None
 
 
 def test_validate_config_developer(tmp_path):
     """Test ``validate_config_developer``."""
     custom_table_path = (
-        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "custom"
+        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "cmip5-custom"
     )
     cfg_dev = {
         "custom": {"cmor_path": custom_table_path},

@@ -600,6 +600,9 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
                     f" within the requested timerange {facets['timerange']}"
                 )
 
+        if files:
+            self.debug_info = f"F{self.debug_info[len('No f') :]}"
+
         return files
 
     def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:

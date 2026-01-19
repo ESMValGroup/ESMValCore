@@ -12,6 +12,7 @@ from esmvalcore.cmor.table import (
     CMIP5Info,
     CMIP6Info,
     CustomInfo,
+    Obs4MIPsInfo,
     _get_branding_suffixes,
     _get_mips,
     _update_cmor_facets,
@@ -24,6 +25,8 @@ def test_update_cmor_facets():
         "project": "CMIP6",
         "mip": "Amon",
         "short_name": "tas",
+        "dataset": "CanESM5",
+        "exp": "historical",
     }
 
     _update_cmor_facets(facets)
@@ -32,12 +35,18 @@ def test_update_cmor_facets():
         "project": "CMIP6",
         "mip": "Amon",
         "short_name": "tas",
+        "dataset": "CanESM5",
         "original_short_name": "tas",
         "standard_name": "air_temperature",
         "long_name": "Near-Surface Air Temperature",
         "units": "K",
         "modeling_realm": ["atmos"],
         "frequency": "mon",
+        "activity": "CMIP",
+        "exp": "historical",
+        "institute": [
+            "CCCma",
+        ],
     }
     assert facets == expected
 
@@ -76,12 +85,9 @@ class TestCMIP6Info(unittest.TestCase):
         We read CMIP6Info once to keep tests times manageable
         """
         cls.variables_info = CMIP6Info(
-            "cmip6",
-            default=CustomInfo(),
-            strict=True,
-            alt_names=[
-                ["sic", "siconc"],
-                ["tro3", "o3"],
+            paths=[
+                Path("cmip6/Tables"),
+                Path("cmip6-custom"),
             ],
         )
 
@@ -177,11 +183,12 @@ class Testobs4mipsInfo(unittest.TestCase):
 
         We read CMIP6Info once to keep tests times manageable
         """
-        cls.variables_info = CMIP6Info(
-            cmor_tables_path="obs4mips",
-            default=CustomInfo(),
+        cls.variables_info = Obs4MIPsInfo(
+            paths=[
+                Path("obs4mips/Tables"),
+                Path("cmip6-custom"),
+            ],
             strict=False,
-            default_table_prefix="obs4MIPs_",
         )
 
     def setUp(self):
@@ -190,7 +197,7 @@ class Testobs4mipsInfo(unittest.TestCase):
     def test_get_table_frequency(self):
         """Test get table frequency."""
         self.assertEqual(
-            self.variables_info.get_table("obs4MIPs_monStderr").frequency,
+            self.variables_info.get_table("monStderr").frequency,
             "mon",
         )
 
@@ -215,7 +222,7 @@ class Testobs4mipsInfo(unittest.TestCase):
 
     def test_get_variable_hus(self):
         """Get hus variable."""
-        var = self.variables_info.get_variable("obs4MIPs_Amon", "hus")
+        var = self.variables_info.get_variable("Amon", "hus")
         self.assertEqual(var.short_name, "hus")
         self.assertEqual(var.frequency, "mon")
 
@@ -231,7 +238,7 @@ class Testobs4mipsInfo(unittest.TestCase):
         Note table name obs4MIPs_[mip]
         """
         var = self.variables_info.get_variable(
-            "obs4MIPs_monStderr",
+            "monStderr",
             "prStderr",
         )
         self.assertEqual(var.short_name, "prStderr")
@@ -240,7 +247,7 @@ class Testobs4mipsInfo(unittest.TestCase):
     def test_get_variable_from_custom_deriving(self):
         """Get a variable from default."""
         var = self.variables_info.get_variable(
-            "obs4MIPs_Amon",
+            "Amon",
             "swcre",
             derived=True,
         )
@@ -248,7 +255,7 @@ class Testobs4mipsInfo(unittest.TestCase):
         self.assertEqual(var.frequency, "mon")
 
         var = self.variables_info.get_variable(
-            "obs4MIPs_Aday",
+            "Aday",
             "swcre",
             derived=True,
         )
@@ -269,7 +276,13 @@ class TestCMIP5Info(unittest.TestCase):
 
         We read CMIP5Info once to keep testing times manageable
         """
-        cls.variables_info = CMIP5Info("cmip5", CustomInfo(), strict=True)
+        cls.variables_info = CMIP5Info(
+            paths=[
+                Path("cmip5/Tables"),
+                Path("cmip5-custom"),
+            ],
+            strict=True,
+        )
 
     def setUp(self):
         self.variables_info.strict = True
@@ -356,7 +369,13 @@ class TestCMIP3Info(unittest.TestCase):
 
         We read CMIP5Info once to keep testing times manageable
         """
-        cls.variables_info = CMIP3Info("cmip3", CustomInfo(), strict=True)
+        cls.variables_info = CMIP3Info(
+            paths=[
+                Path("cmip3/Tables"),
+                Path("cmip5-custom"),
+            ],
+            strict=True,
+        )
 
     def setUp(self):
         self.variables_info.strict = True
@@ -443,7 +462,12 @@ class TestCORDEXInfo(unittest.TestCase):
 
         We read CORDEX once to keep testing times manageable
         """
-        cls.variables_info = CMIP5Info("cordex", default=CustomInfo())
+        cls.variables_info = CMIP5Info(
+            paths=[
+                Path("cordex/Tables"),
+                Path("cmip5-custom"),
+            ],
+        )
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -478,23 +502,29 @@ class TestCustomInfo(unittest.TestCase):
         expected_cmor_folder = os.path.join(
             os.path.dirname(esmvalcore.cmor.__file__),
             "tables",
-            "custom",
+            "cmip5-custom",
         )
-        self.assertEqual(custom_info._cmor_folder, expected_cmor_folder)
+        assert custom_info.paths == (Path(expected_cmor_folder),)
         self.assertTrue(custom_info.tables["custom"])
         self.assertTrue(custom_info.coords)
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        default_cmor_tables_path = os.path.join(cmor_path, "tables", "custom")
+        default_cmor_tables_path = os.path.join(
+            cmor_path,
+            "tables",
+            "cmip5-custom",
+        )
         cmor_tables_path = os.path.join(cmor_path, "tables", "cmip5")
         cmor_tables_path = os.path.abspath(cmor_tables_path)
 
         custom_info = CustomInfo(cmor_tables_path)
 
-        self.assertEqual(custom_info._cmor_folder, default_cmor_tables_path)
-        self.assertEqual(custom_info._user_table_folder, cmor_tables_path)
+        assert custom_info.paths == (
+            Path(default_cmor_tables_path),
+            Path(cmor_tables_path),
+        )
         self.assertTrue(custom_info.tables["custom"])
         self.assertTrue(custom_info.coords)
 

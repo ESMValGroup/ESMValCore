@@ -24,11 +24,7 @@ from esmvalcore.cmor.table import (
     _update_cmor_facets,
 )
 from esmvalcore.config import CFG
-from esmvalcore.config._config import (
-    get_activity,
-    get_institutes,
-    load_extra_facets,
-)
+from esmvalcore.config._config import load_extra_facets
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _dates_to_timerange
@@ -756,14 +752,6 @@ class Dataset:
     def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
-        if "institute" not in self.facets:
-            institute = get_institutes(self.facets)
-            if institute:
-                self.facets["institute"] = institute
-        if "activity" not in self.facets:
-            activity = get_activity(self.facets)
-            if activity:
-                self.facets["activity"] = activity
         _update_cmor_facets(self.facets)
         if self.facets.get("frequency") == "fx":
             self.facets.pop("timerange", None)

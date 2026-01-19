@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -37,6 +38,11 @@ def test_load_legacy_data_sources(
         session["projects"][project].pop("data", None)
     session["search_esgf"] = search_esgf
     session["download_dir"] = "~/climate_data"
+    monkeypatch.setitem(
+        esmvalcore.local.CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     monkeypatch.setitem(
         esmvalcore.local.CFG,
         "rootpath",

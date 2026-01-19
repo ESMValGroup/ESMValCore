@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
+import esmvalcore
+import esmvalcore.config
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import (
@@ -147,9 +150,15 @@ def test_get_preprocessor_filename_default(
 
 
 def test_get_preprocessor_filename_falls_back_to_config_developer(
+    monkeypatch: pytest.MonkeyPatch,
     session: Session,
 ) -> None:
     """Test the function `_get_preprocessor_filename`."""
+    monkeypatch.setitem(
+        esmvalcore.config.CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     session["projects"]["CMIP6"].pop("preprocessor_filename_template")
     dataset = Dataset(
         project="CMIP6",

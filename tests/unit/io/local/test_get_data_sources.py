@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import esmvalcore
 from esmvalcore.config import CFG
-from esmvalcore.config._config_validators import validate_config_developer
 from esmvalcore.io.local import LocalDataSource
 from esmvalcore.local import DataSource, _get_data_sources
 
@@ -33,7 +33,11 @@ if TYPE_CHECKING:
 )
 def test_get_data_sources(monkeypatch, rootpath_drs):
     # Make sure that default config-developer file is used
-    validate_config_developer(None)
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
 
     rootpath, drs = rootpath_drs
     monkeypatch.setitem(CFG, "rootpath", rootpath)
@@ -48,7 +52,11 @@ def test_get_data_sources(monkeypatch, rootpath_drs):
 
 def test_get_data_sources_nodefault(monkeypatch):
     # Make sure that default config-developer file is used
-    validate_config_developer(None)
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
 
     monkeypatch.setitem(
         CFG,

@@ -7,7 +7,6 @@ import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache, partial
-from importlib.resources import files as importlib_files
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -15,6 +14,7 @@ from packaging import version
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.cmor.table import load_cmor_tables
 from esmvalcore.config._config import TASKSEP, load_config_developer
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
@@ -285,9 +285,10 @@ def validate_drs(value):
 def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
-    if path is None:
-        path = importlib_files("esmvalcore") / "config-developer.yml"
-    load_config_developer(path)
+    if path is not None:
+        # This has the side-effect of updating `esmvalcore.config._config.CFG`
+        # `esmvalcore.cmor.tables.CMOR_TABLES`.
+        load_config_developer(path)
 
     return path
 
@@ -373,12 +374,29 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
+def validate_cmor_tables(value: dict) -> None:
+    """Validate the CMOR table configuration."""
+    # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
+    #
+    # Relying on global state is not nice, preferably we should get rid of any
+    # global state except the defaults for starting a new session in
+    # `esmvalcore.config.CFG`.
+    #
+    # Having side effects when updating an `esmvalcore.config.Session` object
+    # that changes global state of the `esmvalcore` package is nasty and should
+    # preferably be avoided. This would require passing around session objects
+    # instead of relying on global state (e.g. esmvalcore.config.CFG,
+    # esmvalcore.cmor.tables.CMOR_TABLES).
+    load_cmor_tables({"projects": value})  # type: ignore[arg-type]
+
+
 def validate_projects(
     value: dict,
 ) -> dict[str, dict[str, Any]]:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
+        "cmor_table": validate_dict,
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
         "preprocessor_filename_template": validate_string,
@@ -393,6 +411,7 @@ def validate_projects(
                 )
                 raise ValidationError(msg) from None
             mapping[project][option] = options_for_project[option](val)
+    validate_cmor_tables(mapping)
     return mapping
 
 
