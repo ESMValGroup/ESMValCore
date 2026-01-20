@@ -2,7 +2,7 @@
 
 .. deprecated:: 2.14.0
     This module has been moved to :mod:`esmvalcore.io.esgf`. Importing it as
-    :mod:`esmvalcore.io.esgf` is deprecated and will be removed in version 2.16.0.
+    :mod:`esmvalcore.esgf` is deprecated and will be removed in version 2.16.0.
 """
 
 from esmvalcore.io.esgf import (

@@ -839,7 +839,7 @@ def test_limit_datasets():
 def test_get_default_settings(mocker):
     mocker.patch.object(
         _recipe,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         autospec=True,
         return_value=Path("/path/to/file.nc"),
     )

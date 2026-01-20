@@ -1,0 +1,1442 @@
+{
+    "Header": {
+        "Conventions": "CF-1.12 CMIP-7.0",
+        "checksum": "md5: 8d957f160aa44e67d52c4a550faaf8fb",
+        "cmor_version": "3.13",
+        "generic_levels": "olevel olevhalf",
+        "int_missing_value": "-999",
+        "missing_value": "1e20",
+        "ok_max_mean_abs": "",
+        "ok_min_mean_abs": "",
+        "positive": "",
+        "product": "model-output",
+        "realm": "seaIce",
+        "table_date": "2026-01-07 10:30:23",
+        "table_id": "seaIce",
+        "type": "real",
+        "valid_max": "",
+        "valid_min": ""
+    },
+    "variable_entry": {
+        "evspsbl_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Evaporation and Sublimation",
+            "modeling_realm": "seaIce",
+            "out_name": "evspsbl",
+            "positive": "up",
+            "standard_name": "water_evapotranspiration_flux",
+            "units": "kg m-2 s-1"
+        },
+        "prra_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Rainfall Rate over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "prra",
+            "positive": "",
+            "standard_name": "rainfall_flux",
+            "units": "kg m-2 s-1"
+        },
+        "prsn_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Change Through Snowfall",
+            "modeling_realm": "seaIce",
+            "out_name": "prsn",
+            "positive": "",
+            "standard_name": "snowfall_flux",
+            "units": "kg m-2 s-1"
+        },
+        "rlds_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downwelling Longwave Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "rlds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_longwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rlus_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Upwelling Longwave Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "rlus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_longwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsds_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downwelling Shortwave Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "rsds",
+            "positive": "down",
+            "standard_name": "surface_downwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "rsus_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Upwelling Shortwave Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "rsus",
+            "positive": "up",
+            "standard_name": "surface_upwelling_shortwave_flux_in_air",
+            "units": "W m-2"
+        },
+        "sbl_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Rate of Change Through Evaporation or Sublimation",
+            "modeling_realm": "seaIce",
+            "out_name": "sbl",
+            "positive": "",
+            "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sfdsi_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Salt Flux from Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sfdsi",
+            "positive": "down",
+            "standard_name": "downward_sea_ice_basal_salt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "siage_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Age of Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "siage",
+            "positive": "",
+            "standard_name": "age_of_sea_ice",
+            "units": "s"
+        },
+        "siarea_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Sea-Ice Area",
+            "modeling_realm": "seaIce",
+            "out_name": "siarea",
+            "positive": "",
+            "standard_name": "sea_ice_area",
+            "units": "1e6 km2"
+        },
+        "siareaacrossline_tavg-u-ht-u": {
+            "cell_measures": "",
+            "cell_methods": "time: mean",
+            "comment": "",
+            "dimensions": [
+                "siline",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Flux Through Straits",
+            "modeling_realm": "seaIce",
+            "out_name": "siareaacrossline",
+            "positive": "",
+            "standard_name": "sea_ice_area_transport_across_line",
+            "units": "m2 s-1"
+        },
+        "sicompstren_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Compressive Sea Ice Strength",
+            "modeling_realm": "seaIce",
+            "out_name": "sicompstren",
+            "positive": "",
+            "standard_name": "compressive_strength_of_sea_ice",
+            "units": "N m-1"
+        },
+        "siconc_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Percentage (Ocean Grid)",
+            "modeling_realm": "seaIce",
+            "out_name": "siconc",
+            "positive": "",
+            "standard_name": "sea_ice_area_fraction",
+            "units": "%"
+        },
+        "siconca_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Percentage (Atmospheric Grid)",
+            "modeling_realm": "seaIce",
+            "out_name": "siconca",
+            "positive": "",
+            "standard_name": "sea_ice_area_fraction",
+            "units": "%"
+        },
+        "sidconcdyn_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Fraction Tendency Due to Dynamics",
+            "modeling_realm": "seaIce",
+            "out_name": "sidconcdyn",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_area_fraction_due_to_dynamics",
+            "units": "s-1"
+        },
+        "sidconcth_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Fraction Tendency Due to Thermodynamics",
+            "modeling_realm": "seaIce",
+            "out_name": "sidconcth",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_area_fraction_due_to_thermodynamics",
+            "units": "s-1"
+        },
+        "sidivvel_tpt-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea_ice (mask=siconc) time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Divergence of the Sea-Ice Velocity Field",
+            "modeling_realm": "seaIce",
+            "out_name": "sidivvel",
+            "positive": "",
+            "standard_name": "divergence_of_sea_ice_velocity",
+            "units": "s-1"
+        },
+        "sidmassdyn_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change from Dynamics",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassdyn",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_sea_ice_dynamics",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassgrowthbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Basal Growth",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassgrowthbot",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_congelation_ice_accumulation",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassgrowthsi_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Snow-to-Ice Conversion",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassgrowthsi",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_conversion_of_snow_to_sea_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassgrowthwat_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Growth in Supercooled Open Water (Frazil)",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassgrowthwat",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_frazil_ice_accumulation_in_leads",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassmeltbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Bottom Melting",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassmeltbot",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_basal_melting",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassmeltlat_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Lateral Melting",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassmeltlat",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_lateral_melting",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassmelttop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change Through Surface Melting",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassmelttop",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_surface_melting",
+            "units": "kg m-2 s-1"
+        },
+        "sidmassth_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Change from Thermodynamics",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmassth",
+            "positive": "",
+            "standard_name": "tendency_of_sea_ice_amount_due_to_sea_ice_thermodynamics",
+            "units": "kg m-2 s-1"
+        },
+        "sidmasstranx_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Sea-Ice Mass Transport",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmasstranx",
+            "positive": "",
+            "standard_name": "sea_ice_x_transport",
+            "units": "kg s-1"
+        },
+        "sidmasstrany_tavg-u-hxy-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Sea-Ice Mass Transport",
+            "modeling_realm": "seaIce",
+            "out_name": "sidmasstrany",
+            "positive": "",
+            "standard_name": "sea_ice_y_transport",
+            "units": "kg s-1"
+        },
+        "sidragbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ocean Drag Coefficient",
+            "modeling_realm": "seaIce",
+            "out_name": "sidragbot",
+            "positive": "",
+            "standard_name": "sea_ice_basal_drag_coefficient_for_momentum_in_sea_water",
+            "units": "1"
+        },
+        "sidragtop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Atmospheric Drag Coefficient",
+            "modeling_realm": "seaIce",
+            "out_name": "sidragtop",
+            "positive": "",
+            "standard_name": "surface_drag_coefficient_for_momentum_in_air",
+            "units": "1"
+        },
+        "sieqthick_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Volume per Area",
+            "modeling_realm": "seaIce",
+            "out_name": "sieqthick",
+            "positive": "",
+            "standard_name": "sea_ice_thickness",
+            "units": "m"
+        },
+        "siextent_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Sea-Ice Extent",
+            "modeling_realm": "seaIce",
+            "out_name": "siextent",
+            "positive": "",
+            "standard_name": "sea_ice_extent",
+            "units": "1e6 km2"
+        },
+        "sifb_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Freeboard",
+            "modeling_realm": "seaIce",
+            "out_name": "sifb",
+            "positive": "",
+            "standard_name": "sea_ice_freeboard",
+            "units": "m"
+        },
+        "siflcondbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Conductive Heat Flux in Sea Ice at the Base",
+            "modeling_realm": "seaIce",
+            "out_name": "siflcondbot",
+            "positive": "down",
+            "standard_name": "basal_downward_heat_flux_in_sea_ice",
+            "units": "W m-2"
+        },
+        "siflcondtop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Conductive Heat Flux in Sea Ice at the Surface",
+            "modeling_realm": "seaIce",
+            "out_name": "siflcondtop",
+            "positive": "down",
+            "standard_name": "surface_downward_heat_flux_in_sea_ice",
+            "units": "W m-2"
+        },
+        "siflfwbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Freshwater Flux from Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "siflfwbot",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_due_to_sea_ice_thermodynamics",
+            "units": "kg m-2 s-1"
+        },
+        "siflfwdrain_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Freshwater Flux from Sea-Ice Surface",
+            "modeling_realm": "seaIce",
+            "out_name": "siflfwdrain",
+            "positive": "",
+            "standard_name": "water_flux_into_sea_water_due_to_surface_drainage",
+            "units": "kg m-2 s-1"
+        },
+        "sifllattop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Latent Heat Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sifllattop",
+            "positive": "down",
+            "standard_name": "surface_downward_latent_heat_flux",
+            "units": "W m-2"
+        },
+        "siflsensbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Upward Sensible Heat Flux under Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "siflsensbot",
+            "positive": "down",
+            "standard_name": "upward_sea_ice_basal_heat_flux",
+            "units": "W m-2"
+        },
+        "siflsenstop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconca)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Downward Sensible Heat Flux over Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "siflsenstop",
+            "positive": "down",
+            "standard_name": "surface_downward_sensible_heat_flux",
+            "units": "W m-2"
+        },
+        "siflswdbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Downwelling Shortwave Flux under Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "siflswdbot",
+            "positive": "down",
+            "standard_name": "downwelling_shortwave_flux_in_sea_water_at_sea_ice_base",
+            "units": "W m-2"
+        },
+        "siforcecoriolx_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Coriolis Force Term in Force Balance (X-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforcecoriolx",
+            "positive": "",
+            "standard_name": "sea_ice_x_force_per_unit_area_due_to_coriolis_effect",
+            "units": "N m-2"
+        },
+        "siforcecorioly_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Coriolis Force Term in Force Balance (Y-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforcecorioly",
+            "positive": "",
+            "standard_name": "sea_ice_y_force_per_unit_area_due_to_coriolis_effect",
+            "units": "N m-2"
+        },
+        "siforceintstrx_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Internal Stress Term in Force Balance (X-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforceintstrx",
+            "positive": "",
+            "standard_name": "sea_ice_x_internal_stress",
+            "units": "N m-2"
+        },
+        "siforceintstry_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Internal Stress Term in Force Balance (Y-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforceintstry",
+            "positive": "",
+            "standard_name": "sea_ice_y_internal_stress",
+            "units": "N m-2"
+        },
+        "siforcetiltx_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Surface Tilt Term in Force Balance (X-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforcetiltx",
+            "positive": "",
+            "standard_name": "sea_ice_x_force_per_unit_area_due_to_sea_surface_tilt",
+            "units": "N m-2"
+        },
+        "siforcetilty_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Surface Tilt Term in Force Balance (Y-Component)",
+            "modeling_realm": "seaIce",
+            "out_name": "siforcetilty",
+            "positive": "",
+            "standard_name": "sea_ice_y_force_per_unit_area_due_to_sea_surface_tilt",
+            "units": "N m-2"
+        },
+        "sihc_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Heat Content",
+            "modeling_realm": "seaIce",
+            "out_name": "sihc",
+            "positive": "",
+            "standard_name": "sea_ice_enthalpy_content",
+            "units": "J m-2"
+        },
+        "siitdconc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "iceband",
+                "time"
+            ],
+            "long_name": "Sea-Ice Area Percentages in Ice Thickness Categories",
+            "modeling_realm": "seaIce",
+            "out_name": "siitdconc",
+            "positive": "",
+            "standard_name": "sea_ice_area_fraction",
+            "units": "%"
+        },
+        "siitdsnconc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siitdconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "iceband",
+                "time"
+            ],
+            "long_name": "Snow Area Percentages in Ice Thickness Categories",
+            "modeling_realm": "seaIce",
+            "out_name": "siitdsnconc",
+            "positive": "",
+            "standard_name": "surface_snow_area_fraction",
+            "units": "%"
+        },
+        "siitdsnthick_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siitdconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "iceband",
+                "time"
+            ],
+            "long_name": "Snow Thickness in Ice Thickness Categories",
+            "modeling_realm": "seaIce",
+            "out_name": "siitdsnthick",
+            "positive": "",
+            "standard_name": "surface_snow_thickness",
+            "units": "m"
+        },
+        "siitdthick_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siitdconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "iceband",
+                "time"
+            ],
+            "long_name": "Sea-Ice Thickness in Ice Thickness Categories",
+            "modeling_realm": "seaIce",
+            "out_name": "siitdthick",
+            "positive": "",
+            "standard_name": "sea_ice_thickness",
+            "units": "m"
+        },
+        "simass_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass",
+            "modeling_realm": "seaIce",
+            "out_name": "simass",
+            "positive": "",
+            "standard_name": "sea_ice_amount",
+            "units": "kg m-2"
+        },
+        "simassacrossline_tavg-u-ht-u": {
+            "cell_measures": "",
+            "cell_methods": "time: mean",
+            "comment": "",
+            "dimensions": [
+                "siline",
+                "time"
+            ],
+            "long_name": "Sea-Ice Mass Flux Through Straits",
+            "modeling_realm": "seaIce",
+            "out_name": "simassacrossline",
+            "positive": "",
+            "standard_name": "sea_ice_transport_across_line",
+            "units": "kg s-1"
+        },
+        "simpconc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typemp"
+            ],
+            "long_name": "Fraction of Sea Ice Covered by Melt Pond",
+            "modeling_realm": "seaIce",
+            "out_name": "simpconc",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "simpeffconc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typemp"
+            ],
+            "long_name": "Fraction of Sea Ice Covered by Effective Melt Pond",
+            "modeling_realm": "seaIce",
+            "out_name": "simpeffconc",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "simprefrozen_tavg-u-hxy-simp": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice_melt_pond (mask=simpconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Thickness of Refrozen Ice on Melt Pond",
+            "modeling_realm": "seaIce",
+            "out_name": "simprefrozen",
+            "positive": "",
+            "standard_name": "thickness_of_ice_on_sea_ice_melt_pond",
+            "units": "m"
+        },
+        "simpthick_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Melt Pond Depth",
+            "modeling_realm": "seaIce",
+            "out_name": "simpthick",
+            "positive": "",
+            "standard_name": "sea_ice_melt_pond_thickness",
+            "units": "m"
+        },
+        "simpthick_tavg-u-hxy-simp": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice_melt_pond (mask=simpconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Melt Pond Depth",
+            "modeling_realm": "seaIce",
+            "out_name": "simpthick",
+            "positive": "",
+            "standard_name": "sea_ice_melt_pond_thickness",
+            "units": "m"
+        },
+        "sirdgconc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time",
+                "typesirdg"
+            ],
+            "long_name": "Fraction of Ridged Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sirdgconc",
+            "positive": "",
+            "standard_name": "area_fraction",
+            "units": "%"
+        },
+        "sisali_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Salinity",
+            "modeling_realm": "seaIce",
+            "out_name": "sisali",
+            "positive": "",
+            "standard_name": "sea_ice_salinity",
+            "units": "1E-03"
+        },
+        "sisaltmass_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Mass of Salt in Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sisaltmass",
+            "positive": "",
+            "standard_name": "sea_ice_mass_content_of_salt",
+            "units": "kg m-2"
+        },
+        "sishearvel_tpt-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea_ice (mask=siconc) time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Maximum Shear of Sea-Ice Velocity Field",
+            "modeling_realm": "seaIce",
+            "out_name": "sishearvel",
+            "positive": "",
+            "standard_name": "maximum_over_coordinate_rotation_of_sea_ice_horizontal_shear_strain_rate",
+            "units": "s-1"
+        },
+        "sisndmassdyn_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Rate of Change Through Advection by Sea-Ice Dynamics",
+            "modeling_realm": "seaIce",
+            "out_name": "sisndmassdyn",
+            "positive": "",
+            "standard_name": "tendency_of_surface_snow_amount_due_to_sea_ice_dynamics",
+            "units": "kg m-2 s-1"
+        },
+        "sisndmasssi_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Rate of Change Through Snow-to-Ice Conversion",
+            "modeling_realm": "seaIce",
+            "out_name": "sisndmasssi",
+            "positive": "",
+            "standard_name": "tendency_of_surface_snow_amount_due_to_conversion_of_snow_to_sea_ice",
+            "units": "kg m-2 s-1"
+        },
+        "sisndmasswind_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Rate of Change Through Wind Drift of Snow",
+            "modeling_realm": "seaIce",
+            "out_name": "sisndmasswind",
+            "positive": "",
+            "standard_name": "tendency_of_surface_snow_amount_due_to_drifting_into_sea",
+            "units": "kg m-2 s-1"
+        },
+        "sisnhc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Heat Content",
+            "modeling_realm": "seaIce",
+            "out_name": "sisnhc",
+            "positive": "",
+            "standard_name": "thermal_energy_content_of_surface_snow",
+            "units": "J m-2"
+        },
+        "sisnmass_tavg-u-hm-si": {
+            "cell_measures": "",
+            "cell_methods": "area: sum where sea_ice time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Snow Mass on Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sisnmass",
+            "positive": "",
+            "standard_name": "surface_snow_mass",
+            "units": "kg"
+        },
+        "sisnmassacrossline_tavg-u-ht-u": {
+            "cell_measures": "",
+            "cell_methods": "time: mean",
+            "comment": "",
+            "dimensions": [
+                "siline",
+                "time"
+            ],
+            "long_name": "Snow Mass Flux Through Straits",
+            "modeling_realm": "seaIce",
+            "out_name": "sisnmassacrossline",
+            "positive": "",
+            "standard_name": "snow_transport_across_line_due_to_sea_ice_dynamics",
+            "units": "kg s-1"
+        },
+        "sispeed_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Speed",
+            "modeling_realm": "seaIce",
+            "out_name": "sispeed",
+            "positive": "",
+            "standard_name": "sea_ice_speed",
+            "units": "m s-1"
+        },
+        "sistressave_tpt-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea_ice (mask=siconc) time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Average Normal Stress in Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistressave",
+            "positive": "",
+            "standard_name": "sea_ice_average_normal_horizontal_stress",
+            "units": "N m-1"
+        },
+        "sistressmax_tpt-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea_ice (mask=siconc) time: point",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time1"
+            ],
+            "long_name": "Maximum Shear Stress in Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistressmax",
+            "positive": "",
+            "standard_name": "maximum_over_coordinate_rotation_of_sea_ice_horizontal_shear_stress",
+            "units": "N m-1"
+        },
+        "sistrxdtop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Atmospheric Stress on Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistrxdtop",
+            "positive": "down",
+            "standard_name": "surface_downward_x_stress",
+            "units": "N m-2"
+        },
+        "sistrxubot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Ocean Stress on Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistrxubot",
+            "positive": "up",
+            "standard_name": "upward_x_stress_at_sea_ice_base",
+            "units": "N m-2"
+        },
+        "sistrydtop_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Atmospheric Stress on Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistrydtop",
+            "positive": "down",
+            "standard_name": "surface_downward_y_stress",
+            "units": "N m-2"
+        },
+        "sistryubot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Ocean Stress on Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sistryubot",
+            "positive": "up",
+            "standard_name": "upward_y_stress_at_sea_ice_base",
+            "units": "N m-2"
+        },
+        "sitempbot_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature at Ice-Ocean Interface",
+            "modeling_realm": "seaIce",
+            "out_name": "sitempbot",
+            "positive": "",
+            "standard_name": "sea_ice_basal_temperature",
+            "units": "K"
+        },
+        "sitempsnic_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Temperature at Snow-Ice Interface",
+            "modeling_realm": "seaIce",
+            "out_name": "sitempsnic",
+            "positive": "",
+            "standard_name": "sea_ice_surface_temperature",
+            "units": "K"
+        },
+        "sithick_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Sea-Ice Thickness",
+            "modeling_realm": "seaIce ocean",
+            "out_name": "sithick",
+            "positive": "",
+            "standard_name": "sea_ice_thickness",
+            "units": "m"
+        },
+        "sithick_tavg-u-hxy-sir": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice_ridges (mask=sirdgconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Ridged Ice Thickness",
+            "modeling_realm": "seaIce",
+            "out_name": "sithick",
+            "positive": "",
+            "standard_name": "sea_ice_thickness",
+            "units": "m"
+        },
+        "sitimefrac_tavg-u-hxy-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Fraction of Time Steps with Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "sitimefrac",
+            "positive": "",
+            "standard_name": "fraction_of_time_with_sea_ice_area_fraction_above_threshold",
+            "units": "1"
+        },
+        "siu_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "X-Component of Sea-Ice Velocity",
+            "modeling_realm": "seaIce",
+            "out_name": "siu",
+            "positive": "",
+            "standard_name": "sea_ice_x_velocity",
+            "units": "m s-1"
+        },
+        "siv_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Y-Component of Sea-Ice Velocity",
+            "modeling_realm": "seaIce",
+            "out_name": "siv",
+            "positive": "",
+            "standard_name": "sea_ice_y_velocity",
+            "units": "m s-1"
+        },
+        "sivol_tavg-u-hm-u": {
+            "cell_measures": "",
+            "cell_methods": "area: sum time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Sea-Ice Volume",
+            "modeling_realm": "seaIce",
+            "out_name": "sivol",
+            "positive": "",
+            "standard_name": "sea_ice_volume",
+            "units": "1e3 km3"
+        },
+        "snc_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Area Percentage",
+            "modeling_realm": "seaIce",
+            "out_name": "snc",
+            "positive": "",
+            "standard_name": "surface_snow_area_fraction",
+            "units": "%"
+        },
+        "snd_tavg-u-hxy-sn": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where snow (for snow on sea ice only)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Thickness",
+            "modeling_realm": "seaIce",
+            "out_name": "snd",
+            "positive": "",
+            "standard_name": "surface_snow_thickness",
+            "units": "m"
+        },
+        "snm_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass Rate of Change Through Melt",
+            "modeling_realm": "seaIce",
+            "out_name": "snm",
+            "positive": "",
+            "standard_name": "surface_snow_melt_flux",
+            "units": "kg m-2 s-1"
+        },
+        "snw_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice over all_area_types",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Snow Mass per Area",
+            "modeling_realm": "seaIce",
+            "out_name": "snw",
+            "positive": "",
+            "standard_name": "surface_snow_amount",
+            "units": "kg m-2"
+        },
+        "ts_tavg-u-hxy-si": {
+            "cell_measures": "",
+            "cell_methods": "area: time: mean where sea_ice (mask=siconc)",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Surface Temperature of Sea Ice",
+            "modeling_realm": "seaIce",
+            "out_name": "ts",
+            "positive": "",
+            "standard_name": "surface_temperature",
+            "units": "K"
+        }
+    }
+}

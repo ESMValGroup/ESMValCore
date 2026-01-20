@@ -685,22 +685,26 @@ Example:
 
 The following project-specific options are available:
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``data``                      | Data sources are used to find input    | :obj:`dict`                 | {}                                     |
-|                               | data and have to be configured before  |                             |                                        |
-|                               | running the tool. See                  |                             |                                        |
-|                               | :ref:`config-data-sources` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
-|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
-|                               | facets defined in the recipe. See      |                             |                                        |
-|                               | :ref:`config-extra-facets` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
 
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``data``
+     - Data sources are used to find input data and have to be configured before running the tool. Refer to :ref:`config-data-sources` for details.
+     - :obj:`dict`
+     - ``{}``
+   * - ``extra_facets``
+     - Extra key-value pairs ("*facets*") added to datasets in addition to the facets defined in the recipe. Refer to  :ref:`config-extra-facets` for details.
+     - :obj:`dict`
+     - Refer to :ref:`config-extra-facets-defaults`.
+   * - ``preprocessor_filename_template``
+     - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
+     - :obj:`str`
+     - Refer to :ref:`config-preprocessor-filename-template`.
 
 .. _config-data-sources:
 
@@ -847,12 +851,11 @@ The keyword arguments specified in the list items are directly passed to
 Extra Facets
 ------------
 
-It can be useful to automatically add extra key-value pairs to variables or
-datasets without explicitly specifying them in the recipe.
-These key-value pairs can be used for :ref:`finding data
-<extra-facets-data-finder>` or for providing extra information to the functions
-that :ref:`fix data <extra-facets-fixes>` before passing it on to the
-preprocessor.
+It can be useful to automatically add extra :ref:`facets <facets>` to variables
+or datasets without explicitly specifying them in the recipe.
+These facets can be used for :ref:`finding data <extra-facets-data-finder>` or
+for providing extra information to the functions that
+:ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
 
 To support this, we provide the **extra facets** facilities.
 Facets are the key-value pairs described in :ref:`Datasets`.
@@ -954,6 +957,30 @@ Default extra facets are specified in ``extra_facets_*.yml`` files located in
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
 directory.
 
+.. _config-preprocessor-filename-template:
+
+Preprocessor output filenames
+-----------------------------
+
+The filename to use for saving :ref:`preprocessed data <preprocessed_datasets>`
+when running a :ref:`recipe <recipe>` is configured using ``preprocessor_filename_template``,
+similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
+
+Default values are provided in ``defaults/preprocessor_filename_template.yml``,
+for example:
+
+.. literalinclude:: ../configurations/defaults/preprocessor_filename_template.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/preprocessor_filename_template.yml``
+    :end-before: # Observational
+
+The facet names from the template are replaced with the facet values from the
+recipe to create a filename. The extension ``.nc`` (and if applicable, a start
+and end time) will automatically be appended to the filename.
+
+If no ``preprocessor_filename_template`` is configured for a project, the facets
+describing the dataset in the recipe, as stored in
+:attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
 
 .. _config-esgf:
 
@@ -1009,7 +1036,7 @@ The default settings are:
 
     search_connection:
       urls:
-        .. - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
+        - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
         - 'https://esgf.ceda.ac.uk/esg-search'
         - 'https://esgf-data.dkrz.de/esg-search'
         - 'https://esgf-node.ipsl.upmc.fr/esg-search'
@@ -1113,24 +1140,15 @@ Example of the CMIP6 project configuration:
 .. code-block:: yaml
 
    CMIP6:
-     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_strict: true
-
-Preprocessor output files
--------------------------
-
-The filename to use for preprocessed data is configured using ``output_file``,
-similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
-Note that the extension ``.nc`` (and if applicable, a start and end time) will
-automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
 Project CMOR table configuration
 --------------------------------
 
-ESMValCore comes bundled with several CMOR tables, which are stored in the directory
+ESMValCore comes bundled with several :ref:`CMOR tables <cmor_tables>`, which are stored in the directory
 `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_.
 These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
 
@@ -1233,13 +1251,11 @@ Example:
 
    native6:
      cmor_strict: false
-     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 
    ICON:
      cmor_strict: false
-     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 

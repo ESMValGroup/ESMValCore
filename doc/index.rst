@@ -65,6 +65,7 @@ Contact information is available :ref:`here <Support-and-Contact>`.
     Development <develop/index>
     Contributing <contributing>
     How-to guides <how-to/index>
+    Reference guides <reference/index>
     ESMValCore API Reference <api/esmvalcore>
     Changelog <changelog>
 
