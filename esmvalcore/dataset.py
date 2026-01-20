@@ -182,25 +182,9 @@ class Dataset:
 
     def _derivation_necessary(self) -> bool:
         """Return ``True`` if derivation is necessary, ``False`` otherwise."""
-        # If variable cannot be derived, derivation is not necessary
-        if not self._is_derived():
-            return False
-
-        # If forced derivation is requested, derivation is necessary
-        if self._is_force_derived():
-            return True
-
-        # Otherwise, derivation is necessary if no files for the self dataset
-        # are found
-        ds_copy = self.copy()
-        ds_copy.supplementaries = []
-
-        # Avoid potential errors from missing data during timerange glob
-        # expansion
-        if _isglob(ds_copy.facets.get("timerange", "")):
-            ds_copy.facets.pop("timerange", None)
-
-        return not ds_copy.files
+        return not (
+            self.required_datasets and self.required_datasets[0] is self
+        )
 
     def _get_required_datasets(self) -> list[Dataset]:
         """Get required datasets for derivation."""
@@ -242,7 +226,29 @@ class Dataset:
         if self._required_datasets is not None:
             return self._required_datasets
 
-        if not self._derivation_necessary():
+        def _derivation_needed(dataset: Dataset) -> bool:
+            """Check if derivation is nedeed."""
+            # If variable cannot be derived, derivation is not necessary
+            if not dataset._is_derived():
+                return False
+
+            # If forced derivation is requested, derivation is necessary
+            if dataset._is_force_derived():
+                return True
+
+            # Otherwise, derivation is necessary if no files for the self
+            # dataset are found
+            ds_copy = dataset.copy()
+            ds_copy.supplementaries = []
+
+            # Avoid potential errors from missing data during timerange glob
+            # expansion
+            if _isglob(ds_copy.facets.get("timerange", "")):
+                ds_copy.facets.pop("timerange", None)
+
+            return not ds_copy.files
+
+        if not _derivation_needed(self):
             self._required_datasets = [self]
         else:
             self._required_datasets = self._get_required_datasets()
