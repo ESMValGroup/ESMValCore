@@ -32,8 +32,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 FREQUENCIES = {
-    "P1M": "mon",
     "P1D": "day",
+    "P1M": "mon",
+    "P1Y": "yr",
 }
 
 
@@ -113,6 +114,9 @@ class XCubeDataset(esmvalcore.io.protocol.DataElement):
         return dataset_to_iris(dataset)
 
 
+_DATASETS_LOGGED: set[str] = set()
+
+
 @dataclass
 class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     """Data source for finding files on a local filesystem."""
@@ -168,6 +172,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         if isinstance(requested_datasets, str | int | float):
             requested_datasets = [str(requested_datasets)]
         available_datasets = store.list_data_ids()
+        if self.data_store_id not in _DATASETS_LOGGED:
+            _DATASETS_LOGGED.add(self.data_store_id)
+            logger.debug(
+                "Available datasets in %s are:\n%s",
+                self.data_store_id,
+                "\n".join(sorted(available_datasets)),
+            )
 
         for data_id in available_datasets:
             for dataset_pattern in requested_datasets:
@@ -185,8 +196,10 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                             "No variable matching % found in %s. Available variables are: %s",
                             requested_short_names,
                             data_id,
-                            available_short_names,
+                            ", ".join(sorted(available_short_names)),
                         )
+                        continue
+
                     # TODO: Maybe this is too complicated and we should only
                     # decide which variables to keep/drop after load and conversion
                     # to iris cube.
@@ -215,37 +228,28 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         "-",
                         "",
                     )
-                    native_frequency = description.attrs[
-                        "time_coverage_resolution"
-                    ]
-                    frequency = FREQUENCIES.get(
-                        native_frequency,
-                        native_frequency,
-                    )
-
                     dataset = XCubeDataset(
                         name=data_id,
                         facets={
                             "dataset": data_id,
-                            "short_name": short_names
-                            if len(short_names) > 1
-                            else short_names[0],
-                            "frequency": frequency,
+                            "short_name": (
+                                short_names[0]
+                                if len(short_names) == 1
+                                else short_names
+                            ),
                             "timerange": timerange,
                         },
                         store=store,
                         open_params=open_params,
                     )
+                    frequency = FREQUENCIES.get(
+                        description.attrs.get("time_coverage_resolution", ""),
+                    )
+                    if frequency:
+                        # Assign the frequency facet if it is a known frequency.
+                        dataset.facets["frequency"] = frequency
                     dataset.attributes = description.attrs
 
                     result.append(dataset)
-
-        if not result:
-            logger.debug(
-                "No datasets matching %s found in %s. Available datasets are: %s",
-                requested_datasets,
-                self.data_store_id,
-                available_datasets,
-            )
 
         return result

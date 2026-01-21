@@ -7,3 +7,12 @@ projects:
       ccizarr:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "ccizarr"
+        priority: 1
+      esa-cci-kc:
+        type: "esmvalcore.io.xcube.XCubeDataSource"
+        data_store_id: "esa-cci-kc"
+        priority: 2
+      cciodp:
+        type: "esmvalcore.io.xcube.XCubeDataSource"
+        data_store_id: "cciodp"
+        priority: 3
