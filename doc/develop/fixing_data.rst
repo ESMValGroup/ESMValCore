@@ -4,7 +4,7 @@
 Fixing data
 ***********
 
-The baseline case for ESMValCore input data is CMOR fully compliant
+The baseline case for ESMValCore input data is fully :ref:`CMOR compliant <cmor_tables>`
 data that is read using Iris' :func:`iris:iris.load_raw`.
 ESMValCore also allows for some departures from compliance (see
 :ref:`cmor_check_strictness`). Beyond that situation, some datasets

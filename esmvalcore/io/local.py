@@ -405,8 +405,13 @@ def _select_files(
     selection: list[LocalFile] = []
 
     for filename in filenames:
+        if "timerange" not in filename.facets:
+            # Gracefully handle files where no timerange could be determined.
+            selection.append(filename)
+            continue
+
         start_date, end_date = _parse_period(timerange)
-        start, end = _get_start_end_date(filename)
+        start, end = filename.facets["timerange"].split("/")  # type: ignore[union-attr]
 
         start_date_int, end_int = _truncate_dates(start_date, end)
         end_date_int, start_int = _truncate_dates(end_date, start)
@@ -661,7 +666,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         )
 
         # Remove all tags that are in between other tags, e.g.,
-        # {tag1}{tag2}{tag3} -> {tag1}{tag2} (there is no way to reliably
+        # {tag1}{tag2}{tag3} -> {tag1}{tag3} (there is no way to reliably
         # extract facets from those)
         pattern = re.sub(r"(?<=\})\\\{[^\}]+?\\\}(?=\\(?=\{))", "", pattern)
 

@@ -40,7 +40,7 @@ jobs:
     if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail
       fail-fast: false
@@ -66,7 +66,7 @@ jobs:
           esmvaltool version 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Conda_Install_Linux_python_${{ matrix.python-version }}
           path: conda_install_linux_artifacts_python_${{ matrix.python-version }}
@@ -76,7 +76,7 @@ jobs:
     if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
         architecture: ["x64"]  # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
@@ -102,7 +102,7 @@ jobs:
           esmvaltool version 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Conda_Install_OSX_python_${{ matrix.python-version }}
           path: conda_install_osx_artifacts_python_${{ matrix.python-version }}

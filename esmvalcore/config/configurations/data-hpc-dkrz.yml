@@ -3,88 +3,95 @@ projects:
   CMIP6:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/ik1017/CMIP6/data
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
       esgf-cache:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/kd0956/CMIP5/data
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
       esgf-cache:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
   CMIP3:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/CMIP3
         dirname_template: "{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}"
         filename_template: "{short_name}_*.nc"
       esgf-cache:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}"
         filename_template: "{short_name}_*.nc"
   CORDEX:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/ik1017/C3SCORDEX/data/c3s-cordex/output
         dirname_template: "{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
       esgf-cache:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
   obs4MIPs:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/OBS
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{short_name}_*.nc"
       esgf-cache:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/download
         dirname_template: "{project}/{dataset}/{version}"
         filename_template: "{short_name}_*.nc"
+  ana4MIPs:
+    data:
+      dkrz:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /work/bd0854/DATA/ESMValTool2/OBS
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{short_name}_{mip}_{type}_{dataset}_*.nc"
   native6:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/RAWOBS
         dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
       # ERA5 data in GRIB format:
       # https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#pool-data-era5-file-and-directory-names
       dkrz-era5:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /pool/data/ERA5
         dirname_template: "{family}/{level}/{type}/{tres}/{grib_id}"
         filename_template: "{family}{level}{typeid}_{tres}_*_{grib_id}.grb"
   OBS6:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/OBS
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
   OBS:
     data:
       dkrz:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /work/bd0854/DATA/ESMValTool2/OBS
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
