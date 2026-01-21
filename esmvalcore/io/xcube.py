@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import copy
 import fnmatch
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +27,14 @@ from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
     from esmvalcore.typing import Facets, FacetValue
+
+
+logger = logging.getLogger(__name__)
+
+FREQUENCIES = {
+    "P1M": "mon",
+    "P1D": "day",
+}
 
 
 @dataclass
@@ -133,7 +142,7 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     open_params: dict[str, Any] = field(default_factory=dict, repr=False)
     """Parameters to use when opening the data."""
 
-    def find_data(self, **facets: FacetValue) -> list[XCubeDataset]:  # noqa: C901
+    def find_data(self, **facets: FacetValue) -> list[XCubeDataset]:  # noqa: C901,PLR0912
         # TODO: fix complexity
         """Find data.
 
@@ -153,12 +162,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         )
         result = []
         requested_short_names = facets.get("short_name", "*")
-        if isinstance(requested_short_names, str | int):
+        if isinstance(requested_short_names, str | int | float):
             requested_short_names = [str(requested_short_names)]
         requested_datasets = facets.get("dataset", "*")
-        if isinstance(requested_datasets, str | int):
+        if isinstance(requested_datasets, str | int | float):
             requested_datasets = [str(requested_datasets)]
         available_datasets = store.list_data_ids()
+
         for data_id in available_datasets:
             for dataset_pattern in requested_datasets:
                 if fnmatch.fnmatchcase(data_id, dataset_pattern):
@@ -170,6 +180,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         for short_name_pattern in requested_short_names
                         if fnmatch.fnmatchcase(short_name, short_name_pattern)
                     ]
+                    if not short_names:
+                        logger.debug(
+                            "No variable matching % found in %s. Available variables are: %s",
+                            requested_short_names,
+                            data_id,
+                            available_short_names,
+                        )
                     # TODO: Maybe this is too complicated and we should only
                     # decide which variables to keep/drop after load and conversion
                     # to iris cube.
@@ -198,12 +215,14 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         "-",
                         "",
                     )
-                    frequencies = {
-                        "P1M": "mon",
-                    }
-                    frequency = frequencies[
-                        description.attrs["time_coverage_resolution"]
+                    native_frequency = description.attrs[
+                        "time_coverage_resolution"
                     ]
+                    frequency = FREQUENCIES.get(
+                        native_frequency,
+                        native_frequency,
+                    )
+
                     dataset = XCubeDataset(
                         name=data_id,
                         facets={
@@ -220,5 +239,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                     dataset.attributes = description.attrs
 
                     result.append(dataset)
+
+        if not result:
+            logger.debug(
+                "No datasets matching %s found in %s. Available datasets are: %s",
+                requested_datasets,
+                self.data_store_id,
+                available_datasets,
+            )
 
         return result
