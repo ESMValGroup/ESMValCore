@@ -34,7 +34,7 @@ import warnings
 # import intake_esm.exceptions
 import isodate
 
-from esmvalcore.dataset import _isglob, _ismatch
+from esmvalcore.dataset import _isglob
 from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
@@ -130,7 +130,7 @@ class IntakeEsmDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-            pass
+        pass
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -194,7 +194,6 @@ class IntakeEsmDataSource(DataSource):
         repr=False,
     )
     """The intake-esm catalog used to find data."""
-
 
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
