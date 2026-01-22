@@ -28,6 +28,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake_esm
+from intake_esm.source import ESMDataSource
+import warnings
 
 # import intake_esm.exceptions
 import isodate
@@ -49,7 +51,29 @@ __all__ = [
 ]
 
 
-class _CachingCatalog(intake_esm.core.esm_datastore):
+def _to_path_dict(
+    esm_datastore: intake_esm.esm_datastore, quiet: bool = False
+) -> dict[str, list[str | Path]]:
+    """Return the current search as a dictionary of paths to files.
+
+    This method does not exist on intake-ESM's esm_datastore, so we implement it here.
+    """
+    if not esm_datastore.keys() and not quiet:
+        warnings.warn(
+            "There are no datasets to load! Returning an empty dictionary.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return {}
+
+    def _to_pathlist(source: ESMDataSource) -> list[str | Path]:
+        return source.df[source.path_column_name].to_list()
+
+    result = {key: _to_pathlist(val) for key, val in esm_datastore.items()}
+    return result
+
+
+class _CachingCatalog(intake_esm.esm_datastore):
     """An Intake-ESM catalog that caches to_path_dict results."""
 
     def __init__(self):
@@ -59,9 +83,9 @@ class _CachingCatalog(intake_esm.core.esm_datastore):
     @classmethod
     def from_catalog(
         cls,
-        catalog: intake_esm.core.esm_datastore,
+        catalog: intake_esm.esm_datastore,
     ) -> _CachingCatalog:
-        """Create a CachingCatalog from an existing EsmCatalog."""
+        """Create a CachingCatalog from an existing esm_datastore."""
         cat = cls()
         cat.indices = catalog.indices
         cat.local_cache = catalog.local_cache
@@ -69,33 +93,16 @@ class _CachingCatalog(intake_esm.core.esm_datastore):
         cat.file_start = catalog.file_start
         cat.file_end = catalog.file_end
         cat.project = catalog.project
-        cat.df = catalog.df
         return cat
 
     def to_path_dict(
         self,
-        prefer_streaming: bool = False,
-        globus_endpoint: str | None = None,
-        globus_path: Path = Path("/"),
-        minimal_keys: bool = True,
-        ignore_facets: None | str | list[str] = None,
-        separator: str = ".",
         quiet: bool = False,
     ) -> dict[str, list[str | Path]]:
         """Return the current search as a dictionary of paths to files."""
-        kwargs = {
-            "prefer_streaming": prefer_streaming,
-            "globus_endpoint": globus_endpoint,
-            "globus_path": globus_path,
-            "minimal_keys": minimal_keys,
-            "ignore_facets": ignore_facets,
-            "separator": separator,
-            "quiet": quiet,
-        }
-        key = tuple((k, v) for k, v in kwargs.items() if k != "quiet")
-        if key not in self._result:
-            self._result[key] = super().to_path_dict(**kwargs)
-        return self._result[key]
+
+        self._result = _to_path_dict(self, quiet=quiet)
+        return self._result
 
 
 @dataclass
@@ -108,7 +115,7 @@ class IntakeEsmDataset(DataElement):
     facets: Facets = field(repr=False)
     """Facets are key-value pairs that were used to find this data."""
 
-    catalog: intake_esm.core.esm_datastore = field(repr=False)
+    catalog: intake_esm.esm_datastore = field(repr=False)
     """The intake-esm catalog describing this data."""
 
     _attributes: dict[str, Any] | None = field(
@@ -123,20 +130,7 @@ class IntakeEsmDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-        self.catalog.to_path_dict(minimal_keys=False)
-        for index in self.catalog.indices:
-            # Set the sessions to None to avoid issues with pickling
-            # requests_cache.CachedSession objects when max_parallel_tasks > 1.
-            # After the prepare step, the sessions for interacting with the
-            # search indices are not needed anymore as all file paths required
-            # to load the data have been found. To make sure we do not
-            # accidentally use the sessions later on, we set them to None
-            # instead of e.g. requests.Session objects.
-            #
-            # This seems the safest/fastest solution as it avoids accessing the
-            # sqlite database backing the cached_requests.CachedSession from
-            # multiple processes on multiple machines.
-            index.session = None
+            pass
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -161,15 +155,11 @@ class IntakeEsmDataset(DataElement):
         :
             The loaded data.
         """
-        files = self.catalog.to_path_dict(
-            minimal_keys=False,
-            quiet=True,
-        )[self.name]
-        dataset = self.catalog.to_dataset_dict(
-            minimal_keys=False,
-            add_measures=False,
-            quiet=True,
-        )[self.name]
+
+        files = _to_path_dict(self.catalog, quiet=True)[self.name]
+
+        # Might want to pass through args/kwargs here? Ie.
+        dataset = self.catalog.to_dask()
         # Store the local paths in the attributes for easier debugging.
         dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
         # Cache the attributes.
@@ -191,23 +181,20 @@ class IntakeEsmDataSource(DataSource):
     """The priority of the data source. Lower values have priority."""
 
     facets: dict[str, str]
-    """Mapping between the ESMValCore and Esm facet names."""
+    """Mapping between the ESMValCore and intake-esm facet names."""
 
     values: dict[str, dict[str, str]] = field(default_factory=dict)
-    """Mapping between the ESMValCore and Esm facet values."""
+    """Mapping between the ESMValCore and intake-esm facet values."""
 
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
-    catalog: intake_esm.core.esm_datastore = field(
+    catalog: intake_esm.esm_datastore = field(
         init=False,
         repr=False,
-        default_factory=intake_esm.core.esm_datastore,
     )
     """The intake-esm catalog used to find data."""
 
-    def __post_init__(self):
-        self.catalog.project = intake_esm.projects.projects[self.project.lower()]
 
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
@@ -228,20 +215,15 @@ class IntakeEsmDataSource(DataSource):
             for facet, values in facets.items()
             if facet in self.facets
         }
-        # Filter out glob patterns as these are not supported by intake-esm.
-        non_glob_facets = {
-            facet: values
-            for facet, values in normalized_facets.items()
-            if not any(_isglob(v) for v in values)
-        }
+
         # Translate "our" facets to Esm facets and "our" values to Esm values.
         query = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
-                for v in non_glob_facets[our_facet]
+                for v in normalized_facets[our_facet]
             ]
             for our_facet, their_facet in self.facets.items()
-            if our_facet in non_glob_facets
+            if our_facet in normalized_facets
         }
         if (
             "timerange" in facets and not _isglob(facets["timerange"])  # type: ignore[operator]
@@ -253,12 +235,12 @@ class IntakeEsmDataSource(DataSource):
             query["file_end"] = isodate.date_isoformat(
                 isodate.parse_date(end.split("T")[0]),
             )
-        # Search Esm.
-        try:
-            self.catalog.search(**query, quiet=True)
-        except intake_esm.exceptions.NoSearchResults:
+
+        res = self.catalog.search(**query)
+
+        if not len(res):
             self.debug_info = (
-                "`intake_esm.core.esm_datastore().search("
+                "`intake_esm.esm_datastore().search("
                 + ", ".join(
                     [
                         f"{k}={v}" if isinstance(v, list) else f"{k}='{v}'"
@@ -272,8 +254,10 @@ class IntakeEsmDataSource(DataSource):
         # Return a list of datasets, with one IntakeEsmDataset per dataset_id.
         result: list[IntakeEsmDataset] = []
 
+        # @CT: Made it to here, still some work to do after this bit
+
         # These are the keys in the dict[str, xarray.Dataset] returned by
-        # `intake_esm.core.esm_datastore.to_dataset_dict`. Taken from:
+        # `intake_esm.esm_datastore.to_dataset_dict`. Taken from:
         # https://github.com/esgf2-us/intake-esm/blob/c34124e54078e70ef271709a6d158edb22bcdb96/intake_esm/catalog.py#L523-L528
         self.catalog.df["key"] = self.catalog.df.apply(
             lambda row: ".".join(
@@ -281,6 +265,7 @@ class IntakeEsmDataSource(DataSource):
             ),
             axis=1,
         )
+
         inverse_values = {
             our_facet: {
                 their_value: our_value
@@ -288,6 +273,7 @@ class IntakeEsmDataSource(DataSource):
             }
             for our_facet in self.values
         }
+
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
             # Use a caching catalog to avoid searching the indices after
@@ -313,22 +299,13 @@ class IntakeEsmDataSource(DataSource):
                         inverse_values.get(our_facet, {}).get(v, v) for v in esgf_values
                     ]
                     dataset_facets[our_facet] = our_values
-            # Only return datasets that match the glob patterns.
-            if all(
-                any(
-                    _ismatch(v, p)
-                    for v in dataset_facets[f]
-                    for p in normalized_facets[f]
-                )
-                for f in dataset_facets
-                if f in normalized_facets
-            ):
-                dataset = IntakeEsmDataset(
-                    name=dataset_id,
-                    facets={
-                        k: v[0] if len(v) == 1 else v for k, v in dataset_facets.items()
-                    },  # type: ignore[arg-type]
-                    catalog=cat,
-                )
-                result.append(dataset)
+
+            dataset = IntakeEsmDataset(
+                name=dataset_id,
+                facets={
+                    k: v[0] if len(v) == 1 else v for k, v in dataset_facets.items()
+                },  # type: ignore[arg-type]
+                catalog=cat,
+            )
+            result.append(dataset)
         return result
