@@ -135,7 +135,7 @@ class DerivedVariable(DerivedVariableBase):
             test_cube = soiltemp_window.collapsed("time", iris.analysis.MEAN)
             # if all months in test period show soil tempeatures below zero
             # then mark grid cell with "1" as permafrost and "0" otherwise
-            pfr_yr.data[tidx, :, :] = da.where(test_cube.data > 0.99, 1, 0)
+            pfr_yr.data[tidx, :, :] = da.where(test_cube.core_data() > 0.99, 1, 0)
 
         pfr_yr = pfr_yr * mask
         pfr_yr.units = "%"
