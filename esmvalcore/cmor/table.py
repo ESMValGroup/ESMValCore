@@ -1317,6 +1317,9 @@ class CMIP5Info(InfoBase):
                 setattr(var, key, value)
             elif key == "out_name":
                 var.short_name = value
+        if not var.short_name:
+            # Some of our custom CMIP5 table entries are missing the `out_name` field.
+            var.short_name = var.name
         for dim in var.dimensions:
             var.coordinates[dim] = self.coords[dim]
         return var
