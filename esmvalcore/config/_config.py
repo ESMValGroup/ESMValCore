@@ -1,4 +1,5 @@
 """Functions dealing with config-developer.yml and extra facets."""
+# TODO: remove this module in v2.16.0
 
 from __future__ import annotations
 

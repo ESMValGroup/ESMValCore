@@ -630,6 +630,30 @@ def deprecate_search_esgf(
     )
 
 
+def deprecate_config_developer_file(
+    validated_config: ValidatedConfig,  # noqa: ARG001
+    value: str | Path,  # noqa: ARG001
+    validated_value: str | Path,  # noqa: ARG001
+) -> None:
+    """Deprecate ``config_developer_file`` option.
+
+    Parameters
+    ----------
+    validated_config:
+        ``ValidatedConfig`` instance which will be modified in place.
+    value:
+        Raw input value for ``config_file`` option.
+    validated_value:
+        Validated value for ``config_file`` option.
+
+    """
+    more_info = (
+        " Please configure data sources, cmor tables, and preprocessor "
+        "filename templates under `projects` instead."
+    )
+    _handle_deprecation("config_developer_file", "2.14.0", "2.16.0", more_info)
+
+
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
@@ -638,6 +662,7 @@ _deprecators: dict[str, Callable] = {
     "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
     "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
     "search_esgf": deprecate_search_esgf,  # TODO: remove in v2.16.0
+    "config_developer_file": deprecate_config_developer_file,  # TODO: remove in v2.16.0
 }
 
 

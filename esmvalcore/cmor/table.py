@@ -15,7 +15,7 @@ import os
 from collections import Counter
 from functools import lru_cache, total_ordering
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 import yaml
 
@@ -43,7 +43,7 @@ _CMOR_KEYS = (
 
 
 def _get_institutes(project: str, dataset: str) -> list[str]:
-    """Return the institutes given the dataset name in CMIP6."""
+    """Return the institutes from the controlled vocabulary given the dataset name."""
     try:
         return CMOR_TABLES[project].institutes[dataset]  # type: ignore[attr-defined]
     except (KeyError, AttributeError):
@@ -54,7 +54,7 @@ def _get_activity(
     project: str,
     exp: str | list[str],
 ) -> str | list[str] | None:
-    """Return the activity given the experiment name in CMIP6."""
+    """Return the activity from the controlled vocabulary given the experiment name."""
     try:
         if isinstance(exp, list):
             return [CMOR_TABLES[project].activities[value][0] for value in exp]  # type: ignore[attr-defined]
@@ -205,6 +205,12 @@ def load_cmor_tables(cfg: Config) -> None:
 
 def read_cmor_tables(cfg_developer: Path | None = None) -> None:
     """Read cmor tables required in the configuration.
+
+    .. deprecated:: 2.14.0
+
+        The config-developer.yml file based configuration is deprecated and
+        will no longer be supported in ESMValCore v2.16.0. Please use
+        :func:`~esmvalcore.cmor.table.load_cmor_tables` instead of this function.
 
     Parameters
     ----------
@@ -374,34 +380,34 @@ def get_tables(
 
 
 class InfoBase:
-    """Base class for all table info classes.
-
-    This uses CMOR 3 json format
+    """Base class for all CMOR table info classes.
 
     Parameters
     ----------
-    cmor_tables_path:
-        The path to a directory with subdirectory "Tables" where the CMOR tables
-        are located.
-
     default:
         Default table to look variables on if not found.
 
+        .. deprecated:: 2.14.0
+
+            The ``default`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
+            to aggregate multiple tables.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
-        the default values from the file variable_alt_names.yml will be used.
+        the default values from the installed copy of
+        `variable_alt_names.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/variable_alt_names.yml>`_
+        will be used.
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one.
 
-    default_table_prefix:
-        If the table_id contains a prefix, it can be specified here.
-
     paths:
         A list of paths to CMOR tables. If the path is relative and exists in
-        the ``tables`` directory in :mod:`esmvalcore.cmor`, the version of the
-        tables shipped with ESMValCore will be used.
+        the installed copy of the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory it will be used.
     """
 
     def __init__(
@@ -420,6 +426,7 @@ class InfoBase:
             else p
             for p in paths
         )
+        """A list of paths to CMOR tables."""
         for path in self.paths:
             if not path.is_dir():
                 raise NotADirectoryError(path)
@@ -431,10 +438,24 @@ class InfoBase:
                 alt_names_path.read_text(encoding="utf-8"),
             )
         self.alt_names = alt_names
+        """List of known alternative names for variables."""
         self.coords: dict[str, CoordinateInfo] = {}
+        """The coordinates defined in these tables."""
         self.default = default
+        """
+        Default table to look variables on if not found.
+
+        .. deprecated:: 2.14.0
+
+            The ``default`` attribute is deprecated and will be removed in
+            ESMValCore v2.16.0.
+        """
         self.strict = strict
+        """If False, will look for a variable in other tables if it can not be
+        found in the requested one.
+        """
         self.tables: dict[str, TableInfo] = {}
+        """A mapping from table names to :class:`TableInfo` objects."""
 
     def get_table(self, table: str) -> TableInfo | None:
         """Search and return the table info.
@@ -560,9 +581,9 @@ class InfoBase:
 
 
 class CMIP6Info(InfoBase):
-    """Class to read CMIP6-like data request.
+    """Class to read CMIP6-like CMOR tables.
 
-    This uses CMOR 3 json format
+    This class reads CMOR 3 json format tables.
 
     Parameters
     ----------
@@ -570,12 +591,24 @@ class CMIP6Info(InfoBase):
         The path to a directory with subdirectory "Tables" where the CMOR tables
         are located.
 
+        .. deprecated:: 2.14.0
+
+            The ``cmor_tables_path`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
+
     default:
         Default table to look variables on if not found.
 
+        .. deprecated:: 2.14.0
+
+            The ``default`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
+            to aggregate multiple tables.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
-        the default values from the file variable_alt_names.yml will be used.
+        the default values from the installed copy of
+        `variable_alt_names.yml`_ will be used.
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
@@ -584,11 +617,15 @@ class CMIP6Info(InfoBase):
     default_table_prefix:
         If the table_id contains a prefix, it can be specified here.
 
+        .. deprecated:: 2.14.0
+
+            The ``default_table_prefix`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0.
+
     paths:
         A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
-        directory it will be used.
+        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
+        be used.
     """
 
     def __init__(
@@ -613,9 +650,19 @@ class CMIP6Info(InfoBase):
         super().__init__(default, alt_names, strict, paths=paths)
 
         self.default_table_prefix = default_table_prefix
+        """
+        If the table_id contains a prefix, it can be specified here.
+
+        .. deprecated:: 2.14.0
+
+            The ``default_table_prefix`` attribute is deprecated and will be
+            removed in ESMValCore v2.16.0.
+        """
         self.var_to_freq: dict[str, dict[str, str]] = {}
         self.activities: dict[str, list[str]] = {}
+        """A mapping from ``exp`` to ``activity`` from the controlled vocabulary."""
         self.institutes: dict[str, list[str]] = {}
+        """A mapping from ``dataset`` to ``institute`` from the controlled vocabulary."""
 
         for path in self.paths:
             if not any(path.glob("*.json")):
@@ -665,7 +712,7 @@ class CMIP6Info(InfoBase):
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
-                var = VariableInfo("CMIP6", var_name)
+                var = VariableInfo("CMIP6", name=var_name)
                 var.read_json(var_data, table.frequency)
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
@@ -731,17 +778,17 @@ class CMIP6Info(InfoBase):
                 except (KeyError, AttributeError):
                     pass
 
-    def get_table(self, table):
+    def get_table(self, table: str) -> TableInfo | None:
         """Search and return the table info.
 
         Parameters
         ----------
-        table: str
+        table:
             Table name
 
         Returns
         -------
-        TableInfo
+        :
             Return the TableInfo object for the requested table if
             found, returns None if not
         """
@@ -758,22 +805,14 @@ class CMIP6Info(InfoBase):
 
 
 class Obs4MIPsInfo(CMIP6Info):
-    """Class to read obs4MIPs-like data request.
-
-    This uses CMOR 3 json format
+    """Class to read obs4MIPs-like CMOR tables.
 
     Parameters
     ----------
-    cmor_tables_path:
-        The path to a directory with subdirectory "Tables" where the CMOR tables
-        are located.
-
-    default:
-        Default table to look variables on if not found.
-
     alt_names:
         List of known alternative names for variables. If no value is provided,
-        the default values from the file variable_alt_names.yml will be used.
+        the default values from the installed copy of
+        `variable_alt_names.yml`_ will be used.
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
@@ -781,22 +820,17 @@ class Obs4MIPsInfo(CMIP6Info):
 
     paths:
         A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
-        directory it will be used.
+        the ``tables`` directory in :mod:`esmvalcore.cmor`, the version of the
+        tables shipped with ESMValCore will be used.
     """
 
     def __init__(
         self,
-        cmor_tables_path: str | None = None,
-        default: CustomInfo | None = None,
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
         paths: Iterable[Path] = (),
     ) -> None:
         super().__init__(
-            cmor_tables_path=cmor_tables_path,
-            default=default,
             alt_names=alt_names,
             strict=strict,
             paths=paths,
@@ -817,8 +851,11 @@ class TableInfo(dict):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super().__init__(*args, **kwargs)
         self.name = ""
+        """Table name."""
         self.frequency = ""
+        """Table frequency (if defined)."""
         self.realm = ""
+        """Table realm (if defined)."""
 
     def __eq__(self, other):
         return (self.name, self.frequency, self.realm) == (
@@ -892,18 +929,38 @@ class JsonInfo:
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
 
-    def __init__(self, table_type, short_name):
+    def __init__(
+        self,
+        table_type: str = "",
+        short_name: str = "",
+        name: str = "",
+    ) -> None:
         """Class to read and store variable information.
 
         Parameters
         ----------
-        short_name: str
+        table_type:
+            Type of table (e.g., CMIP5, CMIP6).
+
+            .. deprecated:: 2.14.0
+
+                The ``table_type`` parameter is deprecated and will be removed
+                in ESMValCore v2.16.0.
+        short_name:
             Variable's short name.
+
+            .. deprecated:: 2.14.0
+
+                The ``short_name`` parameter is deprecated and will be removed
+                in ESMValCore v2.16.0.
+        name:
+            Name of the variable entry in the CMOR table.
         """
         super().__init__()
-        self.name = short_name
+        self.name = name
+        """Name of the variable entry in the CMOR table."""
         self.table_type = table_type
-        self.modeling_realm = []
+        self.modeling_realm: list[str] = []
         """Modeling realm"""
         self.short_name = short_name
         """Short name"""
@@ -922,9 +979,9 @@ class VariableInfo(JsonInfo):
         self.positive = ""
         """Increasing direction"""
 
-        self.dimensions = []
+        self.dimensions: list[str] = []
         """List of dimensions"""
-        self.coordinates = {}
+        self.coordinates: dict[str, CoordinateInfo] = {}
         """Coordinates
 
         This is a dict with the names of the dimensions as keys and
@@ -936,7 +993,7 @@ class VariableInfo(JsonInfo):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name})"
 
-    def copy(self):
+    def copy(self) -> Self:
         """Return a shallow copy of VariableInfo.
 
         Returns
@@ -946,17 +1003,17 @@ class VariableInfo(JsonInfo):
         """
         return copy.copy(self)
 
-    def read_json(self, json_data, default_freq):
+    def read_json(self, json_data: dict, default_freq: str) -> None:
         """Read variable information from json.
 
         Non-present options will be set to empty
 
         Parameters
         ----------
-        json_data: dict
+        json_data:
             Dictionary created by the json reader containing variable
             information.
-        default_freq: str
+        default_freq:
             Default frequency to use if it is not defined at variable level.
         """
         self._json_data = json_data
@@ -992,12 +1049,12 @@ class VariableInfo(JsonInfo):
 
         Parameters
         ----------
-        standard_name: str
+        standard_name:
             Standard name to be checked.
 
         Returns
         -------
-        bool
+        :
             `True` if there is at least one coordinate with the given
             `standard_name`, `False` if not.
 
@@ -1011,18 +1068,19 @@ class VariableInfo(JsonInfo):
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         """Class to read and store coordinate information.
 
         Parameters
         ----------
-        name: str
+        name:
             coordinate's name
         """
         super().__init__()
         self.name = name
+        """Name of the coordinate entry in the CMOR table."""
         self.generic_level = False
-        self.generic_lev_coords = {}
+        self.generic_lev_coords: dict[str, CoordinateInfo] = {}
 
         self.axis = ""
         """Axis"""
@@ -1044,7 +1102,7 @@ class CoordinateInfo(JsonInfo):
         """Units"""
         self.stored_direction = ""
         """Direction in which the coordinate increases"""
-        self.requested = []
+        self.requested: list[str] = []
         """Values requested"""
         self.valid_min = ""
         """Minimum allowed value"""
@@ -1071,7 +1129,7 @@ class CoordinateInfo(JsonInfo):
         self.axis = self._read_json_variable("axis")
         self.value = self._read_json_variable("value")
         self.out_name = self._read_json_variable("out_name")
-        self.var_name = self._read_json_variable("var_name")
+        self.var_name = self._read_json_variable("out_name")
         self.standard_name = self._read_json_variable("standard_name")
         self.long_name = self._read_json_variable("long_name")
         self.units = self._read_json_variable("units")
@@ -1084,7 +1142,9 @@ class CoordinateInfo(JsonInfo):
 
 
 class CMIP5Info(InfoBase):
-    """Class to read CMIP5-like data request.
+    """Class to read CMIP5-like CMOR tables.
+
+    This class reads CMOR 2 format tables.
 
     Parameters
     ----------
@@ -1092,22 +1152,42 @@ class CMIP5Info(InfoBase):
         The path to a directory with subdirectory "Tables" where the CMOR tables
         are located.
 
+        .. deprecated:: 2.14.0
+
+            The ``cmor_tables_path`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
+
     default:
         Default table to look variables on if not found.
 
+        .. deprecated:: 2.14.0
+
+            The ``default`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
+            to aggregate multiple tables.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
-        the default values from the file variable_alt_names.yml will be used.
+        the default values from the installed copy of
+        `variable_alt_names.yml`_ will be used.
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one.
 
+    default_table_prefix:
+        If the table_id contains a prefix, it can be specified here.
+
+        .. deprecated:: 2.14.0
+
+            The ``default_table_prefix`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0.
+
     paths:
         A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
-        directory it will be used.
+        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
+        be used.
+
     """
 
     def __init__(
@@ -1224,8 +1304,8 @@ class CMIP5Info(InfoBase):
                 setattr(coord, key, value)
         return coord
 
-    def _read_variable(self, short_name, frequency):
-        var = VariableInfo("CMIP5", short_name)
+    def _read_variable(self, entry_name, frequency):
+        var = VariableInfo(table_type="CMIP5", name=entry_name)
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read
@@ -1241,17 +1321,17 @@ class CMIP5Info(InfoBase):
             var.coordinates[dim] = self.coords[dim]
         return var
 
-    def get_table(self, table):
+    def get_table(self, table: str) -> TableInfo | None:
         """Search and return the table info.
 
         Parameters
         ----------
-        table: str
+        table:
             Table name
 
         Returns
         -------
-        TableInfo
+        :
             Return the TableInfo object for the requested table if
             found, returns None if not
         """
@@ -1259,7 +1339,7 @@ class CMIP5Info(InfoBase):
 
 
 class CMIP3Info(CMIP5Info):
-    """Class to read CMIP3-like data request.
+    """Class to read CMIP3-like CMOR tables.
 
     Parameters
     ----------
@@ -1267,22 +1347,42 @@ class CMIP3Info(CMIP5Info):
         The path to a directory with subdirectory "Tables" where the CMOR tables
         are located.
 
+        .. deprecated:: 2.14.0
+
+            The ``cmor_tables_path`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead.
+
     default:
         Default table to look variables on if not found.
 
+        .. deprecated:: 2.14.0
+
+            The ``default`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0. Please use the ``paths`` parameter instead
+            to aggregate multiple tables.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
-        the default values from the file variable_alt_names.yml will be used.
+        the default values from the installed copy of
+        `variable_alt_names.yml`_ will be used.
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one.
 
+    default_table_prefix:
+        If the table_id contains a prefix, it can be specified here.
+
+        .. deprecated:: 2.14.0
+
+            The ``default_table_prefix`` parameter is deprecated and will be removed in
+            ESMValCore v2.16.0.
+
     paths:
         A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
-        directory it will be used.
+        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
+        be used.
+
     """
 
     def _read_table_file(self, table_file: str) -> TableInfo:
@@ -1300,8 +1400,8 @@ class CMIP3Info(CMIP5Info):
             coord.var_name = coord.name
         return coord
 
-    def _read_variable(self, short_name, frequency):
-        var = super()._read_variable(short_name, frequency)
+    def _read_variable(self, entry_name, frequency):
+        var = super()._read_variable(entry_name, frequency)
         var.frequency = ""
         var.modeling_realm = []
         return var
@@ -1309,6 +1409,11 @@ class CMIP3Info(CMIP5Info):
 
 class CustomInfo(CMIP5Info):
     """Class to read custom var info for ESMVal.
+
+    .. deprecated:: 2.14.0
+
+        This class is deprecated and will be removed in ESMValCore v2.16.0.
+        Please use :class:`~esmvalcore.cmor.tables.table.CMIP5Info` instead.
 
     Parameters
     ----------
@@ -1426,7 +1531,10 @@ class CustomInfo(CMIP5Info):
 
 
 class NoInfo(InfoBase):
-    """Table that can be used for projects that do not have a CMOR table."""
+    """Table that can be used for projects that do not provide a CMOR table."""
+
+    def __init__(self) -> None:
+        pass
 
     def get_variable(
         self,
@@ -1456,7 +1564,9 @@ class NoInfo(InfoBase):
             otherwise.
 
         """
-        return VariableInfo(table_type="No table", short_name=short_name)
+        vardef = VariableInfo(name=short_name)
+        vardef.short_name = short_name
+        return vardef
 
 
 # Load the default tables on initializing the module.

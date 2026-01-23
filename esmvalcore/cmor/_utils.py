@@ -163,7 +163,7 @@ def _get_new_generic_level_coord(
         New generic level coordinate.
 
     """
-    new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
+    new_coord = generic_level_coord.generic_lev_coords[new_coord_name]  # type: ignore[index]  # Is this a bug?
     new_coord.generic_level = True
     new_coord.generic_lev_coords = var_info.coordinates[
         generic_level_coord_name
