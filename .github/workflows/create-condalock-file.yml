@@ -11,9 +11,6 @@ on:
   #     - main
   schedule:
     - cron: "0 4 */10 * *"
-  push:
-    branches:
-      - adopt-zizmor
 
 # Required shell entrypoint to have properly configured bash shell
 defaults:
