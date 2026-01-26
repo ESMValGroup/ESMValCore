@@ -132,6 +132,11 @@ def test_find_files_with_facets(monkeypatch, root):
             break
 
     project = cfg["variable"]["project"]
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
     monkeypatch.setitem(CFG, "rootpath", {project: root})
 

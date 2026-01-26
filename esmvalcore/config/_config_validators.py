@@ -671,5 +671,4 @@ _deprecators: dict[str, Callable] = {
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecated_options_defaults: dict[str, Any] = {
     "extra_facets_dir": [],  # TODO: remove in v2.15.0
-    "config_developer_file": None,  # TODO: remove in v2.16.0
 }

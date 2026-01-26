@@ -178,7 +178,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "auxiliary_data_dir": Path.home() / "auxiliary_data",
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
-        "config_developer_file": None,
         "dask": {
             "profiles": {
                 "local_threaded": {
