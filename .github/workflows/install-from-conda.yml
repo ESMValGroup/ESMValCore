@@ -23,6 +23,7 @@ on:
   push:
     branches:
       - main
+      - adopt-zizmor
   # run the test only if the PR is to main
   # turn it on if required
   # pull_request:
