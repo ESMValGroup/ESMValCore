@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: codespell
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.36.0
+    rev: 0.36.1
     hooks:
       - id: check-citation-file-format
       - id: check-github-workflows
