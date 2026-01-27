@@ -31,7 +31,7 @@ def s3_url_exists(url):
             url,
             timeout=10,  # seconds
         )
-        return response.status_code == 200
+        return response.status_code == 200  # noqa: TRY300
     except requests.exceptions.Timeout:
         return False
     except requests.exceptions.RequestException:
