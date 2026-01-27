@@ -27,17 +27,19 @@ from esmvalcore.preprocessor._io import load
 
 def s3_url_exists(url):
     try:
-        response = requests.get(url,
-        timeout=10  # seconds
-    )
+        response = requests.get(
+            url,
+            timeout=10,  # seconds
+        )
         return response.status_code == 200
     except requests.exceptions.Timeout:
         return False
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         return False
 
 
 jasmin_online = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
+
 
 @pytest.mark.parametrize("input_type", [str, Path])
 def test_load_zarr2_local(input_type):
