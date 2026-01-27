@@ -20,9 +20,24 @@ from pathlib import Path
 
 import cf_units
 import pytest
+import requests
 
 from esmvalcore.preprocessor._io import load
 
+
+def s3_url_exists(url):
+    try:
+        response = requests.get(url,
+        timeout=10  # seconds
+    )
+        return response.status_code == 200
+    except requests.exceptions.Timeout:
+        return False
+    except requests.exceptions.RequestException as e:
+        return False
+
+
+jasmin_online = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
 
 @pytest.mark.parametrize("input_type", [str, Path])
 def test_load_zarr2_local(input_type):
@@ -49,6 +64,7 @@ def test_load_zarr2_local(input_type):
 
 
 @pytest.mark.online
+@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
 def test_load_zarr2_remote():
     """Test loading a Zarr2 store from a https Object Store."""
     zarr_path = (
@@ -90,6 +106,7 @@ def test_load_zarr2_remote():
 
 
 @pytest.mark.online
+@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
 def test_load_zarr3_remote():
     """Test loading a Zarr3 store from a https Object Store."""
     zarr_path = (
@@ -117,6 +134,7 @@ def test_load_zarr3_remote():
 
 
 @pytest.mark.online
+@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
 def test_load_zarr3_cmip6_metadata():
     """
     Test loading a Zarr3 store from a https Object Store.
@@ -152,6 +170,7 @@ def test_load_zarr3_cmip6_metadata():
     assert cube.has_lazy_data()
 
 
+@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_zarr_file():
     """
     Test loading a Zarr store from a https Object Store.
@@ -172,6 +191,7 @@ def test_load_zarr_remote_not_zarr_file():
         load(zarr_path)
 
 
+@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_file():
     """
     Test loading a Zarr store from a https Object Store.
