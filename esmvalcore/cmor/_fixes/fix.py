@@ -7,8 +7,9 @@ import importlib
 import inspect
 import logging
 import tempfile
+import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import dask
 import numpy as np
@@ -26,7 +27,7 @@ from esmvalcore.cmor._utils import (
     _get_single_cube,
 )
 from esmvalcore.cmor.fixes import get_time_bounds
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import get_tables
 from esmvalcore.iris_helpers import (
     has_unstructured_grid,
     safe_convert_units,
@@ -53,8 +54,9 @@ class Fix:
     def __init__(
         self,
         vardef: VariableInfo,
+        *,
+        session: Session,
         extra_facets: dict | None = None,
-        session: Session | None = None,
         frequency: str | None = None,
     ) -> None:
         """Initialize fix object.
@@ -63,11 +65,11 @@ class Fix:
         ----------
         vardef:
             CMOR table entry of the variable.
-        extra_facets:
-            Extra facets. For details, see :ref:`config-extra-facets`.
         session:
             Current session which includes configuration and directory
             information.
+        extra_facets:
+            Extra facets. For details, see :ref:`config-extra-facets`.
         frequency:
             Expected frequency of the variable. If not given, use the one from
             the CMOR table entry of the variable.
@@ -211,7 +213,7 @@ class Fix:
         extra_facets: dict | None = None,
         session: Session | None = None,
         frequency: str | None = None,
-    ) -> list:
+    ) -> list[Self]:
         """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
@@ -248,15 +250,25 @@ class Fix:
 
         Returns
         -------
-        list[Fix]
+        :
             Fixes to apply for the given data.
 
         """
+        if session is None:
+            warnings.warn(
+                "Not providing a `session` argument or using `session=None` "
+                "is deprecated and will no longer be supported in v2.16.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            from esmvalcore.config import CFG  # noqa: PLC0415
+
+            session = CFG.start_session("fix")
+
         if extra_facets is None:
             extra_facets = {}
 
-        vardef = get_var_info(
-            project,
+        vardef = get_tables(session, project).get_variable(
             mip,
             short_name,
             branding_suffix=extra_facets.get("branding_suffix"),
@@ -271,7 +283,6 @@ class Fix:
         fixes_modules = []
         if project == "cordex":
             driver = extra_facets["driver"].replace("-", "_").lower()
-            extra_facets["dataset"] = dataset
             with contextlib.suppress(ImportError):
                 fixes_modules.append(
                     importlib.import_module(
@@ -374,7 +385,10 @@ class GenericFix(Fix):
             Fixed cubes.
 
         """
-        # Make sure the this fix also works when no extra_facets are given
+        # Make sure the this fix also works when no extra_facets are given.
+        # Note that this never happens in practice because `"project"` and
+        # `"dataset"` are inserted into `extra_facets` in
+        # `esmvalcore.cmor.fix.fix_*`.
         if "project" in self.extra_facets and "dataset" in self.extra_facets:
             dataset_str = (
                 f"{self.extra_facets['project']}:"
@@ -600,7 +614,8 @@ class GenericFix(Fix):
                     _get_alternative_generic_lev_coord(
                         cube,
                         coord_name,
-                        self.vardef.table_type,
+                        project=self.extra_facets["project"],
+                        session=self.session,
                     )
                 )
             except ValueError:  # no alternatives found

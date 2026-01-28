@@ -14,7 +14,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import get_tables
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from iris.coords import Coord
 
     from esmvalcore.cmor.table import VariableInfo
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -101,13 +102,28 @@ def align_metadata(
     return cube
 
 
-def _get_var_info(project: str, mip: str, short_name: str) -> VariableInfo:
+def _get_var_info(
+    project: str,
+    mip: str,
+    short_name: str,
+    branding_suffix: str | None,
+    session: Session,
+) -> VariableInfo:
     """Get variable information."""
-    var_info = get_var_info(project, mip, short_name)
+    var_info = get_tables(session, project).get_variable(
+        table_name=mip,
+        short_name=short_name,
+        branding_suffix=branding_suffix,
+    )
     if var_info is None:
         msg = (
-            f"Variable '{short_name}' not available for table '{mip}' of "
-            f"project '{project}'"
+            f"Variable '{short_name}' "
+            + (
+                f"with branding suffix '{branding_suffix}' "
+                if branding_suffix
+                else ""
+            )
+            + f"not available for table '{mip}' of project '{project}'"
         )
         raise ValueError(msg)
     return var_info

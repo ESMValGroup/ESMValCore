@@ -146,6 +146,7 @@ def _update_target_levels(
         settings["extract_levels"]["levels"] = get_cmor_levels(
             levels["cmor_table"],
             levels["coordinate"],
+            session=dataset.session,
         )
     elif "dataset" in levels:
         dataset_name = levels["dataset"]
@@ -595,7 +596,7 @@ def _update_align_metadata(
             "target_short_name",
             dataset.facets["short_name"],
         )
-        check.align_metadata(settings["align_metadata"])
+        check.align_metadata(settings["align_metadata"], dataset.session)
 
 
 def _update_extract_shape(
