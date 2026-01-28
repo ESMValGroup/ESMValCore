@@ -537,7 +537,7 @@ class InfoBase:
 
         # If that didn't work either, look in default table if
         # cmor_strict=False or derived=True
-        if not var_info:
+        if not var_info and self.default is not None:
             var_info = self._look_in_default(
                 derived,
                 alt_names_list,
@@ -1595,7 +1595,3 @@ class NoInfo(InfoBase):
         vardef = VariableInfo()
         vardef.short_name = short_name
         return vardef
-
-
-# Load the default tables on initializing the module.
-read_cmor_tables()
