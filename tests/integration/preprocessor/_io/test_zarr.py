@@ -25,7 +25,7 @@ import requests
 from esmvalcore.preprocessor._io import load
 
 
-def s3_url_exists(url):
+def s3_url_exists(url: str) -> bool:
     try:
         response = requests.get(
             url,
