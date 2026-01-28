@@ -22,6 +22,8 @@ from esmvalcore.cmor.fix import Fix
 if TYPE_CHECKING:
     import pytest_mock
 
+    from esmvalcore.config import Session
+
 
 @pytest.fixture
 def cubes():
@@ -145,10 +147,11 @@ def test_mohchadrem3ga705_fix_metadata(cubes, coord, var_name, long_name):
 
 def test_mohchadrem3ga705_fix_metadata_no_time_coord(
     cubes: iris.cube.CubeList,
+    session: Session,
 ) -> None:
     for cube in cubes:
         cube.remove_coord("time")
-    fix = MOHCHadREM3GA705(None)  # type: ignore[arg-type]
+    fix = MOHCHadREM3GA705(None, session=session)  # type: ignore[arg-type]
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
@@ -167,6 +170,7 @@ def test_timelongname_fix_metadata(cubes):
 @pytest.mark.parametrize("has_time_coord", [True, False])
 def test_clmcomcclm4817_fix_metadata_time(
     cubes: iris.cube.CubeList,
+    session: Session,
     has_time_coord: bool,
 ) -> None:
     if has_time_coord:
@@ -189,7 +193,7 @@ def test_clmcomcclm4817_fix_metadata_time(
     lat.guess_bounds()
     lat.bounds = lat.core_bounds().astype(">f4", casting="same_kind")
 
-    fix = CLMcomCCLM4817(None)  # type: ignore[arg-type]
+    fix = CLMcomCCLM4817(None, session=session)  # type: ignore[arg-type]
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
