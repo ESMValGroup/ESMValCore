@@ -31,12 +31,10 @@ def s3_url_exists(url):
             url,
             timeout=10,  # seconds
         )
-        return response.status_code == 200  # noqa: TRY300
-    except requests.exceptions.Timeout:
-        return False
     except requests.exceptions.RequestException:
         return False
-
+    else:
+        return response.status_code == 200    
 
 jasmin_online = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
 
