@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.table import get_tables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -14,17 +14,18 @@ if TYPE_CHECKING:
     from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
     "alevel": {
-        "CMIP5": ["alt40", "plevs"],
-        "CMIP6": ["alt16", "plev3"],
-        "obs4MIPs": ["alt16", "plev3"],
+        "CMIP5Info": ["alt40", "plevs"],
+        "CMIP6Info": ["alt16", "plev3"],
+        "Obs4MIPsInfo": ["alt16", "plev3"],
     },
     "zlevel": {
-        "CMIP3": ["pressure"],
+        "CMIP3Info": ["pressure"],
     },
 }
 
@@ -32,7 +33,8 @@ _ALTERNATIVE_GENERIC_LEV_COORDS = {
 def _get_alternative_generic_lev_coord(
     cube: Cube,
     coord_name: str,
-    cmor_table_type: str,
+    project: str,
+    session: Session,
 ) -> tuple[CoordinateInfo, Coord]:
     """Find alternative generic level coordinate in cube.
 
@@ -42,10 +44,10 @@ def _get_alternative_generic_lev_coord(
         Cube to be checked.
     coord_name:
         Name of the generic level coordinate.
-    cmor_table_type:
-        CMOR table type, e.g., CMIP3, CMIP5, CMIP6. Note: This is NOT the
-        project of the dataset, but rather the entry `cmor_type` in
-        `config-developer.yml`.
+    project:
+        Project that the dataset belongs to.
+    session:
+        The session to use.
 
     Returns
     -------
@@ -63,12 +65,16 @@ def _get_alternative_generic_lev_coord(
         coord_name,
         {},
     )
-    allowed_alternatives = alternatives_for_coord.get(cmor_table_type, [])
+    tables = get_tables(session, project)
+    allowed_alternatives = alternatives_for_coord.get(
+        tables.__class__.__name__,
+        [],
+    )
 
     # Check if any of the allowed alternative coordinates is present in the
     # cube
     for allowed_alternative in allowed_alternatives:
-        cmor_coord = CMOR_TABLES[cmor_table_type].coords[allowed_alternative]
+        cmor_coord = tables.coords[allowed_alternative]
         if cube.coords(var_name=cmor_coord.out_name):
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
             return (cmor_coord, cube_coord)
@@ -77,9 +83,7 @@ def _get_alternative_generic_lev_coord(
         f"Found no valid alternative coordinate for generic level coordinate "
         f"'{coord_name}'"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def _get_generic_lev_coord_names(

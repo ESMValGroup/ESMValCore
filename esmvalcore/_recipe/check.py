@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from esmvalcore._task import TaskSet
+    from esmvalcore.config import Session
     from esmvalcore.dataset import Dataset
     from esmvalcore.typing import Facets
 
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def align_metadata(step_settings: dict[str, Any]) -> None:
+def align_metadata(step_settings: dict[str, Any], session: Session) -> None:
     """Check settings of preprocessor ``align_metadata``."""
     project = step_settings.get("target_project")
     mip = step_settings.get("target_mip")
@@ -55,7 +56,13 @@ def align_metadata(step_settings: dict[str, Any]) -> None:
         return
 
     try:
-        _get_var_info(project, mip, short_name)
+        _get_var_info(
+            project,
+            mip,
+            short_name,
+            branding_suffix=step_settings.get("branding_suffix"),
+            session=session,
+        )
     except ValueError as exc:
         if strict:
             msg = (

@@ -32,7 +32,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
     add_plev_from_altitude,
 )
-from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.table import get_tables
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
     _rechunk_aux_factory_dependencies,
@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from iris.analysis import Regridder, RegriddingScheme
     from numpy.typing import ArrayLike
 
+    from esmvalcore.config import Session
     from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -1383,7 +1384,11 @@ def extract_levels(
     return result
 
 
-def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
+def get_cmor_levels(
+    cmor_table: str,
+    coordinate: str,
+    session: Session,
+) -> list[float]:
     """Get level definition from a CMOR coordinate.
 
     Parameters
@@ -1392,10 +1397,13 @@ def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
         CMOR table name
     coordinate:
         CMOR coordinate name
+    session:
+        The session to use.
 
     Returns
     -------
-    list[float]
+    :
+        A list of levels.
 
     Raises
     ------
@@ -1403,15 +1411,13 @@ def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    if cmor_table not in CMOR_TABLES:
-        msg = f"Level definition cmor_table '{cmor_table}' not available"
-        raise ValueError(msg)
+    cmor_tables = get_tables(session, project=cmor_table)
 
-    if coordinate not in CMOR_TABLES[cmor_table].coords:
+    if coordinate not in cmor_tables.coords:
         msg = f"Coordinate {coordinate} not available for {cmor_table}"
         raise ValueError(msg)
 
-    cmor = CMOR_TABLES[cmor_table].coords[coordinate]
+    cmor = cmor_tables.coords[coordinate]
 
     if cmor.requested:
         return [float(level) for level in cmor.requested]

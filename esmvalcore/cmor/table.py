@@ -31,7 +31,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 CMOR_TABLES: dict[str, InfoBase] = {}
-"""dict of str, obj: CMOR info objects."""
+"""dict of str, obj: CMOR info objects.
+
+.. deprecated:: 2.14.0
+
+    The global ``CMOR_TABLES`` dictionary is deprecated and will be removed in
+    ESMValCore v2.16.0. Please use :func:`~esmvalcore.cmor.table.get_tables`
+    to access the CMOR tables instead.
+"""
 
 _CMOR_KEYS = (
     "standard_name",
@@ -140,6 +147,12 @@ def get_var_info(
 ) -> VariableInfo | None:
     """Get variable information.
 
+    .. deprecated:: 2.14.0
+        The ``get_var_info`` function is deprecated and will be removed in
+        ESMValCore v2.16.0. Please use :func:`~esmvalcore.cmor.table.get_tables`
+        to retrieve the tables for a project and :meth:`InfoBase.get_variable`
+        to retrieve a variable from a table.
+
     Note
     ----
     If `project=CORDEX` and the `mip` ends with 'hr', it is cropped to 'h'
@@ -188,21 +201,6 @@ def get_var_info(
     )
 
 
-def load_cmor_tables(cfg: Config) -> None:
-    """Load the configured CMOR tables into :data:`esmvalcore.cmor.table.CMOR_TABLES`.
-
-    Parameters
-    ----------
-    cfg:
-        The configuration.
-    """
-    CMOR_TABLES.clear()
-    if cfg.get("config_developer_file") is not None:
-        read_cmor_tables(cfg["config_developer_file"])
-    for project in cfg["projects"]:
-        CMOR_TABLES[project] = get_tables(cfg, project)
-
-
 def read_cmor_tables(cfg_developer: Path | None = None) -> None:
     """Read cmor tables required in the configuration.
 
@@ -210,7 +208,7 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
 
         The config-developer.yml file based configuration is deprecated and
         will no longer be supported in ESMValCore v2.16.0. Please use
-        :func:`~esmvalcore.cmor.table.load_cmor_tables` instead of this function.
+        :func:`~esmvalcore.cmor.table.get_tables` instead of this function.
 
     Parameters
     ----------
@@ -456,6 +454,9 @@ class InfoBase:
         """
         self.tables: dict[str, TableInfo] = {}
         """A mapping from table names to :class:`TableInfo` objects."""
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(paths={self.paths}, strict={self.strict})"
 
     def get_table(self, table: str) -> TableInfo | None:
         """Search and return the table info.
@@ -934,6 +935,8 @@ class VariableInfo(JsonInfo):
         table_type: str = "",
         short_name: str = "",
         name: str = "",
+        table: str = "",
+        project: str = "",
     ) -> None:
         """Class to read and store variable information.
 
@@ -953,12 +956,21 @@ class VariableInfo(JsonInfo):
 
                 The ``short_name`` parameter is deprecated and will be removed
                 in ESMValCore v2.16.0.
+        # TODO: maybe not have these? They come from an upper level.
         name:
             Name of the variable entry in the CMOR table.
+        table:
+            Name of the table where the variable is defined.
+        project:
+            Name of the project the variable belongs to.
         """
         super().__init__()
         self.name = name
         """Name of the variable entry in the CMOR table."""
+        self.table = table
+        """Name of the table where the variable is defined."""
+        self.project = project
+        """Name of the project the variable belongs to."""
         self.table_type = table_type
         self.modeling_realm: list[str] = []
         """Modeling realm"""
@@ -986,6 +998,13 @@ class VariableInfo(JsonInfo):
 
         This is a dict with the names of the dimensions as keys and
         CoordinateInfo objects as values.
+        """
+        self._alternative_coordinates: dict[str, list[str]] = {}
+        """Alternative coordinates that can be used for variants of this variable.
+
+        This is a dict with the names of the dimensions as keys and
+        lists of alternative coordinate names as values and can be used
+        for variants of this variable that are similar enough for comparison.
         """
 
         self._json_data = None
