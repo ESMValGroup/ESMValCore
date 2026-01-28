@@ -37,7 +37,10 @@ def s3_url_exists(url: str) -> bool:
         return response.status_code == 200
 
 
-JASMIN_ONLINE = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
+# root S3 URL will always return a 403
+JASMIN_ONLINE = s3_url_exists(
+    "https://uor-aces-o.s3-ext.jc.rl.ac.uk/esmvaltool-zarr",
+)
 
 
 @pytest.mark.parametrize("input_type", [str, Path])
