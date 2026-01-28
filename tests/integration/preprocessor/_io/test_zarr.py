@@ -64,7 +64,7 @@ def test_load_zarr2_local(input_type):
 
 
 @pytest.mark.online
-@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
+@pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr2_remote():
     """Test loading a Zarr2 store from a https Object Store."""
     zarr_path = (
@@ -106,7 +106,7 @@ def test_load_zarr2_remote():
 
 
 @pytest.mark.online
-@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
+@pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr3_remote():
     """Test loading a Zarr3 store from a https Object Store."""
     zarr_path = (
@@ -134,7 +134,7 @@ def test_load_zarr3_remote():
 
 
 @pytest.mark.online
-@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
+@pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr3_cmip6_metadata():
     """
     Test loading a Zarr3 store from a https Object Store.
@@ -170,7 +170,7 @@ def test_load_zarr3_cmip6_metadata():
     assert cube.has_lazy_data()
 
 
-@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
+@pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_zarr_file():
     """
     Test loading a Zarr store from a https Object Store.
@@ -191,7 +191,7 @@ def test_load_zarr_remote_not_zarr_file():
         load(zarr_path)
 
 
-@pytest.mark.skipif(not jasmin_online, reason="CEDA S3 object store offline.")
+@pytest.mark.skipif(not JASMIN_ONLINE, reason="CEDA S3 object store offline.")
 def test_load_zarr_remote_not_file():
     """
     Test loading a Zarr store from a https Object Store.
