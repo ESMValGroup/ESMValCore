@@ -14,7 +14,7 @@ from packaging import version
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.cmor.table import load_cmor_tables
+from esmvalcore.cmor.table import _load_cmor_tables
 from esmvalcore.config._config import TASKSEP, load_config_developer
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
@@ -387,7 +387,7 @@ def validate_cmor_tables(value: dict) -> None:
     # preferably be avoided. This would require passing around session objects
     # instead of relying on global state (e.g. esmvalcore.config.CFG,
     # esmvalcore.cmor.tables.CMOR_TABLES).
-    load_cmor_tables({"projects": value})  # type: ignore[arg-type]
+    _load_cmor_tables({"projects": value})  # type: ignore[arg-type]
 
 
 def validate_projects(

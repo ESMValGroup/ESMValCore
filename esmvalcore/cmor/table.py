@@ -188,7 +188,7 @@ def get_var_info(
     )
 
 
-def load_cmor_tables(cfg: Config) -> None:
+def _load_cmor_tables(cfg: Config) -> None:
     """Load the configured CMOR tables into :data:`esmvalcore.cmor.table.CMOR_TABLES`.
 
     Parameters
@@ -457,6 +457,9 @@ class InfoBase:
         self.tables: dict[str, TableInfo] = {}
         """A mapping from table names to :class:`TableInfo` objects."""
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(paths={list(self.paths)}, strict={self.strict}, alt_names={self.alt_names})"
+
     def get_table(self, table: str) -> TableInfo | None:
         """Search and return the table info.
 
@@ -532,6 +535,15 @@ class InfoBase:
         # cmor_strict=False or derived=True
         var_info = self._look_in_all_tables(derived, alt_names_list)
 
+        # If that didn't work either, look in default table if
+        # cmor_strict=False or derived=True
+        if not var_info:
+            var_info = self._look_in_default(
+                derived,
+                alt_names_list,
+                table_name,
+            )
+
         # If necessary, adapt frequency of variable (set it to the one from the
         # requested MIP). E.g., if the user asked for table `Amon`, but the
         # variable has been found in `day`, use frequency `mon`.
@@ -539,6 +551,17 @@ class InfoBase:
             var_info = var_info.copy()
             var_info = self._update_frequency_from_mip(table_name, var_info)
 
+        return var_info
+
+    def _look_in_default(self, derived, alt_names_list, table_name):
+        """Look for variable in default table."""
+        # TODO: remove in v2.16.0
+        var_info = None
+        if not self.strict or derived:
+            for alt_names in alt_names_list:
+                var_info = self.default.get_variable(table_name, alt_names)
+                if var_info:
+                    break
         return var_info
 
     def _look_in_all_tables(self, derived, alt_names_list):
@@ -712,7 +735,7 @@ class CMIP6Info(InfoBase):
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
-                var = VariableInfo("CMIP6", name=var_name)
+                var = VariableInfo("CMIP6")
                 var.read_json(var_data, table.frequency)
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
@@ -933,7 +956,6 @@ class VariableInfo(JsonInfo):
         self,
         table_type: str = "",
         short_name: str = "",
-        name: str = "",
     ) -> None:
         """Class to read and store variable information.
 
@@ -953,12 +975,8 @@ class VariableInfo(JsonInfo):
 
                 The ``short_name`` parameter is deprecated and will be removed
                 in ESMValCore v2.16.0.
-        name:
-            Name of the variable entry in the CMOR table.
         """
         super().__init__()
-        self.name = name
-        """Name of the variable entry in the CMOR table."""
         self.table_type = table_type
         self.modeling_realm: list[str] = []
         """Modeling realm"""
@@ -991,7 +1009,7 @@ class VariableInfo(JsonInfo):
         self._json_data = None
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name})"
+        return f"<{self.__class__.__name__} defining variable '{self.short_name}'>"
 
     def copy(self) -> Self:
         """Return a shallow copy of VariableInfo.
@@ -1305,7 +1323,7 @@ class CMIP5Info(InfoBase):
         return coord
 
     def _read_variable(self, entry_name, frequency):
-        var = VariableInfo(table_type="CMIP5", name=entry_name)
+        var = VariableInfo(table_type="CMIP5")
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read
@@ -1319,7 +1337,8 @@ class CMIP5Info(InfoBase):
                 var.short_name = value
         if not var.short_name:
             # Some of our custom CMIP5 table entries are missing the `out_name` field.
-            var.short_name = var.name
+            # In that case, we assume the entry name is the same as short_name.
+            var.short_name = entry_name
         for dim in var.dimensions:
             var.coordinates[dim] = self.coords[dim]
         return var
@@ -1454,6 +1473,9 @@ class CustomInfo(CMIP5Info):
         for path in self.paths:
             self._read_table_dir(str(path))
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(paths={list(self.paths)})"
+
     def _read_table_dir(self, table_dir: str) -> None:
         """Read CMOR tables from directory."""
         # If present, read coordinates
@@ -1539,6 +1561,9 @@ class NoInfo(InfoBase):
     def __init__(self) -> None:
         pass
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
     def get_variable(
         self,
         table_name: str,  # noqa: ARG002
@@ -1567,7 +1592,7 @@ class NoInfo(InfoBase):
             otherwise.
 
         """
-        vardef = VariableInfo(name=short_name)
+        vardef = VariableInfo()
         vardef.short_name = short_name
         return vardef
 

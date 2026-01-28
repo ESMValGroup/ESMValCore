@@ -2945,6 +2945,10 @@ recipe:
   target metadata is read.
   If not given, use the short names of the corresponding variables defined in
   the recipe.
+* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix from which
+  target metadata is read.
+  If not given, use the branding suffixes of the corresponding variables defined in
+  the recipe.
 * ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
   error if desired metadata cannot be read for variable ``target_short_name``
   of MIP table ``target_mip`` and project ``target_project``.
