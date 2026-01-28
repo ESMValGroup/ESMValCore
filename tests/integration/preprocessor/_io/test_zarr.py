@@ -34,7 +34,8 @@ def s3_url_exists(url: str) -> bool:
     except requests.exceptions.RequestException:
         return False
     else:
-        return response.status_code == 200    
+        return response.status_code == 200
+
 
 JASMIN_ONLINE = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
 
