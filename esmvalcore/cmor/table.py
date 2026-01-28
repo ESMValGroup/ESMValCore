@@ -31,7 +31,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 CMOR_TABLES: dict[str, InfoBase] = {}
-"""dict of str, obj: CMOR info objects."""
+"""dict of str, obj: CMOR info objects.
+
+.. note::
+    If this dictionary is empty, it can be populated by loading the global
+    configuration by importing the :mod:`esmvalcore.config` module.
+"""
 
 _CMOR_KEYS = (
     "standard_name",
