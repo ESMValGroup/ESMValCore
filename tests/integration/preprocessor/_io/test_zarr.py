@@ -36,7 +36,7 @@ def s3_url_exists(url):
     else:
         return response.status_code == 200    
 
-jasmin_online = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
+JASMIN_ONLINE = s3_url_exists("https://uor-aces-o.s3-ext.jc.rl.ac.uk")
 
 
 @pytest.mark.parametrize("input_type", [str, Path])
