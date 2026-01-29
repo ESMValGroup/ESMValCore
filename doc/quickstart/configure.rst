@@ -737,10 +737,11 @@ have variables you would like to use which are not in the standard tables,
 it is recommended that you start from the default configuration and extend the
 list of ``paths`` with the directory where your custom CMOR tables are stored.
 
-If you have data that is not described in a CMOR table at all, you can use
+If you have data that is not described in a CMOR table at all and do not need
+interoperability with typical climate model data, you can use
 the :class:`esmvalcore.cmor.table.NoInfo` class to indicate that no CMOR table
 is available. In that case you will need to provide all necessary facets
-for finding and saving the data in the :ref:`recipe <recipe>` or
+for loading and saving the data in the :ref:`recipe <recipe>` or
 :class:`~esmvalcore.dataset.Dataset`, and
 :ref:`CMOR checks <cmor_check_strictness>` will be skipped.
 

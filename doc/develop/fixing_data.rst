@@ -320,8 +320,9 @@ The baseline case for ESMValCore input data is fully
 :ref:`CMOR compliant <cmor_tables>` data and this is checked when data is
 loaded by :meth:`esmvalcore.dataset.Dataset.load`.
 
-However, it is possible to disable these checks completely by configuring
-the project so it uses the :class:`esmvalcore.cmor.table.NoInfo` CMOR table,
+However, it is possible to disable these checks completely by
+:ref:`configuring the project <cmor_table_configuration>` so it uses the
+:class:`esmvalcore.cmor.table.NoInfo` CMOR table,
 or to adjust the strictness of the checks using the :ref:`configuration option
 <config_options>` ``check_level``.
 
