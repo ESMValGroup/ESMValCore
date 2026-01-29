@@ -228,10 +228,26 @@ def generate_validator_testcases(valid):
         {
             "validator": validate_projects,
             "success": (
-                ({"CMIP6": {}}, {"CMIP6": {}}),
+                (
+                    {"CMIP6": {}},
+                    {
+                        "CMIP6": {
+                            "cmor_table": {
+                                "type": "esmvalcore.cmor.table.NoInfo",
+                            },
+                        },
+                    },
+                ),
                 (
                     {"CMIP6": {"extra_facets": {}}},
-                    {"CMIP6": {"extra_facets": {}}},
+                    {
+                        "CMIP6": {
+                            "cmor_table": {
+                                "type": "esmvalcore.cmor.table.NoInfo",
+                            },
+                            "extra_facets": {},
+                        },
+                    },
                 ),
             ),
             "fail": (

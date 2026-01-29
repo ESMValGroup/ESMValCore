@@ -402,6 +402,10 @@ def validate_projects(
         "preprocessor_filename_template": validate_string,
     }
     for project, project_config in mapping.items():
+        if "cmor_table" not in project_config:
+            project_config["cmor_table"] = {
+                "type": "esmvalcore.cmor.table.NoInfo",
+            }
         for option, val in project_config.items():
             if option not in options_for_project:
                 msg = (

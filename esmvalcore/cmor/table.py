@@ -374,9 +374,9 @@ def get_tables(
         tables = cls(**kwargs)
         if not isinstance(tables, InfoBase):
             msg = (
-                "Expected CMOR tables of type `esmvalcore.cmor.table.InfoBase`, "
+                "`type` should be a subclass `esmvalcore.cmor.table.InfoBase`, "
                 f"but your configuration for project '{project}' contains "
-                f"'{tables}' of type '{type(tables)}'."
+                f"'{tables}' of type: '{type(tables)}'."
             )
             raise TypeError(msg)
         _TABLE_CACHE[cache_key] = tables
@@ -404,15 +404,17 @@ class InfoBase:
         `variable_alt_names.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/variable_alt_names.yml>`_
         will be used.
 
-    strict: bool
-        If False, will look for a variable in other tables if it can not be
-        found in the requested one.
+    strict:
+        If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
+        will look for a variable in other tables if it can not be found in the
+        table specified by ``mip`` in the :ref:`recipe <recipe>` or :class:`~esmvalcore.dataset.Dataset`.
 
     paths:
-        A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
         `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory it will be used.
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
@@ -494,7 +496,8 @@ class InfoBase:
         Parameters
         ----------
         table_name:
-            Table name, i.e., the variable's MIP.
+            Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
+            :class:`~esmvalcore.dataset.Dataset`.
         short_name:
             Variable's short name.
         branding_suffix:
@@ -638,9 +641,11 @@ class CMIP6Info(InfoBase):
         the default values from the installed copy of
         `variable_alt_names.yml`_ will be used.
 
-    strict: bool
-        If False, will look for a variable in other tables if it can not be
-        found in the requested one.
+    strict:
+        If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
+        will look for a variable in other tables if it can not be found in the
+        table specified by ``mip`` in the :ref:`recipe <recipe>` or
+        :class:`~esmvalcore.dataset.Dataset`.
 
     default_table_prefix:
         If the table_id contains a prefix, it can be specified here.
@@ -651,9 +656,12 @@ class CMIP6Info(InfoBase):
             ESMValCore v2.16.0.
 
     paths:
-        A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
-        be used.
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
+
     """
 
     def __init__(
@@ -842,14 +850,18 @@ class Obs4MIPsInfo(CMIP6Info):
         the default values from the installed copy of
         `variable_alt_names.yml`_ will be used.
 
-    strict: bool
-        If False, will look for a variable in other tables if it can not be
-        found in the requested one.
+    strict:
+        If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
+        will look for a variable in other tables if it can not be found in the
+        table specified by ``mip`` in the :ref:`recipe <recipe>` or
+        :class:`~esmvalcore.dataset.Dataset`.
 
     paths:
-        A list of paths to CMOR tables. If the path is relative and exists in
-        the ``tables`` directory in :mod:`esmvalcore.cmor`, the version of the
-        tables shipped with ESMValCore will be used.
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
@@ -1194,9 +1206,11 @@ class CMIP5Info(InfoBase):
         the default values from the installed copy of
         `variable_alt_names.yml`_ will be used.
 
-    strict: bool
-        If False, will look for a variable in other tables if it can not be
-        found in the requested one.
+    strict:
+        If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
+        will look for a variable in other tables if it can not be found in the
+        table specified by ``mip`` in the :ref:`recipe <recipe>` or
+        :class:`~esmvalcore.dataset.Dataset`.
 
     default_table_prefix:
         If the table_id contains a prefix, it can be specified here.
@@ -1207,9 +1221,11 @@ class CMIP5Info(InfoBase):
             ESMValCore v2.16.0.
 
     paths:
-        A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
-        be used.
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
 
     """
 
@@ -1393,9 +1409,11 @@ class CMIP3Info(CMIP5Info):
         the default values from the installed copy of
         `variable_alt_names.yml`_ will be used.
 
-    strict: bool
-        If False, will look for a variable in other tables if it can not be
-        found in the requested one.
+    strict:
+        If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
+        will look for a variable in other tables if it can not be found in the
+        table specified by ``mip`` in the :ref:`recipe <recipe>` or
+        :class:`~esmvalcore.dataset.Dataset`.
 
     default_table_prefix:
         If the table_id contains a prefix, it can be specified here.
@@ -1406,9 +1424,11 @@ class CMIP3Info(CMIP5Info):
             ESMValCore v2.16.0.
 
     paths:
-        A list of paths to CMOR tables. If the path is relative and exists in
-        the installed copy of the `esmvalcore/cmor/tables`_ directory it will
-        be used.
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
 
     """
 
@@ -1582,9 +1602,13 @@ class NoInfo(InfoBase):
         Parameters
         ----------
         table_name:
-            Table name, i.e., the variable's MIP.
+            Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
+            :class:`~esmvalcore.dataset.Dataset`.
         short_name:
             Variable's short name.
+        branding_suffix:
+            A suffix that will be appended to ``short_name`` when looking up the
+            variable in the CMOR table.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if

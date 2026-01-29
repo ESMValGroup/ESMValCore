@@ -316,6 +316,15 @@ missing coordinate you can create a fix for this model:
 Customizing checker strictness
 ==============================
 
+The baseline case for ESMValCore input data is fully
+:ref:`CMOR compliant <cmor_tables>` data and this is checked when data is
+loaded by :meth:`esmvalcore.dataset.Dataset.load`.
+
+However, it is possible to disable these checks completely by configuring
+the project so it uses the :class:`esmvalcore.cmor.table.NoInfo` CMOR table,
+or to adjust the strictness of the checks using the :ref:`configuration option
+<config_options>` ``check_level``.
+
 The data checker classifies its issues using four different levels of
 severity. From highest to lowest:
 
@@ -345,6 +354,13 @@ below from the lowest level of strictness to the highest:
   strictness. Mostly useful for checking datasets that you have produced, to
   be sure that future users will not be distracted by inoffensive warnings.
 
+.. warning::
+
+    While it is possible to work with datasets that are not described in a CMOR
+    table or only partially follow the CMOR standards, the
+    :ref:`preprocessor functions <preprocessor>` and
+    :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
+    CMORized data and may not work as expected with non-CMORized data.
 
 .. _add_new_fix_native_datasets:
 
@@ -357,14 +373,23 @@ under project ``native6``.
 
 .. _add_new_fix_native_datasets_config:
 
-Configuration
--------------
+CMOR Table Configuration
+------------------------
 
-An example of a configuration in ``config-developer.yml`` for projects used for
-native datasets is given :ref:`here <configure_native_models>`.
-Make sure to use the option ``cmor_strict: false`` for these projects if you
-want to make use of :ref:`custom_cmor_tables`.
-This allows reading arbitrary variables from native datasets.
+An example of a CMOR table configuration for projects used for native datasets is given in
+
+.. literalinclude:: ../configurations/defaults/cmor_tables.yml
+    :language: yaml
+    :caption: Example native data format projects in ``defaults/cmor_tables.yml``
+    :prepend: projects:
+    :start-at: # Observational and reanalysis data that can be read in its native format by ESMValCore.
+    :end-before: CESM:
+
+The option ``strict: false`` is convenient for these projects, if you
+want to make use of the feature that looks in all tables instead of
+only the one specified by the ``mip`` facet in the recipe or
+:class:`~esmvalcore.dataset.Dataset`: like this, a custom variable only needs to
+be defined for a single ``mip`` and can then be used with all ``mip`` s.
 
 .. _add_new_fix_native_datasets_locate_data:
 
@@ -373,89 +398,85 @@ Locate data
 
 To allow ESMValCore to locate the data files, use the following steps:
 
-   - If you want to use the ``native6`` project (recommended for datasets whose
-     input files can be easily moved to the usual ``native6`` directory
-     structure given by the :ref:`configuration option <config_options>`
-     ``rootpath``; this is usually the case for native reanalysis/observational
-     datasets):
+- If you want to use the ``native6`` project, recommended for datasets whose
+  input files can be easily moved to the usual ``native6`` directory
+  structure given by
 
-     The entry ``native6`` of ``config-developer.yml`` should be complemented
-     with sub-entries for ``input_dir`` and ``input_file`` that go under a new
-     key representing the data organization (such as ``MY_DATA_ORG``), and
-     these sub-entries can use an arbitrary list of ``{placeholders}``.
-     Example :
+  .. literalinclude:: ../configurations/data-local-esmvaltool.yml
+     :language: yaml
+     :caption: ``native6`` standard directory organization in ``data-local-esmvaltool.yml``
+     :end-before: # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
 
-     .. code-block:: yaml
+  this is preferred. This is usually the case for native reanalysis/observational
+  datasets.
 
-        native6:
-          ...
-          input_dir:
-            default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
-            MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
-          input_file:
-            default: '*.nc'
-            MY_DATA_ORG: '{simulation}_*.nc'
-          ...
+- If moving the data into a particular directory structure is not possible,
+  the ``data`` entry of the ``native6`` project could be complemented
+  with another data source that goes under a new
+  key representing the data organization (such as ``MY_DATA_ORG``), and
+  these sub-entries can use an arbitrary list of ``{placeholders}``.
 
-     To find your native data (e.g., called ``MYDATA``) that is for example
-     located in ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
-     (``{rootpath}`` is ESMValTool's ``rootpath`` :ref:`configuration option
-     <config_options>` for the project ``native6``), use the following dataset
-     entry in your recipe
+  Example:
 
-     .. code-block:: yaml
+  .. code-block:: yaml
 
-        datasets:
-          - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
+    projects:
+      native6:
+        data:
+          MY_DATA_ORG:
+            type: esmvalcore.io.local.LocalDataSource
+            rootpath: /path/to/data
+            dirname_template: "{dataset}/{exp}/{simulation}/{version}/{type}"
+            filename_template: '{simulation}_*.nc'
 
-     and make sure to use the following :ref:`configuration option
-     <config_options>` ``drs``:
+  would allow the tool to find your native data (e.g., a ``dataset`` called ``MYDATA``)
+  that is for example located in ``/path/to/data/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
+  if you use the following dataset entry in your recipe
 
-     .. code-block:: yaml
+  .. code-block:: yaml
 
-        drs:
-          native6: MY_DATA_ORG
+     datasets:
+       - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
 
-   - If you want to use a dedicated project for your native dataset
-     (recommended for datasets for which you cannot control the location of the
-     input files; this is usually the case for native model output):
+- If you want to use a dedicated project for your native dataset
+  (this is usually the case for native model output):
 
-     A new entry for the project needs to be added to ``config-developer.yml``.
-     For example, for the ICON model, create a new project ``ICON``:
+  A new entry for the project needs to be added under :ref:`config-projects`.
+  For example, for the ICON model, create a new project ``ICON`` and define
+  its data sources:
 
-     .. code-block:: yaml
+  .. literalinclude:: ../configurations/data-native-icon.yml
+     :language: yaml
+     :caption: ``ICON`` standard directory organization in ``data-native-icon.yml``
 
-        ICON:
-          ...
-          input_dir:
-            default:
-              - '{exp}'
-              - '{exp}/outdata'
-              - '{exp}/output'
-          input_file:
-            default: '{exp}_{var_type}*.nc'
-          ...
+  and a CMOR table configuration:
 
-     To find your ICON data that is for example located in files like
-     ``{rootpath}/amip/amip_atm_2d_ml_20000101T000000Z.nc`` (``{rootpath}`` is
-     ESMValCore's :ref:`configuration option <config_options>` ``rootpath`` for
-     the project ``ICON``), use the following dataset entry in your recipe:
+  .. literalinclude:: ../configurations/defaults/cmor_tables.yml
+     :language: yaml
+     :caption: ``ICON`` CMOR table configuration from ``defaults/cmor_tables.yml``
+     :prepend: projects:
+     :start-at: ICON:
+     :end-at: strict: false
 
-     .. code-block:: yaml
+  To find your ICON data that is for example located in files like
+  ``~/climate_data/amip/amip_atm_2d_ml_20000101T000000Z.nc``, use the following
+  dataset entry in your recipe:
 
-        datasets:
-          - {project: ICON, dataset: ICON, exp: amip}
+  .. code-block:: yaml
 
-     Please note the duplication of the name ``ICON`` in ``project`` and
-     ``dataset``, which is necessary to comply with ESMValTool's data finding
-     and CMORizing functionalities.
-     For other native models, ``dataset`` could also refer to a subversion of
-     the model.
-     Note that it is possible to predefine facets via :ref:`extra facets
-     <add_new_fix_native_datasets_extra_facets>`.
-     In this ICON example, the facet ``var_type`` is :download:`predefined
-     </../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>`
-     for many variables.
+     datasets:
+       - {project: ICON, dataset: ICON, exp: amip}
+
+  Please note the duplication of the name ``ICON`` in ``project`` and
+  ``dataset``, which is necessary to comply with ESMValTool's data finding
+  and CMORizing functionalities.
+  For other native models, ``dataset`` could also refer to a subversion of
+  the model.
+  Note that it is possible to predefine facets via :ref:`extra facets
+  <add_new_fix_native_datasets_extra_facets>`.
+  In this ICON example, the facet ``var_type`` is :download:`predefined
+  </../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>`
+  for many variables.
 
 .. _add_new_fix_native_datasets_fix_data:
 

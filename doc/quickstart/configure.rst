@@ -694,7 +694,7 @@ The following project-specific options are available:
      - Type
      - Default value
    * - ``cmor_table``
-     - :ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore can work with. Refer to :ref:`config-cmor-tables` for available options.
+     - :ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore can work with. Refer to :ref:`cmor_table_configuration` for available options.
      - :obj:`dict`
      - ``{}``
    * - ``data``
@@ -710,7 +710,7 @@ The following project-specific options are available:
      - :obj:`str`
      - Refer to :ref:`config-preprocessor-filename-template`.
 
-.. _config-cmor-tables:
+.. _cmor_table_configuration:
 
 CMOR table configuration
 ------------------------
@@ -726,6 +726,30 @@ for example:
     :caption: First few lines of ``defaults/cmor_tables.yml``
     :end-before: CMIP3:
 
+The ``type`` parameter defines which class is used to read the CMOR tables for a
+project, it should be a subclass of :class:`esmvalcore.cmor.table.InfoBase`.
+The other parameters are passed as keyword arguments to the class when it is
+created. See :mod:`esmvalcore.cmor.table` for a description of the built-in
+classes for reading CMOR tables and their parameters.
+
+Most users will not need to change the CMOR table configuration. However, if you
+have variables you would like to use which are not in the standard tables,
+it is recommended that you start from the default configuration and extend the
+list of ``paths`` with the directory where your custom CMOR tables are stored.
+
+If you have data that is not described in a CMOR table at all, you can use
+the :class:`esmvalcore.cmor.table.NoInfo` class to indicate that no CMOR table
+is available. In that case you will need to provide all necessary facets
+for finding and saving the data in the :ref:`recipe <recipe>` or
+:class:`~esmvalcore.dataset.Dataset`, and
+:ref:`CMOR checks <cmor_check_strictness>` will be skipped.
+
+.. warning::
+
+    While it is possible to work with datasets that are not described in a CMOR
+    table,the  :ref:`preprocessor functions <preprocessor>` and
+    :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
+    CMORized data and may not work as expected with non-CMORized data.
 
 .. _config-data-sources:
 
@@ -1201,7 +1225,7 @@ would translate to the following new configuration:
 Upgrade instructions for using custom CMOR tables
 -------------------------------------------------
 
-The CMOR tables can now be configured via :ref:`config-cmor-tables`. The
+The CMOR tables can now be configured via :ref:`cmor_table_configuration`. The
 following mapping applies:
 
 - ``cmor_type`` has been replaced by ``type``
