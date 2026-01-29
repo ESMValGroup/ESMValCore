@@ -476,7 +476,9 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
+    # This function is called by the deprecation functions, which are called by
+    # ValidatedConfig.__setitem__, so the calling site is 4 levels away.
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=4)
 
 
 # TODO: remove in v2.15.0
