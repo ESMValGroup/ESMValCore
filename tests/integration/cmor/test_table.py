@@ -1,7 +1,6 @@
 """Integration tests for the variable_info module."""
 
 import os
-import unittest
 from pathlib import Path
 
 import pytest
@@ -76,24 +75,25 @@ def test_update_cmor_facets_facet_not_in_table(mocker):
     assert facets == expected
 
 
-class TestCMIP6Info(unittest.TestCase):
-    """Test for the CMIP6 info class."""
+class TestCMIP6Info:
+    """Tests for the CMIP6 info class."""
 
-    def setUp(self):
-        self.variables_info = CMIP6Info(
+    @pytest.fixture
+    def variables_info(self) -> CMIP6Info:
+        return CMIP6Info(
             paths=[
                 Path("cmip6/Tables"),
                 Path("cmip6-custom"),
             ],
         )
 
-    def test_repr(self) -> None:
+    def test_repr(self, variables_info: CMIP6Info) -> None:
         builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
         expected_paths = [
             builtin_tables_path / "cmip6" / "Tables",
             builtin_tables_path / "cmip6-custom",
         ]
-        result = repr(self.variables_info)
+        result = repr(variables_info)
         assert result.startswith(
             f"CMIP6Info(paths={expected_paths}, strict=True, alt_names=",
         )
@@ -106,71 +106,68 @@ class TestCMIP6Info(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, default=None, strict=False)
 
-    def test_get_table_frequency(self):
+    def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
-        self.assertEqual(
-            self.variables_info.get_table("Amon").frequency,
-            "mon",
-        )
-        self.assertEqual(self.variables_info.get_table("day").frequency, "day")
+        assert variables_info.get_table("Amon").frequency == "mon"
+        assert variables_info.get_table("day").frequency == "day"
 
-    def test_get_variable_tas(self):
+    def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
-        var = self.variables_info.get_variable("Amon", "tas")
-        self.assertEqual(var.short_name, "tas")
+        var = variables_info.get_variable("Amon", "tas")
+        assert var.short_name == "tas"
 
-    def test_get_variable_from_alt_names(self):
+    def test_get_variable_from_alt_names(self, variables_info):
         """Get a variable from a known alt_names."""
-        var = self.variables_info.get_variable("SImon", "sic")
-        self.assertEqual(var.short_name, "siconc")
+        var = variables_info.get_variable("SImon", "sic")
+        assert var.short_name == "siconc"
 
-    def test_get_variable_derived(self):
+    def test_get_variable_derived(self, variables_info):
         """Test that derived variable are looked up from other MIP tables."""
-        var = self.variables_info.get_variable("3hr", "sfcWind", derived=True)
-        self.assertEqual(var.short_name, "sfcWind")
+        var = variables_info.get_variable("3hr", "sfcWind", derived=True)
+        assert var.short_name == "sfcWind"
 
-    def test_get_variable_from_custom(self):
+    def test_get_variable_from_custom(self, variables_info):
         """Get a variable from default."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Amon", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Amon", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == "mon"
 
-        var = self.variables_info.get_variable("day", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "day")
+        var = variables_info.get_variable("day", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == "day"
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "ta"))
+        assert variables_info.get_variable("Omon", "ta") is None
 
-    def test_omon_ta_fail_if_strict(self):
+    def test_omon_ta_fail_if_strict(self, variables_info):
         """Get ta fails with Omon if strict."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "ta"))
+        assert variables_info.get_variable("Omon", "ta") is None
 
-    def test_omon_ta_succes_if_strict(self):
+    def test_omon_ta_succes_if_strict(self, variables_info):
         """Get ta does not fail with AERMonZ if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Omon", "ta")
-        self.assertEqual(var.short_name, "ta")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Omon", "ta")
+        assert var.short_name == "ta"
+        assert var.frequency == "mon"
 
-    def test_omon_toz_succes_if_strict(self):
+    def test_omon_toz_succes_if_strict(self, variables_info):
         """Get toz does not fail with Omon if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Omon", "toz")
-        self.assertEqual(var.short_name, "toz")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Omon", "toz")
+        assert var.short_name == "toz"
+        assert var.frequency == "mon"
 
-    def test_get_institute_from_source(self):
+    def test_get_institute_from_source(self, variables_info):
         """Get institution for source ACCESS-CM2."""
-        institute = self.variables_info.institutes["ACCESS-CM2"]
-        self.assertListEqual(institute, ["CSIRO-ARCCSS"])
+        institute = variables_info.institutes["ACCESS-CM2"]
+        assert institute == ["CSIRO-ARCCSS"]
 
-    def test_get_activity_from_exp(self):
+    def test_get_activity_from_exp(self, variables_info):
         """Get activity for experiment 1pctCO2."""
-        activity = self.variables_info.activities["1pctCO2"]
-        self.assertListEqual(activity, ["CMIP"])
+        activity = variables_info.activities["1pctCO2"]
+        assert activity == ["CMIP"]
 
     def test_invalid_path(self) -> None:
         path = Path(__file__) / "path" / "does" / "not" / "exist"
@@ -183,17 +180,19 @@ class TestCMIP6Info(unittest.TestCase):
         with pytest.raises(NotADirectoryError, match=str(path)):
             CMIP6Info(paths=[path])
 
+    def test_invalid_file(self, tmp_path: Path) -> None:
+        invalid_file = tmp_path / "invalid.json"
+        invalid_file.touch()
+        with pytest.raises(ValueError):
+            CMIP6Info(paths=[tmp_path])
 
-class Testobs4mipsInfo(unittest.TestCase):
-    """Test for the obs$mips info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
+class Testobs4mipsInfo:
+    """Tests for the obs4mips info class."""
 
-        We read CMIP6Info once to keep tests times manageable
-        """
-        cls.variables_info = Obs4MIPsInfo(
+    @pytest.fixture
+    def variables_info(self) -> Obs4MIPsInfo:
+        return Obs4MIPsInfo(
             paths=[
                 Path("obs4mips/Tables"),
                 Path("cmip6-custom"),
@@ -201,15 +200,9 @@ class Testobs4mipsInfo(unittest.TestCase):
             strict=False,
         )
 
-    def setUp(self):
-        self.variables_info.strict = False
-
-    def test_get_table_frequency(self):
+    def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
-        self.assertEqual(
-            self.variables_info.get_table("monStderr").frequency,
-            "mon",
-        )
+        assert variables_info.get_table("monStderr").frequency == "mon"
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -218,84 +211,77 @@ class Testobs4mipsInfo(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
-    def test_get_variable_ndvistderr(self):
+    def test_get_variable_ndvistderr(self, variables_info):
         """Get ndviStderr variable.
 
         Note table name obs4MIPs_[mip]
         """
-        var = self.variables_info.get_variable(
+        var = variables_info.get_variable(
             "obs4MIPs_monStderr",
             "ndviStderr",
         )
-        self.assertEqual(var.short_name, "ndviStderr")
-        self.assertEqual(var.frequency, "mon")
+        assert var.short_name == "ndviStderr"
+        assert var.frequency == "mon"
 
-    def test_get_variable_hus(self):
+    def test_get_variable_hus(self, variables_info):
         """Get hus variable."""
-        var = self.variables_info.get_variable("Amon", "hus")
-        self.assertEqual(var.short_name, "hus")
-        self.assertEqual(var.frequency, "mon")
+        var = variables_info.get_variable("Amon", "hus")
+        assert var.short_name == "hus"
+        assert var.frequency == "mon"
 
-    def test_get_variable_hus_default_prefix(self):
+    def test_get_variable_hus_default_prefix(self, variables_info):
         """Get hus variable."""
-        var = self.variables_info.get_variable("Amon", "hus")
-        self.assertEqual(var.short_name, "hus")
-        self.assertEqual(var.frequency, "mon")
+        var = variables_info.get_variable("Amon", "hus")
+        assert var.short_name == "hus"
+        assert var.frequency == "mon"
 
-    def test_get_variable_from_custom(self):
+    def test_get_variable_from_custom(self, variables_info):
         """Get prStderr variable.
 
         Note table name obs4MIPs_[mip]
         """
-        var = self.variables_info.get_variable(
+        var = variables_info.get_variable(
             "monStderr",
             "prStderr",
         )
-        self.assertEqual(var.short_name, "prStderr")
-        self.assertEqual(var.frequency, "mon")
+        assert var.short_name == "prStderr"
+        assert var.frequency == "mon"
 
-    def test_get_variable_from_custom_deriving(self):
+    def test_get_variable_from_custom_deriving(self, variables_info):
         """Get a variable from default."""
-        var = self.variables_info.get_variable(
+        var = variables_info.get_variable(
             "Amon",
             "swcre",
             derived=True,
         )
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "mon")
+        assert var.short_name == "swcre"
+        assert var.frequency == "mon"
 
-        var = self.variables_info.get_variable(
+        var = variables_info.get_variable(
             "Aday",
             "swcre",
             derived=True,
         )
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "day")
+        assert var.short_name == "swcre"
+        assert var.frequency == "day"
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "tras"))
+        assert variables_info.get_variable("Omon", "tras") is None
 
 
-class TestCMIP5Info(unittest.TestCase):
-    """Test for the CMIP5 info class."""
+class TestCMIP5Info:
+    """Tests for the CMIP5 info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
-
-        We read CMIP5Info once to keep testing times manageable
-        """
-        cls.variables_info = CMIP5Info(
+    @pytest.fixture
+    def variables_info(self) -> CMIP5Info:
+        return CMIP5Info(
             paths=[
                 Path("cmip5/Tables"),
                 Path("cmip5-custom"),
             ],
             strict=True,
         )
-
-    def setUp(self):
-        self.variables_info.strict = True
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -304,91 +290,81 @@ class TestCMIP5Info(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP5Info(cmor_tables_path, None, True)
 
-    def test_get_variable_tas(self):
+    def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
-        var = self.variables_info.get_variable("Amon", "tas")
-        self.assertEqual(var.short_name, "tas")
+        var = variables_info.get_variable("Amon", "tas")
+        assert var.short_name == "tas"
 
-    def test_get_variable_zg(self):
+    def test_get_variable_zg(self, variables_info):
         """Get zg variable."""
-        var = self.variables_info.get_variable("Amon", "zg")
-        self.assertEqual(var.short_name, "zg")
-        self.assertEqual(
-            var.coordinates["plevs"].requested,
-            [
-                "100000.",
-                "92500.",
-                "85000.",
-                "70000.",
-                "60000.",
-                "50000.",
-                "40000.",
-                "30000.",
-                "25000.",
-                "20000.",
-                "15000.",
-                "10000.",
-                "7000.",
-                "5000.",
-                "3000.",
-                "2000.",
-                "1000.",
-            ],
-        )
+        var = variables_info.get_variable("Amon", "zg")
+        assert var.short_name == "zg"
+        assert var.coordinates["plevs"].requested == [
+            "100000.",
+            "92500.",
+            "85000.",
+            "70000.",
+            "60000.",
+            "50000.",
+            "40000.",
+            "30000.",
+            "25000.",
+            "20000.",
+            "15000.",
+            "10000.",
+            "7000.",
+            "5000.",
+            "3000.",
+            "2000.",
+            "1000.",
+        ]
 
-    def test_get_variable_from_custom(self):
+    def test_get_variable_from_custom(self, variables_info):
         """Get a variable from default."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Amon", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Amon", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == "mon"
 
-        var = self.variables_info.get_variable("day", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "day")
+        var = variables_info.get_variable("day", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == "day"
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "tas"))
+        assert variables_info.get_variable("Omon", "tas") is None
 
-    def test_aermon_ta_fail_if_strict(self):
+    def test_aermon_ta_fail_if_strict(self, variables_info):
         """Get ta fails with AERMonZ if strict."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "ta"))
+        assert variables_info.get_variable("Omon", "ta") is None
 
-    def test_aermon_ta_succes_if_strict(self):
+    def test_aermon_ta_succes_if_strict(self, variables_info):
         """Get ta does not fail with Omon if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Omon", "ta")
-        self.assertEqual(var.short_name, "ta")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Omon", "ta")
+        assert var.short_name == "ta"
+        assert var.frequency == "mon"
 
-    def test_omon_toz_succes_if_strict(self):
+    def test_omon_toz_succes_if_strict(self, variables_info):
         """Get toz does not fail with Omon if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("Omon", "toz")
-        self.assertEqual(var.short_name, "toz")
-        self.assertEqual(var.frequency, "mon")
+        variables_info.strict = False
+        var = variables_info.get_variable("Omon", "toz")
+        assert var.short_name == "toz"
+        assert var.frequency == "mon"
 
 
-class TestCMIP3Info(unittest.TestCase):
-    """Test for the CMIP5 info class."""
+class TestCMIP3Info:
+    """Tests for the CMIP3 info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
-
-        We read CMIP5Info once to keep testing times manageable
-        """
-        cls.variables_info = CMIP3Info(
+    @pytest.fixture
+    def variables_info(self) -> CMIP3Info:
+        return CMIP3Info(
             paths=[
                 Path("cmip3/Tables"),
                 Path("cmip5-custom"),
             ],
             strict=True,
         )
-
-    def setUp(self):
-        self.variables_info.strict = True
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -397,82 +373,75 @@ class TestCMIP3Info(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP3Info(cmor_tables_path, None, True)
 
-    def test_get_variable_tas(self):
+    def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
-        var = self.variables_info.get_variable("A1", "tas")
-        self.assertEqual(var.short_name, "tas")
+        var = variables_info.get_variable("A1", "tas")
+        assert var.short_name == "tas"
 
-    def test_get_variable_zg(self):
+    def test_get_variable_zg(self, variables_info):
         """Get zg variable."""
-        var = self.variables_info.get_variable("A1", "zg")
-        self.assertEqual(var.short_name, "zg")
-        self.assertEqual(
-            var.coordinates["pressure"].requested,
-            [
-                "100000.",
-                "92500.",
-                "85000.",
-                "70000.",
-                "60000.",
-                "50000.",
-                "40000.",
-                "30000.",
-                "25000.",
-                "20000.",
-                "15000.",
-                "10000.",
-                "7000.",
-                "5000.",
-                "3000.",
-                "2000.",
-                "1000.",
-            ],
-        )
+        var = variables_info.get_variable("A1", "zg")
+        assert var.short_name == "zg"
+        assert var.coordinates["pressure"].requested == [
+            "100000.",
+            "92500.",
+            "85000.",
+            "70000.",
+            "60000.",
+            "50000.",
+            "40000.",
+            "30000.",
+            "25000.",
+            "20000.",
+            "15000.",
+            "10000.",
+            "7000.",
+            "5000.",
+            "3000.",
+            "2000.",
+            "1000.",
+        ]
 
-    def test_get_variable_from_custom(self):
+    def test_get_variable_from_custom(self, variables_info):
         """Get a variable from default."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("A1", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "")
+        variables_info.strict = False
+        var = variables_info.get_variable("A1", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == ""
 
-        var = self.variables_info.get_variable("day", "swcre")
-        self.assertEqual(var.short_name, "swcre")
-        self.assertEqual(var.frequency, "")
+        var = variables_info.get_variable("day", "swcre")
+        assert var.short_name == "swcre"
+        assert var.frequency == ""
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("O1", "tas"))
+        assert variables_info.get_variable("O1", "tas") is None
 
-    def test_aermon_ta_fail_if_strict(self):
+    def test_aermon_ta_fail_if_strict(self, variables_info):
         """Get ta fails with AERMonZ if strict."""
-        self.assertIsNone(self.variables_info.get_variable("O1", "ta"))
+        assert variables_info.get_variable("O1", "ta") is None
 
-    def test_aermon_ta_succes_if_strict(self):
+    def test_aermon_ta_succes_if_strict(self, variables_info):
         """Get ta does not fail with Omon if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("O1", "ta")
-        self.assertEqual(var.short_name, "ta")
-        self.assertEqual(var.frequency, "")
+        variables_info.strict = False
+        var = variables_info.get_variable("O1", "ta")
+        assert var.short_name == "ta"
+        assert var.frequency == ""
 
-    def test_omon_toz_succes_if_strict(self):
+    def test_omon_toz_succes_if_strict(self, variables_info):
         """Get toz does not fail with Omon if not strict."""
-        self.variables_info.strict = False
-        var = self.variables_info.get_variable("O1", "toz")
-        self.assertEqual(var.short_name, "toz")
-        self.assertEqual(var.frequency, "")
+        variables_info.strict = False
+        var = variables_info.get_variable("O1", "toz")
+        assert var.short_name == "toz"
+        assert var.frequency == ""
 
 
-class TestCORDEXInfo(unittest.TestCase):
-    """Test for the CORDEX info class."""
+class TestCORDEXInfo:
+    """Tests for the CORDEX info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
-
-        We read CORDEX once to keep testing times manageable
-        """
-        cls.variables_info = CMIP5Info(
+    @pytest.fixture
+    def variables_info(self) -> CMIP5Info:
+        return CMIP5Info(
             paths=[
                 Path("cordex/Tables"),
                 Path("cmip5-custom"),
@@ -485,28 +454,24 @@ class TestCORDEXInfo(unittest.TestCase):
         cmor_tables_path = os.path.join(cmor_path, "tables", "cordex")
         CMIP5Info(cmor_tables_path)
 
-    def test_get_variable_tas(self):
+    def test_get_variable_tas(self, variables_info):
         """Get tas variable."""
-        var = self.variables_info.get_variable("mon", "tas")
-        self.assertEqual(var.short_name, "tas")
+        var = variables_info.get_variable("mon", "tas")
+        assert var.short_name == "tas"
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "tas"))
+        assert variables_info.get_variable("Omon", "tas") is None
 
 
-class TestCustomInfo(unittest.TestCase):
-    """Test for the custom info class."""
+class TestCustomInfo:
+    """Tests for the custom info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
+    @pytest.fixture
+    def variables_info(self) -> CustomInfo:
+        return CustomInfo()
 
-        We read CMIP5Info once to keep testing times manageable
-        """
-        cls.variables_info = CustomInfo()
-
-    def test_custom_tables_default_location(self):
+    def test_custom_tables_default_location(self, variables_info):
         """Test constructor with default tables location."""
         custom_info = CustomInfo()
         expected_cmor_folder = os.path.join(
@@ -515,10 +480,10 @@ class TestCustomInfo(unittest.TestCase):
             "cmip5-custom",
         )
         assert custom_info.paths == (Path(expected_cmor_folder),)
-        self.assertTrue(custom_info.tables["custom"])
-        self.assertTrue(custom_info.coords)
+        assert custom_info.tables["custom"]
+        assert custom_info.coords
 
-    def test_custom_tables_location(self):
+    def test_custom_tables_location(self, variables_info):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
         default_cmor_tables_path = os.path.join(
@@ -535,72 +500,69 @@ class TestCustomInfo(unittest.TestCase):
             Path(default_cmor_tables_path),
             Path(cmor_tables_path),
         )
-        self.assertTrue(custom_info.tables["custom"])
-        self.assertTrue(custom_info.coords)
+        assert custom_info.tables["custom"]
+        assert custom_info.coords
 
     def test_custom_tables_invalid_location(self):
         """Test constructor with invalid custom tables location."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             CustomInfo("this_file_does_not_exist.dat")
 
-    def test_get_variable_netcre(self):
+    def test_get_variable_netcre(self, variables_info):
         """Get tas variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Amon", "netcre")
-        self.assertEqual(var.short_name, "netcre")
+        var = variables_info.get_variable("Amon", "netcre")
+        assert var.short_name == "netcre"
 
-    def test_get_bad_variable(self):
+    def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable("Omon", "badvar"))
+        assert variables_info.get_variable("Omon", "badvar") is None
 
-    def test_get_variable_tasconf5(self):
+    def test_get_variable_tasconf5(self, variables_info):
         """Get tas variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Amon", "tasConf5")
-        self.assertEqual(var.short_name, "tasConf5")
-        self.assertEqual(
-            var.long_name,
-            "Near-Surface Air Temperature Uncertainty Range",
+        var = variables_info.get_variable("Amon", "tasConf5")
+        assert var.short_name == "tasConf5"
+        assert (
+            var.long_name == "Near-Surface Air Temperature Uncertainty Range"
         )
-        self.assertEqual(var.units, "K")
+        assert var.units == "K"
 
-    def test_get_variable_tasconf95(self):
+    def test_get_variable_tasconf95(self, variables_info):
         """Get tas variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Amon", "tasConf95")
-        self.assertEqual(var.short_name, "tasConf95")
-        self.assertEqual(
-            var.long_name,
-            "Near-Surface Air Temperature Uncertainty Range",
+        var = variables_info.get_variable("Amon", "tasConf95")
+        assert var.short_name == "tasConf95"
+        assert (
+            var.long_name == "Near-Surface Air Temperature Uncertainty Range"
         )
-        self.assertEqual(var.units, "K")
+        assert var.units == "K"
 
-    def test_get_variable_tasaga(self):
+    def test_get_variable_tasaga(self, variables_info):
         """Get tas variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Amon", "tasaga")
-        self.assertEqual(var.short_name, "tasaga")
-        self.assertEqual(
-            var.long_name,
-            "Global-mean Near-Surface Air Temperature Anomaly",
+        var = variables_info.get_variable("Amon", "tasaga")
+        assert var.short_name == "tasaga"
+        assert (
+            var.long_name == "Global-mean Near-Surface Air Temperature Anomaly"
         )
-        self.assertEqual(var.units, "K")
+        assert var.units == "K"
 
-    def test_get_variable_ch4s(self):
+    def test_get_variable_ch4s(self, variables_info):
         """Get ch4s variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Amon", "ch4s")
-        self.assertEqual(var.short_name, "ch4s")
-        self.assertEqual(var.long_name, "Atmosphere CH4 surface")
-        self.assertEqual(var.units, "1e-09")
+        var = variables_info.get_variable("Amon", "ch4s")
+        assert var.short_name == "ch4s"
+        assert var.long_name == "Atmosphere CH4 surface"
+        assert var.units == "1e-09"
 
-    def test_get_variable_tosstderr(self):
+    def test_get_variable_tosstderr(self, variables_info):
         """Get tosStderr variable."""
         CustomInfo()
-        var = self.variables_info.get_variable("Omon", "tosStderr")
-        self.assertEqual(var.short_name, "tosStderr")
-        self.assertEqual(var.long_name, "Sea Surface Temperature Error")
-        self.assertEqual(var.units, "K")
+        var = variables_info.get_variable("Omon", "tosStderr")
+        assert var.short_name == "tosStderr"
+        assert var.long_name == "Sea Surface Temperature Error"
+        assert var.units == "K"
 
 
 @pytest.mark.parametrize(
