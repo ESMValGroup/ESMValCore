@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -190,9 +191,30 @@ class TestCMIP6Info:
 
     def test_invalid_file(self, tmp_path: Path) -> None:
         invalid_file = tmp_path / "invalid.json"
-        invalid_file.touch()
+        invalid_file.write_text("invalid content", encoding="utf-8")
         with pytest.raises(ValueError):
             CMIP6Info(paths=[tmp_path])
+
+    def test_invalid_file_logged(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        # attach the root logger handler added by caplog
+        monkeypatch.setattr(
+            esmvalcore.cmor.table.logger,
+            "handlers",
+            logging.getLogger().handlers,
+        )
+        invalid_file = tmp_path / "invalid.json"
+        invalid_file.write_text("invalid content", encoding="utf-8")
+        with pytest.raises(ValueError):
+            CMIP6Info(paths=[tmp_path])
+        assert (
+            f"Exception raised when loading {tmp_path}/invalid.json"
+            in caplog.messages
+        )
 
 
 class Testobs4mipsInfo:
@@ -365,6 +387,27 @@ class TestCMIP5Info:
         invalid_file.write_text("invalid content", encoding="utf-8")
         with pytest.raises(ValueError):
             CMIP5Info(paths=[tmp_path])
+
+    def test_invalid_file_logged(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        # attach the root logger handler added by caplog
+        monkeypatch.setattr(
+            esmvalcore.cmor.table.logger,
+            "handlers",
+            logging.getLogger().handlers,
+        )
+        invalid_file = tmp_path / "invalid"
+        invalid_file.write_text("invalid content", encoding="utf-8")
+        with pytest.raises(ValueError):
+            CMIP5Info(paths=[tmp_path])
+        assert (
+            f"Exception raised when loading {tmp_path}/invalid"
+            in caplog.messages
+        )
 
 
 class TestCMIP3Info:
