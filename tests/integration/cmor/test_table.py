@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import esmvalcore.cmor
+import esmvalcore.cmor.table
 from esmvalcore.cmor.table import (
     CMIP3Info,
     CMIP5Info,
@@ -78,21 +79,25 @@ def test_update_cmor_facets_facet_not_in_table(mocker):
 class TestCMIP6Info(unittest.TestCase):
     """Test for the CMIP6 info class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up tests.
-
-        We read CMIP6Info once to keep tests times manageable
-        """
-        cls.variables_info = CMIP6Info(
+    def setUp(self):
+        self.variables_info = CMIP6Info(
             paths=[
                 Path("cmip6/Tables"),
                 Path("cmip6-custom"),
             ],
         )
 
-    def setUp(self):
-        self.variables_info.strict = True
+    def test_repr(self) -> None:
+        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
+        expected_paths = [
+            builtin_tables_path / "cmip6" / "Tables",
+            builtin_tables_path / "cmip6-custom",
+        ]
+        result = repr(self.variables_info)
+        assert result.startswith(
+            f"CMIP6Info(paths={expected_paths}, strict=True, alt_names=",
+        )
+        assert result.endswith(")")
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -167,11 +172,16 @@ class TestCMIP6Info(unittest.TestCase):
         activity = self.variables_info.activities["1pctCO2"]
         self.assertListEqual(activity, ["CMIP"])
 
-    def test_invalid_path(self):
+    def test_invalid_path(self) -> None:
         path = Path(__file__) / "path" / "does" / "not" / "exist"
         msg = r"CMOR tables not found in"
         with pytest.raises(ValueError, match=msg):
-            CMIP6Info(path)
+            CMIP6Info(str(path))
+
+    def test_invalid_paths(self) -> None:
+        path = Path(__file__) / "path" / "does" / "not" / "exist"
+        with pytest.raises(NotADirectoryError, match=str(path)):
+            CMIP6Info(paths=[path])
 
 
 class Testobs4mipsInfo(unittest.TestCase):
