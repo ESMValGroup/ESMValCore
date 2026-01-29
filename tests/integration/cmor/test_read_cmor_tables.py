@@ -124,6 +124,52 @@ def test_get_tables(
     assert vardef.units
 
 
+def test_get_tables_unknown_project(
+    session: Session,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"Unknown project 'unknown', please configure it under 'projects'.",
+    ):
+        get_tables(session, "unknown")
+
+
+def test_get_tables_no_type(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {"cmor_table": {}}
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Missing CMOR table 'type' in configuration of project "
+            r"test. Current configuration is:\n{}\n"
+        ),
+    ):
+        get_tables(session, "test")
+
+
+class InvalidTable:
+    pass
+
+
+def test_get_tables_invalid_type(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {
+        "cmor_table": {
+            "type": "tests.integration.cmor.test_read_cmor_tables.InvalidTable",
+        },
+    }
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"`type` should be a subclass `esmvalcore.cmor.table.InfoBase`, "
+            r"but your configuration for project 'test' contains "
+        ),
+    ):
+        get_tables(session, "test")
+
+
 def test_clear_table_cache(session: Session) -> None:
     assert esmvalcore.cmor.table._TABLE_CACHE
     esmvalcore.cmor.table.clear_table_cache()
