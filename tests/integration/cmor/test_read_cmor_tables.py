@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-import esmvalcore
 import esmvalcore.cmor.table
 from esmvalcore.cmor.table import (
     CMOR_TABLES,
@@ -64,23 +63,6 @@ def test_read_cmor_tables():
         table_path / "cmip6-custom",
     )
     assert table.strict is False
-
-
-def test_load_cmor_tables_with_config_developer(
-    monkeypatch: pytest.MonkeyPatch,
-    session: Session,
-) -> None:
-    """Test that _load_cmor_tables falls back to config-developer.yml."""
-    # TODO: remove in v2.16.0
-    cmor_tables: dict[str, esmvalcore.cmor.table.InfoBase] = {}
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", cmor_tables)
-    monkeypatch.delitem(session, "projects")
-    monkeypatch.setitem(
-        session,
-        "config_developer_file",
-        Path(esmvalcore.__file__).parent / "config-developer.yml",
-    )
-    assert cmor_tables
 
 
 @pytest.mark.parametrize(
@@ -140,6 +122,12 @@ def test_get_tables(
     assert isinstance(vardef, VariableInfo)
     assert vardef.short_name
     assert vardef.units
+
+
+def test_clear_table_cache(session: Session) -> None:
+    assert esmvalcore.cmor.table._TABLE_CACHE
+    esmvalcore.cmor.table.clear_table_cache()
+    assert not esmvalcore.cmor.table._TABLE_CACHE
 
 
 CMOR_NEWVAR_ENTRY = dedent(

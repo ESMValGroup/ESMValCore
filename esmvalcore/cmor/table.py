@@ -193,21 +193,6 @@ def get_var_info(
     )
 
 
-def _load_cmor_tables(cfg: Config) -> None:
-    """Load the configured CMOR tables into :data:`esmvalcore.cmor.table.CMOR_TABLES`.
-
-    Parameters
-    ----------
-    cfg:
-        The configuration.
-    """
-    CMOR_TABLES.clear()
-    if cfg.get("config_developer_file") is not None:
-        read_cmor_tables(cfg["config_developer_file"])
-    for project in cfg["projects"]:
-        CMOR_TABLES[project] = get_tables(cfg, project)
-
-
 def read_cmor_tables(cfg_developer: Path | None = None) -> None:
     """Read cmor tables required in the configuration.
 

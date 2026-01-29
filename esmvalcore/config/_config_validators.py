@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from packaging import version
 
+import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.cmor.table import _load_cmor_tables
 from esmvalcore.config._config import TASKSEP, load_config_developer
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
@@ -287,7 +287,7 @@ def validate_config_developer(value):
     path = validate_path_or_none(value)
     if path is not None:
         # This has the side-effect of updating `esmvalcore.config._config.CFG`
-        # `esmvalcore.cmor.tables.CMOR_TABLES`.
+        # and `esmvalcore.cmor.tables.CMOR_TABLES`.
         load_config_developer(path)
 
     return path
@@ -387,7 +387,14 @@ def validate_cmor_tables(value: dict) -> None:
     # preferably be avoided. This would require passing around session objects
     # instead of relying on global state (e.g. esmvalcore.config.CFG,
     # esmvalcore.cmor.tables.CMOR_TABLES).
-    _load_cmor_tables({"projects": value})  # type: ignore[arg-type]
+    esmvalcore.cmor.table.CMOR_TABLES.clear()
+    for project in value:
+        esmvalcore.cmor.table.CMOR_TABLES[project] = (
+            esmvalcore.cmor.table.get_tables(
+                session={"projects": value},  # type: ignore[arg-type]
+                project=project,
+            )
+        )
 
 
 def validate_projects(
