@@ -1,5 +1,7 @@
 """Integration tests for the variable_info module."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
@@ -12,7 +14,9 @@ from esmvalcore.cmor.table import (
     CMIP5Info,
     CMIP6Info,
     CustomInfo,
+    NoInfo,
     Obs4MIPsInfo,
+    VariableInfo,
     _get_branding_suffixes,
     _get_mips,
     _update_cmor_facets,
@@ -179,6 +183,10 @@ class TestCMIP6Info:
         path = Path(__file__) / "path" / "does" / "not" / "exist"
         with pytest.raises(NotADirectoryError, match=str(path)):
             CMIP6Info(paths=[path])
+
+    def test_no_tables_in_path(self, tmp_path: Path) -> None:
+        with pytest.raises(ValueError):
+            CMIP6Info(paths=[tmp_path])
 
     def test_invalid_file(self, tmp_path: Path) -> None:
         invalid_file = tmp_path / "invalid.json"
@@ -352,6 +360,12 @@ class TestCMIP5Info:
         assert var.short_name == "toz"
         assert var.frequency == "mon"
 
+    def test_invalid_file(self, tmp_path: Path) -> None:
+        invalid_file = tmp_path / "invalid"
+        invalid_file.write_text("invalid content", encoding="utf-8")
+        with pytest.raises(ValueError):
+            CMIP5Info(paths=[tmp_path])
+
 
 class TestCMIP3Info:
     """Tests for the CMIP3 info class."""
@@ -471,6 +485,14 @@ class TestCustomInfo:
     def variables_info(self) -> CustomInfo:
         return CustomInfo()
 
+    def test_repr(self, variables_info: CustomInfo) -> None:
+        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
+        expected_paths = [
+            builtin_tables_path / "cmip5-custom",
+        ]
+        result = repr(variables_info)
+        assert result == f"CustomInfo(paths={expected_paths})"
+
     def test_custom_tables_default_location(self, variables_info):
         """Test constructor with default tables location."""
         custom_info = CustomInfo()
@@ -563,6 +585,24 @@ class TestCustomInfo:
         assert var.short_name == "tosStderr"
         assert var.long_name == "Sea Surface Temperature Error"
         assert var.units == "K"
+
+
+class TestNoInfo:
+    """Tests for the no info class."""
+
+    @pytest.fixture
+    def variables_info(self) -> NoInfo:
+        return NoInfo()
+
+    def test_repr(self, variables_info: NoInfo) -> None:
+        result = repr(variables_info)
+        assert result == "NoInfo()"
+
+    def test_get_variable_tas(self, variables_info: NoInfo) -> None:
+        """Get tas variable."""
+        var = variables_info.get_variable("Amon", "tas")
+        assert isinstance(var, VariableInfo)
+        assert var.short_name == "tas"
 
 
 @pytest.mark.parametrize(

@@ -18,6 +18,11 @@ class TestVariableInfo(unittest.TestCase):
             "dim2": CoordinateInfo("dim2"),
         }
 
+    def test_repr(self) -> None:
+        """Test __repr__."""
+        result = repr(self.info)
+        assert result == "<VariableInfo defining variable 'var'>"
+
     def test_constructor(self):
         """Test basic constructor."""
         self.assertEqual("table_type", self.info.table_type)
