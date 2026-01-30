@@ -748,7 +748,7 @@ for loading and saving the data in the :ref:`recipe <recipe>` or
 .. warning::
 
     While it is possible to work with datasets that are not described in a CMOR
-    table,the  :ref:`preprocessor functions <preprocessor>` and
+    table, the :ref:`preprocessor functions <preprocessor>` and
     :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
     CMORized data and may not work as expected with non-CMORized data.
 

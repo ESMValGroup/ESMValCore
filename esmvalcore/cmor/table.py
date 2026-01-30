@@ -1569,7 +1569,7 @@ class NoInfo(InfoBase):
     """Table that can be used for projects that do not provide a CMOR table."""
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
