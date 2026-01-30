@@ -1,11 +1,24 @@
+from __future__ import annotations
+
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
 
-from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.cmor.table import (
+    _TABLE_CACHE,
+    CMOR_TABLES,
+    VariableInfo,
+    clear_table_cache,
+    get_tables,
+    read_cmor_tables,
+)
 from esmvalcore.cmor.table import __file__ as root
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 
 def test_read_cmor_tables_raiser():
@@ -22,32 +35,146 @@ def test_read_cmor_tables():
 
     for project in "CMIP5", "CMIP6":
         table = CMOR_TABLES[project]
-        assert (
-            Path(table._cmor_folder) == table_path / project.lower() / "Tables"
+        assert table.paths == (
+            table_path / project.lower() / "Tables",
+            table_path / f"{project.lower()}-custom",
         )
         assert table.strict is True
 
     project = "OBS"
     table = CMOR_TABLES[project]
-    assert Path(table._cmor_folder) == table_path / "cmip5" / "Tables"
+    assert table.paths == (
+        table_path / "cmip5" / "Tables",
+        table_path / "cmip5-custom",
+    )
     assert table.strict is False
 
     project = "OBS6"
     table = CMOR_TABLES[project]
-    assert Path(table._cmor_folder) == table_path / "cmip6" / "Tables"
+    assert table.paths == (
+        table_path / "cmip6" / "Tables",
+        table_path / "cmip6-custom",
+    )
     assert table.strict is False
 
     project = "obs4MIPs"
     table = CMOR_TABLES[project]
-    assert Path(table._cmor_folder) == table_path / "obs4mips" / "Tables"
+    assert table.paths == (
+        table_path / "obs4mips" / "Tables",
+        table_path / "cmip6-custom",
+    )
     assert table.strict is False
 
-    project = "custom"
-    table = CMOR_TABLES[project]
-    assert Path(table._cmor_folder) == table_path / "custom"
-    assert table._user_table_folder is None
-    assert table.coords
-    assert table.tables["custom"]
+
+@pytest.mark.parametrize(
+    (
+        "project",
+        "mip",
+        "short_name",
+        "branding_suffix",
+    ),
+    [
+        ("CMIP7", "atmos", "tas", "tavg-h2m-hxy-u"),
+        ("CMIP7", "Amon", "alb", None),  # custom derived variable
+        ("CMIP6", "Amon", "tas", None),
+        ("CMIP6", "Amon", "alb", None),  # custom derived variable
+        ("CMIP6", "Amon", "ch4", "Clim"),  # table entry != short_name
+        ("CMIP5", "Amon", "tas", None),
+        ("CMIP5", "Amon", "alb", None),  # custom derived variable
+        ("CMIP3", "A1", "tas", None),
+        ("CMIP3", "A1", "alb", None),  # custom derived variable
+        ("CORDEX", "mon", "tas", None),
+        ("CORDEX", "mon", "alb", None),  # custom derived variable
+        ("obs4MIPs", "Amon", "tas", None),
+        ("obs4MIPs", "Amon", "agb", None),  # custom variable
+        ("obs4MIPs", "Amon", "alb", None),  # custom derived variable
+        ("ana4MIPs", "Amon", "tas", None),
+        ("native6", "Amon", "tas", None),
+        ("native6", "Amon", "agb", None),  # custom variable
+        ("native6", "Amon", "alb", None),  # custom derived variable
+        ("ACCESS", "Amon", "tas", None),
+        ("CESM", "Amon", "tas", None),
+        ("EMAC", "Amon", "tas", None),
+        ("ICON", "Amon", "tas", None),
+        ("IPSLCM", "Amon", "tas", None),
+        ("OBS6", "Amon", "tas", None),
+        ("OBS6", "Amon", "agb", None),  # custom variable
+        ("OBS6", "Amon", "alb", None),  # custom derived variable
+        ("OBS", "Amon", "tas", None),
+        ("OBS", "Amon", "agb", None),  # custom variable
+        ("OBS", "Amon", "alb", None),  # custom derived variable
+    ],
+)
+def test_get_tables(
+    session: Session,
+    project: str,
+    mip: str,
+    short_name: str,
+    branding_suffix: str | None,
+) -> None:
+    info = get_tables(session, project)
+    assert info.tables
+    vardef = info.get_variable(
+        mip,
+        short_name,
+        branding_suffix=branding_suffix,
+        derived=short_name == "alb",
+    )
+    assert isinstance(vardef, VariableInfo)
+    assert vardef.short_name
+    assert vardef.units
+
+
+def test_get_tables_unknown_project(
+    session: Session,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"Unknown project 'unknown', please configure it under 'projects'.",
+    ):
+        get_tables(session, "unknown")
+
+
+def test_get_tables_no_type(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {"cmor_table": {}}
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Missing CMOR table 'type' in configuration of project "
+            r"test. Current configuration is:\n{}\n"
+        ),
+    ):
+        get_tables(session, "test")
+
+
+class InvalidTable:
+    pass
+
+
+def test_get_tables_invalid_type(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {
+        "cmor_table": {
+            "type": "tests.integration.cmor.test_read_cmor_tables.InvalidTable",
+        },
+    }
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"`type` should be a subclass `esmvalcore.cmor.table.InfoBase`, "
+            r"but your configuration for project 'test' contains "
+        ),
+    ):
+        get_tables(session, "test")
+
+
+def test_clear_table_cache(session: Session) -> None:
+    assert _TABLE_CACHE
+    clear_table_cache()
+    assert not _TABLE_CACHE
 
 
 CMOR_NEWVAR_ENTRY = dedent(
@@ -125,7 +252,7 @@ CMOR_NEWCOORD_ENTRY = dedent(
 )
 
 
-def test_read_custom_cmor_tables(tmp_path):
+def test_read_custom_cmor_tables_config_developer(tmp_path):
     """Test reading of custom CMOR tables."""
     (tmp_path / "CMOR_newvarfortesting.dat").write_text(CMOR_NEWVAR_ENTRY)
     (tmp_path / "CMOR_netcre.dat").write_text(CMOR_NETCRE_ENTRY)
@@ -152,10 +279,10 @@ def test_read_custom_cmor_tables(tmp_path):
     assert "custom" in CMOR_TABLES
 
     custom_table = CMOR_TABLES["custom"]
-    assert custom_table._cmor_folder == str(
-        Path(root).parent / "tables" / "custom",
+    assert custom_table.paths == (
+        Path(root).parent / "tables" / "cmip5-custom",
+        tmp_path,
     )
-    assert custom_table._user_table_folder == str(tmp_path)
 
     # Make sure that default tables have been read
     assert "alb" in custom_table.tables["custom"]

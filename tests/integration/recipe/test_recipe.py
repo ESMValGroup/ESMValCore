@@ -3294,7 +3294,7 @@ def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
                 additional_datasets:
                   - {dataset: CanESM5,    group: ref, reference_for_bias: true}
                   - {dataset: CESM2,      group: ref, reference_for_bias: true}
-                  - {dataset: MPI-ESM-LR, group: notref}
+                  - {dataset: MPI-ESM1-2-LR, group: notref}
 
             scripts: null
         """)
@@ -3562,7 +3562,7 @@ def test_distance_metrics_two_refs_with_mmm(
                 additional_datasets:
                   - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
                   - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
-                  - {dataset: MPI-ESM-LR}
+                  - {dataset: MPI-ESM1-2-LR}
 
             scripts: null
         """)
@@ -3825,9 +3825,9 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: custom, CMIP7, CMIP6, CMIP5, "
-        "CMIP3, OBS, OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, "
-        'ICON, CESM, ACCESS."'
+        "The following tables are available: CMIP7, CMIP6, CMIP5, CMIP3, "
+        "CORDEX, obs4MIPs, ana4MIPs, native6, ACCESS, CESM, EMAC, ICON, IPSLCM, "
+        'OBS6, OBS."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)

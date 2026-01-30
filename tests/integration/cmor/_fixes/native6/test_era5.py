@@ -674,8 +674,6 @@ def ptype_cmor_e1hr():
         ],
         attributes={"comment": COMMENT},
     )
-    cube.coord("latitude").long_name = "latitude"
-    cube.coord("longitude").long_name = "longitude"
     return CubeList([cube])
 
 
@@ -752,8 +750,6 @@ def rlns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
@@ -984,8 +980,6 @@ def rsns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
