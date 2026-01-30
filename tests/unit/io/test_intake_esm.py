@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import importlib.resources
-from typing import TYPE_CHECKING
-from pathlib import Path
 from importlib.resources import files as importlib_files
+from pathlib import Path
+from typing import TYPE_CHECKING
 
+import intake
 import iris.cube
 import pandas as pd
 import pytest
 import xarray as xr
 import yaml
 
-import intake
 import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
 
@@ -137,7 +137,7 @@ def test_find_data_no_results_sets_debug_info(mocker: MockerFixture) -> None:
     cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
     # Mock search to return an empty result (intake-esm returns the catalog itself)
     empty_cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
-        variable_id="bogus_variable"
+        variable_id="bogus_variable",
     )
     mocker.patch.object(
         cat,

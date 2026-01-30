@@ -23,15 +23,11 @@ create a file with the following content in your configuration directory:
 from __future__ import annotations
 
 import copy
+import warnings
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake_esm
-from intake_esm.source import ESMDataSource
-import warnings
-
-# import intake_esm.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob
@@ -40,7 +36,10 @@ from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import iris.cube
+    from intake_esm.source import ESMDataSource
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -52,7 +51,8 @@ __all__ = [
 
 
 def _to_path_dict(
-    esm_datastore: intake_esm.esm_datastore, quiet: bool = False
+    esm_datastore: intake_esm.esm_datastore,
+    quiet: bool = False,
 ) -> dict[str, list[str | Path]]:
     """Return the current search as a dictionary of paths to files.
 
@@ -69,8 +69,7 @@ def _to_path_dict(
     def _to_pathlist(source: ESMDataSource) -> list[str | Path]:
         return source.df[source.path_column_name].to_list()
 
-    result = {key: _to_pathlist(val) for key, val in esm_datastore.items()}
-    return result
+    return {key: _to_pathlist(val) for key, val in esm_datastore.items()}
 
 
 class _CachingCatalog(intake_esm.esm_datastore):
@@ -100,7 +99,6 @@ class _CachingCatalog(intake_esm.esm_datastore):
         quiet: bool = False,
     ) -> dict[str, list[str | Path]]:
         """Return the current search as a dictionary of paths to files."""
-
         self._result = _to_path_dict(self, quiet=quiet)
         return self._result
 
@@ -130,7 +128,6 @@ class IntakeEsmDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-        pass
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -155,7 +152,6 @@ class IntakeEsmDataset(DataElement):
         :
             The loaded data.
         """
-
         files = _to_path_dict(self.catalog, quiet=True)[self.name]
 
         # Might want to pass through args/kwargs here? Ie.
@@ -210,7 +206,9 @@ class IntakeEsmDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)] if isinstance(values, str | int | float) else values
+            facet: [str(values)]
+            if isinstance(values, str | int | float)
+            else values
             for facet, values in facets.items()
             if facet in self.facets
         }
@@ -295,14 +293,16 @@ class IntakeEsmDataSource(DataSource):
                     if isinstance(esgf_values, str):
                         esgf_values = [esgf_values]
                     our_values = [
-                        inverse_values.get(our_facet, {}).get(v, v) for v in esgf_values
+                        inverse_values.get(our_facet, {}).get(v, v)
+                        for v in esgf_values
                     ]
                     dataset_facets[our_facet] = our_values
 
             dataset = IntakeEsmDataset(
                 name=dataset_id,
                 facets={
-                    k: v[0] if len(v) == 1 else v for k, v in dataset_facets.items()
+                    k: v[0] if len(v) == 1 else v
+                    for k, v in dataset_facets.items()
                 },  # type: ignore[arg-type]
                 catalog=cat,
             )
