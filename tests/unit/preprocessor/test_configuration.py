@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import esmvalcore
-import esmvalcore.config
+from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import (
@@ -155,7 +155,7 @@ def test_get_preprocessor_filename_falls_back_to_config_developer(
 ) -> None:
     """Test the function `_get_preprocessor_filename`."""
     monkeypatch.setitem(
-        esmvalcore.config.CFG,
+        CFG,
         "config_developer_file",
         Path(esmvalcore.__path__[0], "config-developer.yml"),
     )

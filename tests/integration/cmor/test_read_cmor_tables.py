@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-import esmvalcore.cmor.table
 from esmvalcore.cmor.table import (
+    _TABLE_CACHE,
     CMOR_TABLES,
     VariableInfo,
+    clear_table_cache,
     get_tables,
     read_cmor_tables,
 )
@@ -171,9 +172,9 @@ def test_get_tables_invalid_type(
 
 
 def test_clear_table_cache(session: Session) -> None:
-    assert esmvalcore.cmor.table._TABLE_CACHE
-    esmvalcore.cmor.table.clear_table_cache()
-    assert not esmvalcore.cmor.table._TABLE_CACHE
+    assert _TABLE_CACHE
+    clear_table_cache()
+    assert not _TABLE_CACHE
 
 
 CMOR_NEWVAR_ENTRY = dedent(
