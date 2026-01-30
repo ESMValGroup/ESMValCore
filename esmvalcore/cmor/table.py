@@ -40,6 +40,9 @@ _CMOR_KEYS = (
 def _update_cmor_facets(facets):
     """Update `facets` with information from CMOR table."""
     project = facets["project"]
+    if project == "external":
+        facets["original_short_name"] = facets["short_name"]
+        return
     mip = facets["mip"]
     short_name = facets["short_name"]
     derive = facets.get("derive", False)
