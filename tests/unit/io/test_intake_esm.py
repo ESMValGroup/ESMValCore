@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.resources
-from importlib.resources import files as importlib_files
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -23,14 +22,16 @@ if TYPE_CHECKING:
 
     from esmvalcore.config import Session
 
-
-esm_ds_fhandle = (
-    Path(importlib_files("tests"))
-    / "sample_data"
-    / "intake-esm"
-    / "catalog"
-    / "cmip6-netcdf.json"
-)
+with importlib.resources.as_file(
+    importlib.resources.files("tests"),
+) as test_dir:
+    esm_ds_fhandle = (
+        Path(test_dir)
+        / "sample_data"
+        / "intake-esm"
+        / "catalog"
+        / "cmip6-netcdf.json"
+    )
 
 
 def test_intakeesmdataset_repr() -> None:
@@ -230,7 +231,10 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
 
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
-    assert dataset.name == "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
+    assert (
+        dataset.name
+        == "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
+    )
     assert hash(dataset) == hash((dataset.name, "v20190429"))
 
     assert dataset.facets == {
@@ -246,7 +250,10 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         "version": "v20190429",
     }
     dataset = results[1]
-    assert dataset.name == "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn"
+    assert (
+        dataset.name
+        == "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn"
+    )
     assert dataset.facets == {
         "activity": "ScenarioMIP",
         "dataset": "CanESM5",
@@ -363,7 +370,9 @@ def test_find_data_online(
     expected_names: list[str],
 ) -> None:
     """Test finding data from a real intake-esm catalog."""
-    data_source = next(ds for ds in data_sources if ds.project == facets["project"])
+    data_source = next(
+        ds for ds in data_sources if ds.project == facets["project"]
+    )
     result = data_source.find_data(**facets)
     assert len(result) > 0
     result_names = {ds.name for ds in result}
