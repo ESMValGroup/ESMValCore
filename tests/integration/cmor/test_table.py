@@ -562,6 +562,42 @@ class TestCustomInfo(unittest.TestCase):
         self.assertEqual(var.long_name, "Sea Surface Temperature Error")
         self.assertEqual(var.units, "K")
 
+    def test_get_variable_ctp(self):
+        """Get ctp variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('day', 'ctp')
+        self.assertEqual(var.short_name, 'ctp')
+        self.assertEqual(var.long_name,
+                         'Cloud Top Pressure')
+        self.assertEqual(var.units, 'hPa')
+
+    def test_get_variable_reff(self):
+        """Get reff variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('day', 'reff')
+        self.assertEqual(var.short_name, 'reff')
+        self.assertEqual(var.long_name,
+                         'Cloud Effective Radius')
+        self.assertEqual(var.units, 'um')
+
+    def test_get_variable_ta1000(self):
+        """Get ta1000 variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('day', 'ta1000')
+        self.assertEqual(var.short_name, 'ta1000')
+        self.assertEqual(var.long_name,
+                         'Air Temperature at 1000hPa')
+        self.assertEqual(var.units, 'K')
+
+    def test_get_variable_wap700(self):
+        """Get wap700 variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('day', 'wap700')
+        self.assertEqual(var.short_name, 'wap700')
+        self.assertEqual(var.long_name,
+                         'Omega (=dp/dt) at 700hPa')
+        self.assertEqual(var.units, 'Pa s-1')
+
 
 @pytest.mark.parametrize(
     ("project", "mip", "short_name", "frequency"),
