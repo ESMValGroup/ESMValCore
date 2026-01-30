@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 CMOR_TABLES: dict[str, InfoBase] = {}
 """dict of str, obj: CMOR info objects.
 
+.. deprecated:: 2.14.0
+    The global ``CMOR_TABLES`` dictionary is deprecated and will be removed in
+    ESMValCore v2.16.0. Please use :func:`~esmvalcore.cmor.table.get_tables`
+    to access the CMOR tables instead.
+
 .. note::
     If this dictionary is empty, it can be populated by loading the global
     configuration by importing the :mod:`esmvalcore.config` module.
