@@ -33,6 +33,7 @@ from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _dates_to_timerange
 from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
+from esmvalcore.preprocessor._derive import get_required
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -104,7 +105,7 @@ class Dataset:
 
     Attributes
     ----------
-    supplementaries : list[Dataset]
+    supplementaries: list[Dataset]
         List of supplementary datasets.
     facets: :obj:`esmvalcore.typing.Facets`
         Facets describing the dataset.
@@ -136,6 +137,7 @@ class Dataset:
         self._session: Session | None = None
         self._files: Sequence[DataElement] | None = None
         self._used_data_sources: Sequence[DataSource] = []
+        self._required_datasets: list[Dataset] | None = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -180,43 +182,103 @@ class Dataset:
 
     def _derivation_necessary(self) -> bool:
         """Return ``True`` if derivation is necessary, ``False`` otherwise."""
-        # If variable cannot be derived, derivation is not necessary
-        if not self._is_derived():
-            return False
+        return not (
+            self.required_datasets and self.required_datasets[0] is self
+        )
 
-        # If forced derivation is requested, derivation is necessary
-        if self._is_force_derived():
-            return True
+    def _get_required_datasets(self) -> list[Dataset]:
+        """Get required datasets for derivation."""
+        required_datasets: list[Dataset] = []
+        required_vars_facets = get_required(
+            self.facets["short_name"],  # type: ignore
+            self.facets["project"],  # type: ignore
+        )
 
-        # Otherwise, derivation is necessary of no files for the self dataset
-        # are found
-        ds_copy = self.copy()
-        ds_copy.supplementaries = []
-        return not ds_copy.files
+        for required_facets in required_vars_facets:
+            required_dataset = self._copy(derive=False, force_derivation=False)
+            keep = {"alias", "recipe_dataset_index", *self.minimal_facets}
+            required_dataset.facets = {
+                k: v for k, v in required_dataset.facets.items() if k in keep
+            }
+            required_dataset.facets.update(required_facets)
+            required_dataset.augment_facets()
+            required_datasets.append(required_dataset)
 
+        return required_datasets
+
+    @property
+    def required_datasets(self) -> list[Dataset]:
+        """Get required datasets.
+
+        For non-derived variables (i.e., those without a ``derive`` facet or
+        with facet ``derive=False``), this will simply return the dataset
+        itself in a list.
+
+        For derived variables (i.e., those with facet ``derive=True``), this
+        will return the datasets required for derivation if derivation is
+        necessary, and the dataset itself if derivation is not necessary.
+        Derivation is necessary if the facet ``force_derivation=True`` is set
+        or no files for the dataset itself are available.
+
+        See also :func:`esmvalcore.preprocessor.derive` for an example usage.
+
+        """
+        if self._required_datasets is not None:
+            return self._required_datasets
+
+        def _derivation_needed(dataset: Dataset) -> bool:
+            """Check if derivation is nedeed."""
+            # If variable cannot be derived, derivation is not necessary
+            if not dataset._is_derived():
+                return False
+
+            # If forced derivation is requested, derivation is necessary
+            if dataset._is_force_derived():
+                return True
+
+            # Otherwise, derivation is necessary if no files for the self
+            # dataset are found
+            ds_copy = dataset.copy()
+            ds_copy.supplementaries = []
+
+            # Avoid potential errors from missing data during timerange glob
+            # expansion
+            if _isglob(ds_copy.facets.get("timerange", "")):
+                ds_copy.facets.pop("timerange", None)
+
+            return not ds_copy.files
+
+        if not _derivation_needed(self):
+            self._required_datasets = [self]
+        else:
+            self._required_datasets = self._get_required_datasets()
+
+        return self._required_datasets
+
+    @staticmethod
     def _file_to_dataset(
-        self,
+        dataset: Dataset,
         file: DataElement,
     ) -> Dataset:
         """Create a dataset from a file with a `facets` attribute."""
         facets = dict(file.facets)
-        if "version" not in self.facets:
+        if "version" not in dataset.facets:
             # Remove version facet if no specific version requested
             facets.pop("version", None)
 
         updated_facets = {
             f: v
             for f, v in facets.items()
-            if f in self.facets
-            and _isglob(self.facets[f])
-            and _ismatch(v, self.facets[f])
+            if f in dataset.facets
+            and _isglob(dataset.facets[f])
+            and _ismatch(v, dataset.facets[f])
         }
-        dataset = self.copy()
-        dataset.facets.update(updated_facets)
+        new_dataset = dataset.copy()
+        new_dataset.facets.update(updated_facets)
 
         # If possible, remove unexpanded facets that can be automatically
         # populated.
-        unexpanded = {f for f, v in dataset.facets.items() if _isglob(v)}
+        unexpanded = {f for f, v in new_dataset.facets.items() if _isglob(v)}
         required_for_augment = {
             "project",
             "mip",
@@ -225,60 +287,139 @@ class Dataset:
             "dataset",
         }
         if unexpanded and not unexpanded & required_for_augment:
-            copy = dataset.copy()
+            copy = new_dataset.copy()
             copy.supplementaries = []
             for facet in unexpanded:
                 copy.facets.pop(facet)
             copy.augment_facets()
             for facet in unexpanded:
                 if facet in copy.facets:
-                    dataset.facets.pop(facet)
+                    new_dataset.facets.pop(facet)
 
-        return dataset
+        return new_dataset
 
-    def _get_available_datasets(self) -> Iterator[Dataset]:
+    @staticmethod
+    def _get_expanded_globs(
+        dataset_with_globs: Dataset,
+        dataset_with_expanded_globs: Dataset,
+    ) -> tuple[tuple[str, FacetValue], ...]:
+        """Get facets that have been updated by expanding globs."""
+        expanded_globs: dict[str, FacetValue] = {}
+        for key, value in dataset_with_globs.facets.items():
+            if (
+                _isglob(value)
+                and key in dataset_with_expanded_globs.facets
+                and not _isglob(dataset_with_expanded_globs[key])
+            ):
+                expanded_globs[key] = dataset_with_expanded_globs[key]
+        return tuple(expanded_globs.items())
+
+    @staticmethod
+    def _get_all_available_datasets(dataset: Dataset) -> Iterator[Dataset]:
+        """Yield datasets based on the available files.
+
+        This function requires that dataset.facets['mip'] is not a glob
+        pattern.
+
+        Does take variable derivation into account, i.e., datasets available
+        through variable derivation are returned.
+
+        """
+        if not dataset._derivation_necessary():
+            yield from Dataset._get_available_datasets(dataset)
+            return
+
+        # Since we are in full control of the derived variables (the module is
+        # private; no custom derivation functions are possible), we can be sure
+        # that the following list is never empty
+        non_optional_datasets = [
+            d
+            for d in dataset.required_datasets
+            if not d.facets.get("optional", False)
+        ]
+        if not non_optional_datasets:
+            msg = (
+                f"Using wildcards to derive {dataset.summary(shorten=True)} "
+                f"is not possible, derivation function only requires optional "
+                f"variables"
+            )
+            raise RecipeError(msg)
+
+        # Record all expanded globs from first non-optional required dataset
+        # (called "reference_dataset" hereafter)
+        reference_dataset = non_optional_datasets[0]
+        reference_expanded_globs = {
+            Dataset._get_expanded_globs(dataset, ds)
+            for ds in Dataset._get_available_datasets(reference_dataset)
+        }
+
+        # Iterate through all other non-optional required datasets and only
+        # keep those expanded globs which are present for all other
+        # non-optional required datasets
+        for required_dataset in non_optional_datasets:
+            if required_dataset is reference_dataset:
+                continue
+            new_expanded_globs = {
+                Dataset._get_expanded_globs(dataset, ds)
+                for ds in Dataset._get_available_datasets(required_dataset)
+            }
+            reference_expanded_globs &= new_expanded_globs
+
+        # Use the final expanded globs to create new dataset(s)
+        for expanded_globs in reference_expanded_globs:
+            new_ds = dataset.copy()
+            new_ds.facets.update(dict(expanded_globs))
+            yield new_ds
+
+    @staticmethod
+    def _get_available_datasets(dataset: Dataset) -> Iterator[Dataset]:
         """Yield datasets based on the available files.
 
         This function requires that self.facets['mip'] is not a glob pattern.
+
+        Does not take variable derivation into account, i.e., datasets
+        potentially available through variable derivation are ignored. To
+        consider derived variables properly, use the function
+        :func:`_get_all_available_datasets`.
+
         """
-        dataset_template = self.copy()
+        dataset_template = dataset.copy()
         dataset_template.supplementaries = []
 
         seen = set()
         partially_defined = []
         expanded = False
         for file in dataset_template.files:
-            dataset = self._file_to_dataset(file)
-            # Do not use the timerange facet from the file because there may be multiple
-            # files per dataset.
-            dataset.facets.pop("timerange", None)
+            new_dataset = Dataset._file_to_dataset(dataset, file)
+            # Do not use the timerange facet from the file because there may be
+            # multiple files per dataset.
+            new_dataset.facets.pop("timerange", None)
             # Restore the original timerange facet if it was specified.
-            if "timerange" in self.facets:
-                dataset.facets["timerange"] = self.facets["timerange"]
+            if "timerange" in dataset.facets:
+                new_dataset.facets["timerange"] = dataset.facets["timerange"]
 
             # Filter out identical datasets
             facetset = frozenset(
                 (f, frozenset(v) if isinstance(v, list) else v)
-                for f, v in dataset.facets.items()
+                for f, v in new_dataset.facets.items()
             )
             if facetset not in seen:
                 seen.add(facetset)
                 if any(
                     _isglob(v)
-                    for f, v in dataset.facets.items()
+                    for f, v in new_dataset.facets.items()
                     if f != "timerange"
                 ):
-                    partially_defined.append((dataset, file))
+                    partially_defined.append((new_dataset, file))
                 else:
-                    dataset._update_timerange()  # noqa: SLF001
-                    dataset._supplementaries_from_files()  # noqa: SLF001
+                    new_dataset._update_timerange()  # noqa: SLF001
                     expanded = True
-                    yield dataset
+                    yield new_dataset
 
         # Only yield datasets with globs if there is no better alternative
-        for dataset, file in partially_defined:
+        for new_dataset, file in partially_defined:
             msg = (
-                f"{dataset} with unexpanded wildcards, created from file "
+                f"{new_dataset} with unexpanded wildcards, created from file "
                 f"{file} with facets {file.facets}. Please check why "
                 "the missing facets are not available for the file."
                 "This will depend on the data source they come from, e.g. can "
@@ -293,7 +434,7 @@ class Dataset:
                     "because it still contains wildcards.",
                     msg,
                 )
-                yield dataset
+                yield new_dataset
 
     def from_files(self) -> Iterator[Dataset]:
         """Create datasets based on the available files.
@@ -317,6 +458,10 @@ class Dataset:
         Supplementary datasets will in inherit the facet values from the main
         dataset for those facets listed in :obj:`INHERITED_FACETS`.
 
+        This also works for :ref:`derived variables <Variable derivation>`. The
+        datasets required for derivation can be accessed via
+        :attr:`Dataset.required_datasets`.
+
         Examples
         --------
         See :doc:`/notebooks/discovering-data` notebook for example use cases.
@@ -326,52 +471,66 @@ class Dataset:
         Dataset
             Datasets representing the available files.
         """
+        # No wildcards present -> simply return self with expanded
+        # supplementaries
+        if not any(_isglob(v) for v in self.facets.values()):
+            self._supplementaries_from_files()
+            yield self
+            return
+
+        # Wildcards present -> expand them
         expanded = False
-        if any(_isglob(v) for v in self.facets.values()):
-            if _isglob(self.facets["mip"]):
-                available_mips = _get_mips(
-                    self.facets["project"],  # type: ignore
-                    self.facets["short_name"],  # type: ignore
+        if _isglob(self.facets["mip"]):
+            available_mips = _get_mips(
+                self.facets["project"],  # type: ignore
+                self.facets["short_name"],  # type: ignore
+            )
+            mips = [
+                mip
+                for mip in available_mips
+                if _ismatch(mip, self.facets["mip"])
+            ]
+        else:
+            mips = [self.facets["mip"]]  # type: ignore
+
+        for mip in mips:
+            if _isglob(self.facets.get("branding_suffix", "")):
+                available_branding_suffixes = _get_branding_suffixes(
+                    project=self.facets["project"],  # type: ignore[arg-type]
+                    mip=mip,
+                    short_name=self.facets["short_name"],  # type: ignore[arg-type]
                 )
-                mips = [
-                    mip
-                    for mip in available_mips
-                    if _ismatch(mip, self.facets["mip"])
+                branding_suffixes = [
+                    branding_suffix
+                    for branding_suffix in available_branding_suffixes
+                    if _ismatch(
+                        branding_suffix,
+                        self.facets["branding_suffix"],
+                    )
+                ]
+                dataset_templates = [
+                    self.copy(mip=mip, branding_suffix=branding_suffix)
+                    for branding_suffix in branding_suffixes
                 ]
             else:
-                mips = [self.facets["mip"]]  # type: ignore
+                dataset_templates = [self.copy(mip=mip)]
+            for dataset_template in dataset_templates:
+                for dataset in self._get_all_available_datasets(
+                    dataset_template,
+                ):
+                    dataset._supplementaries_from_files()  # noqa: SLF001
+                    expanded = True
+                    yield dataset
 
-            for mip in mips:
-                if _isglob(self.facets.get("branding_suffix", "")):
-                    available_branding_suffixes = _get_branding_suffixes(
-                        project=self.facets["project"],  # type: ignore[arg-type]
-                        mip=mip,
-                        short_name=self.facets["short_name"],  # type: ignore[arg-type]
-                    )
-                    branding_suffixes = [
-                        branding_suffix
-                        for branding_suffix in available_branding_suffixes
-                        if _ismatch(
-                            branding_suffix,
-                            self.facets["branding_suffix"],
-                        )
-                    ]
-                    dataset_templates = [
-                        self.copy(mip=mip, branding_suffix=branding_suffix)
-                        for branding_suffix in branding_suffixes
-                    ]
-                else:
-                    dataset_templates = [self.copy(mip=mip)]
-                for dataset_template in dataset_templates:
-                    for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
-                        expanded = True
-                        yield dataset
-
+        # If files were found, or the file facets didn't match the
+        # specification, yield the original, but do expand any supplementary
+        # globs. For derived variables, make sure to purge any files found for
+        # required variables; those won't match in their facets.
         if not expanded:
-            # If the definition contains no wildcards, no files were found,
-            # or the file facets didn't match the specification, yield the
-            # original, but do expand any supplementary globs.
             self._supplementaries_from_files()
+            if self._derivation_necessary():
+                for required_dataset in self.required_datasets:
+                    required_dataset.files = []
             yield self
 
     def _supplementaries_from_files(self) -> None:
@@ -638,15 +797,29 @@ class Dataset:
         """Return a dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
+    @staticmethod
+    def _get_version(dataset: Dataset) -> str | list[str]:
+        """Get available version(s) of dataset."""
+        versions: set[str] = set()
+        for file in dataset.files:
+            if "version" in file.facets:
+                versions.add(str(file.facets["version"]))
+        return versions.pop() if len(versions) == 1 else sorted(versions)
+
     def set_version(self) -> None:
         """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
-        for file in self.files:
-            if "version" in file.facets:
-                versions.add(file.facets["version"])  # type: ignore
+        for required_dataset in self.required_datasets:
+            version = self._get_version(required_dataset)
+            if version:
+                if isinstance(version, list):
+                    versions.update(version)
+                else:
+                    versions.add(version)
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         if version:
             self.set_facet("version", version)
+
         for supplementary_ds in self.supplementaries:
             supplementary_ds.set_version()
 
@@ -1007,8 +1180,9 @@ class Dataset:
             dataset = self.copy()
             dataset.facets.pop("timerange")
             dataset.supplementaries = []
-            check.data_availability(dataset)
-            if all("timerange" in f.facets for f in dataset.files):
+            if dataset.files and all(
+                "timerange" in f.facets for f in dataset.files
+            ):
                 # "timerange" can only be reliably computed when all DataElements
                 # provide it.
                 intervals = [

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import warnings
 from copy import deepcopy
 from functools import lru_cache
@@ -7,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
+import yaml
 from cf_units import Unit
 from iris.coords import (
     AncillaryVariable,
@@ -17,6 +19,7 @@ from iris.coords import (
 )
 from iris.cube import Cube
 
+import esmvalcore
 from esmvalcore.config import CFG, Config
 
 if TYPE_CHECKING:
@@ -55,6 +58,33 @@ def ignore_existing_user_config(
     monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
 
 
+@lru_cache
+def _load_default_data_sources() -> dict[
+    str,
+    dict[str, dict[str, dict[str, dict[str, str]]]],
+]:
+    """Load default data sources for local users."""
+    cfg: dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]] = {
+        "projects": {},
+    }
+    for file in (
+        "data-local.yml",
+        "data-local-esmvaltool.yml",
+        "data-native-cesm.yml",
+        "data-native-emac.yml",
+        "data-native-icon.yml",
+        "data-native-ipslcm.yml",
+    ):
+        with importlib.resources.as_file(
+            importlib.resources.files(esmvalcore.config)
+            / "configurations"
+            / file,
+        ) as config_file:
+            content = config_file.read_text(encoding="utf-8")
+            cfg["projects"].update(yaml.safe_load(content)["projects"])
+    return cfg
+
+
 @pytest.fixture
 def session(
     tmp_path: Path,
@@ -63,7 +93,15 @@ def session(
 ) -> Session:
     """Session object with default settings."""
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
-    return CFG.start_session("recipe_test")
+    session = CFG.start_session("recipe_test")
+    projects = _load_default_data_sources()["projects"]
+    for project in projects:
+        print(project)
+        data_sources = projects[project]["data"]
+        for data_source in data_sources.values():
+            data_source["rootpath"] = str(tmp_path)
+        session["projects"][project]["data"] = data_sources
+    return session
 
 
 @pytest.fixture
