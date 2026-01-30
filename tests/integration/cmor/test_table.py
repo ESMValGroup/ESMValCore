@@ -90,6 +90,11 @@ class TestCMIP6Info:
                 Path("cmip6/Tables"),
                 Path("cmip6-custom"),
             ],
+            strict=True,
+            alt_names=[
+                ["sic", "siconc"],
+                ["tro3", "o3"],
+            ],
         )
 
     def test_repr(self, variables_info: CMIP6Info) -> None:

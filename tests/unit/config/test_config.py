@@ -162,13 +162,9 @@ def test_get_project_config(mocker):
 def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
     root_path = importlib_files("esmvalcore")
-    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_config_dir = root_path / "config" / "configurations" / "defaults"
     default_project_settings = dask.config.collect(
-        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")]
-        + [
-            str(config_dir / "preprocessor_filename_template.yml"),
-            str(config_dir / "cmor_tables.yml"),
-        ],
+        paths=[str(p) for p in default_config_dir.glob("*.yml")],
         env={},
     )["projects"]
 

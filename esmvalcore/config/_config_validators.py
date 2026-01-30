@@ -380,7 +380,7 @@ def validate_cmor_tables(value: dict) -> None:
     #
     # Relying on global state is not nice, preferably we should get rid of any
     # global state except the defaults for starting a new session in
-    # `esmvalcore.config.CFG`.
+    # `esmvalcore.config.CFG`. https://github.com/esMValGroup/esMValCore/issues/2954
     #
     # Having side effects when updating an `esmvalcore.config.Session` object
     # that changes global state of the `esmvalcore` package is nasty and should
