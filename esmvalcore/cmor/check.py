@@ -425,14 +425,18 @@ class CMORCheck:
                                 "exist",
                             )
 
-    def _check_generic_level_dim_names(self, key, coordinate):
+    def _check_generic_level_dim_names(
+        self,
+        key: str,
+        coordinate: CoordinateInfo,
+    ) -> None:
         """Check name of generic level coordinate."""
         if coordinate.generic_lev_coords:
-            (standard_name, out_name, name) = _get_generic_lev_coord_names(
+            (_, out_name, name) = _get_generic_lev_coord_names(
                 self._cube,
                 coordinate,
             )
-            if standard_name:
+            if name is not None:
                 if not out_name:
                     self.report_error(
                         f"Generic level coordinate {key} has wrong var_name.",

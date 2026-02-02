@@ -130,7 +130,7 @@ def _get_new_generic_level_coord(
     var_info: VariableInfo,
     generic_level_coord: CoordinateInfo,
     generic_level_coord_name: str,
-    new_coord_name: str | None,
+    new_coord_name: str,
 ) -> CoordinateInfo:
     """Get new generic level coordinate.
 
