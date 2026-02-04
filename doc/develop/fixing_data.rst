@@ -459,7 +459,7 @@ To allow ESMValCore to locate the data files, use the following steps:
      :start-at: ICON:
      :end-at: strict: false
 
-  To find your ICON data that is for example located in files like
+  To find your ICON data that is, for example, located in files like
   ``~/climate_data/amip/amip_atm_2d_ml_20000101T000000Z.nc``, use the following
   dataset entry in your recipe:
 
