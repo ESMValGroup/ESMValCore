@@ -27,8 +27,8 @@ import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-import intake_esm
 import isodate
+from intake_esm.core import esm_datastore
 
 from esmvalcore.dataset import _isglob
 from esmvalcore.io.local import _parse_period
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     import iris.cube
+    from intake_esm.core import esm_datastore
     from intake_esm.source import ESMDataSource
 
     from esmvalcore.typing import Facets, FacetValue
@@ -51,7 +52,7 @@ __all__ = [
 
 
 def _to_path_dict(
-    esm_datastore: intake_esm.esm_datastore,
+    esm_datastore: esm_datastore,
     quiet: bool = False,
 ) -> dict[str, list[str | Path]]:
     """Return the current search as a dictionary of paths to files.
@@ -72,7 +73,8 @@ def _to_path_dict(
     return {key: _to_pathlist(val) for key, val in esm_datastore.items()}
 
 
-class _CachingCatalog(intake_esm.esm_datastore):
+# I'm not sure we actually need this in the case of intake-esm?
+class _CachingCatalog(esm_datastore):
     """An Intake-ESM catalog that caches to_path_dict results."""
 
     def __init__(self):
@@ -82,10 +84,10 @@ class _CachingCatalog(intake_esm.esm_datastore):
     @classmethod
     def from_catalog(
         cls,
-        catalog: intake_esm.esm_datastore,
+        catalog: esm_datastore,
     ) -> _CachingCatalog:
         """Create a CachingCatalog from an existing esm_datastore."""
-        cat = cls()
+        cat = cls(catalog.esmcat)
         cat.indices = catalog.indices
         cat.local_cache = catalog.local_cache
         cat.esg_dataroot = catalog.esg_dataroot
@@ -105,7 +107,10 @@ class _CachingCatalog(intake_esm.esm_datastore):
 
 @dataclass
 class IntakeEsmDataset(DataElement):
-    """A dataset that can be used to load data found using intake-esm_."""
+    """A dataset that can be used to load data found using intake-esm_.
+
+    Roughly maps, conceptually, to `intake_esm.esm_datastore`
+    """
 
     name: str
     """A unique name identifying the data."""
@@ -113,7 +118,7 @@ class IntakeEsmDataset(DataElement):
     facets: Facets = field(repr=False)
     """Facets are key-value pairs that were used to find this data."""
 
-    catalog: intake_esm.esm_datastore = field(repr=False)
+    catalog: esm_datastore = field(repr=False)
     """The intake-esm catalog describing this data."""
 
     _attributes: dict[str, Any] | None = field(
@@ -125,9 +130,6 @@ class IntakeEsmDataset(DataElement):
     def __hash__(self) -> int:
         """Return a number uniquely representing the data element."""
         return hash((self.name, self.facets.get("version")))
-
-    def prepare(self) -> None:
-        """Prepare the data for access."""
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -165,7 +167,10 @@ class IntakeEsmDataset(DataElement):
 
 @dataclass
 class IntakeEsmDataSource(DataSource):
-    """Data source that can be used to find data using intake-esm."""
+    """Data source that can be used to find data using intake-esm.
+
+    Maps to an `intake_esm.esm_datasource`.
+    """
 
     name: str
     """A name identifying the data source."""
@@ -185,7 +190,7 @@ class IntakeEsmDataSource(DataSource):
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
-    catalog: intake_esm.esm_datastore = field(
+    catalog: esm_datastore = field(
         init=False,
         repr=False,
     )
@@ -253,16 +258,6 @@ class IntakeEsmDataSource(DataSource):
 
         # @CT: Made it to here, still some work to do after this bit
 
-        # These are the keys in the dict[str, xarray.Dataset] returned by
-        # `intake_esm.esm_datastore.to_dataset_dict`. Taken from:
-        # https://github.com/esgf2-us/intake-esm/blob/c34124e54078e70ef271709a6d158edb22bcdb96/intake_esm/catalog.py#L523-L528
-        self.catalog.df["key"] = self.catalog.df.apply(
-            lambda row: ".".join(
-                [row[f] for f in self.catalog.project.master_id_facets()],
-            ),
-            axis=1,
-        )
-
         inverse_values = {
             our_facet: {
                 their_value: our_value
@@ -271,35 +266,33 @@ class IntakeEsmDataSource(DataSource):
             for our_facet in self.values
         }
 
-        for _, row in self.catalog.df.iterrows():
-            dataset_id = row["key"]
-            # Use a caching catalog to avoid searching the indices after
-            # calling the EsmFile.prepare method.
-            cat = _CachingCatalog.from_catalog(self.catalog)
-            # Subset the catalog to a single dataset.
-            cat.df = cat.df[cat.df.key == dataset_id]
+        for key in res.keys():
+            esm_datasource = res[key]
+            path_col = esm_datasource.path_column_name
+
+            valid_paths = esm_datasource.df[path_col].to_list()
+            path_query = {path_col: valid_paths}
+            cat = self.catalog.search(**path_query)
+
             # Ensure only the requested variable is included in the dataset.
-            # https://github.com/esgf2-us/intake-esm/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esm/catalog.py#L544-L552
+            # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
             if "short_name" in normalized_facets:
-                cat.last_search[self.facets["short_name"]] = [
-                    self.values.get("short_name", {}).get(v, v)
-                    for v in normalized_facets["short_name"]
-                ]
+                cat = cat.search(**query)
+
             # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = {"version": [f"v{row['version']}"]}
-            for our_facet, esgf_facet in self.facets.items():
-                if esgf_facet in row:
-                    esgf_values = row[esgf_facet]
-                    if isinstance(esgf_values, str):
-                        esgf_values = [esgf_values]
+            dataset_facets = {}
+            df = cat.df
+            for our_facet, esm_facet in self.facets.items():
+                if esm_facet in df:
+                    esm_values = df[esm_facet].unique().tolist()
                     our_values = [
                         inverse_values.get(our_facet, {}).get(v, v)
-                        for v in esgf_values
+                        for v in esm_values
                     ]
                     dataset_facets[our_facet] = our_values
 
             dataset = IntakeEsmDataset(
-                name=dataset_id,
+                name=key,
                 facets={
                     k: v[0] if len(v) == 1 else v
                     for k, v in dataset_facets.items()
