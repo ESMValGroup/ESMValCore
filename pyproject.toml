@@ -54,7 +54,7 @@ dependencies = [
     "netCDF4",
     "numpy!=1.24.3",
     "packaging",
-    "pandas<3.0",  # github.com/ESMValGroup/ESMValCore/issues/2950
+    "pandas",
     "pillow",
     "prov",
     "psutil",
