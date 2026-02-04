@@ -104,3 +104,47 @@ type:             double
 must_have_bounds: yes
 !----------------------------------
 !
+
+!============
+axis_entry: p700
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    air_pressure
+units:            Pa
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         down         ! up or down (default: undeclared)
+long_name:        pressure
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         plev
+stored_direction: decreasing
+type:             double
+value:            70000.            ! of scalar (singleton) dimension
+must_have_bounds: no
+!----------------------------------
+!
+
+!============
+axis_entry: p1000
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    air_pressure
+units:            Pa
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         down         ! up or down (default: undeclared)
+long_name:        pressure
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         plev
+stored_direction: decreasing
+type:             double
+value:            100000.            ! of scalar (singleton) dimension
+must_have_bounds: no
+!----------------------------------
+!
