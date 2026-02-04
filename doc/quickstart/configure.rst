@@ -1242,7 +1242,7 @@ following mapping applies:
 
 Because it is now possible to configure multiple paths to directories containing
 CMOR tables per project, the ``custom`` project for specifying additional custom
-CMOR tables is no longer needed or supported.
+CMOR tables is no longer needed nor supported.
 
 Example 1: A config-developer.yml file specifying different CMIP6 CMOR tables
 than the default ones, augmented by the default custom CMOR tables:
