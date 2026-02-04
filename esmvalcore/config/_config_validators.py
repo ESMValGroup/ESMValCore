@@ -236,12 +236,15 @@ def validate_rootpath(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, paths in mapping.items():
-        if key == "obs4mips":
+        if key in ("obs4mips", "ana4mips"):
+            lower_case_key = key
+            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
             logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'rootpath'",
+                "Correcting capitalization, project '%s' should be "
+                "written as '%s' in configured 'rootpath'",
+                lower_case_key,
+                key,
             )
-            key = "obs4MIPs"  # noqa: PLW2901
         if isinstance(paths, Path):
             paths = str(paths)  # noqa: PLW2901
         if isinstance(paths, (str, list)):
@@ -266,12 +269,15 @@ def validate_drs(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, drs in mapping.items():
-        if key == "obs4mips":
+        if key in ("obs4mips", "ana4mips"):
+            lower_case_key = key
+            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
             logger.warning(
-                "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in configured 'drs'",
+                "Correcting capitalization, project '%s' should be "
+                "written as '%s' in configured 'drs'",
+                lower_case_key,
+                key,
             )
-            key = "obs4MIPs"  # noqa: PLW2901
         new_mapping[key] = validate_string(drs)
     return new_mapping
 
@@ -375,6 +381,7 @@ def validate_projects(
     options_for_project: dict[str, Callable[[Any], Any]] = {
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
+        "preprocessor_filename_template": validate_string,
     }
     for project, project_config in mapping.items():
         for option, val in project_config.items():

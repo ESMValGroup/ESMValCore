@@ -31,8 +31,11 @@ from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.io.local import _get_output_file
-from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
+from esmvalcore.preprocessor import (
+    DEFAULT_ORDER,
+    PreprocessingTask,
+    _get_preprocessor_filename,
+)
 from tests.integration.test_provenance import check_provenance
 
 if TYPE_CHECKING:
@@ -468,8 +471,7 @@ def test_simple_recipe(
             dataset = next(
                 d
                 for d in datasets
-                if _get_output_file(d.facets, session.preproc_dir)
-                == product.filename
+                if _get_preprocessor_filename(d) == product.filename
             )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
@@ -788,21 +790,21 @@ TEST_ISO_TIMERANGE = [
     ),
     ("1990/*", "1990-2019"),
     ("*/1992", "1990-1992"),
-    ("1990/P2Y", "1990-P2Y"),
-    ("19900101/P2Y2M1D", "19900101-P2Y2M1D"),
+    ("1990/P2Y", "19900101-19920101"),
+    ("19900101/P2Y2M1D", "19900101-19920302"),
     (
         "19900101T0000/P2Y2M1DT12H00M00S",
-        "19900101T0000-P2Y2M1DT12H00M00S",
+        "19900101T000000-19920302T120000",
     ),
-    ("P2Y/1992", "P2Y-1992"),
-    ("P1Y2M1D/19920101", "P1Y2M1D-19920101"),
-    ("P1Y2M1D/19920101T120000", "P1Y2M1D-19920101T120000"),
-    ("P2Y/*", "P2Y-2019"),
-    ("P2Y2M1D/*", "P2Y2M1D-2019"),
-    ("P2Y21DT12H00M00S/*", "P2Y21DT12H00M00S-2019"),
-    ("*/P2Y", "1990-P2Y"),
-    ("*/P2Y2M1D", "1990-P2Y2M1D"),
-    ("*/P2Y21DT12H00M00S", "1990-P2Y21DT12H00M00S"),
+    ("P2Y/1992", "19900101-19920101"),
+    ("P1Y2M1D/19920101", "19901031-19920101"),
+    ("P1Y2M1D/19920101T120000", "19901031T120000-19920101T120000"),
+    ("P2Y/*", "20170101-20190101"),
+    ("P2Y2M1D/*", "20161031-20190101"),
+    ("P2Y21DT12H00M00S/*", "20161211-20190101"),
+    ("*/P2Y", "19900101-19920101"),
+    ("*/P2Y2M1D", "19900101-19920302"),
+    ("*/P2Y21DT12H00M00S", "19900101-19920122"),
 ]
 
 
@@ -3823,9 +3825,9 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
-        "OBS6, native6, obs4MIPs, ana4mips, EMAC, CORDEX, IPSLCM, ICON, CESM, "
-        'ACCESS."'
+        "The following tables are available: custom, CMIP7, CMIP6, CMIP5, "
+        "CMIP3, OBS, OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, "
+        'ICON, CESM, ACCESS."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)

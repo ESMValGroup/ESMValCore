@@ -13,6 +13,8 @@
 
 name: Install from conda-forge
 
+permissions: {}
+
 # runs on a push on main and at the end of every day
 on:
   # triggering on push without branch name will run tests every time
@@ -27,7 +29,7 @@ on:
   #   branches:
   #     - main
   schedule:
-    - cron: '0 4 * * *'
+    - cron: "0 4 * * *"
 
 # Required shell entrypoint to have properly configured bash shell
 defaults:
@@ -37,16 +39,16 @@ defaults:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
-    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
+    if: github.repository == 'ESMValGroup/ESMValCore' # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
@@ -65,23 +67,23 @@ jobs:
           esmvaltool --help
           esmvaltool version 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
-        if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        if: ${{ always() }} # upload artifacts even if fail
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Conda_Install_Linux_python_${{ matrix.python-version }}
           path: conda_install_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
-    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
+    if: github.repository == 'ESMValGroup/ESMValCore' # avoid GAs in forks
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
-        architecture: ["x64"]  # need to force Intel, arm64 builds have issues
+        python-version: ["3.12", "3.13", "3.14"]
+        architecture: ["x64"] # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           architecture: ${{ matrix.architecture }}
           python-version: ${{ matrix.python-version }}
@@ -101,8 +103,8 @@ jobs:
           esmvaltool --help
           esmvaltool version 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
-        if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v5
+        if: ${{ always() }} # upload artifacts even if fail
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Conda_Install_OSX_python_${{ matrix.python-version }}
           path: conda_install_osx_artifacts_python_${{ matrix.python-version }}

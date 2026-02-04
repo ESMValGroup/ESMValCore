@@ -23,26 +23,36 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-  - repo: https://github.com/adrienverge/yamllint
-    rev: 'v1.37.1'
-    hooks:
-      - id: yamllint
-  - repo: https://github.com/codespell-project/codespell
-    rev: 'v2.4.1'
-    hooks:
-      - id: codespell
-        additional_dependencies: [tomli]  # required for Python 3.10
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.7"
+    rev: "v0.14.14"
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.19.0'
+    rev: "v1.19.1"
     hooks:
       - id: mypy
         additional_dependencies:
-          - 'types-PyYAML'
-          - 'types-requests'
-          - 'numpy'
+          - "types-PyYAML"
+          - "types-requests"
+          - "numpy"
+  - repo: https://github.com/adrienverge/yamllint
+    rev: "v1.38.0"
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/codespell-project/codespell
+    rev: "v2.4.1"
+    hooks:
+      - id: codespell
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.36.1
+    hooks:
+      - id: check-citation-file-format
+      - id: check-github-workflows
+      - id: check-circle-ci
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.22.0
+    hooks:
+      - id: zizmor
+        args: [--fix=safe]

@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools >= 40.6.0",
-    "setuptools_scm>=6.2",
+    "setuptools>=80",
+    "setuptools_scm>=8",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -14,7 +14,6 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
@@ -64,7 +63,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris>=3.12.2",  # github.com/SciTools/iris/issues/6417
+    "scitools-iris",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",
@@ -72,7 +71,8 @@ dependencies = [
     "zarr>3",
 ]
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
-license = {text = "Apache License, Version 2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 name = "ESMValCore"
 requires-python = ">=3.12"
 
@@ -92,7 +92,7 @@ doc = [
     "autodocsumm>=0.2.2",
     "ipython",
     "myst-nb",
-    "sphinx>=6.1.3",
+    "sphinx>=6.1.3,<9",  # ESMValTool/issues/4316
     "pydata_sphinx_theme",
 ]
 develop = [
@@ -111,10 +111,7 @@ Homepage = "https://esmvaltool.org"
 Issues = "https://github.com/ESMValGroup/ESMValCore/issues"
 
 [tool.setuptools]
-include-package-data = true
-license-files = ["LICENSE"]
 packages = ["esmvalcore"]
-zip-safe = false
 
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}

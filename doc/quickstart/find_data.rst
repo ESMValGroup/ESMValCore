@@ -834,5 +834,5 @@ a corresponding entry in the configuration file could look like:
 
 The same replacement mechanism can be employed everywhere where tags can be
 used, particularly in ``dirname_template`` and ``filename_template`` in
-:class:`esmvalcore.io.local.LocalDataSource`, and in ``output_file`` in
-:ref:`config-developer.yml <config-developer>`.
+:class:`esmvalcore.io.local.LocalDataSource`, and in ``preprocessor_filename_template``
+under :ref:`config-projects`.

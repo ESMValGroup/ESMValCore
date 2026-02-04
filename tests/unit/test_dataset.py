@@ -21,6 +21,8 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.esgf import ESGFFile
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from esmvalcore.typing import Facets
 
 
@@ -107,10 +109,10 @@ def test_repr_supplementary():
 @pytest.mark.parametrize(
     ("separator", "join_lists", "output"),
     [
-        ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
-        ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
-        (" ", False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
-        (" ", True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+        ("_", False, "1_d_dom_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ("_", True, "1_d_dom_e1-e2_ens2-ens1_g1_v1"),
+        (" ", False, "1 d dom ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (" ", True, "1 d dom e1-e2 ens2-ens1 g1 v1"),
     ],
 )
 def test_get_joined_summary_facet(separator, join_lists, output):
@@ -1003,6 +1005,138 @@ def test_from_files_with_globs(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_with_globs_cmip7(
+    monkeypatch: pytest.MonkeyPatch,
+    session: Session,
+) -> None:
+    """Test `from_files` with wildcards in dataset and supplementary."""
+    rootpath = Path("/path/to/data")
+    file1 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f3",
+        "glb",
+        "mon",
+        "tas",
+        "tavg-h2m-hxy-u",
+        "gn",
+        "v20260109",
+        "tas_tavg-h2m-hxy-u_mon_glb_gn_PCMDI-test-1-0_historical_r1i1p1f3_185001-201412.nc",
+    )
+    file1.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f3",
+        "frequency": "mon",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "tas",
+        "timerange": "185001/201412",
+        "version": "v20260109",
+    }
+    file2 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f1",
+        "glb",
+        "fx",
+        "areacella",
+        "ti-u-hxy-u",
+        "gn",
+        "v20260110",
+        "areacella_ti-u-hxy-u_fx_glb_gn_PCMDI-test-1-0_historical_r1i1p1f1.nc",
+    )
+    file2.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f1",
+        "frequency": "fx",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "areacella",
+        "version": "v20260109",
+    }
+    dataset = Dataset(
+        activity="*",
+        dataset="*",
+        ensemble="*",
+        exp="historical",
+        frequency="mon",
+        grid="*",
+        institute="*",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+        branding_suffix="tavg-h2m-hxy-u",
+    )
+    dataset.add_supplementary(
+        short_name="areacella",
+        frequency="fx",
+        branding_suffix="*",
+        ensemble="*",
+    )
+    dataset.facets["timerange"] = "*"
+    dataset.session = session
+    print(dataset)
+
+    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
+
+    datasets = list(dataset.from_files())
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(
+        ads.session == session for ds in datasets for ads in ds.supplementaries
+    )
+
+    expected = Dataset(
+        activity="CMIP",
+        branding_suffix="tavg-h2m-hxy-u",
+        dataset="PCMDI-test-1-0",
+        ensemble="r1i1p1f3",
+        exp="historical",
+        frequency="mon",
+        grid="gn",
+        institute="PCMDI",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+    )
+    expected.add_supplementary(
+        short_name="areacella",
+        branding_suffix="ti-u-hxy-u",
+        frequency="fx",
+        ensemble="r1i1p1f1",
+    )
+    expected.facets["timerange"] = "185001/201412"
+    expected.session = session
+
+    assert datasets == [expected]
+
+
 def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and files with missing facets.
 
@@ -1462,7 +1596,7 @@ def create_esgf_file(timerange, version):
 
 
 @pytest.fixture
-def dataset():
+def dataset() -> Dataset:
     dataset = Dataset(
         project="CMIP6",
         mip="Amon",
@@ -1475,33 +1609,39 @@ def dataset():
         timerange="1850/1851",
         alias="CMIP6_EC-Earth3_tas",
     )
-    dataset.session = {
-        "search_data": "complete",
-        "download_dir": Path("/download_dir"),
-        "projects": {
-            "CMIP6": {
-                "data": {
-                    "local": {
-                        "type": "esmvalcore.io.local.LocalDataSource",
-                        "rootpath": Path("/local_dir"),
-                        "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
-                        "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
-                        "priority": 1,
-                    },
-                    "esgf": {
-                        "type": "esmvalcore.io.esgf.ESGFDataSource",
-                        "download_dir": Path("/download_dir"),
-                        "priority": 2,
+    dataset.session.clear()
+    dataset.session.update(
+        {
+            "search_data": "quick",
+            "projects": {
+                "CMIP6": {
+                    "data": {
+                        "local": {
+                            "type": "esmvalcore.io.local.LocalDataSource",
+                            "rootpath": Path("/local_dir"),
+                            "dirname_template": "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
+                            "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",
+                            "priority": 1,
+                        },
+                        "esgf": {
+                            "type": "esmvalcore.io.esgf.ESGFDataSource",
+                            "download_dir": Path("/download_dir"),
+                            "priority": 2,
+                        },
                     },
                 },
             },
         },
-    }
+    )
     return dataset
 
 
 @pytest.mark.parametrize("local_availability", ["all", "partial", "none"])
-def test_find_files(mocker, dataset, local_availability):
+def test_find_files(
+    mocker: MockerFixture,
+    dataset: Dataset,
+    local_availability: str,
+) -> None:
     """Test `find_files`."""
     esgf_files = [
         create_esgf_file(version="v1", timerange="185001-185012"),
@@ -1578,16 +1718,27 @@ def test_find_files_wildcard_timerange(mocker, dataset):
     assert dataset.facets["timerange"] == "185001/185112"
 
 
-def test_find_files_outdated_local(mocker, dataset):
-    """Test newer files from ESGF are found when local data is incomplete."""
+@pytest.mark.parametrize("search_data", ["quick", "complete"])
+def test_find_files_outdated_local(
+    mocker: MockerFixture,
+    dataset: Dataset,
+    search_data: str,
+) -> None:
+    """Test newer files from ESGF are found when local data is an older version.
+
+    With `search_data="quick"` the expected behaviour is to stop searching as
+    soon as a result covering the expected timerange is found.
+    With `search_data="complete", the expected behaviour is to search all data
+    sources and use the most up to date version.
+    """
+    dataset.session["search_data"] = search_data
     esgf_files = [
-        create_esgf_file(version="v2", timerange="185001-185012"),
-        create_esgf_file(version="v2", timerange="185101-185112"),
+        create_esgf_file(version="v2", timerange="185001-185112"),
     ]
 
     local_dir = Path("/local_dir")
     local_files = [
-        create_esgf_file(version="v1", timerange="185001-185012").local_file(
+        create_esgf_file(version="v1", timerange="185001-185112").local_file(
             local_dir,
         ),
     ]
@@ -1611,7 +1762,8 @@ def test_find_files_outdated_local(mocker, dataset):
         return_value=list(esgf_files),
     )
 
-    assert dataset.files == esgf_files
+    expected = esgf_files if search_data == "complete" else local_files
+    assert dataset.files == expected
 
 
 def test_set_version():
@@ -1735,11 +1887,11 @@ def test_load(mocker, session):
     fix_dir_prefix = Path(
         session.preproc_dir,
         "fixed_files",
-        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
+        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_yr_",
     )
-    _get_output_file = mocker.patch.object(
+    _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         create_autospec=True,
         return_value=output_file,
     )
@@ -1813,6 +1965,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "clip_timerange": {
@@ -1834,6 +1987,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "concatenate": {
@@ -1846,7 +2000,7 @@ def test_load(mocker, session):
 
     assert args == load_args
 
-    _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    _get_preprocessor_filename.assert_called_with(dataset)
     items[0].prepare.assert_called_once()
 
 

@@ -252,14 +252,19 @@ class Fix:
             Fixes to apply for the given data.
 
         """
-        vardef = get_var_info(project, mip, short_name)
+        if extra_facets is None:
+            extra_facets = {}
+
+        vardef = get_var_info(
+            project,
+            mip,
+            short_name,
+            branding_suffix=extra_facets.get("branding_suffix"),
+        )
 
         project = project.replace("-", "_").lower()
         dataset = dataset.replace("-", "_").lower()
         short_name = short_name.replace("-", "_").lower()
-
-        if extra_facets is None:
-            extra_facets = {}
 
         fixes = []
 

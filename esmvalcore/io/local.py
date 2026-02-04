@@ -58,7 +58,6 @@ from cf_units import Unit
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
-from esmvalcore.config._config import get_project_config
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.iris_helpers import ignore_warnings_context
 
@@ -406,8 +405,13 @@ def _select_files(
     selection: list[LocalFile] = []
 
     for filename in filenames:
+        if "timerange" not in filename.facets:
+            # Gracefully handle files where no timerange could be determined.
+            selection.append(filename)
+            continue
+
         start_date, end_date = _parse_period(timerange)
-        start, end = _get_start_end_date(filename)
+        start, end = filename.facets["timerange"].split("/")  # type: ignore[union-attr]
 
         start_date_int, end_int = _truncate_dates(start_date, end)
         end_date_int, start_int = _truncate_dates(end_date, start)
@@ -589,7 +593,13 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         files.sort()  # sorting makes it easier to see what was found
 
         if "timerange" in facets:
+            found_files = bool(files)
             files = _select_files(files, facets["timerange"])
+            if not files and found_files:
+                self.debug_info += (
+                    f" within the requested timerange {facets['timerange']}"
+                )
+
         return files
 
     def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
@@ -656,7 +666,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         )
 
         # Remove all tags that are in between other tags, e.g.,
-        # {tag1}{tag2}{tag3} -> {tag1}{tag2} (there is no way to reliably
+        # {tag1}{tag2}{tag3} -> {tag1}{tag3} (there is no way to reliably
         # extract facets from those)
         pattern = re.sub(r"(?<=\})\\\{[^\}]+?\\\}(?=\\(?=\{))", "", pattern)
 
@@ -695,27 +705,6 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             pattern = pattern.replace(rf"\[{chars}\]", f"[{chars}]")
 
         return pattern
-
-
-def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
-    """Return the full path to the output (preprocessed) file."""
-    cfg = get_project_config(variable["project"])
-
-    # Join different experiment names
-    if isinstance(variable.get("exp"), (list, tuple)):
-        variable = dict(variable)
-        variable["exp"] = "-".join(variable["exp"])
-    outfile = _replace_tags(cfg["output_file"], variable)[0]
-    if "timerange" in variable:
-        timerange = variable["timerange"].replace("/", "-")
-        outfile = Path(f"{outfile}_{timerange}")
-    outfile = Path(f"{outfile}.nc")
-    return Path(
-        preproc_dir,
-        variable.get("diagnostic", ""),
-        variable.get("variable_group", ""),
-        outfile,
-    )
 
 
 def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
