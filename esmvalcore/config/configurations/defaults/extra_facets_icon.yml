@@ -35,6 +35,7 @@ projects:
           prw: {var_type: atm_2d_ml}
           ps: {var_type: atm_2d_ml}
           psl: {var_type: atm_2d_ml}
+          qep: {var_type: atm_2d_ml}
           rlds: {var_type: atm_2d_ml}
           rldscs: {var_type: atm_2d_ml}
           rlns: {var_type: atm_2d_ml}
