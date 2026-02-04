@@ -7,10 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import intake
-import iris.cube
 import pytest
 import xarray as xr
-import yaml
 
 import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
@@ -19,7 +17,6 @@ if TYPE_CHECKING:
     from intake_esm.core import esm_datastore
     from pytest_mock import MockerFixture
 
-    from esmvalcore.config import Session
 
 with importlib.resources.as_file(
     importlib.resources.files("tests"),
@@ -186,4 +183,4 @@ def test_to_iris_nomock():
 
     # Raises a KeyError because the dtype of the dataset is Object, which I don't think NCData likes.
     with pytest.raises(KeyError, match="'O'"):
-        cubes = dataset.to_iris()
+        dataset.to_iris()

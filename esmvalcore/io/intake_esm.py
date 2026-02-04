@@ -28,7 +28,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 import isodate
-from intake_esm.core import esm_datastore
 
 from esmvalcore.dataset import _isglob
 from esmvalcore.io.local import _parse_period
@@ -73,38 +72,6 @@ def _to_path_dict(
     return {key: _to_pathlist(val) for key, val in esm_datastore.items()}
 
 
-# I'm not sure we actually need this in the case of intake-esm?
-class _CachingCatalog(esm_datastore):
-    """An Intake-ESM catalog that caches to_path_dict results."""
-
-    def __init__(self):
-        super().__init__()
-        self._result = {}
-
-    @classmethod
-    def from_catalog(
-        cls,
-        catalog: esm_datastore,
-    ) -> _CachingCatalog:
-        """Create a CachingCatalog from an existing esm_datastore."""
-        cat = cls(catalog.esmcat)
-        cat.indices = catalog.indices
-        cat.local_cache = catalog.local_cache
-        cat.esg_dataroot = catalog.esg_dataroot
-        cat.file_start = catalog.file_start
-        cat.file_end = catalog.file_end
-        cat.project = catalog.project
-        return cat
-
-    def to_path_dict(
-        self,
-        quiet: bool = False,
-    ) -> dict[str, list[str | Path]]:
-        """Return the current search as a dictionary of paths to files."""
-        self._result = _to_path_dict(self, quiet=quiet)
-        return self._result
-
-
 @dataclass
 class IntakeEsmDataset(DataElement):
     """A dataset that can be used to load data found using intake-esm_.
@@ -130,6 +97,12 @@ class IntakeEsmDataset(DataElement):
     def __hash__(self) -> int:
         """Return a number uniquely representing the data element."""
         return hash((self.name, self.facets.get("version")))
+
+    def prepare(self) -> None:
+        """Prepare the data for access.
+
+        For intake-esm, no preparation is needed.
+        """
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -266,7 +239,7 @@ class IntakeEsmDataSource(DataSource):
             for our_facet in self.values
         }
 
-        for key in res.keys():
+        for key in res:
             esm_datasource = res[key]
             path_col = esm_datasource.path_column_name
 
