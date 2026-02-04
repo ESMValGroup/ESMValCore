@@ -363,6 +363,12 @@ below from the lowest level of strictness to the highest:
     :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
     CMORized data and may not work as expected with non-CMORized data.
 
+    Our ambition is that :ref:`preprocessor functions <preprocessor>` support
+    data that follows the
+    `CF Conventions <https://cfconventions.org/>`_, while
+    :ref:`diagnostics <esmvaltool:recipes>` are only expected to work with
+    CMORized data.
+
 .. _add_new_fix_native_datasets:
 
 Add support for new native datasets

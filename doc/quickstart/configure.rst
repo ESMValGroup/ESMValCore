@@ -752,6 +752,12 @@ for loading and saving the data in the :ref:`recipe <recipe>` or
     :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
     CMORized data and may not work as expected with non-CMORized data.
 
+    Our ambition is that :ref:`preprocessor functions <preprocessor>` support
+    data that follows the
+    `CF Conventions <https://cfconventions.org/>`_, while
+    :ref:`diagnostics <esmvaltool:recipes>` are only expected to work with
+    CMORized data.
+
 .. _config-data-sources:
 
 Data sources
