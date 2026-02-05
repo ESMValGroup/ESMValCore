@@ -22,7 +22,11 @@ with importlib.resources.as_file(
     importlib.resources.files("tests"),
 ) as test_dir:
     esm_ds_fhandle = (
-        Path(test_dir) / "sample_data" / "intake-esm" / "catalog" / "cmip6-netcdf.json"
+        Path(test_dir)
+        / "sample_data"
+        / "intake-esm"
+        / "catalog"
+        / "cmip6-netcdf.json"
     )
 
 
