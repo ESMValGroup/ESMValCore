@@ -16,6 +16,7 @@ from esmvalcore.cmor.table import (
     read_cmor_tables,
 )
 from esmvalcore.cmor.table import __file__ as root
+from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
     from esmvalcore.config import Session
@@ -144,6 +145,43 @@ def test_get_tables_no_type(
         match=(
             r"Missing CMOR table 'type' in configuration of project "
             r"test. Current configuration is:\n{}\n"
+        ),
+    ):
+        get_tables(session, "test")
+
+
+def test_get_tables_non_existent_table_module(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {
+        "cmor_table": {
+            "type": "tests.integration.cmor.does_not_exist.DoesNotExist",
+        },
+    }
+    with pytest.raises(
+        InvalidConfigParameter,
+        match=(
+            r"Failed to import module 'tests.integration.cmor.does_not_exist' "
+            r"for CMOR table of project 'test'. Please check your configuration. "
+        ),
+    ):
+        get_tables(session, "test")
+
+
+def test_get_tables_non_existent_table_class(
+    session: Session,
+) -> None:
+    session["projects"]["test"] = {
+        "cmor_table": {
+            "type": "tests.integration.cmor.test_read_cmor_tables.NonExistentTable",
+        },
+    }
+    with pytest.raises(
+        InvalidConfigParameter,
+        match=(
+            r"Class 'NonExistentTable' for reading CMOR table of project 'test' "
+            r"does not exist in module 'tests.integration.cmor.test_read_cmor_tables'. "
+            r"Please check your configuration."
         ),
     ):
         get_tables(session, "test")
