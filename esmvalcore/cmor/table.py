@@ -493,9 +493,10 @@ class InfoBase:
             Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
-            temporal average at an undefined vertical level on a horizontal grid
-            where non-sea points are masked.
+            variable in the CMOR table, e.g. for
+            `CMIP7 <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            ``"tavg-u-hxy-sea"`` defines the temporal average at an undefined
+            vertical level on a horizontal grid where non-sea points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
@@ -1536,9 +1537,11 @@ class CustomInfo(CMIP5Info):
             Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
-            temporal average at an undefined vertical level on a horizontal grid
-            where non-sea points are masked.
+            variable in the CMOR table, e.g. a
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            could be ``"tavg-u-hxy-sea"``, which defines the temporal average
+            at an undefined vertical level on a horizontal grid where non-sea
+            points are masked.
         derived:
             Variable is derived. Info retrieval for derived variables always
             looks on the default tables if variable is not found in the
@@ -1606,9 +1609,11 @@ class NoInfo(InfoBase):
             Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
-            temporal average at an undefined vertical level on a horizontal grid
-            where non-sea points are masked.
+            variable in the CMOR table, e.g. a
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            could be ``"tavg-u-hxy-sea"``, which defines the temporal average
+            at an undefined vertical level on a horizontal grid where non-sea
+            points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
