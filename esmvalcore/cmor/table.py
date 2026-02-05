@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Self
 
 import yaml
 
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -358,15 +358,41 @@ def get_tables(
         raise ValueError(msg)
     cache_key = str(kwargs)
     if cache_key not in _TABLE_CACHE:
+        import_error_messsage = (
+            "Please check your configuration. "
+            f"Current configuration is:\n\n{
+                yaml.safe_dump(
+                    {'projects': {project: {'cmor_table': kwargs}}},
+                )
+            }\n"
+            "Typical good values for 'type' are "
+            "'esmvalcore.cmor.table.CMIP6Info' for CMIP6-style CMOR tables or "
+            "'esmvalcore.cmor.table.CMIP5Info' for CMIP5-style CMOR tables."
+        )
         module_name, cls_name = kwargs.pop("type").rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        cls = getattr(module, cls_name)
+        try:
+            module = importlib.import_module(module_name)
+        except ModuleNotFoundError as exc:
+            msg = (
+                f"Failed to import module '{module_name}' for CMOR table of "
+                f"project '{project}'. {import_error_messsage}"
+            )
+            raise InvalidConfigParameter(msg) from exc
+        try:
+            cls = getattr(module, cls_name)
+        except AttributeError as exc:
+            msg = (
+                f"Class '{cls_name}' for reading CMOR table of project "
+                f"'{project}' does not exist in module '{module_name}'. "
+                f"{import_error_messsage}"
+            )
+            raise InvalidConfigParameter(msg) from exc
         tables = cls(**kwargs)
         if not isinstance(tables, InfoBase):
             msg = (
                 "`type` should be a subclass `esmvalcore.cmor.table.InfoBase`, "
                 f"but your configuration for project '{project}' contains "
-                f"'{tables}' of type: '{type(tables)}'."
+                f"'{tables}' of type: '{type(tables)}'. {import_error_messsage}"
             )
             raise TypeError(msg)
         _TABLE_CACHE[cache_key] = tables
