@@ -1,5 +1,7 @@
 """Access data using `intake-esm <https://intake-esgf.readthedocs.io>`_.
 
+@CT: Needs updating, this is copied verbatim from intake-esgf module.
+
 .. note::
 
     It is highly recommended that you take a moment to
@@ -239,7 +241,7 @@ class IntakeEsmDataSource(DataSource):
             for our_facet in self.values
         }
 
-        for key in res:
+        for key in sorted(res):
             esm_datasource = res[key]
             path_col = esm_datasource.path_column_name
 
