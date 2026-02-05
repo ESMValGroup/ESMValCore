@@ -487,12 +487,15 @@ class InfoBase:
         ----------
         table_name:
             Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
-            :class:`~esmvalcore.dataset.Dataset`.
+            :class:`~esmvalcore.dataset.Dataset`, e.g. ``"Omon"`` for CMIP6 or
+            ``"ocean"`` for CMIP7.
         short_name:
-            Variable's short name.
+            Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table.
+            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
+            temporal average at an undefined vertical level on a horizontal grid
+            where non-sea points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
@@ -1525,13 +1528,17 @@ class CustomInfo(CMIP5Info):
 
         Parameters
         ----------
-        table:
-            Table name. Ignored for custom tables.
+        table_name:
+            Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
+            :class:`~esmvalcore.dataset.Dataset`, e.g. ``"Omon"`` for CMIP6 or
+            ``"ocean"`` for CMIP7.
         short_name:
-            Variable's short name.
+            Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table. Ignored for custom tables.
+            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
+            temporal average at an undefined vertical level on a horizontal grid
+            where non-sea points are masked.
         derived:
             Variable is derived. Info retrieval for derived variables always
             looks on the default tables if variable is not found in the
@@ -1593,12 +1600,15 @@ class NoInfo(InfoBase):
         ----------
         table_name:
             Table name, i.e., the ``mip`` in the :ref:`recipe <recipe>` or
-            :class:`~esmvalcore.dataset.Dataset`.
+            :class:`~esmvalcore.dataset.Dataset`, e.g. ``"Omon"`` for CMIP6 or
+            ``"ocean"`` for CMIP7.
         short_name:
-            Variable's short name.
+            Variable's short name, e.g. "tos" for sea surface temperature.
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
-            variable in the CMOR table.
+            variable in the CMOR table, e.g. ``"tavg-u-hxy-sea"`` for the
+            temporal average at an undefined vertical level on a horizontal grid
+            where non-sea points are masked.
         derived:
             Variable is derived. Information retrieval for derived variables
             always looks in the default tables (usually, the custom tables) if
