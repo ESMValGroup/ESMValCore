@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from esmvalcore.cmor.table import CMOR_TABLES
+import esmvalcore.cmor.table
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -68,7 +68,9 @@ def _get_alternative_generic_lev_coord(
     # Check if any of the allowed alternative coordinates is present in the
     # cube
     for allowed_alternative in allowed_alternatives:
-        cmor_coord = CMOR_TABLES[cmor_table_type].coords[allowed_alternative]
+        cmor_coord = esmvalcore.cmor.table.CMOR_TABLES[cmor_table_type].coords[
+            allowed_alternative
+        ]
         if cube.coords(var_name=cmor_coord.out_name):
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
             return (cmor_coord, cube_coord)

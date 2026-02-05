@@ -423,7 +423,7 @@ class TestCMIP3Info:
         return CMIP3Info(
             paths=[
                 Path("cmip3/Tables"),
-                Path("cmip5-custom"),
+                Path("cmip3-custom"),
             ],
             strict=True,
         )
@@ -490,11 +490,11 @@ class TestCMIP3Info:
         assert var.short_name == "ta"
         assert var.frequency == ""
 
-    def test_omon_toz_succes_if_strict(self, variables_info):
-        """Get toz does not fail with Omon if not strict."""
+    def test_derived_variable_success_if_strict(self, variables_info):
+        """Get swcre does not fail with Omon if not strict."""
         variables_info.strict = False
-        var = variables_info.get_variable("O1", "toz")
-        assert var.short_name == "toz"
+        var = variables_info.get_variable("O1", "swcre")
+        assert var.short_name == "swcre"
         assert var.frequency == ""
 
 
@@ -506,6 +506,7 @@ class TestCORDEXInfo:
         return CMIP5Info(
             paths=[
                 Path("cordex/Tables"),
+                Path("cordex-custom"),
                 Path("cmip5-custom"),
             ],
         )
@@ -536,6 +537,7 @@ class TestCustomInfo:
     def test_repr(self, variables_info: CustomInfo) -> None:
         builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
         expected_paths = [
+            builtin_tables_path / "old-custom-coordinates",
             builtin_tables_path / "cmip5-custom",
         ]
         result = repr(variables_info)
@@ -544,32 +546,29 @@ class TestCustomInfo:
     def test_custom_tables_default_location(self, variables_info):
         """Test constructor with default tables location."""
         custom_info = CustomInfo()
-        expected_cmor_folder = os.path.join(
-            os.path.dirname(esmvalcore.cmor.__file__),
-            "tables",
-            "cmip5-custom",
+        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
+        default_paths = (
+            builtin_tables_path / "old-custom-coordinates",
+            builtin_tables_path / "cmip5-custom",
         )
-        assert custom_info.paths == (Path(expected_cmor_folder),)
+        assert custom_info.paths == default_paths
         assert custom_info.tables["custom"]
         assert custom_info.coords
 
     def test_custom_tables_location(self, variables_info):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
-        default_cmor_tables_path = os.path.join(
-            cmor_path,
-            "tables",
-            "cmip5-custom",
-        )
         cmor_tables_path = os.path.join(cmor_path, "tables", "cmip5")
         cmor_tables_path = os.path.abspath(cmor_tables_path)
 
         custom_info = CustomInfo(cmor_tables_path)
 
-        assert custom_info.paths == (
-            Path(default_cmor_tables_path),
-            Path(cmor_tables_path),
+        builtin_tables_path = Path(esmvalcore.cmor.__file__).parent / "tables"
+        default_paths = (
+            builtin_tables_path / "old-custom-coordinates",
+            builtin_tables_path / "cmip5-custom",
         )
+        assert custom_info.paths == (*default_paths, Path(cmor_tables_path))
         assert custom_info.tables["custom"]
         assert custom_info.coords
 

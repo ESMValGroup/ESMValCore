@@ -223,9 +223,8 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
         msg = "cfg_developer is not a Path-like object, got "
         raise TypeError(msg, cfg_developer)
     mtime = cfg_developer.stat().st_mtime
-    cmor_tables = _read_cmor_tables(cfg_developer, mtime)
-    CMOR_TABLES.clear()
-    CMOR_TABLES.update(cmor_tables)
+    global CMOR_TABLES  # noqa: PLW0603
+    CMOR_TABLES = _read_cmor_tables(cfg_developer, mtime)
 
 
 @lru_cache
@@ -1502,7 +1501,10 @@ class CustomInfo(CMIP5Info):
         self.tables[table.name] = table
 
         # First, read default custom tables from repository
-        self.paths = (Path(self._get_cmor_path("cmip5-custom")),)
+        self.paths = (
+            Path(self._get_cmor_path("old-custom-coordinates")),
+            Path(self._get_cmor_path("cmip5-custom")),
+        )
 
         # Second, if given, update default tables with user-defined custom
         # tables

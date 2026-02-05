@@ -387,14 +387,13 @@ def validate_cmor_tables(value: dict) -> None:
     # preferably be avoided. This would require passing around session objects
     # instead of relying on global state (e.g. esmvalcore.config.CFG,
     # esmvalcore.cmor.tables.CMOR_TABLES).
-    esmvalcore.cmor.table.CMOR_TABLES.clear()
-    for project in value:
-        esmvalcore.cmor.table.CMOR_TABLES[project] = (
-            esmvalcore.cmor.table.get_tables(
-                session={"projects": value},  # type: ignore[arg-type]
-                project=project,
-            )
+    esmvalcore.cmor.table.CMOR_TABLES = {
+        project: esmvalcore.cmor.table.get_tables(
+            session={"projects": value},  # type: ignore[arg-type]
+            project=project,
         )
+        for project in value
+    }
 
 
 def validate_projects(

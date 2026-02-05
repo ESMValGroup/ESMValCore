@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import esmvalcore.cmor.table
 import esmvalcore.config._data_sources
 import esmvalcore.local
 from esmvalcore.exceptions import InvalidConfigParameter
@@ -38,6 +39,7 @@ def test_load_legacy_data_sources(
         session["projects"][project].pop("data", None)
     session["search_esgf"] = search_esgf
     session["download_dir"] = "~/climate_data"
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         esmvalcore.local.CFG,
         "config_developer_file",

@@ -6,6 +6,7 @@ import dask.config
 import pytest
 import yaml
 
+import esmvalcore.cmor.table
 import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
@@ -322,6 +323,7 @@ def test_get_ignored_warnings_none(project, step):
 
 def test_get_ignored_warnings_emac(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test ``get_ignored_warnings``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",

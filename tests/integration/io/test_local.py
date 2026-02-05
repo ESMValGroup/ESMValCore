@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 import esmvalcore
+import esmvalcore.cmor.table
 from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalDataSource,
@@ -69,6 +70,7 @@ def create_tree(path, filenames=None, symlinks=None):
 @pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
 def test_get_output_file(monkeypatch, cfg):
     """Test getting output name for preprocessed files."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",
@@ -101,6 +103,7 @@ def test_find_files(monkeypatch, root, cfg):
         pprint.pformat(cfg["variable"]),
     )
     project = cfg["variable"]["project"]
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",
@@ -132,6 +135,7 @@ def test_find_files_with_facets(monkeypatch, root):
             break
 
     project = cfg["variable"]["project"]
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",
@@ -193,6 +197,7 @@ def test_find_data(root, cfg):
 
 
 def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",

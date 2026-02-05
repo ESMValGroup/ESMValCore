@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import esmvalcore
+import esmvalcore.cmor.table
 from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
@@ -154,6 +155,7 @@ def test_get_preprocessor_filename_falls_back_to_config_developer(
     session: Session,
 ) -> None:
     """Test the function `_get_preprocessor_filename`."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
         "config_developer_file",

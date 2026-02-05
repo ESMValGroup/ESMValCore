@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
+import esmvalcore.cmor.table
 from esmvalcore.cmor.table import (
     _TABLE_CACHE,
-    CMOR_TABLES,
     VariableInfo,
     clear_table_cache,
     get_tables,
@@ -30,40 +30,30 @@ def test_read_cmor_tables_raiser():
     assert "cow" in str(exc)
 
 
-def test_read_cmor_tables():
+def test_read_cmor_tables_from_config_developer(monkeypatch):
     """Test that the function `read_cmor_tables` loads the tables correctly."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    read_cmor_tables()
     table_path = Path(root).parent / "tables"
 
     for project in "CMIP5", "CMIP6":
-        table = CMOR_TABLES[project]
-        assert table.paths == (
-            table_path / project.lower() / "Tables",
-            table_path / f"{project.lower()}-custom",
-        )
+        table = esmvalcore.cmor.table.CMOR_TABLES[project]
+        assert table.paths == (table_path / project.lower() / "Tables",)
         assert table.strict is True
 
     project = "OBS"
-    table = CMOR_TABLES[project]
-    assert table.paths == (
-        table_path / "cmip5" / "Tables",
-        table_path / "cmip5-custom",
-    )
+    table = esmvalcore.cmor.table.CMOR_TABLES[project]
+    assert table.paths == (table_path / "cmip5" / "Tables",)
     assert table.strict is False
 
     project = "OBS6"
-    table = CMOR_TABLES[project]
-    assert table.paths == (
-        table_path / "cmip6" / "Tables",
-        table_path / "cmip6-custom",
-    )
+    table = esmvalcore.cmor.table.CMOR_TABLES[project]
+    assert table.paths == (table_path / "cmip6" / "Tables",)
     assert table.strict is False
 
     project = "obs4MIPs"
-    table = CMOR_TABLES[project]
-    assert table.paths == (
-        table_path / "obs4mips" / "Tables",
-        table_path / "cmip6-custom",
-    )
+    table = esmvalcore.cmor.table.CMOR_TABLES[project]
+    assert table.paths == (table_path / "obs4mips" / "Tables",)
     assert table.strict is False
 
 
@@ -83,7 +73,7 @@ def test_read_cmor_tables():
         ("CMIP5", "Amon", "tas", None),
         ("CMIP5", "Amon", "alb", None),  # custom derived variable
         ("CMIP3", "A1", "tas", None),
-        ("CMIP3", "A1", "alb", None),  # custom derived variable
+        ("CMIP3", "A1", "lwcre", None),  # custom derived variable
         ("CORDEX", "mon", "tas", None),
         ("CORDEX", "mon", "alb", None),  # custom derived variable
         ("obs4MIPs", "Amon", "tas", None),
@@ -119,7 +109,7 @@ def test_get_tables(
         mip,
         short_name,
         branding_suffix=branding_suffix,
-        derived=short_name == "alb",
+        derived=short_name in ("alb", "lwcre"),
     )
     assert isinstance(vardef, VariableInfo)
     assert vardef.short_name
@@ -290,8 +280,9 @@ CMOR_NEWCOORD_ENTRY = dedent(
 )
 
 
-def test_read_custom_cmor_tables_config_developer(tmp_path):
+def test_read_custom_cmor_tables_config_developer(tmp_path, monkeypatch):
     """Test reading of custom CMOR tables."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     (tmp_path / "CMOR_newvarfortesting.dat").write_text(CMOR_NEWVAR_ENTRY)
     (tmp_path / "CMOR_netcre.dat").write_text(CMOR_NETCRE_ENTRY)
     (tmp_path / "CMOR_coordinates.dat").write_text(CMOR_NEWCOORD_ENTRY)
@@ -312,12 +303,13 @@ def test_read_custom_cmor_tables_config_developer(tmp_path):
 
     read_cmor_tables(cfg_file)
 
-    assert len(CMOR_TABLES) == 2
-    assert "CMIP6" in CMOR_TABLES
-    assert "custom" in CMOR_TABLES
+    assert len(esmvalcore.cmor.table.CMOR_TABLES) == 2
+    assert "CMIP6" in esmvalcore.cmor.table.CMOR_TABLES
+    assert "custom" in esmvalcore.cmor.table.CMOR_TABLES
 
-    custom_table = CMOR_TABLES["custom"]
+    custom_table = esmvalcore.cmor.table.CMOR_TABLES["custom"]
     assert custom_table.paths == (
+        Path(root).parent / "tables" / "old-custom-coordinates",
         Path(root).parent / "tables" / "cmip5-custom",
         tmp_path,
     )
@@ -334,7 +326,7 @@ def test_read_custom_cmor_tables_config_developer(tmp_path):
     assert netcre.units == "K"
     assert netcre.long_name == "This is New"
 
-    cmip6_table = CMOR_TABLES["CMIP6"]
+    cmip6_table = esmvalcore.cmor.table.CMOR_TABLES["CMIP6"]
     assert cmip6_table.default is custom_table
 
     # Restore default tables
