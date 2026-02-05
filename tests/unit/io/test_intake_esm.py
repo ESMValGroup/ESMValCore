@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from importlib.resources import files as importlib_files
+import importlib.resources
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,13 +18,12 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-esm_ds_fhandle = (
-    Path(importlib_files(anchor="tests"))  # type: ignore[arg-type]
-    / "sample_data"
-    / "intake-esm"
-    / "catalog"
-    / "cmip6-netcdf.json"
-)
+with importlib.resources.as_file(
+    importlib.resources.files("tests"),
+) as test_dir:
+    esm_ds_fhandle = (
+        Path(test_dir) / "sample_data" / "intake-esm" / "catalog" / "cmip6-netcdf.json"
+    )
 
 
 def test_intake_esm_dataset_repr() -> None:
