@@ -65,6 +65,28 @@ must_have_bounds: no
 !----------------------------------
 !
 
+!============
+axis_entry: sdepth
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    depth
+units:            m
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         down         ! up or down (default: undeclared)
+long_name:        depth
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         depth
+valid_min:        0.0
+valid_max:        200.0
+stored_direction: increasing
+type:             double
+must_have_bounds: yes
+!----------------------------------
+!
 
 !============
 axis_entry: time
