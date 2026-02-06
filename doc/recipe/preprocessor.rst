@@ -1541,6 +1541,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points might be rounded. For
+   example, for `period=hourly`, a time point of 01:30 will be rounded to
+   01:00.
+
 Examples:
     * Monthly climatology:
 
