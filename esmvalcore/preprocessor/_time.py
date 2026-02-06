@@ -897,7 +897,7 @@ def climate_statistics(
 
     If a period other than `full` is used, time points will be put into bins,
     which may shift existing time points. For example, for `period=hourly`, the
-    time point of 01:30h will be moved to the corresponding hour, 01:00h.
+    time point of 01:30h will be moved to the corresponding whole hour, 01:00h.
 
     Parameters
     ----------
