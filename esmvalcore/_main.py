@@ -33,6 +33,7 @@ import logging
 import os
 import re
 import sys
+import warnings
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -371,8 +372,6 @@ class Config:
             version 2.16.0. Use the ``copy`` method instead.
 
         """
-        import warnings
-
         from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
         deprecation_msg = (
@@ -417,6 +416,20 @@ class Config:
             If not provided, the file will be copied to `~/.esmvaltool`.
 
         """
+        from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
+        deprecation_msg = (
+            "The config-developer.yml file and the associated "
+            "'esmvaltool config get_config_developer' command are deprecated "
+            "and support for them will be removed in ESMValCore version 2.16.0. "
+            "Please configure data sources, cmor tables, and preprocessor "
+            "filename templates under `projects` instead."
+        )
+        warnings.warn(
+            deprecation_msg,
+            category=ESMValCoreDeprecationWarning,
+            stacklevel=1,
+        )
         in_file = Path(__file__).parent / "config-developer.yml"
         if path is None:
             out_file = Path.home() / ".esmvaltool" / "config-developer.yml"
