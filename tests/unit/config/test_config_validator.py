@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 import esmvalcore
+import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import (
@@ -330,8 +331,9 @@ def test_validate_config_developer_none():
     assert path is None
 
 
-def test_validate_config_developer(tmp_path):
+def test_validate_config_developer(tmp_path, monkeypatch):
     """Test ``validate_config_developer``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     custom_table_path = (
         Path(esmvalcore.__file__).parent / "cmor" / "tables" / "cmip5-custom"
     )

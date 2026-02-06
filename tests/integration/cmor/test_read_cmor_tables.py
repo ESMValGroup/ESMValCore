@@ -56,6 +56,15 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
     assert table.paths == (table_path / "obs4mips" / "Tables",)
     assert table.strict is False
 
+    project = "custom"
+    table = esmvalcore.cmor.table.CMOR_TABLES[project]
+    assert table.paths == (
+        table_path / "old-custom-coordinates",
+        table_path / "cmip5-custom",
+    )
+    assert table.coords
+    assert table.tables["custom"]
+
 
 @pytest.mark.parametrize(
     (
