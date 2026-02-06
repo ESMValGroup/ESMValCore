@@ -84,7 +84,10 @@ def warn_if_old_extra_facets_exist() -> None:
         )
 
 
-def load_config_developer(cfg_file: Path) -> dict:
+def load_config_developer(
+    cfg_file: Path,
+    set_cmor_tables: bool = True,
+) -> dict:
     """Read the developer's configuration file."""
     with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
@@ -112,7 +115,8 @@ def load_config_developer(cfg_file: Path) -> dict:
             settings["input_dir"][site] = normalized_drs
         CFG[project] = settings
 
-    read_cmor_tables(cfg_file)
+    if set_cmor_tables:
+        read_cmor_tables(cfg_file)
     return cfg
 
 

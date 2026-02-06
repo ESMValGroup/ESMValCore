@@ -788,6 +788,9 @@ def run():
         raise
     except SuppressedError as exc:
         # Hide the stack trace for RecipeErrors
+        if not logger.handlers:
+            # Add a logging handler if main failed to do so.
+            logging.basicConfig()
         logger.error("%s", exc)
         logger.debug("Stack trace for debugging:", exc_info=True)
         sys.exit(1)
