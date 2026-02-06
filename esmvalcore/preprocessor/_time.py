@@ -895,6 +895,10 @@ def climate_statistics(
     the units of the resulting cube will be multiplied by corresponding time
     units (e.g., days).
 
+    If a period other than `full` is used, time points will be put into bins,
+    which may shift existing time points. For example, for `period=hourly`, a
+    time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
     Parameters
     ----------
     cube:

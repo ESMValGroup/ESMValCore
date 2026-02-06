@@ -1541,6 +1541,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points will be put into bins,
+   which may shift existing time points. For example, for `period=hourly`, a
+   time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
 Examples:
     * Monthly climatology:
 
