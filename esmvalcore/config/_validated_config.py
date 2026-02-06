@@ -106,7 +106,7 @@ class ValidatedConfig(MutableMapping):
             else:
                 for key, value in other:
                     if key == "config_developer_file":
-                        config_developer_file = other[key]
+                        config_developer_file = value
                         continue
                     self[key] = value
         for key, value in kwargs.items():

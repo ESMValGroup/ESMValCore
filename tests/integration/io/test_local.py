@@ -11,6 +11,8 @@ import yaml
 
 import esmvalcore
 import esmvalcore.cmor.table
+import esmvalcore.config._config
+import esmvalcore.local
 from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalDataSource,
@@ -81,6 +83,22 @@ def test_get_output_file(monkeypatch, cfg):
     assert output_file == expected
 
 
+@pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
+def test_get_output_file_no_config_developer(monkeypatch, cfg):
+    """Test getting output name for preprocessed files."""
+    monkeypatch.setattr(esmvalcore.local, "CFG", {})
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setattr(esmvalcore.config._config, "CFG", {})
+    monkeypatch.setattr(esmvalcore.local, "CONFIG_DEVELOPER", {})
+    output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
+    expected = Path(cfg["output_file"])
+    assert output_file == expected
+    # This test ensures that only the directory structure bits of
+    # config-developer.yml have been loaded.
+    assert esmvalcore.config._config.CFG
+    assert not esmvalcore.cmor.table.CMOR_TABLES
+
+
 @pytest.fixture
 def root(tmp_path):
     """Root function for tests."""
@@ -91,7 +109,7 @@ def root(tmp_path):
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
-def test_find_files(monkeypatch, root, cfg):
+def test_find_files(monkeypatch, root, cfg, mocker):
     """Test retrieving input filelist."""
     if "drs" not in cfg:
         pytest.skip(
@@ -103,6 +121,7 @@ def test_find_files(monkeypatch, root, cfg):
         pprint.pformat(cfg["variable"]),
     )
     project = cfg["variable"]["project"]
+    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
     monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
         CFG,
@@ -126,6 +145,7 @@ def test_find_files(monkeypatch, root, cfg):
     ]
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     assert [Path(g) for g in globs] == sorted(ref_globs)
+    esmvalcore.local._ensure_config_developer_drs.assert_called_once()
 
 
 def test_find_files_with_facets(monkeypatch, root):
