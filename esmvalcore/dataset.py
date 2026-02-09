@@ -166,32 +166,6 @@ class Dataset:
 
         return datasets_from_recipe(recipe, session)
 
-    def _is_derived(self) -> bool:
-        """Return ``True`` for derived variables, ``False`` otherwise."""
-        return bool(self.facets.get("derive", False))
-
-    def _is_force_derived(self) -> bool:
-        """Return ``True`` for force-derived variables, ``False`` otherwise."""
-        return self._is_derived() and bool(
-            self.facets.get("force_derivation", False),
-        )
-
-    def _derivation_necessary(self) -> bool:
-        """Return ``True`` if derivation is necessary, ``False`` otherwise."""
-        # If variable cannot be derived, derivation is not necessary
-        if not self._is_derived():
-            return False
-
-        # If forced derivation is requested, derivation is necessary
-        if self._is_force_derived():
-            return True
-
-        # Otherwise, derivation is necessary of no files for the self dataset
-        # are found
-        ds_copy = self.copy()
-        ds_copy.supplementaries = []
-        return not ds_copy.files
-
     def _file_to_dataset(
         self,
         file: DataElement,
@@ -677,10 +651,6 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
-        if self._is_derived():
-            facets.setdefault("derive", False)
-        if self._is_force_derived():
-            facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)
