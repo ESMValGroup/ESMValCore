@@ -29,10 +29,6 @@ import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-import isodate
-
-from esmvalcore.dataset import _isglob
-from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
@@ -121,7 +117,7 @@ class IntakeEsmDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(self) -> iris.cube.CubeList:
+    def to_iris(self, quiet: bool = True) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
         Returns
@@ -129,7 +125,7 @@ class IntakeEsmDataset(DataElement):
         :
             The loaded data.
         """
-        files = _to_path_dict(self.catalog, quiet=True)[self.name]
+        files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
 
         # Might want to pass through args/kwargs here? Ie.
         dataset = self.catalog.to_dask()
@@ -202,16 +198,6 @@ class IntakeEsmDataSource(DataSource):
             for our_facet, their_facet in self.facets.items()
             if our_facet in normalized_facets
         }
-        if (
-            "timerange" in facets and not _isglob(facets["timerange"])  # type: ignore[operator]
-        ):
-            start, end = _parse_period(facets["timerange"])
-            query["file_start"] = isodate.date_isoformat(
-                isodate.parse_date(start.split("T")[0]),
-            )
-            query["file_end"] = isodate.date_isoformat(
-                isodate.parse_date(end.split("T")[0]),
-            )
 
         res = self.catalog.search(**query)
 

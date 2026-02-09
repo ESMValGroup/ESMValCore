@@ -11,7 +11,11 @@ import pytest
 import xarray as xr
 
 import esmvalcore.io.intake_esm
-from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
+from esmvalcore.io.intake_esm import (
+    IntakeEsmDataset,
+    IntakeEsmDataSource,
+    _to_path_dict,
+)
 
 if TYPE_CHECKING:
     from intake_esm.core import esm_datastore
@@ -150,8 +154,6 @@ def test_find_data() -> None:
     }
 
 
-@pytest.mark.online
-# @pytest.mark.skip(reason="Requires intake-esm catalog configuration")
 def test_to_iris_nomock():
     """`to_iris` should load data from a real intake-esm catalog."""
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
@@ -169,6 +171,7 @@ def test_to_iris_nomock():
             "grid": "grid_label",
             "mip": "table_id",
             "short_name": "variable_id",
+            "timerange": "time_range",
             "version": "version",
         },
         values={},
@@ -184,3 +187,21 @@ def test_to_iris_nomock():
     # Raises a KeyError because the dtype of the dataset is Object, which I don't think NCData likes.
     with pytest.raises(KeyError, match="'O'"):
         dataset.to_iris()
+
+
+def test_to_path_dict_nofiles() -> None:
+    """Test for quiet flag.
+
+    If we disable the `quiet` flag and pass a search query that returns no results, `to_path_dict`
+    should warn.
+
+    TODO: Can this code path ever be triggered in practice?
+    """
+    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
+
+    empty_cat = cat.search(variable_id="non_existent_variable")
+
+    with pytest.warns(UserWarning, match="There are no datasets to load!"):
+        ret = _to_path_dict(empty_cat, quiet=False)
+
+    assert ret == {}
