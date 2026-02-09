@@ -1406,7 +1406,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * `hour`: Number of hours per period.
+    * `hours`: Number of hours per period.
       Must be a divisor of 24, i.e., (1, 2, 3, 4, 6, 8, 12).
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
@@ -1541,6 +1541,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points will be put into bins,
+   which may shift existing time points. For example, for `period=hourly`, a
+   time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
 Examples:
     * Monthly climatology:
 
@@ -1646,14 +1650,14 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
 
 * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
           offset: 6
 
 * Convert to 3-hourly data using bilinear interpolation:
@@ -1661,7 +1665,7 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 3
+          interval: 3
           interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
