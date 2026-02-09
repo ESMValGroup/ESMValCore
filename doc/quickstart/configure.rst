@@ -696,7 +696,7 @@ The following project-specific options are available:
    * - ``cmor_table``
      - :ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore can work with. Refer to :ref:`cmor_table_configuration` for available options.
      - :obj:`dict`
-     - ``{}``
+     - ``{"type": "esmvalcore.cmor.table.NoInfo"}``
    * - ``data``
      - Data sources are used to find input data and have to be configured before running the tool. Refer to :ref:`config-data-sources` for details.
      - :obj:`dict`
@@ -753,10 +753,7 @@ for loading and saving the data in the :ref:`recipe <recipe>` or
     CMORized data and may not work as expected with non-CMORized data.
 
     Our ambition is that :ref:`preprocessor functions <preprocessor>` support
-    data that follows the
-    `CF Conventions <https://cfconventions.org/>`_, while
-    :ref:`diagnostics <esmvaltool:recipes>` are only expected to work with
-    CMORized data.
+    data that follows the `CF Conventions <https://cfconventions.org/>`_.
 
 .. _config-data-sources:
 
@@ -1170,7 +1167,7 @@ Upgrade instructions for finding files
 --------------------------------------
 
 The ``input_dir``, ``input_file``, and ``ignore_warnings`` settings have
-been replaced by the :class:`esmvalcore.io.local.LocalDataSource`, which can be
+been replaced by :class:`esmvalcore.io.local.LocalDataSource`, which can be
 configured via :ref:`data sources <config-data-sources>`.
 
 Example 1: A config-developer.yml file specifying a directory structure for

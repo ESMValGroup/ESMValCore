@@ -364,10 +364,7 @@ below from the lowest level of strictness to the highest:
     CMORized data and may not work as expected with non-CMORized data.
 
     Our ambition is that :ref:`preprocessor functions <preprocessor>` support
-    data that follows the
-    `CF Conventions <https://cfconventions.org/>`_, while
-    :ref:`diagnostics <esmvaltool:recipes>` are only expected to work with
-    CMORized data.
+    data that follows the `CF Conventions <https://cfconventions.org/>`_.
 
 .. _add_new_fix_native_datasets:
 
@@ -383,7 +380,7 @@ under project ``native6``.
 CMOR Table Configuration
 ------------------------
 
-An example of a CMOR table configuration for projects used for native datasets is given in
+An example of a CMOR table configuration for projects used for native datasets is given here:
 
 .. literalinclude:: ../configurations/defaults/cmor_tables.yml
     :language: yaml
@@ -392,9 +389,9 @@ An example of a CMOR table configuration for projects used for native datasets i
     :start-at: # Observational and reanalysis data that can be read in its native format by ESMValCore.
     :end-before: CESM:
 
-The option ``strict: false`` is convenient for these projects, if you
+The option ``strict: false`` is convenient for these projects if you
 want to make use of the feature that looks in all tables instead of
-only the one specified by the ``mip`` facet in the recipe or
+only the one specified by the ``mip`` facet in the :ref:`recipe <recipe>` or
 :class:`~esmvalcore.dataset.Dataset`: like this, a custom variable only needs to
 be defined for a single ``mip`` and can then be used with all ``mip`` s.
 
@@ -414,8 +411,7 @@ To allow ESMValCore to locate the data files, use the following steps:
      :caption: ``native6`` standard directory organization in ``data-local-esmvaltool.yml``
      :end-before: # Data that has been CMORized by ESMValTool according to the CMIP6 standard.
 
-  this is preferred. This is usually the case for native reanalysis/observational
-  datasets.
+  this is preferred.
 
 - If moving the data into a particular directory structure is not possible,
   the ``data`` entry of the ``native6`` project could be complemented
