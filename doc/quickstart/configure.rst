@@ -718,7 +718,8 @@ CMOR table configuration
 :ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore
 can work with.
 
-Default values are provided in ``defaults/cmor_tables.yml``,
+Default values are provided in
+`defaults/cmor_tables.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/cmor_tables.yml>`__,
 for example:
 
 .. literalinclude:: ../configurations/defaults/cmor_tables.yml
