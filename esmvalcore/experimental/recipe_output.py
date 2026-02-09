@@ -99,8 +99,8 @@ class DiagnosticOutput:
 
     def __init__(self, name, task_output, title=None, description=None):
         self.name = name
-        self.title = title if title else name.title()
-        self.description = description if description else ""
+        self.title = title or name.title()
+        self.description = description or ""
         self.task_output = task_output
 
     def __repr__(self):
