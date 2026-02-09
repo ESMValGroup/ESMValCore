@@ -413,34 +413,6 @@ To allow ESMValCore to locate the data files, use the following steps:
 
   this is preferred.
 
-- If moving the data into a particular directory structure is not possible,
-  the ``data`` entry of the ``native6`` project could be complemented
-  with another data source that goes under a new
-  key representing the data organization (such as ``MY_DATA_ORG``), and
-  these sub-entries can use an arbitrary list of ``{placeholders}``.
-
-  Example:
-
-  .. code-block:: yaml
-
-    projects:
-      native6:
-        data:
-          MY_DATA_ORG:
-            type: esmvalcore.io.local.LocalDataSource
-            rootpath: /path/to/data
-            dirname_template: "{dataset}/{exp}/{simulation}/{version}/{type}"
-            filename_template: '{simulation}_*.nc'
-
-  would allow the tool to find your native data (e.g., a ``dataset`` called ``MYDATA``)
-  that is for example located in ``/path/to/data/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
-  if you use the following dataset entry in your recipe
-
-  .. code-block:: yaml
-
-     datasets:
-       - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
-
 - If you want to use a dedicated project for your native dataset
   (this is usually the case for native model output):
 
