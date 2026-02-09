@@ -1054,7 +1054,7 @@
             "out_name": "siextent",
             "standard_name": "",
             "type": "real",
-            "units": "m2",
+            "units": "1",
             "valid_max": "",
             "valid_min": ""
         },
