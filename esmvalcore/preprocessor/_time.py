@@ -1800,6 +1800,11 @@ def _transform_to_lst_lazy(
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
     """
+    # da.apply_gufunc internally casts all input arrays to Dask, which might
+    # produce misaligned chunks. To avoid this, convert time_index and mask to
+    # dask arrays with one single chunk.
+    time_index = da.from_array(time_index, chunks=time_index.shape)
+    mask = da.from_array(mask, chunks=time_index.shape)
     return da.apply_gufunc(
         _transform_to_lst_eager,
         "(t,x),(t,x),(t,x)->(t,x)",
