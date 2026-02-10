@@ -553,8 +553,13 @@ def _calculate_emd(
     # Data
     if cube.has_lazy_data() and reference.has_lazy_data():
         # da.apply_gufunc internally casts all input arrays to Dask, which
-        # might produce misaligned chunks. To avoid this, convert bin_centers
-        # to a dask array with one single chunk.
+        # might produce misaligned chunks. To avoid this, make sure
+        # `bin_centers` is also a Dask array which is similarly chunked as
+        # `pmf.lazy_data()` and `pmf_ref.lazy_data()` along the shared
+        # dimension `i`. Since `pmf.lazy_data()` and `pmf_ref.lazy_data()` are
+        # not chunked along the shared dimension `i` (see `rechunk_cube()`
+        # function above) and `bin_centers` has shape (i,), `bin_centers` must
+        # not be chunked at all.
         bin_centers = da.from_array(bin_centers, chunks=bin_centers.shape)
         emd = da.apply_gufunc(
             _get_emd,
