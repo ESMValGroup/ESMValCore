@@ -52,11 +52,12 @@ logger = logging.getLogger(__name__)
 
 INHERITED_FACETS: list[str] = [
     "dataset",
-    "region",
     "domain",
     "driver",
     "grid",
     "project",
+    "realm",
+    "region",
     "timerange",
 ]
 """Inherited facets.
@@ -683,9 +684,13 @@ class Dataset:
         )
         dataset_names = self._pattern_filter(raw_extra_facets, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
-            mips = self._pattern_filter(
-                raw_extra_facets[dataset_name],
-                self["mip"],  # type: ignore[arg-type]
+            mips = (
+                self._pattern_filter(
+                    raw_extra_facets[dataset_name],
+                    self["mip"],  # type: ignore[arg-type]
+                )
+                if "mip" in self.facets
+                else list(raw_extra_facets[dataset_name])
             )
             for mip in mips:
                 variables = self._pattern_filter(
@@ -706,9 +711,13 @@ class Dataset:
         )
         dataset_names = self._pattern_filter(project_details, self["dataset"])  # type: ignore[arg-type]
         for dataset_name in dataset_names:
-            mips = self._pattern_filter(
-                project_details[dataset_name],
-                self["mip"],  # type: ignore[arg-type]
+            mips = (
+                self._pattern_filter(
+                    project_details[dataset_name],
+                    self["mip"],  # type: ignore[arg-type]
+                )
+                if "mip" in self.facets
+                else list(project_details[dataset_name])
             )
             for mip in mips:
                 variables = self._pattern_filter(

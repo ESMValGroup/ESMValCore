@@ -252,10 +252,10 @@ def _append_missing_supplementaries(
 
             supplementary_facets: Facets = {
                 facet: "*"
-                for facet in FACETS.get(project, ["mip"])
+                for facet in FACETS.get(project, [])
                 if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
-            for key in ("frequency", "version"):
+            for key in ("mip", "frequency", "version"):
                 # Do not inherit these facets as they tend to differ from the
                 # main variable.
                 if key in facets:
@@ -313,7 +313,6 @@ def _get_dataset_facets_from_recipe(
         facets,
         required_keys=(
             "short_name",
-            "mip",
             "dataset",
             "project",
         ),

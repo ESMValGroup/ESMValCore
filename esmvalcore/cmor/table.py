@@ -76,10 +76,14 @@ def _get_activity(
 def _update_cmor_facets(facets: Facets) -> None:
     """Update `facets` with information from CMOR table."""
     project: str = facets["project"]  # type: ignore[assignment]
-    mip: str = facets["mip"]  # type: ignore[assignment]
+    table = CMOR_TABLES.get(project)
+    mip: str = (
+        "unknown"
+        if isinstance(table, NoInfo) and "mip" not in facets
+        else facets["mip"]  # type: ignore[assignment]
+    )
     short_name: str = facets["short_name"]  # type: ignore[assignment]
     derive: bool = facets.get("derive", False)  # type: ignore[assignment]
-    table = CMOR_TABLES.get(project)
     if table:
         table_entry = table.get_variable(
             mip,
