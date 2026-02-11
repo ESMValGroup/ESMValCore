@@ -34,7 +34,7 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
     """Test that the function `read_cmor_tables` loads the tables correctly."""
     monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     read_cmor_tables()
-    table_path = Path(root).parent / "Tables"
+    table_path = Path(root).parent / "tables"
 
     for project in "CMIP5", "CMIP6":
         table = esmvalcore.cmor.table.CMOR_TABLES[project]
