@@ -572,7 +572,7 @@ class GenericFix(Fix):
             # Make sure to update variable information with actual generic
             # level coordinate if one has been found; this is necessary for
             # subsequent fixes
-            if standard_name:
+            if name is not None:
                 new_generic_level_coord = _get_new_generic_level_coord(
                     self.vardef,
                     cmor_coord,

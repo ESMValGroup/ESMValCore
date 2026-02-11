@@ -19,16 +19,14 @@ from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import (
+    NoInfo,
     _get_branding_suffixes,
     _get_mips,
     _update_cmor_facets,
+    get_tables,
 )
 from esmvalcore.config import CFG
-from esmvalcore.config._config import (
-    get_activity,
-    get_institutes,
-    load_extra_facets,
-)
+from esmvalcore.config._config import load_extra_facets
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _dates_to_timerange
@@ -726,14 +724,6 @@ class Dataset:
     def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
-        if "institute" not in self.facets:
-            institute = get_institutes(self.facets)
-            if institute:
-                self.facets["institute"] = institute
-        if "activity" not in self.facets:
-            activity = get_activity(self.facets)
-            if activity:
-                self.facets["activity"] = activity
         _update_cmor_facets(self.facets)
         if self.facets.get("frequency") == "fx":
             self.facets.pop("timerange", None)
@@ -841,28 +831,39 @@ class Dataset:
             self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",
         )
+        cmor_tables_available = not isinstance(
+            get_tables(
+                session=self.session,
+                project=self.facets["project"],  # type: ignore[arg-type]
+            ),
+            NoInfo,
+        )
 
         settings: dict[str, dict[str, Any]] = {}
-        settings["fix_file"] = {
-            "output_dir": fix_dir_prefix,
-            "add_unique_suffix": True,
-            "session": self.session,
-            **self.facets,
-        }
+        if cmor_tables_available:
+            settings["fix_file"] = {
+                "output_dir": fix_dir_prefix,
+                "add_unique_suffix": True,
+                "session": self.session,
+                **self.facets,
+            }
         settings["load"] = {}
-        settings["fix_metadata"] = {
-            "session": self.session,
-            **self.facets,
-        }
+        if cmor_tables_available:
+            settings["fix_metadata"] = {
+                "session": self.session,
+                **self.facets,
+            }
         settings["concatenate"] = {"check_level": self.session["check_level"]}
-        settings["cmor_check_metadata"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-            "branding_suffix": self.facets.get("branding_suffix"),
-        }
+
+        if cmor_tables_available:
+            settings["cmor_check_metadata"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+                "branding_suffix": self.facets.get("branding_suffix"),
+            }
         if "timerange" in self.facets:
             settings["clip_timerange"] = {
                 "timerange": self.facets["timerange"],
@@ -871,14 +872,15 @@ class Dataset:
             "session": self.session,
             **self.facets,
         }
-        settings["cmor_check_data"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-            "branding_suffix": self.facets.get("branding_suffix"),
-        }
+        if cmor_tables_available:
+            settings["cmor_check_data"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+                "branding_suffix": self.facets.get("branding_suffix"),
+            }
 
         result: Sequence[PreprocessorItem] = self.files
         for step, kwargs in settings.items():
