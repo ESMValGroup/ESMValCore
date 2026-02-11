@@ -38,7 +38,10 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
 
     for project in "CMIP5", "CMIP6":
         table = esmvalcore.cmor.table.CMOR_TABLES[project]
-        assert table.paths == (table_path / project.lower() / "Tables",)
+        table.paths = tuple(pth.resolve() for pth in table.paths)
+        expected = table_path / project.lower() / "Tables"
+        expected = expected.resolve()
+        assert table.paths == (expected,)
         assert table.strict is True
 
     project = "OBS"
