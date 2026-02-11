@@ -680,7 +680,9 @@ class CMIP6Info(InfoBase):
         tables in the
         `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
         directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
+        path is relative and exists in the built-in tables directory. Only files
+        with the extension ``.json`` in the specified paths will be read as a
+        CMOR tables, any other files will be ignored.
 
     """
 
@@ -1245,7 +1247,8 @@ class CMIP5Info(InfoBase):
         tables in the
         `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
         directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
 
     """
 
@@ -1448,7 +1451,8 @@ class CMIP3Info(CMIP5Info):
         tables in the
         `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
         directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
 
     """
 
