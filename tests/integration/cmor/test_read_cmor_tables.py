@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -39,43 +38,22 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
 
     for project in "CMIP5", "CMIP6":
         table = esmvalcore.cmor.table.CMOR_TABLES[project]
-        # on OSX Path objects are all lower case
-        if sys.platform == "darwin":
-            print("Platform - OSX GTFO", sys.platform)
-            expected = table_path / project.lower() / "tables"
-        else:
-            expected = table_path / project.lower() / "Tables"
-        assert table.paths == (expected,)
+        assert table.paths == (table_path / project.lower() / "Tables",)
         assert table.strict is True
 
     project = "OBS"
     table = esmvalcore.cmor.table.CMOR_TABLES[project]
-    # on OSX Path objects are all lower case
-    if sys.platform == "darwin":
-        expected = table_path / "cmip5" / "tables"
-    else:
-        expected = table_path / "cmip5" / "Tables"
-    assert table.paths == (expected,)
+    assert table.paths == (table_path / "cmip5" / "Tables",)
     assert table.strict is False
 
     project = "OBS6"
     table = esmvalcore.cmor.table.CMOR_TABLES[project]
-    # on OSX Path objects are all lower case
-    if sys.platform == "darwin":
-        expected = table_path / "cmip6" / "tables"
-    else:
-        expected = table_path / "cmip6" / "Tables"
-    assert table.paths == (expected,)
+    assert table.paths == (table_path / "cmip6" / "Tables",)
     assert table.strict is False
 
     project = "obs4MIPs"
     table = esmvalcore.cmor.table.CMOR_TABLES[project]
-    # on OSX Path objects are all lower case
-    if sys.platform == "darwin":
-        expected = table_path / "obs4mips" / "tables"
-    else:
-        expected = table_path / "obs4mips" / "Tables"
-    assert table.paths == (expected,)
+    assert table.paths == (table_path / "obs4mips" / "Tables",)
     assert table.strict is False
 
     project = "custom"
