@@ -47,7 +47,7 @@ Backwards incompatible changes
    .. admonition:: Upgrade instructions
 
       Most users will not be affected by these changes, which were introduced to
-      keep the some function signatures easy to read.
+      keep the function signatures easy to read.
 
       1. It is no longer possible to pass ``derive`` as a positional argument to
          the :meth:`esmvalcore.cmor.table.CMIP6Info.get_variable` method.  Please
@@ -142,7 +142,7 @@ Bug fixes
 CMOR standard
 ~~~~~~~~~~~~~
 
--  CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
+-  Add CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
 
 Configuration
 ~~~~~~~~~~~~~
@@ -189,7 +189,7 @@ Installation
 -  Support for Python 3.14.0 (:pull:`2850`) by :user:`valeriupredoi`
 -  Make the tool compatible with numpy 2.4 (:pull:`2941`) by :user:`bouweandela`
 -  Update PyPI publish action (:pull:`2939`) by :user:`bouweandela`
--  Unpin pandas to free (:pull:`2961`) by :user:`valeriupredoi`
+-  Unpin pandas (:pull:`2961`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
