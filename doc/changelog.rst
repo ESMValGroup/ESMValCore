@@ -47,7 +47,7 @@ Backwards incompatible changes
    .. admonition:: Upgrade instructions
 
       Most users will not be affected by these changes, which were introduced to
-      keep the some function signatures easy to read.
+      keep the function signatures easy to read.
 
       1. It is no longer possible to pass ``derive`` as a positional argument to
          the :meth:`esmvalcore.cmor.table.CMIP6Info.get_variable` method.  Please
