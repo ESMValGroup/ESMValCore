@@ -788,7 +788,7 @@ class CMIP6Info(InfoBase):
                 coord.generic_level = True
                 for name in self.coords:
                     generic_level = self.coords[name].generic_lev_name
-                    if dimension in [generic_level]:
+                    if dimension == generic_level:
                         coord.generic_lev_coords[name] = self.coords[name]
             else:
                 try:
