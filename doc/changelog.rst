@@ -97,13 +97,6 @@ Preprocessor
 
 -  Extend preprocessor anomalies (:pull:`2871`) by :user:`axel-lauer`
 
-Release
-~~~~~~~
-
--  Add highlights for v2.13.0 (:pull:`2859`) by :user:`jlenh`
--  Update CITATION.cff version and release date (:pull:`2860`) by :user:`jlenh`
--  Update changelog reference for v2.13.0 (:pull:`2861`) by :user:`jlenh`
-
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
