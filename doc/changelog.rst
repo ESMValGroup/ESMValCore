@@ -40,7 +40,7 @@ Backwards incompatible changes
       regridding scheme
       <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#generic-regridding-schemes>`__
       in your recipe, you will need to update it to use
-      :class:`esmvalcore.regrid_schemes.IrisESMFRegrid` instead.
+      :class:`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` instead.
 
 -  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
 
@@ -53,12 +53,12 @@ Backwards incompatible changes
          the :meth:`esmvalcore.cmor.table.CMIP6Info.get_variable` method.  Please
          use ``derive=True`` or ``derive=False`` instead of ``True`` or ``False``
          respectively.
-      1. Similarly, ``frequency`` and ``check_level`` are now keyword only
+      2. Similarly, ``frequency`` and ``check_level`` are now keyword only
          arguments for the functions
          :func:`esmvalcore.cmor.check.cmor_check_metadata`,
          :func:`esmvalcore.cmor.check.cmor_check_data`, and
          :func:`esmvalcore.cmor.check.cmor_check`.
-      1. The argument ``table`` to the method
+      3. The argument ``table`` to the method
          :meth:`esmvalcore.cmor.table.CustomInfo.get_variable` has been renamed to
          ``table_name`` so the signature of this method matches with the same
          method on the parent class
