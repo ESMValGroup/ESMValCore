@@ -122,13 +122,15 @@ Deprecations
       - ``config-developer.yml`` and the configuration setting
         ``config_developer_file``: upgrade instructions are available `here
         <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#developer-configuration-file>`__.
-      - In the module :mod:`esmvalcore.cmor.table`:
-         - the function ``read_cmor_tables`` which reads the tables based on the deprecated config-developer file.
+      - In the module :mod:`esmvalcore.cmor.table`,
+         - the function ``read_cmor_tables`` which reads the tables based on
+           the deprecated config-developer file has been deprecated.
          - the ``cmor_tables_path``, ``default``, and ``default_table_prefix``
            arguments to various CMOR table reader classes and the class
            ``CustomInfo`` for reading custom CMOR tables have been deprecated
            because they are no longer needed with the new configuration format.
-         - the global variable ``CMOR_TABLES`` holding the CMOR tables because of :issue:`2954`.
+         - the global variable ``CMOR_TABLES`` holding the CMOR tables has been
+           deprecated because of :issue:`2954`.
 
 Bug fixes
 ~~~~~~~~~
