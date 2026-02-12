@@ -187,7 +187,7 @@ Installation
 -  Support for Python 3.14.0 (:pull:`2850`) by :user:`valeriupredoi`
 -  Make the tool compatible with numpy 2.4 (:pull:`2941`) by :user:`bouweandela`
 -  Update PyPI publish action (:pull:`2939`) by :user:`bouweandela`
--  Unpin pandas to free (:pull:`2961`) by :user:`valeriupredoi`
+-  Unpin pandas (:pull:`2961`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
