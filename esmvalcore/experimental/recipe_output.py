@@ -416,9 +416,9 @@ class OutputFile:
         item_class: type[OutputFile]
 
         ext = Path(path).suffix
-        if ext in (".png",):
+        if ext == ".png":
             item_class = ImageFile
-        elif ext in (".nc",):
+        elif ext == ".nc":
             item_class = DataFile
         else:
             item_class = cls
