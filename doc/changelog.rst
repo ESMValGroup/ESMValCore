@@ -140,7 +140,7 @@ Bug fixes
 CMOR standard
 ~~~~~~~~~~~~~
 
--  CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
+-  Add CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
 
 Configuration
 ~~~~~~~~~~~~~
