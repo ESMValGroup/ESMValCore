@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -30,6 +31,9 @@ def test_read_cmor_tables_raiser():
     assert "cow" in str(exc)
 
 
+# this test is a mess in OSX: some PosixPaths end in Tables, others in tables
+# since OSX is case-insensitive in PosixPaths
+@pytest.mark.skipif(sys.platform == "darwin", reason="flaky in OSX")
 def test_read_cmor_tables_from_config_developer(monkeypatch):
     """Test that the function `read_cmor_tables` loads the tables correctly."""
     monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
