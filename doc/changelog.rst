@@ -204,6 +204,7 @@ Automatic testing
 -  Improve the security of GitHub Action workflows (:pull:`2952`) by :user:`bouweandela`
 -  Run s3 zarr tests only if s3 object store is online (:pull:`2958`) by :user:`valeriupredoi`
 -  Correction to #2958 - add bucket to S3 url (:pull:`2959`) by :user:`valeriupredoi`
+-  Fix CMOR test fails in OSX due to case discrepancy tables -> Tables (:pull:`2975`) by :user:`valeriupredoi`
 
 Variable Derivation
 ~~~~~~~~~~~~~~~~~~~
