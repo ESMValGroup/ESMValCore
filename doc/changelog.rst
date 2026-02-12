@@ -18,20 +18,117 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
-
 -  Remove support for ``~/.esmvaltool/config-user.yml`` and ``~/.esmvaltool/dask.yml`` (:pull:`2878`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Move the file ``~/.esmvaltool/config-user.yml`` to
+      ``~/.config/esmvaltool/config-user.yml`` and replace
+      ``~/.esmvaltool/dask.yml`` by `new way of configuring Dask
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#dask-configuration>`__.
+
 -  Remove deprecated ESMPy regridding schemes (:pull:`2879`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      In most cases, users do not need to do anything as the `default
+      regridding schemes
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#default-regridding-schemes>`__
+      have been updated so these schemes are no longer used.
+
+      If you were using these schemes from Python or through a `Generic
+      regridding scheme
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#generic-regridding-schemes>`__
+      in your recipe, you will need to update it to use
+      :class:`esmvalcore.regrid_schemes.IrisESMFRegrid` instead.
+
 -  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Most users will not be affected by these changes, which were introduced to
+      keep the some function signatures easy to read.
+
+      1. It is no longer possible to pass ``derive`` as a positional argument to
+         the :meth:`esmvalcore.cmor.table.CMIP6Info.get_variable` method.  Please
+         use ``derive=True`` or ``derive=False`` instead of ``True`` or ``False``
+         respectively.
+      1. Similarly, ``frequency`` and ``check_level`` are now keyword only
+         arguments for the functions
+         :func:`esmvalcore.cmor.check.cmor_check_metadata`,
+         :func:`esmvalcore.cmor.check.cmor_check_data`, and
+         :func:`esmvalcore.cmor.check.cmor_check`.
+      1. The argument ``table`` to the method
+         :meth:`esmvalcore.cmor.table.CustomInfo.get_variable` has been renamed to
+         ``table_name`` so the signature of this method matches with the same
+         method on the parent class
+         :meth:`esmvalcore.cmor.table.InfoBase.get_variable`.
+
 -  Unify handling of group coordinates in temporal statistics preprocessors (:pull:`2787`) by :user:`schlunma`
+
+   .. admonition:: Upgrade instructions
+
+      This PR changes the default behavior of the preprocessor functions
+
+      - ``monthly_statistics`` (group coordinates ``month_number`` and ``year``)
+      - ``seasonal_statistics`` (group coordinates ``clim_season`` and ``season_year``)
+      - ``annual_statistics`` (group coordinate ``year``)
+      - ``decadal_statistics`` (group coordinate ``decade``)
+
+      Previously, the returned cubes of these preprocessor functions contained
+      the corresponding group coordinates. Now, those coordinates are not
+      present in the returned cubes anymore.
+
+      To restore the old behavior, use ``keep_group_coordinates=True``.
 
 Deprecations
 ~~~~~~~~~~~~
 
 -  Move the ``esmvalcore.local`` and ``esmvalcore.esgf`` modules into the ``esmvalcore.io`` module (:pull:`2911`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      - Importing ``esmvalcore.local`` is deprecated and will be removed in v2.16. It can be imported as ``esmvalcore.io.local`` instead.
+      - Importing ``esmvalcore.esgf`` is deprecated and will be removed in v2.16. It can be imported as ``esmvalcore.io.esgf`` instead.
+
 -  Move preprocessor output filename template to new configuration (:pull:`2923`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      If you have defined projects in config-developer.yml that are not in the
+      default config-developer.yml file shipped with ESMValCore, then you will
+      need to move the value of 'output_file' to
+
+      .. code-block:: yaml
+
+         projects:
+           <insert project name here>:
+             preprocessor_filename_template: <insert output_file value here>
+
 -  Improve ana4MIPs support in the new configuration (:pull:`2932`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      The name of the project is ``ana4MIPs``, see e.g. `here
+      <https://reanalyses.org/tags/ana4mips>`__. Using the name ``ana4mips`` in
+      all lowercase is deprecated, and support for it will be removed in
+      v2.16.0 of ESMValCore.
+
+
 -  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      - ``config-developer.yml`` and the configuration setting
+        ``config_developer_file``: upgrade instructions are available `here
+        <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#developer-configuration-file>`__.
+      - In the module :mod:`esmvalcore.cmor.table`](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/api/esmvalcore.cmor.html#module-esmvalcore.cmor.table):
+         - the function ``read_cmor_tables`` which reads the tables based on the deprecated config-developer file.
+         - the ``cmor_tables_path``, ``default``, and ``default_table_prefix``
+           arguments to various CMOR table reader classes and the class
+           ``CustomInfo`` for reading custom CMOR tables have been deprecated
+           because they are no longer needed with the new configuration format.
+         - the global variable ``CMOR_TABLES`` holding the CMOR tables because of :issue:`2954`.
 
 Bug fixes
 ~~~~~~~~~
