@@ -123,7 +123,7 @@ def derive(
 
     # Set standard attributes
     cube.var_name = short_name
-    cube.standard_name = standard_name if standard_name else None
+    cube.standard_name = standard_name or None
     cube.long_name = long_name
     for temp in cubes:
         if "source_file" in temp.attributes:

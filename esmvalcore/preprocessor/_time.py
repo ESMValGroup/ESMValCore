@@ -310,7 +310,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
         Start/end times can not be parsed by isodate.
 
     """
-    start_date = _parse_start_date(timerange.split("/")[0])
+    start_date = _parse_start_date(timerange.split("/", maxsplit=1)[0])
     end_date = _parse_end_date(timerange.split("/")[1])
 
     if isinstance(start_date, isodate.duration.Duration):
@@ -925,7 +925,7 @@ def climate_statistics(
     period = period.lower()
 
     # Use Cube.collapsed when full period is requested
-    if period in ("full",):
+    if period == "full":
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
             operator,
@@ -1033,7 +1033,7 @@ def anomalies(
         period=period,
         seasons=seasons,
     )
-    if period in ["full"]:
+    if period == "full":
         metadata = copy.deepcopy(cube.metadata)
         cube = cube - reference
         cube.metadata = metadata
