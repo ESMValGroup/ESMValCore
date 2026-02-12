@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -39,7 +41,11 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
     for project in "CMIP5", "CMIP6":
         table = esmvalcore.cmor.table.CMOR_TABLES[project]
         table.paths = tuple(pth.resolve() for pth in table.paths)
-        expected = table_path / project.lower() / "Tables"
+        # on OSX Path objects are all lower case
+        if sys.platform == "darwin":
+            expected = table_path / project.lower() / "tables"
+        else:
+            expected = table_path / project.lower() / "Tables"
         expected = expected.resolve()
         assert table.paths == (expected,)
         assert table.strict is True
