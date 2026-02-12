@@ -20,7 +20,7 @@ Backwards incompatible changes
 
 TODO: add examples of how to deal with these changes
 
--  Remove support for ``~/.esmvaltool/config-user.yml`` and `~/.esmvaltool/dask.yml` (:pull:`2878`) by :user:`bouweandela`
+-  Remove support for ``~/.esmvaltool/config-user.yml`` and ``~/.esmvaltool/dask.yml`` (:pull:`2878`) by :user:`bouweandela`
 -  Remove deprecated ESMPy regridding schemes (:pull:`2879`) by :user:`bouweandela`
 -  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
 -  Unify handling of group coordinates in temporal statistics preprocessors (:pull:`2787`) by :user:`schlunma`
@@ -37,7 +37,7 @@ Bug fixes
 ~~~~~~~~~
 
 -  Fix a bug where the mask_fillvalues preprocessor only recorded provenance for the first result (:pull:`2904`) by :user:`bouweandela`
--  Fixed behavior of `--search_data=quick` and `--search_data=complete` (:pull:`2937`) by :user:`schlunma`
+-  Fixed behavior of ``--search_data=quick`` and ``--search_data=complete`` (:pull:`2937`) by :user:`schlunma`
 -  Two fixes in preprocessor documentation (:pull:`2966`) by :user:`LisaBock`
 
 CMOR standard
@@ -55,7 +55,7 @@ Configuration
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Make sure all input arrays passed to `dask.array.apply_gufunc` are Dask arrays (:pull:`2969`) by :user:`schlunma`
+-  Make sure all input arrays passed to ``dask.array.apply_gufunc`` are Dask arrays (:pull:`2969`) by :user:`schlunma`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ Documentation
 -  Fix tiny doc bug in (legacy) ESGF configuration (:pull:`2945`) by :user:`valeriupredoi`
 -  Pin sphinx<9 (:pull:`2949`) by :user:`valeriupredoi`
 -  Add Matomo page view tracking for the documentation (:pull:`2955`) by :user:`bouweandela`
--  Add notes to `climate_statistics` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
+-  Add notes to ``climate_statistics`` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ Improvements
 -  Sort ``__all__`` in Python modules (:pull:`2914`) by :user:`bouweandela`
 -  Better debug message when local data is not found within the requested timerange (:pull:`2927`) by :user:`bouweandela`
 -  Add float to FacetValue and improve preprocessor filename template error message (:pull:`2931`) by :user:`bouweandela`
--  Removed unused code from `Dataset` class (:pull:`2963`) by :user:`schlunma`
+-  Removed unused code from ``Dataset`` class (:pull:`2963`) by :user:`schlunma`
 
 .. _changelog-v2-13-0:
 
