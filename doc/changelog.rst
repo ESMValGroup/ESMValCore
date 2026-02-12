@@ -3,6 +3,134 @@
 Changelog
 =========
 
+.. _changelog-v2-14-0:
+
+v2.14.0
+-------
+
+Highlights
+~~~~~~~~~~
+
+TODO: Add
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: add examples of how to deal with these changes
+
+-  Remove support for ``~/.esmvaltool/config-user.yml`` and `~/.esmvaltool/dask.yml` (:pull:`2878`) by :user:`bouweandela`
+-  Remove deprecated ESMPy regridding schemes (:pull:`2879`) by :user:`bouweandela`
+-  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
+-  Unify handling of group coordinates in temporal statistics preprocessors (:pull:`2787`) by :user:`schlunma`
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Move the ``esmvalcore.local`` and ``esmvalcore.esgf`` modules into the ``esmvalcore.io`` module (:pull:`2911`) by :user:`bouweandela`
+-  Move preprocessor output filename template to new configuration (:pull:`2923`) by :user:`bouweandela`
+-  Improve ana4MIPs support in the new configuration (:pull:`2932`) by :user:`bouweandela`
+-  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+Bug fixes
+~~~~~~~~~
+
+-  Fix a bug where the mask_fillvalues preprocessor only recorded provenance for the first result (:pull:`2904`) by :user:`bouweandela`
+-  Fixed behavior of `--search_data=quick` and `--search_data=complete` (:pull:`2937`) by :user:`schlunma`
+-  Two fixes in preprocessor documentation (:pull:`2966`) by :user:`LisaBock`
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
+
+Configuration
+~~~~~~~~~~~~~
+
+-  Avoid logging the configuration multiple times (:pull:`2869`) by :user:`bouweandela`
+-  Add an interface for adding new data sources and add support for intake-esgf as a first example (:pull:`2765`) by :user:`bouweandela`
+-  Add BSC data configuration (:pull:`2907`) by :user:`sloosvel`
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Make sure all input arrays passed to `dask.array.apply_gufunc` are Dask arrays (:pull:`2969`) by :user:`schlunma`
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Fix indentation and add links in changelog for v2.13 (:pull:`2862`) by :user:`bouweandela`
+-  Documentation layout to highlight 2 packages (:pull:`2732`) by :user:`flicj191`
+-  Document that we follow SPEC 0 (:pull:`2885`) by :user:`bouweandela`
+-  Add missing preprocessor name rolling_window_statistics to example. (:pull:`2890`) by :user:`katjaweigel`
+-  Fix stable documentation build (:pull:`2893`) by :user:`bouweandela`
+-  Move ESMValCore release documentation to How-to guide section (:pull:`2889`) by :user:`jlenh`
+-  Add ENES-RI Zenodo community (:pull:`2894`) by :user:`bouweandela`
+-  Fix the name and version number on readthedocs (:pull:`2926`) by :user:`bouweandela`
+-  Add updated release timeline doodle (:pull:`2899`) by :user:`jlenh`
+-  Fix tiny doc bug in (legacy) ESGF configuration (:pull:`2945`) by :user:`valeriupredoi`
+-  Pin sphinx<9 (:pull:`2949`) by :user:`valeriupredoi`
+-  Add Matomo page view tracking for the documentation (:pull:`2955`) by :user:`bouweandela`
+-  Add notes to `climate_statistics` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Fix ERA5 native6 fix to handle single monthly-averaged NetCDF files. (:pull:`2512`) by :user:`rbeucher`
+-  Expand ICON extra facets (:pull:`2965`) by :user:`schlunma`
+-  Copy fixes for obs4MIPs dataset SSMI RSSv07r00 to RSS-v7 (:pull:`2968`) by :user:`bouweandela`
+
+Installation
+~~~~~~~~~~~~
+
+-  Drop support for Python 3.11 (:pull:`2905`) by :user:`bouweandela`
+-  Pin iris <3.14.1 to align with iris-esmf-regrid (:pull:`2925`) by :user:`bouweandela`
+-  Update pyproject.toml with new license and license-files settings (:pull:`2924`) by :user:`bouweandela`
+-  Support for Python 3.14.0 (:pull:`2850`) by :user:`valeriupredoi`
+-  Make the tool compatible with numpy 2.4 (:pull:`2941`) by :user:`bouweandela`
+-  Update PyPI publish action (:pull:`2939`) by :user:`bouweandela`
+-  Unpin pandas to free (:pull:`2961`) by :user:`valeriupredoi`
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Extend preprocessor anomalies (:pull:`2871`) by :user:`axel-lauer`
+
+Release
+~~~~~~~
+
+-  Add highlights for v2.13.0 (:pull:`2859`) by :user:`jlenh`
+-  Update CITATION.cff version and release date (:pull:`2860`) by :user:`jlenh`
+-  Update changelog reference for v2.13.0 (:pull:`2861`) by :user:`jlenh`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Ignore user configuration in configuration reload test (:pull:`2903`) by :user:`bouweandela`
+-  Remove an outdated file that is part of the ESMValTool tests (:pull:`2944`) by :user:`bouweandela`
+-  Improve the security of GitHub Action workflows (:pull:`2952`) by :user:`bouweandela`
+-  Run s3 zarr tests only if s3 object store is online (:pull:`2958`) by :user:`valeriupredoi`
+-  Correction to #2958 - add bucket to S3 url (:pull:`2959`) by :user:`valeriupredoi`
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Add derived variable lapserate (:pull:`2872`) by :user:`axel-lauer`
+-  Fix derivation for sea ice extent (siextent) (:pull:`2648`) by :user:`axel-lauer`
+
+Improvements
+~~~~~~~~~~~~
+
+-  Update logger to include esmvaltool logs (:pull:`2886`) by :user:`bouweandela`
+-  Enable annotations ruff rule (:pull:`2880`) by :user:`bouweandela`
+-  Fix issue with wildcards in timerange after introducing data sources (:pull:`2900`) by :user:`bouweandela`
+-  Automatically sort ``__all__`` in Python modules (:pull:`2913`) by :user:`bouweandela`
+-  Sort ``__all__`` in Python modules (:pull:`2914`) by :user:`bouweandela`
+-  Better debug message when local data is not found within the requested timerange (:pull:`2927`) by :user:`bouweandela`
+-  Add float to FacetValue and improve preprocessor filename template error message (:pull:`2931`) by :user:`bouweandela`
+-  Removed unused code from `Dataset` class (:pull:`2963`) by :user:`schlunma`
+
 .. _changelog-v2-13-0:
 
 v2.13.0
