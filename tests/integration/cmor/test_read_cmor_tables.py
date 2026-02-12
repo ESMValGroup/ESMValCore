@@ -40,8 +40,8 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
     for project in "CMIP5", "CMIP6":
         table = esmvalcore.cmor.table.CMOR_TABLES[project]
         # on OSX Path objects are all lower case
-        print("Platform", sys.platform)
         if sys.platform == "darwin":
+            print("Platform - OSX GTFO", sys.platform)
             expected = table_path / project.lower() / "tables"
         else:
             expected = table_path / project.lower() / "Tables"
