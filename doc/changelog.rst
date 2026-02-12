@@ -24,7 +24,7 @@ Backwards incompatible changes
 
       Move the file ``~/.esmvaltool/config-user.yml`` to
       ``~/.config/esmvaltool/config-user.yml`` and replace
-      ``~/.esmvaltool/dask.yml`` by `new way of configuring Dask
+      ``~/.esmvaltool/dask.yml`` by the `new way of configuring Dask
       <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#dask-configuration>`__.
 
 -  Remove deprecated ESMPy regridding schemes (:pull:`2879`) by :user:`bouweandela`
@@ -40,7 +40,7 @@ Backwards incompatible changes
       regridding scheme
       <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#generic-regridding-schemes>`__
       in your recipe, you will need to update it to use
-      :class:`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` instead.
+      :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` instead.
 
 -  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
 
@@ -55,9 +55,9 @@ Backwards incompatible changes
          respectively.
       2. Similarly, ``frequency`` and ``check_level`` are now keyword only
          arguments for the functions
-         :func:`esmvalcore.cmor.check.cmor_check_metadata`,
-         :func:`esmvalcore.cmor.check.cmor_check_data`, and
-         :func:`esmvalcore.cmor.check.cmor_check`.
+         :func:`~esmvalcore.cmor.check.cmor_check_metadata`,
+         :func:`~esmvalcore.cmor.check.cmor_check_data`, and
+         :func:`~esmvalcore.cmor.check.cmor_check`.
       3. The argument ``table`` to the method
          :meth:`esmvalcore.cmor.table.CustomInfo.get_variable` has been renamed to
          ``table_name`` so the signature of this method matches with the same
@@ -70,10 +70,10 @@ Backwards incompatible changes
 
       This PR changes the default behavior of the preprocessor functions
 
-      - ``monthly_statistics`` (group coordinates ``month_number`` and ``year``)
-      - ``seasonal_statistics`` (group coordinates ``clim_season`` and ``season_year``)
-      - ``annual_statistics`` (group coordinate ``year``)
-      - ``decadal_statistics`` (group coordinate ``decade``)
+      - :func:`~esmvalcore.preprocessor.monthly_statistics` (group coordinates ``month_number`` and ``year``)
+      - :func:`~esmvalcore.preprocessor.seasonal_statistics` (group coordinates ``clim_season`` and ``season_year``)
+      - :func:`~esmvalcore.preprocessor.annual_statistics` (group coordinate ``year``)
+      - :func:`~esmvalcore.preprocessor.decadal_statistics` (group coordinate ``decade``)
 
       Previously, the returned cubes of these preprocessor functions contained
       the corresponding group coordinates. Now, those coordinates are not
@@ -95,9 +95,9 @@ Deprecations
 
    .. admonition:: Upgrade instructions
 
-      If you have defined projects in config-developer.yml that are not in the
-      default config-developer.yml file shipped with ESMValCore, then you will
-      need to move the value of 'output_file' to
+      If you have defined projects in ``config-developer.yml`` that are not in
+      the default config-developer.yml file shipped with ESMValCore, then you
+      will need to move the value of 'output_file' to
 
       .. code-block:: yaml
 
@@ -122,7 +122,7 @@ Deprecations
       - ``config-developer.yml`` and the configuration setting
         ``config_developer_file``: upgrade instructions are available `here
         <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#developer-configuration-file>`__.
-      - In the module :mod:`esmvalcore.cmor.table`](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/api/esmvalcore.cmor.html#module-esmvalcore.cmor.table):
+      - In the module :mod:`esmvalcore.cmor.table`:
          - the function ``read_cmor_tables`` which reads the tables based on the deprecated config-developer file.
          - the ``cmor_tables_path``, ``default``, and ``default_table_prefix``
            arguments to various CMOR table reader classes and the class
