@@ -7,12 +7,12 @@ import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache, partial
-from importlib.resources import files as importlib_files
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from packaging import version
 
+import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config._config import TASKSEP, load_config_developer
@@ -285,9 +285,10 @@ def validate_drs(value):
 def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
-    if path is None:
-        path = importlib_files("esmvalcore") / "config-developer.yml"
-    load_config_developer(path)
+    if path is not None:
+        # This has the side-effect of updating `esmvalcore.config._config.CFG`
+        # and `esmvalcore.cmor.tables.CMOR_TABLES`.
+        load_config_developer(path)
 
     return path
 
@@ -373,17 +374,44 @@ def validate_extra_facets_dir(value):
     return validate_pathlist(value)
 
 
+def validate_cmor_tables(value: dict) -> None:
+    """Validate the CMOR table configuration."""
+    # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
+    #
+    # Relying on global state is not nice, preferably we should get rid of any
+    # global state except the defaults for starting a new session in
+    # `esmvalcore.config.CFG`. https://github.com/esMValGroup/esMValCore/issues/2954
+    #
+    # Having side effects when updating an `esmvalcore.config.Session` object
+    # that changes global state of the `esmvalcore` package is nasty and should
+    # preferably be avoided. This would require passing around session objects
+    # instead of relying on global state (e.g. esmvalcore.config.CFG,
+    # esmvalcore.cmor.tables.CMOR_TABLES).
+    esmvalcore.cmor.table.CMOR_TABLES = {
+        project: esmvalcore.cmor.table.get_tables(
+            session={"projects": value},  # type: ignore[arg-type]
+            project=project,
+        )
+        for project in value
+    }
+
+
 def validate_projects(
     value: dict,
 ) -> dict[str, dict[str, Any]]:
     """Validate projects mapping."""
     mapping = validate_dict(value)
     options_for_project: dict[str, Callable[[Any], Any]] = {
+        "cmor_table": validate_dict,
         "data": validate_dict,  # TODO: try to create data sources here
         "extra_facets": validate_dict,
         "preprocessor_filename_template": validate_string,
     }
     for project, project_config in mapping.items():
+        if "cmor_table" not in project_config:
+            project_config["cmor_table"] = {
+                "type": "esmvalcore.cmor.table.NoInfo",
+            }
         for option, val in project_config.items():
             if option not in options_for_project:
                 msg = (
@@ -393,6 +421,7 @@ def validate_projects(
                 )
                 raise ValidationError(msg) from None
             mapping[project][option] = options_for_project[option](val)
+    validate_cmor_tables(mapping)
     return mapping
 
 
@@ -453,7 +482,9 @@ def _handle_deprecation(
         f"been deprecated in ESMValCore version {deprecated_version} and is "
         f"scheduled for removal in version {remove_version}.{more_info}"
     )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=2)
+    # This function is called by the deprecation functions, which are called by
+    # ValidatedConfig.__setitem__, so the calling site is 4 levels away.
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=4)
 
 
 # TODO: remove in v2.15.0
@@ -611,6 +642,30 @@ def deprecate_search_esgf(
     )
 
 
+def deprecate_config_developer_file(
+    validated_config: ValidatedConfig,  # noqa: ARG001
+    value: str | Path,  # noqa: ARG001
+    validated_value: str | Path,  # noqa: ARG001
+) -> None:
+    """Deprecate ``config_developer_file`` option.
+
+    Parameters
+    ----------
+    validated_config:
+        ``ValidatedConfig`` instance which will be modified in place.
+    value:
+        Raw input value for ``config_file`` option.
+    validated_value:
+        Validated value for ``config_file`` option.
+
+    """
+    more_info = (
+        " Please configure data sources, cmor tables, and preprocessor "
+        "filename templates under `projects` instead."
+    )
+    _handle_deprecation("config_developer_file", "2.14.0", "2.16.0", more_info)
+
+
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
@@ -619,6 +674,7 @@ _deprecators: dict[str, Callable] = {
     "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
     "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
     "search_esgf": deprecate_search_esgf,  # TODO: remove in v2.16.0
+    "config_developer_file": deprecate_config_developer_file,  # TODO: remove in v2.16.0
 }
 
 
@@ -627,4 +683,5 @@ _deprecators: dict[str, Callable] = {
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecated_options_defaults: dict[str, Any] = {
     "extra_facets_dir": [],  # TODO: remove in v2.15.0
+    "download_dir": "~/climate_data",  # TODO: remove in v2.16.0
 }

@@ -13,10 +13,22 @@
 
 """
 
-from ._config_object import CFG, Config, Session
+import contextlib
+
+import iris
+
+from esmvalcore.config._config_object import CFG, Config, Session
 
 __all__ = (
     "CFG",
     "Config",
     "Session",
 )
+
+# Set iris.FUTURE flags
+for attr, value in {
+    "save_split_attrs": True,
+    "date_microseconds": True,
+}.items():
+    with contextlib.suppress(AttributeError):
+        setattr(iris.FUTURE, attr, value)

@@ -6,6 +6,7 @@ import dask.config
 import pytest
 import yaml
 
+import esmvalcore.cmor.table
 import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
@@ -161,14 +162,10 @@ def test_get_project_config(mocker):
 
 def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
-    project_cfg = {}
-    monkeypatch.setattr(_config, "CFG", project_cfg)
     root_path = importlib_files("esmvalcore")
-    default_dev_file = root_path / "config-developer.yml"
-    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_config_dir = root_path / "config" / "configurations" / "defaults"
     default_project_settings = dask.config.collect(
-        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")]
-        + [str(config_dir / "preprocessor_filename_template.yml")],
+        paths=[str(p) for p in default_config_dir.glob("*.yml")],
         env={},
     )["projects"]
 
@@ -178,7 +175,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "auxiliary_data_dir": Path.home() / "auxiliary_data",
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
-        "config_developer_file": default_dev_file,
         "dask": {
             "profiles": {
                 "local_threaded": {
@@ -261,9 +257,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
 
-    # Check that projects were configured
-    assert project_cfg
-
 
 def test_rootpath_obs4mips_case_correction(monkeypatch):
     """Test that the name of the obs4MIPs project is correct in rootpath."""
@@ -328,8 +321,14 @@ def test_get_ignored_warnings_none(project, step):
     assert get_ignored_warnings(project, step) is None
 
 
-def test_get_ignored_warnings_emac():
+def test_get_ignored_warnings_emac(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test ``get_ignored_warnings``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     ignored_warnings = get_ignored_warnings("EMAC", "load")
     assert isinstance(ignored_warnings, list)
     assert ignored_warnings

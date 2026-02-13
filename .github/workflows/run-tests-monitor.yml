@@ -1,5 +1,8 @@
 ---
 name: Monitor Tests
+
+permissions: {}
+
 on:
   push:
     branches:
@@ -10,7 +13,7 @@ on:
   #  branches:
   #  - main
   schedule:
-    - cron: '0 0 * * *'  # nightly
+    - cron: "0 0 * * *" # nightly
 
 # Required shell entrypoint to have properly configured bash shell
 defaults:
@@ -20,17 +23,18 @@ defaults:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
-    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
+    if: github.repository == 'ESMValGroup/ESMValCore' # avoid GAs in forks
     strategy:
       matrix:
         python-version: ["3.12", "3.13", "3.14"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v3
+          persist-credentials: false
+      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           activate-environment: esmvalcore
           environment-file: environment.yml
@@ -45,26 +49,27 @@ jobs:
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - run: python tests/parse_pymon.py
       - name: Upload artifacts
-        if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v6
+        if: ${{ always() }} # upload artifacts even if fail
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Test_Linux_python_${{ matrix.python-version }}
           path: test_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
-    if: github.repository == 'ESMValGroup/ESMValCore'  # avoid GAs in forks
+    if: github.repository == 'ESMValGroup/ESMValCore' # avoid GAs in forks
     strategy:
       matrix:
         python-version: ["3.12", "3.13", "3.14"]
-        architecture: ["x64"]  # need to force Intel, arm64 builds have issues
+        architecture: ["x64"] # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v3
+          persist-credentials: false
+      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
         with:
           architecture: ${{ matrix.architecture }}
           activate-environment: esmvalcore
@@ -82,8 +87,8 @@ jobs:
       - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - run: python tests/parse_pymon.py
       - name: Upload artifacts
-        if: ${{ always() }}  # upload artifacts even if fail
-        uses: actions/upload-artifact@v6
+        if: ${{ always() }} # upload artifacts even if fail
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Test_OSX_python_${{ matrix.python-version }}
           path: test_osx_artifacts_python_${{ matrix.python-version }}

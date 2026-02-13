@@ -7,9 +7,9 @@ import numpy as np
 from iris.cube import CubeList
 from iris.util import reverse
 
+import esmvalcore.cmor.table
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
-from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import (
     date2num,
     has_unstructured_grid,
@@ -535,7 +535,9 @@ class AllVars(Fix):
             # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
-                coord_def = CMOR_TABLES["CMIP6"].coords["plev19"]  # noqa: PLW2901
+                coord_def = esmvalcore.cmor.table.CMOR_TABLES["CMIP6"].coords[  # noqa: PLW2901
+                    "plev19"
+                ]
             coord = cube.coord(axis=axis)
             if axis == "T":
                 coord.convert_units("days since 1850-1-1 00:00:00.0")

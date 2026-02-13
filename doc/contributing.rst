@@ -72,7 +72,9 @@ Please keep the following considerations in mind when programming:
   what exactly is being changed.
 - :ref:`preprocessor_functions` are Python functions (and not classes) so they
   are easy to understand and implement for scientific contributors.
-- No additional CMOR checks should be implemented inside preprocessor functions.
+- No additional CMOR checks should be implemented inside preprocessor functions,
+  though it is our ambition to make preprocessor functions work with any data that
+  follows the `CF Conventions <https://cfconventions.org/>`_.
   The input cube is fixed and confirmed to follow the specification in
   `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
   before applying any other preprocessor functions.
@@ -82,7 +84,8 @@ Please keep the following considerations in mind when programming:
   recipe to the relevant CMOR table.
 - The ESMValCore package is based on :ref:`iris <iris_docs>`.
   Preprocessor functions should preferably be small and just call the relevant
-  iris code.
+  iris code. This automatically ensures that the preprocessor functions work with
+  data that follows the CF Conventions.
   Code that is more involved and more broadly applicable than just in the
   ESMValCore, should be implemented in iris instead.
 - Any settings in the recipe that can be checked before loading the data should

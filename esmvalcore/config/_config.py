@@ -1,9 +1,9 @@
 """Functions dealing with config-developer.yml and extra facets."""
+# TODO: remove this module in v2.16.0
 
 from __future__ import annotations
 
 import collections.abc
-import contextlib
 import logging
 import os
 import warnings
@@ -11,10 +11,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import iris
 import yaml
 
-from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.cmor.table import read_cmor_tables
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 if TYPE_CHECKING:
@@ -28,15 +27,6 @@ CFG = {}
 
 # TODO: remove in v2.15.0
 USER_EXTRA_FACETS = Path.home() / ".esmvaltool" / "extra_facets"
-
-
-# Set iris.FUTURE flags
-for attr, value in {
-    "save_split_attrs": True,
-    "date_microseconds": True,
-}.items():
-    with contextlib.suppress(AttributeError):
-        setattr(iris.FUTURE, attr, value)
 
 
 # TODO: remove in v2.15.0
@@ -94,7 +84,10 @@ def warn_if_old_extra_facets_exist() -> None:
         )
 
 
-def load_config_developer(cfg_file: Path) -> dict:
+def load_config_developer(
+    cfg_file: Path,
+    set_cmor_tables: bool = True,
+) -> dict:
     """Read the developer's configuration file."""
     with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
@@ -122,7 +115,8 @@ def load_config_developer(cfg_file: Path) -> dict:
             settings["input_dir"][site] = normalized_drs
         CFG[project] = settings
 
-    read_cmor_tables(cfg_file)
+    if set_cmor_tables:
+        read_cmor_tables(cfg_file)
     return cfg
 
 
@@ -132,28 +126,6 @@ def get_project_config(project):
         return CFG[project]
     msg = f"Project '{project}' not in config-developer.yml"
     raise RecipeError(msg)
-
-
-def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP6."""
-    dataset = variable["dataset"]
-    project = variable["project"]
-    try:
-        return CMOR_TABLES[project].institutes[dataset]
-    except (KeyError, AttributeError):
-        return []
-
-
-def get_activity(variable):
-    """Return the activity given the experiment name in CMIP6."""
-    project = variable["project"]
-    try:
-        exp = variable["exp"]
-        if isinstance(exp, list):
-            return [CMOR_TABLES[project].activities[value][0] for value in exp]
-        return CMOR_TABLES[project].activities[exp][0]
-    except (KeyError, AttributeError):
-        return None
 
 
 def get_ignored_warnings(project: FacetValue, step: str) -> None | list:

@@ -9,6 +9,10 @@ from pathlib import Path
 import pytest
 import yaml
 
+import esmvalcore
+import esmvalcore.cmor.table
+import esmvalcore.config._config
+import esmvalcore.local
 from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalDataSource,
@@ -66,11 +70,33 @@ def create_tree(path, filenames=None, symlinks=None):
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
-def test_get_output_file(cfg):
+def test_get_output_file(monkeypatch, cfg):
     """Test getting output name for preprocessed files."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
     expected = Path(cfg["output_file"])
     assert output_file == expected
+
+
+@pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
+def test_get_output_file_no_config_developer(monkeypatch, cfg):
+    """Test getting output name for preprocessed files."""
+    monkeypatch.setattr(esmvalcore.local, "CFG", {})
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setattr(esmvalcore.config._config, "CFG", {})
+    monkeypatch.setattr(esmvalcore.local, "CONFIG_DEVELOPER", {})
+    output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
+    expected = Path(cfg["output_file"])
+    assert output_file == expected
+    # This test ensures that only the directory structure bits of
+    # config-developer.yml have been loaded.
+    assert esmvalcore.config._config.CFG
+    assert not esmvalcore.cmor.table.CMOR_TABLES
 
 
 @pytest.fixture
@@ -83,7 +109,7 @@ def root(tmp_path):
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
-def test_find_files(monkeypatch, root, cfg):
+def test_find_files(monkeypatch, root, cfg, mocker):
     """Test retrieving input filelist."""
     if "drs" not in cfg:
         pytest.skip(
@@ -95,6 +121,13 @@ def test_find_files(monkeypatch, root, cfg):
         pprint.pformat(cfg["variable"]),
     )
     project = cfg["variable"]["project"]
+    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
     monkeypatch.setitem(CFG, "rootpath", {project: root})
     create_tree(
@@ -112,6 +145,7 @@ def test_find_files(monkeypatch, root, cfg):
     ]
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     assert [Path(g) for g in globs] == sorted(ref_globs)
+    esmvalcore.local._ensure_config_developer_drs.assert_called_once()
 
 
 def test_find_files_with_facets(monkeypatch, root):
@@ -121,6 +155,12 @@ def test_find_files_with_facets(monkeypatch, root):
             break
 
     project = cfg["variable"]["project"]
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
     monkeypatch.setitem(CFG, "rootpath", {project: root})
 
@@ -176,7 +216,13 @@ def test_find_data(root, cfg):
         assert str(pattern) in data_source.debug_info
 
 
-def test_select_invalid_drs_structure():
+def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     msg = (
         r"drs _INVALID_STRUCTURE_ for CMIP6 project not specified in "
         r"config-developer file"
