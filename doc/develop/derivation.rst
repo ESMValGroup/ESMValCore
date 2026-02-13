@@ -76,9 +76,7 @@ of the ESMValCore package. An example entry for CMIP6 looks like:
 .. literalinclude:: ../../esmvalcore/cmor/tables/cmip6-custom/CMIP6_custom.json
    :start-at: "asr": {
    :end-at: },
-   :caption: The ``asr`` variable definition in the custom CMIP6 table at
-   `esmvalcore/cmor/tables/cmip6/tables/cmip6-custom/CMIP6_custom.json
-   <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/tables/cmip6-custom/CMIP6_custom.json>`__.
+   :caption: The ``asr`` variable definition in the custom CMIP6 table at `esmvalcore/cmor/tables/cmip6/tables/cmip6-custom/CMIP6_custom.json <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/tables/cmip6-custom/CMIP6_custom.json>`__.
 
 More details on this can also be found in the documentation of the
 :ref:`cmor_table_configuration`.
