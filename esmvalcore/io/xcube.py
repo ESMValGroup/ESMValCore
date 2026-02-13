@@ -1,12 +1,12 @@
 """Access data using `xcube <https://xcube.readthedocs.io>`_.
 
-Run the command ``esmvaltool config copy data-xcube-ccizarr.yml`` to update
+Run the command ``esmvaltool config copy data-xcube-esacci.yml`` to update
 your :ref:`configuration <config-data-sources>` to use this module. This will
 create a file with the following content in your configuration directory:
 
-.. literalinclude:: ../configurations/data-xcube-ccizarr.yml
+.. literalinclude:: ../configurations/data-xcube-esacci.yml
    :language: yaml
-   :caption: Contents of ``data-xcube-ccizarr.yml``
+   :caption: Contents of ``data-xcube-esacci.yml``
 
 """
 
