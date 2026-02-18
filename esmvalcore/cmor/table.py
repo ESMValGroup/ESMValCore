@@ -559,8 +559,14 @@ class InfoBase:
                 except KeyError:
                     pass
 
-        # If that didn't work, look in all tables (i.e., other MIPs) if
-        # cmor_strict=False or derived=True
+        # If that didn't work, look in all tables (i.e., other MIPs) and
+        # optionally ignore the branding suffix if cmor_strict=False or
+        # derived=True.
+        if branding_suffix:
+            # Append the unbranded short names to the list of alternatives as
+            # a fallback option. This allows to find the variable even if it
+            # does not have a branding suffix.
+            alt_names_list += self._get_alt_names_list(short_name)
         var_info = self._look_in_all_tables(derived, alt_names_list)
 
         # If that didn't work either, look in default table if
