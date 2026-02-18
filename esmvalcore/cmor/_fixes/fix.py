@@ -882,18 +882,18 @@ class GenericFix(Fix):
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
-        times = {"time", "time1", "time2", "time3"}
-        key = times.intersection(self.vardef.coordinates)
-        if not key:  # cube has time, but CMOR variable does not
-            return
-        cmor = self.vardef.coordinates[" ".join(key)]
-        if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
-            cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
-            self._warning_msg(
-                cube,
-                "Added guessed bounds to coordinate %s",
-                cube_coord.var_name,
-            )
+        for cmor_coord in self.vardef.coordinates.values():
+            if (
+                cmor_coord.axis == "T"
+                and cmor_coord.must_have_bounds == "yes"
+                and not cube_coord.has_bounds()
+            ):
+                cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
+                self._warning_msg(
+                    cube,
+                    "Added guessed bounds to coordinate %s",
+                    cube_coord.var_name,
+                )
 
     def _fix_time_coord(self, cube: Cube) -> Cube:
         """Fix time coordinate."""
