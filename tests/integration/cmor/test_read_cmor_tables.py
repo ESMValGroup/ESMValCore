@@ -79,7 +79,9 @@ def test_read_cmor_tables_from_config_developer(monkeypatch):
     ),
     [
         ("CMIP7", "atmos", "tas", "tavg-h2m-hxy-u"),
-        ("CMIP7", "Amon", "alb", None),  # custom derived variable
+        ("CMIP7", "atmos", "alb", None),  # custom derived variable
+        # custom derived variable with branding suffix of input variables:
+        ("CMIP7", "atmos", "rtnt", "tavg-u-hxy-u"),
         ("CMIP6", "Amon", "tas", None),
         ("CMIP6", "Amon", "alb", None),  # custom derived variable
         ("CMIP6", "Amon", "ch4", "Clim"),  # table entry != short_name
@@ -122,7 +124,7 @@ def test_get_tables(
         mip,
         short_name,
         branding_suffix=branding_suffix,
-        derived=short_name in ("alb", "lwcre"),
+        derived=short_name in ("alb", "lwcre", "rtnt"),
     )
     assert isinstance(vardef, VariableInfo)
     assert vardef.short_name
