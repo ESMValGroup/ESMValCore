@@ -726,7 +726,8 @@ class DiagnosticTask(BaseTask):
         valid = True
         for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(orig_attributes)
+            attributes = deepcopy(attrs)
+            attributes.update(deepcopy(orig_attributes))
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
@@ -764,7 +765,6 @@ class DiagnosticTask(BaseTask):
                         self.name,
                     )
 
-            attributes.update(deepcopy(attrs))
 
             TAGS.replace_tags_in_dict(attributes)
 
