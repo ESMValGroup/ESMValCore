@@ -765,7 +765,6 @@ class DiagnosticTask(BaseTask):
                         self.name,
                     )
 
-
             TAGS.replace_tags_in_dict(attributes)
 
             product = TrackedFile(Path(filename), attributes, ancestors)
