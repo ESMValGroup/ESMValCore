@@ -1505,6 +1505,64 @@ def simulate_diagnostic_run(diagnostic_task):
     return record
 
 
+def test_preprocessor_file_ancestors_are_input_files(
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+) -> None:
+    """Test that the ancestors of a preprocessor file are the input files."""
+    content = dedent("""
+        datasets:
+          - dataset: BCC-ESM1
+            project: CMIP6
+            exp: historical
+            ensemble: r1i1p1f1
+            grid: gn
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                exp: 1pctCO2
+          - dataset: bcc-csm1-1
+            project: CMIP5
+            exp: historical
+            ensemble: r1i1p1
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                ensemble: r0i0p0
+
+        preprocessors:
+          regrid:
+            regrid:
+              target_grid: BCC-ESM1
+              scheme: linear
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: regrid
+                mip: Amon
+                timerange: 2000/2005
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+    assert len(recipe.tasks) == 1
+    task = next(iter(recipe.tasks))
+    assert len(task.products) == 2
+    for preprocessor_file in task.products:
+        assert len(preprocessor_file.datasets) == 1
+        dataset = preprocessor_file.datasets[0]
+        assert len(dataset.files) == 1
+        assert len(dataset.supplementaries[0].files) == 1
+        assert len(preprocessor_file._ancestors) == 2
+        assert dataset.files[0] is preprocessor_file._ancestors[0].filename
+        assert (
+            dataset.supplementaries[0].files[0]
+            is preprocessor_file._ancestors[1].filename
+        )
+
+
 def test_diagnostic_task_provenance(
     tmp_path,
     patched_datafinder,
