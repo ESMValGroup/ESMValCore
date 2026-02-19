@@ -135,7 +135,6 @@ class IntakeESGFDataset(DataElement):
             )
             raise
 
-        self.catalog.to_path_dict(minimal_keys=False)
         for index in self.catalog.indices:
             # Set the sessions to None to avoid issues with pickling
             # requests_cache.CachedSession objects when max_parallel_tasks > 1.
