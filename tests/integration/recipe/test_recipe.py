@@ -971,6 +971,11 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     )
 
     assert product.settings["regrid"]["target_grid"] == reference.datasets[0]
+    # Check that the target dataset does not have files, to prevent pickling
+    # errors: https://github.com/ESMValGroup/ESMValCore/issues/2989.
+    # The files can be found again at load time.
+    assert product.settings["regrid"]["target_grid"]._files is None
+
     assert product.settings["extract_levels"]["levels"] == levels
 
     get_reference_levels.assert_called_once_with(reference.datasets[0])
