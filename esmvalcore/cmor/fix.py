@@ -20,8 +20,6 @@ from esmvalcore.io.local import LocalFile
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import ncdata
-    import xarray as xr
     from iris.cube import Cube
 
     from esmvalcore.config import Session
@@ -40,7 +38,7 @@ def fix_file(  # noqa: PLR0913
     session: Session | None = None,
     frequency: str | None = None,
     **extra_facets: Any,
-) -> str | Path | xr.Dataset | ncdata.NcData:
+) -> Path | CubeList:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
     This is mainly intended to fix errors that prevent loading the data with
@@ -52,7 +50,7 @@ def fix_file(  # noqa: PLR0913
     -------
     A path should only be returned if it points to the original (unchanged)
     file (i.e., a fix was not necessary). If a fix is necessary, this function
-    should return a :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object.
+    should return a :class:`~iris.cube.CubeList`.
     Under no circumstances a copy of the input data should be created (this is
     very inefficient).
 
@@ -81,21 +79,13 @@ def fix_file(  # noqa: PLR0913
 
     Returns
     -------
-    str | pathlib.Path | xr.Dataset | ncdata.NcData:
+    :
         Fixed data or a path to them.
 
     """
-    # TODO: the code in `esmvalcore.preprocessor.preprocess` called from
-    # `esmvalcore.dataset.Dataset.load` currently relies on this function
-    # returning an esmvalcore.io.local.LocalFile (or an iris.cube.Cube or a
-    # list of those). Maybe this function could be updated so it returns a
-    # CubeList instead of a xr.Dataset or ncdata.NcData object?
-    # All fix_file methods currently seem to return a Path, so this is not a
-    # problem just yet.
     if not isinstance(file, Path):
-        # Skip this function for anything that is not a path to a file.
-        # TODO: it would be nice to make this work for any
-        # `esmvalcore.io.DataElement`.
+        # Skip this function for `esmvalcore.io.DataElement` that is not a path
+        # to a file.
         return file
 
     # Update extra_facets with variable information given as regular arguments
@@ -110,7 +100,7 @@ def fix_file(  # noqa: PLR0913
         },
     )
 
-    result = Path(file)
+    result: Path | CubeList = Path(file)
     for fix in Fix.get_fixes(
         project=project,
         dataset=dataset,
@@ -127,11 +117,25 @@ def fix_file(  # noqa: PLR0913
         )
 
     if isinstance(file, LocalFile):
-        result = LocalFile(result)
-        result.facets = file.facets
-        result.ignore_warnings = file.ignore_warnings
-        result.to_iris()
-        file.attributes = result.attributes
+        # This happens when this function is called from
+        # `esmvalcore.dataset.Dataset.load`.
+        if isinstance(result, Path):
+            if result == file:
+                # No fixes have been applied, return the original file.
+                result = file
+            else:
+                # The file has been fixed and the result is a path to the fixed
+                # file. The result needs to be loaded to read the global
+                # attributes for recording provenance.
+                fixed_file = LocalFile(result)
+                fixed_file.facets = file.facets
+                fixed_file.ignore_warnings = file.ignore_warnings
+                result = fixed_file.to_iris()
+
+        if isinstance(result, CubeList):
+            # Set the attributes for recording provenance here because
+            # to_iris will not be called on the original file.
+            file.attributes = result[0].attributes.globals.copy()
 
     return result
 
