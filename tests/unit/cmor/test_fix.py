@@ -14,7 +14,7 @@ class TestFixFile:
     @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
-        self.filename = "filename"
+        self.filename = Path("filename")
         self.mock_fix = Mock()
         self.mock_fix.fix_file.return_value = "new_filename"
         self.expected_get_fixes_call = {
@@ -40,7 +40,7 @@ class TestFixFile:
             return_value=[self.mock_fix],
         ) as mock_get_fixes:
             file_returned = fix_file(
-                file="filename",
+                file=Path("filename"),
                 short_name="short_name",
                 project="project",
                 dataset="model",
@@ -62,7 +62,7 @@ class TestFixFile:
             return_value=[],
         ) as mock_get_fixes:
             file_returned = fix_file(
-                file="filename",
+                file=Path("filename"),
                 short_name="short_name",
                 project="project",
                 dataset="model",
