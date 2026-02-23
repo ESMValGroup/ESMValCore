@@ -35,8 +35,6 @@ from esmvalcore.iris_helpers import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import ncdata
-    import xarray as xr
     from iris.coords import Coord
     from iris.cube import Cube
 
@@ -84,10 +82,10 @@ class Fix:
 
     def fix_file(
         self,
-        file: str | Path | xr.Dataset | ncdata.NcData,
+        file: Path,
         output_dir: Path,  # noqa: ARG002
         add_unique_suffix: bool = False,  # noqa: ARG002
-    ) -> str | Path | xr.Dataset | ncdata.NcData:
+    ) -> Path | Sequence[Cube]:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
@@ -116,7 +114,7 @@ class Fix:
 
         Returns
         -------
-        str | pathlib.Path | xr.Dataset | ncdata.NcData:
+        :
             Fixed data or a path to them.
 
         """

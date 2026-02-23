@@ -9,19 +9,16 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from iris.cube import CubeList
+from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from iris.cube import Cube
-
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
@@ -38,7 +35,7 @@ def fix_file(  # noqa: PLR0913
     session: Session | None = None,
     frequency: str | None = None,
     **extra_facets: Any,
-) -> Path | CubeList:
+) -> Path | Sequence[Cube]:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
     This is mainly intended to fix errors that prevent loading the data with
@@ -100,7 +97,7 @@ def fix_file(  # noqa: PLR0913
         },
     )
 
-    result: Path | CubeList = Path(file)
+    result: Path | Sequence[Cube] = Path(file)
     for fix in Fix.get_fixes(
         project=project,
         dataset=dataset,
@@ -132,7 +129,7 @@ def fix_file(  # noqa: PLR0913
                 fixed_file.ignore_warnings = file.ignore_warnings
                 result = fixed_file.to_iris()
 
-        if isinstance(result, CubeList):
+        if isinstance(result, Sequence) and isinstance(result[0], Cube):
             # Set the attributes for recording provenance here because
             # to_iris will not be called on the original file.
             file.attributes = result[0].attributes.globals.copy()
