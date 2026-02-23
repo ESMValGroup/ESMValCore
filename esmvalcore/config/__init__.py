@@ -29,6 +29,7 @@ __all__ = (
 for attr, value in {
     "save_split_attrs": True,
     "date_microseconds": True,
+    "derived_bounds": True,
 }.items():
     with contextlib.suppress(AttributeError):
         setattr(iris.FUTURE, attr, value)
