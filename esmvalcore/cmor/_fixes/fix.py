@@ -96,11 +96,12 @@ class Fix:
 
         Warning
         -------
-        A path should only be returned if it points to the original (unchanged)
-        file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~ncdata.NcData` or
-        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
-        input data should be created (this is very inefficient).
+        For fix developers: a path should only be returned if it points to the
+        original (unchanged) file (i.e., a fix was not necessary). If a fix is
+        necessary, this function should return a :class:`~iris.cube.CubeList` or
+        a :class:`~collections.abc.Sequence` of :class:`~iris.cube.Cube`
+        objects. Under no circumstances a copy of the input data should be
+        created (this is very inefficient).
 
         Parameters
         ----------
