@@ -104,4 +104,17 @@ class Omon(Fix):
 
 Cli = Cl
 
+
 Clw = Cl
+
+
+class O3(Cl):
+    """Fixes of ozone variable (mip: AERmon only)."""
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            if "table_id" in cube.attributes:
+                if cube.attributes["table_id"] == "AERmon":
+                    cubes = Cl.fix_metadata(self, cubes)
+                    break
+        return cubes
