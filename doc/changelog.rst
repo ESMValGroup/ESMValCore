@@ -13,7 +13,7 @@ Highlights
 
 - Support for intake-esgf and new ``esmvaltool config`` commands have been added (See :ref:`config-data-sources`)
 - A new way to configure the CMOR tables and the possibility to use data that is not described in a CMOR table have been implemented (see :ref:`cmor_table_configuration`)
-- CMIP7 data is not supported (see :pull:`2935`)
+- CMIP7 data is now supported (see :pull:`2935`)
 
 This release includes
 
@@ -88,7 +88,7 @@ Backwards incompatible changes
    .. admonition:: Upgrade instructions
 
       Importing :mod:`esmvalcore.cmor.table` no longer reads the built-in
-      ``config-developer.yml`` file and users of the
+      ``config-developer.yml`` file and users of the deprecated
       :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object have to load their
       configuration by importing :mod:`esmvalcore.config` before the
       :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object is populated.
