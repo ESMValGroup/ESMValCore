@@ -11,7 +11,9 @@ v2.14.0
 Highlights
 ~~~~~~~~~~
 
-TODO: Add
+- Support for intake-esgf and new ``esmvaltool config`` commands have been added (See :ref:`config-data-sources`)
+- A new way to configure the CMOR tables and the possibility to use data that is not described in a CMOR table have been implemented (see :ref:`cmor_table_configuration`)
+- CMIP7 data is not supported (see :pull:`2935`)
 
 This release includes
 
