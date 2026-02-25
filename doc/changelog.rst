@@ -81,6 +81,16 @@ Backwards incompatible changes
 
       To restore the old behavior, use ``keep_group_coordinates=True``.
 
+-  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Importing :mod:`esmvalcore.cmor.table` no longer reads the built-in
+      ``config-developer.yml`` file and users of the
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object have to load their
+      configuration by importing :mod:`esmvalcore.config` before the
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object is populated.
+
 Deprecations
 ~~~~~~~~~~~~
 
