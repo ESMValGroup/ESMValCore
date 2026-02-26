@@ -9,20 +9,16 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from iris.cube import CubeList
+from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from pathlib import Path
-
-    import ncdata
-    import xarray as xr
-    from iris.cube import Cube
-
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
@@ -39,21 +35,13 @@ def fix_file(  # noqa: PLR0913
     session: Session | None = None,
     frequency: str | None = None,
     **extra_facets: Any,
-) -> str | Path | xr.Dataset | ncdata.NcData:
+) -> Path | Sequence[Cube]:
     """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
     This is mainly intended to fix errors that prevent loading the data with
     Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
     operations that are more efficient with other packages (e.g., loading files
     with lots of variables is much faster with Xarray than Iris).
-
-    Warning
-    -------
-    A path should only be returned if it points to the original (unchanged)
-    file (i.e., a fix was not necessary). If a fix is necessary, this function
-    should return a :class:`~ncdata.NcData` or :class:`~xarray.Dataset` object.
-    Under no circumstances a copy of the input data should be created (this is
-    very inefficient).
 
     Parameters
     ----------
@@ -80,10 +68,15 @@ def fix_file(  # noqa: PLR0913
 
     Returns
     -------
-    str | pathlib.Path | xr.Dataset | ncdata.NcData:
+    :
         Fixed data or a path to them.
 
     """
+    if not isinstance(file, Path):
+        # Skip this function for `esmvalcore.io.DataElement` that is not a path
+        # to a file.
+        return file
+
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update(
@@ -96,6 +89,7 @@ def fix_file(  # noqa: PLR0913
         },
     )
 
+    result: Path | Sequence[Cube] = Path(file)
     for fix in Fix.get_fixes(
         project=project,
         dataset=dataset,
@@ -105,12 +99,34 @@ def fix_file(  # noqa: PLR0913
         session=session,
         frequency=frequency,
     ):
-        file = fix.fix_file(
-            file,
+        result = fix.fix_file(
+            result,
             output_dir,
             add_unique_suffix=add_unique_suffix,
         )
-    return file
+
+    if isinstance(file, LocalFile):
+        # This happens when this function is called from
+        # `esmvalcore.dataset.Dataset.load`.
+        if isinstance(result, Path):
+            if result == file:
+                # No fixes have been applied, return the original file.
+                result = file
+            else:
+                # The file has been fixed and the result is a path to the fixed
+                # file. The result needs to be loaded to read the global
+                # attributes for recording provenance.
+                fixed_file = LocalFile(result)
+                fixed_file.facets = file.facets
+                fixed_file.ignore_warnings = file.ignore_warnings
+                result = fixed_file.to_iris()
+
+        if isinstance(result, Sequence) and isinstance(result[0], Cube):
+            # Set the attributes for recording provenance here because
+            # to_iris will not be called on the original file.
+            file.attributes = result[0].attributes.globals.copy()
+
+    return result
 
 
 def fix_metadata(
