@@ -69,6 +69,7 @@ from esmvalcore.preprocessor._regrid import (
     extract_levels,
     extract_location,
     extract_point,
+    is_dataset,
     regrid,
 )
 from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
@@ -619,7 +620,7 @@ class PreprocessorFile(TrackedFile):
         self,
         filename: Path,
         attributes: dict[str, Any] | None = None,
-        settings: dict[str, Any] | None = None,
+        settings: dict[str, dict[str, Any]] | None = None,
         datasets: list[Dataset] | None = None,
     ) -> None:
         if datasets is not None:
@@ -644,6 +645,22 @@ class PreprocessorFile(TrackedFile):
         # Set some preprocessor settings (move all defaults here?)
         if settings is None:
             settings = {}
+
+        # Create a copy of any datasets in settings. This drops the information
+        # in Dataset.files and avoids issues with deepcopying and pickling
+        # those files. This is needed because
+        # esmvalcore.io.intake_esgf.IntakeESGFDataset objects use a
+        # cached_requests.CachedSession object that cannot be deepcopied or
+        # pickled.
+        settings = {
+            fn: {
+                arg: (
+                    value.copy() if is_dataset(value) else copy.deepcopy(value)
+                )
+                for arg, value in kwargs.items()
+            }
+            for fn, kwargs in settings.items()
+        }
         self.settings = copy.deepcopy(settings)
         if attributes is None:
             attributes = {}
