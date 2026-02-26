@@ -152,6 +152,8 @@ Bug fixes
 -  Two fixes in preprocessor documentation (:pull:`2966`) by :user:`LisaBock`
 -  Do not overwrite provenance information written by ``ProvenanceLogger`` (:pull:`2987`) by :user:`schlunma`
 -  Avoid modifying supplementary variables (:pull:`2992`) by :user:`bouweandela`
+-  Avoid issue with deepcopying/pickling IntakeESGFDatasets (:pull:`2990`) by :user:`bouweandela`
+-  Repair fix_file (:pull:`2993`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
