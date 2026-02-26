@@ -1,8 +1,13 @@
 """Fixes for CESM2-WACCM model."""
 
-from netCDF4 import Dataset
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import ncdata.netcdf4
 
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.iris_helpers import dataset_to_iris
 
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
@@ -12,11 +17,22 @@ from .cesm2 import Tas as BaseTas
 from .cesm2 import Tasmax as BaseTasmax
 from .cesm2 import Tasmin as BaseTasmin
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
+
+    from iris.cube import Cube
+
 
 class Cl(BaseCl):
     """Fixes for cl."""
 
-    def fix_file(self, file, output_dir, add_unique_suffix=False):
+    def fix_file(
+        self,
+        file: Path,
+        output_dir: Path,  # noqa: ARG002
+        add_unique_suffix: bool = False,  # noqa: ARG002
+    ) -> Path | Sequence[Cube]:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -43,21 +59,27 @@ class Cl(BaseCl):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(
+        dataset = ncdata.netcdf4.from_nc4(
             file,
-            output_dir,
-            add_unique_suffix=add_unique_suffix,
+            # Use iris-style chunks to avoid mismatching chunks between data
+            # and derived coordinates, as the latter are automatically rechunked
+            # by iris.
+            dim_chunks={
+                "time": "auto",
+                "lev": None,
+                "lat": None,
+                "lon": None,
+                "nbnd": None,
+            },
         )
-        with Dataset(new_path, mode="a") as dataset:
-            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
-                :,
-                ::-1,
-            ]
-            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
-                :,
-                ::-1,
-            ]
-        return new_path
+        self._fix_formula_terms(dataset)
+
+        # Correct order of bounds data
+        a_bnds = dataset.variables["a_bnds"]
+        a_bnds.data = a_bnds.data[:, ::-1]
+        b_bnds = dataset.variables["b_bnds"]
+        b_bnds.data = b_bnds.data[:, ::-1]
+        return [self.get_cube_from_list(dataset_to_iris(dataset, file))]
 
 
 Cli = Cl

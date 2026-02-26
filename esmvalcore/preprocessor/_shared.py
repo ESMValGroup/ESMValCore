@@ -664,39 +664,3 @@ def apply_mask(
 
     array_module = get_array_module(mask, array)
     return array_module.ma.masked_where(mask, array)
-
-
-def _rechunk_aux_factory_dependencies(
-    cube: iris.cube.Cube,
-    coord_name: str | None = None,
-) -> iris.cube.Cube:
-    """Rechunk coordinate aux factory dependencies.
-
-    This ensures that the resulting coordinate has reasonably sized
-    chunks that are aligned with the cube data for optimal computational
-    performance.
-    """
-    # Workaround for https://github.com/SciTools/iris/issues/5457
-    if coord_name is None:
-        factories = cube.aux_factories
-    else:
-        try:
-            factories = [cube.aux_factory(coord_name)]
-        except iris.exceptions.CoordinateNotFoundError:
-            return cube
-
-    cube = cube.copy()
-    cube_chunks = cube.lazy_data().chunks
-    for factory in factories:
-        for orig_coord in factory.dependencies.values():
-            coord_dims = cube.coord_dims(orig_coord)
-            if coord_dims:
-                coord = orig_coord.copy()
-                chunks = tuple(cube_chunks[i] for i in coord_dims)
-                coord.points = coord.lazy_points().rechunk(chunks)
-                if coord.has_bounds():
-                    coord.bounds = coord.lazy_bounds().rechunk(
-                        (*chunks, None),
-                    )
-                cube.replace_coord(coord)
-    return cube

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from shutil import copyfile
 from typing import TYPE_CHECKING
 
 import iris
 import iris.coords
+import ncdata
+import ncdata.netcdf4
 import numpy as np
-from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import Fix
@@ -19,40 +19,36 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typesea_coord,
     fix_ocean_depth_coord,
 )
+from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
+
+    from iris.cube import Cube
 
 
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(
-        self,
-        file: str | Path,
-        output_dir: str | Path,
-        add_unique_suffix: bool = False,
-    ) -> Path:
+    @staticmethod
+    def _fix_formula_terms(dataset: ncdata.NcData) -> None:
         """Fix ``formula_terms`` attribute."""
-        new_path = self.get_fixed_filepath(
-            output_dir,
-            file,
-            add_unique_suffix=add_unique_suffix,
+        lev = dataset.variables["lev"]
+        lev.set_attrval("formula_terms", "p0: p0 a: a b: b ps: ps")
+        lev.set_attrval(
+            "standard_name",
+            "atmosphere_hybrid_sigma_pressure_coordinate",
         )
-        copyfile(file, new_path)
-        with Dataset(new_path, mode="a") as dataset:
-            dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
-            dataset.variables[
-                "lev"
-            ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
-        return new_path
+        lev.set_attrval("units", "1")
+        dataset.variables["lev_bnds"].attributes.pop("units")
 
     def fix_file(
         self,
-        file: str | Path,
-        output_dir: str | Path,
-        add_unique_suffix: bool = False,
-    ) -> Path:
+        file: Path,
+        output_dir: Path,  # noqa: ARG002
+        add_unique_suffix: bool = False,  # noqa: ARG002
+    ) -> Path | Sequence[Cube]:
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -79,45 +75,38 @@ class Cl(Fix):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(
+        dataset = ncdata.netcdf4.from_nc4(
             file,
-            output_dir,
-            add_unique_suffix=add_unique_suffix,
+            # Use iris-style chunks to avoid mismatching chunks between data
+            # and derived coordinates, as the latter are automatically rechunked
+            # by iris.
+            dim_chunks={
+                "time": "auto",
+                "lev": None,
+                "lat": None,
+                "lon": None,
+                "nbnd": None,
+            },
         )
-        with Dataset(new_path, mode="a") as dataset:
-            dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][
-                ::-1,
-                :,
-            ]
-            dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][
-                ::-1,
-                :,
-            ]
-        return new_path
+        self._fix_formula_terms(dataset)
 
-    def fix_metadata(self, cubes):
-        """Fix ``atmosphere_hybrid_sigma_pressure_coordinate``.
+        # Correct order of bounds data
+        a_bnds = dataset.variables["a_bnds"]
+        a_bnds.data = a_bnds.data[::-1, :]
+        b_bnds = dataset.variables["b_bnds"]
+        b_bnds.data = b_bnds.data[::-1, :]
 
-        See discussion in #882 for more details on that.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name="lev")
-        a_coord = cube.coord(var_name="a")
-        b_coord = cube.coord(var_name="b")
-        lev_coord.points = a_coord.core_points() + b_coord.core_points()
-        lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = "1"
-        return cubes
+        # Correct lev and lev_bnds data
+        lev = dataset.variables["lev"]
+        lev.data = dataset.variables["a"].data + dataset.variables["b"].data
+        lev_bnds = dataset.variables["lev_bnds"]
+        lev_bnds.data = (
+            dataset.variables["a_bnds"].data + dataset.variables["b_bnds"].data
+        )
+        # Remove 'title' attribute that duplicates long name
+        for var_name in dataset.variables:
+            dataset.variables[var_name].attributes.pop("title", None)
+        return [self.get_cube_from_list(dataset_to_iris(dataset, file))]
 
 
 Cli = Cl

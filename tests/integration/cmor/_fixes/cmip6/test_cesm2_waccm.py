@@ -1,7 +1,9 @@
 """Tests for the fixes of CESM2-WACCM."""
 
-import os
-import unittest.mock
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import iris
 import numpy as np
@@ -28,6 +30,10 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import VariableInfo, get_var_info
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_get_cl_fix():
@@ -41,25 +47,16 @@ def test_cl_fix():
     assert issubclass(Cl, BaseCl)
 
 
-@unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath",
-    autospec=True,
-)
-def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
+def test_cl_fix_file(tmp_path: Path, test_data_path: Path) -> None:
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / "cesm2_waccm_cl.nc"
-    mock_get_filepath.return_value = os.path.join(
-        tmp_path,
-        "fixed_cesm2_waccm_cl.nc",
-    )
-    fix = Cl(None)
-    fixed_file = fix.fix_file(nc_path, tmp_path)
-    mock_get_filepath.assert_called_once_with(
-        tmp_path,
-        nc_path,
-        add_unique_suffix=False,
-    )
-    fixed_cube = iris.load_cube(fixed_file)
+    vardef = get_var_info("CMIP6", "Amon", "cl")
+    assert isinstance(vardef, VariableInfo)
+    fix = Cl(vardef)
+    fixed_cubes = fix.fix_file(nc_path, tmp_path)
+    assert isinstance(fixed_cubes, Sequence)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
     lev_coord = fixed_cube.coord(var_name="lev")
     a_coord = fixed_cube.coord(var_name="a")
     b_coord = fixed_cube.coord(var_name="b")
