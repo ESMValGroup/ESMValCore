@@ -11,7 +11,9 @@ v2.14.0
 Highlights
 ~~~~~~~~~~
 
-TODO: Add
+- Support for intake-esgf and new ``esmvaltool config`` commands have been added (See :ref:`config-data-sources`)
+- A new way to configure the CMOR tables and the possibility to use data that is not described in a CMOR table have been implemented (see :ref:`cmor_table_configuration`)
+- CMIP7 data is now supported (see :pull:`2935`)
 
 This release includes
 
@@ -81,6 +83,16 @@ Backwards incompatible changes
 
       To restore the old behavior, use ``keep_group_coordinates=True``.
 
+-  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Importing :mod:`esmvalcore.cmor.table` no longer reads the built-in
+      ``config-developer.yml`` file and users of the deprecated
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object have to load their
+      configuration by importing :mod:`esmvalcore.config` before the
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object is populated.
+
 Deprecations
 ~~~~~~~~~~~~
 
@@ -138,11 +150,17 @@ Bug fixes
 -  Fix a bug where the mask_fillvalues preprocessor only recorded provenance for the first result (:pull:`2904`) by :user:`bouweandela`
 -  Fixed behavior of ``--search_data=quick`` and ``--search_data=complete`` (:pull:`2937`) by :user:`schlunma`
 -  Two fixes in preprocessor documentation (:pull:`2966`) by :user:`LisaBock`
+-  Do not overwrite provenance information written by ``ProvenanceLogger`` (:pull:`2987`) by :user:`schlunma`
+-  Avoid modifying supplementary variables (:pull:`2992`) by :user:`bouweandela`
+-  Avoid issue with deepcopying/pickling IntakeESGFDatasets (:pull:`2990`) by :user:`bouweandela`
+-  Repair fix_file (:pull:`2993`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
 
 -  Add CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
+-  Add the option to ignore the ``branding_suffix`` for derived CMIP7 and custom variables (:pull:`2982`) by :user:`bouweandela`
+-  Avoid hardcoded time coordinate names in CMOR check (:pull:`2981`) by :user:`bouweandela`
 
 Configuration
 ~~~~~~~~~~~~~
@@ -150,6 +168,7 @@ Configuration
 -  Avoid logging the configuration multiple times (:pull:`2869`) by :user:`bouweandela`
 -  Add an interface for adding new data sources and add support for intake-esgf as a first example (:pull:`2765`) by :user:`bouweandela`
 -  Add BSC data configuration (:pull:`2907`) by :user:`sloosvel`
+-  Moved ``dkrz-era5`` data source in DKRZ default config to separate file (:pull:`2996`) by :user:`schlunma`
 
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,6 +191,8 @@ Documentation
 -  Pin sphinx<9 (:pull:`2949`) by :user:`valeriupredoi`
 -  Add Matomo page view tracking for the documentation (:pull:`2955`) by :user:`bouweandela`
 -  Add notes to ``climate_statistics`` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
+-  Update documentation on derived variables with new CMOR tables configuration (:pull:`2979`) by :user:`schlunma`
+-  Update contact info (:pull:`2985`) by :user:`axel-lauer`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
