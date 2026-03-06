@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import logging
 import re
@@ -308,7 +309,7 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""
         if isinstance(value, str | int | float):
-            return re.sub("[^a-zA-Z0-9]+", "-", str(value))[:25]
+            return re.sub("[^a-zA-Z0-9]+", "-", str(value))
         return "-".join(normalize(v) for v in value)
 
     normalized_facets = {
@@ -346,7 +347,15 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
     if "timerange" in dataset.facets:
         start_time, end_time = _parse_period(dataset.facets["timerange"])
         filename += f"_{start_time}-{end_time}"
-    filename += ".nc"
+    suffix = ".nc"
+    max_filename_length = 255
+    max_base_length = max_filename_length - len(suffix)
+    if len(filename) > max_base_length:
+        digest_size = 4
+        digest = hashlib.shake_128(filename.encode()).hexdigest(digest_size)
+        suffix = f".{digest}{suffix}"
+        max_base_length = max_filename_length - len(suffix)
+    filename = f"{filename[:max_base_length]}{suffix}"
     return Path(
         dataset.session.preproc_dir,
         dataset.facets.get("diagnostic", ""),  # type: ignore[arg-type]
