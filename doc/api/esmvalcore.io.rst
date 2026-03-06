@@ -21,3 +21,4 @@ Submodules
    esmvalcore.io.intake_esgf
    esmvalcore.io.local
    esmvalcore.io.protocol
+   esmvalcore.io.xcube
