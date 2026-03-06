@@ -15,6 +15,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import esmvalcore.cmor.table
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
@@ -720,6 +721,106 @@ class Dataset:
                     extra_facets.update(facets)
 
         return extra_facets
+
+    def validate_facets(self) -> None:
+        """Validate the facets of the dataset."""
+        # Validate project
+        if "project" not in self.facets:
+            msg = f"Missing required facet 'project' in {self}"
+            raise KeyError(msg)
+        project = self.facets["project"]
+        if not isinstance(project, str):
+            msg = (
+                f"Facet 'project' should be a string, but got {type(project)} "
+                f"in {self}"
+            )
+            raise TypeError(msg)
+        projects = sorted(esmvalcore.cmor.table.CMOR_TABLES)
+        if project not in projects:
+            msg = (
+                f"Unknown project '{project}' in {self}. The following "
+                "projects have been configured: "
+                + ", ".join(f"'{p}'" for p in projects)
+            )
+            raise RecipeError(msg)
+
+        for facet in ["short_name", "dataset"]:
+            if facet not in self.facets:
+                msg = f"Missing required facet '{facet}' in {self}"
+                raise KeyError(msg)
+            if not isinstance(self.facets[facet], str):
+                msg = (
+                    f"Facet '{facet}' should be a string, but got "
+                    f"{type(self.facets[facet])} in {self}"
+                )
+                raise TypeError(msg)
+        short_name: str = self.facets["short_name"]  # type: ignore[assignment]
+
+        info = esmvalcore.cmor.table.CMOR_TABLES[project]
+        if isinstance(info, esmvalcore.cmor.table.NoInfo):
+            return
+
+        if "mip" not in self.facets:
+            msg = f"Missing required facet 'mip' in {self}"
+            raise KeyError(msg)
+        mip = self.facets["mip"]
+        if not isinstance(mip, str):
+            msg = f"Facet 'mip' should be a string, but got {type(mip)} in {self}"
+            raise TypeError(msg)
+
+        if mip not in info.tables:
+            available_mips = esmvalcore.cmor.table._get_mips(
+                project,
+                short_name,
+            )
+            if available_mips:
+                msg = (
+                    f"Unknown mip '{mip}' for project '{project}' and variable "
+                    f"'{short_name}'. Available 'mip's for this variable are: "
+                    + ", ".join(f"'{m}'" for m in available_mips)
+                )
+            else:
+                msg = (
+                    f"Unknown mip '{mip}' for project '{project}' and variable "
+                    f"'{short_name}'. Available 'mip's for this project are: "
+                    + ", ".join(f"'{m}'" for m in info.tables)
+                )
+            raise ValueError(msg)
+
+        branding_suffix = self.facets.get("branding_suffix")
+        if not isinstance(branding_suffix, str | None):
+            msg = (
+                f"Facet 'branding_suffix' should be a string, but got "
+                f"{type(branding_suffix)} in {self}"
+            )
+            raise TypeError(msg)
+
+        derive = self.facets.get("derive", False)
+        if not isinstance(derive, bool):
+            msg = (
+                f"Facet 'derive' should be a string, but got {type(derive)} "
+                f"in {self}"
+            )
+            raise TypeError(msg)
+
+        table_entry = info.get_variable(
+            mip,
+            short_name,
+            branding_suffix=branding_suffix,
+            derived=derive,
+        )
+
+        if table_entry is None:
+            msg = (
+                f"Unable to find variable (short_name) '{short_name}' "
+                + (
+                    f"with branding_suffix '{branding_suffix}' "
+                    if branding_suffix
+                    else ""
+                )
+                + f"in CMOR table (mip) '{mip}' for project '{project}'."
+            )
+            raise ValueError(msg)
 
     def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
