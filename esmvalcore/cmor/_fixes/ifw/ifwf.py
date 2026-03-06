@@ -123,6 +123,16 @@ class Lwp(Fix):
         return cubes
 
 
+class Od440aer(Fix):
+    """Fixes for od550aer."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = "1"
+        return cubes
+
+
 class Od550aer(Fix):
     """Fixes for od550aer."""
 
