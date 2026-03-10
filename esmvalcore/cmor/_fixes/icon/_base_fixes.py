@@ -584,13 +584,8 @@ class AllVarsBase(IconFix):
         if cube.coords(long_name="depth_below_sea"):
             self._fix_depth(cube, cubes)
 
-        # Remove undesired lev coordinate with length 1
-        lev_coord = DimCoord(0.0, var_name="lev")
-        if cube.coords(lev_coord, dim_coords=True):
-            slices = [slice(None)] * cube.ndim
-            slices[cube.coord_dims(lev_coord)[0]] = 0
-            cube = cube[tuple(slices)]
-            cube.remove_coord(lev_coord)
+        # Remove undesired coordinates of length 1
+        cube = self._remove_undesired_coords(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -795,19 +790,33 @@ class AllVarsBase(IconFix):
 
     def _fix_depth(self, cube: Cube, cubes: CubeList) -> None:
         """Fix ocean depth coordinate."""
-        depth_coord = self.fix_depth_coord_metadata(cube)
+        depth_coord = cube.coord(long_name="depth_below_sea")
+        depth_var_name = depth_coord.var_name
+        depth_coord = self.fix_depth_coord_metadata(cube, coord=depth_coord)
         if depth_coord.has_bounds():
             return
 
-        # Try to get bounds of depth coordinate from depth_2 coordinate that
-        # might be present in other variables loaded from the same file
+        # ICON ocean output usually consists of two different depth
+        # coordinates, "depth" and "depth_2". One of them is the depth at the
+        # cell centers, the other at the cell boundaries. The nomenclature is
+        # not consistent on which coordinate is which. Thus, if possible, we
+        # try to add the cell boundaries from the other depth coordinate here
+        # (potentially available from other variables loaded from same file).
+        if depth_var_name == "depth":
+            other_depth_var_name = "depth_2"
+        else:
+            other_depth_var_name = "depth"
         for other_cube in cubes:
-            if not other_cube.coords(var_name="depth_2"):
+            if not other_cube.coords(var_name=other_depth_var_name):
                 continue
-            depth_2_coord = other_cube.coord(var_name="depth_2")
+            depth_2_coord = other_cube.coord(var_name=other_depth_var_name)
             depth_2_coord.convert_units(depth_coord.units)
             bounds = depth_2_coord.core_points()
-            depth_coord.bounds = np.stack((bounds[:-1], bounds[1:]), axis=-1)
+            if bounds.shape == (depth_coord.shape[0] + 1,):
+                depth_coord.bounds = np.stack(
+                    (bounds[:-1], bounds[1:]),
+                    axis=-1,
+                )
 
     def _fix_lat(self, cube: Cube) -> tuple[int, ...]:
         """Fix latitude coordinate of cube."""
@@ -1120,6 +1129,20 @@ class AllVarsBase(IconFix):
         # Modify time coordinate in place
         time_coord.points = new_dt_points
         time_coord.units = new_t_units
+
+    def _remove_undesired_coords(self, cube: Cube) -> Cube:
+        """Remove undesired coordinates of length 1 from cube."""
+        coords_to_remove = [
+            DimCoord(0.0, var_name="lev"),
+            DimCoord(0.0, var_name="ice_class"),
+        ]
+        for coord in coords_to_remove:
+            if cube.coords(coord, dim_coords=True):
+                slices: list[int | slice] = [slice(None)] * cube.ndim
+                slices[cube.coord_dims(coord)[0]] = 0
+                cube = cube[tuple(slices)]
+                cube.remove_coord(coord)
+        return cube
 
 
 class NegateData(IconFix):
