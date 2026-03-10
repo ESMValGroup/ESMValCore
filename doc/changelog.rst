@@ -193,6 +193,7 @@ Documentation
 -  Add notes to ``climate_statistics`` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
 -  Update documentation on derived variables with new CMOR tables configuration (:pull:`2979`) by :user:`schlunma`
 -  Update contact info (:pull:`2985`) by :user:`axel-lauer`
+-  Update contact email in documentation (:pull:`3008`) by :user:`axel-lauer`
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -244,6 +245,7 @@ Improvements
 -  Better debug message when local data is not found within the requested timerange (:pull:`2927`) by :user:`bouweandela`
 -  Add float to FacetValue and improve preprocessor filename template error message (:pull:`2931`) by :user:`bouweandela`
 -  Removed unused code from ``Dataset`` class (:pull:`2963`) by :user:`schlunma`
+-  Smarter limit on preprocessor filename length (:pull:`3011`) by :user:`bouweandela`
 
 .. _changelog-v2-13-0:
 
