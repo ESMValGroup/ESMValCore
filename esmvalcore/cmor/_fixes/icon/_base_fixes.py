@@ -790,19 +790,33 @@ class AllVarsBase(IconFix):
 
     def _fix_depth(self, cube: Cube, cubes: CubeList) -> None:
         """Fix ocean depth coordinate."""
-        depth_coord = self.fix_depth_coord_metadata(cube)
+        depth_coord = cube.coord(long_name="depth_below_sea")
+        depth_var_name = depth_coord.var_name
+        depth_coord = self.fix_depth_coord_metadata(cube, coord=depth_coord)
         if depth_coord.has_bounds():
             return
 
-        # Try to get bounds of depth coordinate from depth_2 coordinate that
-        # might be present in other variables loaded from the same file
+        # ICON ocean output usually consists of two different depth
+        # coordinates, "depth" and "depth_2". One of them is the depth at the
+        # cell centers, the other at the cell boundaries. The nomenclature is
+        # not consistent on which coordinate is which. Thus, if possible, we
+        # try to add the cell boundaries from the other depth coordinate here
+        # (potentially available from other variables loaded from same file).
+        if depth_var_name == "depth":
+            other_depth_var_name = "depth_2"
+        else:
+            other_depth_var_name = "depth"
         for other_cube in cubes:
-            if not other_cube.coords(var_name="depth_2"):
+            if not other_cube.coords(var_name=other_depth_var_name):
                 continue
-            depth_2_coord = other_cube.coord(var_name="depth_2")
+            depth_2_coord = other_cube.coord(var_name=other_depth_var_name)
             depth_2_coord.convert_units(depth_coord.units)
             bounds = depth_2_coord.core_points()
-            depth_coord.bounds = np.stack((bounds[:-1], bounds[1:]), axis=-1)
+            if bounds.shape == (depth_coord.shape[0] + 1,):
+                depth_coord.bounds = np.stack(
+                    (bounds[:-1], bounds[1:]),
+                    axis=-1,
+                )
 
     def _fix_lat(self, cube: Cube) -> tuple[int, ...]:
         """Fix latitude coordinate of cube."""

@@ -1112,6 +1112,34 @@ def test_thetao_fix(cubes_ocean_3d, session):
 
 
 @pytest.mark.online
+def test_thetao_fix_switched_depth_coords(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))
+    to_cube.coord("depth").var_name = "depth_2"
+    w_cube.coord("depth").var_name = "depth"
+    cubes = CubeList([to_cube, w_cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
 def test_thetao_fix_already_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
@@ -1146,6 +1174,36 @@ def test_thetao_fix_no_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
     cubes = CubeList([cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert not depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
+def test_thetao_fix_no_bounds_invalid_depth_2(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))[
+        :,
+        :40,
+        :,
+    ]
+    cubes = CubeList([to_cube, w_cube])
 
     fix = get_allvars_fix("Omon", "thetao", session=session)
 
