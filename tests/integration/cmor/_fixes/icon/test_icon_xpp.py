@@ -929,7 +929,8 @@ def test_rtmt_fix(cubes_regular_grid):
     np.testing.assert_allclose(cube.data, [[[0.0, 2.0], [4.0, 6.0]]])
 
 
-# Test siconc (for extra_facets, removal of lev coord and  typesi coordinate)
+# Test siconc (for extra_facets, removal of lev/ice_class coord and typesi
+# coordinate)
 
 
 def test_get_siconc_fix():
@@ -939,7 +940,8 @@ def test_get_siconc_fix():
 
 
 @pytest.mark.online
-def test_siconc_fix(cubes_ocean_3d, session):
+@pytest.mark.parametrize("z_coord_name", ["lev", "ice_class"])
+def test_siconc_fix(z_coord_name, cubes_ocean_3d, session):
     """Test fix."""
     cubes = CubeList(
         [cubes_ocean_3d.extract_cube(NameConstraint(var_name="to")).copy()],
@@ -947,10 +949,10 @@ def test_siconc_fix(cubes_ocean_3d, session):
     cubes[0].var_name = "conc"
     cubes[0].units = None
 
-    # Add lev coord to test removal of it
+    # Add Z-coord to test removal of it
     cubes[0] = cubes[0][:, [0], :]
     cubes[0].remove_coord("depth")
-    cubes[0].add_dim_coord(DimCoord(0.0, var_name="lev"), 1)
+    cubes[0].add_dim_coord(DimCoord(0.0, var_name=z_coord_name), 1)
 
     fix = get_allvars_fix("SImon", "siconc", session=session)
     fixed_cubes = fix.fix_metadata(cubes)
@@ -965,7 +967,7 @@ def test_siconc_fix(cubes_ocean_3d, session):
     check_typesi(cube)
 
     assert cube.shape == (1, 8)
-    assert not cube.coords(var_name="lev")
+    assert not cube.coords(var_name=z_coord_name)
 
     assert cube.dtype == np.float32
     np.testing.assert_allclose(

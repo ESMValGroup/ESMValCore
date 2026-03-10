@@ -584,13 +584,8 @@ class AllVarsBase(IconFix):
         if cube.coords(long_name="depth_below_sea"):
             self._fix_depth(cube, cubes)
 
-        # Remove undesired lev coordinate with length 1
-        lev_coord = DimCoord(0.0, var_name="lev")
-        if cube.coords(lev_coord, dim_coords=True):
-            slices = [slice(None)] * cube.ndim
-            slices[cube.coord_dims(lev_coord)[0]] = 0
-            cube = cube[tuple(slices)]
-            cube.remove_coord(lev_coord)
+        # Remove undesired coordinates of length 1
+        cube = self._remove_undesired_coords(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -1120,6 +1115,20 @@ class AllVarsBase(IconFix):
         # Modify time coordinate in place
         time_coord.points = new_dt_points
         time_coord.units = new_t_units
+
+    def _remove_undesired_coords(self, cube: Cube) -> Cube:
+        """Remove undesired coordinates of length 1 from cube."""
+        coords_to_remove = [
+            DimCoord(0.0, var_name="lev"),
+            DimCoord(0.0, var_name="ice_class"),
+        ]
+        for coord in coords_to_remove:
+            if cube.coords(coord, dim_coords=True):
+                slices: list[int | slice] = [slice(None)] * cube.ndim
+                slices[cube.coord_dims(coord)[0]] = 0
+                cube = cube[tuple(slices)]
+                cube.remove_coord(coord)
+        return cube
 
 
 class NegateData(IconFix):
