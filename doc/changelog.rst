@@ -201,6 +201,7 @@ Fixes for datasets
 -  Fix ERA5 native6 fix to handle single monthly-averaged NetCDF files. (:pull:`2512`) by :user:`rbeucher`
 -  Expand ICON extra facets (:pull:`2965`) by :user:`schlunma`
 -  Copy fixes for obs4MIPs dataset SSMI RSSv07r00 to RSS-v7 (:pull:`2968`) by :user:`bouweandela`
+-  Expand ICON-XPP fix for new model version (:pull:`3014`) by :user:`schlunma`
 
 Installation
 ~~~~~~~~~~~~
