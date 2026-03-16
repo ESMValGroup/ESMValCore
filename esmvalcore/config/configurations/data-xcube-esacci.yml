@@ -8,14 +8,18 @@ projects:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "ccizarr"
         priority: 1
-        values:
+        values: &values
+          # Use this to define the mapping between the short_name used by
+          # ESMValCore and the variable name in the source dataset.
           short_name:
             prw: tcwv
       esa-cci-kc:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "esa-cci-kc"
         priority: 2
+        values: *values
       cciodp:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "cciodp"
         priority: 3
+        values: *values
