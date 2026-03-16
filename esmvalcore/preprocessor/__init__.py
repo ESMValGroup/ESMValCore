@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import logging
 import re
@@ -69,6 +70,7 @@ from esmvalcore.preprocessor._regrid import (
     extract_levels,
     extract_location,
     extract_point,
+    is_dataset,
     regrid,
 )
 from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
@@ -307,7 +309,7 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""
         if isinstance(value, str | int | float):
-            return re.sub("[^a-zA-Z0-9]+", "-", str(value))[:25]
+            return re.sub("[^a-zA-Z0-9]+", "-", str(value))
         return "-".join(normalize(v) for v in value)
 
     normalized_facets = {
@@ -345,7 +347,15 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
     if "timerange" in dataset.facets:
         start_time, end_time = _parse_period(dataset.facets["timerange"])
         filename += f"_{start_time}-{end_time}"
-    filename += ".nc"
+    suffix = ".nc"
+    max_filename_length = 255
+    max_base_length = max_filename_length - len(suffix)
+    if len(filename) > max_base_length:
+        digest_size = 4
+        digest = hashlib.shake_128(filename.encode()).hexdigest(digest_size)
+        suffix = f".{digest}{suffix}"
+        max_base_length = max_filename_length - len(suffix)
+    filename = f"{filename[:max_base_length]}{suffix}"
     return Path(
         dataset.session.preproc_dir,
         dataset.facets.get("diagnostic", ""),  # type: ignore[arg-type]
@@ -619,7 +629,7 @@ class PreprocessorFile(TrackedFile):
         self,
         filename: Path,
         attributes: dict[str, Any] | None = None,
-        settings: dict[str, Any] | None = None,
+        settings: dict[str, dict[str, Any]] | None = None,
         datasets: list[Dataset] | None = None,
     ) -> None:
         if datasets is not None:
@@ -644,6 +654,22 @@ class PreprocessorFile(TrackedFile):
         # Set some preprocessor settings (move all defaults here?)
         if settings is None:
             settings = {}
+
+        # Create a copy of any datasets in settings. This drops the information
+        # in Dataset.files and avoids issues with deepcopying and pickling
+        # those files. This is needed because
+        # esmvalcore.io.intake_esgf.IntakeESGFDataset objects use a
+        # cached_requests.CachedSession object that cannot be deepcopied or
+        # pickled.
+        settings = {
+            fn: {
+                arg: (
+                    value.copy() if is_dataset(value) else copy.deepcopy(value)
+                )
+                for arg, value in kwargs.items()
+            }
+            for fn, kwargs in settings.items()
+        }
         self.settings = copy.deepcopy(settings)
         if attributes is None:
             attributes = {}

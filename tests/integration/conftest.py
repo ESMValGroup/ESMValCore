@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import iris
 import pytest
 
-import esmvalcore.io.local
 from esmvalcore.io.local import (
+    LocalDataSource,
     LocalFile,
-    _replace_tags,
     _select_files,
 )
-from esmvalcore.local import _select_drs
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+    from pathlib import Path
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -36,11 +34,12 @@ def create_test_file(filename, tracking_id=None):
 
 
 def _get_files(  # noqa: C901,PLR0912
+    self: LocalDataSource,
     root_path: Path,
     facets: Facets,
     tracking_id: Iterator[int],
     suffix: str = "nc",
-) -> tuple[list[LocalFile], list[Path]]:
+) -> list[LocalFile]:
     """Return dummy files.
 
     Wildcards are only supported for `dataset` and `institute`; in this case
@@ -55,34 +54,15 @@ def _get_files(  # noqa: C901,PLR0912
     else:
         all_facets = [facets]
 
-    # Globs without expanded facets
-    dir_template = _select_drs("input_dir", facets["project"], "default")  # type: ignore[arg-type]
-    file_template = _select_drs("input_file", facets["project"], "default")  # type: ignore[arg-type]
-    dir_globs = _replace_tags(dir_template, facets)
-    file_globs = _replace_tags(file_template, facets)
-    globs = sorted(
-        root_path / "input" / d / f for d in dir_globs for f in file_globs
-    )
+    self.rootpath = root_path / "input"
+    facets = dict(facets)
+    if "original_short_name" in facets:
+        facets["short_name"] = facets["original_short_name"]
 
     files = []
     for expanded_facets in all_facets:
         filenames = []
-        dir_template = _select_drs(
-            "input_dir",
-            expanded_facets["project"],  # type: ignore[arg-type]
-            "default",
-        )
-        file_template = _select_drs(
-            "input_file",
-            expanded_facets["project"],  # type: ignore[arg-type]
-            "default",
-        )
-
-        dir_globs = _replace_tags(dir_template, expanded_facets)
-        file_globs = _replace_tags(file_template, expanded_facets)
-        filename = str(
-            root_path / "input" / dir_globs[0] / Path(file_globs[0]).name,
-        )
+        filename = str(self._get_glob_patterns(**expanded_facets)[0])
         if filename.endswith("nc"):
             filename = f"{filename[:-2]}{suffix}"
 
@@ -120,7 +100,7 @@ def _get_files(  # noqa: C901,PLR0912
     if "timerange" in facets:
         files = _select_files(files, facets["timerange"])
 
-    return files, globs
+    return files
 
 
 def _tracking_ids(i=0):
@@ -129,37 +109,28 @@ def _tracking_ids(i=0):
         i += 1
 
 
-def _get_find_files_func(
+def _get_find_data_func(
     path: Path,
     suffix: str = "nc",
-) -> Callable[
-    ...,
-    tuple[list[LocalFile], list[Path]] | list[LocalFile],
-]:
+) -> Callable[..., list[LocalFile]]:
     tracking_id = _tracking_ids()
 
-    def find_files(
-        self: esmvalcore.io.local.LocalDataSource,
-        *,
-        debug: bool = False,
+    def find_data(
+        self: LocalDataSource,
         **facets: FacetValue,
-    ) -> tuple[list[LocalFile], list[Path]] | list[LocalFile]:
-        files, file_globs = _get_files(path, facets, tracking_id, suffix)
-        if debug:
-            return files, file_globs
-        return files
+    ) -> list[LocalFile]:
+        return _get_files(self, path, facets, tracking_id, suffix)
 
-    return find_files
+    return find_data
 
 
 @pytest.fixture
-def patched_datafinder(tmp_path: Path, monkeypatch: pytest.MonkeyPath) -> None:
-    find_files = _get_find_files_func(tmp_path)
-    monkeypatch.setattr(
-        esmvalcore.io.local.LocalDataSource,
-        "find_data",
-        find_files,
-    )
+def patched_datafinder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    find_data = _get_find_data_func(tmp_path)
+    monkeypatch.setattr(LocalDataSource, "find_data", find_data)
 
 
 @pytest.fixture
@@ -167,12 +138,8 @@ def patched_datafinder_grib(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    find_files = _get_find_files_func(tmp_path, suffix="grib")
-    monkeypatch.setattr(
-        esmvalcore.io.local.LocalDataSource,
-        "find_data",
-        find_files,
-    )
+    find_data = _get_find_data_func(tmp_path, suffix="grib")
+    monkeypatch.setattr(LocalDataSource, "find_data", find_data)
 
 
 @pytest.fixture
@@ -191,25 +158,17 @@ def patched_failing_datafinder(
     """
     tracking_id = _tracking_ids()
 
-    def find_files(
-        self: esmvalcore.io.local.LocalDataSource,
-        *,
-        debug: bool = False,
+    def find_data(
+        self: LocalDataSource,
         **facets: FacetValue,
-    ) -> tuple[list[LocalFile], list[Path]] | list[LocalFile]:
-        files, file_globs = _get_files(tmp_path, facets, tracking_id)
+    ) -> list[LocalFile]:
+        files = _get_files(self, tmp_path, facets, tracking_id)
         if facets["frequency"] == "fx":
             files = []
         returned_files = []
         for file in files:
             if not ("AAA" in file.name and "rsutcs" in file.name):
                 returned_files.append(file)
-        if debug:
-            return returned_files, file_globs
         return returned_files
 
-    monkeypatch.setattr(
-        esmvalcore.io.local.LocalDataSource,
-        "find_data",
-        find_files,
-    )
+    monkeypatch.setattr(LocalDataSource, "find_data", find_data)

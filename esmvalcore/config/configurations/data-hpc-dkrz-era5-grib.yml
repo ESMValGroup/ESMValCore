@@ -1,0 +1,11 @@
+# Read ERA5 data in GRIB format on Levante at DKRZ (see
+# https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#pool-data-era5-file-and-directory-names
+# for details).
+projects:
+  native6:
+    data:
+      dkrz-era5-grib:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /pool/data/ERA5
+        dirname_template: "{family}/{level}/{type}/{tres}/{grib_id}"
+        filename_template: "{family}{level}{typeid}_{tres}_*_{grib_id}.grb"

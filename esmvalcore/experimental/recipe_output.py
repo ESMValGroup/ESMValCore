@@ -99,8 +99,8 @@ class DiagnosticOutput:
 
     def __init__(self, name, task_output, title=None, description=None):
         self.name = name
-        self.title = title if title else name.title()
-        self.description = description if description else ""
+        self.title = title or name.title()
+        self.description = description or ""
         self.task_output = task_output
 
     def __repr__(self):
@@ -416,9 +416,9 @@ class OutputFile:
         item_class: type[OutputFile]
 
         ext = Path(path).suffix
-        if ext in (".png",):
+        if ext == ".png":
             item_class = ImageFile
-        elif ext in (".nc",):
+        elif ext == ".nc":
             item_class = DataFile
         else:
             item_class = cls
