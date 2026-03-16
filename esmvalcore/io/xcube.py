@@ -166,14 +166,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         if isinstance(requested_datasets, str | int | float):
             requested_datasets = [str(requested_datasets)]
         available_datasets = store.list_data_ids()
-        if self.data_store_id not in _DATASETS_LOGGED:
-            _DATASETS_LOGGED.add(self.data_store_id)
-            logger.debug(
-                "Available datasets in %s are:\n%s",
-                self.data_store_id,
-                "\n".join(sorted(available_datasets)),
-            )
 
+        self.debug_info = (
+            "No dataset matching "
+            + ", ".join(f"'{d}'" for d in requested_datasets)
+            + f" was found in {self.data_store_id}. Available datasets are:\n"
+            + "\n".join(sorted(available_datasets))
+        )
         for data_id in available_datasets:
             for dataset_pattern in requested_datasets:
                 if fnmatch.fnmatchcase(data_id, dataset_pattern):
@@ -186,11 +185,13 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         if fnmatch.fnmatchcase(short_name, short_name_pattern)
                     ]
                     if not xcube_short_names:
-                        logger.debug(
-                            "No variable matching %s found in %s. Available variables are: %s",
-                            requested_xcube_short_names,
-                            data_id,
-                            ", ".join(sorted(available_xcube_short_names)),
+                        self.debug_info = (
+                            "No variable matching "
+                            + ", ".join(
+                                f"'{s}'" for s in requested_xcube_short_names
+                            )
+                            + f" was found in dataset '{data_id}'. Available variables are:\n"
+                            + "\n".join(sorted(available_xcube_short_names))
                         )
                         continue
 
@@ -253,5 +254,12 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                     dataset.attributes = description.attrs
 
                     result.append(dataset)
+
+        if result:
+            self.debug_info = (
+                f"Found dataset{'' if len(result) == 1 else 's'} "
+                f"{', '.join(d.name for d in result)} in data store "
+                f"{self.data_store_id}."
+            )
 
         return result
