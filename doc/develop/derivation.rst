@@ -71,4 +71,12 @@ the definition of derived variables. To contribute a completely new derived
 variable, it is necessary to define a name for it and to provide the
 corresponding CMOR table. This is to guarantee the proper metadata definition
 is attached to the derived data. Such custom CMOR tables are collected as part
-of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+of the ESMValCore package. An example entry for CMIP6 looks like:
+
+.. literalinclude:: ../../esmvalcore/cmor/tables/cmip6-custom/CMIP6_custom.json
+   :start-at: "asr": {
+   :end-at: },
+   :caption: The ``asr`` variable definition in the custom CMIP6 table at `esmvalcore/cmor/tables/cmip6/tables/cmip6-custom/CMIP6_custom.json <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/tables/cmip6-custom/CMIP6_custom.json>`__.
+
+More details on this can also be found in the documentation of the
+:ref:`cmor_table_configuration`.

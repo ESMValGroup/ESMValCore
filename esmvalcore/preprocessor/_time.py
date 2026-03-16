@@ -310,7 +310,7 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
         Start/end times can not be parsed by isodate.
 
     """
-    start_date = _parse_start_date(timerange.split("/")[0])
+    start_date = _parse_start_date(timerange.split("/", maxsplit=1)[0])
     end_date = _parse_end_date(timerange.split("/")[1])
 
     if isinstance(start_date, isodate.duration.Duration):
@@ -925,7 +925,7 @@ def climate_statistics(
     period = period.lower()
 
     # Use Cube.collapsed when full period is requested
-    if period in ("full",):
+    if period == "full":
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
             operator,
@@ -1033,7 +1033,7 @@ def anomalies(
         period=period,
         seasons=seasons,
     )
-    if period in ["full"]:
+    if period == "full":
         metadata = copy.deepcopy(cube.metadata)
         cube = cube - reference
         cube.metadata = metadata
@@ -1800,6 +1800,14 @@ def _transform_to_lst_lazy(
 
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
     """
+    # da.apply_gufunc internally casts all input arrays to Dask, which might
+    # produce misaligned chunks. To avoid this, make sure `time_index` and
+    # `mask` are also Dask arrays which are similarly chunked as `data` along
+    # the shared dimensions (time, lon). Since `data` is not chunked along the
+    # shared dimensions (time, lon) and `time_index` and `mask` have shape
+    # (time, lon), `time_index` and `mask` must not be chunked at all.
+    time_index = da.from_array(time_index, chunks=time_index.shape)
+    mask = da.from_array(mask, chunks=time_index.shape)
     return da.apply_gufunc(
         _transform_to_lst_eager,
         "(t,x),(t,x),(t,x)->(t,x)",

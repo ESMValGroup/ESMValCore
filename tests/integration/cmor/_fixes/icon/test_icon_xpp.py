@@ -929,7 +929,8 @@ def test_rtmt_fix(cubes_regular_grid):
     np.testing.assert_allclose(cube.data, [[[0.0, 2.0], [4.0, 6.0]]])
 
 
-# Test siconc (for extra_facets, removal of lev coord and  typesi coordinate)
+# Test siconc (for extra_facets, removal of lev/ice_class coord and typesi
+# coordinate)
 
 
 def test_get_siconc_fix():
@@ -939,7 +940,8 @@ def test_get_siconc_fix():
 
 
 @pytest.mark.online
-def test_siconc_fix(cubes_ocean_3d, session):
+@pytest.mark.parametrize("z_coord_name", ["lev", "ice_class"])
+def test_siconc_fix(z_coord_name, cubes_ocean_3d, session):
     """Test fix."""
     cubes = CubeList(
         [cubes_ocean_3d.extract_cube(NameConstraint(var_name="to")).copy()],
@@ -947,10 +949,10 @@ def test_siconc_fix(cubes_ocean_3d, session):
     cubes[0].var_name = "conc"
     cubes[0].units = None
 
-    # Add lev coord to test removal of it
+    # Add Z-coord to test removal of it
     cubes[0] = cubes[0][:, [0], :]
     cubes[0].remove_coord("depth")
-    cubes[0].add_dim_coord(DimCoord(0.0, var_name="lev"), 1)
+    cubes[0].add_dim_coord(DimCoord(0.0, var_name=z_coord_name), 1)
 
     fix = get_allvars_fix("SImon", "siconc", session=session)
     fixed_cubes = fix.fix_metadata(cubes)
@@ -965,7 +967,7 @@ def test_siconc_fix(cubes_ocean_3d, session):
     check_typesi(cube)
 
     assert cube.shape == (1, 8)
-    assert not cube.coords(var_name="lev")
+    assert not cube.coords(var_name=z_coord_name)
 
     assert cube.dtype == np.float32
     np.testing.assert_allclose(
@@ -1110,6 +1112,34 @@ def test_thetao_fix(cubes_ocean_3d, session):
 
 
 @pytest.mark.online
+def test_thetao_fix_switched_depth_coords(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))
+    to_cube.coord("depth").var_name = "depth_2"
+    w_cube.coord("depth").var_name = "depth"
+    cubes = CubeList([to_cube, w_cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
 def test_thetao_fix_already_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
@@ -1144,6 +1174,36 @@ def test_thetao_fix_no_bounds(cubes_ocean_3d, session):
     """Test fix."""
     cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
     cubes = CubeList([cube])
+
+    fix = get_allvars_fix("Omon", "thetao", session=session)
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "thetao"
+    assert cube.standard_name == "sea_water_potential_temperature"
+    assert cube.long_name == "Sea Water Potential Temperature"
+    assert cube.units == "degC"
+    assert "positive" not in cube.attributes
+
+    depth_coord = cube.coord("depth")
+    assert not depth_coord.has_bounds()
+
+    assert cube.dtype == np.float32
+    assert cube.shape == (1, 47, 8)
+
+
+@pytest.mark.online
+def test_thetao_fix_no_bounds_invalid_depth_2(cubes_ocean_3d, session):
+    """Test fix."""
+    to_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="to"))
+    w_cube = cubes_ocean_3d.extract_cube(NameConstraint(var_name="w"))[
+        :,
+        :40,
+        :,
+    ]
+    cubes = CubeList([to_cube, w_cube])
 
     fix = get_allvars_fix("Omon", "thetao", session=session)
 

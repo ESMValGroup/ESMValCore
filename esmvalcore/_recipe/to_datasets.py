@@ -599,5 +599,7 @@ def _representative_datasets(dataset: Dataset) -> list[Dataset]:
     copy.supplementaries = []
     representative_datasets = _get_input_datasets(copy)
     for representative_dataset in representative_datasets:
-        representative_dataset.supplementaries = dataset.supplementaries
+        representative_dataset.supplementaries = [
+            d.copy() for d in dataset.supplementaries
+        ]
     return representative_datasets
