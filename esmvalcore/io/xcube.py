@@ -136,8 +136,7 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     open_params: dict[str, Any] = field(default_factory=dict, repr=False)
     """Parameters to use when opening the data."""
 
-    def find_data(self, **facets: FacetValue) -> list[XCubeDataset]:  # noqa: C901,PLR0912
-        # TODO: fix complexity
+    def find_data(self, **facets: FacetValue) -> list[XCubeDataset]:
         """Find data.
 
         Parameters
@@ -195,30 +194,6 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         )
                         continue
 
-                    # TODO: Maybe this is too complicated and we should only
-                    # decide which variables to keep/drop after load and conversion
-                    # to iris cube.
-                    open_params = copy.deepcopy(self.open_params)
-                    open_params_schema = store.get_open_data_params_schema()
-                    if "variable_names" in open_params_schema.properties:
-                        open_params["variable_names"] = xcube_short_names
-                    elif "drop_variables" in open_params_schema.properties:
-                        drop_variables = {
-                            short_name
-                            for short_name in available_xcube_short_names
-                            if short_name not in xcube_short_names
-                        }
-                        for coord in description.coords.values():
-                            if bound_var := coord.attrs.get("bounds"):
-                                drop_variables.remove(bound_var)
-                        for data_var in description.data_vars.values():
-                            # TODO: keep cell measures
-                            for ancillary_var in data_var.attrs.get(
-                                "ancillary_variables",
-                                "",
-                            ).split():
-                                drop_variables.remove(ancillary_var)
-                        open_params["drop_variables"] = sorted(drop_variables)
                     timerange = f"{description.time_range[0]}/{description.time_range[1]}".replace(
                         "-",
                         "",
@@ -243,7 +218,7 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                             "timerange": timerange,
                         },
                         store=store,
-                        open_params=open_params,
+                        open_params=copy.deepcopy(self.open_params),
                     )
                     frequency = FREQUENCIES.get(
                         description.attrs.get("time_coverage_resolution", ""),
