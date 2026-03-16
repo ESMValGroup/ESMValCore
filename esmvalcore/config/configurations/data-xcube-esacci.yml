@@ -8,6 +8,9 @@ projects:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "ccizarr"
         priority: 1
+        values:
+          short_name:
+            prw: tcwv
       esa-cci-kc:
         type: "esmvalcore.io.xcube.XCubeDataSource"
         data_store_id: "esa-cci-kc"

@@ -18,14 +18,15 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-import iris.cube
-import iris.std_names
 import xcube.core.store
+from fixer import fix
 
 import esmvalcore.io.protocol
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
+    import iris.cube
+
     from esmvalcore.typing import Facets, FacetValue
 
 
@@ -92,22 +93,8 @@ class XCubeDataset(esmvalcore.io.protocol.DataElement):
             The loaded data.
         """
         dataset = self.store.open_data(self.name, **self.open_params)
-        # Keep only variables matching the "short_name" facet.
-        short_names = self.facets.get("short_name", [])
-        if isinstance(short_names, str | int):
-            short_names = [str(short_names)]
-        if short_names:
-            dataset = dataset[short_names]
-
-        # Drop invalid standard_names.
-        # TODO: move this to a standalone fixes package.
-        for data_var in dataset.data_vars.values():
-            if (
-                "standard_name" in data_var.attrs
-                and data_var.attrs["standard_name"]
-                not in iris.std_names.STD_NAMES
-            ):
-                data_var.attrs.pop("standard_name")
+        dataset = fix(dataset, self.name)
+        dataset.attrs["source_file"] = repr(self)
 
         # Cache the attributes.
         self.attributes = copy.deepcopy(dataset.attrs)
@@ -140,6 +127,9 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     <https://xcube.readthedocs.io/en/latest/dataaccess.html#available-data-stores>`__.
     """
 
+    values: dict[str, dict[str, str]] = field(default_factory=dict)
+    """Mapping between the ESMValCore and xcube facet values."""
+
     data_store_params: dict[str, Any] = field(default_factory=dict, repr=False)
     """Parameters to use when creating the data store."""
 
@@ -168,6 +158,10 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         requested_short_names = facets.get("short_name", "*")
         if isinstance(requested_short_names, str | int | float):
             requested_short_names = [str(requested_short_names)]
+        requested_xcube_short_names = [
+            self.values.get("short_name", {}).get(short_name, short_name)
+            for short_name in requested_short_names
+        ]
         requested_datasets = facets.get("dataset", "*")
         if isinstance(requested_datasets, str | int | float):
             requested_datasets = [str(requested_datasets)]
@@ -184,19 +178,19 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
             for dataset_pattern in requested_datasets:
                 if fnmatch.fnmatchcase(data_id, dataset_pattern):
                     description = store.describe_data(data_id)
-                    available_short_names = list(description.data_vars)
-                    short_names = [
+                    available_xcube_short_names = list(description.data_vars)
+                    xcube_short_names = [
                         short_name
-                        for short_name in available_short_names
-                        for short_name_pattern in requested_short_names
+                        for short_name in available_xcube_short_names
+                        for short_name_pattern in requested_xcube_short_names
                         if fnmatch.fnmatchcase(short_name, short_name_pattern)
                     ]
-                    if not short_names:
+                    if not xcube_short_names:
                         logger.debug(
-                            "No variable matching % found in %s. Available variables are: %s",
-                            requested_short_names,
+                            "No variable matching %s found in %s. Available variables are: %s",
+                            requested_xcube_short_names,
                             data_id,
-                            ", ".join(sorted(available_short_names)),
+                            ", ".join(sorted(available_xcube_short_names)),
                         )
                         continue
 
@@ -206,12 +200,12 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                     open_params = copy.deepcopy(self.open_params)
                     open_params_schema = store.get_open_data_params_schema()
                     if "variable_names" in open_params_schema.properties:
-                        open_params["variable_names"] = short_names
+                        open_params["variable_names"] = xcube_short_names
                     elif "drop_variables" in open_params_schema.properties:
                         drop_variables = {
                             short_name
-                            for short_name in available_short_names
-                            if short_name not in short_names
+                            for short_name in available_xcube_short_names
+                            if short_name not in xcube_short_names
                         }
                         for coord in description.coords.values():
                             if bound_var := coord.attrs.get("bounds"):
@@ -228,6 +222,14 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                         "-",
                         "",
                     )
+                    short_names = [
+                        short_name
+                        for short_name, xcube_short_name in self.values.get(
+                            "short_name",
+                            {},
+                        ).items()
+                        if xcube_short_name in xcube_short_names
+                    ]
                     dataset = XCubeDataset(
                         name=data_id,
                         facets={

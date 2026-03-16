@@ -68,3 +68,7 @@ dependencies:
   - pytest-mock
   - pytest-xdist
   # Not on conda forge - vprof
+  - pip:
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer-cmip7
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer-esa-cci
