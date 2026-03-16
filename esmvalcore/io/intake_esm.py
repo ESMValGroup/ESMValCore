@@ -217,8 +217,6 @@ class IntakeEsmDataSource(DataSource):
         # Return a list of datasets, with one IntakeEsmDataset per dataset_id.
         result: list[IntakeEsmDataset] = []
 
-        # @CT: Made it to here, still some work to do after this bit
-
         inverse_values = {
             our_facet: {
                 their_value: our_value
