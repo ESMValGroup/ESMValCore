@@ -195,6 +195,16 @@ IFW:
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
+MONARCH:
+  cmor_strict: false
+  input_dir:
+    default: '{exp}/{short_name}'
+  input_file:
+    default: '*.nc'
+  output_file: '{project}_{dataset}_{exp}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
 CESM:
   cmor_strict: false
   input_dir:
