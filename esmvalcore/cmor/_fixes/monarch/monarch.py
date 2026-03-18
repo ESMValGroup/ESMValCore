@@ -119,12 +119,11 @@ class AllVars(Fix):
 
         # remove longitude = 180.0 as this is the same as longitude = -180.0
         # which leads to trouble because of the non strictly monotonic coordinates
-        # also remove unused level dimension
+        # also remove time step 25 as this is 00:00 the next day and unused level dimension.
 
         #outcube = cube.intersection(longitude=(-180.,179.9), latitude=(-90.0, 90.0), ignore_bounds=True)
         #outcube = cube.extract(iris.Constraint(longitude=lambda cell: -180.0 <= cell.point < 180.0))
-        #outcube = cube[..., :-1]
-        cube = cube[:, 0, :, :-1]
+        cube = cube[:-1, 0, :, :-1]
 
         """Fix longitude coordinate from -180:180 to 0:360."""
         lon_axis = cube.coord_dims("longitude")
