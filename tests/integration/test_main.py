@@ -216,6 +216,23 @@ def test_config_show(
     assert cfg == reference
 
 
+def test_config_show_single_project(
+    capsys: pytest.CaptureFixture,
+    cfg_default: Config,
+) -> None:
+    """Test esmvaltool config show command for a single project."""
+    with arguments("esmvaltool", "config", "show", "--project=CMIP7"):
+        run()
+    stdout = capsys.readouterr().out
+    expected_header = "# Current configuration for project 'CMIP7', excluding the keys 'extra_facets':\n"
+    assert expected_header in stdout
+    cfg_txt = stdout.split(expected_header)[1]
+    cfg = yaml.safe_load(cfg_txt)
+    assert "projects" in cfg
+    assert "CMIP7" in cfg["projects"]
+    assert "CMIP6" not in cfg["projects"]
+
+
 def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
     """Test that the `esmvaltool config show` command produces readable results."""
     with arguments("esmvaltool", "config", "show"):
