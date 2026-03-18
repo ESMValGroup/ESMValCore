@@ -205,7 +205,7 @@ def test_config_show(
     cfg_default: Config,
 ) -> None:
     """Test esmvaltool config show command."""
-    with arguments("esmvaltool", "config", "show", "--filter=None"):
+    with arguments("esmvaltool", "config", "show", "--filter="):
         run()
     stdout = capsys.readouterr().out
     expected_header = "# Current configuration:\n"
@@ -231,6 +231,24 @@ def test_config_show_single_project(
     assert "projects" in cfg
     assert "CMIP7" in cfg["projects"]
     assert "CMIP6" not in cfg["projects"]
+
+
+def test_config_show_filter(
+    capsys: pytest.CaptureFixture,
+    cfg_default: Config,
+) -> None:
+    """Test esmvaltool config show command for a single project."""
+    with arguments("esmvaltool", "config", "show", "--filter=projects"):
+        run()
+    stdout = capsys.readouterr().out
+    expected_header = (
+        "# Current configuration, excluding the keys 'projects':\n"
+    )
+    assert expected_header in stdout
+    cfg_txt = stdout.split(expected_header)[1]
+    cfg = yaml.safe_load(cfg_txt)
+    assert cfg
+    assert "projects" not in cfg
 
 
 def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
