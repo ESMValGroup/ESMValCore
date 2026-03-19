@@ -598,8 +598,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         try:
             globs = self._get_glob_patterns(**facets)
         except MissingFacetError as exc:
-            self.debug_info = str(exc)
-            logger.debug(self.debug_info)
+            self.debug_info = exc.args[0]
             return []
         self.debug_info = "No files found matching glob pattern " + "\n".join(
             str(g) for g in globs

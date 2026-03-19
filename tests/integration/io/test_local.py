@@ -216,6 +216,31 @@ def test_find_data(root, cfg):
         assert str(pattern) in data_source.debug_info
 
 
+def test_find_data_facet_missing() -> None:
+    """Test that a MissingFacetError is raised if a required facet is missing."""
+    data_source = LocalDataSource(
+        name="test-data-source",
+        project="CMIP6",
+        rootpath=Path("/data/cmip6"),
+        priority=1,
+        dirname_template="{dataset}/{exp}/{ensemble}",
+        filename_template="{short_name}.nc",
+    )
+    facets = {
+        "short_name": "tas",
+        "dataset": "test-dataset",
+        "exp": ["historical", "ssp585"],
+    }
+    expected_message = (
+        "Unable to complete paths 'test-dataset/historical/{ensemble}', and "
+        "'test-dataset/ssp585/{ensemble}' because the facet 'ensemble' has "
+        "not been specified."
+    )
+    files = data_source.find_data(**facets)
+    assert not files
+    assert data_source.debug_info == expected_message
+
+
 def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     monkeypatch.setitem(
