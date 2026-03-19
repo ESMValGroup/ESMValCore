@@ -16,6 +16,7 @@ import copy
 import fnmatch
 import logging
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import xcube.core.store
@@ -136,6 +137,48 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
     open_params: dict[str, Any] = field(default_factory=dict, repr=False)
     """Parameters to use when opening the data."""
 
+    @cached_property
+    def store(self) -> xcube.core.store.store.DataStore:
+        """The store containing the data."""
+        return xcube.core.store.new_data_store(
+            self.data_store_id,
+            **self.data_store_params,
+        )
+
+    @cached_property
+    def _available_datasets(self) -> list[str]:
+        return self.store.list_data_ids()
+
+    def _get_frequency(
+        self,
+        description: xcube.core.store.descriptor.DatasetDescriptor,
+    ) -> str | None:
+        """Get the frequency of the dataset.
+
+        Parameters
+        ----------
+        description:
+            The description of the dataset to get the frequency from.
+
+        Returns
+        -------
+        :
+            The frequency of the dataset, or ``None`` if it cannot be determined.
+        """
+        frequency = FREQUENCIES.get(
+            description.attrs.get("time_coverage_resolution", ""),
+        )
+        if not frequency:
+            # Try to extract the frequency from the dataset name.
+            values = [
+                v
+                for v in FREQUENCIES.values()
+                if v in description.data_id.split(".")
+            ]
+            if len(values) == 1:
+                frequency = values[0]
+        return frequency
+
     def find_data(self, **facets: FacetValue) -> list[XCubeDataset]:
         """Find data.
 
@@ -149,10 +192,6 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         :
             A list of data elements that have been found.
         """
-        store = xcube.core.store.new_data_store(
-            self.data_store_id,
-            **self.data_store_params,
-        )
         result = []
         requested_short_names = facets.get("short_name", "*")
         if isinstance(requested_short_names, str | int | float):
@@ -164,18 +203,19 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
         requested_datasets = facets.get("dataset", "*")
         if isinstance(requested_datasets, str | int | float):
             requested_datasets = [str(requested_datasets)]
-        available_datasets = store.list_data_ids()
 
         self.debug_info = (
             "No dataset matching "
             + ", ".join(f"'{d}'" for d in requested_datasets)
             + f" was found in {self.data_store_id}. Available datasets are:\n"
-            + "\n".join(sorted(available_datasets))
+            + "\n".join(sorted(self._available_datasets))
         )
-        for data_id in available_datasets:
+        for data_id in self._available_datasets:
             for dataset_pattern in requested_datasets:
                 if fnmatch.fnmatchcase(data_id, dataset_pattern):
-                    description = store.describe_data(data_id)
+                    description: xcube.core.store.descriptor.DatasetDescriptor = self.store.describe_data(
+                        data_id,
+                    )
                     available_xcube_short_names = list(description.data_vars)
                     xcube_short_names = [
                         short_name
@@ -217,14 +257,10 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                             ),
                             "timerange": timerange,
                         },
-                        store=store,
+                        store=self.store,
                         open_params=copy.deepcopy(self.open_params),
                     )
-                    frequency = FREQUENCIES.get(
-                        description.attrs.get("time_coverage_resolution", ""),
-                    )
-                    if frequency:
-                        # Assign the frequency facet if it is a known frequency.
+                    if frequency := self._get_frequency(description):
                         dataset.facets["frequency"] = frequency
                     dataset.attributes = description.attrs
 
