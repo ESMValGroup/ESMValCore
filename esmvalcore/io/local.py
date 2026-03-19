@@ -61,7 +61,7 @@ import esmvalcore.io.protocol
 from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Iterable
+    from collections.abc import Iterable
 
     from netCDF4 import Variable
 
@@ -420,28 +420,28 @@ def _select_files(
     return selection
 
 
-class MissingFacetError(KeyError):
+class _MissingFacetError(KeyError):
     """Error raised when a facet required for filling the template is missing."""
 
 
-def format_collection(collection: Collection[Any]) -> str:
-    """Format a collection of items as a string for use in messages.
+def _format_iterable(iterable: Iterable[Any]) -> str:
+    """Format an iterable as a string for use in messages.
 
     Parameters
     ----------
-    collection:
-        The collection of items to format.
+    iterable:
+        The iterable to format.
 
     Returns
     -------
     :
         The formatted string.
     """
-    items = [f"'{item}'" for item in sorted(collection)]
+    items = [f"'{item}'" for item in sorted(iterable)]
     if len(items) > 1:
         items[-1] = f"and {items[-1]}"
-    txt = ", ".join(items)
-    return f"s {txt}" if len(collection) > 1 else f" {txt}"
+    txt = " ".join(items) if len(items) == 2 else ", ".join(items)
+    return f"s {txt}" if len(items) > 1 else f" {txt}"
 
 
 def _replace_tags(
@@ -483,12 +483,12 @@ def _replace_tags(
         pathset = _replace_tag(pathset, original_tag, replacewith)
     if failed:
         msg = (
-            f"Unable to complete path{format_collection(pathset)} because "
-            f"the facet{format_collection(failed)}"
+            f"Unable to complete path{_format_iterable(pathset)} because "
+            f"the facet{_format_iterable(failed)}"
             + (" has" if len(failed) == 1 else " have")
             + " not been specified."
         )
-        raise MissingFacetError(msg)
+        raise _MissingFacetError(msg)
     return [Path(p) for p in pathset]
 
 
@@ -597,7 +597,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
 
         try:
             globs = self._get_glob_patterns(**facets)
-        except MissingFacetError as exc:
+        except _MissingFacetError as exc:
             self.debug_info = exc.args[0]
             return []
         self.debug_info = "No files found matching glob pattern " + "\n".join(

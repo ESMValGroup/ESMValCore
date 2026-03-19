@@ -232,7 +232,7 @@ def test_find_data_facet_missing() -> None:
         "exp": ["historical", "ssp585"],
     }
     expected_message = (
-        "Unable to complete paths 'test-dataset/historical/{ensemble}', and "
+        "Unable to complete paths 'test-dataset/historical/{ensemble}' and "
         "'test-dataset/ssp585/{ensemble}' because the facet 'ensemble' has "
         "not been specified."
     )

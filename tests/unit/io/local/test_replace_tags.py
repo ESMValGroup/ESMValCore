@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore.io.local import MissingFacetError, _replace_tags
+from esmvalcore.io.local import (
+    _MissingFacetError,
+    _replace_tags,
+)
 
 VARIABLE = {
     "project": "CMIP6",
@@ -65,19 +68,20 @@ def test_replace_tags_missing_facet():
         "Unable to complete path 'tas_{missing}_*.nc' because the facet "
         "'missing' has not been specified."
     )
-    with pytest.raises(MissingFacetError, match=re.escape(expected_message)):
+    with pytest.raises(_MissingFacetError, match=re.escape(expected_message)):
         _replace_tags(paths, variable)
 
 
 def test_replace_tags_missing_facets():
     """Check that a MissingFacetError is raised if multiple facets are missing."""
-    paths = ["{short_name}_{missing}_{other}_*.nc"]
+    paths = ["{missing1}_{short_name}_{missing2}_{missing3}_*.nc"]
     variable = {"short_name": "tas"}
     expected_message = (
-        "Unable to complete path 'tas_{missing}_{other}_*.nc' because the facets "
-        "'missing', and 'other' have not been specified."
+        "Unable to complete path '{missing1}_tas_{missing2}_{missing3}_*.nc' "
+        "because the facets 'missing1', 'missing2', and 'missing3' have not "
+        "been specified."
     )
-    with pytest.raises(MissingFacetError, match=re.escape(expected_message)):
+    with pytest.raises(_MissingFacetError, match=re.escape(expected_message)):
         _replace_tags(paths, variable)
 
 
