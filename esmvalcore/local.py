@@ -21,10 +21,12 @@ from esmvalcore.config._config import (
     get_project_config,
     load_config_developer,
 )
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
     _filter_versions_called_latest,
+    _MissingFacetError,
     _replace_tags,
     _select_latest_version,
 )
@@ -300,7 +302,10 @@ def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     if isinstance(variable.get("exp"), (list, tuple)):
         variable = dict(variable)
         variable["exp"] = "-".join(variable["exp"])
-    outfile = _replace_tags(cfg["output_file"], variable)[0]
+    try:
+        outfile = _replace_tags(cfg["output_file"], variable)[0]
+    except _MissingFacetError as exc:
+        raise RecipeError(exc.args[0]) from exc
     if "timerange" in variable:
         timerange = variable["timerange"].replace("/", "-")
         outfile = Path(f"{outfile}_{timerange}")

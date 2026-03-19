@@ -14,6 +14,7 @@ import esmvalcore.cmor.table
 import esmvalcore.config._config
 import esmvalcore.local
 from esmvalcore.config import CFG
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -81,6 +82,30 @@ def test_get_output_file(monkeypatch, cfg):
     output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
     expected = Path(cfg["output_file"])
     assert output_file == expected
+
+
+def test_get_output_file_missing_facets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that a RecipeError is raised if a required facet is missing."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
+    facets = {
+        "project": "CMIP6",
+        "mip": "Amon",
+        "short_name": "tas",
+    }
+    expected_message = (
+        "Unable to complete path 'CMIP6_{dataset}_Amon_{exp}_{ensemble}_tas"
+        "_{grid}' because the facets 'dataset', 'ensemble', 'exp', and 'grid' "
+        "have not been specified."
+    )
+    with pytest.raises(RecipeError, match=expected_message):
+        _get_output_file(facets, Path("/preproc/dir"))
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
