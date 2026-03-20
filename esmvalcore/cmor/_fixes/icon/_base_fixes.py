@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import shutil
@@ -326,17 +327,14 @@ class IconFix(NativeDatasetFix):
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
         """Try to get grid from the ICON rootpath."""
-        glob_patterns: list[Path] = []
         for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
             if isinstance(data_source, esmvalcore.io.local.LocalDataSource):
-                glob_patterns.extend(
-                    data_source._get_glob_patterns(**self.extra_facets),  # noqa: SLF001
-                )
-        possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
-        for grid_path in possible_grid_paths:
-            if grid_path.is_file():
-                logger.debug("Using ICON grid file '%s'", grid_path)
-                return self._load_cubes(grid_path)
+                ds = copy.deepcopy(data_source)
+                ds.filename_template = grid_name
+                files = ds.find_data(**self.extra_facets)
+                if files:
+                    logger.debug("Using ICON grid file '%s'", files[0])
+                    return files[0].to_iris()
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:

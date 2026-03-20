@@ -164,7 +164,10 @@ class DataSource(LocalDataSource):
 
     def get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
-        return self._get_glob_patterns(**facets)
+        try:
+            return self._get_glob_patterns(**facets)
+        except _MissingFacetError as exc:
+            raise RecipeError(exc.args[0]) from exc
 
     def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
         """Extract facets from path."""
@@ -273,7 +276,10 @@ def find_files(
     if debug:
         globs = []
         for data_source in data_sources:
-            globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            try:
+                globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            except _MissingFacetError as exc:
+                raise RecipeError(exc.args[0]) from exc
         return files, sorted(globs)
     return files
 
