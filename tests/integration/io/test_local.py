@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import os
 import pprint
+import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
@@ -21,6 +23,9 @@ from esmvalcore.io.local import (
     _parse_period,
 )
 from esmvalcore.local import _get_output_file, _select_drs, find_files
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 # Load test configuration
 with open(
@@ -171,6 +176,34 @@ def test_find_files(monkeypatch, root, cfg, mocker):
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     assert [Path(g) for g in globs] == sorted(ref_globs)
     esmvalcore.local._ensure_config_developer_drs.assert_called_once()
+
+
+def test_find_files_missing_facets(
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    """Test that a RecipeError is raised if a required facet is missing."""
+    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
+    monkeypatch.setitem(CFG, "drs", {"CMIP6": "default"})
+    monkeypatch.setitem(CFG, "rootpath", {"CMIP6": "/data/cmip6"})
+    facets = {
+        "project": "CMIP6",
+        "mip": "Amon",
+        "short_name": "tas",
+    }
+    expected_message = (
+        "Unable to complete path 'tas_Amon_{dataset}_{exp}_{ensemble}_{grid}*."
+        "nc' because the facets 'dataset', 'ensemble', 'exp', and 'grid' have "
+        "not been specified."
+    )
+    with pytest.raises(RecipeError, match=re.escape(expected_message)):
+        find_files(debug=True, **facets)
 
 
 def test_find_files_with_facets(monkeypatch, root):
