@@ -83,16 +83,14 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
 def test_find_data_no_results_sets_debug_info() -> None:
     """When catalog.search returns empty results, find_data should return empty list and set debug_info."""
+    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
     data_source = IntakeEsmDataSource(
         name="src",
         project="CMIP6",
         priority=1,
         facets={"short_name": "variable_id"},
+        catalog=cat,
     )
-
-    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-
-    data_source.catalog = cat
 
     result = data_source.find_data(short_name="non_existent_variable")
     assert result == []
@@ -123,8 +121,8 @@ def test_find_data() -> None:
             "version": "version",
         },
         values={},
+        catalog=cat,
     )
-    data_source.catalog = cat
 
     # Call find_data - it should use the df we set and return 8 datasets
     results = data_source.find_data(short_name="tasmax")
@@ -171,8 +169,8 @@ def test_to_iris_nomock():
             "version": "version",
         },
         values={},
+        catalog=cat,
     )
-    data_source.catalog = cat
 
     # Call find_data - it should use the df we set and return 8 datasets.
     # Then we'll load the first one.
@@ -228,8 +226,8 @@ def test_search_time_facet_transformation() -> None:
             "version": "version",
         },
         values={},
+        catalog=cat,
     )
-    data_source.catalog = cat
 
     results = data_source.find_data(timerange="185001/230012")
     dataset = results[0]

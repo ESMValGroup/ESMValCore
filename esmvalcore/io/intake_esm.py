@@ -155,6 +155,11 @@ class IntakeEsmDataSource(DataSource):
     facets: dict[str, str]
     """Mapping between the ESMValCore and intake-esm facet names."""
 
+    catalog: esm_datastore = field(
+        repr=False,
+    )
+    """The intake-esm catalog used to find data."""
+
     time_separator: str = field(repr=False, default="/")
     """ The separator used in time facets. Needed for datasets which have time range
     formats as eg. `185002-185501`, not `185002/185501`. """
@@ -164,12 +169,6 @@ class IntakeEsmDataSource(DataSource):
 
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
-
-    catalog: esm_datastore = field(
-        init=False,
-        repr=False,
-    )
-    """The intake-esm catalog used to find data."""
 
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
