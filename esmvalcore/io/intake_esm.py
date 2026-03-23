@@ -182,9 +182,7 @@ class IntakeEsmDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)]
-            if isinstance(values, str | int | float)
-            else values
+            facet: [str(values)] if isinstance(values, str | int | float) else values
             for facet, values in facets.items()
             if facet in self.facets
         }
@@ -233,11 +231,6 @@ class IntakeEsmDataSource(DataSource):
             path_query = {path_col: valid_paths}
             cat = self.catalog.search(**path_query)
 
-            # Ensure only the requested variable is included in the dataset.
-            # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
-            if "short_name" in normalized_facets:
-                cat = cat.search(**query)
-
             # Retrieve "our" facets associated with the dataset_id.
             dataset_facets = {}
             df = cat.df
@@ -245,16 +238,14 @@ class IntakeEsmDataSource(DataSource):
                 if esm_facet in df:
                     esm_values = df[esm_facet].unique().tolist()
                     our_values = [
-                        inverse_values.get(our_facet, {}).get(v, v)
-                        for v in esm_values
+                        inverse_values.get(our_facet, {}).get(v, v) for v in esm_values
                     ]
                     dataset_facets[our_facet] = our_values
 
             dataset = IntakeEsmDataset(
                 name=key,
                 facets={
-                    k: v[0] if len(v) == 1 else v
-                    for k, v in dataset_facets.items()
+                    k: v[0] if len(v) == 1 else v for k, v in dataset_facets.items()
                 },  # type: ignore[arg-type]
                 catalog=cat,
             )
