@@ -331,7 +331,10 @@ class IconFix(NativeDatasetFix):
             if isinstance(data_source, esmvalcore.io.local.LocalDataSource):
                 ds = copy.deepcopy(data_source)
                 ds.filename_template = grid_name
-                files = ds.find_data(**self.extra_facets)
+                icon_grid_facets = dict(self.extra_facets)
+                icon_grid_facets.pop("timerange", None)
+                icon_grid_facets["frequency"] = "fx"
+                files = ds.find_data(**icon_grid_facets)
                 if files:
                     logger.debug("Using ICON grid file '%s'", files[0])
                     return files[0].to_iris()
@@ -514,21 +517,8 @@ class IconFix(NativeDatasetFix):
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
-                message="Ignoring netCDF variable .* invalid units .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris < 3.8
-            warnings.filterwarnings(
-                "ignore",
-                message="Ignoring invalid units .* on netCDF variable .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris >= 3.8
-            warnings.filterwarnings(
-                "ignore",
                 message="Failed to create 'height' dimension coordinate: The "
-                "'height' DimCoord bounds array must be strictly "
-                "monotonic.",
+                "'height' DimCoord bounds array must be strictly monotonic.",
                 category=UserWarning,
                 module="iris",
             )
