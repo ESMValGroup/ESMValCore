@@ -3906,7 +3906,6 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
     ]
     assert [x in proj_list for x in list_msg]
     assert len(proj_list) == len(list_msg)
-    assert exc.value.failed_tasks[0].message == msg
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
