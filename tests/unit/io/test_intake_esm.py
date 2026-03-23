@@ -26,11 +26,7 @@ with importlib.resources.as_file(
     importlib.resources.files("tests"),
 ) as test_dir:
     esm_ds_fhandle = (
-        Path(test_dir)
-        / "sample_data"
-        / "intake-esm"
-        / "catalog"
-        / "cmip6-netcdf.json"
+        Path(test_dir) / "sample_data" / "intake-esm" / "catalog" / "cmip6-netcdf.json"
     )
 
 
@@ -205,3 +201,40 @@ def test_to_path_dict_nofiles() -> None:
         ret = _to_path_dict(empty_cat, quiet=False)
 
     assert ret == {}
+
+
+def test_search_time_facet_transformation() -> None:
+    """
+    Ensure tht `find_data` correctly transforms time facet values to use the
+    correct separator when searching the catalog.
+    """
+    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
+
+    data_source = IntakeEsmDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        time_separator="-",
+        facets={
+            "activity": "activity_id",
+            "dataset": "source_id",
+            "ensemble": "member_id",
+            "exp": "experiment_id",
+            "institute": "institution_id",
+            "grid": "grid_label",
+            "mip": "table_id",
+            "short_name": "variable_id",
+            "timerange": "time_range",
+            "version": "version",
+        },
+        values={},
+    )
+    data_source.catalog = cat
+
+    results = data_source.find_data(timerange="185001/230012")
+    dataset = results[0]
+    assert isinstance(dataset, IntakeEsmDataset)
+
+    # Raises a KeyError because the dtype of the dataset is Object, which I don't think NCData likes.
+    with pytest.raises(KeyError, match="'O'"):
+        dataset.to_iris()

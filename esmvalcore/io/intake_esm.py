@@ -155,6 +155,10 @@ class IntakeEsmDataSource(DataSource):
     facets: dict[str, str]
     """Mapping between the ESMValCore and intake-esm facet names."""
 
+    time_separator: str = field(repr=False, default="/")
+    """ The separator used in time facets. Needed for datasets which have time range
+    formats as eg. `185002-185501`, not `185002/185501`. """
+
     values: dict[str, dict[str, str]] = field(default_factory=dict)
     """Mapping between the ESMValCore and intake-esm facet values."""
 
@@ -196,6 +200,20 @@ class IntakeEsmDataSource(DataSource):
             for our_facet, their_facet in self.facets.items()
             if our_facet in normalized_facets
         }
+
+        if self.time_separator != "/" and self.facets.get("timerange"):
+            query[self.facets["timerange"]] = [
+                v.replace("/", self.time_separator)
+                for v in query[self.facets["timerange"]]
+            ]
+
+        # Transform time facet values to use the correct separator.
+        for our_facet, their_facet in self.facets.items():
+            if "time" in our_facet.lower() and their_facet in query:
+                query[their_facet] = [
+                    v.replace(self.time_separator, self.time_separator)
+                    for v in query[their_facet]
+                ]
 
         res = self.catalog.search(**query)
 
