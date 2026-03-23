@@ -1,0 +1,18 @@
+projects:
+  CMIP6:
+    data:
+      my-catalog:
+        type: esmvalcore.io.intake_esm.IntakeEsmDataSource
+        facets:
+          activity: "activity_id"
+          dataset: "source_id"
+          ensemble: "member_id"
+          exp: "experiment_id"
+          institute: "institution_id"
+          grid: "grid_label"
+          mip: "table_id"
+          short_name: "variable_id"
+          version: "version"
+          timerange: "time_range"
+        time_separator: "/"
+        catalog: ...

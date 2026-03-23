@@ -26,7 +26,11 @@ with importlib.resources.as_file(
     importlib.resources.files("tests"),
 ) as test_dir:
     esm_ds_fhandle = (
-        Path(test_dir) / "sample_data" / "intake-esm" / "catalog" / "cmip6-netcdf.json"
+        Path(test_dir)
+        / "sample_data"
+        / "intake-esm"
+        / "catalog"
+        / "cmip6-netcdf.json"
     )
 
 
@@ -202,9 +206,9 @@ def test_to_path_dict_nofiles() -> None:
 
 
 def test_search_time_facet_transformation() -> None:
-    """
-    Ensure tht `find_data` correctly transforms time facet values to use the
-    correct separator when searching the catalog.
+    """Test for `time_separator` handling in `find_data`.
+
+    Ensure that `find_data` correctly transforms time facet values to use the correct separator when searching the catalog.
     """
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
 
