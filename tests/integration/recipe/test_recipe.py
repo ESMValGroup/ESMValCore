@@ -3904,7 +3904,7 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         ' obs4MIPs', ' ana4MIPs', ' OBS', ' OBS6', ' native6',
         ' CMIP3', ' CMIP5', ' EMAC', ' ICON', ' IPSLCM'
     ]
-    assert [x in proj_list for x in list_msg]
+    assert len([x in proj_list for x in list_msg]) == len(list_msg)
     assert len(proj_list) == len(list_msg)
 
 
