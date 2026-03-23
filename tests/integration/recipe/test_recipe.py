@@ -3900,9 +3900,21 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
     assert root_msg == msg.split(":")[1]
     list_msg = all_msg.split(":")[2].strip('."').split(",")
     proj_list = [
-        ' ACCESS', ' CESM', ' CMIP6', ' CMIP7', ' CORDEX',
-        ' obs4MIPs', ' ana4MIPs', ' OBS', ' OBS6', ' native6',
-        ' CMIP3', ' CMIP5', ' EMAC', ' ICON', ' IPSLCM'
+        " ACCESS",
+        " CESM",
+        " CMIP6",
+        " CMIP7",
+        " CORDEX",
+        " obs4MIPs",
+        " ana4MIPs",
+        " OBS",
+        " OBS6",
+        " native6",
+        " CMIP3",
+        " CMIP5",
+        " EMAC",
+        " ICON",
+        " IPSLCM",
     ]
     assert len([x in proj_list for x in list_msg]) == len(list_msg)
     assert len(proj_list) == len(list_msg)
