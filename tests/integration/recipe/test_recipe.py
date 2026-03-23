@@ -3895,6 +3895,17 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    all_msg = exc.value.failed_tasks[0].message
+    root_msg = all_msg.split(":")[1]
+    assert root_msg == msg.split(":")[1]
+    list_msg = all_msg.split(":")[2].strip('."').split(",")
+    proj_list = [
+        ' ACCESS', ' CESM', ' CMIP6', ' CMIP7', ' CORDEX',
+        ' obs4MIPs', ' ana4MIPs', ' OBS', ' OBS6', ' native6',
+        ' CMIP3', ' CMIP5', ' EMAC', ' ICON', ' IPSLCM'
+    ]
+    assert [x in proj_list for x in list_msg]
+    assert len(proj_list) == len(list_msg)
     assert exc.value.failed_tasks[0].message == msg
 
 
