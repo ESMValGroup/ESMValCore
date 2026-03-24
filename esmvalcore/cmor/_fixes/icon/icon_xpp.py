@@ -16,6 +16,10 @@ class AllVars(AllVarsBase):
     DEFAULT_PFULL_VAR_NAME = "pres"
 
 
+class Msftmz(IconFix):
+    """Fixes for ``msftmz``."""
+
+
 class Clwvi(IconFix):
     """Fixes for ``clwvi``."""
 
