@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import iris
 from cf_units import Unit
 from iris import NameConstraint
 
@@ -17,7 +16,8 @@ if TYPE_CHECKING:
 
     from esmvalcore.typing import Facets
 
-RHO_CP = iris.coords.AuxCoord(4.09169e6, units=Unit("kg m-3 J kg-1 K-1"))
+RHO_CP = 4.09169e6
+RHO_CP_UNIT = Unit("kg m-3 J kg-1 K-1")
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -48,5 +48,8 @@ class DerivedVariable(DerivedVariableBase):
         """
         cube = cubes.extract_cube(NameConstraint(var_name="thetao"))
         cube.convert_units("K")
-        cube = cube * RHO_CP
+        cube.data = (
+            cube.core_data() * RHO_CP
+        )  # https://github.com/SciTools/iris/issues/6990
+        cube.units *= RHO_CP_UNIT
         return depth_integration(cube)
