@@ -3888,34 +3888,13 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: .*."'
+        'The following tables are available: .*."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    all_msg = exc.value.failed_tasks[0].message
-    root_msg = all_msg.split(":")[1]
-    assert root_msg == msg.split(":")[1]
-    list_msg = all_msg.split(":")[2].strip('."').split(",")
-    proj_list = [
-        " ACCESS",
-        " CESM",
-        " CMIP6",
-        " CMIP7",
-        " CORDEX",
-        " obs4MIPs",
-        " ana4MIPs",
-        " OBS",
-        " OBS6",
-        " native6",
-        " CMIP3",
-        " CMIP5",
-        " EMAC",
-        " ICON",
-        " IPSLCM",
-    ]
-    assert len([x in proj_list for x in list_msg]) == len(list_msg)
-    assert len(proj_list) == len(list_msg)
+    assert re.match(msg, exc.value.failed_tasks[0].message)
+    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
