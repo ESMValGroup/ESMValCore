@@ -1,3 +1,4 @@
+# Read CMIP and obs4MIPs data from intake-esm catalogs.
 projects:
   CMIP6:
     data:
