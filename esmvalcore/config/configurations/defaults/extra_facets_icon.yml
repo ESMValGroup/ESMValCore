@@ -132,6 +132,9 @@ projects:
           gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
           lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
 
+          # 1D ocean variables
+          amoc: {var_type: oce_moc}
+
           # 2D ocean variables
           hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
           mlotst: {raw_name: mld, var_type: oce_dbg}
