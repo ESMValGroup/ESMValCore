@@ -5,8 +5,9 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import DimCoord
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
+from iris.util import new_axis
 
 import esmvalcore.cmor._fixes.icon.icon_xpp
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -18,6 +19,7 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     Gpp,
     Hfls,
     Hfss,
+    Msftmz,
     Rlut,
     Rlutcs,
     Rsutcs,
@@ -702,6 +704,64 @@ def test_hfss_fix(cubes_regular_grid):
     fixed_cube = fix_data(cube, "Amon", "hfss")
 
     np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test msftmz (for extra fix)
+
+
+def test_get_msftmz_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Omon", "msftmz")
+    assert fix == [Msftmz(None), AllVars(None), GenericFix(None)]
+
+
+def test_msftmz_fix(cubes_regular_grid):
+    """Test fix."""
+    depth_coord = AuxCoord(
+        10.0,
+        standard_name="depth",
+        long_name="depth below sea",
+        units="m",
+        attributes={"positive": "down"},
+    )
+    cube = cubes_regular_grid[0][..., [0]]
+    cube.coord("latitude").var_name = "lat"
+    cube.add_aux_coord(depth_coord, ())
+    cube = new_axis(cube, "depth")
+    cube.transpose([1, 0, 2, 3])
+    cubes = CubeList([cube.copy() * 0.0, cube.copy() * 1.0, cube.copy() * 2.0])
+    cubes[0].var_name = "atlantic_moc"
+    cubes[0].units = "kg s-1"
+    cubes[1].var_name = "pacific_moc"
+    cubes[1].units = "kg s-1"
+    cubes[2].var_name = "global_moc"
+    cubes[2].units = "kg s-1"
+
+    fixed_cubes = fix_metadata(cubes, "Omon", "msftmz")
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == "msftmz"
+    assert (
+        cube.standard_name
+        == "ocean_meridional_overturning_mass_streamfunction"
+    )
+    assert cube.long_name == "Ocean Meridional Overturning Mass Streamfunction"
+
+    assert cube.units == "kg s-1"
+    assert "positive" not in cube.attributes
+    assert "invalid_units" not in cube.attributes
+
+    np.testing.assert_equal(
+        cube.coord("region").points,
+        ["atlantic_arctic_ocean", "indian_pacific_ocean", "global_ocean"],
+    )
+
+    assert cube.shape == (1, 3, 1, 2)
+    np.testing.assert_allclose(
+        cube.data,
+        [[[[0.0, 0.0]], [[0.0, 2.0]], [[0.0, 4.0]]]],
+    )
 
 
 # Test rlut (for extra fix)
