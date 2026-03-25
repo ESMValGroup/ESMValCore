@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 import multiprocessing
 import os
+import re
 import shutil
 from contextlib import contextmanager
 from functools import partial
 from multiprocessing.pool import ThreadPool
+from typing import TYPE_CHECKING
+from unittest.mock import sentinel
 
 import pytest
 import yaml
 
 import esmvalcore
+import esmvalcore._task
 from esmvalcore._task import (
     BaseTask,
     DiagnosticError,
@@ -18,6 +24,11 @@ from esmvalcore._task import (
     _run_task,
 )
 from esmvalcore.config._diagnostics import DIAGNOSTICS
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 class MockBaseTask(BaseTask):
@@ -374,3 +385,24 @@ def test_diagnostic_run_task_fail(
     with pytest.raises(DiagnosticError) as err_mssg:
         task.run()
     assert diag_text[1] in str(err_mssg.value)
+
+
+def test_initialize_provenance_already_initialized_fail() -> None:
+    task = BaseTask()  # type: ignore[abstract]
+    task.activity = sentinel.activity
+
+    msg = r"Provenance of BaseTask('') already initialized"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        task.initialize_provenance(sentinel.recipe_entity)
+
+
+def test_diagnostic_task_script_not_x_fail(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    mock_os = mocker.patch.object(esmvalcore._task, "os", create_autospec=True)
+    mock_os.access.return_value = False
+    diag_script = tmp_path / "diag_cow.c"
+    msg = r"Cannot execute script"
+    with pytest.raises(DiagnosticError, match=re.escape(msg)):
+        _get_single_diagnostic_task(tmp_path, diag_script)

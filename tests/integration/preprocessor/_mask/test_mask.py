@@ -3,6 +3,7 @@
 Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
 
+import re
 from pathlib import Path
 
 import dask.array as da
@@ -10,7 +11,8 @@ import iris
 import iris.fileformats
 import numpy as np
 import pytest
-from iris.coords import AuxCoord
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
@@ -19,6 +21,7 @@ from esmvalcore.preprocessor import (
     mask_landsea,
     mask_landseaice,
 )
+from esmvalcore.preprocessor._mask import _get_fillvalues_mask
 from tests import assert_array_equal
 
 
@@ -461,3 +464,17 @@ class Test:
             else:
                 msg = f"Invalid filename: {product.filename}"
                 raise AssertionError(msg)
+
+
+def test_get_fillvalues_mask_invalid_time_window_fail() -> None:
+    time_coord = DimCoord([0.0], standard_name="time")
+    cube = Cube([0.0], dim_coords_and_dims=[(time_coord, 0)])
+
+    msg = r"Time window (in time units) larger than total time span. Stop."
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _get_fillvalues_mask(
+            cube,
+            threshold_fraction=0.5,
+            min_value=0.0,
+            time_window=2,
+        )

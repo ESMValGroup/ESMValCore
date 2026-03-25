@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+import re
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+import pytest
 
 import esmvalcore
+import esmvalcore.experimental.recipe_metadata
 from esmvalcore.config._diagnostics import TAGS, Diagnostics
 from esmvalcore.experimental.recipe_info import (
     Contributor,
@@ -9,6 +16,9 @@ from esmvalcore.experimental.recipe_info import (
     RecipeInfo,
     Reference,
 )
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
@@ -95,3 +105,53 @@ def test_recipe_info_str():
         ### Maintainers
         """).lstrip()
     assert str(recipe) == text
+
+
+def test_reference_multiple_entries_fail(tmp_path: Path) -> None:
+    bib_file = tmp_path / "bib.bib"
+    bib_file.write_text(
+        textwrap.dedent(
+            """
+            @article{a,
+                title = {a},
+                author = {a},
+                year = 2020,
+            }
+            @article{b,
+                title = {b},
+                author = {b},
+                year = 2020,
+            }
+            """,
+        ),
+    )
+    msg = r"Reference cannot handle bibtex files with more than 1 entry"
+    with pytest.raises(NotImplementedError, match=re.escape(msg)):
+        Reference(str(bib_file))
+
+
+def test_render_fail(
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: MockerFixture,
+) -> None:
+    mock_pybtex = mocker.patch.object(
+        esmvalcore.experimental.recipe_metadata,
+        "pybtex",
+        create_autospec=True,
+    )
+    mock_pybtex.plugin.find_plugin.return_value.return_value.format_entry.side_effect = ValueError(
+        "err",
+    )
+    monkeypatch.setattr(
+        esmvalcore.experimental.recipe_metadata,
+        "DIAGNOSTICS",
+        DIAGNOSTICS,
+    )
+    reference = Reference.from_tag("doe2021")
+
+    msg = r"Could not render 'doe2021': err"
+    with pytest.raises(
+        esmvalcore.experimental.recipe_metadata.RenderError,
+        match=re.escape(msg),
+    ):
+        reference.render()
