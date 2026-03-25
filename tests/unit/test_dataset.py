@@ -2242,15 +2242,15 @@ def test_get_extra_facets_icon_xpp():
     dataset = Dataset(
         project="ICON",
         mip="Omon",
-        short_name="so",
+        short_name="thetao",
         dataset="ICON-XPP",
     )
 
     extra_facets = dataset._get_extra_facets()
 
     assert extra_facets == {
-        "raw_name": "so",
-        "raw_units": "0.001",
+        "raw_name": "to",
+        "raw_units": "degC",
         "var_type": "oce_def",
     }
 

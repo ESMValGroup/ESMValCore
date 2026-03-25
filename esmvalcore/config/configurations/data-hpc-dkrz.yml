@@ -74,13 +74,6 @@ projects:
         rootpath: /work/bd0854/DATA/ESMValTool2/RAWOBS
         dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
-      # ERA5 data in GRIB format:
-      # https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#pool-data-era5-file-and-directory-names
-      dkrz-era5:
-        type: esmvalcore.io.local.LocalDataSource
-        rootpath: /pool/data/ERA5
-        dirname_template: "{family}/{level}/{type}/{tres}/{grib_id}"
-        filename_template: "{family}{level}{typeid}_{tres}_*_{grib_id}.grb"
   OBS6:
     data:
       dkrz:

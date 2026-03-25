@@ -520,7 +520,12 @@ def _update_multiproduct(
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
-        grouping = ["project", "dataset", "exp", "sub_experiment"]
+        grouping: tuple[str, ...] | None = (
+            "project",
+            "dataset",
+            "exp",
+            "sub_experiment",
+        )
     else:
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)

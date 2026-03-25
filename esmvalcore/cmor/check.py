@@ -632,16 +632,21 @@ class CMORCheck:
                 var_name,
             )
 
-    def _check_time_bounds(self, time):
-        times = {"time", "time1", "time2", "time3"}
-        key = times.intersection(self._cmor_var.coordinates)
-        cmor = self._cmor_var.coordinates[" ".join(key)]
-        if cmor.must_have_bounds == "yes" and not time.has_bounds():
-            self.report_warning(
-                "Coordinate {0} from var {1} does not have bounds",
-                time.var_name,
-                self._cmor_var.short_name,
-            )
+    def _check_time_bounds(
+        self,
+        time: iris.coords.DimCoord | iris.coords.AuxCoord,
+    ) -> None:
+        for cmor_coord in self._cmor_var.coordinates.values():
+            if (
+                cmor_coord.axis == "T"
+                and cmor_coord.must_have_bounds == "yes"
+                and not time.has_bounds()
+            ):
+                self.report_warning(
+                    "Coordinate {0} from var {1} does not have bounds",
+                    time.var_name,
+                    self._cmor_var.short_name,
+                )
 
     def _check_coord_monotonicity_and_direction(  # noqa: C901
         self,

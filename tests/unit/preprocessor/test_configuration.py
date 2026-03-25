@@ -77,6 +77,25 @@ def test_multimodel_functions_in_default_order():
             },
             "CMIP6_GFDL-ESM4_fx_historical_r1i1p1f1_areacella_gn.nc",
         ),
+        (
+            {
+                "project": "CMIP6",
+                "mip": "fx",
+                "short_name": "areacella",
+                "dataset": "really-way-too-long-dataset-name" * 10,
+                "ensemble": "r1i1p1f1",
+                "exp": "historical",
+                "version": "v20191115",
+                "grid": "gn",
+            },
+            (
+                "CMIP6_really-way-too-long-dataset-namereally-way-too-long-"
+                "dataset-namereally-way-too-long-dataset-namereally-way-too-"
+                "long-dataset-namereally-way-too-long-dataset-namereally-way-"
+                "too-long-dataset-namereally-way-too-long-dataset-namereally-"
+                "way-to.d1439569.nc"
+            ),
+        ),
     ],
 )
 def test_get_preprocessor_filename(
@@ -90,6 +109,8 @@ def test_get_preprocessor_filename(
     result = _get_preprocessor_filename(dataset)
     expected = session.preproc_dir / filename
     assert result == expected
+    # Check that the filename is not too long for most filesystems.
+    assert len(result.name) <= 255
 
 
 def test_get_preprocessor_filename_missing_facet(session: Session) -> None:

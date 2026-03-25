@@ -61,7 +61,14 @@ class CoordinateInfoMock:
         self.name = name
         self.generic_level = False
 
-        self.axis = ""
+        axis = {
+            "time": "T",
+            "lat": "Y",
+            "lon": "X",
+            "depth": "Z",
+            "air_pressure": "Z",
+        }
+        self.axis = axis.get(name, "")
         self.value = ""
         standard_names = {"lat": "latitude", "lon": "longitude"}
         self.standard_name = standard_names.get(name, name)
@@ -814,6 +821,12 @@ class TestCMORCheck(unittest.TestCase):
         """Test fail for incompatible time units."""
         self.cube.coord("time").units = "K"
         self._check_fails_in_metadata()
+
+    def test_missing_time_bounds(self):
+        """Test fail for incompatible time units."""
+        self.cube.coord("time").bounds = None
+        self.var_info.coordinates["time"].must_have_bounds = "yes"
+        self._check_warnings_on_metadata()
 
     def test_time_non_monotonic(self):
         """Test fail for non monotonic times."""

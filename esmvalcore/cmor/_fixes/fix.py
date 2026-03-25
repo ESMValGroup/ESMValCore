@@ -35,8 +35,6 @@ from esmvalcore.iris_helpers import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import ncdata
-    import xarray as xr
     from iris.coords import Coord
     from iris.cube import Cube
 
@@ -84,10 +82,10 @@ class Fix:
 
     def fix_file(
         self,
-        file: str | Path | xr.Dataset | ncdata.NcData,
+        file: Path,
         output_dir: Path,  # noqa: ARG002
         add_unique_suffix: bool = False,  # noqa: ARG002
-    ) -> str | Path | xr.Dataset | ncdata.NcData:
+    ) -> Path | Sequence[Cube]:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
@@ -98,11 +96,12 @@ class Fix:
 
         Warning
         -------
-        A path should only be returned if it points to the original (unchanged)
-        file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~ncdata.NcData` or
-        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
-        input data should be created (this is very inefficient).
+        For fix developers: a path should only be returned if it points to the
+        original (unchanged) file (i.e., a fix was not necessary). If a fix is
+        necessary, this function should return a :class:`~iris.cube.CubeList` or
+        a :class:`~collections.abc.Sequence` of :class:`~iris.cube.Cube`
+        objects. Under no circumstances a copy of the input data should be
+        created (this is very inefficient).
 
         Parameters
         ----------
@@ -116,7 +115,7 @@ class Fix:
 
         Returns
         -------
-        str | pathlib.Path | xr.Dataset | ncdata.NcData:
+        :
             Fixed data or a path to them.
 
         """
@@ -882,18 +881,18 @@ class GenericFix(Fix):
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
-        times = {"time", "time1", "time2", "time3"}
-        key = times.intersection(self.vardef.coordinates)
-        if not key:  # cube has time, but CMOR variable does not
-            return
-        cmor = self.vardef.coordinates[" ".join(key)]
-        if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
-            cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
-            self._warning_msg(
-                cube,
-                "Added guessed bounds to coordinate %s",
-                cube_coord.var_name,
-            )
+        for cmor_coord in self.vardef.coordinates.values():
+            if (
+                cmor_coord.axis == "T"
+                and cmor_coord.must_have_bounds == "yes"
+                and not cube_coord.has_bounds()
+            ):
+                cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
+                self._warning_msg(
+                    cube,
+                    "Added guessed bounds to coordinate %s",
+                    cube_coord.var_name,
+                )
 
     def _fix_time_coord(self, cube: Cube) -> Cube:
         """Fix time coordinate."""
