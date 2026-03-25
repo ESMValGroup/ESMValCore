@@ -162,9 +162,7 @@ class IconFix(NativeDatasetFix):
                 f"necessary to download the ICON horizontal grid file:\n"
                 f"{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name
@@ -223,9 +221,7 @@ class IconFix(NativeDatasetFix):
                     f"relative to the auxiliary_data_dir "
                     f"'{self.session['auxiliary_data_dir']}')"
                 )
-                raise FileNotFoundError(
-                    msg,
-                )
+                raise FileNotFoundError(msg)
             path = new_path
         return path
 
@@ -650,9 +646,7 @@ class AllVarsBase(IconFix):
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):
@@ -678,9 +672,7 @@ class AllVarsBase(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def _get_z_coord(
         self,
@@ -987,9 +979,7 @@ class AllVarsBase(IconFix):
                     f"got {datetime_point}. Use `shift_time=false` in the "
                     f"recipe to disable this feature"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
 
         # Decadal data
         if "dec" in freq:
@@ -1082,9 +1072,7 @@ class AllVarsBase(IconFix):
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         new_t_units = Unit(
             "days since 1850-01-01",
             calendar="proleptic_gregorian",

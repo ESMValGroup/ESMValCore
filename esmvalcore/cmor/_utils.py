@@ -79,9 +79,7 @@ def _get_alternative_generic_lev_coord(
         f"Found no valid alternative coordinate for generic level coordinate "
         f"'{coord_name}'"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def _get_generic_lev_coord_names(
@@ -204,9 +202,7 @@ def _get_single_cube(
             f"but none of their var_names match the expected.\nFull list of "
             f"cubes encountered: {cube_list}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     logger.warning(
         "Found variable %s%s, but there were other present in the file. Those "
         "extra variables are usually metadata (cell area, latitude "

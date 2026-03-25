@@ -82,9 +82,7 @@ def add_cell_measure(
     """
     if measure not in ["area", "volume"]:
         msg = f"measure name must be 'area' or 'volume', got {measure} instead"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     coord_dims = tuple(
         range(cube.ndim - len(cell_measure_cube.shape), cube.ndim),
     )

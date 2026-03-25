@@ -126,15 +126,11 @@ def accumulate_coordinate(
             f"Requested coordinate {coordinate} not found in cube "
             f"{cube.summary(shorten=True)}"
         )
-        raise ValueError(
-            msg,
-        ) from err
+        raise ValueError(msg) from err
 
     if coord.ndim > 1:
         msg = f"Multidimensional coordinate {coord} not supported."
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
 
     array_module = da if coord.has_lazy_bounds() else np
     factor = AuxCoord(
