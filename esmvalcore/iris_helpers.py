@@ -631,9 +631,13 @@ def dataset_to_iris(
     with ignore_warnings_context(ignore_warnings):
         cubes = conversion_func(dataset)
 
-    # Restore the lat/lon coordinate units that iris changes to degrees
-    for coord_name in ["latitude", "longitude"]:
-        for cube in cubes:
+    for cube in cubes:
+        # Iris works best with masked arrays, so change NaNs to masked values.
+        array_module = da if cube.has_lazy_data() else np
+        cube.data = array_module.ma.masked_invalid(cube.core_data())
+
+        # Restore the lat/lon coordinate units that iris changes to degrees
+        for coord_name in ["latitude", "longitude"]:
             try:
                 coord = cube.coord(coord_name)
             except iris.exceptions.CoordinateNotFoundError:
@@ -643,9 +647,9 @@ def dataset_to_iris(
                     ds_coord = ds_coords[coord.var_name]
                     coord.units = _get_attribute(ds_coord, "units")
 
-            # If possible, add the source file as an attribute to support
-            # grouping by file when calling fix_metadata.
-            if filepath is not None:
-                cube.attributes.globals["source_file"] = str(filepath)
+        # If possible, add the source file as an attribute to support
+        # grouping by file when calling fix_metadata.
+        if filepath is not None:
+            cube.attributes.globals["source_file"] = str(filepath)
 
     return cubes
