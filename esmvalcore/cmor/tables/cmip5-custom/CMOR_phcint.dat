@@ -1,6 +1,7 @@
 SOURCE: CMIP7
+generic_levels:    olevel
 !============
-variable_entry:    phcint_total
+variable_entry:    phcint
 !============
 modeling_realm:    ocean
 !----------------------------------
@@ -10,12 +11,12 @@ standard_name:     integral_wrt_depth_of_sea_water_potential_temperature_express
 units:             J m-2
 cell_methods:      area: time: mean where sea
 cell_measures:     area: areacello
-long_name:         Total Column Integrated Ocean Heat Content from Potential Temperature
-comment:           This is the total column vertically-integrated heat content derived from potential temperature (thetao).
+long_name:         Integrated Ocean Heat Content from Potential Temperature
+comment:           This is the vertically-integrated heat content derived from potential temperature (thetao).
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        longitude latitude time
+dimensions:        longitude latitude time olevel
 type:              real
 !----------------------------------
 !
