@@ -216,6 +216,11 @@ class XCubeDataSource(esmvalcore.io.protocol.DataSource):
                     description: xcube.core.store.descriptor.DatasetDescriptor = self.store.describe_data(
                         data_id,
                     )
+                    if not isinstance(
+                        description,
+                        xcube.core.store.descriptor.DatasetDescriptor,
+                    ):
+                        continue
                     available_xcube_short_names = list(description.data_vars)
                     xcube_short_names = [
                         short_name
