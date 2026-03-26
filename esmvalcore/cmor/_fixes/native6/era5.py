@@ -516,7 +516,7 @@ class Zg(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def _fix_coordinates(  # noqa: C901
+    def _fix_coordinates(  # noqa: C901,PLR0912
         self,
         cube,
     ):
@@ -553,6 +553,13 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype("float64")
+            # For now, remove "stored_direction" attribute introduced by the
+            # new netCDF converter from ECMWF for ERA5 data if missing.
+            if (
+                coord.name() == "latitude"
+                and "stored_direction" in coord.attributes
+            ):
+                coord.attributes.pop("stored_direction")
             if (
                 not coord.has_bounds()
                 and len(coord.core_points()) > 1
