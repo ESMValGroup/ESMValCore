@@ -1734,3 +1734,31 @@ def test_multi_model_statistics_invalid_input_type_fail() -> None:
     msg = r"Input type for multi_model_statistics not understood."
     with pytest.raises(ValueError, match=re.escape(msg)):
         mm.multi_model_statistics([0, 0], "full", [])
+
+
+def test_compute_eager_concatenate_fail() -> None:
+    """Test that ``_compute_eager`` raises on concatenation failure."""
+    # Use small cubes (no slicing) but mock concatenate_cube to fail
+    cubes = CubeList(generate_cube_from_dates("monthly") for _ in range(3))
+
+    # Create a mock result that will fail on concatenate
+    mock_result = mock.Mock()
+    mock_result.coords = mock.Mock(return_value=[])
+
+    # Test with concatenate_cube raising an exception
+    with mock.patch.object(
+        mm,
+        "_compute",
+        return_value=mock_result,
+    ):
+        with mock.patch.object(
+            iris.cube.CubeList,
+            "concatenate_cube",
+            side_effect=iris.exceptions.ConcatenateError("test error"),
+        ):
+            msg = (
+                r"Multi-model statistics failed to concatenate results into a "
+                r"single array. This happened for operator"
+            )
+            with pytest.raises(ValueError, match=re.escape(msg)):
+                mm._compute_eager(cubes, operator="mean")

@@ -12,7 +12,7 @@ import iris.fileformats
 import numpy as np
 import pytest
 from iris.coords import AuxCoord, DimCoord
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
@@ -23,6 +23,9 @@ from esmvalcore.preprocessor import (
 )
 from esmvalcore.preprocessor._mask import _get_fillvalues_mask
 from tests import assert_array_equal
+from tests.unit.preprocessor._mask.test_mask_multimodel import (
+    PreprocessorFile as MockedPreprocessorFile,
+)
 
 
 class Test:
@@ -464,6 +467,22 @@ class Test:
             else:
                 msg = f"Invalid filename: {product.filename}"
                 raise AssertionError(msg)
+
+    def test_mask_fillvalues_unsupported_ndim_fail(self) -> None:
+        """Test ``mask_fillvalues`` with unsupported data dimensions."""
+        cube = iris.cube.Cube(
+            self.mock_data[:, 0, 0],
+            dim_coords_and_dims=[(self.times, 0)],
+        )
+        products = [MockedPreprocessorFile(CubeList([cube]), "A")]
+        msg = r"Unable to handle 0 dimensional data"
+        with pytest.raises(NotImplementedError, match=re.escape(msg)):
+            mask_fillvalues(
+                products,
+                threshold_fraction=0.5,
+                min_value=None,
+                time_window=1,
+            )
 
     @pytest.mark.parametrize(
         "threshold_fraction",
