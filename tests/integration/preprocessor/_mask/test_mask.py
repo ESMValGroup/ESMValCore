@@ -465,16 +465,32 @@ class Test:
                 msg = f"Invalid filename: {product.filename}"
                 raise AssertionError(msg)
 
+    @pytest.mark.parametrize(
+        "threshold_fraction",
+        [-1000.0, -0.1, 1.1, 1000.0],
+    )
+    def test_get_fillvalues_mask_invalid_threshold_fraction_fail(
+        self,
+        threshold_fraction: float,
+    ) -> None:
+        msg = r"should be between 0 and 1.0"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                Cube(0.0),
+                threshold_fraction=threshold_fraction,
+                min_value=0.0,
+                time_window=1,
+            )
 
-def test_get_fillvalues_mask_invalid_time_window_fail() -> None:
-    time_coord = DimCoord([0.0], standard_name="time")
-    cube = Cube([0.0], dim_coords_and_dims=[(time_coord, 0)])
+    def test_get_fillvalues_mask_invalid_time_window_fail(self) -> None:
+        time_coord = DimCoord([0.0], standard_name="time")
+        cube = Cube([0.0], dim_coords_and_dims=[(time_coord, 0)])
 
-    msg = r"Time window (in time units) larger than total time span. Stop."
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        _get_fillvalues_mask(
-            cube,
-            threshold_fraction=0.5,
-            min_value=0.0,
-            time_window=2,
-        )
+        msg = r"Time window (in time units) larger than total time span. Stop."
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                cube,
+                threshold_fraction=0.5,
+                min_value=0.0,
+                time_window=2,
+            )
