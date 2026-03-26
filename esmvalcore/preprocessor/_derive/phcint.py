@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from cf_units import Unit
 from iris import NameConstraint
 
-from esmvalcore.preprocessor._volume import _add_axis_stats_weights_coord
+from esmvalcore.preprocessor._shared import get_coord_weights
 
 from ._baseclass import DerivedVariableBase
 
@@ -49,15 +49,18 @@ class DerivedVariable(DerivedVariableBase):
         cube = cubes.extract_cube(NameConstraint(var_name="thetao"))
         cube.convert_units("K")
 
-        # J m-3 (multiply by c_p * rho_0)
-        cube.data = (
-            cube.core_data() * RHO_CP
-        )  # https://github.com/SciTools/iris/issues/6990
+        # In the following, we modify the cube's data and units instead of the
+        # cube directly to avoid dropping cell measures and ancillary variables
+        # (https://scitools-iris.readthedocs.io/en/stable/further_topics/lenient_maths.html#finer-detail)
+
+        # Multiply by c_p * rho_0 -> J m-3
+        cube.data = cube.core_data() * RHO_CP
         cube.units *= RHO_CP_UNIT
 
-        # J m-2 (multiply by layer depth)
-        _add_axis_stats_weights_coord(cube, cube.coord(axis="z"))
-        cube = cube * cube.coord("_axis_statistics_weights_")
-        cube.remove_coord("_axis_statistics_weights_")
+        # Multiply by layer depth -> J m-2
+        z_coord = cube.coord(axis="z")
+        layer_depth = get_coord_weights(cube, z_coord, broadcast=True)
+        cube.data = cube.core_data() * layer_depth
+        cube.units *= z_coord.units
 
         return cube
