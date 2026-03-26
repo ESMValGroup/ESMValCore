@@ -555,11 +555,8 @@ class AllVars(Fix):
             coord.points = coord.core_points().astype("float64")
             # For now, remove "stored_direction" attribute introduced by the
             # new netCDF converter from ECMWF for ERA5 data if missing.
-            if (
-                coord.name() == "latitude"
-                and "stored_direction" in coord.attributes
-            ):
-                coord.attributes.pop("stored_direction")
+            if coord.name() == "latitude":
+                coord.attributes.pop("stored_direction", None)
             if (
                 not coord.has_bounds()
                 and len(coord.core_points()) > 1
