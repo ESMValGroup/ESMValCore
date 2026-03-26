@@ -131,9 +131,7 @@ class AllVars(Fix):
                 "Differences between the original grid and the "
                 f"standardised grid are above 10e-4 {new_coord.units}."
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
 
     def _fix_rotated_coords(self, cube, domain, domain_info):
         """Fix rotated coordinates."""
@@ -221,8 +219,6 @@ class AllVars(Fix):
                     "not supported in CORDEX datasets. Must be "
                     "rotated_latitude_longitude or lambert_conformal_conic."
                 )
-                raise RecipeError(
-                    msg,
-                )
+                raise RecipeError(msg)
 
         return cubes

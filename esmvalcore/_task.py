@@ -177,16 +177,12 @@ def _py2ncl(value, var_name=""):
                 type_ = type(value[0])
             if any(not isinstance(v, type_) for v in value):
                 msg = f"NCL array cannot be mixed type: {value}"
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
             txt += "(/{}/)".format(", ".join(_py2ncl(v) for v in value))
     elif isinstance(value, dict):
         if not var_name:
             msg = f"NCL does not support nested dicts: {value}"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         txt += "True\n"
         for key in value:
             txt += f"{var_name}@{key} = {_py2ncl(value[key])}\n"
@@ -272,9 +268,7 @@ class BaseTask:
         """Initialize task provenance activity."""
         if self.activity is not None:
             msg = f"Provenance of {self} already initialized"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         self.activity = get_task_provenance(self, recipe_entity)
 
     def flatten(self):
@@ -445,18 +439,14 @@ class DiagnosticTask(BaseTask):
                 msg = (
                     f"{err_msg}: program '{interpreters[ext]}' not installed."
                 )
-                raise DiagnosticError(
-                    msg,
-                )
+                raise DiagnosticError(msg)
             cmd.append(interpreter)
         elif not os.access(script_file, os.X_OK):
             msg = (
                 f"{err_msg}: non-executable file with unknown extension "
                 f"'{script_file.suffix}'."
             )
-            raise DiagnosticError(
-                msg,
-            )
+            raise DiagnosticError(msg)
 
         cmd.extend(args.get(ext, []))
         cmd.append(str(script_file))
@@ -674,9 +664,7 @@ class DiagnosticTask(BaseTask):
             f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
             f"in {self.log}"
         )
-        raise DiagnosticError(
-            msg,
-        )
+        raise DiagnosticError(msg)
 
     def _collect_provenance(self) -> None:
         """Process provenance information provided by the diagnostic script."""
