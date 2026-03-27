@@ -112,12 +112,38 @@ class CLMcomCCLM4817(Fix):
 class AllVars(Fix):
     """General CORDEX grid fix."""
 
-    def _check_grid_differences(self, old_coord, new_coord):
+    def _check_grid_differences(
+        self,
+        old_coord: iris.coords.DimCoord | iris.coords.AuxCoord,
+        new_coord: iris.coords.DimCoord | iris.coords.AuxCoord,
+    ) -> bool:
         """Check differences between coords."""
+        if new_coord.shape != old_coord.shape:
+            logger.debug(
+                "Shapes of original %s points and standard %s domain "
+                "points for dataset %s and driver %s are different: "
+                "%s vs %s. Not correcting the grid.",
+                new_coord.var_name,
+                self.extra_facets["domain"],
+                self.extra_facets["dataset"],
+                self.extra_facets["driver"],
+                new_coord.shape,
+                old_coord.shape,
+            )
+            return False
+        if new_coord.var_name == "lon" and new_coord.points.min() < 0.0:
+            # Avoid the check failing due to the new coordinate being on the
+            # other side of the zero meridian compared to the old coordinate
+            # as described in https://github.com/ESMValGroup/ESMValCore/issues/2036.
+            # Check adapted from: https://github.com/ESMValGroup/ESMValCore/pull/2334.
+            old_coord = old_coord.copy()
+            lon_inds = (new_coord.points < 0.0) & (old_coord.points > 0.0)
+            old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.0
+
         diff = np.max(np.abs(old_coord.points - new_coord.points))
         logger.debug(
-            "Maximum difference between original %s"
-            "points and standard %s domain points  "
+            "Maximum difference between original %s "
+            "points and standard %s domain points "
             "for dataset %s and driver %s is: %s.",
             new_coord.var_name,
             self.extra_facets["domain"],
@@ -125,19 +151,19 @@ class AllVars(Fix):
             self.extra_facets["driver"],
             str(diff),
         )
-
         if diff > 10e-4:
-            msg = (
+            logger.debug(
                 "Differences between the original grid and the "
-                f"standardised grid are above 10e-4 {new_coord.units}."
+                "standardised grid are above 10e-4 %s."
+                "not correcting the grid.",
+                new_coord.units,
             )
-            raise RecipeError(msg)
+            return False
+        return True
 
     def _fix_rotated_coords(self, cube, domain, domain_info):
         """Fix rotated coordinates."""
         for dim_coord in ["rlat", "rlon"]:
-            old_coord = cube.coord(domain[dim_coord].standard_name)
-            old_coord_dims = old_coord.cube_dims(cube)
             points = domain[dim_coord].data
             coord_system = iris.coord_systems.RotatedGeogCS(
                 grid_north_pole_latitude=domain_info["pollat"],
@@ -151,16 +177,16 @@ class AllVars(Fix):
                 units=Unit("degrees"),
                 coord_system=coord_system,
             )
-            self._check_grid_differences(old_coord, new_coord)
-            new_coord.guess_bounds()
-            cube.remove_coord(old_coord)
-            cube.add_dim_coord(new_coord, old_coord_dims)
+            old_coord = cube.coord(domain[dim_coord].standard_name)
+            if self._check_grid_differences(old_coord, new_coord):
+                new_coord.guess_bounds()
+                old_coord_dims = old_coord.cube_dims(cube)
+                cube.remove_coord(old_coord)
+                cube.add_dim_coord(new_coord, old_coord_dims)
 
     def _fix_geographical_coords(self, cube, domain):
         """Fix geographical coordinates."""
         for aux_coord in ["lat", "lon"]:
-            old_coord = cube.coord(domain[aux_coord].standard_name)
-            cube.remove_coord(old_coord)
             points = domain[aux_coord].data
             bounds = domain[f"{aux_coord}_vertices"].data
             new_coord = iris.coords.AuxCoord(
@@ -171,15 +197,13 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds,
             )
-            if aux_coord == "lon" and new_coord.points.min() < 0.0:
-                lon_inds = (new_coord.points < 0.0) & (old_coord.points > 0.0)
-                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.0
-
-            self._check_grid_differences(old_coord, new_coord)
-            aux_coord_dims = cube.coord(var_name="rlat").cube_dims(
-                cube,
-            ) + cube.coord(var_name="rlon").cube_dims(cube)
-            cube.add_aux_coord(new_coord, aux_coord_dims)
+            old_coord = cube.coord(domain[aux_coord].standard_name)
+            if self._check_grid_differences(old_coord, new_coord):
+                aux_coord_dims = cube.coord(var_name="rlat").cube_dims(
+                    cube,
+                ) + cube.coord(var_name="rlon").cube_dims(cube)
+                cube.remove_coord(old_coord)
+                cube.add_aux_coord(new_coord, aux_coord_dims)
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
