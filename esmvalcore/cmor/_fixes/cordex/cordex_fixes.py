@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def _get_domain(data_domain):
-    return cx.cordex_domain(data_domain, add_vertices=True)
+    return cx.cordex_domain(data_domain, bounds=True)
 
 
 @lru_cache
@@ -43,7 +43,8 @@ class MOHCHadREM3GA705(Fix):
         for cube in cubes:
             cube.coord("latitude").var_name = "lat"
             cube.coord("longitude").var_name = "lon"
-            cube.coord("time").long_name = "time"
+            for coord in cube.coords("time"):
+                coord.long_name = "time"
 
         return cubes
 
@@ -91,10 +92,11 @@ class CLMcomCCLM4817(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            time_unit = cube.coord("time").units
-            if time_unit.calendar == "standard":
-                new_unit = time_unit.change_calendar("proleptic_gregorian")
-                cube.coord("time").units = new_unit
+            for coord in cube.coords("time"):
+                time_unit = coord.units
+                if time_unit.calendar == "standard":
+                    new_unit = time_unit.change_calendar("proleptic_gregorian")
+                    coord.units = new_unit
             for coord in cube.coords():
                 if coord.dtype in [">f8", ">f4"]:
                     coord.points = coord.core_points().astype(
