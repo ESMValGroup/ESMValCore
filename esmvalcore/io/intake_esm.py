@@ -117,18 +117,24 @@ class IntakeEsmDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(self, quiet: bool = True) -> iris.cube.CubeList:
+    def to_iris(self, quiet: bool = True, **kwargs) -> iris.cube.CubeList:  # noqa: ANN003
         """Load the data as Iris cubes.
+
+        Arguments
+        ---------
+        quiet : bool, optional
+            If True, suppress warnings when no datasets are found. Default is True.
+        **kwargs
+            Additional keyword arguments to pass through to `intake_esm.esm_datastore.to_dask()`.
 
         Returns
         -------
-        :
-            The loaded data.
+        : The loaded data.
         """
         files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
 
         # Might want to pass through args/kwargs here? Ie.
-        dataset = self.catalog.to_dask()
+        dataset = self.catalog.to_dask(**kwargs)
         # Store the local paths in the attributes for easier debugging.
         dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
         # Cache the attributes.

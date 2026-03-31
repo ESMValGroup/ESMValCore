@@ -17,6 +17,7 @@ dependencies:
   - filelock
   - fiona
   - fire
+  - gcsfs # For tests with pangeo store on GCS, not a hard dependency.
   - geopy
   - humanfriendly
   - intake >=2.0.0

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import intake
 import pytest
 import xarray as xr
+from intake_esm.source import ESMDataSourceError
 
 import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import (
@@ -17,10 +18,16 @@ from esmvalcore.io.intake_esm import (
     _to_path_dict,
 )
 
+try:
+    import gcsfs  # noqa: F401
+
+    gcfs_available = True
+except ImportError:
+    gcfs_available = False
+
 if TYPE_CHECKING:
     from intake_esm.core import esm_datastore
     from pytest_mock import MockerFixture
-
 
 with importlib.resources.as_file(
     importlib.resources.files("tests"),
@@ -32,6 +39,12 @@ with importlib.resources.as_file(
         / "catalog"
         / "cmip6-netcdf.json"
     )
+
+
+"""
+These tests all use a local datastore, for which the data isn't available locally. This is mostly for
+speed reasons. Anything like `.to_iris()` is going to raise a FileNotFoundError.
+"""
 
 
 def test_intake_esm_dataset_repr() -> None:
@@ -182,8 +195,7 @@ def test_to_iris_nomock():
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
 
-    # Raises a KeyError because the dtype of the dataset is Object, which I don't think NCData likes.
-    with pytest.raises(KeyError, match="'O'"):
+    with pytest.raises(ESMDataSourceError):
         dataset.to_iris()
 
 
@@ -237,6 +249,152 @@ def test_search_time_facet_transformation() -> None:
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
 
-    # Raises a KeyError because the dtype of the dataset is Object, which I don't think NCData likes.
-    with pytest.raises(KeyError, match="'O'"):
+    with pytest.raises(ESMDataSourceError):
         dataset.to_iris()
+
+
+"""
+The following tests load some real data. These come from gcs. Mostly this is to ensure that we can
+load stuff out of the cloud.
+"""
+
+
+@pytest.fixture(scope="session")
+def pangeo_ds() -> esm_datastore:
+    """Load the pangeo CMIP6 catalog as an intake_esm datastore.
+
+    This is a remote resource, so we use session scope to avoid reloading it for every test.
+    """
+    return intake.open_esm_datastore(
+        "https://storage.googleapis.com/cmip6/pangeo-cmip6.json",
+    )
+
+
+def test_remote_esm_dataset(pangeo_ds: esm_datastore) -> None:
+    data_source = IntakeEsmDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        time_separator="-",
+        facets={
+            "activity_id": "activity_id",
+            "institution_id": "institution_id",
+            "source_id": "source_id",
+            "experiment_id": "experiment_id",
+            "member_id": "member_id",
+            "table_id": "table_id",
+            "variable_id": "variable_id",
+            "grid_label": "grid_label",
+            "dcpp_init_year": "dcpp_init_year",
+            "version": "version",
+        },
+        values={},
+        catalog=pangeo_ds,
+    )
+
+    # Equivalent direct search on the catalog.
+    # Note: This *might* change since it's a remote resource, so better to calculate, not specify, expected len
+    expected_len = len(
+        pangeo_ds.search(
+            table_id="Amon",
+            experiment_id="historical",
+            institution_id="NOAA-GFDL",
+        ),
+    )
+
+    results = data_source.find_data(
+        institution_id="NOAA-GFDL",
+        table_id="Amon",
+        experiment_id="piControl",
+    )
+
+    assert len(results) == expected_len
+
+    ds = results[0]
+    assert isinstance(ds, IntakeEsmDataset)
+
+    if gcfs_available:
+        """
+        CT NOTE
+        -------
+        This error is potentially gonna be a bit of an issue: comes from decoding time_bounds.
+        How far do we want to go down the rabbit hole of fixing data issues versus saying 'Nope,
+        not supported'?
+        Might be better to fix it in xarray instead, I think it should be straightforward?
+        ---
+
+        I've also tried this with a bunch of other datasets & they all variously error out. Presumably
+        this is due to iris's data model being stricter than xarrays?
+        """
+        with pytest.raises(
+            ValueError,
+            match=r"When encoding chunked arrays of datetime values, both the units and dtype must be prescribed or both must be unprescribed. Prescribing only one or the other is not currently supported. Got a units encoding of hours since 0151-01-16 12:00:00.000000 and a dtype encoding of None.",
+        ):
+            ds.to_iris(
+                xarray_open_kwargs={"decode_cf": True, "decode_times": True},
+            )
+    else:
+        # Can't match because it's not in the ESMDataSourceError
+        with pytest.raises(
+            ESMDataSourceError,
+        ):
+            ds.to_iris()
+
+
+def test_remote_esm_dataset_keyerr(pangeo_ds: esm_datastore) -> None:
+    data_source = IntakeEsmDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        time_separator="-",
+        facets={
+            "activity_id": "activity_id",
+            "institution_id": "institution_id",
+            "source_id": "source_id",
+            "experiment_id": "experiment_id",
+            "member_id": "member_id",
+            "table_id": "table_id",
+            "variable_id": "variable_id",
+            "grid_label": "grid_label",
+            "dcpp_init_year": "dcpp_init_year",
+            "version": "version",
+        },
+        values={},
+        catalog=pangeo_ds,
+    )
+
+    # Equivalent direct search on the catalog.
+    # Note: This *might* change since it's a remote resource, so better to calculate, not specify, expected len
+    expected_len = len(
+        pangeo_ds.search(
+            table_id="Amon",
+            experiment_id="historical",
+            institution_id="MIROC",
+            variable_id="tasmax",
+        ),
+    )
+
+    results = data_source.find_data(
+        institution_id="MIROC",
+        table_id="Amon",
+        experiment_id="historical",
+        variable_id="tasmax",
+    )
+
+    assert len(results) == expected_len
+
+    ds = results[0]
+    assert isinstance(ds, IntakeEsmDataset)
+
+    errtype = KeyError if gcfs_available else ESMDataSourceError
+
+    with pytest.raises(
+        errtype,
+    ):
+        ds.to_iris(
+            xarray_open_kwargs={"decode_cf": True, "decode_times": True},
+            xarray_combine_by_coords_kwargs={
+                "coords": "minimal",
+                "compat": "override",
+            },
+        )
