@@ -4,6 +4,8 @@ Integration tests for the
 :func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 
+import re
+
 import dask.array as da
 import iris
 import iris.fileformats
@@ -356,3 +358,12 @@ class Test:
             self.lats,
             self.cube,
         ) == (1,)
+
+    def test_add_cell_measure_invalid_measure_fail(self) -> None:
+        msg = r"measure name must be 'area' or 'volume'"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            add_cell_measure(
+                iris.cube.Cube(0.0),
+                self.fx_area,
+                measure="invalid",  # type: ignore[arg-type]
+            )

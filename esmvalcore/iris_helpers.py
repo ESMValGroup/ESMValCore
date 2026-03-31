@@ -522,9 +522,7 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             f"standard_name changed from '{old_standard_name}' to "
             f"'{cube.standard_name}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return cube
 
 
@@ -624,9 +622,7 @@ def dataset_to_iris(
             f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
             f"type {type(dataset)}"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     with ignore_warnings_context(ignore_warnings):
         cubes = conversion_func(dataset)

@@ -112,5 +112,6 @@ doc/_sidebar.rst.inc
 *.ESMF_LogFile
 
 
-#Ignore vscode AI rules
+# AI
 .github/instructions/codacy.instructions.md
+CLAUDE.md

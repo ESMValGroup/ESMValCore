@@ -43,9 +43,7 @@ class DerivedVariable(DerivedVariableBase):
                     f"standard name CMIP5: soil_carbon_content "
                     f"or CMIP6: soil_mass_content_of_carbon"
                 )
-                raise ValueError(
-                    msg,
-                ) from exc
+                raise ValueError(msg) from exc
         c_veg_cube = cubes.extract_cube(
             Constraint(name="vegetation_carbon_content"),
         )
