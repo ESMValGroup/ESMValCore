@@ -21,10 +21,12 @@ from esmvalcore.config._config import (
     get_project_config,
     load_config_developer,
 )
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
     _filter_versions_called_latest,
+    _MissingFacetError,
     _replace_tags,
     _select_latest_version,
 )
@@ -162,7 +164,10 @@ class DataSource(LocalDataSource):
 
     def get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
-        return self._get_glob_patterns(**facets)
+        try:
+            return self._get_glob_patterns(**facets)
+        except _MissingFacetError as exc:
+            raise RecipeError(exc.args[0]) from exc
 
     def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
         """Extract facets from path."""
@@ -271,7 +276,10 @@ def find_files(
     if debug:
         globs = []
         for data_source in data_sources:
-            globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            try:
+                globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            except _MissingFacetError as exc:
+                raise RecipeError(exc.args[0]) from exc
         return files, sorted(globs)
     return files
 
@@ -300,7 +308,10 @@ def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     if isinstance(variable.get("exp"), (list, tuple)):
         variable = dict(variable)
         variable["exp"] = "-".join(variable["exp"])
-    outfile = _replace_tags(cfg["output_file"], variable)[0]
+    try:
+        outfile = _replace_tags(cfg["output_file"], variable)[0]
+    except _MissingFacetError as exc:
+        raise RecipeError(exc.args[0]) from exc
     if "timerange" in variable:
         timerange = variable["timerange"].replace("/", "-")
         outfile = Path(f"{outfile}_{timerange}")
