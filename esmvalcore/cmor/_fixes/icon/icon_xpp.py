@@ -2,6 +2,7 @@
 
 import logging
 
+from iris.coords import AuxCoord
 from iris.cube import CubeList
 from scipy import constants
 
@@ -54,6 +55,51 @@ Hfls = NegateData
 
 
 Hfss = NegateData
+
+
+class Msftmz(IconFix):
+    """Fixes for ``msftmz``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata."""
+        preprocessed_cubes = CubeList([])
+        basin_coord = AuxCoord(
+            "placeholder",
+            standard_name="region",
+            long_name="ocean basin",
+            var_name="basin",
+        )
+        var_names = {
+            "atlantic_moc": "atlantic_arctic_ocean",
+            "pacific_moc": "indian_pacific_ocean",
+            "global_moc": "global_ocean",
+        }
+        for var_name, basin in var_names.items():
+            cube = self.get_cube(cubes, var_name=var_name)
+            cube.var_name = "msftmz"
+            cube.long_name = None
+            cube.attributes.locals = {}
+
+            # Remove longitude coordinate (with length 1)
+            cube = cube[..., 0]
+            cube.remove_coord("longitude")
+
+            # Add scalar basin coordinate
+            cube.add_aux_coord(basin_coord.copy(basin), ())
+            preprocessed_cubes.append(cube)
+
+        msftmz_cube = preprocessed_cubes.merge_cube()
+
+        # Swap time and basin coordinates
+        msftmz_cube.transpose([1, 0, 2, 3])
+
+        # By default, merge_cube() sorts the coordinate alphabetically (i.e.,
+        # atlantic_arctic_ocean -> global_ocean -> indian_pacific_ocean). Thus,
+        # we need to restore the desired order (atlantic_arctic_ocean ->
+        # indian_pacific_ocean -> global_ocean).
+        msftmz_cube = msftmz_cube[:, [0, 2, 1], ...]
+
+        return CubeList([msftmz_cube])
 
 
 Rlut = NegateData
