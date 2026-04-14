@@ -58,7 +58,6 @@ from cf_units import Unit
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
-from esmvalcore.exceptions import RecipeError
 from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
@@ -421,6 +420,30 @@ def _select_files(
     return selection
 
 
+class _MissingFacetError(KeyError):
+    """Error raised when a facet required for filling the template is missing."""
+
+
+def _format_iterable(iterable: Iterable[Any]) -> str:
+    """Format an iterable as a string for use in messages.
+
+    Parameters
+    ----------
+    iterable:
+        The iterable to format.
+
+    Returns
+    -------
+    :
+        The formatted string.
+    """
+    items = [f"'{item}'" for item in sorted(iterable)]
+    if len(items) > 1:
+        items[-1] = f"and {items[-1]}"
+    txt = " ".join(items) if len(items) == 2 else ", ".join(items)
+    return f"s {txt}" if len(items) > 1 else f" {txt}"
+
+
 def _replace_tags(
     paths: str | list[str],
     variable: Facets,
@@ -446,6 +469,7 @@ def _replace_tags(
             tlist.add("sub_experiment")
         pathset = new_paths
 
+    failed = set()
     for original_tag in tlist:
         tag, _, _ = _get_caps_options(original_tag)
 
@@ -454,12 +478,17 @@ def _replace_tags(
         elif tag == "version":
             replacewith = "*"
         else:
-            msg = (
-                f"Dataset key '{tag}' must be specified for {variable}, check "
-                f"your recipe entry and/or extra facet file(s)"
-            )
-            raise RecipeError(msg)
+            failed.add(tag)
+            continue
         pathset = _replace_tag(pathset, original_tag, replacewith)
+    if failed:
+        msg = (
+            f"Unable to complete path{_format_iterable(pathset)} because "
+            f"the facet{_format_iterable(failed)}"
+            + (" has" if len(failed) == 1 else " have")
+            + " not been specified."
+        )
+        raise _MissingFacetError(msg)
     return [Path(p) for p in pathset]
 
 
@@ -566,7 +595,11 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         if "original_short_name" in facets:
             facets["short_name"] = facets["original_short_name"]
 
-        globs = self._get_glob_patterns(**facets)
+        try:
+            globs = self._get_glob_patterns(**facets)
+        except _MissingFacetError as exc:
+            self.debug_info = exc.args[0]
+            return []
         self.debug_info = "No files found matching glob pattern " + "\n".join(
             str(g) for g in globs
         )

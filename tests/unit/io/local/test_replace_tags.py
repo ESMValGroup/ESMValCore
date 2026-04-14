@@ -1,11 +1,14 @@
 """Tests for `_replace_tags` in `esmvalcore.io.local`."""
 
+import re
 from pathlib import Path
 
 import pytest
 
-from esmvalcore.exceptions import RecipeError
-from esmvalcore.io.local import _replace_tags
+from esmvalcore.io.local import (
+    _MissingFacetError,
+    _replace_tags,
+)
 
 VARIABLE = {
     "project": "CMIP6",
@@ -58,13 +61,28 @@ def test_replace_tags_with_caps():
 
 
 def test_replace_tags_missing_facet():
-    """Check that a RecipeError is raised if a required facet is missing."""
+    """Check that a MissingFacetError is raised if a required facet is missing."""
     paths = ["{short_name}_{missing}_*.nc"]
     variable = {"short_name": "tas"}
-    with pytest.raises(RecipeError) as exc:
+    expected_message = (
+        "Unable to complete path 'tas_{missing}_*.nc' because the facet "
+        "'missing' has not been specified."
+    )
+    with pytest.raises(_MissingFacetError, match=re.escape(expected_message)):
         _replace_tags(paths, variable)
 
-    assert "Dataset key 'missing' must be specified" in exc.value.message
+
+def test_replace_tags_missing_facets():
+    """Check that a MissingFacetError is raised if multiple facets are missing."""
+    paths = ["{missing1}_{short_name}_{missing2}_{missing3}_*.nc"]
+    variable = {"short_name": "tas"}
+    expected_message = (
+        "Unable to complete path '{missing1}_tas_{missing2}_{missing3}_*.nc' "
+        "because the facets 'missing1', 'missing2', and 'missing3' have not "
+        "been specified."
+    )
+    with pytest.raises(_MissingFacetError, match=re.escape(expected_message)):
+        _replace_tags(paths, variable)
 
 
 def test_replace_tags_list_of_str():
