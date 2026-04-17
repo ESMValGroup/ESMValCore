@@ -57,6 +57,13 @@ projects:
         - cmip6/Tables
         - cmip6-custom
       strict: false
+  # Data from the ESA Climate Data Centre (ESA CCI).
+  ESACCI:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip7/tables
+        - cmip6-custom
   # Data from selected climate models that can be read in its native format by ESMValCore.
   ACCESS:
     cmor_table:

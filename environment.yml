@@ -48,8 +48,10 @@ dependencies:
   - scipy >=1.6
   - shapely >=2.0.0
   - xarray
+  - xcube
+  - xcube-cci
   - yamale
-  - zarr >3
+  - zarr >2
   # Python packages needed for building docs
   - autodocsumm >=0.2.2
   - ipython
@@ -66,3 +68,7 @@ dependencies:
   - pytest-mock
   - pytest-xdist
   # Not on conda forge - vprof
+  - pip:
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer-cmip7
+      - git+https://github.com/ESMValGroup/fixer-prototype.git@main#subdirectory=packages/fixer-esa-cci
