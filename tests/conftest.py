@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import warnings
 from copy import deepcopy
 from functools import lru_cache
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -15,8 +17,12 @@ from iris.coords import (
 )
 from iris.cube import Cube
 
-import esmvalcore.config._dask
 from esmvalcore.config import CFG, Config
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from esmvalcore.config import Session
 
 
 @lru_cache
@@ -27,7 +33,6 @@ def _load_default_config():
             "ignore",
             message="Do not instantiate `Config` objects directly",
             category=UserWarning,
-            module="esmvalcore",
         )
         cfg = Config()
     cfg.load_from_dirs([])
@@ -42,41 +47,23 @@ def cfg_default():
 
 
 @pytest.fixture(autouse=True)
-def ignore_existing_user_config(monkeypatch, cfg_default):
+def ignore_existing_user_config(
+    monkeypatch: pytest.MonkeyPatch,
+    cfg_default: Config,
+) -> None:
     """Ignore user's configuration when running tests."""
     monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
 
 
 @pytest.fixture
-def session(tmp_path: Path, ignore_existing_user_config, monkeypatch):
+def session(
+    tmp_path: Path,
+    ignore_existing_user_config: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Session:
     """Session object with default settings."""
-    monkeypatch.setitem(CFG, "rootpath", {"default": {tmp_path: "default"}})
     monkeypatch.setitem(CFG, "output_dir", tmp_path / "esmvaltool_output")
     return CFG.start_session("recipe_test")
-
-
-# TODO: remove in v2.14.0
-@pytest.fixture(autouse=True)
-def ignore_old_config_user(tmp_path, monkeypatch):
-    """Ignore potentially existing old config-user.yml file in all tests."""
-    nonexistent_config_dir = tmp_path / "nonexistent_config_dir"
-    monkeypatch.setattr(
-        Config,
-        "_DEFAULT_USER_CONFIG_DIR",
-        nonexistent_config_dir,
-    )
-
-
-# TODO: remove in v2.14.0
-@pytest.fixture(autouse=True)
-def ignore_old_dask_config_file(tmp_path, monkeypatch):
-    """Ignore potentially existing old dask.yml file in all tests."""
-    nonexistent_file = tmp_path / "nonexistent_file.yml"
-    monkeypatch.setattr(
-        esmvalcore.config._dask,
-        "CONFIG_FILE",
-        nonexistent_file,
-    )
 
 
 @pytest.fixture

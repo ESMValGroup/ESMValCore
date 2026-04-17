@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
@@ -12,7 +12,7 @@ import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
-from iris.coords import CellMethod, Coord
+from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
@@ -32,6 +32,8 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.coords import Coord
 
     from esmvalcore.preprocessor import PreprocessorFile
 
@@ -165,7 +167,10 @@ def bias(
     return output_products
 
 
-def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
+def _get_ref(
+    products: Iterable[PreprocessorFile],
+    ref_tag: str,
+) -> tuple[Cube, PreprocessorFile]:
     """Get reference cube and product."""
     ref_products = []
     for product in products:
@@ -230,7 +235,7 @@ def distance_metric(
     reference: Cube | None = None,
     coords: Iterable[Coord] | Iterable[str] | None = None,
     keep_reference_dataset: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
     r"""Calculate distance metrics.
 
@@ -385,7 +390,7 @@ def _calculate_metric(
     reference: Cube,
     metric: MetricType,
     coords: Iterable[Coord] | Iterable[str] | None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Cube:
     """Calculate metric for a single cube relative to a reference cube."""
     # Make sure that dimensional metadata of data and ref data is compatible
@@ -475,7 +480,7 @@ def _calculate_pearsonr(
     coords: Iterable[Coord] | Iterable[str],
     *,
     weighted: bool,
-    **kwargs,
+    **kwargs: Any,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
     # Here, we want to use common_mask=True in iris.analysis.stats.pearsonr
@@ -547,6 +552,15 @@ def _calculate_emd(
 
     # Data
     if cube.has_lazy_data() and reference.has_lazy_data():
+        # da.apply_gufunc internally casts all input arrays to Dask, which
+        # might produce misaligned chunks. To avoid this, make sure
+        # `bin_centers` is also a Dask array which is similarly chunked as
+        # `pmf.lazy_data()` and `pmf_ref.lazy_data()` along the shared
+        # dimension `i`. Since `pmf.lazy_data()` and `pmf_ref.lazy_data()` are
+        # not chunked along the shared dimension `i` (see `rechunk_cube()`
+        # function above) and `bin_centers` has shape (i,), `bin_centers` must
+        # not be chunked at all.
+        bin_centers = da.from_array(bin_centers, chunks=bin_centers.shape)
         emd = da.apply_gufunc(
             _get_emd,
             "(i),(i),(i)->()",

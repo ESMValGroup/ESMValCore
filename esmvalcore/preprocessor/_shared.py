@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import CellMeasure, Coord, DimCoord
+from iris.coords import CellMeasure, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.util import broadcast_to_shape
@@ -28,6 +28,8 @@ from esmvalcore.iris_helpers import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from iris.coords import Coord
 
     from esmvalcore.typing import DataType
 
@@ -45,7 +47,7 @@ def guess_bounds(cube, coords):
 
 def get_iris_aggregator(
     operator: str,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> tuple[iris.analysis.Aggregator, dict]:
     """Get :class:`iris.analysis.Aggregator` and keyword arguments.
 
@@ -82,18 +84,14 @@ def get_iris_aggregator(
     # Check if valid aggregator is found
     if not hasattr(iris.analysis, cap_operator):
         msg = f"Aggregator '{operator}' not found in iris.analysis module"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     aggregator = getattr(iris.analysis, cap_operator)
     if not hasattr(aggregator, "aggregate"):
         msg = (
             f"Aggregator {aggregator} found by '{operator}' is not a valid "
             f"iris.analysis.Aggregator"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
@@ -109,9 +107,7 @@ def get_iris_aggregator(
             cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         msg = f"Invalid kwargs for operator '{operator}': {exc!s}"
-        raise ValueError(
-            msg,
-        ) from exc
+        raise ValueError(msg) from exc
 
     return (aggregator, aggregator_kwargs)
 
@@ -141,10 +137,10 @@ def update_weights_kwargs(
     operator: str,
     aggregator: iris.analysis.Aggregator,
     kwargs: dict,
-    weights: Any,
+    weights: Any,  # noqa: ANN401
     cube: Cube | None = None,
     callback: Callable | None = None,
-    **callback_kwargs,
+    **callback_kwargs: Any,
 ) -> dict:
     """Update weights keyword argument.
 
@@ -177,9 +173,7 @@ def update_weights_kwargs(
     kwargs = dict(kwargs)
     if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
         msg = f"Aggregator '{operator}' does not support 'weights' option"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
         if cube is not None and callback is not None:
@@ -236,9 +230,7 @@ def get_normalized_cube(
             f"Expected 'subtract' or 'divide' for `normalize`, got "
             f"'{normalize}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Keep old metadata except for units
     new_units = normalized_cube.units
@@ -248,7 +240,7 @@ def get_normalized_cube(
     return normalized_cube
 
 
-def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:
+def _get_first_arg(func: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
     """Get first argument given to a function."""
     # If positional arguments are given, use the first one
     if args:
@@ -278,9 +270,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
             f"Cannot preserve float dtype during function '{func.__name__}', "
             f"function takes no arguments"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> DataType:
@@ -302,9 +292,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
                 f"type {type(result)} do not have the necessary attribute "
                 f"'dtype'"
             )
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
 
         return result
 
@@ -385,9 +373,7 @@ def get_weights(
                 f"`cell_area` can be given to the cube as supplementary "
                 f"variable)"
             )
-            raise CoordinateNotFoundError(
-                msg,
-            )
+            raise CoordinateNotFoundError(msg)
         try_adding_calculated_cell_area(cube)
         area_weights = cube.cell_measure("cell_area").core_data()
         if cube.has_lazy_data():
@@ -442,18 +428,14 @@ def get_coord_weights(
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"without bounds"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if coord.core_bounds().shape[-1] != 2:
         msg = (
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"with {coord.core_bounds().shape[-1]} bounds per point, expected "
             f"2 bounds per point"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Calculate weights of same shape as coordinate and make sure to use
     # identical chunks as parent cube for non-scalar lazy data
@@ -577,9 +559,7 @@ def get_all_coords(
                 f"{cube.summary(shorten=True)} must not have unnamed "
                 f"dimensions"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
     return coords
 
 

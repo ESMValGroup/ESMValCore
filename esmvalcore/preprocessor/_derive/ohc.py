@@ -1,13 +1,19 @@
 """Derivation of variable `ohc`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import iris
 from cf_units import Unit
 from iris import Constraint
-from iris.cube import Cube, CubeList
-
-from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 RHO_CP = iris.coords.AuxCoord(4.09169e6, units=Unit("kg m-3 J kg-1 K-1"))
 

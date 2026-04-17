@@ -1,6 +1,8 @@
 """Fixes for EC-Earth model."""
 
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import iris
 import numpy as np
@@ -11,6 +13,9 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
     cube_to_aux_coord,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Sic(Fix):

@@ -1,11 +1,16 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
+from __future__ import annotations
+
 import logging
-from collections.abc import Callable, Iterable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import iris.coords
-from iris.cube import Cube
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +82,7 @@ def add_cell_measure(
     """
     if measure not in ["area", "volume"]:
         msg = f"measure name must be 'area' or 'volume', got {measure} instead"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     coord_dims = tuple(
         range(cube.ndim - len(cell_measure_cube.shape), cube.ndim),
     )

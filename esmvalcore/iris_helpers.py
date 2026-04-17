@@ -522,9 +522,7 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             f"standard_name changed from '{old_standard_name}' to "
             f"'{cube.standard_name}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return cube
 
 
@@ -575,7 +573,7 @@ def ignore_warnings_context(
 def _get_attribute(
     data: ncdata.NcData | ncdata.NcVariable | xr.Dataset | xr.DataArray,
     attribute_name: str,
-) -> Any:
+) -> Any:  # noqa: ANN401
     """Get attribute from an ncdata or xarray object."""
     if isinstance(data, ncdata.NcData | ncdata.NcVariable):
         attribute = data.attributes[attribute_name].value
@@ -624,9 +622,7 @@ def dataset_to_iris(
             f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
             f"type {type(dataset)}"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     with ignore_warnings_context(ignore_warnings):
         cubes = conversion_func(dataset)

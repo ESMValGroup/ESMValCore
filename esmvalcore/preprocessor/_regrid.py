@@ -20,15 +20,19 @@ import iris.coords
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
-from iris.analysis import AreaWeighted, Linear, Nearest
+from iris.analysis import (
+    AreaWeighted,
+    Linear,
+    Nearest,
+)
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
+import esmvalcore.cmor.table
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
     add_plev_from_altitude,
 )
-from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
     _rechunk_aux_factory_dependencies,
@@ -50,6 +54,7 @@ from esmvalcore.preprocessor.regrid_schemes import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from iris.analysis import Regridder, RegriddingScheme
     from numpy.typing import ArrayLike
 
     from esmvalcore.dataset import Dataset
@@ -580,7 +585,9 @@ def extract_point(
     return cube.interpolate(point, scheme=loaded_scheme)
 
 
-def is_dataset(dataset: Any) -> bool:
+def is_dataset(
+    dataset: Any,  # noqa: ANN401
+) -> bool:
     """Test if something is an `esmvalcore.dataset.Dataset`."""
     # Use this function to avoid circular imports
     return hasattr(dataset, "facets")
@@ -631,7 +638,7 @@ def _load_scheme(
     src_cube: Cube,
     tgt_cube: Cube,
     scheme: NamedHorizontalScheme | dict[str, Any],
-):
+) -> RegriddingScheme:
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
 
@@ -664,7 +671,7 @@ def _load_scheme(
     return loaded_scheme
 
 
-def _load_generic_scheme(scheme: dict[str, Any]):
+def _load_generic_scheme(scheme: dict[str, Any]) -> RegriddingScheme:
     """Load generic regridding scheme."""
     scheme = dict(scheme)  # do not overwrite original scheme
 
@@ -706,7 +713,7 @@ def _get_regridder(
     tgt_cube: Cube,
     scheme: NamedHorizontalScheme | dict,
     cache_weights: bool,
-):
+) -> Regridder:
     """Get regridder to actually perform regridding.
 
     Note
@@ -1396,15 +1403,15 @@ def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    if cmor_table not in CMOR_TABLES:
+    if cmor_table not in esmvalcore.cmor.table.CMOR_TABLES:
         msg = f"Level definition cmor_table '{cmor_table}' not available"
         raise ValueError(msg)
 
-    if coordinate not in CMOR_TABLES[cmor_table].coords:
+    if coordinate not in esmvalcore.cmor.table.CMOR_TABLES[cmor_table].coords:
         msg = f"Coordinate {coordinate} not available for {cmor_table}"
         raise ValueError(msg)
 
-    cmor = CMOR_TABLES[cmor_table].coords[coordinate]
+    cmor = esmvalcore.cmor.table.CMOR_TABLES[cmor_table].coords[coordinate]
 
     if cmor.requested:
         return [float(level) for level in cmor.requested]

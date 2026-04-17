@@ -8,16 +8,17 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import fiona
+import fiona.collection
 import iris
 import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
 from iris.coords import AuxCoord
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
@@ -39,6 +40,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.cube import Cube
 
     from esmvalcore.config import Session
 
@@ -211,7 +214,7 @@ def zonal_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute zonal statistics.
 
@@ -247,9 +250,7 @@ def zonal_statistics(
     """
     if cube.coord("longitude").points.ndim >= 2:
         msg = "Zonal statistics on irregular grids not yet implemented"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed("longitude", agg, **agg_kwargs)
@@ -263,7 +264,7 @@ def meridional_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Compute meridional statistics.
 
@@ -298,9 +299,7 @@ def meridional_statistics(
     """
     if cube.coord("latitude").points.ndim >= 2:
         msg = "Meridional statistics on irregular grids not yet implemented"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     with ignore_iris_vague_metadata_warnings():
         result = cube.collapsed("latitude", agg, **agg_kwargs)
@@ -318,7 +317,7 @@ def area_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
@@ -418,17 +417,13 @@ def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
 
     if not isinstance(regions, (list, tuple, set)):
         msg = f'Regions "{regions}" is not an acceptable format.'
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     available_regions = set(cube.coord("region").points)
     invalid_regions = set(regions) - available_regions
     if invalid_regions:
         msg = f'Region(s) "{invalid_regions}" not in cube region(s): {available_regions}'
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     constraints = iris.Constraint(region=lambda r: r in regions)
     return cube.extract(constraint=constraints)
@@ -477,7 +472,7 @@ def _crop_cube(
 
 
 def _select_representative_point(
-    shape,
+    shape: shapely.geometry.base.BaseGeometry,
     lon: np.ndarray,
     lat: np.ndarray,
 ) -> np.ndarray:
@@ -519,7 +514,10 @@ def _correct_coords_from_shapefile(
     return lon, lat
 
 
-def _process_ids(geometries, ids: list | dict | None) -> tuple:
+def _process_ids(
+    geometries: fiona.collection.Collection,
+    ids: list | dict | None,
+) -> tuple:
     """Read requested IDs and ID keys."""
     # If ids is a dict, it needs to have length 1 and all geometries needs to
     # have the requested attribute key
@@ -529,9 +527,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                 f"If `ids` is given as dict, it needs exactly one entry, got "
                 f"{ids}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         key = next(iter(ids.keys()))
         for geometry in geometries:
             if key not in geometry["properties"]:
@@ -539,9 +535,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
                     f"Geometry {dict(geometry['properties'])} does not have "
                     f"requested attribute {key}"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
         id_keys: tuple[str, ...] = (key,)
         ids = ids[key]
 
@@ -559,7 +553,7 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
 
 
 def _get_requested_geometries(
-    geometries,
+    geometries: fiona.collection.Collection,
     ids: list | dict | None,
     shapefile: Path,
 ) -> dict[str, dict]:
@@ -594,9 +588,7 @@ def _get_requested_geometries(
                 f"Requested shapes {missing} not found in shapefile "
                 f"{shapefile}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
     return requested_geometries
 
@@ -610,11 +602,8 @@ def _get_masks_from_geometries(
 ) -> dict[str, np.ndarray]:
     """Get cube masks from requested regions."""
     if method not in {"contains", "representative"}:
-        msg = "Invalid value for `method`. Choose from 'contains', "
-        raise ValueError(
-            msg,
-            "'representative'.",
-        )
+        msg = "Invalid value for `method`. Choose from 'contains', 'representative'."
+        raise ValueError(msg)
 
     masks = {}
     for id_, geometry in geometries.items():

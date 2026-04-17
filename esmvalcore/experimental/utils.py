@@ -1,19 +1,23 @@
 """ESMValCore utilities."""
 
-import os
+from __future__ import annotations
+
 import re
 from pathlib import Path
-from re import Pattern
+from typing import TYPE_CHECKING
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
+from esmvalcore.experimental.recipe import Recipe
 
-from .recipe import Recipe
+if TYPE_CHECKING:
+    import os
+    from re import Pattern
 
 
 class RecipeList(list):
     """Container for recipes."""
 
-    def find(self, query: Pattern[str]):
+    def find(self, query: Pattern[str]) -> RecipeList:
         """Search for recipes matching the search query or pattern.
 
         Searches in the description, authors and project information fields.

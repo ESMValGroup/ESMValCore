@@ -1,14 +1,21 @@
 """Derivation of variable `vegFrac`."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask.array as da
 import iris
 from iris import NameConstraint
-from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._regrid import regrid
-from esmvalcore.typing import Facets
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):

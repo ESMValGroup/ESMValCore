@@ -70,9 +70,7 @@ def amplitude(cube, coords):
                 f"{cube.summary(shorten=True)} and cannot be added via "
                 f"iris.coord_categorisation"
             )
-            raise iris.exceptions.CoordinateNotFoundError(
-                msg,
-            )
+            raise iris.exceptions.CoordinateNotFoundError(msg)
 
     # Calculate amplitude
     with ignore_iris_vague_metadata_warnings():

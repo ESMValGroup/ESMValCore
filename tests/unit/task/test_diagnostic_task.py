@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import copy
 import logging
+import re
 import stat
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
@@ -9,6 +13,9 @@ import yaml
 import esmvalcore._task
 from esmvalcore._task import DiagnosticError, write_ncl_settings
 from esmvalcore.config._diagnostics import TagsManager
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_write_ncl_settings(tmp_path):
@@ -228,7 +235,7 @@ def test_collect_provenance(mocker, diagnostic_task):
     diagnostic_task._collect_provenance()
 
     tracked_file_class.assert_called_once_with(
-        "test.png",
+        Path("test.png"),
         {
             "caption": "Some figure",
             "plot_type": ("tag_value",),
@@ -337,3 +344,55 @@ def test_collect_provenance_ancestor_hint(mocker, caplog, diagnostic_task):
             ["Valid ancestor files", "xyz.nc"],
         ],
     )
+
+
+def test_run_fails_with_nonzero_returncode(
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    """Test that DiagnosticError is raised when script fails."""
+    mocker.patch.object(
+        esmvalcore._task.DiagnosticTask,
+        "_initialize_cmd",
+        autospec=True,
+    )
+    mocker.patch.object(
+        esmvalcore._task.DiagnosticTask,
+        "_initialize_env",
+        autospec=True,
+    )
+
+    settings = {
+        "run_dir": str(tmp_path / "run_dir"),
+        "plot_dir": str(tmp_path / "plot_dir"),
+        "work_dir": str(tmp_path / "work_dir"),
+        "profile_diagnostic": False,
+    }
+
+    task = esmvalcore._task.DiagnosticTask(
+        "test.py",
+        settings,
+        output_dir=str(tmp_path),
+        name="test-task",
+    )
+
+    # Mock subprocess.Popen to return a process with non-zero return code
+    mock_process = mocker.Mock()
+    mock_process.pid = 12345
+    mock_process.poll.return_value = (
+        1  # Non-zero return code indicates failure
+    )
+    mock_process.stdout.read.return_value = b"Error occurred\n"
+
+    mocker.patch.object(
+        esmvalcore._task.subprocess,
+        "Popen",
+        return_value=mock_process,
+    )
+
+    # Mock resource_usage_logger to avoid threading issues in tests
+    mocker.patch.object(esmvalcore._task, "resource_usage_logger")
+
+    msg = r"Diagnostic script test.py failed with return code 1"
+    with pytest.raises(DiagnosticError, match=re.escape(msg)):
+        task._run(input_files=[])

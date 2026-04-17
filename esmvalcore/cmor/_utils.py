@@ -5,13 +5,15 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
+import esmvalcore.cmor.table
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from iris.coords import Coord
     from iris.cube import Cube
+
+    from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,9 @@ def _get_alternative_generic_lev_coord(
     # Check if any of the allowed alternative coordinates is present in the
     # cube
     for allowed_alternative in allowed_alternatives:
-        cmor_coord = CMOR_TABLES[cmor_table_type].coords[allowed_alternative]
+        cmor_coord = esmvalcore.cmor.table.CMOR_TABLES[cmor_table_type].coords[
+            allowed_alternative
+        ]
         if cube.coords(var_name=cmor_coord.out_name):
             cube_coord = cube.coord(var_name=cmor_coord.out_name)
             return (cmor_coord, cube_coord)
@@ -75,9 +79,7 @@ def _get_alternative_generic_lev_coord(
         f"Found no valid alternative coordinate for generic level coordinate "
         f"'{coord_name}'"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def _get_generic_lev_coord_names(
@@ -128,7 +130,7 @@ def _get_new_generic_level_coord(
     var_info: VariableInfo,
     generic_level_coord: CoordinateInfo,
     generic_level_coord_name: str,
-    new_coord_name: str | None,
+    new_coord_name: str,
 ) -> CoordinateInfo:
     """Get new generic level coordinate.
 
@@ -200,9 +202,7 @@ def _get_single_cube(
             f"but none of their var_names match the expected.\nFull list of "
             f"cubes encountered: {cube_list}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     logger.warning(
         "Found variable %s%s, but there were other present in the file. Those "
         "extra variables are usually metadata (cell area, latitude "

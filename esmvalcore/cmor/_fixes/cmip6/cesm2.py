@@ -1,7 +1,9 @@
 """Fixes for CESM2 model."""
 
-from pathlib import Path
+from __future__ import annotations
+
 from shutil import copyfile
+from typing import TYPE_CHECKING
 
 import iris
 import iris.coords
@@ -17,6 +19,9 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typesea_coord,
     fix_ocean_depth_coord,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Cl(Fix):

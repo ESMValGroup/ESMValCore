@@ -1,19 +1,26 @@
 """Recipe metadata."""
 
+from __future__ import annotations
+
 import logging
-import os
 import pprint
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG
 
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
+
+if TYPE_CHECKING:
+    import os
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +36,7 @@ class Recipe:
         Path to the recipe.
     """
 
-    def __init__(self, path: os.PathLike):
+    def __init__(self, path: os.PathLike) -> None:
         self.path = Path(path)
         if not self.path.exists():
             msg = f"Cannot find recipe: `{path}`."
@@ -104,7 +111,7 @@ class Recipe:
         self,
         task: str | None = None,
         session: Session | None = None,
-    ):
+    ) -> RecipeOutput:
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -112,17 +119,17 @@ class Recipe:
 
         Parameters
         ----------
-        task : str
+        task
             Specify the name of the diagnostic or preprocessor to run a
             single task.
-        session : :obj:`Session`, optional
+        session
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
             started automatically.
 
         Returns
         -------
-        output : dict
+        :
             Returns output of the recipe as instances of :obj:`OutputItem`
             grouped by diagnostic task.
         """
@@ -150,7 +157,7 @@ class Recipe:
 
         Returns
         -------
-        output : dict
+        output
             Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
@@ -163,6 +170,6 @@ class Recipe:
 
         return RecipeOutput(
             task_output=task_output,
-            session=self.last_session,
+            session=self.last_session,  # type: ignore[arg-type]
             info=self.info,
         )

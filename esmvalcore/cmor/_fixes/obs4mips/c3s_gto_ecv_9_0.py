@@ -1,9 +1,15 @@
 """Fixes for obs4MIPs dataset C3S-GTO-ECV-9-0."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import dask.array as da
-from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.fix import Fix
+
+if TYPE_CHECKING:
+    from iris.cube import Cube
 
 
 class Toz(Fix):

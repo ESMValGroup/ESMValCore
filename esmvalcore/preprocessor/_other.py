@@ -10,7 +10,7 @@ import dask
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import Coord, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
@@ -31,6 +31,8 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from iris.coords import Coord
+
     from esmvalcore.cmor.table import VariableInfo
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,7 @@ def align_metadata(
     target_project: str,
     target_mip: str,
     target_short_name: str,
+    target_branding_suffix: str | None = None,
     strict: bool = True,
 ) -> Cube:
     """Set cube metadata to entries from a specific target project.
@@ -62,6 +65,8 @@ def align_metadata(
         MIP table from which target metadata is read.
     target_short_name:
         Variable short name from which target metadata is read.
+    target_branding_suffix:
+        Branding suffix from which target metadata is read.
     strict:
         If ``True``, raise an error if desired metadata cannot be read for
         variable ``target_short_name`` of MIP table ``target_mip`` and project
@@ -84,7 +89,12 @@ def align_metadata(
     cube = cube.copy()
 
     try:
-        var_info = _get_var_info(target_project, target_mip, target_short_name)
+        var_info = _get_var_info(
+            target_project,
+            target_mip,
+            target_short_name,
+            branding_suffix=target_branding_suffix,
+        )
     except ValueError as exc:
         if strict:
             raise
@@ -99,13 +109,28 @@ def align_metadata(
     return cube
 
 
-def _get_var_info(project: str, mip: str, short_name: str) -> VariableInfo:
+def _get_var_info(
+    project: str,
+    mip: str,
+    short_name: str,
+    branding_suffix: str | None,
+) -> VariableInfo:
     """Get variable information."""
-    var_info = get_var_info(project, mip, short_name)
+    var_info = get_var_info(
+        project,
+        mip,
+        short_name,
+        branding_suffix=branding_suffix,
+    )
     if var_info is None:
         msg = (
-            f"Variable '{short_name}' not available for table '{mip}' of "
-            f"project '{project}'"
+            f"Variable '{short_name}' "
+            + (
+                f"with branding suffix '{branding_suffix}' "
+                if branding_suffix
+                else ""
+            )
+            + f"not available for table '{mip}' of project '{project}'"
         )
         raise ValueError(msg)
     return var_info
@@ -411,7 +436,7 @@ def _get_histogram_weights(
     elif weights is True:
         weights_array = get_weights(cube, coords)
     else:
-        weights_array = weights
+        weights_array = npx.array(weights)
 
     if normalization is not None:
         norm = npx.sum(weights_array, axis=axes, keepdims=True)
@@ -563,7 +588,7 @@ def _get_histogram_cube(
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
     normalization: Literal["sum", "integral"] | None,
-):
+) -> Cube:
     """Get cube with correct metadata for histogram."""
     # Calculate bin centers using 2-window running mean and get corresponding
     # coordinate

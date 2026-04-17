@@ -8,7 +8,7 @@ The location is determined by the ``output_dir`` :ref:`configuration option
 <config_options>`, the recipe name, and the date and time, using the the
 format: ``YYYYMMDD_HHMMSS``.
 
-For instance, a typical output location would be:
+For instance, a typical output location (:attr:`~esmvalcore.config.Session.session_dir`) would be:
 ``output_directory/recipe_ocean_amoc_20190118_1027/``
 
 This is effectively produced by the combination:

@@ -40,9 +40,7 @@ class EmacFix(NativeDatasetFix):
             f"available in the input file. Please specify a valid `raw_name` "
             f"in the recipe or as extra facets."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
 
 class NegateData(EmacFix):

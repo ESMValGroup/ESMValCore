@@ -7,7 +7,7 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
@@ -110,9 +110,7 @@ def extract_volume(
             'Depth extraction bounds can be set to "open", "closed", '
             f'"left_closed", or "right_closed". Got "{interval_bounds}".'
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     z_constraint = iris.Constraint(coord_values=coord_values)
 
@@ -162,18 +160,14 @@ def calculate_volume(cube: Cube) -> np.ndarray | da.Array:
             "Bounds should be 2 in the last dimension to compute the "
             "thickness."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Convert units to get the thickness in meters
     try:
         depth.convert_units("m")
     except ValueError as err:
         msg = f"Cannot compute volume using the Z-axis. {err}"
-        raise ValueError(
-            msg,
-        ) from err
+        raise ValueError(msg) from err
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
@@ -250,7 +244,7 @@ def volume_statistics(
     cube: Cube,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Apply a statistical operation over a volume.
 
@@ -314,9 +308,7 @@ def volume_statistics(
             "This may indicate Z axis depending on other dimension than "
             "space that could provoke invalid aggregation..."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
@@ -346,7 +338,7 @@ def axis_statistics(
     axis: str,
     operator: str,
     normalize: Literal["subtract", "divide"] | None = None,
-    **operator_kwargs,
+    **operator_kwargs: Any,
 ) -> Cube:
     """Perform statistics along a given axis.
 
@@ -391,9 +383,7 @@ def axis_statistics(
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
         msg = f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
-        raise ValueError(
-            msg,
-        ) from err
+        raise ValueError(msg) from err
 
     # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
@@ -401,9 +391,7 @@ def axis_statistics(
         msg = (
             "axis_statistics not implemented for multidimensional coordinates."
         )
-        raise NotImplementedError(
-            msg,
-        )
+        raise NotImplementedError(msg)
 
     # For weighted operations, create a dummy weights coordinate using the
     # bounds of the original coordinate (this handles units properly, e.g., for
@@ -621,9 +609,7 @@ def extract_trajectory(
     """
     if len(latitudes) != len(longitudes):
         msg = "Longitude & Latitude coordinates have different lengths"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     if len(latitudes) == len(longitudes) == 2:
         minlat, maxlat = np.min(latitudes), np.max(latitudes)

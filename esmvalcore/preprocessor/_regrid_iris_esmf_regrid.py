@@ -34,6 +34,11 @@ METHODS = {
 class IrisESMFRegrid:
     """:doc:`esmf_regrid:index` based regridding scheme.
 
+    This regridding scheme is a thin wrapper around the regridders provided by
+    :mod:`esmf_regrid` with improved handling of masks. This allows using
+    these regridders from the :ref:`regrid preprocessor <Horizontal regridding>`
+    function.
+
     Supports lazy regridding.
 
     Parameters
@@ -131,9 +136,7 @@ class IrisESMFRegrid:
                 "`method` should be one of 'bilinear', 'conservative', or "
                 "'nearest'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         if use_src_mask is None:
             use_src_mask = method != "nearest"
@@ -154,9 +157,7 @@ class IrisESMFRegrid:
                     "`mdol` can only be specified when `method='bilinear'` "
                     "or `method='conservative'`"
                 )
-                raise TypeError(
-                    msg,
-                )
+                raise TypeError(msg)
         else:
             self.kwargs["mdtol"] = mdtol
         if method == "conservative":
@@ -167,17 +168,13 @@ class IrisESMFRegrid:
                 "`src_resolution` can only be specified when "
                 "`method='conservative'`"
             )
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
         elif tgt_resolution is not None:
             msg = (
                 "`tgt_resolution` can only be specified when "
                 "`method='conservative'`"
             )
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
 
     def __repr__(self) -> str:
         """Return string representation of class."""

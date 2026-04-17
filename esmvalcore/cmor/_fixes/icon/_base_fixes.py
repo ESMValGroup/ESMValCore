@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import shutil
@@ -10,7 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import iris
@@ -19,13 +20,18 @@ import pandas as pd
 import requests
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import AuxCoord, Coord, DimCoord
-from iris.cube import Cube, CubeList
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import CubeList
 from iris.mesh import Connectivity, MeshXY
 
+import esmvalcore.io.local
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
-from esmvalcore.local import _get_data_sources
+
+if TYPE_CHECKING:
+    from iris.coords import Coord
+    from iris.cube import Cube
 
 logger = logging.getLogger(__name__)
 
@@ -157,9 +163,7 @@ class IconFix(NativeDatasetFix):
                 f"necessary to download the ICON horizontal grid file:\n"
                 f"{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name
@@ -218,9 +222,7 @@ class IconFix(NativeDatasetFix):
                     f"relative to the auxiliary_data_dir "
                     f"'{self.session['auxiliary_data_dir']}')"
                 )
-                raise FileNotFoundError(
-                    msg,
-                )
+                raise FileNotFoundError(msg)
             path = new_path
         return path
 
@@ -321,16 +323,17 @@ class IconFix(NativeDatasetFix):
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
         """Try to get grid from the ICON rootpath."""
-        glob_patterns: list[Path] = []
-        for data_source in _get_data_sources("ICON"):
-            glob_patterns.extend(
-                data_source.get_glob_patterns(**self.extra_facets),
-            )
-        possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
-        for grid_path in possible_grid_paths:
-            if grid_path.is_file():
-                logger.debug("Using ICON grid file '%s'", grid_path)
-                return self._load_cubes(grid_path)
+        for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
+            if isinstance(data_source, esmvalcore.io.local.LocalDataSource):
+                ds = copy.deepcopy(data_source)
+                ds.filename_template = grid_name
+                icon_grid_facets = dict(self.extra_facets)
+                icon_grid_facets.pop("timerange", None)
+                icon_grid_facets["frequency"] = "fx"
+                files = ds.find_data(**icon_grid_facets)
+                if files:
+                    logger.debug("Using ICON grid file '%s'", files[0])
+                    return files[0].to_iris()
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -510,21 +513,8 @@ class IconFix(NativeDatasetFix):
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
-                message="Ignoring netCDF variable .* invalid units .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris < 3.8
-            warnings.filterwarnings(
-                "ignore",
-                message="Ignoring invalid units .* on netCDF variable .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris >= 3.8
-            warnings.filterwarnings(
-                "ignore",
                 message="Failed to create 'height' dimension coordinate: The "
-                "'height' DimCoord bounds array must be strictly "
-                "monotonic.",
+                "'height' DimCoord bounds array must be strictly monotonic.",
                 category=UserWarning,
                 module="iris",
             )
@@ -578,13 +568,8 @@ class AllVarsBase(IconFix):
         if cube.coords(long_name="depth_below_sea"):
             self._fix_depth(cube, cubes)
 
-        # Remove undesired lev coordinate with length 1
-        lev_coord = DimCoord(0.0, var_name="lev")
-        if cube.coords(lev_coord, dim_coords=True):
-            slices = [slice(None)] * cube.ndim
-            slices[cube.coord_dims(lev_coord)[0]] = 0
-            cube = cube[tuple(slices)]
-            cube.remove_coord(lev_coord)
+        # Remove undesired coordinates of length 1
+        cube = self._remove_undesired_coords(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -649,9 +634,7 @@ class AllVarsBase(IconFix):
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):
@@ -677,9 +660,7 @@ class AllVarsBase(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def _get_z_coord(
         self,
@@ -789,19 +770,33 @@ class AllVarsBase(IconFix):
 
     def _fix_depth(self, cube: Cube, cubes: CubeList) -> None:
         """Fix ocean depth coordinate."""
-        depth_coord = self.fix_depth_coord_metadata(cube)
+        depth_coord = cube.coord(long_name="depth_below_sea")
+        depth_var_name = depth_coord.var_name
+        depth_coord = self.fix_depth_coord_metadata(cube, coord=depth_coord)
         if depth_coord.has_bounds():
             return
 
-        # Try to get bounds of depth coordinate from depth_2 coordinate that
-        # might be present in other variables loaded from the same file
+        # ICON ocean output usually consists of two different depth
+        # coordinates, "depth" and "depth_2". One of them is the depth at the
+        # cell centers, the other at the cell boundaries. The nomenclature is
+        # not consistent on which coordinate is which. Thus, if possible, we
+        # try to add the cell boundaries from the other depth coordinate here
+        # (potentially available from other variables loaded from same file).
+        if depth_var_name == "depth":
+            other_depth_var_name = "depth_2"
+        else:
+            other_depth_var_name = "depth"
         for other_cube in cubes:
-            if not other_cube.coords(var_name="depth_2"):
+            if not other_cube.coords(var_name=other_depth_var_name):
                 continue
-            depth_2_coord = other_cube.coord(var_name="depth_2")
+            depth_2_coord = other_cube.coord(var_name=other_depth_var_name)
             depth_2_coord.convert_units(depth_coord.units)
             bounds = depth_2_coord.core_points()
-            depth_coord.bounds = np.stack((bounds[:-1], bounds[1:]), axis=-1)
+            if bounds.shape == (depth_coord.shape[0] + 1,):
+                depth_coord.bounds = np.stack(
+                    (bounds[:-1], bounds[1:]),
+                    axis=-1,
+                )
 
     def _fix_lat(self, cube: Cube) -> tuple[int, ...]:
         """Fix latitude coordinate of cube."""
@@ -972,9 +967,7 @@ class AllVarsBase(IconFix):
                     f"got {datetime_point}. Use `shift_time=false` in the "
                     f"recipe to disable this feature"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
 
         # Decadal data
         if "dec" in freq:
@@ -1067,9 +1060,7 @@ class AllVarsBase(IconFix):
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         new_t_units = Unit(
             "days since 1850-01-01",
             calendar="proleptic_gregorian",
@@ -1114,6 +1105,20 @@ class AllVarsBase(IconFix):
         # Modify time coordinate in place
         time_coord.points = new_dt_points
         time_coord.units = new_t_units
+
+    def _remove_undesired_coords(self, cube: Cube) -> Cube:
+        """Remove undesired coordinates of length 1 from cube."""
+        coords_to_remove = [
+            DimCoord(0.0, var_name="lev"),
+            DimCoord(0.0, var_name="ice_class"),
+        ]
+        for coord in coords_to_remove:
+            if cube.coords(coord, dim_coords=True):
+                slices: list[int | slice] = [slice(None)] * cube.ndim
+                slices[cube.coord_dims(coord)[0]] = 0
+                cube = cube[tuple(slices)]
+                cube.remove_coord(coord)
+        return cube
 
 
 class NegateData(IconFix):

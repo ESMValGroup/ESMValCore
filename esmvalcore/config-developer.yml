@@ -26,6 +26,10 @@
 #   cmor_path: ~/my/own/custom_tables
 ###############################################################################
 ---
+CMIP7:
+  cmor_path: "cmip7"
+  cmor_strict: true
+  cmor_type: "CMIP6"
 
 CMIP6:
   cmor_strict: true
@@ -122,7 +126,7 @@ obs4MIPs:
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'
 
-ana4mips:
+ana4MIPs:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'

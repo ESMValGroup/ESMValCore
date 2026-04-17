@@ -27,7 +27,8 @@ def test_cmor_check_metadata(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
 
@@ -35,7 +36,8 @@ def test_cmor_check_metadata(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
@@ -61,7 +63,8 @@ def test_cmor_check_data(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
 
@@ -69,7 +72,8 @@ def test_cmor_check_data(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
@@ -99,8 +103,9 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
-        sentinel.check_level,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
+        check_level=sentinel.check_level,
     )
 
     mock_cmor_check_metadata.assert_called_once_with(
@@ -108,7 +113,8 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     mock_cmor_check_data.assert_called_once_with(
@@ -116,7 +122,8 @@ def test_cmor_check(mocker):
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
-        sentinel.frequency,
+        branding_suffix=sentinel.branding_suffix,
+        frequency=sentinel.frequency,
         check_level=sentinel.check_level,
     )
     assert cube == sentinel.cube_after_check_data

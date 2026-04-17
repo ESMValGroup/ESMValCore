@@ -1,11 +1,17 @@
 """Derivation of variable `qep`."""
 
-from iris import Constraint
-from iris.cube import Cube, CubeList
+from __future__ import annotations
 
-from esmvalcore.typing import Facets
+from typing import TYPE_CHECKING
+
+from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
+
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariable(DerivedVariableBase):

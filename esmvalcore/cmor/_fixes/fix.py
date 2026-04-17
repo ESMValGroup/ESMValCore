@@ -8,13 +8,13 @@ import inspect
 import logging
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask
 import numpy as np
 from cf_units import Unit
-from iris.coords import Coord, CoordExtent
-from iris.cube import Cube, CubeList
+from iris.coords import CoordExtent
+from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
@@ -35,8 +35,8 @@ from esmvalcore.iris_helpers import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import ncdata
-    import xarray as xr
+    from iris.coords import Coord
+    from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
     from esmvalcore.config import Session
@@ -82,10 +82,10 @@ class Fix:
 
     def fix_file(
         self,
-        file: str | Path | xr.Dataset | ncdata.NcData,
+        file: Path,
         output_dir: Path,  # noqa: ARG002
         add_unique_suffix: bool = False,  # noqa: ARG002
-    ) -> str | Path | xr.Dataset | ncdata.NcData:
+    ) -> Path | Sequence[Cube]:
         """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
         This is mainly intended to fix errors that prevent loading the data
@@ -96,11 +96,12 @@ class Fix:
 
         Warning
         -------
-        A path should only be returned if it points to the original (unchanged)
-        file (i.e., a fix was not necessary). If a fix is necessary, this
-        function should return a :class:`~ncdata.NcData` or
-        :class:`~xarray.Dataset` object.  Under no circumstances a copy of the
-        input data should be created (this is very inefficient).
+        For fix developers: a path should only be returned if it points to the
+        original (unchanged) file (i.e., a fix was not necessary). If a fix is
+        necessary, this function should return a :class:`~iris.cube.CubeList` or
+        a :class:`~collections.abc.Sequence` of :class:`~iris.cube.Cube`
+        objects. Under no circumstances a copy of the input data should be
+        created (this is very inefficient).
 
         Parameters
         ----------
@@ -114,7 +115,7 @@ class Fix:
 
         Returns
         -------
-        str | pathlib.Path | xr.Dataset | ncdata.NcData:
+        :
             Fixed data or a path to them.
 
         """
@@ -250,14 +251,19 @@ class Fix:
             Fixes to apply for the given data.
 
         """
-        vardef = get_var_info(project, mip, short_name)
+        if extra_facets is None:
+            extra_facets = {}
+
+        vardef = get_var_info(
+            project,
+            mip,
+            short_name,
+            branding_suffix=extra_facets.get("branding_suffix"),
+        )
 
         project = project.replace("-", "_").lower()
         dataset = dataset.replace("-", "_").lower()
         short_name = short_name.replace("-", "_").lower()
-
-        if extra_facets is None:
-            extra_facets = {}
 
         fixes = []
 
@@ -421,12 +427,12 @@ class GenericFix(Fix):
             return f"\n(for file {cube.attributes['source_file']})"
         return f"\n(for variable {cube.var_name})"
 
-    def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _debug_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.debug(msg, *args)
 
-    def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
+    def _warning_msg(self, cube: Cube, msg: str, *args: Any) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
         generic_fix_logger.warning(msg, *args)
@@ -565,7 +571,7 @@ class GenericFix(Fix):
             # Make sure to update variable information with actual generic
             # level coordinate if one has been found; this is necessary for
             # subsequent fixes
-            if standard_name:
+            if name is not None:
                 new_generic_level_coord = _get_new_generic_level_coord(
                     self.vardef,
                     cmor_coord,
@@ -875,18 +881,18 @@ class GenericFix(Fix):
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""
-        times = {"time", "time1", "time2", "time3"}
-        key = times.intersection(self.vardef.coordinates)
-        if not key:  # cube has time, but CMOR variable does not
-            return
-        cmor = self.vardef.coordinates[" ".join(key)]
-        if cmor.must_have_bounds == "yes" and not cube_coord.has_bounds():
-            cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
-            self._warning_msg(
-                cube,
-                "Added guessed bounds to coordinate %s",
-                cube_coord.var_name,
-            )
+        for cmor_coord in self.vardef.coordinates.values():
+            if (
+                cmor_coord.axis == "T"
+                and cmor_coord.must_have_bounds == "yes"
+                and not cube_coord.has_bounds()
+            ):
+                cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
+                self._warning_msg(
+                    cube,
+                    "Added guessed bounds to coordinate %s",
+                    cube_coord.var_name,
+                )
 
     def _fix_time_coord(self, cube: Cube) -> Cube:
         """Fix time coordinate."""

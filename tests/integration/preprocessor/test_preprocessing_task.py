@@ -1,5 +1,7 @@
 """Tests for `esmvalcore.preprocessor.PreprocessingTask`."""
 
+from pathlib import Path
+
 import iris
 import iris.cube
 import pytest
@@ -7,6 +9,7 @@ from prov.model import ProvDocument
 
 import esmvalcore.preprocessor
 from esmvalcore.dataset import Dataset
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 
@@ -15,11 +18,11 @@ def test_load_save_task(tmp_path, mocker, scheduler_lock):
     """Test that a task that just loads and saves a file."""
     # Prepare a test dataset
     cube = iris.cube.Cube(data=[273.0], var_name="tas", units="K")
-    in_file = tmp_path / "tas_in.nc"
+    in_file = LocalFile(tmp_path / "tas_in.nc")
     iris.save(cube, in_file)
     dataset = Dataset(short_name="tas")
     dataset.files = [in_file]
-    dataset.load = lambda: cube.copy()
+    dataset.load = lambda: in_file.to_iris()[0]
 
     # Create task
     task = PreprocessingTask(
@@ -62,8 +65,8 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
     # Prepare test datasets
     in_cube = iris.cube.Cube(data=[0.0], var_name="tas", units="degrees_C")
     (tmp_path / "climate_data").mkdir()
-    file1 = tmp_path / "climate_data" / "tas_dataset1.nc"
-    file2 = tmp_path / "climate_data" / "tas_dataset2.nc"
+    file1 = LocalFile(tmp_path / "climate_data" / "tas_dataset1.nc")
+    file2 = LocalFile(tmp_path / "climate_data" / "tas_dataset2.nc")
 
     # Save cubes for reading global attributes into provenance
     iris.save(in_cube, target=file1)
@@ -71,11 +74,11 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     dataset1 = Dataset(short_name="tas", dataset="dataset1")
     dataset1.files = [file1]
-    dataset1.load = lambda: in_cube.copy()
+    dataset1.load = lambda: file1.to_iris()[0]
 
     dataset2 = Dataset(short_name="tas", dataset="dataset1")
     dataset2.files = [file2]
-    dataset2.load = lambda: in_cube.copy()
+    dataset2.load = lambda: file2.to_iris()[0]
 
     # Create some mock preprocessor functions and patch
     # `esmvalcore.preprocessor` so it uses them.
@@ -83,12 +86,18 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
         cube.data = cube.core_data() + 1.0
         return cube
 
-    def multi_preproc_func(products):
+    def multi_preproc_func(products, output_products):
+        # Preprocessor function that mimics the behaviour of e.g.
+        # `esmvalcore.preprocessor.multi_model_statistics`.`
         for product in products:
             cube = product.cubes[0]
             cube.data = cube.core_data() + 1.0
             product.cubes = [cube]
-        return products
+        output_product = output_products[""]["mean"]
+        output_product.cubes = [
+            iris.cube.Cube([5.0], var_name="tas", units="degrees_C"),
+        ]
+        return products | {output_product}
 
     monkeypatch.setattr(
         esmvalcore.preprocessor,
@@ -132,7 +141,17 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
                 filename=tmp_path / "tas_dataset2.nc",
                 settings={
                     "single_preproc_func": {},
-                    "multi_preproc_func": {},
+                    "multi_preproc_func": {
+                        "output_products": {
+                            "": {
+                                "mean": PreprocessorFile(
+                                    filename=tmp_path / "tas_dataset2_mean.nc",
+                                    attributes={"dataset": "dataset2_mean"},
+                                    settings={},
+                                ),
+                            },
+                        },
+                    },
                 },
                 datasets=[dataset2],
                 attributes={"dataset": "dataset2"},
@@ -149,9 +168,9 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     task.run()
 
-    # Check that two files were saved and the preprocessor functions were
+    # Check that three files were saved and the preprocessor functions were
     # only applied to the second one.
-    assert len(task.products) == 2
+    assert len(task.products) == 3
     for product in task.products:
         print(product.filename)
         assert product.filename.exists()
@@ -161,6 +180,11 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
             assert out_cube.data.tolist() == [0.0]
         elif product.attributes["dataset"] == "dataset2":
             assert out_cube.data.tolist() == [2.0]
+        elif product.attributes["dataset"] == "dataset2_mean":
+            assert out_cube.data.tolist() == [5.0]
         else:
             msg = "unexpected product"
             raise AssertionError(msg)
+        provenance_file = Path(product.provenance_file)
+        assert provenance_file.exists()
+        assert provenance_file.read_text(encoding="utf-8")

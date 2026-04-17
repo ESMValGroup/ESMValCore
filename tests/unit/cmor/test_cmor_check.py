@@ -61,7 +61,14 @@ class CoordinateInfoMock:
         self.name = name
         self.generic_level = False
 
-        self.axis = ""
+        axis = {
+            "time": "T",
+            "lat": "Y",
+            "lon": "X",
+            "depth": "Z",
+            "air_pressure": "Z",
+        }
+        self.axis = axis.get(name, "")
         self.value = ""
         standard_names = {"lat": "latitude", "lon": "longitude"}
         self.standard_name = standard_names.get(name, name)
@@ -815,6 +822,12 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.coord("time").units = "K"
         self._check_fails_in_metadata()
 
+    def test_missing_time_bounds(self):
+        """Test fail for incompatible time units."""
+        self.cube.coord("time").bounds = None
+        self.var_info.coordinates["time"].must_have_bounds = "yes"
+        self._check_warnings_on_metadata()
+
     def test_time_non_monotonic(self):
         """Test fail for non monotonic times."""
         time = self.cube.coord("time")
@@ -933,12 +946,12 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_hr_mip_cordex(self):
         """Test hourly CORDEX tables are found."""
-        checker = _get_cmor_checker("CORDEX", "3hr", "tas", "3hr")
+        checker = _get_cmor_checker("CORDEX", "3hr", "tas", frequency="3hr")
         assert checker(self.cube)._cmor_var.short_name == "tas"
         assert checker(self.cube)._cmor_var.frequency == "3hr"
 
     def test_custom_variable(self):
-        checker = _get_cmor_checker("OBS", "Amon", "uajet", "mon")
+        checker = _get_cmor_checker("OBS", "Amon", "uajet", frequency="mon")
         assert checker(self.cube)._cmor_var.short_name == "uajet"
         assert checker(self.cube)._cmor_var.long_name == (
             "Jet position expressed as latitude of maximum meridional wind "
@@ -1278,7 +1291,12 @@ class TestCMORCheck(unittest.TestCase):
 def test_get_cmor_checker_invalid_project_fail():
     """Test ``_get_cmor_checker`` with invalid project."""
     with pytest.raises(KeyError):
-        _get_cmor_checker("INVALID_PROJECT", "mip", "short_name", "frequency")
+        _get_cmor_checker(
+            "INVALID_PROJECT",
+            "mip",
+            "short_name",
+            frequency="frequency",
+        )
 
 
 if __name__ == "__main__":

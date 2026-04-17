@@ -1,0 +1,49 @@
+# Read CMIP, CORDEX, OBS6, OBS and EC-Earth data from the filesystem at BSC.
+projects:
+  CMIP6:
+    data:
+      esarchive:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive/exp/CMIP6
+        dirname_template: "{exp}/{dataset}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+  CMIP5:
+    data:
+      esarchive:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive/exp/CMIP5
+        dirname_template: "{exp}/{dataset.lower}/{project.lower}-{expid}/*/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
+  ECEARTH:
+    data:
+      original_files:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive/exp/ecearth
+        dirname_template: "{expid}/original_files/cmorfiles/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+      cmorfiles:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive/exp/ecearth
+        dirname_template: "{expid}/cmorfiles/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+  CORDEX:
+    data:
+      esarchive:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive/exp/CORDEX
+        dirname_template: "{exp}/{expid.lower}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
+  OBS6:
+    data:
+      esarchive:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive
+        dirname_template: "{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}"
+        filename_template: "{short_name}*.nc"
+  OBS:
+    data:
+      esarchive:
+        type: "esmvalcore.local.LocalDataSource"
+        rootpath: /esarchive
+        dirname_template: "{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}"
+        filename_template: "{short_name}*.nc"

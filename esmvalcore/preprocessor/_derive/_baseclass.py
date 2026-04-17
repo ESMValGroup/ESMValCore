@@ -1,10 +1,14 @@
 """Contains the base class for derived variables."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
-from iris.cube import Cube, CubeList
+if TYPE_CHECKING:
+    from iris.cube import Cube, CubeList
 
-from esmvalcore.typing import Facets
+    from esmvalcore.typing import Facets
 
 
 class DerivedVariableBase:

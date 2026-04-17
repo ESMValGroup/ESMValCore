@@ -1,16 +1,23 @@
 """Automatically derive variables."""
 
+from __future__ import annotations
+
 import importlib
 import logging
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from cf_units import Unit
-from iris.cube import Cube, CubeList
+from iris.cube import CubeList
 
-from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
 from esmvalcore.preprocessor._units import convert_units
-from esmvalcore.typing import Facets
+
+if TYPE_CHECKING:
+    from cf_units import Unit
+    from iris.cube import Cube
+
+    from esmvalcore.preprocessor._derive._baseclass import DerivedVariableBase
+    from esmvalcore.typing import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +123,7 @@ def derive(
 
     # Set standard attributes
     cube.var_name = short_name
-    cube.standard_name = standard_name if standard_name else None
+    cube.standard_name = standard_name or None
     cube.long_name = long_name
     for temp in cubes:
         if "source_file" in temp.attributes:

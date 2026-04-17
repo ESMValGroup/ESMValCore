@@ -15,10 +15,11 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     Evspsbl,
     Zg,
     fix_accumulated_units,
-    get_frequency,
 )
 from esmvalcore.cmor.fix import fix_metadata
-from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
+from esmvalcore.cmor.table import get_tables
+from esmvalcore.config import CFG
+from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = (
@@ -26,98 +27,23 @@ COMMENT = (
     f"{datetime.datetime.now().year}"
 )
 
+CMOR_TABLES = {
+    "native6": get_tables(CFG, "native6"),
+}
+
 
 def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes("native6", "ERA5", "E1hr", "evspsbl")
-    vardef = get_var_info("native6", "E1hr", "evspsbl")
+    vardef = CMOR_TABLES["native6"].get_variable("E1hr", "evspsbl")
     assert fix == [Evspsbl(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes("native6", "ERA5", "Amon", "zg")
-    vardef = get_var_info("native6", "E1hr", "evspsbl")
+    vardef = CMOR_TABLES["native6"].get_variable("E1hr", "evspsbl")
     assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
-
-
-def test_get_frequency_hourly():
-    """Test cubes with hourly frequency."""
-    time = DimCoord(
-        [0, 1, 2],
-        standard_name="time",
-        units=Unit("hours since 1900-01-01"),
-    )
-    cube = Cube(
-        [1, 6, 3],
-        var_name="random_var",
-        dim_coords_and_dims=[(time, 0)],
-    )
-    assert get_frequency(cube) == "hourly"
-    cube.coord("time").convert_units("days since 1850-1-1 00:00:00.0")
-    assert get_frequency(cube) == "hourly"
-
-
-def test_get_frequency_daily():
-    """Test cubes with daily frequency."""
-    time = DimCoord(
-        [0, 1, 2],
-        standard_name="time",
-        units=Unit("days since 1900-01-01"),
-    )
-    cube = Cube(
-        [1, 6, 3],
-        var_name="random_var",
-        dim_coords_and_dims=[(time, 0)],
-    )
-    assert get_frequency(cube) == "daily"
-    cube.coord("time").convert_units("hours since 1850-1-1 00:00:00.0")
-    assert get_frequency(cube) == "daily"
-
-
-def test_get_frequency_monthly():
-    """Test cubes with monthly frequency."""
-    time = DimCoord(
-        [0, 31, 59],
-        standard_name="time",
-        units=Unit("hours since 1900-01-01"),
-    )
-    cube = Cube(
-        [1, 6, 3],
-        var_name="random_var",
-        dim_coords_and_dims=[(time, 0)],
-    )
-    assert get_frequency(cube) == "monthly"
-    cube.coord("time").convert_units("days since 1850-1-1 00:00:00.0")
-    assert get_frequency(cube) == "monthly"
-
-
-def test_get_frequency_fx():
-    """Test cubes with time invariant frequency."""
-    cube = Cube(1.0, long_name="Cube without time coordinate")
-    assert get_frequency(cube) == "fx"
-
-    time = DimCoord(
-        0,
-        standard_name="time",
-        units=Unit("hours since 1900-01-01"),
-    )
-    cube = Cube(
-        [1],
-        var_name="cube_with_length_1_time_coord",
-        long_name="Geopotential",
-        dim_coords_and_dims=[(time, 0)],
-    )
-    assert get_frequency(cube) == "fx"
-
-    cube.long_name = (
-        "Percentage of the Grid Cell Occupied by Land (Including Lakes)"
-    )
-    assert get_frequency(cube) == "fx"
-
-    cube.long_name = "Not geopotential"
-    with pytest.raises(ValueError):
-        get_frequency(cube)
 
 
 def test_fix_accumulated_units_fail():
@@ -133,7 +59,7 @@ def test_fix_accumulated_units_fail():
         dim_coords_and_dims=[(time, 0)],
     )
     with pytest.raises(NotImplementedError):
-        fix_accumulated_units(cube)
+        fix_accumulated_units(cube, "day")
 
 
 def _era5_latitude():
@@ -143,6 +69,17 @@ def _era5_latitude():
         long_name="latitude",
         var_name="latitude",
         units=Unit("degrees"),
+    )
+
+
+def _era5_latitude_w_direction():
+    return DimCoord(
+        np.array([90.0, 0.0, -90.0]),
+        standard_name="latitude",
+        long_name="latitude",
+        var_name="latitude",
+        units=Unit("degrees"),
+        attributes={"stored_direction": "decreasing"},
     )
 
 
@@ -162,9 +99,9 @@ def _era5_time(frequency):
         timestamps = [788928]  # hours since 1900 at 1 january 1990
     elif frequency == "daily":
         timestamps = [788940, 788964, 788988]
-    elif frequency == "hourly":
+    elif frequency == "1hr":
         timestamps = [788928, 788929, 788930]
-    elif frequency == "monthly":
+    elif frequency in ("monthly", "mon"):
         timestamps = [788928, 789672, 790344]
     else:
         msg = f"Invalid frequency {frequency}"
@@ -292,7 +229,7 @@ def _cmor_data(mip):
 
 
 def era5_2d(frequency):
-    if frequency == "monthly":
+    if frequency in ("monthly", "mon"):
         time = DimCoord(
             [-31, 0, 31],
             standard_name="time",
@@ -422,9 +359,9 @@ def cl_cmor_amon():
 
 
 def clt_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="cloud cover fraction",
         var_name="cloud_cover",
         units="unknown",
@@ -459,9 +396,9 @@ def clt_cmor_e1hr():
 
 
 def evspsbl_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly") * -1.0,
+        _era5_data("1hr") * -1.0,
         long_name="total evapotranspiration",
         var_name="e",
         units="unknown",
@@ -496,9 +433,9 @@ def evspsbl_cmor_e1hr():
 
 
 def evspsblpot_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly") * -1.0,
+        _era5_data("1hr") * -1.0,
         long_name="potential evapotranspiration",
         var_name="epot",
         units="unknown",
@@ -533,9 +470,9 @@ def evspsblpot_cmor_e1hr():
 
 
 def mrro_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="runoff",
         var_name="runoff",
         units="m",
@@ -647,9 +584,9 @@ def pr_cmor_amon():
 
 
 def pr_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="total_precipitation",
         var_name="tp",
         units="m",
@@ -684,9 +621,9 @@ def pr_cmor_e1hr():
 
 
 def prsn_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="snow",
         var_name="snow",
         units="unknown",
@@ -721,9 +658,9 @@ def prsn_cmor_e1hr():
 
 
 def ptype_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="snow",
         var_name="snow",
         units="unknown",
@@ -753,15 +690,13 @@ def ptype_cmor_e1hr():
         ],
         attributes={"comment": COMMENT},
     )
-    cube.coord("latitude").long_name = "latitude"
-    cube.coord("longitude").long_name = "longitude"
     return CubeList([cube])
 
 
 def rlds_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="surface thermal radiation downwards",
         var_name="ssrd",
         units="J m**-2",
@@ -796,7 +731,7 @@ def rlds_cmor_e1hr():
 
 
 def rlns_era5_hourly():
-    freq = "hourly"
+    freq = "1hr"
     cube = Cube(
         _era5_data(freq),
         long_name=None,
@@ -831,13 +766,11 @@ def rlns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
 def rlus_era5_hourly():
-    freq = "hourly"
+    freq = "1hr"
     cube = Cube(
         _era5_data(freq),
         long_name=None,
@@ -954,9 +887,9 @@ def rlutcs_cmor_amon():
 
 
 def rls_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="runoff",
         var_name="runoff",
         units="W m-2",
@@ -991,9 +924,9 @@ def rls_cmor_e1hr():
 
 
 def rsds_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="solar_radiation_downwards",
         var_name="rlwd",
         units="J m**-2",
@@ -1028,7 +961,7 @@ def rsds_cmor_e1hr():
 
 
 def rsns_era5_hourly():
-    freq = "hourly"
+    freq = "1hr"
     cube = Cube(
         _era5_data(freq),
         long_name=None,
@@ -1063,13 +996,11 @@ def rsns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
 def rsus_era5_hourly():
-    freq = "hourly"
+    freq = "1hr"
     cube = Cube(
         _era5_data(freq),
         long_name=None,
@@ -1108,9 +1039,9 @@ def rsus_cmor_e1hr():
 
 
 def rsdt_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="thermal_radiation_downwards",
         var_name="strd",
         units="J m**-2",
@@ -1145,9 +1076,9 @@ def rsdt_cmor_e1hr():
 
 
 def rss_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="net_solar_radiation",
         var_name="ssr",
         units="J m**-2",
@@ -1211,9 +1142,9 @@ def sftlf_cmor_fx():
 
 
 def tas_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="2m_temperature",
         var_name="t2m",
         units="K",
@@ -1335,9 +1266,9 @@ def zg_cmor_amon():
 
 
 def tasmax_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="maximum 2m temperature",
         var_name="mx2t",
         units="K",
@@ -1373,9 +1304,9 @@ def tasmax_cmor_e1hr():
 
 
 def tasmin_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="minimum 2m temperature",
         var_name="mn2t",
         units="K",
@@ -1411,9 +1342,9 @@ def tasmin_cmor_e1hr():
 
 
 def uas_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="10m_u_component_of_wind",
         var_name="u10",
         units="m s-1",
@@ -1449,9 +1380,9 @@ def uas_cmor_e1hr():
 
 
 def vas_era5_hourly():
-    time = _era5_time("hourly")
+    time = _era5_time("1hr")
     cube = Cube(
-        _era5_data("hourly"),
+        _era5_data("1hr"),
         long_name="10m_v_component_of_wind",
         var_name="v10",
         units="m s-1",
@@ -1510,6 +1441,7 @@ VARIABLES = [
         (prsn_era5_hourly(), prsn_cmor_e1hr(), "prsn", "E1hr"),
         (era5_2d("monthly"), cmor_2d("Amon", "prw"), "prw", "Amon"),
         (era5_2d("monthly"), cmor_2d("Amon", "ps"), "ps", "Amon"),
+        (era5_2d("mon"), cmor_2d("Amon", "ps"), "ps", "Amon"),
         (ptype_era5_hourly(), ptype_cmor_e1hr(), "ptype", "E1hr"),
         (
             era5_3d("monthly"),
@@ -1550,14 +1482,30 @@ VARIABLES = [
 @pytest.mark.parametrize(("era5_cubes", "cmor_cubes", "var", "mip"), VARIABLES)
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-    fixed_cubes = fix_metadata(era5_cubes, var, "native6", "era5", mip)
+    dataset = Dataset(
+        short_name=var,
+        mip=mip,
+        project="native6",
+        dataset="ERA5",
+    )
+    dataset.augment_facets()
+
+    # Call `fix_metadata` and `cmor_check_metadata` with the same arguments as
+    # in `esmvalcore.dataset.Dataset.load`.
+    fixed_cubes = fix_metadata(era5_cubes, **dataset.facets)
 
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
 
     # Test that CMOR checks are passing
-    fixed_cubes = cmor_check_metadata(fixed_cube, "native6", mip, var)
+    fixed_cubes = cmor_check_metadata(
+        fixed_cube,
+        cmor_table="native6",
+        mip=mip,
+        short_name=var,
+        frequency=dataset["frequency"],
+    )
 
     if fixed_cube.coords("time"):
         for cube in [fixed_cube, cmor_cube]:
@@ -1640,3 +1588,38 @@ def test_unstructured_grid(unstructured_grid_cubes):
     assert lon.bounds is None
 
     assert fixed_cube.attributes["GRIB_PARAM"] == "(1, 1)"
+
+
+@pytest.fixture
+def cube_latitude_w_direction():
+    """Sample cube with latitude coordinate with direction."""
+    time = DimCoord(
+        [-31, 0, 31],
+        standard_name="time",
+        units="days since 1850-01-01",
+    )
+    cube = Cube(
+        _era5_data("mon"),
+        standard_name="air_temperature",
+        units="K",
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_latitude_w_direction(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def test_latitude_w_direction(cube_latitude_w_direction):
+    """Test removal of latitude stored_direction attribute."""
+    fixed_cubes = fix_metadata(
+        cube_latitude_w_direction,
+        "tas",
+        "native6",
+        "era5",
+        "Amon",
+    )
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.coord("latitude") == _cmor_latitude()

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import Callable, Generator, Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from esmvalcore.exceptions import (
     InvalidConfigParameter,
@@ -15,6 +15,9 @@ from esmvalcore.exceptions import (
 )
 
 from ._config_validators import ValidationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -59,7 +62,7 @@ class ValidatedConfig(MutableMapping):
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self._mapping: dict[str, Any] = {}
+        self._mapping = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
@@ -77,6 +80,42 @@ class ValidatedConfig(MutableMapping):
             self._deprecate[key](self, val, cval)
 
         self._mapping[key] = cval
+
+    def update(self, *args, **kwargs):  # noqa: C901
+        """Update configuration with key/value pairs from mapping or kwargs."""
+        # This ensures the config_developer_file is always set last when doing
+        # an update, so the esmvalcore.cmor.table.CMOR_TABLES variable
+        # is populated with the values from config_developer_file, which is
+        # needed for backward compatibility.
+        # TODO: remove in v2.16.0.
+        config_developer_file_not_set = object()
+        config_developer_file = config_developer_file_not_set
+        if args:
+            if len(args) > 1:
+                msg = (
+                    f"Expected at most 1 positional argument, got {len(args)}"
+                )
+                raise TypeError(msg)
+            other = args[0]
+            if isinstance(other, Mapping):
+                for key in other:
+                    if key == "config_developer_file":
+                        config_developer_file = other[key]
+                        continue
+                    self[key] = other[key]
+            else:
+                for key, value in other:
+                    if key == "config_developer_file":
+                        config_developer_file = value
+                        continue
+                    self[key] = value
+        for key, value in kwargs.items():
+            if key == "config_developer_file":
+                config_developer_file = value
+                continue
+            self[key] = value
+        if config_developer_file is not config_developer_file_not_set:
+            self["config_developer_file"] = config_developer_file
 
     def __getitem__(self, key):
         """Return value mapped by key."""

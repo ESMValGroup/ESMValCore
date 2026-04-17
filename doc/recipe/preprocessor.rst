@@ -792,7 +792,7 @@ Regridding on a reference dataset grid
 
 The example below shows how to regrid on the reference dataset
 ``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
-or ana4mips datasets can be used); in this case the `scheme` is
+or ana4MIPs datasets can be used); in this case the `scheme` is
 `linear`.
 
 .. code-block:: yaml
@@ -1294,7 +1294,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * climate_statistics_: Compute statistics for the full period
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
-* anomalies_: Compute (standardized) anomalies
+* anomalies_: Compute (standardized or relative) anomalies
 * regrid_time_: Aligns the time coordinate of each dataset, against a standardized time axis.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
@@ -1406,7 +1406,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * `hour`: Number of hours per period.
+    * `hours`: Number of hours per period.
       Must be a divisor of 24, i.e., (1, 2, 3, 4, 6, 8, 12).
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
@@ -1541,6 +1541,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points will be put into bins,
+   which may shift existing time points. For example, for `period=hourly`, a
+   time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
 Examples:
     * Monthly climatology:
 
@@ -1646,14 +1650,14 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
 
 * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
           offset: 6
 
 * Convert to 3-hourly data using bilinear interpolation:
@@ -1661,7 +1665,7 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 3
+          interval: 3
           interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
@@ -1683,6 +1687,7 @@ Parameters:
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
+    * relative: if true, calculate relative (in percent) anomalies (default: false)
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
@@ -2029,15 +2034,15 @@ Examples:
         .. code-block:: yaml
 
             extract_shape:
-            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
-            decomposed: True
-            method: contains
-            ids:
-              - Spain
-              - France
-              - Italy
-              - United Kingdom
-              - Taiwan
+              shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+              decomposed: true
+              method: contains
+              ids:
+                - Spain
+                - France
+                - Italy
+                - United Kingdom
+                - Taiwan
 
     * Extract European AR6 regions:
 
@@ -2526,9 +2531,10 @@ precipitation sum.
 
   preprocessors:
     preproc_rolling_window:
-      coordinate: time
-      operator: sum
-      window_length: 2
+      rolling_window_statistics:
+        coordinate: time
+        operator: sum
+        window_length: 2
 
 See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
 
@@ -2942,6 +2948,10 @@ recipe:
 * ``target_short_name`` (:obj:`str`; optional): Variable short name from which
   target metadata is read.
   If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix from which
+  target metadata is read.
+  If not given, use the branding suffixes of the corresponding variables defined in
   the recipe.
 * ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
   error if desired metadata cannot be read for variable ``target_short_name``

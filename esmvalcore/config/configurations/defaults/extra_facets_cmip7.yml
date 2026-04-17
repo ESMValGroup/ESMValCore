@@ -1,0 +1,35 @@
+# Extra facets for the CMIP7 project.
+---
+projects:
+  CMIP7:
+    extra_facets:
+      "*":
+        # Default DRS version prefix for CMIP7.
+        "*":
+          "*":
+            drs_specs: MIP-DRS7
+        # `mip` and `realm` are the same for CMIP7.
+        aerosol:
+          "*":
+            realm: aerosol
+        atmos:
+          "*":
+            realm: atmos
+        atmosChem:
+          "*":
+            realm: atmosChem
+        land:
+          "*":
+            realm: land
+        landIce:
+          "*":
+            realm: landIce
+        ocean:
+          "*":
+            realm: ocean
+        ocnBgchem:
+          "*":
+            realm: ocnBgchem
+        seaIce:
+          "*":
+            realm: seaIce

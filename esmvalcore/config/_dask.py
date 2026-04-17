@@ -1,57 +1,28 @@
 """Configuration for Dask distributed."""
 
+from __future__ import annotations
+
 import contextlib
 import importlib
 import logging
-import os
-import warnings
-from collections.abc import Generator, Mapping
+from collections.abc import Mapping
 from copy import deepcopy
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import dask.config
-import yaml
 from distributed import Client
 
 from esmvalcore.config import CFG
 from esmvalcore.exceptions import (
-    ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from distributed.deploy import Cluster
 
 logger = logging.getLogger(__name__)
-
-# TODO: Remove in v2.14.0
-CONFIG_FILE = Path.home() / ".esmvaltool" / "dask.yml"
-
-
-# TODO: Remove in v2.14.0
-def warn_if_old_dask_config_exists() -> None:
-    """Warn user if deprecated dask configuration file exists."""
-    if CONFIG_FILE.exists() and not os.environ.get(
-        "ESMVALTOOL_USE_NEW_DASK_CONFIG",
-    ):
-        deprecation_msg = (
-            "Usage of Dask configuration file ~/.esmvaltool/dask.yml "
-            "has been deprecated in ESMValCore version 2.12.0 and is "
-            "scheduled for removal in version 2.14.0. Please use the "
-            "configuration option `dask` instead (see "
-            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
-            "quickstart/configure.html#dask-configuration for details). "
-            "Ignoring all existing `dask` configuration options for this run. "
-            "To enable the new `dask` configuration options, delete or move "
-            "the file ~/.esmvaltool/dask.yml or set the environment variable "
-            "ESMVALTOOL_USE_NEW_DASK_CONFIG=1."
-        )
-        warnings.warn(
-            deprecation_msg,
-            ESMValCoreDeprecationWarning,
-            stacklevel=2,
-        )
 
 
 def validate_dask_config(dask_config: Mapping) -> None:
@@ -104,75 +75,11 @@ def validate_dask_config(dask_config: Mapping) -> None:
         raise InvalidConfigParameter(msg)
 
 
-# TODO: Remove in v2.14.0
-def _get_old_dask_config() -> dict:
-    """Get dask configuration dict from old dask configuration file."""
-    dask_config: dict[str, Any] = {
-        "use": "local_threaded",
-        "profiles": {"local_threaded": {"scheduler": "threads"}},
-    }
-    config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8"))
-
-    # Use settings from file if this is not empty
-    if config is not None:
-        client_kwargs = config.get("client", {})
-        cluster_kwargs = config.get("cluster", {})
-
-        # Externally managed cluster
-        if "address" in client_kwargs:
-            if cluster_kwargs:
-                logger.warning(
-                    "Not using Dask 'cluster' settings from %s because a "
-                    "cluster 'address' is already provided in 'client'.",
-                    CONFIG_FILE,
-                )
-            dask_config = {
-                "use": "external",
-                "profiles": {
-                    "external": {
-                        "scheduler_address": client_kwargs.pop("address"),
-                    },
-                },
-            }
-
-        # Dask distributed cluster
-        elif cluster_kwargs:
-            cluster_kwargs.setdefault("type", "distributed.LocalCluster")
-            dask_config = {
-                "use": "cluster_from_file",
-                "profiles": {
-                    "cluster_from_file": {
-                        "cluster": cluster_kwargs,
-                    },
-                },
-            }
-
-        dask_config["client"] = client_kwargs
-
-    return dask_config
-
-
-# TODO: Remove in v2.14.0; used deepcopy(CFG["dask"]) instead
-def _get_dask_config() -> dict:
-    """Get Dask configuration dictionary."""
-    if CONFIG_FILE.exists() and not os.environ.get(
-        "ESMVALTOOL_USE_NEW_DASK_CONFIG",
-    ):
-        dask_config = _get_old_dask_config()
-    else:
-        dask_config = deepcopy(CFG["dask"])
-    return dask_config
-
-
 @contextlib.contextmanager
 def get_distributed_client() -> Generator[None | Client]:
     """Get a Dask distributed client."""
-    warn_if_old_dask_config_exists()
-    dask_config = _get_dask_config()
+    dask_config = deepcopy(CFG["dask"])
     validate_dask_config(dask_config)
-
-    # TODO: Remove in v2.14.0
-    client_kwargs = dask_config.get("client", {})
 
     # Set up cluster and client according to the selected profile
     # Note: we already ensured earlier that the selected profile (via `use`)
@@ -211,7 +118,7 @@ def get_distributed_client() -> Generator[None | Client]:
             "scheduler.",
         )
     else:
-        client = Client(**client_kwargs)
+        client = Client()
         logger.info(
             "Using Dask distributed scheduler (address: %s, dashboard link: "
             "%s)",
