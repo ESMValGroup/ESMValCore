@@ -133,7 +133,6 @@ def interpreter_not_installed(script):
             script_file,
             script,
             marks=[
-                pytest.mark.installation,
                 pytest.mark.xfail(
                     interpreter_not_installed(script_file),
                     run=False,

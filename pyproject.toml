@@ -116,7 +116,6 @@ log_cli_level = "INFO"
 log_level = "WARNING"
 minversion = "6"
 markers = [
-    "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
     "online: Run tests that require internet access",
 ]
