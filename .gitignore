@@ -92,9 +92,8 @@ test-reports/
 # Auto generated doc
 _sidebar.rst.inc
 
-# Build folder
-doc/build
-doc/_sidebar.rst.inc
+# Documentation build
+html/
 
 # Data files
 *.nc
@@ -110,7 +109,10 @@ doc/_sidebar.rst.inc
 # ESMF log files
 *.ESMF_LogFile
 
-
 # AI
 .github/instructions/codacy.instructions.md
 CLAUDE.md
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml

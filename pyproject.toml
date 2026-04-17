@@ -76,30 +76,6 @@ license-files = ["LICENSE", "NOTICE"]
 name = "ESMValCore"
 requires-python = ">=3.12"
 
-[project.optional-dependencies]
-test = [
-    "pre-commit",
-    "pytest>6.0.0",
-    "pytest-cov>=2.10.1",
-    "pytest-env",
-    "pytest-html!=2.1.0",
-    "pytest-metadata>=1.5.1",
-    "pytest-mock",
-    "pytest-xdist",
-    "ESMValTool_sample_data==0.0.4",
-]
-doc = [
-    "autodocsumm>=0.2.2",
-    "ipython",
-    "myst-nb",
-    "sphinx>=6.1.3,<9",  # ESMValTool/issues/4316
-    "pydata_sphinx_theme",
-]
-develop = [
-    "esmvalcore[test,doc]",
-    "vprof",
-]
-
 [project.scripts]
 esmvaltool = "esmvalcore._main:run"
 
@@ -140,7 +116,6 @@ log_cli_level = "INFO"
 log_level = "WARNING"
 minversion = "6"
 markers = [
-    "installation: Test requires installation of dependencies",
     "use_sample_data: Run functional tests using real data",
     "online: Run tests that require internet access",
 ]
@@ -230,3 +205,112 @@ known-first-party = ["esmvalcore"]
 convention = "numpy"
 [tool.ruff.lint.pylint]
 max-args = 7
+
+[tool.pixi.dependencies]
+aiohttp = "*"
+cartopy = "*"
+cf-units = "*"
+cftime = "*"
+dask = ">=2025"
+dask-jobqueue = "*"
+distributed = "*"
+esgf-pyclient = ">=0.3.1"
+esmvaltool-sample-data = "*"
+filelock = "*"
+fiona = "*"
+fire = "*"
+geopy = "*"
+humanfriendly = "*"
+intake-esgf = ">=2025.10.22"
+intake-esm = "*"
+iris = "*"
+iris-esmf-regrid = ">=0.11.0"
+iris-grib = ">=0.20.0"
+isodate = ">=0.7.0"
+jinja2 = "*"
+libnetcdf = "!=4.9.1"
+nc-time-axis = "*"
+ncdata = "*"
+nested-lookup = "*"
+netcdf4 = "*"
+numpy = "!=1.24.3"
+packaging = "*"
+pandas = "*"
+pillow = "*"
+pip = "!=21.3"
+prov = "*"
+psutil = "*"
+py-cordex = "*"
+pybtex = "*"
+python = ">=3.12"
+python-stratify = ">=0.3"
+pyyaml = "*"
+requests = "*"
+rich = "*"
+scipy = ">=1.6"
+shapely = ">=2.0.0"
+xarray = "*"
+yamale = "*"
+zarr = ">3"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+ESMValCore = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { features = ["dev", "doc", "test"], solve-group = "default" }
+esmvalcore = { solve-group = "default" }
+# Environments for running tests with specific Python versions.
+test-py312 = { features = ["py312", "test"], solve-group = "py312" }
+test-py313 = { features = ["py313", "test"], solve-group = "py313" }
+test-py314 = { features = ["py314", "test"], solve-group = "default" }
+# Environment for testing R support
+test-r = { features = ["test-r"], solve-group = "test-r" }
+
+# Tools for running the tests.
+[tool.pixi.feature.test.dependencies]
+"pytest" = ">6.0.0"
+"pytest-cov" = ">=2.10.1"
+"pytest-env" = "*"
+"pytest-html" = "!=2.1.0"
+"pytest-metadata" = ">=1.5.1"
+"pytest-mock" = "*"
+"pytest-xdist" = "*"
+
+# Test R support
+[tool.pixi.feature.test-r.dependencies]
+"r-base" = "*"
+"r-yaml" = "*"
+
+# Tools for building the documentation.
+[tool.pixi.feature.doc.dependencies]
+"autodocsumm" = ">=0.2.2"
+"ipython" = "*"
+"myst-nb" = "*"
+"sphinx" = ">=6.1.3,<9"
+"pydata-sphinx-theme" = "*"
+
+# Other development tools.
+[tool.pixi.feature.dev.dependencies]
+"pre-commit" = "*"
+"py-spy" = "*"
+
+# Feature for running tests with Python 3.12.
+[tool.pixi.feature.py312.dependencies]
+"python" = "3.12.*"
+
+# Feature for running tests with Python 3.13.
+[tool.pixi.feature.py313.dependencies]
+"python" = "3.13.*"
+
+# Feature for running tests with Python 3.14.
+[tool.pixi.feature.py314.dependencies]
+"python" = "3.14.*"
+
+# Tasks for use with `pixi run <task>`.
+[tool.pixi.tasks]
+test = {cmd = "pytest", description = "Run the tests"}
+doc = {cmd = "sphinx-build doc html", description = "Build the documentation"}
