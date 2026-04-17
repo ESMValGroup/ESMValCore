@@ -53,7 +53,7 @@ jobs:
       - run:
           name: Install development versions of upstream packages
           command: |
-            pixi run --as-is pip install --no-deps \
+            pixi run --as-is pip install \
               git+https://github.com/esgf2-us/intake-esgf \
               git+https://github.com/euro-cordex/py-cordex \
               git+https://github.com/SciTools/cartopy \
