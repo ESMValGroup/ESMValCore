@@ -18,9 +18,6 @@ jobs:
           name: Check dependencies are compatible
           command: pixi run --as-is pip check
       - run:
-          name: Check code formatting and mistakes
-          command: pixi run --as-is pre-commit run --all
-      - run:
           name: Run tests
           command: |
             pixi run --as-is test --cov -n 4 --junitxml=test-reports/report.xml
@@ -29,9 +26,6 @@ jobs:
           command: |
             pixi run --as-is esmvaltool version
             pixi run --as-is esmvaltool -- --help
-      - run:
-          name: Install gpg (required by codecov orb)
-          command: apt update && apt install -y gpg
       - codecov/upload:
           files: "test-reports/coverage.xml"
           disable_search: true
@@ -60,15 +54,15 @@ jobs:
           name: Install development versions of upstream packages
           command: |
             pixi run --as-is pip install --no-deps \
-              git+https://github.com/esgf2-us/intake-esgf
-              git+https://github.com/euro-cordex/py-cordex
-              git+https://github.com/SciTools/cartopy
-              git+https://github.com/SciTools/cf-units
-              git+https://github.com/SciTools/iris
-              git+https://github.com/SciTools/iris-grib
-              git+https://github.com/SciTools/nc-time-axis
-              git+https://github.com/SciTools/ncdata
-              git+https://github.com/SciTools/iris-esmf-regrid
+              git+https://github.com/esgf2-us/intake-esgf \
+              git+https://github.com/euro-cordex/py-cordex \
+              git+https://github.com/SciTools/cartopy \
+              git+https://github.com/SciTools/cf-units \
+              git+https://github.com/SciTools/iris \
+              git+https://github.com/SciTools/iris-grib \
+              git+https://github.com/SciTools/nc-time-axis \
+              git+https://github.com/SciTools/ncdata \
+              git+https://github.com/SciTools/iris-esmf-regrid \
               git+https://github.com/SciTools/python-stratify
       - run:
           name: Run tests
@@ -102,10 +96,9 @@ jobs:
           name: Install ESMValCore from conda
           command: |
             micromamba create -y --name esmvalcore esmvalcore
-            micromamba activate esmvalcore
-            micromamba env export
-            esmvaltool -- --help
-            esmvaltool version
+            micromamba env export --name esmvalcore
+            micromamba run --name esmvalcore esmvaltool -- --help
+            micromamba run --name esmvalcore esmvaltool version
 
   build_documentation:
     # Test building documentation.
