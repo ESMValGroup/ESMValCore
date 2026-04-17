@@ -98,6 +98,7 @@ doc/_sidebar.rst.inc
 
 # Data files
 *.nc
+!tests/sample_data/intake-esm/data/**/*.nc
 *.nc4
 *.grb
 *.grib

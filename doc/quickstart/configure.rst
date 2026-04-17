@@ -847,6 +847,38 @@ and you should be good to go. If your HPC system is not supported yet, you can
 copy one of the other example configuration files, e.g. ``data-hpc-dkrz.yml``
 and tailor it for your system.
 
+Cloud
+`````
+
+Cloud platforms commonly host public intake-esm catalogs (for example, AWS
+and GCS public datasets) or institution-hosted catalogs (e.g., DKRZ). We
+provide example configuration files that you can copy to your configuration
+directory and adapt to your environment:
+
+.. code-block:: bash
+
+  esmvaltool config copy data-intake-esm-aws.yml
+  esmvaltool config copy data-intake-esm-gcs.yml
+  esmvaltool config copy data-intake-esm-dkrz-cloud.yml
+  esmvaltool config copy data-intake-esm-dkrz-disk.yml
+
+These files follow the naming convention ``data-intake-esm-<backend>.yml``.
+After copying, edit the ``catalog`` entry in the file to point to the
+appropriate intake-esm catalog URL or local catalog path for your provider.
+
+For details about the ESMValCore integration with intake-esm, see the API
+documentation: :doc:`api/esmvalcore.io.intake_esm` and the example files in
+:file:`doc/configurations/`.
+
+Authentication and access
+------------------------
+
+Cloud-hosted catalogs may require provider-specific authentication or
+configuration (for example, AWS credentials, GCP service accounts, or VPN
+access for institutional providers). Follow your cloud or institutional
+provider's documentation for configuring authentication and network access.
+
+
 .. warning::
 
     It is important to :doc:`configure intake-esgf <intake_esgf:configure>`
