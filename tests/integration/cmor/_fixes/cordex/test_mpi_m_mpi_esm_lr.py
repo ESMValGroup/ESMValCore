@@ -2,6 +2,7 @@
 
 import pytest
 
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
 from esmvalcore.cmor.fix import Fix
 
 
@@ -38,3 +39,14 @@ def test_get_hadrem3ga705_fix(short_name):
         extra_facets={"driver": "MPI-M-MPI-ESM-LR"},
     )
     assert isinstance(fix[0], Fix)
+
+
+def test_get_cclm4_8_17fix() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "Amon",
+        "ts",
+        extra_facets={"driver": "MPI-M-MPI-ESM-LR"},
+    )
+    assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)
