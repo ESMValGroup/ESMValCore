@@ -48,8 +48,8 @@ jobs:
       - store_artifacts:
           path: test-reports.tar.gz
 
-  nightly_test:
-    # Test with additional dependencies and development versions of upstream packages.
+  test_with_upstream_developments:
+    # Test with development versions of upstream packages.
     docker:
       - image: cimg/base:current
     resource_class: large
