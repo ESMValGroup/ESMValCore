@@ -178,6 +178,7 @@ class Config:
     def show(
         self,
         filter: tuple[str] | None = ("extra_facets",),  # noqa: A002
+        project: str | None = None,
     ) -> None:
         """Show the current configuration.
 
@@ -185,7 +186,12 @@ class Config:
         ----------
         filter:
             Filter this list of keys. By default, the `extra_facets`
-            key is filtered out, as it can be very large.
+            key is filtered out, as it can be very large. For example, to show
+            the full configuration, use `--filter=` and to filter out both
+            the `data` and `extra_facets` keys use `--filter=data,extra_facets`.
+        project:
+            Only show configuration for this project. For example, to only show
+            the configuration for the CMIP7 project, use `--project=CMIP7`.
 
         """
         import yaml
@@ -195,15 +201,19 @@ class Config:
         from esmvalcore.config import CFG
 
         cfg = dict(CFG)
+        msg = "# Current configuration"
+        if project and "projects" in cfg and project in cfg["projects"]:
+            cfg = {"projects": {project: cfg["projects"][project]}}
+            msg += f" for project '{project}'"
         if filter:
+            if isinstance(filter, str):
+                filter = (filter,)  # noqa: A001
             for key in filter:
                 cfg = nested_delete(cfg, key)
-        exclude_msg = (
-            ", excluding the keys " + ", ".join(f"'{f}'" for f in filter)
-            if filter
-            else ""
-        )
-        self.console.print(f"# Current configuration{exclude_msg}:")
+            msg += ", excluding the keys " + ", ".join(
+                f"'{key}'" for key in filter
+            )
+        self.console.print(f"{msg}:")
         self.console.print(
             Syntax(
                 yaml.safe_dump(cfg),
