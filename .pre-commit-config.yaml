@@ -9,7 +9,8 @@ exclude: |
   ^doc/conf.py|
   ^esmvalcore/cmor/tables/|
   ^esmvalcore/preprocessor/ne_masks/|
-  ^esmvalcore/preprocessor/shapefiles/
+  ^esmvalcore/preprocessor/shapefiles/|
+  ^pixi.lock
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -18,6 +19,7 @@ repos:
       - id: check-added-large-files
       - id: check-ast
       - id: check-case-conflict
+      - id: check-illegal-windows-names
       - id: check-merge-conflict
       - id: debug-statements
       - id: end-of-file-fixer

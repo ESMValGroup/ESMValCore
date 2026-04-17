@@ -3,22 +3,9 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@5.3.0
+  pixi: prefix-dev/pixi@0.1.0
 
 commands:
-  check_changes:
-    steps:
-      - run:
-          name: Check whether or not installation tests are needed
-          command: |
-            if (test "$CIRCLE_BRANCH" = main ||
-              git --no-pager diff --name-only origin/main... |
-              grep -q -E -f .circleci/install_triggers)
-            then
-              echo Running installation tests
-            else
-              echo Skipping installation tests
-              circleci step halt
-            fi
   test_and_report:
     parameters:
       args:
@@ -28,16 +15,11 @@ commands:
       - run:
           name: Run tests
           command: |
-            mkdir -p test-reports
-            . /opt/conda/etc/profile.d/conda.sh
-            conda activate esmvaltool
             pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
             esmvaltool -- --help
       - store_test_results:
           path: test-reports/report.xml
-      - store_artifacts:
-          path: /logs
       - run:
           name: Compress pytest artifacts
           command: tar -cvzf pytest.tar.gz -C /tmp/pytest-of-root/pytest-0/ .
@@ -124,132 +106,126 @@ commands:
             - .pytest_cache
 
 jobs:
-  run_tests:
-    # Run tests
+  test:
+    # Run tests.
     docker:
-      - image: esmvalgroup/esmvalcore:development
+      - image: cimg/base:current
     resource_class: large
     steps:
       - checkout
+      - pixi/pixi_setup
       - run:
-          name: Generate cache key
-          command: date '+%Y-%V' | tee cache_key.txt
-      - restore_cache:
-          key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
+          name: Check dependencies are compatible
+          command: pixi run --as-is pip check
       - run:
-          name: Install dependencies
+          name: Check code formatting and mistakes
+          command: pixi run --as-is pre-commit run --all
+      - run:
+          name: Run tests
           command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            mkdir /logs
-            conda activate esmvaltool
-            pip install --no-deps .[test] > /logs/install.txt 2>&1
-            pip check
-      - test_and_report:
-          args: --cov
-      - save_cache:
-          key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
-          paths:
-            - /root/.cache/pip
-            - .mypy_cache
-            - .pytest_cache
+            pixi run --as-is test --cov -n 4 --junitxml=test-reports/report.xml
+      - run:
+          name: Test the command line interface
+          command: |
+            pixi run --as-is esmvaltool version
+            pixi run --as-is esmvaltool -- --help
       - run:
           name: Install gpg (required by codecov orb)
           command: apt update && apt install -y gpg
       - codecov/upload:
           files: "test-reports/coverage.xml"
           disable_search: true
+      - store_test_results:
+          path: test-reports/report.xml
+      - run:
+          name: Compress pytest artifacts
+          command: tar -cvzf pytest.tar.gz -C /tmp/pytest-of-$(whoami)/ .
+      - store_artifacts:
+          path: pytest.tar.gz
+      - run:
+          name: Compress test-report artifacts
+          command: tar -cvzf test-reports.tar.gz test-reports/
+      - store_artifacts:
+          path: test-reports.tar.gz
 
-  test_installation_from_source_test_mode:
-    # Test installation from source
+  nightly_test:
+    # Test with additional dependencies and development versions of upstream packages.
     docker:
-      - image: condaforge/miniforge3
+      - image: cimg/base:current
     resource_class: large
     steps:
-      - test_installation_from_source
-
-  test_installation_from_source_develop_mode:
-    # Test development installation
-    docker:
-      - image: condaforge/miniforge3
-    resource_class: large
-    steps:
-      - test_installation_from_source:
-          extra: develop
-          flags: "--editable"
-
-  test_with_upstream_developments:
-    # Test with development versions of upstream packages
-    docker:
-      - image: condaforge/miniforge3
-    resource_class: large
-    steps:
-      - test_installation_from_source:
-          upstream_packages: >-
-            git+https://github.com/esgf/esgf-pyclient
-            git+https://github.com/euro-cordex/py-cordex
-            git+https://github.com/SciTools/cartopy
-            git+https://github.com/SciTools/cf-units
-            git+https://github.com/SciTools/iris
-            git+https://github.com/SciTools/iris-grib
-            git+https://github.com/SciTools/nc-time-axis
-            git+https://github.com/SciTools-incubator/iris-esmf-regrid
-            git+https://github.com/SciTools-incubator/python-stratify
-            git+https://github.com/Toblerity/Fiona
+      - checkout
+      - pixi/pixi_setup
+      - run:
+          name: Install development versions of upstream packages
+          command: |
+            pixi run --as-is pip install --no-deps \
+              git+https://github.com/esgf2-us/intake-esgf
+              git+https://github.com/euro-cordex/py-cordex
+              git+https://github.com/SciTools/cartopy
+              git+https://github.com/SciTools/cf-units
+              git+https://github.com/SciTools/iris
+              git+https://github.com/SciTools/iris-grib
+              git+https://github.com/SciTools/nc-time-axis
+              git+https://github.com/SciTools/ncdata
+              git+https://github.com/SciTools/iris-esmf-regrid
+              git+https://github.com/SciTools/python-stratify
+      - run:
+          name: Run tests
+          command: |
+            pixi run --as-is test -n 4 --junitxml=test-reports/report.xml
+      - run:
+          name: Test the command line interface
+          command: |
+            pixi run --as-is esmvaltool version
+            pixi run --as-is esmvaltool -- --help
+      - store_test_results:
+          path: test-reports/report.xml
+      - run:
+          name: Compress pytest artifacts
+          command: tar -cvzf pytest.tar.gz -C /tmp/pytest-of-$(whoami)/ .
+      - store_artifacts:
+          path: pytest.tar.gz
+      - run:
+          name: Compress test-report artifacts
+          command: tar -cvzf test-reports.tar.gz test-reports/
+      - store_artifacts:
+          path: test-reports.tar.gz
 
   test_installation_from_conda:
-    # Test conda package installation
-    working_directory: /esmvaltool
+    # Test installation from conda-forge.
     docker:
-      - image: condaforge/miniforge3
+      - image: mambaorg/micromamba
     resource_class: medium
     steps:
       - run:
+          name: Install ESMValCore from conda
           command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            # Install prerequisites
-            mkdir /logs
-            # Create and activate conda environment
-            mamba create -y --name esmvaltool 'python=3.12'
-            set +x; conda activate esmvaltool; set -x
-            # Install
-            mamba install -y esmvalcore
-            # Log versions
-            conda env export | tee /logs/environment.yml
-            # Test installation
+            micromamba create -y --name esmvalcore esmvalcore
+            micromamba activate esmvalcore
+            micromamba env export
+            esmvaltool -- --help
             esmvaltool version
 
   build_documentation:
-    # Test building documentation
+    # Test building documentation.
     docker:
-      - image: condaforge/miniforge3
+      - image: cimg/base:current
     resource_class: medium
     steps:
       - checkout
+      - pixi/pixi_setup
       - run:
-          command: |
-            mkdir /logs
-            . /opt/conda/etc/profile.d/conda.sh
-            # Install
-            mamba env create -n esmvaltool -f environment.yml
-            conda activate esmvaltool
-            pip install --no-deps .[doc]
-            pip check
-            # Log versions
-            dpkg -l | tee /logs/versions.txt
-            conda env export | tee /logs/environment.yml
-            pip freeze | tee /logs/requirements.txt
-            # Test building documentation
-            MPLBACKEND=Agg sphinx-build -W doc doc/build
-      - store_artifacts:
-          path: /logs
+          name: Build documentation
+          command: pixi run --as-is doc --fail-on-warning --show-traceback
 
 workflows:
   commit:
     jobs:
-      - run_tests
-      - test_installation_from_source_develop_mode
-      - test_installation_from_source_test_mode
+      - build_documentation
+      - test
+      - test_installation_from_conda
+      - test_with_upstream_developments
 
   nightly:
     triggers:
@@ -261,8 +237,6 @@ workflows:
                 - main
     jobs:
       - build_documentation
-      - run_tests
+      - test
       - test_installation_from_conda
-      - test_installation_from_source_develop_mode
-      - test_installation_from_source_test_mode
       - test_with_upstream_developments
