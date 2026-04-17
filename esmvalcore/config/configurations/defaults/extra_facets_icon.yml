@@ -132,12 +132,20 @@ projects:
           zg: {raw_name: geopot, var_type: atm_3d_ml}
 
           # 2D land variables
-          gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
-          lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
+          gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d}
+          lai: {raw_name: pheno_lai_box, var_type: jsb_2d, raw_units: '1'}
+          cVeg: {raw_name: carbon_c_sum_veg_ta_box, var_type: jsb_2d, raw_units: 'mol(C) m-2'}
           #hfls: {raw_name: seb_latent_hflx_box, var_type: jsb_2d_ml}
           #hfss: {raw_name: seb_sensible_hflx_box, var_type: jsb_2d_ml}
           #evspsbl: {raw_name: hydro_evapotrans_box, var_type: jsb_2d_ml}
+          baresoilFrac: {raw_name: pplcc_baresoil_fract_box, var_type: jsb_2d, raw_units: '1'}
+          grassFrac: {raw_name: pplcc_grass_fract_box, var_type: jsb_2d, raw_units: '1'}
+          treeFrac: {raw_name: pplcc_tree_fract_box, var_type: jsb_2d, raw_units: '1'}
+          shrubFrac: {raw_name: pplcc_shrub_fract_box, var_type: jsb_2d, raw_units: '1'}
+          cropFrac: {raw_name: pplcc_crop_fract_box, var_type: jsb_2d, raw_units: '1'}
           tsland: {raw_name: seb_t_box, var_type: jsb_2d_ml}
+
+          # 3D land variables
 
           # 2D ocean variables
           hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}

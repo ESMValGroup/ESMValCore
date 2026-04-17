@@ -2,6 +2,7 @@
 
 import logging
 
+from iris.coords import AuxCoord
 from iris.cube import CubeList
 from scipy import constants
 
@@ -46,6 +47,107 @@ class Gpp(IconFix):
         cube.data = cube.core_data() * 44.0095 / 1000
         cube.units = "kg m-2 s-1"
         cube.attributes.pop("invalid_units", None)
+
+        return cubes
+
+
+class GrassFrac(IconFix):
+    """Fixes for ``grassFrac``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata.
+
+        Add "type" dimension.
+
+        """
+        cube = self.get_cube(cubes, var_name="pplcc_grass_fract_box")
+        area_type = AuxCoord(
+            "grass",
+            long_name="Grass area type",
+            standard_name="area_type",
+        )
+        cube.add_aux_coord(area_type)
+
+        return cubes
+
+
+class ShrubFrac(IconFix):
+    """Fixes for ``shrubFrac``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata.
+
+        Add "type" dimension.
+
+        """
+        cube = self.get_cube(cubes, var_name="pplcc_shrub_fract_box")
+        area_type = AuxCoord(
+            "shrubs",
+            long_name="Shrub area type",
+            standard_name="area_type",
+        )
+        cube.add_aux_coord(area_type)
+
+        return cubes
+
+
+class BaresoilFrac(IconFix):
+    """Fixes for ``baresoilFrac``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata.
+
+        Add "type" dimension.
+
+        """
+        cube = self.get_cube(cubes, var_name="pplcc_baresoil_fract_box")
+        area_type = AuxCoord(
+            "baresoil",
+            long_name="Baresoil area type",
+            standard_name="area_type",
+        )
+        cube.add_aux_coord(area_type)
+
+        return cubes
+
+
+class TreeFrac(IconFix):
+    """Fixes for ``treeFrac``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata.
+
+        Add "type" dimension.
+
+        """
+        cube = self.get_cube(cubes, var_name="pplcc_tree_fract_box")
+
+        area_type = AuxCoord(
+            "trees",
+            long_name="Tree area type",
+            standard_name="area_type",
+        )
+        cube.add_aux_coord(area_type)
+
+        return cubes
+
+
+class CropFrac(IconFix):
+    """Fixes for ``grassFrac``."""
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata.
+
+        Add "type" dimension.
+
+        """
+        cube = self.get_cube(cubes, var_name="pplcc_crop_fract_box")
+        area_type = AuxCoord(
+            "crops",
+            long_name="Crop area type",
+            standard_name="area_type",
+        )
+        cube.add_aux_coord(area_type)
 
         return cubes
 
