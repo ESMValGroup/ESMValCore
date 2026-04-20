@@ -23,15 +23,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        environment: [test-py312, test-py313, test-py314, test-r]
+        os:
+          - ubuntu-latest
+          - macos-26
+        environment:
+          - test-py312
+          - test-py313
+          - test-py314
+          - test-r
     name: ${{ matrix.os }} ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e  # v0.9.5
+      - uses: prefix-dev/setup-pixi@a0af7a228712d6121d37aba47adf55c1332c9c2e # v0.9.5
         with:
           frozen: true
           environments: ${{ matrix.environment }}
