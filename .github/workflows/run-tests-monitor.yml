@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - pixi
   schedule:
     - cron: "0 0 * * *" # nightly
 
@@ -25,7 +24,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-26
+          - macos-latest
         environment:
           - test-py312
           - test-py313

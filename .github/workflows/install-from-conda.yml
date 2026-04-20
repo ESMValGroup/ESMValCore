@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - pixi
   schedule:
     - cron: "0 4 * * *"
 
@@ -24,8 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.12", "3.13", "3.14"]
+        os:
+          - ubuntu-latest
+          - macos-latest
+        python-version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
     name: Install ESMValCore with Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
       - name: Install Micromamba

@@ -104,7 +104,7 @@ jobs:
     # Test building documentation.
     docker:
       - image: cimg/base:current
-    resource_class: medium
+    resource_class: small
     steps:
       - checkout
       - pixi/pixi_setup
@@ -117,8 +117,6 @@ workflows:
     jobs:
       - build_documentation
       - test
-      - test_installation_from_conda
-      - test_with_upstream_developments
 
   nightly:
     triggers:
