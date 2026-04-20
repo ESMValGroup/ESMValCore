@@ -115,7 +115,6 @@ jobs:
 workflows:
   commit:
     jobs:
-      - build_documentation
       - test
 
   nightly:

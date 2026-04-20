@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - pixi
   schedule:
     - cron: "0 0 * * *" # nightly
 
@@ -27,10 +26,10 @@ jobs:
           - ubuntu-latest
           - macos-latest
         environment:
-          # - test-py312
+          - test-py312
           - test-py313
-          # - test-py314
-          # - test-r
+          - test-py314
+          - test-r
     name: ${{ matrix.os }} ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
