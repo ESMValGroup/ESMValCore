@@ -28,8 +28,7 @@ build:
         - pixi run sphinx-build -T -b latex -d _build/doctrees -D language=en doc $READTHEDOCS_OUTPUT/pdf
         - cd $READTHEDOCS_OUTPUT/pdf
         - cat latexmkrc
-        - latexmk -r latexmkrc -pdf -f -dvi- -ps- -jobname=esmvaltool
-          -interaction=nonstopmode
+        - latexmk -r latexmkrc -pdf -f -dvi- -ps- -jobname=esmvalcore -interaction=nonstopmode
 
 # If using Sphinx, optionally build your docs in additional formats such as PDF
 formats:
