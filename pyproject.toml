@@ -295,6 +295,7 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 
 # Other development tools.
 [tool.pixi.feature.dev.dependencies]
+"jupyterlab" = "*"
 "pre-commit" = "*"
 "py-spy" = "*"
 

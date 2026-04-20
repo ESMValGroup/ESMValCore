@@ -3,32 +3,40 @@
 Installation
 ============
 
-Conda installation
-------------------
+Mamba/Conda installation
+------------------------
 
-In order to install the Conda package, you will need to install `Conda <https://docs.conda.io>`_ first.
-For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
-It is recommended that you always use the latest version of conda, as problems have been reported when trying to use older versions.
+In order to install ESMValCore and its dependencies from
+`conda-forge <https://conda-forge.org/>`__, you will first need to install the
+`mamba package manager <https://mamba.readthedocs.io>`_. We recommend using
+mamba instead of conda because it is faster and offers the same commands.
+For a minimal mamba installation (recommended) go to
+https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html.
 
-Once you have installed conda, you can install ESMValCore by running:
+.. tip::
+
+   It is recommended that you always use the latest version of mamba, as
+   problems have been reported when trying to use older versions.
+
+Once you have installed mamba, you can install ESMValCore by running:
 
 .. code-block:: bash
 
-    conda install -c conda-forge esmvalcore
+    mamba install -c conda-forge esmvalcore
 
 It is also possible to create a new
-`Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-environments>`_
+`Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#creating-environments>`_
 and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c conda-forge esmvalcore
+    mamba create --name esmvalcore -c conda-forge esmvalcore
 
 Don't forget to activate the newly created environment after the installation:
 
 .. code-block:: bash
 
-    conda activate esmvalcore
+    mamba activate esmvalcore
 
 Of course it is also possible to choose a different name than ``esmvalcore`` for the environment.
 
@@ -36,38 +44,27 @@ Of course it is also possible to choose a different name than ``esmvalcore`` for
 
 	  Creating a new Conda environment is often much faster and more reliable than trying to update an existing Conda environment.
 
+
 Pip installation
 -----------------
 
 It is also possible to install ESMValCore from `PyPI <https://pypi.org/project/ESMValCore/>`_.
-However, this requires first installing dependencies that are not available on PyPI in some other way.
-By far the easiest way to install these dependencies is to use conda_.
-For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
+However, this requires first installing dependencies that are not available
+on PyPI in some other way.
+The list of required dependencies can be found in
+:download:`pyproject.toml <../../pyproject.toml>`.
 
-After installing Conda, download
-`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml>`_:
+.. warning::
 
-.. code-block:: bash
+    It is recommended to use the installation with mamba instead, as it may not
+    be easy to install the correct versions of all dependencies.
 
-    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml
-
-and install these dependencies into a new conda environment with the command
-
-.. code-block:: bash
-
-    conda env create --name esmvalcore --file environment.yml
-
-Finally, activate the newly created environment
+After installing the dependencies that are not available from PyPI_, install
+ESMValCore and any remaining Python dependencies with the command:
 
 .. code-block:: bash
 
-    conda activate esmvalcore
-
-and install ESMValCore with the command:
-
-.. code-block:: bash
-
-    pip install --no-deps esmvalcore
+    pip install esmvalcore
 
 
 Docker installation
@@ -160,6 +157,7 @@ To run the container using the image file ``esmvalcore.sif`` use:
 
    singularity run esmvalcore.sif ~/recipes/recipe_example.yml
 
+
 .. _installation-from-source:
 
 Installation from source
@@ -172,31 +170,18 @@ Installation from source
 
 To install from source for development, follow these instructions.
 
--  `Download and install
-   conda <https://conda.io/projects/conda/en/latest/user-guide/install/linux.html>`__
-   (this should be done even if the system in use already has a
-   preinstalled version of conda, as problems have been reported with
-   using older versions of conda)
--  To make the ``conda`` command available, add
-   ``source <prefix>/etc/profile.d/conda.sh`` to your ``.bashrc`` file
-   and restart your shell. If using (t)csh shell, add
-   ``source <prefix>/etc/profile.d/conda.csh`` to your
-   ``.cshrc``/``.tcshrc`` file instead.
--  Update conda: ``conda update -y conda``
+-  `Install pixi <https://pixi.prefix.dev/latest/installation/>`__
 -  Clone the ESMValCore Git repository:
    ``git clone https://github.com/ESMValGroup/ESMValCore.git``
 -  Go to the source code directory: ``cd ESMValCore``
--  Create the esmvalcore conda environment
-   ``conda env create --name esmvalcore --file environment.yml``
--  Activate the esmvalcore environment: ``conda activate esmvalcore``
--  Install in development mode: ``pip install --no-deps -e '.[develop]'``. If you
-   are installing behind a proxy that does not trust the usual pip-urls
-   you can declare them with the option ``--trusted-host``,
-   e.g. ``pip install --no-deps --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
--  Test that your installation was successful by running
-   ``esmvaltool -h``.
--  Install the :ref:`esmvaltool:pre-commit` hooks by running:
-   ``pre-commit install``.
+-  Create and activate the development environment by running: ``pixi shell``
+-  Test that your installation was successful by running ``esmvaltool -h``.
+-  Install the :ref:`esmvaltool:pre-commit` hooks by running: ``pre-commit install``.
+
+.. tip::
+
+    To exit the pixi environment, run ``exit`` or press ``Ctrl+D``.
+
 
 Pre-installed versions on HPC clusters / other servers
 ------------------------------------------------------
@@ -205,56 +190,3 @@ Pre-installed versions on HPC clusters / other servers
 If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-Levante),
 and other servers (currently Met Office Linux estate), please have a look at
 :ref:`these instructions <esmvaltool:install_on_hpc>`.
-
-
-.. _condalock-installation-creation:
-
-Installation from the conda lock file
--------------------------------------
-
-A fast conda environment creation is possible using the provided conda lock files. This is a secure alternative
-to the installation from source, whenever the conda environment can not be created for some reason. A conda lock file
-is an explicit environment file that contains pointers to dependency packages as they are hosted on the Anaconda cloud;
-these have frozen version numbers, build hashes, and channel names, parameters established at the time
-of the conda lock file creation, so may be obsolete after a while,
-but they allow for a robust environment creation while they're still up-to-date.
-We regenerate these lock files every 10 days through automatic Pull Requests
-(or more frequently, since the automatic generator runs on merges on the main branch too),
-so to minimize the risk of dependencies becoming obsolete. Conda environment creation from
-a lock file is done just like with any other environment file:
-
-.. code-block:: bash
-
-   conda create --name esmvaltool --file conda-linux-64.lock
-
-The latest, most up-to-date file can always be downloaded directly from the source code
-repository, a direct download link can be found `here <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/conda-linux-64.lock>`__.
-
-.. note::
-   `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
-
-
-Creating a conda lock file
---------------------------
-
-We provide a conda lock file for Linux-based operating systems, but if you prefer to
-build a conda lock file yourself, install the `conda-lock` package first:
-
-.. code-block:: bash
-
-   conda install -c conda-forge conda-lock
-
-then run
-
-.. code-block:: bash
-
-   conda-lock lock --platform linux-64 -f environment.yml --mamba
-
-(mamba activated for speed) to create a conda lock file for Linux platforms,
-or run
-
-.. code-block:: bash
-
-   conda-lock lock --platform osx-64 -f environment.yml --mamba
-
-to create a lock file for OSX platforms. Note however, that using conda lock files on OSX is still problematic!
