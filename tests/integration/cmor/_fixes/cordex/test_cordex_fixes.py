@@ -75,7 +75,7 @@ def cubes():
 
 
 @pytest.fixture
-def cordex_cubes():
+def cordex_cubes() -> iris.cube.CubeList:
     coord_system = iris.coord_systems.RotatedGeogCS(
         grid_north_pole_latitude=39.25,
         grid_north_pole_longitude=-162,
@@ -193,22 +193,31 @@ def test_rotated_grid_fix(cordex_cubes):
             np.testing.assert_array_equal(cube_coord.points, domain_coord)
 
 
-def test_rotated_grid_fix_error(cordex_cubes):
+def test_rotated_grid_fix_not_applied(
+    cordex_cubes: iris.cube.CubeList,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     fix = AllVars(
-        vardef=None,
+        vardef=None,  # type: ignore[arg-type]
         extra_facets={
             "domain": "EUR-11",
             "dataset": "DATASET",
             "driver": "DRIVER",
         },
     )
+    caplog.set_level("DEBUG")
     msg = (
         "Differences between the original grid and the "
         "standardised grid are above 10e-4 degrees."
     )
-    with pytest.raises(RecipeError) as exc:
-        fix.fix_metadata(cordex_cubes)
-    assert msg == exc.value.message
+    fix.fix_metadata(cordex_cubes)
+    domain = cx.cordex_domain("EUR-11", add_vertices=True)
+    for cube in cordex_cubes:
+        for coord in ["rlat", "rlon", "lat", "lon"]:
+            cube_coord = cube.coord(var_name=coord)
+            domain_coord = domain[coord].data
+            assert not np.array_equal(cube_coord.points, domain_coord)
+    assert msg in caplog.text
 
 
 def test_lambert_grid_warning(cubes, caplog):
