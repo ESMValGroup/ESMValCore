@@ -114,5 +114,6 @@ html/
 CLAUDE.md
 
 # pixi environments
+.pixi
 .pixi/*
 !.pixi/config.toml
