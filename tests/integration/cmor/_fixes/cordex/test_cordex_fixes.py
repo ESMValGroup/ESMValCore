@@ -174,6 +174,8 @@ def test_clmcomcclm4817_fix_metadata_time(
     else:
         for cube in cubes:
             cube.remove_coord("time")
+    for cube in cubes:
+        cube.data = cube.lazy_data().astype(">f4", casting="same_kind")
     for coord in cubes[1].coords():
         coord.points = coord.core_points().astype(">f8", casting="same_kind")
     lat = cubes[1].coord("latitude")
@@ -189,6 +191,8 @@ def test_clmcomcclm4817_fix_metadata_time(
                 "days since 1850-1-1 00:00:00",
                 calendar="proleptic_gregorian",
             )
+        assert cube.has_lazy_data()
+        assert cube.lazy_data().dtype == np.float32
         for coord in cube.coords():
             assert coord.points.dtype == np.float64
 

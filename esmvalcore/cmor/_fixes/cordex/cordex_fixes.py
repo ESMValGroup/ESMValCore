@@ -5,6 +5,7 @@ from functools import lru_cache
 
 import cordex as cx
 import iris
+import iris.coords
 import numpy as np
 from cf_units import Unit
 from iris.coord_systems import LambertConformal, RotatedGeogCS
@@ -92,11 +93,18 @@ class CLMcomCCLM4817(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
+            # Fix the calendar if there is a "time" coordinate.
             for coord in cube.coords("time"):
                 time_unit = coord.units
                 if time_unit.calendar == "standard":
                     new_unit = time_unit.change_calendar("proleptic_gregorian")
                     coord.units = new_unit
+            # Fix the endianness of the data.
+            if cube.core_data().dtype == np.dtype(">f4"):
+                cube.data = cube.core_data().astype(
+                    np.float32,
+                    casting="same_kind",
+                )
             for coord in cube.coords():
                 if coord.dtype in [">f8", ">f4"]:
                     coord.points = coord.core_points().astype(
