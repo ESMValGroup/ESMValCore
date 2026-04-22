@@ -174,7 +174,7 @@ To install from source for development, follow these instructions.
 -  Clone the ESMValCore Git repository:
    ``git clone https://github.com/ESMValGroup/ESMValCore.git``
 -  Go to the source code directory: ``cd ESMValCore``
--  Create and activate the development environment by running: ``pixi shell``
+-  Create the development environment and start a shell in this environment by running: ``pixi shell``
 -  Test that your installation was successful by running ``esmvaltool -h``.
 -  Install the :ref:`esmvaltool:pre-commit` hooks by running: ``pre-commit install``.
 
