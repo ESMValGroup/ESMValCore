@@ -776,6 +776,64 @@ def _get_name_and_shape_key(
     return (name, *shapes)
 
 
+def _copy_horizontal_coords(
+    src: Cube,
+    tgt: Cube,
+    overwrite: bool = False,
+) -> None:
+    """Copy horizontal coordinates from source to target cube.
+
+    Parameters
+    ----------
+    src:
+        Source cube to copy the coordinates from.
+    tgt:
+        Target cube to copy the coordinates to.
+    overwrite:
+        Whether to overwrite existing coordinates on the target cube.
+
+    """
+    src_horizontal_dims = get_dims_along_axes(src, ("X", "Y"))
+    tgt_horizontal_dims = get_dims_along_axes(tgt, ("X", "Y"))
+    for coord_name in [
+        "latitude",
+        "longitude",
+        "grid_latitude",
+        "grid_longitude",
+        "projection_y_coordinate",
+        "projection_x_coordinate",
+    ]:
+        if src.coords(coord_name):
+            if tgt.coords(coord_name):
+                if overwrite:
+                    coord_dims = tgt.coord_dims(coord_name)
+                    tgt.remove_coord(coord_name)
+                else:
+                    continue
+            elif src_horizontal_dims == tgt_horizontal_dims:
+                # Unable to determine coordinate dimensions: assume that the
+                # coordinate dimensions are the same as in the source cube if
+                # the horizontal dimensions of source and target cube match.
+                #
+                # This assumption may be too restrictive when the target cube
+                # has additional non-horizontal dimensions and will fail when the
+                # horizontal dimensions are transposed between source and target
+                # cube, but should work fine in the typical use case where the
+                # source cube (i.e. the target grid) is another, similar dataset.
+                coord_dims = src.coord_dims(coord_name)
+            else:
+                continue
+
+            target_coord = src.coord(coord_name).copy()
+            if (
+                isinstance(target_coord, iris.coords.DimCoord)
+                and len(coord_dims) == 1
+            ):
+                tgt.add_dim_coord(target_coord, coord_dims)
+            else:
+                tgt.add_aux_coord(target_coord, coord_dims)
+
+
 @preserve_float_dtype
 def regrid(
     cube: Cube,
@@ -791,17 +849,16 @@ def regrid(
     Note that the target grid can be a :class:`~iris.cube.Cube`, a
     :class:`~esmvalcore.dataset.Dataset`, a path to a cube
     (:class:`~pathlib.Path` or :obj:`str`), a grid spec (:obj:`str`) in the
-    form of `MxN`, or a :obj:`dict` specifying the target grid.
+    form of `MxN` degrees, or a :obj:`dict` specifying the target grid.
 
     For the latter, the `target_grid` should be a :obj:`dict` with the
     following keys:
 
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
-    - ``step_longitude``: constant longitude distance between grid cell
-        centers.
+    - ``step_longitude``: constant longitude distance between grid cell centers.
     - ``start_latitude``: latitude at the center of the first grid cell.
-    - ``end_latitude``: longitude at the center of the last grid cell.
+    - ``end_latitude``: latitude at the center of the last grid cell.
     - ``step_latitude``: constant latitude distance between grid cell centers.
 
     Parameters
@@ -912,15 +969,7 @@ def regrid(
     # -> Return source cube with target coordinates
     if cube.coords("latitude") and cube.coords("longitude"):
         if _horizontal_grid_is_close(cube, target_grid_cube):
-            for coord in ["latitude", "longitude"]:
-                is_dim_coord = cube.coords(coord, dim_coords=True)
-                coord_dims = cube.coord_dims(coord)
-                cube.remove_coord(coord)
-                target_coord = target_grid_cube.coord(coord).copy()
-                if is_dim_coord:
-                    cube.add_dim_coord(target_coord, coord_dims)
-                else:
-                    cube.add_aux_coord(target_coord, coord_dims)
+            _copy_horizontal_coords(target_grid_cube, cube, overwrite=True)
             return cube
 
     # Load scheme and reuse existing regridder if possible
@@ -930,7 +979,9 @@ def regrid(
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
-    return regridder(cube)
+    result = regridder(cube)
+    _copy_horizontal_coords(target_grid_cube, result, overwrite=False)
+    return result
 
 
 def _cache_clear():
