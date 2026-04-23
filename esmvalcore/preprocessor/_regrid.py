@@ -1062,10 +1062,16 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
         coord1 = cube1.coord(coord)
         coord2 = cube2.coord(coord)
 
-        if coord1.shape != coord2.shape:
-            return False
+        if coord1.has_bounds() and coord2.has_bounds():
+            array1 = coord1.core_bounds()
+            array2 = coord2.core_bounds()
+        else:
+            array1 = coord1.core_points()
+            array2 = coord2.core_points()
 
-        if not np.allclose(coord1.bounds, coord2.bounds):
+        if array1.shape != array2.shape:
+            return False
+        if not np.allclose(array1, array2):
             return False
 
     return True
