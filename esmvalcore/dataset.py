@@ -15,6 +15,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import esmvalcore.preprocessor._derive
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
@@ -266,6 +267,33 @@ class Dataset:
                     msg,
                 )
                 yield dataset
+
+    def derived_variable_from_files(self) -> Iterator[tuple[Dataset, ...]]:
+        """Create groups of datasets required to derive a variable, based on the available files.
+
+        Yields
+        ------
+        :
+            Tuples of datasets, the datasets in each tuple can be loaded
+            and passed on to :func:`esmvalcore.preprocessor.derive` to derive
+            the variable.
+        """
+        input_facets = esmvalcore.preprocessor._derive.get_required(  # noqa: SLF001
+            short_name=self.facets["short_name"],  # type: ignore
+            project=self.facets["project"],  # type: ignore
+        )
+        template = self.copy()
+        template.facets.update(input_facets[0])
+        for dataset in template.from_files():
+            datasets = [dataset]
+            for facets in input_facets[1:]:
+                additional_dataset = dataset.copy()
+                additional_dataset.facets.update(facets)
+                datasets.append(additional_dataset)
+                if not additional_dataset.copy().files:
+                    break
+            else:
+                yield tuple(datasets)
 
     def from_files(self) -> Iterator[Dataset]:
         """Create datasets based on the available files.
