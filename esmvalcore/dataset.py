@@ -1112,8 +1112,7 @@ class DerivedDataset:
                     and _isglob(self.facets[k])
                     and not _isglob(v)
                 }
-                result = self.__class__(**facets)
-                yield result
+                yield self.__class__(**facets)
 
     def load(self) -> Cube:
         """Load the derived variable as a cube."""
