@@ -41,7 +41,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
+      - uses: conda-incubator/setup-miniconda@bce0bd83659520ccaf4925e604d458d512f7df37 # v4.0.0
         with:
           activate-environment: esmvaltool-fromlock
           python-version: ${{ matrix.python-version }}
