@@ -1,13 +1,12 @@
-"""Fixes for rcm ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
+"""Fixes for rcm ALADIN53 driven by CNRM-CERFACS-CNRM-CM5."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import numpy as np
+from iris.util import promote_aux_coord_to_dim_coord
 
-from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix
-from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.fix import Fix
 
 if TYPE_CHECKING:
@@ -43,32 +42,26 @@ class AllVars(Fix):
                 )
                 coord.units = "m"
                 coord.guess_bounds()
+                promote_aux_coord_to_dim_coord(cube, coord_name)
 
         return cubes
 
 
-class Tas(Fix):
-    """Fixes for tas."""
+class Sftlf(Fix):
+    """Fixes for sftlf."""
 
-    def fix_metadata(self, cubes):
-        """Add height (2m) coordinate and correct long_name for time.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-        """
+    def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         for cube in cubes:
-            add_scalar_height_coord(cube)
-            if cube.coord("height").points != 2.0:
-                cube.coord("height").points = np.ma.array([2.0])
-            cube.coord("time").long_name = "time"
-
+            cube.units = "1"
+            cube.convert_units(self.vardef.units)
         return cubes
 
 
-Pr = BaseFix
+class Ts(Fix):
+    """Fixes for ts."""
+
+    def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
+        for cube in cubes:
+            cube.units = "deg_C"
+            cube.convert_units(self.vardef.units)
+        return cubes
