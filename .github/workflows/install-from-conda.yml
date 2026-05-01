@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - pixi
   schedule:
     - cron: "0 4 * * *"
 
@@ -32,14 +33,14 @@ jobs:
           - "3.14"
     name: Install ESMValCore with Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
-      - name: Install Micromamba
-        run: |
-          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-      - name: Install ESMValCore
-        run: micromamba create -n esmvalcore esmvalcore python=${{ matrix.python-version }}
+      - uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476  # v3.0.0
+        with:
+          environment-name: esmvalcore
+          create-args: >-
+            python=${{ matrix.python-version }}
+            esmvalcore
       - name: Verify installation
         run: |
-          eval "$(micromamba shell activate esmvalcore)"
           pip check
           esmvaltool --help
           esmvaltool version
