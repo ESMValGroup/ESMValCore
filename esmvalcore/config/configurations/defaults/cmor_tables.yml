@@ -86,7 +86,21 @@ projects:
         - cmip6/Tables
         - cmip6-custom
       strict: false
+  IFW:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
   IPSLCM:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  MONARCH:
     cmor_table:
       type: esmvalcore.cmor.table.CMIP6Info
       paths:

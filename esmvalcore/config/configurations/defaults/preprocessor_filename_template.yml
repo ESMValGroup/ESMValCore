@@ -35,3 +35,7 @@ projects:
     preprocessor_filename_template: "{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}"
   IPSLCM:
     preprocessor_filename_template: "{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}"
+  IFW:
+    preprocessor_filename_template: "{project}_{dataset}_{mip}_{short_name}_{fstep}"
+  MONARCH:
+    preprocessor_filename_template: "{project}_{dataset}_{exp}_{short_name}"

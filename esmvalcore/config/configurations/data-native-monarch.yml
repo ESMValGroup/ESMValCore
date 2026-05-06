@@ -2,14 +2,8 @@
 projects:
   MONARCH:
     data:
-      type: esmvalcore.io.local.LocalDataSource
-      rootpath: ~/climate_data
-      dirname_template: "{dataset}/{short_name}"
-      filename_template: "*.nc"
-    cmor_table:
-      type: esmvalcore.cmor.table.CMIP6Info
-      strict: false
-      paths:
-        - cmip6/Tables
-        - cmip6-custom
-    preprocessor_filename_template: "{project}_{dataset}_{exp}_{short_name}"
+      monarch:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: ~/climate_data
+        dirname_template: "{exp}/{short_name}"
+        filename_template: "*.nc"
