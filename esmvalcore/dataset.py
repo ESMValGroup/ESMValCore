@@ -1034,7 +1034,6 @@ class DerivedDataset:
 
     def __init__(self, **facets: FacetValue) -> None:
         self.facets: Facets = facets
-        self._input_datasets: tuple[Dataset, ...] = ()
         self._session: Session | None = None
 
     def __repr__(self) -> str:
