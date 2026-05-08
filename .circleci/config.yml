@@ -26,6 +26,8 @@ jobs:
           command: |
             pixi run --as-is esmvaltool version
             pixi run --as-is esmvaltool -- --help
+            pixi run --as-is esmvaltool config list
+            pixi run --as-is esmvaltool config show
       - codecov/upload:
           files: "test-reports/coverage.xml"
           disable_search: true
