@@ -14,8 +14,10 @@
 """
 
 import contextlib
+from pathlib import Path, PosixPath
 
 import iris
+import yaml
 
 from esmvalcore.config._config_object import CFG, Config, Session
 
@@ -32,3 +34,13 @@ for attr, value in {
 }.items():
     with contextlib.suppress(AttributeError):
         setattr(iris.FUTURE, attr, value)
+
+
+# Add a representer for pathlib objects to the YAML library.
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
