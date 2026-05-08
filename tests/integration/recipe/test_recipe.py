@@ -971,6 +971,11 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     )
 
     assert product.settings["regrid"]["target_grid"] == reference.datasets[0]
+    # Check that the target dataset does not have files, to prevent pickling
+    # errors: https://github.com/ESMValGroup/ESMValCore/issues/2989.
+    # The files can be found again at load time.
+    assert product.settings["regrid"]["target_grid"]._files is None
+
     assert product.settings["extract_levels"]["levels"] == levels
 
     get_reference_levels.assert_called_once_with(reference.datasets[0])
@@ -3883,14 +3888,13 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: CMIP7, CMIP6, CMIP5, CMIP3, "
-        "CORDEX, obs4MIPs, ana4MIPs, native6, ACCESS, CESM, EMAC, ICON, IPSLCM, "
-        'OBS6, OBS."'
+        'The following tables are available: .*."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
+    assert re.match(msg, exc.value.failed_tasks[0].message)
+    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):

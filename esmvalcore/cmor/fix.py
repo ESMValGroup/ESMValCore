@@ -43,14 +43,6 @@ def fix_file(  # noqa: PLR0913
     operations that are more efficient with other packages (e.g., loading files
     with lots of variables is much faster with Xarray than Iris).
 
-    Warning
-    -------
-    A path should only be returned if it points to the original (unchanged)
-    file (i.e., a fix was not necessary). If a fix is necessary, this function
-    should return a :class:`~iris.cube.CubeList`.
-    Under no circumstances a copy of the input data should be created (this is
-    very inefficient).
-
     Parameters
     ----------
     file:

@@ -55,7 +55,7 @@ using the ``OBS`` root path set to:
 
   .. code-block:: yaml
 
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+    OBS: /gws/ssde/j25a/esmeval/obsdata-v2
 
 and the dataset:
 
@@ -68,7 +68,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 .. code-block::
 
-  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+  /gws/ssde/j25a/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Observational datasets CMORized by ESMValTool are organized in Tiers depending on
 their level of public availability.
@@ -157,13 +157,11 @@ in its native GRIB format.
 To read these data with ESMValCore, use the data definition for the ``native6``
 project:
 
-.. literalinclude:: ../configurations/data-hpc-dkrz.yml
+.. literalinclude:: ../configurations/data-hpc-dkrz-era5-grib.yml
     :language: yaml
-    :caption: Contents of ``data-hpc-dkrz.yml``
-    :start-at: # ERA5 data in GRIB format:
-    :end-before: OBS6:
+    :caption: Contents of ``data-hpc-dkrz-era5-grib.yml``
 
-To use this configuration, run ``esmvaltool config copy data-hpc-dkrz.yml``.
+To use this configuration, run ``esmvaltool config copy data-hpc-dkrz-era5-grib.yml``.
 
 The `naming conventions
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__

@@ -31,7 +31,7 @@ CMIP7
 `Official CMIP7 facets <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/global_attributes/>`__.
 
 .. note::
-    This mapping is prelimary as no CMIP7 data bas been published on ESGF yet.
+    This mapping is preliminary as no CMIP7 data bas been published on ESGF yet.
 
 +----------------------+---------------------------+
 | ESMValCore facet     | ESGF facet                |

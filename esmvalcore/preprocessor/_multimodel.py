@@ -453,9 +453,7 @@ def _combine(cubes):
             f"Multi-model statistics failed to merge input cubes into a "
             f"single array:\n{cubes}\n{msg}"
         )
-        raise ValueError(
-            msg,
-        ) from exc
+        raise ValueError(msg) from exc
 
     return merged_cube
 
@@ -521,9 +519,7 @@ def _compute_eager(
             f"This can happen e.g. if the calculation results in inconsistent "
             f"dtypes"
         )
-        raise ValueError(
-            msg,
-        ) from excinfo
+        raise ValueError(msg) from excinfo
 
     result_cube.data = np.ma.array(result_cube.data)
 
@@ -575,9 +571,7 @@ def _multicube_statistics(
     """
     if not cubes:
         msg = "Cannot perform multicube statistics for an empty list of cubes"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Avoid modifying inputs
     cubes = [cube.copy() for cube in cubes]
@@ -608,9 +602,7 @@ def _multicube_statistics(
             "array: some cubes have a 'time' dimension, some do not have a "
             "'time' dimension."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Calculate statistics
     statistics_cubes = {}
@@ -681,9 +673,7 @@ def _get_operator_and_kwargs(statistic: str | dict) -> tuple[str, dict]:
                 f"`statistic` given as dictionary, but missing required key "
                 f"`operator`, got {statistic}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         operator = statistic.pop("operator")
         kwargs = statistic
     else:
@@ -845,9 +835,7 @@ def multi_model_statistics(
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {products}"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def ensemble_statistics(

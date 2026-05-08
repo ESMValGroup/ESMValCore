@@ -72,6 +72,17 @@ def _era5_latitude():
     )
 
 
+def _era5_latitude_w_direction():
+    return DimCoord(
+        np.array([90.0, 0.0, -90.0]),
+        standard_name="latitude",
+        long_name="latitude",
+        var_name="latitude",
+        units=Unit("degrees"),
+        attributes={"stored_direction": "decreasing"},
+    )
+
+
 def _era5_longitude():
     return DimCoord(
         np.array([0, 180, 359.75]),
@@ -1577,3 +1588,38 @@ def test_unstructured_grid(unstructured_grid_cubes):
     assert lon.bounds is None
 
     assert fixed_cube.attributes["GRIB_PARAM"] == "(1, 1)"
+
+
+@pytest.fixture
+def cube_latitude_w_direction():
+    """Sample cube with latitude coordinate with direction."""
+    time = DimCoord(
+        [-31, 0, 31],
+        standard_name="time",
+        units="days since 1850-01-01",
+    )
+    cube = Cube(
+        _era5_data("mon"),
+        standard_name="air_temperature",
+        units="K",
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_latitude_w_direction(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def test_latitude_w_direction(cube_latitude_w_direction):
+    """Test removal of latitude stored_direction attribute."""
+    fixed_cubes = fix_metadata(
+        cube_latitude_w_direction,
+        "tas",
+        "native6",
+        "era5",
+        "Amon",
+    )
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.coord("latitude") == _cmor_latitude()

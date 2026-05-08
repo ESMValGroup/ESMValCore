@@ -143,9 +143,7 @@ class Reference:
                 f"{self.__class__.__name__} cannot handle bibtex files "
                 "with more than 1 entry."
             )
-            raise NotImplementedError(
-                msg,
-            )
+            raise NotImplementedError(msg)
 
         self._bib_data = bib_data
         self._key, self._entry = next(iter(bib_data.entries.items()))
@@ -202,8 +200,6 @@ class Reference:
             rendered = formatter.text.render(backend)
         except Exception as err:  # noqa: BLE001
             msg = f"Could not render {self._key!r}: {err}"
-            raise RenderError(
-                msg,
-            ) from None
+            raise RenderError(msg) from None
 
         return rendered
