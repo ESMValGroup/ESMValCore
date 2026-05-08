@@ -180,6 +180,14 @@ To install from source for development, follow these instructions.
 
 .. tip::
 
+    If you find that solving the environments (i.e. finding out which
+    combination of package versions is compatible and can be installed) is
+    slow, you can add the ``--frozen`` flag to the commands above to skip the
+    solve step. Add ``export PIXI_FROZEN=true`` to your ``~/.bashrc`` file to
+    make this the default behavior.
+
+.. tip::
+
     To exit the pixi environment, run ``exit`` or press ``Ctrl+D``.
 
 
