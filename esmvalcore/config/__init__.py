@@ -17,7 +17,7 @@ import contextlib
 from pathlib import Path, PosixPath
 
 import iris
-import yaml
+import yaml.representer
 
 from esmvalcore.config._config_object import CFG, Config, Session
 
@@ -37,7 +37,10 @@ for attr, value in {
 
 
 # Add a representer for pathlib objects to the YAML library.
-def path_representer(dumper, data):
+def path_representer(
+    dumper: yaml.representer.SafeRepresenter,
+    data: Path | PosixPath,
+) -> yaml.representer.ScalarNode:
     """For printing pathlib.Path objects in yaml files."""
     return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
 
