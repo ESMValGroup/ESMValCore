@@ -117,9 +117,7 @@ class AllVars(EmacFix):
             f"'{self.vardef.short_name}', searched for Z-coordinates with "
             f"units that are convertible to Pa"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     @staticmethod
     def _fix_alevel(cube, cubes):

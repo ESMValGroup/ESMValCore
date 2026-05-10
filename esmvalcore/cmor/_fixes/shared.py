@@ -52,9 +52,7 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
                 f"Expected exactly one coordinate cube '{coord_name}' in "
                 f"list of cubes {cubes}, got {len(coord_cube):d}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coord_cube = coord_cube[0]
         aux_coord = cube_to_aux_coord(coord_cube)
         cube.add_aux_coord(aux_coord, coord_dims)
@@ -137,9 +135,7 @@ def add_plev_from_altitude(cube):
         "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
         "available"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def add_altitude_from_plev(cube):
@@ -185,9 +181,7 @@ def add_altitude_from_plev(cube):
         "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
         "available"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 def add_scalar_depth_coord(cube, depth=0.0):
@@ -355,16 +349,12 @@ def get_bounds_cube(cubes, coord_var_name):
             return cube[0]
         if len(cube) > 1:
             msg = f"Multiple cubes with var_name '{bound_var}' found"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
     msg = (
         f"No bounds for coordinate variable '{coord_var_name}' available in "
         f"cubes\n{cubes}"
     )
-    raise ValueError(
-        msg,
-    )
+    raise ValueError(msg)
 
 
 @cache
@@ -544,16 +534,12 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
                     f"For `n`-hourly data, `n` must be a divisor of 24, got "
                     f"'{freq}'"
                 )
-                raise NotImplementedError(
-                    msg,
-                )
+                raise NotImplementedError(msg)
             min_bound = date - timedelta(hours=n_hours / 2.0)
             max_bound = date + timedelta(hours=n_hours / 2.0)
         else:
             msg = f"Cannot guess time bounds for frequency '{freq}'"
-            raise NotImplementedError(
-                msg,
-            )
+            raise NotImplementedError(msg)
         bounds.append([min_bound, max_bound])
 
     return date2num(np.array(bounds), time.units, time.dtype)

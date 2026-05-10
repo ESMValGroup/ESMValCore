@@ -67,9 +67,7 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
                 f"'diagnostic' facet missing from {dataset},"
                 "unable to convert to recipe."
             )
-            raise RecipeError(
-                msg,
-            )
+            raise RecipeError(msg)
 
     recipe = _datasets_to_raw_recipe(datasets)
     diagnostics = recipe["diagnostics"].values()

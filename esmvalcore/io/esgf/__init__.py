@@ -26,7 +26,7 @@ or the :ref:`recipe <recipe>`. To use it, run the command
 
 .. code:: bash
 
-    esmvalcore config copy data-esmvalcore.io.esgf.yml
+    esmvalcore config copy data-esmvalcore-esgf.yml
 
 to copy the default configuration file for this module to your configuration
 directory. This will create a file with the following content:

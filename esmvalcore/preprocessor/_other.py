@@ -436,7 +436,7 @@ def _get_histogram_weights(
     elif weights is True:
         weights_array = get_weights(cube, coords)
     else:
-        weights_array = weights
+        weights_array = npx.array(weights)
 
     if normalization is not None:
         norm = npx.sum(weights_array, axis=axes, keepdims=True)
