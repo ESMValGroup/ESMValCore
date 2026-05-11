@@ -9,7 +9,7 @@ import ncdata
 import numpy as np
 import pytest
 import xarray as xr
-from iris.coords import DimCoord
+from iris.coords import AncillaryVariable, CellMeasure, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.exceptions import ESMValCoreLoadWarning
@@ -39,9 +39,19 @@ def test_load(tmp_path, sample_cube):
     assert_array_equal(sample_cube.coord("latitude").points, [1, 2])
 
 
-def test_load_with_valid_max(tmp_path, sample_cube):
+def test_load_with_valid_max(tmp_path: Path, sample_cube: Cube) -> None:
     """Test loading multiple files."""
     sample_cube.attributes["valid_max"] = 1
+    ancillary_var = AncillaryVariable(
+        [0, 1.1],
+        standard_name="land_area_fraction",
+        units="%",
+    )
+    ancillary_var.attributes["valid_max"] = 1
+    sample_cube.add_ancillary_variable(ancillary_var, data_dims=[0])
+    cell_measure = CellMeasure([1, 1], standard_name="cell_area", units="m2")
+    cell_measure.attributes["valid_max"] = 1
+    sample_cube.add_cell_measure(cell_measure, data_dims=[0])
     temp_file = tmp_path / "cube.nc"
     iris.save(sample_cube, temp_file)
 
