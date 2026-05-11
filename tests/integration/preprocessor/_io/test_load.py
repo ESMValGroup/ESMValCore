@@ -39,7 +39,7 @@ def test_load(tmp_path, sample_cube):
     assert_array_equal(sample_cube.coord("latitude").points, [1, 2])
 
 
-def test_load_with_valid_max(tmp_path: Path, sample_cube: Cube) -> None:
+def test_load_with_range_attrs(tmp_path: Path, sample_cube: Cube) -> None:
     """Test loading multiple files."""
     sample_cube.attributes["valid_max"] = 1
     ancillary_var = AncillaryVariable(
@@ -50,7 +50,7 @@ def test_load_with_valid_max(tmp_path: Path, sample_cube: Cube) -> None:
     ancillary_var.attributes["valid_max"] = 1
     sample_cube.add_ancillary_variable(ancillary_var, data_dims=[0])
     cell_measure = CellMeasure([1, 1], standard_name="cell_area", units="m2")
-    cell_measure.attributes["valid_max"] = 1
+    cell_measure.attributes["valid_min"] = 1
     sample_cube.add_cell_measure(cell_measure, data_dims=[0])
     temp_file = tmp_path / "cube.nc"
     iris.save(sample_cube, temp_file)
@@ -64,6 +64,12 @@ def test_load_with_valid_max(tmp_path: Path, sample_cube: Cube) -> None:
         sample_cube.data,
         np.ma.array([1, 2], mask=[False, True]),
     )
+    assert "valid_max" not in sample_cube.ancillary_variables()[0].attributes
+    assert_array_equal(
+        sample_cube.ancillary_variables()[0].data,
+        np.ma.array([0, 1.1], mask=[False, True]),
+    )
+    assert "valid_min" not in sample_cube.cell_measures()[0].attributes
 
 
 def test_load_grib():
