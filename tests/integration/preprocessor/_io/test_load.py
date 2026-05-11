@@ -39,6 +39,23 @@ def test_load(tmp_path, sample_cube):
     assert_array_equal(sample_cube.coord("latitude").points, [1, 2])
 
 
+def test_load_with_valid_max(tmp_path, sample_cube):
+    """Test loading multiple files."""
+    sample_cube.attributes["valid_max"] = 1
+    temp_file = tmp_path / "cube.nc"
+    iris.save(sample_cube, temp_file)
+
+    cubes = load(temp_file)
+
+    assert len(cubes) == 1
+    sample_cube = cubes[0]
+    assert "valid_max" not in sample_cube.attributes
+    assert_array_equal(
+        sample_cube.data,
+        np.ma.array([1, 2], mask=[False, True]),
+    )
+
+
 def test_load_grib():
     """Test loading a grib file."""
     grib_path = (
