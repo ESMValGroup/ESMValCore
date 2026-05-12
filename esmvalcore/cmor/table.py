@@ -519,7 +519,7 @@ class InfoBase:
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
@@ -1577,7 +1577,7 @@ class CustomInfo(CMIP5Info):
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
@@ -1649,7 +1649,7 @@ class NoInfo(InfoBase):
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
