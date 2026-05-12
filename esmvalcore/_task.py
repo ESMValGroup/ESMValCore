@@ -17,7 +17,7 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from pathlib import Path, PosixPath
+from pathlib import Path
 from shutil import which
 
 import dask
@@ -29,15 +29,6 @@ from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
 from .config._dask import get_distributed_client
 from .config._diagnostics import DIAGNOSTICS, TAGS
-
-
-def path_representer(dumper, data):
-    """For printing pathlib.Path objects in yaml files."""
-    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
-
-
-yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
-yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 

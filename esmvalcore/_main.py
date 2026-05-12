@@ -173,7 +173,7 @@ class Config:
     def __init__(self) -> None:
         from rich.console import Console
 
-        self.console = Console(soft_wrap=True)
+        self._console = Console(soft_wrap=True)
 
     def show(
         self,
@@ -203,8 +203,8 @@ class Config:
             if filter
             else ""
         )
-        self.console.print(f"# Current configuration{exclude_msg}:")
-        self.console.print(
+        self._console.print(f"# Current configuration{exclude_msg}:")
+        self._console.print(
             Syntax(
                 yaml.safe_dump(cfg),
                 "yaml",
@@ -264,7 +264,7 @@ class Config:
                     f"- `{f.relative_to(config_dir)}`: {description(f)}"
                     for f in files
                 ]
-        self.console.print(Markdown("\n".join(msg)))
+        self._console.print(Markdown("\n".join(msg)))
 
     def copy(
         self,

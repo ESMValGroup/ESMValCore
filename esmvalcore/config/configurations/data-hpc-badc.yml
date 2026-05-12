@@ -32,20 +32,20 @@ projects:
     data:
       badc:
         type: esmvalcore.io.local.LocalDataSource
-        rootpath: /gws/nopw/j04/esmeval/obsdata-v2
+        rootpath: /gws/ssde/j25a/esmeval/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{short_name}_*.nc"
   OBS6:
     data:
       badc:
         type: esmvalcore.io.local.LocalDataSource
-        rootpath: /gws/nopw/j04/esmeval/obsdata-v2
+        rootpath: /gws/ssde/j25a/esmeval/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
   OBS:
     data:
       badc:
         type: esmvalcore.io.local.LocalDataSource
-        rootpath: /gws/nopw/j04/esmeval/obsdata-v2
+        rootpath: /gws/ssde/j25a/esmeval/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

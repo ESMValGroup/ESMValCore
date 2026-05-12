@@ -1,7 +1,7 @@
 {
     "Header": {
-        "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: dafbfbdbf4f24b46e72199d4f8130371",
+        "Conventions": "CF-1.12",
+        "checksum": "md5: 7ad9045251fbfedb676fc1980abcd480",
         "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "",
-        "table_date": "2026-01-07 10:30:23",
+        "table_date": "2026-04-21 15:01:29",
         "table_id": "cell_measures",
         "type": "real",
         "valid_max": "",
