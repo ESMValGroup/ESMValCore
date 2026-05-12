@@ -1,18 +1,32 @@
 """Configure logging."""
 
+from __future__ import annotations
+
+import inspect
 import logging
 import logging.config
 import os
 import time
-from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import yaml
 
+import esmvalcore.exceptions
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+_WARNINGS_SHOWN_IN_MAIN_LOG = [
+    cls.__name__
+    for cls in vars(esmvalcore.exceptions).values()
+    if inspect.isclass(cls)
+    and issubclass(cls, esmvalcore.exceptions.ESMValCoreUserWarning)
+]
+
 
 class FilterMultipleNames:
-    """Only allow/Disallow events from loggers with specific names."""
+    """Only allow/disallow events from loggers with specific names."""
 
     def __init__(
         self,
@@ -21,10 +35,7 @@ class FilterMultipleNames:
     ) -> None:
         """Initialize filter."""
         self.names = names
-        if mode == "allow":
-            self.starts_with_name = True
-        else:
-            self.starts_with_name = False
+        self.starts_with_name = mode == "allow"
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
@@ -32,6 +43,19 @@ class FilterMultipleNames:
             if record.name.startswith(name):
                 return self.starts_with_name
         return not self.starts_with_name
+
+
+class FilterExternalWarnings:
+    """Do not show warnings from external packages."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        if record.name != "py.warnings":
+            return True
+        for warning in _WARNINGS_SHOWN_IN_MAIN_LOG:
+            if f" {warning}: " in record.msg:
+                return True
+        return False
 
 
 def _purge_file_handlers(cfg: dict) -> None:
@@ -76,7 +100,7 @@ def _get_log_files(
     return log_files
 
 
-def _update_stream_level(cfg: dict, level=None):
+def _update_stream_level(cfg: dict, level: str | None = None) -> None:
     """Update the log level for the stream handlers."""
     handlers = cfg["handlers"]
 

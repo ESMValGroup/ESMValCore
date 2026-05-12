@@ -1,0 +1,110 @@
+# CMOR table configuration.
+projects:
+  # Projects hosted on ESGF.
+  CMIP7:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip7/tables
+        - cmip6-custom
+  CMIP6:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+  CMIP5:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP5Info
+      paths:
+        - cmip5/Tables
+        - cmip5-custom
+  CMIP3:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP3Info
+      paths:
+        - cmip3/Tables
+        - cmip3-custom
+  CORDEX:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP5Info
+      paths:
+        - cordex/Tables
+        - cordex-custom
+        - cmip5-custom
+  obs4MIPs:
+    cmor_table:
+      type: esmvalcore.cmor.table.Obs4MIPsInfo
+      # Set `strict: false` because the tables are incomplete.
+      strict: false
+      paths:
+        - obs4mips/Tables
+        - cmip6-custom
+  ana4MIPs:
+    # CMOR tables are available at https://github.com/PCMDI/ana4MIPs-cmor-tables/
+    # but it is not clear how well these match the data.
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP5Info
+      paths:
+        - cmip5/Tables
+        - cmip5-custom
+      strict: false
+  # Observational and reanalysis data that can be read in its native format by ESMValCore.
+  native6:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  # Data from selected climate models that can be read in its native format by ESMValCore.
+  ACCESS:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  CESM:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  EMAC:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  ICON:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  IPSLCM:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  # Data that has been CMORized by ESMValTool
+  OBS6:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cmip6/Tables
+        - cmip6-custom
+      strict: false
+  OBS:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP5Info
+      paths:
+        - cmip5/Tables
+        - cmip5-custom
+      strict: false

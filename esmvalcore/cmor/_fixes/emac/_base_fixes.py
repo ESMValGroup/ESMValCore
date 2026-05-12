@@ -38,11 +38,9 @@ class EmacFix(NativeDatasetFix):
             f"No variable of {var_names} necessary for the extraction/"
             f"derivation the CMOR variable '{self.vardef.short_name}' is "
             f"available in the input file. Please specify a valid `raw_name` "
-            f"in the recipe or extra facets file."
+            f"in the recipe or as extra facets."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
 
 class NegateData(EmacFix):

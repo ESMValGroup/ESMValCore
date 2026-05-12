@@ -1,5 +1,6 @@
 """Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
 
+import re
 from datetime import datetime
 from unittest import mock
 
@@ -15,7 +16,10 @@ from iris.cube import Cube, CubeList
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
-from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor import (
+    _check_multi_model_settings,
+    multi_model_statistics,
+)
 from esmvalcore.preprocessor._supplementary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ("overlap", "full")
@@ -531,6 +535,33 @@ def test_align(span):
     assert next(iter(shapes)) == (len_data,)
 
 
+def test_align_no_overlap():
+    """Test _align function."""
+    # Create two cubes that do not overlap in time
+    cubes = [
+        generate_cube_from_dates("monthly"),
+        generate_cube_from_dates("monthly"),
+    ]
+    cubes[0].coord("time").points = cubes[0].coord("time").points + 100.0
+
+    msg = r"Cannot align time coordinates with strategy 'overlap'"
+    with pytest.raises(ValueError, match=msg):
+        mm._align_time_coord(cubes, "overlap")
+
+
+def test_align_invalid_span():
+    """Test _align function."""
+    cubes = [
+        generate_cube_from_dates("monthly"),
+        generate_cube_from_dates("monthly"),
+    ]
+    cubes[0].coord("time").points = cubes[0].coord("time").points + 100.0
+
+    msg = r"Invalid argument for span"
+    with pytest.raises(ValueError, match=msg):
+        mm._align_time_coord(cubes, "invalid_span")
+
+
 @pytest.mark.parametrize("span", SPAN_OPTIONS)
 def test_combine_same_shape(span):
     """Test _combine with same shape of cubes."""
@@ -808,11 +839,21 @@ def test_unify_time_coordinates():
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
 
-    def __init__(self, cube=None, attributes=None):
+    def __init__(
+        self,
+        cube=None,
+        attributes=None,
+        filename=None,
+        settings=None,
+    ):
         if cube:
             self.cubes = [cube]
         if attributes:
             self.attributes = attributes
+        if filename:
+            self.filename = filename
+        if settings:
+            self.settings = settings
 
     def wasderivedfrom(self, product):
         pass
@@ -1060,7 +1101,7 @@ def test_daily_inconsistent_calendars():
 
     cubes = [leapcube, noleapcube]
 
-    # span=full
+    # Test span=full
     aligned_cubes = mm._align_time_coord(cubes, span="full")
     for cube in aligned_cubes:
         assert cube.coord("time").units.calendar in ("standard", "gregorian")
@@ -1073,7 +1114,7 @@ def test_daily_inconsistent_calendars():
     assert result_cube[59].data == 2  # looked up nearest neighbour
     assert result_cube[366].data == 1  # outside original range
 
-    # span=overlap
+    # Test span=overlap
     aligned_cubes = mm._align_time_coord(cubes, span="overlap")
     for cube in aligned_cubes:
         assert cube.coord("time").units.calendar in ("standard", "gregorian")
@@ -1671,3 +1712,53 @@ def test_get_operator_and_kwargs_operator_missing(statistic):
 def test_get_stat_identifier(statistic, output):
     """Test ``_get_stat_identifier``."""
     assert mm._get_stat_identifier(statistic) == output
+
+
+def test_differing_multi_model_settings():
+    products = [
+        PreprocessorFile(
+            filename="a",
+            settings={"multi_model_statistics": {"statistics": ["mean"]}},
+        ),
+        PreprocessorFile(
+            filename="b",
+            settings={"multi_model_statistics": {"statistics": ["median"]}},
+        ),
+    ]
+    msg = r"Unable to combine differing multi-dataset settings for a and b"
+    with pytest.raises(ValueError, match=msg):
+        _check_multi_model_settings(products)
+
+
+def test_multi_model_statistics_invalid_input_type_fail() -> None:
+    msg = r"Input type for multi_model_statistics not understood."
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        mm.multi_model_statistics([0, 0], "full", [])
+
+
+def test_compute_eager_concatenate_fail() -> None:
+    """Test that ``_compute_eager`` raises on concatenation failure."""
+    # Use small cubes (no slicing) but mock concatenate_cube to fail
+    cubes = CubeList(generate_cube_from_dates("monthly") for _ in range(3))
+
+    # Create a mock result that will fail on concatenate
+    mock_result = mock.Mock()
+    mock_result.coords = mock.Mock(return_value=[])
+
+    # Test with concatenate_cube raising an exception
+    with mock.patch.object(
+        mm,
+        "_compute",
+        return_value=mock_result,
+    ):
+        with mock.patch.object(
+            iris.cube.CubeList,
+            "concatenate_cube",
+            side_effect=iris.exceptions.ConcatenateError("test error"),
+        ):
+            msg = (
+                r"Multi-model statistics failed to concatenate results into a "
+                r"single array. This happened for operator"
+            )
+            with pytest.raises(ValueError, match=re.escape(msg)):
+                mm._compute_eager(cubes, operator="mean")

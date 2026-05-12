@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
@@ -12,7 +12,7 @@ import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
-from iris.coords import CellMethod, Coord
+from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
@@ -20,7 +20,7 @@ from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
     rechunk_cube,
 )
-from esmvalcore.preprocessor._io import concatenate
+from esmvalcore.preprocessor._concatenate import concatenate
 from esmvalcore.preprocessor._other import histogram
 from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
@@ -32,6 +32,8 @@ from esmvalcore.preprocessor._shared import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from iris.coords import Coord
 
     from esmvalcore.preprocessor import PreprocessorFile
 
@@ -119,9 +121,7 @@ def bias(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         (reference, ref_product) = _get_ref(products, "reference_for_bias")
     else:
         ref_product = None
@@ -167,7 +167,10 @@ def bias(
     return output_products
 
 
-def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
+def _get_ref(
+    products: Iterable[PreprocessorFile],
+    ref_tag: str,
+) -> tuple[Cube, PreprocessorFile]:
     """Get reference cube and product."""
     ref_products = []
     for product in products:
@@ -178,9 +181,7 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
             f"Expected exactly 1 dataset with '{ref_tag}: true', found "
             f"{len(ref_products):d}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     ref_product = ref_products[0]
 
     # Extract reference cube
@@ -210,9 +211,7 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
             f"Expected one of ['absolute', 'relative'] for bias_type, got "
             f"'{bias_type}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     cube.metadata = cube_metadata
     cube.units = new_units
@@ -236,7 +235,7 @@ def distance_metric(
     reference: Cube | None = None,
     coords: Iterable[Coord] | Iterable[str] | None = None,
     keep_reference_dataset: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
     r"""Calculate distance metrics.
 
@@ -345,9 +344,7 @@ def distance_metric(
                 "A list of Cubes is given to this preprocessor; please "
                 "specify a `reference`"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         reference, reference_product = _get_ref(
             products,
             "reference_for_metric",
@@ -393,7 +390,7 @@ def _calculate_metric(
     reference: Cube,
     metric: MetricType,
     coords: Iterable[Coord] | Iterable[str] | None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Cube:
     """Calculate metric for a single cube relative to a reference cube."""
     # Make sure that dimensional metadata of data and ref data is compatible
@@ -403,18 +400,14 @@ def _calculate_metric(
             f"distance metric calculation, got {cube.shape} and "
             f"{reference.shape}, respectively"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     try:
         cube + reference  # dummy operation to check if cubes are compatible
     except Exception as exc:
         msg = (
             "Cannot calculate distance metric between cube and reference cube "
         )
-        raise ValueError(
-            msg,
-        ) from exc
+        raise ValueError(msg) from exc
 
     # Perform the actual calculation of the distance metric
     # Note: we work on arrays here instead of cube to stay as flexible as
@@ -436,13 +429,10 @@ def _calculate_metric(
         msg = (
             f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 
-    # Get result cube with correct dimensional metadata by using dummy
-    # operation (max)
+    # Get result cube with correct dimensional metadata by using dummy operation (max)
     with ignore_iris_vague_metadata_warnings():
         res_cube = cube.collapsed(coords, iris.analysis.MAX)
     res_cube.data = res_data
@@ -490,7 +480,7 @@ def _calculate_pearsonr(
     coords: Iterable[Coord] | Iterable[str],
     *,
     weighted: bool,
-    **kwargs,
+    **kwargs: Any,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
     # Here, we want to use common_mask=True in iris.analysis.stats.pearsonr
@@ -562,6 +552,15 @@ def _calculate_emd(
 
     # Data
     if cube.has_lazy_data() and reference.has_lazy_data():
+        # da.apply_gufunc internally casts all input arrays to Dask, which
+        # might produce misaligned chunks. To avoid this, make sure
+        # `bin_centers` is also a Dask array which is similarly chunked as
+        # `pmf.lazy_data()` and `pmf_ref.lazy_data()` along the shared
+        # dimension `i`. Since `pmf.lazy_data()` and `pmf_ref.lazy_data()` are
+        # not chunked along the shared dimension `i` (see `rechunk_cube()`
+        # function above) and `bin_centers` has shape (i,), `bin_centers` must
+        # not be chunked at all.
+        bin_centers = da.from_array(bin_centers, chunks=bin_centers.shape)
         emd = da.apply_gufunc(
             _get_emd,
             "(i),(i),(i)->()",
@@ -589,7 +588,11 @@ def _calculate_emd(
     return (emd, metadata)
 
 
-def _get_emd(arr, ref_arr, bin_centers):
+def _get_emd(
+    arr: np.ndarray,
+    ref_arr: np.ndarray,
+    bin_centers: np.ndarray,
+) -> np.ndarray:
     """Calculate Earth mover's distance (non-lazy)."""
     if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
         return np.ma.masked  # this is safe because PMFs will be masked arrays

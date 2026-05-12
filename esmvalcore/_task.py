@@ -1,5 +1,7 @@
 """ESMValtool task definition."""
 
+from __future__ import annotations
+
 import abc
 import contextlib
 import datetime
@@ -15,7 +17,7 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from pathlib import Path, PosixPath
+from pathlib import Path
 from shutil import which
 
 import dask
@@ -27,15 +29,6 @@ from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
 from .config._dask import get_distributed_client
 from .config._diagnostics import DIAGNOSTICS, TAGS
-
-
-def path_representer(dumper, data):
-    """For printing pathlib.Path objects in yaml files."""
-    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
-
-
-yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
-yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +74,12 @@ def _get_resource_usage(process, start_time, children=True):
                 processes = [process]
 
             # Update resource usage
-            for proc in cache:
+            for proc, cached_value in cache.items():
                 # Set cpu percent and memory usage to 0 for old processes
                 if proc not in processes:
-                    cache[proc][1] = 0
-                    cache[proc][2] = 0
-                    cache[proc][3] = 0
+                    cached_value[1] = 0
+                    cached_value[2] = 0
+                    cached_value[3] = 0
             for proc in processes:
                 # Update current processes
                 cache[proc] = [
@@ -116,7 +109,7 @@ def _get_resource_usage(process, start_time, children=True):
             round(entry, p)
             for entry, p in zip(entries, precision, strict=False)
         ]
-        entries.insert(0, datetime.datetime.utcnow())
+        entries.insert(0, datetime.datetime.now(datetime.UTC))
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
 
@@ -175,16 +168,12 @@ def _py2ncl(value, var_name=""):
                 type_ = type(value[0])
             if any(not isinstance(v, type_) for v in value):
                 msg = f"NCL array cannot be mixed type: {value}"
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
             txt += "(/{}/)".format(", ".join(_py2ncl(v) for v in value))
     elif isinstance(value, dict):
         if not var_name:
             msg = f"NCL does not support nested dicts: {value}"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         txt += "True\n"
         for key in value:
             txt += f"{var_name}@{key} = {_py2ncl(value[key])}\n"
@@ -206,9 +195,9 @@ def write_ncl_settings(settings, filename, mode="wt"):
             int: "int64",
             dict: "logical",
         }
-        for type_ in typemap:
+        for type_, ncl_type in typemap.items():
             if isinstance(value, type_):
-                return typemap[type_]
+                return ncl_type
         msg = f"Unable to map {type(value)} to an NCL type"
         raise ValueError(msg)
 
@@ -270,9 +259,7 @@ class BaseTask:
         """Initialize task provenance activity."""
         if self.activity is not None:
             msg = f"Provenance of {self} already initialized"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         self.activity = get_task_provenance(self, recipe_entity)
 
     def flatten(self):
@@ -283,7 +270,7 @@ class BaseTask:
         tasks.add(self)
         return tasks
 
-    def run(self, input_files=None):
+    def run(self, input_files: list[str] | None = None) -> None:
         """Run task."""
         if not self.output_files:
             if input_files is None:
@@ -308,7 +295,7 @@ class BaseTask:
         return self.output_files
 
     @abc.abstractmethod
-    def _run(self, input_files):
+    def _run(self, input_files: list[str]) -> list[str]:
         """Run task."""
 
     def get_product_attributes(self) -> dict:
@@ -351,7 +338,7 @@ class ResumeTask(BaseTask):
         for prov_filename, attributes in prev_metadata.items():
             # Update the filename in case the output directory was moved
             # since the original run
-            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            filename = prev_preproc_dir / Path(prov_filename).name
             attributes["filename"] = filename
             product = TrackedFile(
                 filename,
@@ -362,7 +349,7 @@ class ResumeTask(BaseTask):
 
         super().__init__(ancestors=None, name=name, products=products)
 
-    def _run(self, _):
+    def _run(self, _: list[str]) -> list[str]:
         """Return the result of a previous run."""
         metadata = self.get_product_attributes()
 
@@ -443,18 +430,14 @@ class DiagnosticTask(BaseTask):
                 msg = (
                     f"{err_msg}: program '{interpreters[ext]}' not installed."
                 )
-                raise DiagnosticError(
-                    msg,
-                )
+                raise DiagnosticError(msg)
             cmd.append(interpreter)
         elif not os.access(script_file, os.X_OK):
             msg = (
                 f"{err_msg}: non-executable file with unknown extension "
                 f"'{script_file.suffix}'."
             )
-            raise DiagnosticError(
-                msg,
-            )
+            raise DiagnosticError(msg)
 
         cmd.extend(args.get(ext, []))
         cmd.append(str(script_file))
@@ -672,11 +655,9 @@ class DiagnosticTask(BaseTask):
             f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
             f"in {self.log}"
         )
-        raise DiagnosticError(
-            msg,
-        )
+        raise DiagnosticError(msg)
 
-    def _collect_provenance(self):
+    def _collect_provenance(self) -> None:
         """Process provenance information provided by the diagnostic script."""
         provenance_file = (
             Path(self.settings["run_dir"]) / "diagnostic_provenance.yml"
@@ -722,9 +703,10 @@ class DiagnosticTask(BaseTask):
         }
 
         valid = True
-        for filename, attributes in table.items():
+        for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(attributes)
+            attributes = deepcopy(attrs)
+            attributes.update(deepcopy(orig_attributes))
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
@@ -762,11 +744,9 @@ class DiagnosticTask(BaseTask):
                         self.name,
                     )
 
-            attributes.update(deepcopy(attrs))
-
             TAGS.replace_tags_in_dict(attributes)
 
-            product = TrackedFile(filename, attributes, ancestors)
+            product = TrackedFile(Path(filename), attributes, ancestors)
             product.initialize_provenance(self.activity)
             _write_citation_files(product.filename, product.provenance)
             product.save_provenance()
@@ -810,11 +790,11 @@ def available_cpu_count() -> int:
 class TaskSet(set):
     """Container for tasks."""
 
-    def flatten(self) -> "TaskSet":
+    def flatten(self) -> TaskSet:
         """Flatten the list of tasks."""
         return TaskSet(t for task in self for t in task.flatten())
 
-    def get_independent(self) -> "TaskSet":
+    def get_independent(self) -> TaskSet:
         """Return a set of independent tasks."""
         independent_tasks = TaskSet()
         all_tasks = self.flatten()
@@ -869,7 +849,7 @@ class TaskSet(set):
         create n_threads = n_cpu_cores / n_processes.
         """
         # pylint: disable=import-outside-toplevel
-        from esmvalcore.preprocessor import PreprocessingTask
+        from esmvalcore.preprocessor import PreprocessingTask  # noqa: PLC0415
 
         if dask.config.get("scheduler", "threads") not in (
             "threads",

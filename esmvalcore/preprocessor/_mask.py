@@ -14,21 +14,24 @@ from typing import TYPE_CHECKING, Literal
 import cartopy.io.shapereader as shpreader
 import dask.array as da
 import iris
+import iris.cube
 import iris.util
 import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
-from iris.util import rolling_window
 
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
-from esmvalcore.preprocessor._shared import (
-    apply_mask,
+from esmvalcore.preprocessor._shared import apply_mask
+from esmvalcore.preprocessor._supplementary_vars import (
+    register_supplementaries,
 )
 
-from ._supplementary_vars import register_supplementaries
-
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from iris.cube import Cube
+
+    from esmvalcore.preprocessor import PreprocessorFile
 
 logger = logging.getLogger(__name__)
 
@@ -150,9 +153,7 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
             "Use of shapefiles with irregular grids not yet implemented, "
             "land-sea mask not applied."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return cube
 
@@ -217,7 +218,10 @@ def mask_landseaice(cube: Cube, mask_out: Literal["landsea", "ice"]) -> Cube:
     return cube
 
 
-def mask_glaciated(cube, mask_out: str = "glaciated"):
+def mask_glaciated(
+    cube: iris.cube.Cube,
+    mask_out: str = "glaciated",
+) -> iris.cube.Cube:
     """Mask out glaciated areas.
 
     It applies a Natural Earth mask. Note that for computational reasons
@@ -284,9 +288,6 @@ def _get_geometries_from_shp(shapefilename):
     if not geometries:
         msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
-
-    # TODO: might need this for a later, more enhanced, version
-    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
 
     return geometries
 
@@ -355,7 +356,7 @@ def count_spells(
     data: np.ndarray | da.Array,
     threshold: float | None,
     axis: int,
-    spell_length,
+    spell_length: int,
 ) -> np.ndarray | da.Array:
     # Copied from:
     # https://scitools-iris.readthedocs.io/en/stable/generated/gallery/general/plot_custom_aggregation.html
@@ -379,11 +380,11 @@ def count_spells(
     threshold:
         threshold point for 'significant' datapoints.
 
-    axis: int
+    axis:
         number of the array dimension mapping the time sequences.
         (Can also be negative, e.g. '-1' means last dimension)
 
-    spell_length: int
+    spell_length:
         number of consecutive times at which value > threshold to "count".
 
     Returns
@@ -409,7 +410,7 @@ def count_spells(
     # where m is a float
     ###############################################################
     with ignore_iris_vague_metadata_warnings():
-        hit_windows = rolling_window(
+        hit_windows = iris.util.rolling_window(
             data_hits,
             window=spell_length,
             step=spell_length,
@@ -525,9 +526,7 @@ def _get_shape(cubes):
     shapes = {cube.shape for cube in cubes}
     if len(shapes) > 1:
         msg = f"Expected cubes with identical shapes, got shapes {shapes}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return next(iter(shapes))
 
 
@@ -613,17 +612,15 @@ def mask_multimodel(products):
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {product_types}"
     )
-    raise TypeError(
-        msg,
-    )
+    raise TypeError(msg)
 
 
 def mask_fillvalues(
-    products,
+    products: Sequence[PreprocessorFile],
     threshold_fraction: float,
     min_value: float | None = None,
     time_window: int = 1,
-):
+) -> Sequence[PreprocessorFile]:
     """Compute and apply a multi-dataset fillvalues mask.
 
     Construct the mask that fills a certain time window with missing values
@@ -635,7 +632,7 @@ def mask_fillvalues(
 
     Parameters
     ----------
-    products: iris.cube.Cube
+    products:
         data products to be masked.
 
     threshold_fraction:
@@ -651,7 +648,7 @@ def mask_fillvalues(
 
     Returns
     -------
-    iris.cube.Cube
+    :
         Masked iris cubes.
 
     Raises
@@ -665,8 +662,8 @@ def mask_fillvalues(
 
     combined_mask = None
     for product in products:
-        for i, cube in enumerate(product.cubes):
-            cube = cube.copy()
+        for i, orig_cube in enumerate(product.cubes):
+            cube = orig_cube.copy()
             product.cubes[i] = cube
             cube.data = array_module.ma.fix_invalid(cube.core_data())
             mask = _get_fillvalues_mask(
@@ -682,15 +679,14 @@ def mask_fillvalues(
                 valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
                 msg = f"Unable to handle {mask.ndim} dimensional data"
-                raise NotImplementedError(
-                    msg,
-                )
+                raise NotImplementedError(msg)
             combined_mask = array_module.where(
                 valid,
                 combined_mask | mask,
                 combined_mask,
             )
 
+    input_products = {p.copy_provenance() for p in products}
     for product in products:
         for cube in product.cubes:
             array = cube.core_data()
@@ -698,11 +694,10 @@ def mask_fillvalues(
             mask = array_module.ma.getmaskarray(array) | combined_mask
             cube.data = array_module.ma.masked_array(data, mask)
 
-    # Record provenance
-    input_products = {p.copy_provenance() for p in products}
-    for other in input_products:
-        if other.filename != product.filename:
-            product.wasderivedfrom(other)
+        # Record provenance
+        for other in input_products:
+            if other.filename != product.filename:
+                product.wasderivedfrom(other)
 
     return products
 
@@ -727,9 +722,7 @@ def _get_fillvalues_mask(
             f"Fraction of missing values {threshold_fraction} should be "
             f"between 0 and 1.0"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     nr_time_points = len(cube.coord("time").points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."
@@ -744,7 +737,7 @@ def _get_fillvalues_mask(
         "spell_count",
         count_spells,
         lazy_func=count_spells,
-        units_func=lambda units: 1,
+        units_func=lambda units: 1,  # noqa: ARG005
     )
 
     # Calculate the statistic.

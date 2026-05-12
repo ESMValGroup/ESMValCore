@@ -62,25 +62,6 @@ arguments:
 
 	esmvaltool run --argument_name argument_value recipe_example.yml
 
-To automatically download the files required to run a recipe from ESGF, use the
-:ref:`configuration option <config_options>` ``search_esgf=when_missing`` (use
-local files whenever possible) or ``search_esgf=always`` (always search ESGF
-for latest version of files and only use local data if it is the latest
-version):
-
-.. code:: bash
-
-    esmvaltool run --search_esgf=when_missing recipe_example.yml
-
-or
-
-.. code:: bash
-
-    esmvaltool run --search_esgf=always recipe_example.yml
-
-This feature is available for projects that are hosted on the ESGF, i.e.
-CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
-
 To control the strictness of the CMOR checker and the checks during concatenation
 on auxiliary coordinates, supplementary variables, and derived coordinates,
 use the flag ``--check_level``:

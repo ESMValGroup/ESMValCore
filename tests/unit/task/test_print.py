@@ -2,20 +2,22 @@
 
 import copy
 import textwrap
+from pathlib import Path
 
 import pytest
 
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.dataset import Dataset
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 
 @pytest.fixture
 def preproc_file():
     dataset = Dataset(short_name="tas")
-    dataset.files = ["/path/to/input_file.nc"]
+    dataset.files = [LocalFile("/path/to/input_file.nc")]
     return PreprocessorFile(
-        filename="/output/preproc/file.nc",
+        filename=Path("/output/preproc/file.nc"),
         attributes={"short_name": "tas"},
         settings={
             "extract_levels": {"scheme": "linear", "levels": [95000]},
@@ -52,9 +54,9 @@ def test_repr_preproc_task(preproc_task):
     PreprocessingTask: diag_1/tas
     order: ['extract_levels', 'save']
     PreprocessorFile: /output/preproc/file.nc
-    input files: ['/path/to/input_file.nc']
+    input files: [LocalFile('/path/to/input_file.nc')]
     settings: {'extract_levels': {'levels': [95000], 'scheme': 'linear'},
-     'save': {'filename': '/output/preproc/file.nc'}}
+     'save': {'filename': PosixPath('/output/preproc/file.nc')}}
     ancestors:
     None
     """)
@@ -97,9 +99,9 @@ def test_repr_simple_tree(preproc_task, diagnostic_task):
       PreprocessingTask: diag_1/tas
       order: ['extract_levels', 'save']
       PreprocessorFile: /output/preproc/file.nc
-      input files: ['/path/to/input_file.nc']
+      input files: [LocalFile('/path/to/input_file.nc')]
       settings: {'extract_levels': {'levels': [95000], 'scheme': 'linear'},
-       'save': {'filename': '/output/preproc/file.nc'}}
+       'save': {'filename': PosixPath('/output/preproc/file.nc')}}
       ancestors:
       None
     """)
@@ -141,25 +143,25 @@ def test_repr_full_tree(preproc_task, diagnostic_task):
         PreprocessingTask: diag_1/tas
         order: ['extract_levels', 'save']
         PreprocessorFile: /output/preproc/file.nc
-        input files: ['/path/to/input_file.nc']
+        input files: [LocalFile('/path/to/input_file.nc')]
         settings: {'extract_levels': {'levels': [95000], 'scheme': 'linear'},
-         'save': {'filename': '/output/preproc/file.nc'}}
+         'save': {'filename': PosixPath('/output/preproc/file.nc')}}
         ancestors:
           PreprocessingTask: diag_1/tas_derive_input_1
           order: ['extract_levels', 'save']
           PreprocessorFile: /output/preproc/file.nc
-          input files: ['/path/to/input_file.nc']
+          input files: [LocalFile('/path/to/input_file.nc')]
           settings: {'extract_levels': {'levels': [95000], 'scheme': 'linear'},
-           'save': {'filename': '/output/preproc/file.nc'}}
+           'save': {'filename': PosixPath('/output/preproc/file.nc')}}
           ancestors:
           None
 
           PreprocessingTask: diag_1/tas_derive_input_2
           order: ['extract_levels', 'save']
           PreprocessorFile: /output/preproc/file.nc
-          input files: ['/path/to/input_file.nc']
+          input files: [LocalFile('/path/to/input_file.nc')]
           settings: {'extract_levels': {'levels': [95000], 'scheme': 'linear'},
-           'save': {'filename': '/output/preproc/file.nc'}}
+           'save': {'filename': PosixPath('/output/preproc/file.nc')}}
           ancestors:
           None
     """)

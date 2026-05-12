@@ -69,6 +69,21 @@ type of your input if possible:
     >>> type(CFG['max_parallel_tasks'])
     int
 
+It is also possible to temporarily use different configuration options using
+the :meth:`~esmvalcore.config.Config.context` context manager:
+
+.. code-block:: python
+
+    >>> with CFG.context({"output_dir": "/path/to/output"}, log_level="debug"):
+    ...     print(CFG["output_dir"])
+    ...     print(CFG["log_level"])
+    PosixPath('/path/to/output')
+    debug
+    >>> print(CFG["output_dir"])
+    PosixPath('/home/user/esmvaltool_output')
+    >>> print(CFG["log_level"])
+    info
+
 By default, the configuration is loaded from YAML files in the user's home
 directory at ``~/.config/esmvaltool``.
 If set, this can be overwritten with the ``ESMVALTOOL_CONFIG_DIR`` environment

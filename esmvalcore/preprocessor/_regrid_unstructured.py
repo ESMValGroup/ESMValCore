@@ -93,17 +93,13 @@ class UnstructuredLinearRegridder:
                 f"Source cube {src_cube.summary(shorten=True)} does not have "
                 f"unstructured grid"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         if not has_regular_grid(tgt_cube):
             msg = (
                 f"Target cube {tgt_cube.summary(shorten=True)} does not have "
                 f"regular grid"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         src_lat = src_cube.coord("latitude").copy()
         src_lon = src_cube.coord("longitude").copy()
         tgt_lat = tgt_cube.coord("latitude").copy()
@@ -211,18 +207,14 @@ class UnstructuredLinearRegridder:
                 f"Cube {cube.summary(shorten=True)} does not have "
                 f"unstructured grid"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coords = [cube.coord("latitude"), cube.coord("longitude")]
         if coords != self.src_coords:
             msg = (
                 f"The given cube {cube.summary(shorten=True)} is not defined "
                 f"on the same source grid as this regridder"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # Get coordinates of regridded cube
 
@@ -252,8 +244,8 @@ class UnstructuredLinearRegridder:
             if udim not in cube.coord_dims(c)
         ]
         aux_coords_and_dims = []
-        for aux_coord, dims in old_aux_coords_and_dims:
-            dims = tuple(d if d < udim else d + 1 for d in dims)
+        for aux_coord, old_dims in old_aux_coords_and_dims:
+            dims = tuple(d if d < udim else d + 1 for d in old_dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
         # Create new cube with regridded data

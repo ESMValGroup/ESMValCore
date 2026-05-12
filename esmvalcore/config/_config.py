@@ -1,22 +1,20 @@
 """Functions dealing with config-developer.yml and extra facets."""
+# TODO: remove this module in v2.16.0
 
 from __future__ import annotations
 
 import collections.abc
-import contextlib
-import fnmatch
 import logging
 import os
+import warnings
 from functools import lru_cache
-from importlib.resources import files as importlib_files
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import iris
 import yaml
 
-from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.cmor.table import read_cmor_tables
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 if TYPE_CHECKING:
     from esmvalcore.typing import FacetValue
@@ -27,16 +25,11 @@ TASKSEP = os.sep
 
 CFG = {}
 
-
-# Set iris.FUTURE flags
-for attr, value in {
-    "save_split_attrs": True,
-    "date_microseconds": True,
-}.items():
-    with contextlib.suppress(AttributeError):
-        setattr(iris.FUTURE, attr, value)
+# TODO: remove in v2.15.0
+USER_EXTRA_FACETS = Path.home() / ".esmvaltool" / "extra_facets"
 
 
+# TODO: remove in v2.15.0
 def _deep_update(dictionary, update):
     for key, value in update.items():
         if isinstance(value, collections.abc.Mapping):
@@ -46,13 +39,16 @@ def _deep_update(dictionary, update):
     return dictionary
 
 
+# TODO: remove in v2.15.0
 @lru_cache
-def _load_extra_facets(project, extra_facets_dir):
-    config = {}
-    config_paths = [
-        importlib_files("esmvalcore.config") / "extra_facets",
-        Path.home() / ".esmvaltool" / "extra_facets",
-    ]
+def load_extra_facets(
+    project: str,
+    extra_facets_dir: tuple[Path],
+) -> dict[str, dict[str, Any]]:
+    """Load deprecated extra facets."""
+    warn_if_old_extra_facets_exist()
+    config: dict[str, dict[str, Any]] = {}
+    config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
     config_paths.extend([Path(p) for p in extra_facets_dir])
     for config_path in config_paths:
         config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
@@ -65,68 +61,63 @@ def _load_extra_facets(project, extra_facets_dir):
     return config
 
 
-def get_extra_facets(dataset, extra_facets_dir):
-    """Read files with additional variable information ("extra facets")."""
-    extra_facets_dir = tuple(extra_facets_dir)
-    project_details = _load_extra_facets(
-        dataset.facets["project"],
-        extra_facets_dir,
-    )
-
-    def pattern_filter(patterns, name):
-        """Get the subset of the list `patterns` that `name` matches.
-
-        Parameters
-        ----------
-        patterns : :obj:`list` of :obj:`str`
-            A list of strings that may contain shell-style wildcards.
-        name : str
-            A string describing the dataset, mip, or short_name.
-
-        Returns
-        -------
-        :obj:`list` of :obj:`str`
-            The subset of patterns that `name` matches.
-        """
-        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
-
-    extra_facets = {}
-    for dataset_ in pattern_filter(project_details, dataset["dataset"]):
-        for mip_ in pattern_filter(project_details[dataset_], dataset["mip"]):
-            for var in pattern_filter(
-                project_details[dataset_][mip_],
-                dataset["short_name"],
-            ):
-                facets = project_details[dataset_][mip_][var]
-                extra_facets.update(facets)
-
-    return extra_facets
+# TODO: remove in v2.15.0
+def warn_if_old_extra_facets_exist() -> None:
+    """Warn user if deprecated dask configuration file exists."""
+    if USER_EXTRA_FACETS.exists() and not os.environ.get(
+        "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG",
+    ):
+        deprecation_msg = (
+            "Usage of extra facets located in ~/.esmvaltool/extra_facets has "
+            "been deprecated in ESMValCore version 2.13.0 and is scheduled "
+            "for removal in version 2.15.0. Please use the configuration "
+            "option `extra_facets` instead (see "
+            "https://github.com/ESMValGroup/ESMValCore/pull/2747 for "
+            "details). To silent this warning and ignore deprecated extra "
+            "facets, set the environment variable "
+            "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG=1."
+        )
+        warnings.warn(
+            deprecation_msg,
+            ESMValCoreDeprecationWarning,
+            stacklevel=2,
+        )
 
 
-def load_config_developer(cfg_file):
+def load_config_developer(
+    cfg_file: Path,
+    set_cmor_tables: bool = True,
+) -> dict:
     """Read the developer's configuration file."""
     with open(cfg_file, encoding="utf-8") as file:
         cfg = yaml.safe_load(file)
 
-    if "obs4mips" in cfg:
-        logger.warning(
-            "Correcting capitalization, project 'obs4mips'"
-            " should be written as 'obs4MIPs' in %s",
-            cfg_file,
-        )
-        cfg["obs4MIPs"] = cfg.pop("obs4mips")
+    for lower_case_project in ("obs4mips", "ana4mips"):
+        if lower_case_project in cfg:
+            project = f"{lower_case_project[:3]}4MIPs"
+            logger.warning(
+                "Correcting capitalization, project '%s' should be written as '%s' in %s",
+                lower_case_project,
+                project,
+                cfg_file,
+            )
+            cfg[project] = cfg.pop(lower_case_project)
 
     for project, settings in cfg.items():
         for site, drs in settings.get("input_dir", {}).items():
             # Since v2.8, 'version' can be used instead of 'latestversion'
             if isinstance(drs, list):
-                drs = [d.replace("{latestversion}", "{version}") for d in drs]
+                normalized_drs = [
+                    d.replace("{latestversion}", "{version}") for d in drs
+                ]
             else:
-                drs = drs.replace("{latestversion}", "{version}")
-            settings["input_dir"][site] = drs
+                normalized_drs = drs.replace("{latestversion}", "{version}")
+            settings["input_dir"][site] = normalized_drs
         CFG[project] = settings
 
-    read_cmor_tables(cfg_file)
+    if set_cmor_tables:
+        read_cmor_tables(cfg_file)
+    return cfg
 
 
 def get_project_config(project):
@@ -135,28 +126,6 @@ def get_project_config(project):
         return CFG[project]
     msg = f"Project '{project}' not in config-developer.yml"
     raise RecipeError(msg)
-
-
-def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP6."""
-    dataset = variable["dataset"]
-    project = variable["project"]
-    try:
-        return CMOR_TABLES[project].institutes[dataset]
-    except (KeyError, AttributeError):
-        return []
-
-
-def get_activity(variable):
-    """Return the activity given the experiment name in CMIP6."""
-    project = variable["project"]
-    try:
-        exp = variable["exp"]
-        if isinstance(exp, list):
-            return [CMOR_TABLES[project].activities[value][0] for value in exp]
-        return CMOR_TABLES[project].activities[exp][0]
-    except (KeyError, AttributeError):
-        return None
 
 
 def get_ignored_warnings(project: FacetValue, step: str) -> None | list:

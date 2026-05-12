@@ -196,17 +196,11 @@ case of this operation is the evaluation of a variable which is only available
 in an observational dataset but not in the models. In this case a derivation
 function is provided by the ESMValCore in order to calculate the variable and
 perform the comparison. For example, several observational datasets deliver
-total column ozone as observed variable (`toz`), but CMIP models only provide
+total column ozone as observed variable (``toz``), but CMIP models only provide
 the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-The tool will also look in other ``mip`` tables for the same ``project`` to find
-the definition of derived variables. To contribute a completely new derived
-variable, it is necessary to define a name for it and to provide the
-corresponding CMOR table. This is to guarantee the proper metadata definition
-is attached to the derived data. Such custom CMOR tables are collected as part
-of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 By default, the variable derivation will be applied only if the variable is not
 already available in the input data, but the derivation can be forced by
 setting the ``force_derivation`` flag.
@@ -272,20 +266,22 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - ``fix_file``: apply fixes directly to a copy of the file.
-      Copying the files is costly, so only errors that prevent Iris to load the
-      file are fixed here.
-      See :func:`esmvalcore.preprocessor.fix_file`.
+- ``fix_file``: apply fixes to data before loading them with Iris.
+  This is mainly intended to fix errors that prevent data loading with Iris
+  (e.g., those related to ``missing_value`` or ``_FillValue``) or
+  operations that are more efficient with other packages (e.g., loading
+  files with lots of variables is much faster with Xarray than Iris). See
+  :func:`esmvalcore.preprocessor.fix_file`.
 
-    - ``fix_metadata``: metadata fixes are done just before concatenating the
-      cubes loaded from different files in the final one.
-      Automatic metadata fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_metadata`.
+- ``fix_metadata``: metadata fixes are done just before concatenating the
+  cubes loaded from different files in the final one.
+  Automatic metadata fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_metadata`.
 
-    - ``fix_data``: data fixes are applied before starting any operation that
-      will alter the data itself.
-      Automatic data fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_data`.
+- ``fix_data``: data fixes are applied before starting any operation that
+  will alter the data itself.
+  Automatic data fixes are also applied at this step.
+  See :func:`esmvalcore.preprocessor.fix_data`.
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
@@ -796,7 +792,7 @@ Regridding on a reference dataset grid
 
 The example below shows how to regrid on the reference dataset
 ``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
-or ana4mips datasets can be used); in this case the `scheme` is
+or ana4MIPs datasets can be used); in this case the `scheme` is
 `linear`.
 
 .. code-block:: yaml
@@ -1298,7 +1294,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * climate_statistics_: Compute statistics for the full period
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
-* anomalies_: Compute (standardized) anomalies
+* anomalies_: Compute (standardized or relative) anomalies
 * regrid_time_: Aligns the time coordinate of each dataset, against a standardized time axis.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
@@ -1410,7 +1406,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * `hour`: Number of hours per period.
+    * `hours`: Number of hours per period.
       Must be a divisor of 24, i.e., (1, 2, 3, 4, 6, 8, 12).
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
@@ -1545,6 +1541,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points will be put into bins,
+   which may shift existing time points. For example, for `period=hourly`, a
+   time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
 Examples:
     * Monthly climatology:
 
@@ -1650,14 +1650,14 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
 
 * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
           offset: 6
 
 * Convert to 3-hourly data using bilinear interpolation:
@@ -1665,7 +1665,7 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 3
+          interval: 3
           interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
@@ -1687,6 +1687,7 @@ Parameters:
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
+    * relative: if true, calculate relative (in percent) anomalies (default: false)
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
@@ -2033,15 +2034,15 @@ Examples:
         .. code-block:: yaml
 
             extract_shape:
-            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
-            decomposed: True
-            method: contains
-            ids:
-              - Spain
-              - France
-              - Italy
-              - United Kingdom
-              - Taiwan
+              shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+              decomposed: true
+              method: contains
+              ids:
+                - Spain
+                - France
+                - Italy
+                - United Kingdom
+                - Taiwan
 
     * Extract European AR6 regions:
 
@@ -2530,9 +2531,10 @@ precipitation sum.
 
   preprocessors:
     preproc_rolling_window:
-      coordinate: time
-      operator: sum
-      window_length: 2
+      rolling_window_statistics:
+        coordinate: time
+        operator: sum
+        window_length: 2
 
 See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
 
@@ -2915,53 +2917,60 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-
-.. _Memory use:
-
-Information on maximum memory required
-======================================
-In the most general case, we can set upper limits on the maximum memory the
-analysis will require:
-
-
-``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
-
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
-
-where
-
-* ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multi-model module
-* ``R``: computational efficiency of module; `R` is typically 2-3
-* ``N``: number of datasets
-* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
-  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
-  fully realized data) and ``f`` describes how much the data was shrunk by the
-  immediately previous module, e.g. time extraction, area selection or level
-  extraction; note that for fix_data ``f`` relates only to the time extraction,
-  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
-  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
-  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
-  ``N`` datasets will require:
-
-
-``Ms = 1.5 x (N - 1)`` GB
-
-``Mm = 1.5 x (N - 2)`` GB
-
-As a rule of thumb, the maximum required memory at a certain time for
-multi-model analysis could be estimated by multiplying the number of datasets by
-the average file size of all the datasets; this memory intake is high but also
-assumes that all data is fully realized in memory; this aspect will gradually
-change and the amount of realized data will decrease with the increase of
-``dask`` use.
-
 .. _Other:
+
 
 Other
 =====
 
 Miscellaneous functions that do not belong to any of the other categories.
+
+.. _align_metadata:
+
+``align_metadata``
+------------------
+
+This function sets cube metadata to entries from a specific target project.
+This is useful to align variable metadata of different projects prior to
+performing multi-model operations (e.g., :ref:`multi-model statistics`).
+For example, standard names differ for some variables between CMIP5 and CMIP6
+which would prevent the calculation of multi-model statistics between CMIP5 and
+CMIP6 data.
+
+The ``align_metadata`` preprocessor supports the following arguments in the
+recipe:
+
+* ``target_project`` (:obj:`str`): Project from which target metadata is read.
+* ``target_mip`` (:obj:`str`; optional): MIP table from which target metadata
+  is read.
+  If not given, use the MIP tables of the corresponding variables defined in
+  the recipe.
+* ``target_short_name`` (:obj:`str`; optional): Variable short name from which
+  target metadata is read.
+  If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix from which
+  target metadata is read.
+  If not given, use the branding suffixes of the corresponding variables defined in
+  the recipe.
+* ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
+  error if desired metadata cannot be read for variable ``target_short_name``
+  of MIP table ``target_mip`` and project ``target_project``.
+  If ``False``, no error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      calculate_multi_model_statistics:
+        align_metadata:
+          target_project: CMIP6
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+
+See also :func:`esmvalcore.preprocessor.align_metadata`.
 
 .. _cumulative_sum:
 
@@ -3089,3 +3098,44 @@ Example:
           normalization: sum
 
 See also :func:`esmvalcore.preprocessor.histogram`.
+
+
+.. _Memory use:
+
+Information on maximum memory required
+======================================
+In the most general case, we can set upper limits on the maximum memory the
+analysis will require:
+
+
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
+
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
+
+where
+
+* ``Ms``: maximum memory for non-multimodel module
+* ``Mm``: maximum memory for multi-model module
+* ``R``: computational efficiency of module; `R` is typically 2-3
+* ``N``: number of datasets
+* ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
+  where ``e`` is the factor that describes how lazy the data is (``e = 1`` for
+  fully realized data) and ``f`` describes how much the data was shrunk by the
+  immediately previous module, e.g. time extraction, area selection or level
+  extraction; note that for fix_data ``f`` relates only to the time extraction,
+  if data is exact in time (no time selection) ``f = 1`` for fix_data so for
+  cases when we deal with a lot of datasets ``R + N \approx N``, data is fully
+  realized, assuming an average size of 1.5GB for 10 years of `3D` netCDF data,
+  ``N`` datasets will require:
+
+
+``Ms = 1.5 x (N - 1)`` GB
+
+``Mm = 1.5 x (N - 2)`` GB
+
+As a rule of thumb, the maximum required memory at a certain time for
+multi-model analysis could be estimated by multiplying the number of datasets by
+the average file size of all the datasets; this memory intake is high but also
+assumes that all data is fully realized in memory; this aspect will gradually
+change and the amount of realized data will decrease with the increase of
+``dask`` use.

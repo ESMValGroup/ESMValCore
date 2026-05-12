@@ -9,16 +9,17 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.local import _get_start_end_date
+from esmvalcore.io.local import LocalFile, _get_start_end_date
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
-    from pathlib import Path
+    from collections.abc import Iterable
 
     from esmvalcore.config import Session
 
@@ -35,19 +36,19 @@ def fix_file(  # noqa: PLR0913
     add_unique_suffix: bool = False,
     session: Session | None = None,
     frequency: str | None = None,
-    **extra_facets,
-) -> str | Path:
-    """Fix files before ESMValTool can load them.
+    **extra_facets: Any,
+) -> Path | Sequence[Cube]:
+    """Fix files before loading them into a :class:`~iris.cube.CubeList`.
 
-    These fixes are only for issues that prevent iris from loading the cube or
-    that cannot be fixed after the cube is loaded.
-
-    Original files are not overwritten.
+    This is mainly intended to fix errors that prevent loading the data with
+    Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
+    operations that are more efficient with other packages (e.g., loading files
+    with lots of variables is much faster with Xarray than Iris).
 
     Parameters
     ----------
     file:
-        Path to the original file.
+        Path to the original file. Original files are not overwritten.
     short_name:
         Variable's short name.
     project:
@@ -59,21 +60,25 @@ def fix_file(  # noqa: PLR0913
     output_dir:
         Output directory for fixed files.
     add_unique_suffix:
-        Adds a unique suffix to `output_dir` for thread safety.
+        Adds a unique suffix to ``output_dir`` for thread safety.
     session:
         Current session which includes configuration and directory information.
     frequency:
         Variable's data frequency, if available.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------
-    str or pathlib.Path
-        Path to the fixed file.
+    :
+        Fixed data or a path to them.
 
     """
+    if not isinstance(file, Path):
+        # Skip this function for `esmvalcore.io.DataElement` that is not a path
+        # to a file.
+        return file
+
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update(
@@ -86,6 +91,7 @@ def fix_file(  # noqa: PLR0913
         },
     )
 
+    result: Path | Sequence[Cube] = Path(file)
     for fix in Fix.get_fixes(
         project=project,
         dataset=dataset,
@@ -95,12 +101,34 @@ def fix_file(  # noqa: PLR0913
         session=session,
         frequency=frequency,
     ):
-        file = fix.fix_file(
-            file,
+        result = fix.fix_file(
+            result,
             output_dir,
             add_unique_suffix=add_unique_suffix,
         )
-    return file
+
+    if isinstance(file, LocalFile):
+        # This happens when this function is called from
+        # `esmvalcore.dataset.Dataset.load`.
+        if isinstance(result, Path):
+            if result == file:
+                # No fixes have been applied, return the original file.
+                result = file
+            else:
+                # The file has been fixed and the result is a path to the fixed
+                # file. The result needs to be loaded to read the global
+                # attributes for recording provenance.
+                fixed_file = LocalFile(result)
+                fixed_file.facets = file.facets
+                fixed_file.ignore_warnings = file.ignore_warnings
+                result = fixed_file.to_iris()
+
+        if isinstance(result, Sequence) and isinstance(result[0], Cube):
+            # Set the attributes for recording provenance here because
+            # to_iris will not be called on the original file.
+            file.attributes = result[0].attributes.globals.copy()
+
+    return result
 
 
 def _group_cubes(fixes: Iterable[Fix], cubes: CubeList) -> dict[Any, CubeList]:
@@ -132,7 +160,7 @@ def fix_metadata(
     mip: str,
     frequency: str | None = None,
     session: Session | None = None,
-    **extra_facets,
+    **extra_facets: Any,
 ) -> CubeList:
     """Fix cube metadata if fixes are required.
 
@@ -156,8 +184,7 @@ def fix_metadata(
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------
@@ -195,9 +222,9 @@ def fix_metadata(
     #     GROUP_CUBES_BY_DATE=True for the fix class; see
     #     _fixes.native6.era5.Rsut for an example).
     grouped_cubes = _group_cubes(fixes, cubes)
-    for cube_list in grouped_cubes.values():
+    for group in grouped_cubes.values():
         for fix in fixes:
-            cube_list = fix.fix_metadata(cube_list)
+            cube_list = fix.fix_metadata(group)
 
         # The final fix is always GenericFix, whose fix_metadata method always
         # returns a single cube
@@ -217,7 +244,7 @@ def fix_data(
     mip: str,
     frequency: str | None = None,
     session: Session | None = None,
-    **extra_facets,
+    **extra_facets: Any,
 ) -> Cube:
     """Fix cube data if fixes are required.
 
@@ -243,8 +270,7 @@ def fix_data(
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
-        Extra facets are mainly used for data outside of the big projects like
-        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        Extra facets. For details, see :ref:`config-extra-facets`.
 
     Returns
     -------

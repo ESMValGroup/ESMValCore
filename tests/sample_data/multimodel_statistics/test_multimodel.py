@@ -1,9 +1,12 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
+from __future__ import annotations
+
 import pickle
 import platform
 from itertools import groupby
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import cf_units
 import iris
@@ -13,6 +16,9 @@ from iris.coords import AuxCoord
 
 from esmvalcore.preprocessor import extract_time
 from esmvalcore.preprocessor._multimodel import multi_model_statistics
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -30,7 +36,7 @@ def assert_array_almost_equal(this, other, rtol=1e-7):
     np.testing.assert_allclose(this, other, rtol=rtol)
 
 
-def assert_coords_equal(this: list, other: list):
+def assert_coords_equal(this: list, other: list) -> None:
     """Assert coords list `this` equals coords list `other`."""
     for this_coord, other_coord in zip(this, other, strict=False):
         np.testing.assert_equal(this_coord.points, other_coord.points)
@@ -53,7 +59,10 @@ def fix_metadata(cubes):
         cube.coord("air_pressure").bounds = None
 
 
-def preprocess_data(cubes, time_slice: dict | None = None):
+def preprocess_data(
+    cubes: Sequence[iris.cube.Cube],
+    time_slice: dict | None = None,
+) -> list[iris.cube.Cube]:
     """Regrid the data to the first cube and optional time-slicing."""
     # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:
@@ -359,7 +368,12 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 
@@ -435,7 +449,12 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     cubes[1].coord("time").points = 20.0
     cubes[1].coord("time").bounds = [0.0, 40.0]
 
-    msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    if span == "overlap":
+        msg = r"Cannot align time coordinates with strategy 'overlap'"
+    elif span == "full":
+        msg = r"Tried to align cubes in multi-model statistics"
+    else:
+        pytest.fail(f"Invalid span '{span}' given")
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic="mean")
 

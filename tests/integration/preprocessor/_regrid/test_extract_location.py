@@ -26,8 +26,8 @@ def mocked_geopy_geocoders_nominatim(mocker):
         latitude=40.3442754,
         longitude=-5.8606859,
     )
-    mocked_nominatim.return_value.geocode.side_effect = (
-        lambda x: geolocation_penacaballera if x == "Peñacaballera" else None
+    mocked_nominatim.return_value.geocode.side_effect = lambda x: (
+        geolocation_penacaballera if x == "Peñacaballera" else None
     )
 
 
@@ -36,7 +36,7 @@ def test_cube():
     """Create a 3d synthetic test cube."""
     shape = (3, 45, 36)
     data = np.arange(np.prod(shape)).reshape(shape)
-    z, y, x = shape
+    _, y, x = shape
 
     # Create the cube.
     cm = CellMethod(

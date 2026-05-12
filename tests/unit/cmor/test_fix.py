@@ -1,11 +1,22 @@
 """Unit tests for :mod:`esmvalcore.cmor.fix`."""
 
+from __future__ import annotations
+
+from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch, sentinel
 
+import iris
+import iris.cube
 import pytest
 
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
+from esmvalcore.io.local import LocalFile
+from esmvalcore.io.protocol import DataElement
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 class TestFixFile:
@@ -14,9 +25,9 @@ class TestFixFile:
     @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
-        self.filename = "filename"
+        self.filename = Path("filename")
         self.mock_fix = Mock()
-        self.mock_fix.fix_file.return_value = "new_filename"
+        self.mock_fix.fix_file.return_value = Path("new_filename")
         self.expected_get_fixes_call = {
             "project": "project",
             "dataset": "model",
@@ -33,48 +44,106 @@ class TestFixFile:
             "frequency": "frequency",
         }
 
-    def test_fix(self):
+    def test_fix(self, mocker: MockerFixture) -> None:
         """Check that the returned fix is applied."""
-        with patch(
+        mock_get_fixes = mocker.patch(
             "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
             return_value=[self.mock_fix],
-        ) as mock_get_fixes:
-            file_returned = fix_file(
-                file="filename",
-                short_name="short_name",
-                project="project",
-                dataset="model",
-                mip="mip",
-                output_dir=Path("output_dir"),
-                session=sentinel.session,
-                frequency="frequency",
-            )
-            assert file_returned != self.filename
-            assert file_returned == "new_filename"
-            mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call,
-            )
+        )
+        file_returned = fix_file(
+            file=Path("filename"),
+            short_name="short_name",
+            project="project",
+            dataset="model",
+            mip="mip",
+            output_dir=Path("output_dir"),
+            session=sentinel.session,
+            frequency="frequency",
+        )
+        assert file_returned != self.filename
+        assert file_returned == Path("new_filename")
+        mock_get_fixes.assert_called_once_with(
+            **self.expected_get_fixes_call,
+        )
 
-    def test_nofix(self):
+    def test_fix_returns_cubes(
+        self,
+        mocker: MockerFixture,
+        tmp_path: Path,
+    ) -> None:
+        """Check that the returned fix is applied."""
+        # Prepare some mock fixed data and save it to a file.
+        fixed_file = LocalFile(tmp_path / "new_filename.nc")
+        fixed_cube = iris.cube.Cube([0], var_name="tas")
+        fixed_cube.attributes.globals = {"a": "b"}
+        iris.save(fixed_cube, fixed_file)
+
+        # Set up a mock fix to that returns this data.
+        self.mock_fix.fix_file.return_value = fixed_file
+        mock_get_fixes = mocker.patch(
+            "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
+            return_value=[self.mock_fix],
+        )
+
+        mock_input_file = LocalFile(self.filename)
+        result = fix_file(
+            file=mock_input_file,
+            short_name="short_name",
+            project="project",
+            dataset="model",
+            mip="mip",
+            output_dir=Path("output_dir"),
+            session=sentinel.session,
+            frequency="frequency",
+        )
+        # Check that a sequence of cubes is returned and that the attributes
+        # of the input file have been updated with the global attributes of the
+        # fixed cube for recording provenance.
+        assert isinstance(result, Sequence)
+        assert len(result) == 1
+        assert isinstance(result[0], iris.cube.Cube)
+        assert result[0].var_name == "tas"
+        assert "a" in mock_input_file.attributes
+        assert mock_input_file.attributes["a"] == "b"
+        mock_get_fixes.assert_called_once_with(
+            **self.expected_get_fixes_call,
+        )
+
+    def test_nofix(self, mocker: MockerFixture) -> None:
         """Check that the same file is returned if no fix is available."""
-        with patch(
+        mock_get_fixes = mocker.patch(
             "esmvalcore.cmor._fixes.fix.Fix.get_fixes",
             return_value=[],
-        ) as mock_get_fixes:
-            file_returned = fix_file(
-                file="filename",
-                short_name="short_name",
-                project="project",
-                dataset="model",
-                mip="mip",
-                output_dir=Path("output_dir"),
-                session=sentinel.session,
-                frequency="frequency",
-            )
-            assert file_returned == self.filename
-            mock_get_fixes.assert_called_once_with(
-                **self.expected_get_fixes_call,
-            )
+        )
+        file_returned = fix_file(
+            file=Path("filename"),
+            short_name="short_name",
+            project="project",
+            dataset="model",
+            mip="mip",
+            output_dir=Path("output_dir"),
+            session=sentinel.session,
+            frequency="frequency",
+        )
+        assert file_returned == self.filename
+        mock_get_fixes.assert_called_once_with(
+            **self.expected_get_fixes_call,
+        )
+
+    def test_nofix_if_not_path(self, mocker: MockerFixture) -> None:
+        """Check that the same object is returned if the input is not a Path."""
+        mock_data_element = mocker.create_autospec(DataElement, instance=True)
+        file_returned = fix_file(
+            file=mock_data_element,
+            short_name="short_name",
+            project="project",
+            dataset="model",
+            mip="mip",
+            output_dir=Path("output_dir"),
+            session=sentinel.session,
+            frequency="frequency",
+        )
+        assert file_returned is mock_data_element
 
 
 class TestGetCube:

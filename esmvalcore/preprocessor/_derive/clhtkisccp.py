@@ -10,7 +10,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `clhtkisccp`."""
 
     @staticmethod
-    def required(project):
+    def required(project):  # noqa: ARG004
         """Declare the variables needed for derivation."""
         return [{"short_name": "clisccp"}]
 

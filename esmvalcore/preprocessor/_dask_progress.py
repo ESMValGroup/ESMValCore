@@ -6,10 +6,11 @@ import datetime
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask.diagnostics
 import distributed
+import distributed.diagnostics.progressbar
 import rich.progress
 
 from esmvalcore.config import CFG
@@ -45,7 +46,7 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._running = False
         self._timer = None
 
-    def _start(self, dsk):
+    def _start(self, dsk):  # noqa: ARG002
         self._state = None
         # Start background thread
         self._running = True
@@ -53,17 +54,17 @@ class RichProgressBar(dask.diagnostics.Callback):
         self._timer.daemon = True
         self._timer.start()
 
-    def _start_state(self, dsk, state):
+    def _start_state(self, dsk, state):  # noqa: ARG002
         self.progress.start()
         total = sum(
             len(state[k]) for k in ["ready", "waiting", "running", "finished"]
         )
         self.progress.update(self.task, total=total)
 
-    def _pretask(self, key, dsk, state):
+    def _pretask(self, key, dsk, state):  # noqa: ARG002
         self._state = state
 
-    def _finish(self, dsk, state, errored):
+    def _finish(self, dsk, state, errored):  # noqa: ARG002
         self._running = False
         self._timer.join()
         self._draw_bar()
@@ -89,7 +90,7 @@ class RichDistributedProgressBar(
     # Disable warnings about design choices that have been made in the base class.
     # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
 
-    def __init__(self, keys) -> None:
+    def __init__(self, keys) -> None:  # noqa: ANN001
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
             rich.progress.BarColumn(bar_width=80),
@@ -102,7 +103,12 @@ class RichDistributedProgressBar(
         self.task_id = self.progress.add_task(description="progress")
         super().__init__(keys)
 
-    def _draw_bar(self, remaining, all, **kwargs):  # noqa: A002 # pylint: disable=redefined-builtin
+    def _draw_bar(
+        self,
+        remaining: int,
+        all: int,  # noqa: A002 # pylint: disable=redefined-builtin
+        **kwargs: Any,  # noqa: ARG002
+    ) -> None:
         completed = all - remaining
         self.progress.update(self.task_id, completed=completed, total=all)
 
@@ -158,7 +164,7 @@ class DistributedProgressLogger(
 
     def __init__(
         self,
-        keys,
+        keys,  # noqa: ANN001
         log_interval: str | float = "1s",
         description: str = "",
     ) -> None:
@@ -174,7 +180,7 @@ class DistributedProgressLogger(
         self,
         remaining: int,
         all: int,  # noqa: A002 # pylint: disable=redefined-builtin
-        **kwargs,
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         frac = (1 - remaining / all) if all else 1.0
         if (

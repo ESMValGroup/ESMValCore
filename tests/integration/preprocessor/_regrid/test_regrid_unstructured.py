@@ -1,5 +1,8 @@
 """Integration tests for unstructured regridding."""
 
+import platform
+import sys
+
 import numpy as np
 import pytest
 from iris.coords import AuxCoord, CellMethod, DimCoord
@@ -147,6 +150,11 @@ class TestUnstructuredNearest:
 class TestUnstructuredLinear:
     """Test ``UnstructuredLinear``."""
 
+    @pytest.mark.xfail(
+        condition=sys.platform == "darwin" and platform.machine() == "arm64",
+        reason="Fails on Mac OS with ARM CPU: https://github.com/ESMValGroup/ESMValCore/issues/3045",
+        strict=True,  # Mark as strict so we can close the issue when issues are fixed upstream.
+    )
     @pytest.mark.parametrize("units", [None, "rad"])
     @pytest.mark.parametrize("lazy", [True, False])
     def test_regridding(
@@ -204,6 +212,11 @@ class TestUnstructuredLinear:
         np.testing.assert_allclose(result.data, expected_data)
         np.testing.assert_array_equal(result.data.mask, expected_data.mask)
 
+    @pytest.mark.xfail(
+        condition=sys.platform == "darwin" and platform.machine() == "arm64",
+        reason="Fails on Mac OS with ARM CPU: https://github.com/ESMValGroup/ESMValCore/issues/3045",
+        strict=True,  # Mark as strict so we can close the issue when issues are fixed upstream.
+    )
     @pytest.mark.parametrize("units", [None, "rad"])
     @pytest.mark.parametrize("lazy", [True, False])
     def test_regridding_mask_and_transposed(

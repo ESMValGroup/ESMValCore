@@ -3,6 +3,7 @@
 Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
 
+import re
 from pathlib import Path
 
 import dask.array as da
@@ -10,7 +11,8 @@ import iris
 import iris.fileformats
 import numpy as np
 import pytest
-from iris.coords import AuxCoord
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
@@ -19,7 +21,11 @@ from esmvalcore.preprocessor import (
     mask_landsea,
     mask_landseaice,
 )
+from esmvalcore.preprocessor._mask import _get_fillvalues_mask
 from tests import assert_array_equal
+from tests.unit.preprocessor._mask.test_mask_multimodel import (
+    PreprocessorFile as MockedPreprocessorFile,
+)
 
 
 class Test:
@@ -461,3 +467,49 @@ class Test:
             else:
                 msg = f"Invalid filename: {product.filename}"
                 raise AssertionError(msg)
+
+    def test_mask_fillvalues_unsupported_ndim_fail(self) -> None:
+        """Test ``mask_fillvalues`` with unsupported data dimensions."""
+        cube = iris.cube.Cube(
+            self.mock_data[:, 0, 0],
+            dim_coords_and_dims=[(self.times, 0)],
+        )
+        products = [MockedPreprocessorFile(CubeList([cube]), "A")]
+        msg = r"Unable to handle 0 dimensional data"
+        with pytest.raises(NotImplementedError, match=re.escape(msg)):
+            mask_fillvalues(
+                products,
+                threshold_fraction=0.5,
+                min_value=None,
+                time_window=1,
+            )
+
+    @pytest.mark.parametrize(
+        "threshold_fraction",
+        [-1000.0, -0.1, 1.1, 1000.0],
+    )
+    def test_get_fillvalues_mask_invalid_threshold_fraction_fail(
+        self,
+        threshold_fraction: float,
+    ) -> None:
+        msg = r"should be between 0 and 1.0"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                Cube(0.0),
+                threshold_fraction=threshold_fraction,
+                min_value=0.0,
+                time_window=1,
+            )
+
+    def test_get_fillvalues_mask_invalid_time_window_fail(self) -> None:
+        time_coord = DimCoord([0.0], standard_name="time")
+        cube = Cube([0.0], dim_coords_and_dims=[(time_coord, 0)])
+
+        msg = r"Time window (in time units) larger than total time span. Stop."
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _get_fillvalues_mask(
+                cube,
+                threshold_fraction=0.5,
+                min_value=0.0,
+                time_window=2,
+            )

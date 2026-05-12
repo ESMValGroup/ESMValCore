@@ -73,18 +73,14 @@ def weighting_landsea_fraction(cube, area_type):
     """
     if area_type not in ("land", "sea"):
         msg = f"Expected 'land' or 'sea' for area_type, got '{area_type}'"
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
     (land_fraction, errors) = _get_land_fraction(cube)
     if land_fraction is None:
         msg = (
             f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
             f"failed because of the following errors: {' '.join(errors)}"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     core_data = cube.core_data()
     if area_type == "land":
         cube.data = core_data * land_fraction

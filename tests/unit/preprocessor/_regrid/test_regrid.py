@@ -25,7 +25,13 @@ def clear_regridder_cache(monkeypatch):
     )
 
 
-def _make_coord(start: float, stop: float, step: int, *, name: str):
+def _make_coord(
+    start: float,
+    stop: float,
+    step: int,
+    *,
+    name: str,
+) -> iris.coords.DimCoord:
     """Create a latitude or longitude coordinate with bounds."""
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
@@ -36,7 +42,7 @@ def _make_coord(start: float, stop: float, step: int, *, name: str):
     return coord
 
 
-def _make_cube(*, lat: tuple, lon: tuple):
+def _make_cube(*, lat: tuple, lon: tuple) -> iris.cube.Cube:
     """Create a cube with a latitude and longitude dimension."""
     lat_coord = _make_coord(*lat, name="latitude")
     lon_coord = _make_coord(*lon, name="longitude")
@@ -224,7 +230,7 @@ def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
         ),
     ],
 )
-def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
+def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool) -> None:
     """Test for `_horizontal_grid_is_close`."""
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(**cube2_spec)
@@ -387,7 +393,7 @@ def test_rechunk_on_increased_grid(grids):
         src_grid, tgt_grid = grids
         src_dims = (246, 91, 180)
         if src_grid == "unstructured":
-            src_dims = src_dims[:-2] + (np.prod(src_dims[-2:]),)
+            src_dims = (*src_dims[:-2], np.prod(src_dims[-2:]))
         tgt_grid_dims = (2, 361, 720)
         src_cube = globals()[f"make_test_cube_{src_grid}"](src_dims)
         tgt_grid = globals()[f"make_test_cube_{tgt_grid}"](tgt_grid_dims)
@@ -395,7 +401,7 @@ def test_rechunk_on_increased_grid(grids):
 
         expected = ((123, 123), (91,), (180,))
         if src_grid == "unstructured":
-            expected = expected[:-2] + (np.prod(expected[-2:]),)
+            expected = (*expected[:-2], np.prod(expected[-2:]))
         assert result.core_data().chunks == expected
 
 

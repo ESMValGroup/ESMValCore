@@ -14,6 +14,7 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+import yaml
 
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
@@ -21,7 +22,7 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
 )
-from esmvalcore.cmor.table import CoordinateInfo, get_var_info
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
@@ -29,6 +30,8 @@ if TYPE_CHECKING:
 
     from iris.coords import Coord
     from iris.cube import Cube
+
+    from esmvalcore.cmor.table import CoordinateInfo
 
 
 class CheckLevels(IntEnum):
@@ -48,6 +51,12 @@ class CheckLevels(IntEnum):
 
     IGNORE = 5
     """Do not fail for any discrepancy with CMOR standards."""
+
+
+yaml.representer.SafeRepresenter.add_representer(
+    CheckLevels,
+    lambda dumper, data: dumper.represent_str(data.name.lower()),
+)
 
 
 class CMORCheckError(Exception):
@@ -416,14 +425,18 @@ class CMORCheck:
                                 "exist",
                             )
 
-    def _check_generic_level_dim_names(self, key, coordinate):
+    def _check_generic_level_dim_names(
+        self,
+        key: str,
+        coordinate: CoordinateInfo,
+    ) -> None:
         """Check name of generic level coordinate."""
         if coordinate.generic_lev_coords:
-            (standard_name, out_name, name) = _get_generic_lev_coord_names(
+            (_, out_name, name) = _get_generic_lev_coord_names(
                 self._cube,
                 coordinate,
             )
-            if standard_name:
+            if name is not None:
                 if not out_name:
                     self.report_error(
                         f"Generic level coordinate {key} has wrong var_name.",
@@ -533,7 +546,10 @@ class CMORCheck:
 
         self._check_coord_ranges(coords)
 
-    def _check_coord_ranges(self, coords: list[tuple[CoordinateInfo, Coord]]):
+    def _check_coord_ranges(
+        self,
+        coords: list[tuple[CoordinateInfo, Coord]],
+    ) -> None:
         """Check coordinate value are inside valid ranges."""
 
         class Limit(NamedTuple):
@@ -616,16 +632,21 @@ class CMORCheck:
                 var_name,
             )
 
-    def _check_time_bounds(self, time):
-        times = {"time", "time1", "time2", "time3"}
-        key = times.intersection(self._cmor_var.coordinates)
-        cmor = self._cmor_var.coordinates[" ".join(key)]
-        if cmor.must_have_bounds == "yes" and not time.has_bounds():
-            self.report_warning(
-                "Coordinate {0} from var {1} does not have bounds",
-                time.var_name,
-                self._cmor_var.short_name,
-            )
+    def _check_time_bounds(
+        self,
+        time: iris.coords.DimCoord | iris.coords.AuxCoord,
+    ) -> None:
+        for cmor_coord in self._cmor_var.coordinates.values():
+            if (
+                cmor_coord.axis == "T"
+                and cmor_coord.must_have_bounds == "yes"
+                and not time.has_bounds()
+            ):
+                self.report_warning(
+                    "Coordinate {0} from var {1} does not have bounds",
+                    time.var_name,
+                    self._cmor_var.short_name,
+                )
 
     def _check_coord_monotonicity_and_direction(  # noqa: C901
         self,
@@ -925,12 +946,19 @@ def _get_cmor_checker(
     project: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: None | str = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker."""
-    var_info = get_var_info(project, mip, short_name)
+    var_info = get_var_info(
+        project,
+        mip,
+        short_name,
+        branding_suffix=branding_suffix,
+    )
 
     def _checker(cube: Cube) -> CMORCheck:
         return CMORCheck(
@@ -949,6 +977,8 @@ def cmor_check_metadata(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -966,6 +996,9 @@ def cmor_check_metadata(
         Variable's MIP.
     short_name:
         Variable's short name.
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -982,6 +1015,7 @@ def cmor_check_metadata(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -993,6 +1027,8 @@ def cmor_check_data(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -1008,6 +1044,9 @@ def cmor_check_data(
         Variable's MIP.
     short_name:
         Variable's short name
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -1024,6 +1063,7 @@ def cmor_check_data(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -1035,6 +1075,8 @@ def cmor_check(
     cmor_table: str,
     mip: str,
     short_name: str,
+    *,
+    branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
@@ -1053,6 +1095,9 @@ def cmor_check(
         Variable's MIP.
     short_name:
         Variable's short name.
+    branding_suffix:
+        A suffix that will be appended to ``short_name`` when looking up the
+        variable in the CMOR table. Used by the CMIP7 project.
     frequency:
         Data frequency. If not given, use the one from the CMOR table of the
         variable.
@@ -1070,6 +1115,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )
@@ -1078,6 +1124,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
+        branding_suffix=branding_suffix,
         frequency=frequency,
         check_level=check_level,
     )

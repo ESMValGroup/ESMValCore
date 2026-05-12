@@ -1,5 +1,6 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -303,7 +304,16 @@ class Test(tests.Test):
         # test for expected failures:
         with self.assertRaises(ValueError):
             extract_named_regions(region_cube, "reg_A")
+        with self.assertRaises(ValueError):
             extract_named_regions(region_cube, ["region1", "reg_A"])
+
+    def test_extract_named_region_invalid_regions_type_fail(self) -> None:
+        msg = r'Regions "123" is not an acceptable format.'
+        with pytest.raises(TypeError, match=re.escape(msg)):
+            extract_named_regions(Cube(0), 123)  # type: ignore[arg-type]
+        msg = r'Regions ".*" is not an acceptable format.'
+        with pytest.raises(TypeError, match=msg):
+            extract_named_regions(Cube(0), {"region1": "region2"})  # type: ignore[arg-type]
 
 
 def create_irregular_grid_cube(data, lons, lats):
@@ -965,7 +975,7 @@ def test_extract_shape_negative_bounds(
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
-def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
+def test_extract_shape_neg_lon(make_testcube, tmp_path):
     """Test for extr a reg with shapefile w/negative lon."""
     (slat, slon) = (2, -2)
     polyg = Polygon(
@@ -988,7 +998,11 @@ def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
     expected_mask[2, 0] = False
     expected = np.ma.array(expected_data, mask=expected_mask)
     negative_bounds_shapefile = tmp_path / "test_shape_negative_lon.shp"
-    result = extract_shape(make_testcube, negative_bounds_shapefile, crop=crop)
+    result = extract_shape(
+        make_testcube,
+        negative_bounds_shapefile,
+        crop=False,
+    )
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
