@@ -29,6 +29,8 @@ import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+import intake
+
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
@@ -131,14 +133,29 @@ class IntakeEsmDataset(DataElement):
         -------
         : The loaded data.
         """
-        files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
+        # files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
 
         # Might want to pass through args/kwargs here? Ie.
-        dataset = self.catalog.to_dask(**kwargs)
+        dataset = self.catalog.to_dask(
+            decode_times=False,
+            storage_options={"token": "anon"},
+            **kwargs,
+        )
         # Store the local paths in the attributes for easier debugging.
-        dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
+        dataset.attrs["source_file"] = ""  # ", ".join(str(f) for f in files)
         # Cache the attributes.
-        self.attributes = copy.deepcopy(dataset.attrs)
+        self.attributes = copy.deepcopy(
+            {k.replace(":", "-"): v for k, v in dataset.attrs.items()},
+        )
+        if (
+            "pangeo" in self.catalog.esmcat.id
+            and dataset.sizes.get("member_id") == 1
+            and dataset.sizes.get("dcpp_init_year") == 1
+        ):
+            # Temporarily remove the extra dimensions in pangeo data here, until there is a more general solution available.
+            dataset = dataset.isel(member_id=0, dcpp_init_year=0).drop_vars(
+                ["member_id", "dcpp_init_year"],
+            )
         return dataset_to_iris(dataset)
 
 
@@ -176,6 +193,11 @@ class IntakeEsmDataSource(DataSource):
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
 
+    def __post_init__(self) -> None:
+        """Further initialization after the dataclass has been initialized."""
+        if isinstance(self.catalog, str):
+            self.catalog = intake.open_esm_datastore(self.catalog)
+
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
 
@@ -196,6 +218,13 @@ class IntakeEsmDataSource(DataSource):
             else values
             for facet, values in facets.items()
             if facet in self.facets
+        }
+
+        # Drop globs
+        normalized_facets = {
+            facet: values
+            for facet, values in normalized_facets.items()
+            if not any("*" in str(v) for v in values)
         }
 
         # Translate "our" facets to Esm facets and "our" values to Esm values.

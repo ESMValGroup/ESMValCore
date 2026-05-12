@@ -15,8 +15,8 @@ projects:
           grid: "grid_label"
           mip: "table_id"
           short_name: "variable_id"
-          version: "version"
-          timerange: "time_range"
+          # version: "version"
+          # timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip6.json"
   CMIP5:
     data:
@@ -31,8 +31,8 @@ projects:
           grid: "grid_label"
           mip: "table_id"
           short_name: "variable_id"
-          version: "version"
-          timerange: "time_range"
+          # version: "version"
+          # timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip5.json"
   CMIP3:
     data:
@@ -47,6 +47,6 @@ projects:
           grid: "grid_label"
           mip: "table_id"
           short_name: "variable_id"
-          version: "version"
-          timerange: "time_range"
+          # version: "version"
+          # timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip3.json"

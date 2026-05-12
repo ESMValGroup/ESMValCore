@@ -335,6 +335,7 @@ def _update_weighting_settings(
 
 def _schedule_for_download(datasets: Iterable[Dataset]) -> None:
     """Schedule files for download."""
+    return
     for dataset in datasets:
         DOWNLOAD_FILES.update(dataset.files)
         for supplementary_ds in dataset.supplementaries:
