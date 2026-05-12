@@ -223,8 +223,9 @@ def fix_metadata(
     #     _fixes.native6.era5.Rsut for an example).
     grouped_cubes = _group_cubes(fixes, cubes)
     for group in grouped_cubes.values():
+        cube_list = CubeList(group)
         for fix in fixes:
-            cube_list = fix.fix_metadata(group)
+            cube_list = fix.fix_metadata(cube_list)
 
         # The final fix is always GenericFix, whose fix_metadata method always
         # returns a single cube
