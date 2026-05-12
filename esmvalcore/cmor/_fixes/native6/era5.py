@@ -4,6 +4,7 @@ import datetime
 import logging
 
 import numpy as np
+from cf_units import Unit
 from iris.cube import CubeList
 from iris.util import reverse
 
@@ -515,7 +516,7 @@ class Zg(Fix):
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    def _fix_coordinates(  # noqa: C901
+    def _fix_coordinates(  # noqa: C901,PLR0912
         self,
         cube,
     ):
@@ -540,13 +541,22 @@ class AllVars(Fix):
                 ]
             coord = cube.coord(axis=axis)
             if axis == "T":
-                coord.convert_units("days since 1850-1-1 00:00:00.0")
+                coord.convert_units(
+                    Unit(
+                        "days since 1850-1-1 00:00:00.0",
+                        calendar=coord.units.calendar,
+                    ),
+                )
             if axis in ("X", "Y", "Z"):
                 coord.convert_units(coord_def.units)
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype("float64")
+            # For now, remove "stored_direction" attribute introduced by the
+            # new netCDF converter from ECMWF for ERA5 data if missing.
+            if coord.name() == "latitude":
+                coord.attributes.pop("stored_direction", None)
             if (
                 not coord.has_bounds()
                 and len(coord.core_points()) > 1

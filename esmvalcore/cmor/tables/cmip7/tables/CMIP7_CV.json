@@ -1,0 +1,1536 @@
+{
+    "CV": {
+        "Conventions": {
+            "CF-1.11": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html",
+            "CF-1.12": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html",
+            "CF-1.13": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html"
+        },
+        "DRS": {
+            "directory_path_example": "MIP-DRS7/CMIP7/CMIP/CNRM-CERFACS/CNRM-ESM2-1e/1pctCO2/r1i1p1f1/glb/mon/rsus/tavg-h2m-hxy-u/g101/20251104",
+            "directory_path_template": "<drs_specs><mip_era><activity_id><institution_id><source_id><experiment_id><variant_label><region><frequency><variable_id><branding_suffix><grid_label><version>",
+            "filename_example": "rsus_tavg-h2m-hxy-u_mon_glb_g101_CNRM-ESM2-1e_1pctCO2_r1i1p1f1_185001-202112.nc",
+            "filename_template": "<variable_id><branding_suffix><frequency><region><grid_label><source_id><experiment_id><variant_label>"
+        },
+        "activity_id": {
+            "AerChemMIP": "Aerosols and chemistry model intercomparison project: exploration of aerosol chemistry.",
+            "C4MIP": "Coupled climate carbon cycle model intercomparison project: exploration of the response of the coupled carbon-climate system.",
+            "CFMIP": "Cloud feedback model intercomparison project. Focussed primarily on cloud feedbacks with a secondary focus on understanding of response to forcing, model biases, circulation, regional-scale precipitation, and non-linear changes.",
+            "CMIP": "CMIP core common experiments i.e. the DECK (Diagnostic, Evaluation and Characterization of Klima).",
+            "DAMIP": "Detection and attribution model intercomparison project: exploration of the role of individual forcings (both anthropogenic and natural) in past and future climate change.",
+            "GeoMIP": "Geoengineering model intercomparison project: exploration of the climate response to solar radiation manipulation.",
+            "PMIP": "Palaeoclimate modelling intercomparison project: assessment of paleoclimate i.e. climate thousands of years or more in the past.",
+            "RFMIP": "Radiative Forcing Model Intercomparison Project: characterisation of radiative forcing within models.",
+            "ScenarioMIP": "Future scenario experiments. Exploration of the future climate under a (selected) range of possible boundary conditions. In CMIP7, the priority tier for experiments is conditional on whether you are doing emissions- or concentration-driven simulations. There is no way to express this in the CVs (nor time to implement something to handle this conditionality). This means that, for your particular situation, some experiments may be at a lower tier than is listed in the CVs. For example, the `vl` scenario is tier 1 for concentration-driven models and tier 2 for emissions-driven models. However, in the CVs, we have used the highest priority tier (across all the possible conditionalities). Hence `vl` is listed as tier 1 in the CVs (even though it is actually tier 2 for emissions-driven models).For details, please see the full description in the ScenarioMIP description papers."
+        },
+        "area_label": {
+            "air": "Data come solely from regions occupied by air (this isn't always the case e.g. if a variable is reported at sea level pressure but there is a mountain then the surface would not be air).",
+            "ccl": "Data come solely from the portion of the atmosphere or the portion of an atmospheric column occupied by convective cloud.",
+            "cl": "Data come solely from the portion of the atmosphere or the portion of an atmospheric column occupied by cloud.",
+            "crp": "Data come solely from land areas covered by crops. 'Crops' is loosely defined and model dependent.",
+            "fis": "Data come solely from areas of floating ice shelf. 'Ice shelves' are the component of ice sheets that flow over the ocean.",
+            "gis": "Data come solely from areas of grounded ice sheet. Grounded ice sheets rest over bedrock, excluding ice-caps, glaciers and floating ice shelves.",
+            "ifs": "Data come solely from sea areas that are free of ice.",
+            "is": "Data come solely from areas of ice sheets. 'Ice sheets' include both grounded ice sheets resting on bedrock and any ice shelves flowing over the ocean that are attached to grounded ice sheets. It excludes ice-caps and glaciers and any floating ice shelves and ice tongues attached to them.",
+            "li": "Data come solely from areas of land ice. 'Land ice' means glaciers, ice-caps, grounded ice sheets resting on bedrock and floating ice-shelves.",
+            "lnd": "Data come solely from land areas.  Every location on earth is classified as either land or sea, but further area type labels also apply to these primary types (e.g., crops or land ice apply to portions of the land area).",
+            "lsi": "Data come solely from either areas of land or areas of sea ice.",
+            "multi": "Data come from several different area types with data from each area type stored separately in the variable's array as identified by its 'sector' dimension. This area type is typically used for including multiple land-use or vegetation area types in a single file.",
+            "ng": "Data come solely from land areas covered by natural grasses. 'Natural grasses' means grasses growing in areas of low productivity, often situated on rough or uneven ground. This can include rocky areas, briars and heathland.",
+            "pst": "Data come solely from land areas covered by pasture. Pastures are assumed to be anthropogenic in origin. They include anthropogenically managed pastureland and rangeland.",
+            "scl": "Data come solely from the portion of the atmosphere or the portion of an atmospheric column occupied by stratiform cloud.",
+            "sea": "Data come solely from areas covered by sea.  Every location on earth is classified as either land or sea, but further area type labels also apply to these primary types (e.g., sea ice or floating ice shelf).",
+            "shb": "Data come solely from land areas covered by shrubs. Shrubs is loosely defined and model dependent.",
+            "si": "Data come solely from areas of sea ice.",
+            "simp": "Data come solely from areas where melt pond is present atop sea ice.",
+            "sir": "Data come solely from areas where sea ice is 'ridged'.",
+            "sn": "Data come solely from areas where the surface is covered by snow.",
+            "tree": "Data come solely from land areas covered by trees. All trees are in the C3 plant functional type. 'Trees' is loosely defined and model dependent.",
+            "u": "Unmasked; all areas of the Earth are included.",
+            "ufs": "Data come solely from areas of unfrozen soil. Unfrozen soil means that the soil at the surface is unfrozen. Frozen soil may be present at lower levels.",
+            "veg": "Data come solely from land areas covered by vegetation.",
+            "wl": "Data come solely from wetland areas. Wetlands are land areas where water covers the soil, or is present either at or near the surface of the soil all year or for varying periods of time during the year, including during the growing season."
+        },
+        "branding_suffix": "<temporal_label><vertical_label><horizontal_label><area_label>",
+        "creation_date": [
+            "^[[:digit:]]\\{4\\}-[[:digit:]]\\{2\\}-[[:digit:]]\\{2\\}T[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}:[[:digit:]]\\{2\\}Z$"
+        ],
+        "data_specs_version": "MIP-DS7.1.0.0",
+        "drs_specs": "MIP-DRS7",
+        "experiment_id": {
+            "1pctCO2": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "1pctCO2",
+                "min_number_yrs_per_sim": 150,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "1pctCO2-bgc": {
+                "activity_id": [
+                    "C4MIP"
+                ],
+                "description": "Biogeochemically coupled simulation (i.e. the carbon cycle only 'sees' the increase in atmospheric carbon dioxide, not any change in temperature) of a 1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "Biogeochemically coupled simulation (i.e. the carbon cycle only 'sees' the increase in atmospheric carbon dioxide, not any change in temperature) of a 1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "1pctCO2-bgc",
+                "min_number_yrs_per_sim": 150,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "1pctCO2-rad": {
+                "activity_id": [
+                    "C4MIP"
+                ],
+                "description": "Radiatively coupled simulation (i.e. the carbon cycle only 'sees' the increase in temperature, not any change in atmospheric carbon dioxide) of a 1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "Radiatively coupled simulation (i.e. the carbon cycle only 'sees' the increase in temperature, not any change in atmospheric carbon dioxide) of a 1% per year increase in atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "1pctCO2-rad",
+                "min_number_yrs_per_sim": 150,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "G7-1p5K-SAI": {
+                "activity_id": [
+                    "GeoMIP"
+                ],
+                "description": "Stablisation of global-mean temperature at 1.5C by increasing stratospheric sulfur forcing to whatever level is required to achieve stable temperatures after following the `scen7-ml` scenario until 2035.",
+                "end_year": "",
+                "experiment": "Stablisation of global-mean temperature at 1.5C by increasing stratospheric sulfur forcing to whatever level is required to achieve stable temperatures after following the `scen7-ml` scenario until 2035.",
+                "experiment_id": "G7-1p5K-SAI",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-ml"
+                ],
+                "start_year": 2035,
+                "tier": 1
+            },
+            "abrupt-0p5xCO2": {
+                "activity_id": [
+                    "CFMIP"
+                ],
+                "description": "Abrupt halving of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "Abrupt halving of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "abrupt-0p5xCO2",
+                "min_number_yrs_per_sim": 300,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "abrupt-127k": {
+                "activity_id": [
+                    "PMIP"
+                ],
+                "description": "Simulation to examine the response to orbital and greenhouse gas concentration changes associated with the last interglacial (127 000 years before present).",
+                "end_year": "",
+                "experiment": "Simulation to examine the response to orbital and greenhouse gas concentration changes associated with the last interglacial (127 000 years before present).",
+                "experiment_id": "abrupt-127k",
+                "min_number_yrs_per_sim": 100,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "abrupt-2xCO2": {
+                "activity_id": [
+                    "CFMIP"
+                ],
+                "description": "Abrupt doubling of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "Abrupt doubling of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "abrupt-2xCO2",
+                "min_number_yrs_per_sim": 300,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "abrupt-4xCO2": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Abrupt quadrupling of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "end_year": "",
+                "experiment": "Abrupt quadrupling of atmospheric carbon dioxide levels. All other conditions are kept the same as piControl.",
+                "experiment_id": "abrupt-4xCO2",
+                "min_number_yrs_per_sim": 300,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "amip": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Simulation of the climate of the recent past with prescribed sea surface temperatures and sea ice concentrations.",
+                "end_year": 2021,
+                "experiment": "Simulation of the climate of the recent past with prescribed sea surface temperatures and sea ice concentrations.",
+                "experiment_id": "amip",
+                "min_number_yrs_per_sim": 43,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1979,
+                "tier": 1
+            },
+            "amip-p4K": {
+                "activity_id": [
+                    "CFMIP"
+                ],
+                "description": "Same as `amip` simulation, except sea surface temperatures are increased by 4K in ice-free regions.",
+                "end_year": 2021,
+                "experiment": "Same as `amip` simulation, except sea surface temperatures are increased by 4K in ice-free regions.",
+                "experiment_id": "amip-p4K",
+                "min_number_yrs_per_sim": 43,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1979,
+                "tier": 1
+            },
+            "amip-piForcing": {
+                "activity_id": [
+                    "CFMIP"
+                ],
+                "description": "Same as `amip` simulation, except it starts in 1870 and all forcings are set to pre-industrial levels rather than time-varying forcings.",
+                "end_year": 2021,
+                "experiment": "Same as `amip` simulation, except it starts in 1870 and all forcings are set to pre-industrial levels rather than time-varying forcings.",
+                "experiment_id": "amip-piForcing",
+                "min_number_yrs_per_sim": 152,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1870,
+                "tier": 1
+            },
+            "esm-flat10": {
+                "activity_id": [
+                    "C4MIP"
+                ],
+                "description": "10 PgC / yr constant carbon dioxide emissions.",
+                "end_year": "",
+                "experiment": "10 PgC / yr constant carbon dioxide emissions.",
+                "experiment_id": "esm-flat10",
+                "min_number_yrs_per_sim": 100,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "esm-flat10-cdr": {
+                "activity_id": [
+                    "C4MIP"
+                ],
+                "description": "Extension of `esm-flat10` where emissions decline linearly to -10 PgC / yr then stay constant until cumulative emissions (including the emissions in `esm-flat10`) reach zero. An extra 20 years is included at the end to allow for calculating averages over different time windows.",
+                "end_year": "",
+                "experiment": "Extension of `esm-flat10` where emissions decline linearly to -10 PgC / yr then stay constant until cumulative emissions (including the emissions in `esm-flat10`) reach zero. An extra 20 years is included at the end to allow for calculating averages over different time windows.",
+                "experiment_id": "esm-flat10-cdr",
+                "min_number_yrs_per_sim": 220,
+                "parent_activity_id": [
+                    "C4MIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-flat10"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "esm-flat10-zec": {
+                "activity_id": [
+                    "C4MIP"
+                ],
+                "description": "Extension of `esm-flat10` with zero emissions.",
+                "end_year": "",
+                "experiment": "Extension of `esm-flat10` with zero emissions.",
+                "experiment_id": "esm-flat10-zec",
+                "min_number_yrs_per_sim": 100,
+                "parent_activity_id": [
+                    "C4MIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-flat10"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "esm-hist": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Simulation of the climate of the recent past (typically meaning 1850 to present-day) with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `historical`).",
+                "end_year": 2021,
+                "experiment": "Simulation of the climate of the recent past (typically meaning 1850 to present-day) with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `historical`).",
+                "experiment_id": "esm-hist",
+                "min_number_yrs_per_sim": 172,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "esm-piControl": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Pre-industrial control simulation with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `piControl`). Used to characterise natural variability and unforced behaviour.",
+                "end_year": "",
+                "experiment": "Pre-industrial control simulation with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `piControl`). Used to characterise natural variability and unforced behaviour.",
+                "experiment_id": "esm-piControl",
+                "min_number_yrs_per_sim": 400,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-piControl-spinup"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "esm-piControl-spinup": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Spin-up simulation. Used to get the model into a state of approximate radiative equilibrium before starting the `esm-piControl` simulation.",
+                "end_year": "",
+                "experiment": "Spin-up simulation. Used to get the model into a state of approximate radiative equilibrium before starting the `esm-piControl` simulation.",
+                "experiment_id": "esm-piControl-spinup",
+                "min_number_yrs_per_sim": "",
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": "",
+                "tier": 3
+            },
+            "esm-scen7-h": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
+                "experiment_id": "esm-scen7-h",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-h-AQ": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
+                "experiment_id": "esm-scen7-h-AQ",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-h-Aer": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-Aq` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-Aq` instead.",
+                "experiment_id": "esm-scen7-h-Aer",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-h-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-h` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-h` beyond 2100.",
+                "experiment_id": "esm-scen7-h-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-h"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-hl": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
+                "experiment_id": "esm-scen7-hl",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-hl-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-hl` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-hl` beyond 2100.",
+                "experiment_id": "esm-scen7-hl-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-hl"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-l": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
+                "experiment_id": "esm-scen7-l",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-l-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-l` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-l` beyond 2100.",
+                "experiment_id": "esm-scen7-l-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-l"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-ln": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
+                "experiment_id": "esm-scen7-ln",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-ln-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-ln` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-ln` beyond 2100.",
+                "experiment_id": "esm-scen7-ln-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-ln"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-m": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
+                "experiment_id": "esm-scen7-m",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-m-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-m` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-m` beyond 2100.",
+                "experiment_id": "esm-scen7-m-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-m"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-ml": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
+                "experiment_id": "esm-scen7-ml",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-ml-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-ml` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-ml` beyond 2100.",
+                "experiment_id": "esm-scen7-ml-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-ml"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "esm-scen7-vl": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
+                "experiment_id": "esm-scen7-vl",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-vl-AQ": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
+                "experiment_id": "esm-scen7-vl-AQ",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-vl-Aer": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-Aq` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-Aq` instead.",
+                "experiment_id": "esm-scen7-vl-Aer",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-hist"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "esm-scen7-vl-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `esm-scen7-vl` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `esm-scen7-vl` beyond 2100.",
+                "experiment_id": "esm-scen7-vl-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "esm-scen7-vl"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "hist-GHG": {
+                "activity_id": [
+                    "DAMIP"
+                ],
+                "description": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "end_year": 2035,
+                "experiment": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "experiment_id": "hist-GHG",
+                "min_number_yrs_per_sim": 186,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "hist-aer": {
+                "activity_id": [
+                    "DAMIP"
+                ],
+                "description": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "end_year": 2035,
+                "experiment": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "experiment_id": "hist-aer",
+                "min_number_yrs_per_sim": 186,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "hist-nat": {
+                "activity_id": [
+                    "DAMIP"
+                ],
+                "description": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "end_year": 2035,
+                "experiment": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "experiment_id": "hist-nat",
+                "min_number_yrs_per_sim": 186,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "historical": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Simulation of the climate of the recent past (typically meaning 1850 to present-day) with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-hist`).",
+                "end_year": 2021,
+                "experiment": "Simulation of the climate of the recent past (typically meaning 1850 to present-day) with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-hist`).",
+                "experiment_id": "historical",
+                "min_number_yrs_per_sim": 172,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "piClim-4xCO2": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies a quadrupling of atmospheric carbon dioxide's (4xCO2's) effective radiative forcing (ERF). Same as `piClim-control`, except atmospheric carbon dioxide concentrations are set to four times `piControl` levels.",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies a quadrupling of atmospheric carbon dioxide's (4xCO2's) effective radiative forcing (ERF). Same as `piClim-control`, except atmospheric carbon dioxide concentrations are set to four times `piControl` levels.",
+                "experiment_id": "piClim-4xCO2",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-CH4": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-CH4",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-N2O": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-N2O",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-NOx": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-NOx",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-ODS": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-ODS",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-SO2": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-SO2",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-aer": {
+                "activity_id": [
+                    "RFMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-aer",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-anthro": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "end_year": "",
+                "experiment": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment_id": "piClim-anthro",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-control": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Baseline for effective radiative forcing (ERF) calculations. `piControl` with prescribed sea-surface temperatures and sea-ice concentrations from a climatology of the model's `piControl` simulation.",
+                "end_year": "",
+                "experiment": "Baseline for effective radiative forcing (ERF) calculations. `piControl` with prescribed sea-surface temperatures and sea-ice concentrations from a climatology of the model's `piControl` simulation.",
+                "experiment_id": "piClim-control",
+                "min_number_yrs_per_sim": 30,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piClim-histaer": {
+                "activity_id": [
+                    "RFMIP"
+                ],
+                "description": "Simulation of the historical and future period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). Aerosol emissions follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) while all other forcings follow `piControl` to allow for a (approximate) diagnosis of transient historical aerosol effective radiative forcing (ERF) (can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF).",
+                "end_year": 2100,
+                "experiment": "Simulation of the historical and future period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). Aerosol emissions follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) while all other forcings follow `piControl` to allow for a (approximate) diagnosis of transient historical aerosol effective radiative forcing (ERF) (can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF).",
+                "experiment_id": "piClim-histaer",
+                "min_number_yrs_per_sim": 251,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "piClim-histall": {
+                "activity_id": [
+                    "RFMIP"
+                ],
+                "description": "Simulation of the historical period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). All forcings follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) to allow for a (approximate) diagnosis of transient historical effective radiative forcing (ERF) (can be compared with the `piClim-*` experiments which provide a more precise quantification of present-day ERF from various forcers).",
+                "end_year": 2100,
+                "experiment": "Simulation of the historical period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). All forcings follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) to allow for a (approximate) diagnosis of transient historical effective radiative forcing (ERF) (can be compared with the `piClim-*` experiments which provide a more precise quantification of present-day ERF from various forcers).",
+                "experiment_id": "piClim-histall",
+                "min_number_yrs_per_sim": 251,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "piControl": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Pre-industrial control simulation with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-piControl`). Used to characterise natural variability and unforced behaviour.",
+                "end_year": "",
+                "experiment": "Pre-industrial control simulation with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-piControl`). Used to characterise natural variability and unforced behaviour.",
+                "experiment_id": "piControl",
+                "min_number_yrs_per_sim": 400,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl-spinup"
+                ],
+                "start_year": "",
+                "tier": 1
+            },
+            "piControl-spinup": {
+                "activity_id": [
+                    "CMIP"
+                ],
+                "description": "Spin-up simulation. Used to get the model into a state of approximate radiative equilibrium before starting the `piControl` simulation.",
+                "end_year": "",
+                "experiment": "Spin-up simulation. Used to get the model into a state of approximate radiative equilibrium before starting the `piControl` simulation.",
+                "experiment_id": "piControl-spinup",
+                "min_number_yrs_per_sim": "",
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": "",
+                "tier": 3
+            },
+            "scen7-h": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
+                "experiment_id": "scen7-h",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-h-AQ": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
+                "experiment_id": "scen7-h-AQ",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-h-Aer": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-Aq` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-Aq` instead.",
+                "experiment_id": "scen7-h-Aer",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-h-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-h` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-h` beyond 2100.",
+                "experiment_id": "scen7-h-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-h"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-hl": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
+                "experiment_id": "scen7-hl",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-hl-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-hl` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-hl` beyond 2100.",
+                "experiment_id": "scen7-hl-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-hl"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-l": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
+                "experiment_id": "scen7-l",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-l-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-l` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-l` beyond 2100.",
+                "experiment_id": "scen7-l-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-l"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-ln": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
+                "experiment_id": "scen7-ln",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-ln-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-ln` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-ln` beyond 2100.",
+                "experiment_id": "scen7-ln-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-ln"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-m": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
+                "experiment_id": "scen7-m",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-m-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-m` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-m` beyond 2100.",
+                "experiment_id": "scen7-m-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-m"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-ml": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
+                "experiment_id": "scen7-ml",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-ml-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-ml` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-ml` beyond 2100.",
+                "experiment_id": "scen7-ml-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-ml"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            },
+            "scen7-vl": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
+                "experiment_id": "scen7-vl",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-vl-AQ": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
+                "experiment_id": "scen7-vl-AQ",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-vl-Aer": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-Aq` instead.",
+                "end_year": 2100,
+                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-Aq` instead.",
+                "experiment_id": "scen7-vl-Aer",
+                "min_number_yrs_per_sim": 79,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "historical"
+                ],
+                "start_year": 2022,
+                "tier": 1
+            },
+            "scen7-vl-ext": {
+                "activity_id": [
+                    "ScenarioMIP"
+                ],
+                "description": "Extension of `scen7-vl` beyond 2100.",
+                "end_year": 2500,
+                "experiment": "Extension of `scen7-vl` beyond 2100.",
+                "experiment_id": "scen7-vl-ext",
+                "min_number_yrs_per_sim": 50,
+                "parent_activity_id": [
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id": [
+                    "scen7-vl"
+                ],
+                "start_year": 2101,
+                "tier": 1
+            }
+        },
+        "forcing_index": [
+            "^f[[:digit:]]\\{1,\\}$"
+        ],
+        "frequency": {
+            "1hr": {
+                "approx_interval": 0.041666666666666664,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Hourly samples."
+            },
+            "3hr": {
+                "approx_interval": 0.125,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Three hourly samples."
+            },
+            "6hr": {
+                "approx_interval": 0.25,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Six hourly samples."
+            },
+            "day": {
+                "approx_interval": 1.0,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Daily samples."
+            },
+            "dec": {
+                "approx_interval": 3652.5,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Decadal samples. Note that this means that the time interval between each sample is not constant for some calendars."
+            },
+            "fx": "fixed (time invariant) field",
+            "mon": {
+                "approx_interval": 30.0,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Monthly samples. Note that this means that the time interval between each sample is not constant for some calendars."
+            },
+            "subhr": {
+                "approx_interval": 0.01736111111111111,
+                "approx_interval_error": 0.9,
+                "approx_interval_warning": 0.5,
+                "description": "Sub-hourly (i.e. more frequently than once per hour) samples."
+            },
+            "yr": {
+                "approx_interval": 365.25,
+                "approx_interval_error": 0.2,
+                "approx_interval_warning": 0.1,
+                "description": "Yearly (i.e. annual) samples. Note that this means that the time interval between each sample is not constant for some calendars."
+            }
+        },
+        "grid_label": {
+            "g100": "",
+            "g101": "",
+            "g102": "",
+            "g103": "",
+            "g104": "",
+            "g999": ""
+        },
+        "horizontal_label": {
+            "hm": "Data reported as a mean over some horizontal area.",
+            "hs": "Data reported at specific sites.",
+            "ht": "Data along a transect. This is some aggregate (sum, mean etc.) along the transect(s).",
+            "hxy": "Data on x-y (often lat-lon) grid, also referred to as gridded data.",
+            "hy": "Data that is a function of the y horizontal dimension, but not x (i.e., often just a function of latitude). This is usually a zonal-mean or zonal-sum or some other zonal-aggregate data.",
+            "hyb": "Data that is a function of the y horizontal dimension (i.e., often just a function of latitude), representing a zonal-mean or zonal-sum or some other aggregate across the x dimension for individual ocean basins (e.g., a zonal mean across each of the ocean basins)."
+        },
+        "initialization_index": [
+            "^i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}$",
+            "^i[[:digit:]]\\{1,\\}$"
+        ],
+        "institution_id": {
+            "CCCma": "Environment and Climate Change Canada",
+            "CNRM-CERFACS": "CNRM (Centre National de Recherches Meteorologiques, Toulouse 31057, France), CERFACS (Centre Europeen de Recherche et de Formation Avancee en Calcul Scientifique, Toulouse 31057, France)",
+            "IPSL": "Institut Pierre-Simon Laplace",
+            "MOHC": "Met Office Hadley Centre"
+        },
+        "license": {
+            "license_id": {
+                "CC-BY-4.0": {
+                    "license_type": "Creative Commons Attribution 4.0 International",
+                    "license_url": "https://creativecommons.org/licenses/by/4.0"
+                },
+                "CC0-1.0": {
+                    "license_type": "Creative Commons CC0 1.0 Universal Public Domain Dedication (CC0 1.0; https://creativecommons.org/publicdomain/zero/1.0/)",
+                    "license_url": "https://creativecommons.org/publicdomain/zero/1.0"
+                }
+            },
+            "license_template": "<license_id>; CMIP7 data produced by <institution_id> is licensed under a <license_type> License (<license_url>). Consult https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Guidance_for_users/#2-terms-of-use-and-citations-requirements for terms of use governing CMIP7 output, including citation requirements and proper acknowledgment. The data producers and data providers make no warranty, either express or implied, including, but not limited to, warranties of merchantability and fitness for a particular purpose. All liabilities arising from the supply of the information (including any liability arising in negligence) are excluded to the fullest extent permitted by law."
+        },
+        "mip_era": "CMIP7",
+        "nominal_resolution": [
+            "0.5 km",
+            "1 km",
+            "10 km",
+            "100 km",
+            "1000 km",
+            "10000 km",
+            "2.5 km",
+            "25 km",
+            "250 km",
+            "2500 km",
+            "5 km",
+            "50 km",
+            "500 km",
+            "5000 km"
+        ],
+        "physics_index": [
+            "^p[[:digit:]]\\{1,\\}$"
+        ],
+        "product": {
+            "model-output": "Output from a model simulation, in this context typically of the climate system or a component thereof."
+        },
+        "realization_index": [
+            "^r[[:digit:]]\\{1,\\}$"
+        ],
+        "realm": {
+            "aerosol": "Dataset of primary interest in studying atmospheric aerosols.",
+            "atmos": "Dataset of primary interest in studying the dynamics and physic of the atmosphere.",
+            "atmosChem": "Dataset of primary interest in studying the chemical composition and processes in the atmosphere.",
+            "land": "Dataset of primary interest in studying the land surface and/or sub-surface part of the earth system.",
+            "landIce": "Dataset of primary interest in studying land ice.",
+            "ocean": "Dataset of primary interest in studying the dynamics and physic of the ocean.",
+            "ocnBgchem": "Dataset of primary interest in studying the biogeochemical composition and processes in the ocean.",
+            "seaIce": "Dataset of primary interest in studying sea ice."
+        },
+        "region": {
+            "30S-90S": "The geographical region of the Earth\u2019s surface between 30 and 90 degrees south.",
+            "ata": "Antarcica.",
+            "glb": "The geographical region of the whole of the Earth\u2019s surface, as defined by the CF conventions.",
+            "grl": "The geographical region of Greenland, as defined by the CF conventions.",
+            "nh": "The Northern Hemisphere.",
+            "sh": "The Southern Hemisphere."
+        },
+        "required_global_attributes": [
+            "activity_id",
+            "area_label",
+            "branded_variable",
+            "branding_suffix",
+            "Conventions",
+            "creation_date",
+            "data_specs_version",
+            "drs_specs",
+            "experiment_id",
+            "forcing_index",
+            "frequency",
+            "grid_label",
+            "horizontal_label",
+            "initialization_index",
+            "institution_id",
+            "license_id",
+            "mip_era",
+            "nominal_resolution",
+            "physics_index",
+            "product",
+            "realization_index",
+            "realm",
+            "region",
+            "source_id",
+            "temporal_label",
+            "tracking_id",
+            "variable_id",
+            "variant_label",
+            "vertical_label"
+        ],
+        "source_id": {
+            "CNRM-ESM2-1e": {
+                "source": "CNRM-ESM2-1e: aerosol: TACTIC_v2; atmosphere: Arpege-Climat Version 6.3; atmospheric_chemistry: REPROBUS-C (v2.0); land_surface: SURFEX v8 modeling platform; ocean: NEMO : Nucleus for European Modelling of the Ocean version 3.6 (OPA); ocean_biogeochemistry: Pelagic Interaction Scheme for Carbon and Ecosystem Studies model volume 2 version trace gases (PISCESv2-gas); sea_ice: GELATO",
+                "source_id": "CNRM-ESM2-1e"
+            },
+            "DUMMY-MODEL": {
+                "source": "DUMMY-MODEL: aerosol: Dummy Aerosol; atmosphere: Dummy Atmosphere; atmospheric_chemistry: Dummy Atmospheric Chemistry; land_surface: Dummy Land Surface; ocean: Dummy Ocean; ocean_biogeochemistry: Dummy Ocean Biogeochemistry; sea_ice: Dummy Sea Ice",
+                "source_id": "DUMMY-MODEL"
+            }
+        },
+        "temporal_label": {
+            "tavg": "Data is averaged over each time period (i.e. each reported interval defined by its time bounds).",
+            "tclm": "Data is a climatology. In this case, it is a monthly climatology i.e. each set of time bounds represents a month and the twelve values show the month-by-month variation (derived by averaging over a number of years).",
+            "tclmdc": "Data is a climatology. In this case, it is a diurnal cycle climatology i.e. each set of time bounds represents an hour and the values show the hour-by-hour variation (derived by averaging over a number of days or months or years).",
+            "ti": "Data is time independent i.e. has no time dimension. This does not necessarily mean the data has no time relevance e.g. the data may be a mean over all time (therefore not having a time dimension), although such cases are rare (if they exist at all) in CMIP contexts.",
+            "tmax": "Data is the maximum within each time period (i.e. each reported interval defined by its time bounds).",
+            "tmaxavg": "Data is the mean of daily maxima over each time period (i.e. each reported interval defined by its time bounds).For example, the data may be reported monthly, with each value being the mean of the daily maximum temperature for each day in the month.",
+            "tmin": "Data is the mean of daily minima over each time period (i.e. each reported interval defined by its time bounds).For example, the data may be reported monthly, with each value being the mean of the daily minimum temperature for each day in the month.",
+            "tminavg": "Data is the mean of daily minimum over each time period (i.e. interval defined by the time bounds).For example, the data may be reported monthly, with each value being the mean of the daily minimum temperature for each day in the month.",
+            "tpt": "Data represents the value at the specific point in time at which the data is reported (all other time points within each time interval are not considered).",
+            "tsum": "Data is the sum over each time period (i.e. each reported interval defined by its time bounds)."
+        },
+        "tracking_id": [
+            "^hdl:21.14107/[0-9A-Fa-f]\\{8\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{12\\}$"
+        ],
+        "variant_label": [
+            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$",
+            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{1,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$"
+        ],
+        "vertical_label": {
+            "1000hPa": "Data is reported at an atmospheric pressure of 1000 hPa.",
+            "100hPa": "Data is reported at an atmospheric pressure of 100 hPa.",
+            "10hPa": "Data is reported at an atmospheric pressure of 10 hPa.",
+            "200hPa": "Data is reported at an atmospheric pressure of 200 hPa.",
+            "20bar": "Data is reported at a pressure depth of 20 bar.",
+            "220hPa": "Data is reported at an atmospheric pressure of 220 hPa.",
+            "500hPa": "Data is reported at an atmospheric pressure of 500 hPa.",
+            "560hPa": "Data is reported at an atmospheric pressure of 560 hPa.",
+            "700hPa": "Data is reported at an atmospheric pressure of 700 hPa.",
+            "840hPa": "Data is reported at an atmospheric pressure of 840 hPa.",
+            "850hPa": "Data is reported at an atmospheric pressure of 850 hPa.",
+            "925hPa": "Data is reported at an atmospheric pressure of 925hPa.",
+            "al": "Data is reported on the model's atmospheric model levels.",
+            "alh": "Data is reported on the model's atmospheric model half-levels (i.e. at the interfaces between model vertical layers).",
+            "d0m": "Data is reported at the surface.",
+            "d100cm": "Data is reported at a vertical depth of 1m (100cm).",
+            "d100m": "Data is reported at a vertical depth of 100m.",
+            "d10cm": "Data is reported at a vertical depth of 0.1m (10cm).",
+            "d2000m": "Data is reported over the upper 2000m of the ocean.",
+            "d300m": "Data is reported over the upper 300m of the ocean.",
+            "d700m": "Data is reported over the upper 700m of the ocean.",
+            "h100m": "Data is reported at a vertical height of 100m.",
+            "h10m": "Data is reported at a vertical height of 10m.",
+            "h16": "Data is reported at 16 height levels.",
+            "h2m": "Data is reported at a vertical height of 2m.",
+            "h40": "Data is reported at 40 height levels",
+            "ol": "Data is reported on the model's ocean model levels.",
+            "olh": "Data is reported on the model's ocean model half-levels (i.e. at the interfaces between model vertical layers).",
+            "ols": "Data is reported for the surface level of the model's ocean model.",
+            "op4": "Data is reported at 4 ocean pressure layers.",
+            "p19": "Data is reported at 19 pressure levels.",
+            "p27": "Data is reported at 27 pressure levels.",
+            "p3": "Data is reported at 3 pressure levels",
+            "p39": "Data is reported at 39 pressure levels.",
+            "p4": "Data is reported at 4 pressure levels.",
+            "p5u": "Data is reported at 5 pressure levels.",
+            "p6": "Data is reported at 6 pressure levels.",
+            "p7c": "Data is reported at 7 pressure levels (although they're not the same pressure levels as `p7h`).",
+            "p7h": "Data is reported at 7 pressure levels (although they're not the same pressure levels as `p7c`).",
+            "p8": "Data is reported at 8 pressure levels.",
+            "rho": "Data is reported on specific density surface(s).",
+            "sl": "Data is reported on the soil model's levels.",
+            "u": "Data is reported with no vertical dimension. This does not necessarily mean that there is no vertical information attached to the variable, it is just not included in the dimension information. Vertical information might be found in the variable's standard name or cell methods."
+        }
+    }
+}

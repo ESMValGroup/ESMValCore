@@ -1,7 +1,7 @@
 {
     "Header": {
-        "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: c4a2ca44c7555306bce99121c2066395",
+        "Conventions": "CF-1.12",
+        "checksum": "md5: 8b9acc76f169170324c7a196415a5fd8",
         "cmor_version": "3.13",
         "generic_levels": "alevel alevhalf",
         "int_missing_value": "-999",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "aerosol",
-        "table_date": "2026-01-07 10:30:23",
+        "table_date": "2026-04-21 15:01:29",
         "table_id": "aerosol",
         "type": "real",
         "valid_max": "",
