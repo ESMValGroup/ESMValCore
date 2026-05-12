@@ -28,7 +28,7 @@ project specific facet names used on ESGF.
 CMIP7
 -----
 
-`Official CMIP7 facets <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/global_attributes/>`__.
+`Official CMIP7 facets <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Global_Attributes/>`__.
 
 .. note::
     This mapping is preliminary as no CMIP7 data bas been published on ESGF yet.
@@ -68,7 +68,7 @@ CMIP7
 CMIP6
 -----
 
-`Official CMIP6 facets <https://wcrp-cmip.github.io/WGCM_Infrastructure_Panel/Papers/CMIP6_global_attributes_filenames_CVs_v6.2.7.pdf>`__.
+`Official CMIP6 facets <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP6/global_attributes/>`__.
 
 +----------------------+---------------------------+
 | ESMValCore facet     | ESGF facet                |
