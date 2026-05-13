@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
 
-CFG = {}
+CFG: dict[str, Any] = {}
 
 # TODO: remove in v2.15.0
 USER_EXTRA_FACETS = Path.home() / ".esmvaltool" / "extra_facets"
