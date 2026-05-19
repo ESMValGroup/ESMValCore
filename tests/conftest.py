@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 
-@lru_cache
+# @lru_cache
 def _load_default_config():
     """Create a configuration object with default values."""
     with warnings.catch_warnings():
