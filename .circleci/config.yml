@@ -118,6 +118,7 @@ workflows:
   commit:
     jobs:
       - test
+      - test_with_upstream_developments
 
   nightly:
     triggers:
