@@ -78,21 +78,27 @@ def _update_cmor_facets(facets: Facets) -> None:
     project: str = facets["project"]  # type: ignore[assignment]
     mip: str = facets["mip"]  # type: ignore[assignment]
     short_name: str = facets["short_name"]  # type: ignore[assignment]
+    branding_suffix: str | None = facets.get("branding_suffix")  # type: ignore[assignment]
     derive: bool = facets.get("derive", False)  # type: ignore[assignment]
     table = CMOR_TABLES.get(project)
     if table:
         table_entry = table.get_variable(
             mip,
             short_name,
-            branding_suffix=facets.get("branding_suffix"),  # type: ignore[arg-type]
+            branding_suffix=branding_suffix,
             derived=derive,
         )
     else:
         table_entry = None
     if table_entry is None:
         msg = (
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'"
+            f"Variable '{short_name}' "
+            + (
+                f"with branding suffix '{branding_suffix}' "
+                if branding_suffix
+                else ""
+            )
+            + f"not available in table '{mip}' of project '{project}'"
         )
         raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
