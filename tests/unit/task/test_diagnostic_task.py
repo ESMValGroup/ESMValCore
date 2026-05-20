@@ -123,7 +123,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     script.touch()
     if ext == "":
         # test case where file is executable
-        script.chmod(stat.S_IEXEC)
+        script.chmod(stat.S_IRUSR | stat.S_IXUSR)
 
     run_dir = tmp_path / "run_dir"
     settings = {

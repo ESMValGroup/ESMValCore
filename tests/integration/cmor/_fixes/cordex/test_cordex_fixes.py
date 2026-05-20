@@ -2,6 +2,7 @@
 
 import cordex as cx
 import iris
+import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -135,6 +136,19 @@ def test_mohchadrem3ga705_fix_metadata(cubes, coord, var_name, long_name):
         assert cube.coord(standard_name=coord).long_name == long_name
 
 
+def test_mohchadrem3ga705_fix_metadata_no_time_coord(
+    cubes: iris.cube.CubeList,
+) -> None:
+    for cube in cubes:
+        cube.remove_coord("time")
+    fix = MOHCHadREM3GA705(None)  # type: ignore[arg-type]
+    out_cubes = fix.fix_metadata(cubes)
+    assert cubes is out_cubes
+    for cube in out_cubes:
+        assert cube.coord(standard_name="latitude").var_name == "lat"
+        assert cube.coord(standard_name="longitude").var_name == "lon"
+
+
 def test_timelongname_fix_metadata(cubes):
     fix = TimeLongName(None)
     out_cubes = fix.fix_metadata(cubes)
@@ -143,15 +157,23 @@ def test_timelongname_fix_metadata(cubes):
         assert cube.coord("time").long_name == "time"
 
 
-def test_clmcomcclm4817_fix_metadata(cubes):
-    cubes[0].coord("time").units = Unit(
-        "days since 1850-1-1 00:00:00",
-        calendar="proleptic_gregorian",
-    )
-    cubes[1].coord("time").units = Unit(
-        "days since 1850-1-1 00:00:00",
-        calendar="standard",
-    )
+@pytest.mark.parametrize("has_time_coord", [True, False])
+def test_clmcomcclm4817_fix_metadata_time(
+    cubes: iris.cube.CubeList,
+    has_time_coord: bool,
+) -> None:
+    if has_time_coord:
+        cubes[0].coord("time").units = Unit(
+            "days since 1850-1-1 00:00:00",
+            calendar="proleptic_gregorian",
+        )
+        cubes[1].coord("time").units = Unit(
+            "days since 1850-1-1 00:00:00",
+            calendar="standard",
+        )
+    else:
+        for cube in cubes:
+            cube.remove_coord("time")
     for cube in cubes:
         cube.data = cube.lazy_data().astype(">f4", casting="same_kind")
     for coord in cubes[1].coords():
@@ -160,16 +182,17 @@ def test_clmcomcclm4817_fix_metadata(cubes):
     lat.guess_bounds()
     lat.bounds = lat.core_bounds().astype(">f4", casting="same_kind")
 
-    fix = CLMcomCCLM4817(None)
+    fix = CLMcomCCLM4817(None)  # type: ignore[arg-type]
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
+        if has_time_coord:
+            assert cube.coord("time").units == Unit(
+                "days since 1850-1-1 00:00:00",
+                calendar="proleptic_gregorian",
+            )
         assert cube.has_lazy_data()
         assert cube.lazy_data().dtype == np.float32
-        assert cube.coord("time").units == Unit(
-            "days since 1850-1-1 00:00:00",
-            calendar="proleptic_gregorian",
-        )
         for coord in cube.coords():
             assert coord.points.dtype == np.float64
 
@@ -183,7 +206,7 @@ def test_rotated_grid_fix(cordex_cubes):
             "driver": "DRIVER",
         },
     )
-    domain = cx.cordex_domain("EUR-11", add_vertices=True)
+    domain = cx.cordex_domain("EUR-11", bounds=True)
     for cube in cordex_cubes:
         for coord in ["rlat", "rlon", "lat", "lon"]:
             cube_coord = cube.coord(var_name=coord)
