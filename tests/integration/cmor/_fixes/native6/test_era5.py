@@ -51,7 +51,7 @@ def test_fix_accumulated_units_fail():
     time = DimCoord(
         [0, 1, 2],
         standard_name="time",
-        units=Unit("days hour 1900-01-01"),
+        units=Unit("days since 1900-01-01"),
     )
     cube = Cube(
         [1, 6, 3],
