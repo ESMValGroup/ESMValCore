@@ -51,7 +51,7 @@ def test_fix_accumulated_units_fail():
     time = DimCoord(
         [0, 1, 2],
         standard_name="time",
-        units=Unit("days since 1900-01-01"),
+        units=Unit("days hour 1900-01-01"),
     )
     cube = Cube(
         [1, 6, 3],
@@ -371,6 +371,8 @@ def clt_era5_hourly():
             (_era5_longitude(), 2),
         ],
     )
+    # Test time units of newly downloaded ERA5 data (2026-05-20)
+    cube.coord("time").convert_units("seconds since 1970-01-01")
     return CubeList([cube])
 
 
