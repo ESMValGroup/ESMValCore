@@ -26,13 +26,13 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.12"
+    rev: "v0.15.13"
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v2.0.0"
+    rev: "v2.1.0"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -54,7 +54,7 @@ repos:
       - id: check-github-workflows
       - id: check-circle-ci
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.25.2
     hooks:
       - id: zizmor
         args: [--fix=safe]
