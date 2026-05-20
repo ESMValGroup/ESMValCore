@@ -204,7 +204,9 @@ class Config:
             if filter
             else ""
         )
-        self._console.print(Markdown(f"# Current configuration{exclude_msg}:"))
+        self._console.print(
+            Markdown(f"# Current configuration{exclude_msg}\n<br>"),
+        )
         self._console.print(
             Syntax(
                 yaml.safe_dump(cfg),
@@ -480,12 +482,17 @@ class Recipes:
                 recipe = recipe_root / filename
                 if recipe.suffix == ".yml":
                     title = (
-                        yaml.safe_load(recipe.read_text(encoding="utf-8"))
+                        (
+                            yaml.safe_load(
+                                recipe.read_text(encoding="utf-8"),
+                            )
+                            or {}
+                        )
                         .get("documentation", {})
                         .get("title", "")
                     )
                     messages.append(
-                        f"- `{recipe.relative_to(recipe_root)}`: {title}",
+                        f"- `{recipe.relative_to(recipes_folder)}`: {title}",
                     )
         self._console.print(Markdown("\n".join(messages)))
 
