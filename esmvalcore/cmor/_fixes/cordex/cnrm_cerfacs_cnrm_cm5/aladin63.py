@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import iris.coord_systems
 import numpy as np
+import pyproj
+from iris.fileformats.pp import EARTH_RADIUS
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
@@ -21,13 +24,14 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         domain_step = {
-            "-11": 12500,
-            "-22": 25000,
-            "-44": 50000,
+            "11": 12500,
+            "22": 25000,
+            "44": 50000,
         }
 
         for cube in cubes:
-            domain_resolution = self.extra_facets["domain"][-3:]
+            # Correct the projection coordinates.
+            domain_resolution = self.extra_facets["domain"].split("-")[-1]
             step = domain_step[domain_resolution]
 
             for coord_name in [
@@ -43,6 +47,29 @@ class AllVars(Fix):
                 )
                 coord.units = "m"
                 coord.guess_bounds()
+
+            # Correct the latitude and longitude coordinates.
+            latlon_crs = iris.coord_systems.GeogCS(EARTH_RADIUS)
+            projected_crs = cube.coord(
+                "projection_x_coordinate",
+            ).coord_system.as_cartopy_crs()
+            transformer = pyproj.Transformer.from_crs(
+                crs_from=projected_crs,
+                crs_to=latlon_crs.as_cartopy_crs(),
+                always_xy=True,
+            )
+            lon_points, lat_points = transformer.transform(
+                *np.meshgrid(
+                    cube.coord("projection_x_coordinate").points,
+                    cube.coord("projection_y_coordinate").points,
+                ),
+                errcheck=True,
+            )
+            cube.coord("latitude").points = lat_points
+            cube.coord("longitude").points = lon_points % 360
+            cube.coord("latitude").coord_system = latlon_crs
+            cube.coord("longitude").coord_system = latlon_crs
+            # TODO: Correct bounds of latitude and longitude coordinates.
 
         return cubes
 

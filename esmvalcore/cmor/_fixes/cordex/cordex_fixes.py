@@ -223,12 +223,5 @@ class AllVars(Fix):
                     "coordinate system is ongoing. Certain preprocessor "
                     "functions may fail.",
                 )
-            else:
-                msg = (
-                    f"Coordinate system {coord_system.grid_mapping_name} "
-                    "not supported in CORDEX datasets. Must be "
-                    "rotated_latitude_longitude or lambert_conformal_conic."
-                )
-                raise RecipeError(msg)
 
         return cubes

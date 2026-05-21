@@ -20,13 +20,13 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         domain_step = {
-            "-11": 12500,
-            "-22": 25000,
-            "-44": 50000,
+            "11": 12500,
+            "22": 25000,
+            "44": 50000,
         }
 
         for cube in cubes:
-            domain_resolution = self.extra_facets["domain"][-3:]
+            domain_resolution = self.extra_facets["domain"].split("-")[-1]
             step = domain_step[domain_resolution]
 
             for coord_name in [
