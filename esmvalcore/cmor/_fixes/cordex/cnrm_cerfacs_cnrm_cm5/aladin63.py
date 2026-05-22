@@ -58,6 +58,8 @@ class AllVars(Fix):
                 crs_to=latlon_crs.as_cartopy_crs(),
                 always_xy=True,
             )
+
+            # Update the points.
             lon_points, lat_points = transformer.transform(
                 *np.meshgrid(
                     cube.coord("projection_x_coordinate").points,
@@ -66,10 +68,47 @@ class AllVars(Fix):
                 errcheck=True,
             )
             cube.coord("latitude").points = lat_points
-            cube.coord("longitude").points = lon_points % 360
+            cube.coord("longitude").points = lon_points
             cube.coord("latitude").coord_system = latlon_crs
             cube.coord("longitude").coord_system = latlon_crs
-            # TODO: Correct bounds of latitude and longitude coordinates.
+
+            # Update the bounds.
+            x_bounds = np.concatenate(
+                [
+                    cube.coord("projection_x_coordinate").bounds[:1, 0],
+                    cube.coord("projection_x_coordinate").bounds[:, 1],
+                ],
+            )
+            y_bounds = np.concatenate(
+                [
+                    cube.coord("projection_y_coordinate").bounds[:1, 0],
+                    cube.coord("projection_y_coordinate").bounds[:, 1],
+                ],
+            )
+            x_size = cube.coord("projection_x_coordinate").shape[0]
+            y_size = cube.coord("projection_y_coordinate").shape[0]
+            n_vertices = 4
+            x_idx = np.arange(x_size).reshape(1, x_size).repeat(
+                y_size,
+                axis=0,
+            ).reshape(x_size, y_size, 1) + np.array([0, 1, 1, 0]).reshape(
+                (1, 1, n_vertices),
+            )
+            y_idx = np.arange(y_size).reshape(y_size, 1).repeat(
+                x_size,
+                axis=1,
+            ).reshape(x_size, y_size, 1) + np.array([0, 0, 1, 1]).reshape(
+                (1, 1, n_vertices),
+            )
+            x_vertices = x_bounds[x_idx]
+            y_vertices = y_bounds[y_idx]
+            lon_bounds, lat_bounds = transformer.transform(
+                x_vertices,
+                y_vertices,
+                errcheck=True,
+            )
+            cube.coord("longitude").bounds = lon_bounds
+            cube.coord("latitude").bounds = lat_bounds
 
         return cubes
 
