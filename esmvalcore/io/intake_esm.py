@@ -86,6 +86,9 @@ class IntakeEsmDataset(DataElement):
     catalog: esm_datastore = field(repr=False)
     """The intake-esm catalog describing this data."""
 
+    to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
+    """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
+
     _attributes: dict[str, Any] | None = field(
         init=False,
         repr=False,
@@ -117,15 +120,13 @@ class IntakeEsmDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(self, quiet: bool = True, **kwargs) -> iris.cube.CubeList:  # noqa: ANN003
+    def to_iris(self, quiet: bool = True) -> iris.cube.CubeList:  # noqa: ANN003
         """Load the data as Iris cubes.
 
         Arguments
         ---------
         quiet : bool, optional
             If True, suppress warnings when no datasets are found. Default is True.
-        **kwargs
-            Additional keyword arguments to pass through to `intake_esm.esm_datastore.to_dask()`.
 
         Returns
         -------
@@ -133,8 +134,7 @@ class IntakeEsmDataset(DataElement):
         """
         files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
 
-        # Might want to pass through args/kwargs here? Ie.
-        dataset = self.catalog.to_dask(**kwargs)
+        dataset = self.catalog.to_dask(**self.to_dask_kwargs)
         # Store the local paths in the attributes for easier debugging.
         dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
         # Cache the attributes.
@@ -166,6 +166,9 @@ class IntakeEsmDataSource(DataSource):
     )
     """The intake-esm catalog used to find data."""
 
+    to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
+    """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
+
     time_separator: str = field(repr=False, default="/")
     """ The separator used in time facets. Needed for datasets which have time range
     formats as eg. `185002-185501`, not `185002/185501`. """
@@ -191,9 +194,7 @@ class IntakeEsmDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)]
-            if isinstance(values, str | int | float)
-            else values
+            facet: [str(values)] if isinstance(values, str | int | float) else values
             for facet, values in facets.items()
             if facet in self.facets
         }
@@ -263,18 +264,17 @@ class IntakeEsmDataSource(DataSource):
                 if esm_facet in df:
                     esm_values = df[esm_facet].unique().tolist()
                     our_values = [
-                        inverse_values.get(our_facet, {}).get(v, v)
-                        for v in esm_values
+                        inverse_values.get(our_facet, {}).get(v, v) for v in esm_values
                     ]
                     dataset_facets[our_facet] = our_values
 
             dataset = IntakeEsmDataset(
                 name=key,
                 facets={
-                    k: v[0] if len(v) == 1 else v
-                    for k, v in dataset_facets.items()
+                    k: v[0] if len(v) == 1 else v for k, v in dataset_facets.items()
                 },  # type: ignore[arg-type]
                 catalog=cat,
+                to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
             )
             result.append(dataset)
         return result

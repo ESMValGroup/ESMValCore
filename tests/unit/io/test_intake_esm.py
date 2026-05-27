@@ -33,11 +33,7 @@ with importlib.resources.as_file(
     importlib.resources.files("tests"),
 ) as test_dir:
     esm_ds_fhandle = (
-        Path(test_dir)
-        / "sample_data"
-        / "intake-esm"
-        / "catalog"
-        / "cmip6-netcdf.json"
+        Path(test_dir) / "sample_data" / "intake-esm" / "catalog" / "cmip6-netcdf.json"
     )
 
 
@@ -88,9 +84,16 @@ def test_to_iris(mocker: MockerFixture) -> None:
         return_value=cubes,
     )
 
-    dataset = IntakeEsmDataset(name=key, facets={}, catalog=cat)
+    to_dask_kwargs = {"xarray_open_kwargs": {"decode_times": False}}
+    dataset = IntakeEsmDataset(
+        name=key,
+        facets={},
+        catalog=cat,
+        to_dask_kwargs=to_dask_kwargs,
+    )
     result = dataset.to_iris()
     assert result is cubes
+    cat.to_dask.assert_called_once_with(**to_dask_kwargs)
 
     assert dataset.attributes == {
         "attr": "value",
@@ -138,6 +141,7 @@ def test_find_data() -> None:
             "version": "version",
         },
         values={},
+        to_dask_kwargs={"xarray_open_kwargs": {"decode_times": False}},
         catalog=cat,
     )
 
@@ -148,6 +152,9 @@ def test_find_data() -> None:
 
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
+    assert dataset.to_dask_kwargs == {
+        "xarray_open_kwargs": {"decode_times": False},
+    }
     assert dataset.name == "CMIP.BCC.BCC-CSM2-MR.abrupt-4xCO2.Amon.gn"
 
     assert hash(dataset) == hash((dataset.name, "v20181016"))
@@ -277,14 +284,14 @@ def test_remote_esm_dataset(pangeo_ds: esm_datastore) -> None:
         priority=1,
         time_separator="-",
         facets={
-            "activity_id": "activity_id",
-            "institution_id": "institution_id",
-            "source_id": "source_id",
-            "experiment_id": "experiment_id",
-            "member_id": "member_id",
-            "table_id": "table_id",
-            "variable_id": "variable_id",
-            "grid_label": "grid_label",
+            "activity": "activity_id",
+            "institute": "institution_id",
+            "dataset": "source_id",
+            "exp": "experiment_id",
+            "ensemble": "member_id",
+            "mip": "table_id",
+            "short_name": "variable_id",
+            "grid": "grid_label",
             "dcpp_init_year": "dcpp_init_year",
             "version": "version",
         },
@@ -297,15 +304,15 @@ def test_remote_esm_dataset(pangeo_ds: esm_datastore) -> None:
     expected_len = len(
         pangeo_ds.search(
             table_id="Amon",
-            experiment_id="historical",
+            experiment_id="piControl",
             institution_id="NOAA-GFDL",
         ),
     )
 
     results = data_source.find_data(
-        institution_id="NOAA-GFDL",
-        table_id="Amon",
-        experiment_id="piControl",
+        institute="NOAA-GFDL",
+        mip="Amon",
+        exp="piControl",
     )
 
     assert len(results) == expected_len
@@ -330,9 +337,7 @@ def test_remote_esm_dataset(pangeo_ds: esm_datastore) -> None:
             ValueError,
             match=r"When encoding chunked arrays of datetime values, both the units and dtype must be prescribed or both must be unprescribed. Prescribing only one or the other is not currently supported. Got a units encoding of hours since 0151-01-16 12:00:00.000000 and a dtype encoding of None.",
         ):
-            ds.to_iris(
-                xarray_open_kwargs={"decode_cf": True, "decode_times": True},
-            )
+            ds.to_iris()
     else:
         # Can't match because it's not in the ESMDataSourceError
         with pytest.raises(
@@ -348,14 +353,14 @@ def test_remote_esm_dataset_keyerr(pangeo_ds: esm_datastore) -> None:
         priority=1,
         time_separator="-",
         facets={
-            "activity_id": "activity_id",
-            "institution_id": "institution_id",
-            "source_id": "source_id",
-            "experiment_id": "experiment_id",
-            "member_id": "member_id",
-            "table_id": "table_id",
-            "variable_id": "variable_id",
-            "grid_label": "grid_label",
+            "activity": "activity_id",
+            "institute": "institution_id",
+            "dataset": "source_id",
+            "exp": "experiment_id",
+            "ensemble": "member_id",
+            "mip": "table_id",
+            "short_name": "variable_id",
+            "grid": "grid_label",
             "dcpp_init_year": "dcpp_init_year",
             "version": "version",
         },
@@ -375,10 +380,10 @@ def test_remote_esm_dataset_keyerr(pangeo_ds: esm_datastore) -> None:
     )
 
     results = data_source.find_data(
-        institution_id="MIROC",
-        table_id="Amon",
-        experiment_id="historical",
-        variable_id="tasmax",
+        institute="MIROC",
+        mip="Amon",
+        exp="historical",
+        short_name="tasmax",
     )
 
     assert len(results) == expected_len
@@ -391,10 +396,4 @@ def test_remote_esm_dataset_keyerr(pangeo_ds: esm_datastore) -> None:
     with pytest.raises(
         errtype,
     ):
-        ds.to_iris(
-            xarray_open_kwargs={"decode_cf": True, "decode_times": True},
-            xarray_combine_by_coords_kwargs={
-                "coords": "minimal",
-                "compat": "override",
-            },
-        )
+        ds.to_iris()

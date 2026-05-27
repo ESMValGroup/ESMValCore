@@ -851,7 +851,7 @@ Cloud
 `````
 
 Cloud platforms commonly host public intake-esm catalogs (for example, AWS
-and GCS public datasets) or institution-hosted catalogs (e.g., DKRZ). We
+and GCS public datasets) or institution-hosted catalogs. We
 provide example configuration files that you can copy to your configuration
 directory and adapt to your environment:
 
@@ -859,7 +859,6 @@ directory and adapt to your environment:
 
   esmvaltool config copy data-intake-esm-aws.yml
   esmvaltool config copy data-intake-esm-gcs.yml
-  esmvaltool config copy data-intake-esm-dkrz-cloud.yml
   esmvaltool config copy data-intake-esm-dkrz-disk.yml
 
 These files follow the naming convention ``data-intake-esm-<backend>.yml``.

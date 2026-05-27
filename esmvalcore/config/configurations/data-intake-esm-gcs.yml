@@ -18,6 +18,14 @@ projects:
           version: "version"
           timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip6.json"
+        to_dask_kwargs:
+          xarray_open_kwargs:
+            decode_cf: false
+            decode_times: false
+            decode_coords: false
+          xarray_combine_by_coords_kwargs:
+            compat: "override"
+            coords: "minimal"
   CMIP5:
     data:
       gcs-catalog:
@@ -34,6 +42,14 @@ projects:
           version: "version"
           timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip5.json"
+        to_dask_kwargs:
+          xarray_open_kwargs:
+            decode_cf: false
+            decode_times: false
+            decode_coords: false
+          xarray_combine_by_coords_kwargs:
+            compat: "override"
+            coords: "minimal"
   CMIP3:
     data:
       gcs-catalog:
@@ -50,3 +66,11 @@ projects:
           version: "version"
           timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip3.json"
+        to_dask_kwargs:
+          xarray_open_kwargs:
+            decode_cf: false
+            decode_times: false
+            decode_coords: false
+          xarray_combine_by_coords_kwargs:
+            compat: "override"
+            coords: "minimal"

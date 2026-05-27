@@ -18,4 +18,12 @@ projects:
           version: "version"
           timerange: "time_range"
         time_separator: "/"
-        catalog: "https://<AWS_INTAKE_ESM_CATALOG_URL>"
+        catalog: "https://cmip6-pds.s3.amazonaws.com/pangeo-cmip6.json"
+        to_dask_kwargs:
+          xarray_open_kwargs:
+            decode_cf: false
+            decode_times: false
+            decode_coords: false
+          xarray_combine_by_coords_kwargs:
+            compat: "override"
+            coords: "minimal"
