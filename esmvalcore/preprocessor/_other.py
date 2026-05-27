@@ -130,7 +130,7 @@ def _get_var_info(
                 if branding_suffix
                 else ""
             )
-            + f"not available for table '{mip}' of project '{project}'"
+            + f"not available in table '{mip}' of project '{project}'"
         )
         raise ValueError(msg)
     return var_info
@@ -436,7 +436,7 @@ def _get_histogram_weights(
     elif weights is True:
         weights_array = get_weights(cube, coords)
     else:
-        weights_array = weights
+        weights_array = npx.array(weights)
 
     if normalization is not None:
         norm = npx.sum(weights_array, axis=axes, keepdims=True)
