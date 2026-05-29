@@ -73,6 +73,11 @@ class AllVars(Fix):
             cube.coord("longitude").coord_system = latlon_crs
 
             # Update the bounds.
+            #
+            # Compute the bounds of the grid by indexing the bounds arrays
+            # according to
+            # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#cell-boundaries
+            # and transforming the resulting bounds to lat/lon coordinates.
             x_bounds = np.concatenate(
                 [
                     cube.coord("projection_x_coordinate").bounds[:1, 0],
