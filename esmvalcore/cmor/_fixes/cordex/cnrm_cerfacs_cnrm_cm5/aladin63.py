@@ -69,8 +69,6 @@ class AllVars(Fix):
             )
             cube.coord("latitude").points = lat_points
             cube.coord("longitude").points = lon_points
-            cube.coord("latitude").coord_system = latlon_crs
-            cube.coord("longitude").coord_system = latlon_crs
 
             # Update the bounds.
             #
