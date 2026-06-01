@@ -8087,8 +8087,8 @@ packages:
   timestamp: 1767783521974
 - pypi: ./
   name: esmvalcore
-  version: 2.15.0.dev32+g7b187a230.d20260420
-  sha256: 871323bebc4a15c567dff18960f5416df98184cd005f5ca92de6b1060897a95b
+  version: 2.15.0.dev40+gbe05b984e
+  sha256: 8b34fd31430007343a207d8e17c26d30aefbe116459f697d98c9a38b074148eb
   requires_dist:
   - aiohttp
   - cartopy
@@ -8123,7 +8123,7 @@ packages:
   - requests
   - rich
   - scipy>=1.6
-  - scitools-iris
+  - scitools-iris>=3.13
   - shapely>=2.0.0
   - stratify>=0.3
   - xarray

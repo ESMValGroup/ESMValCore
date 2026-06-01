@@ -35,7 +35,6 @@ from esmvalcore.cmor._fixes.shared import (
 )
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
-    _rechunk_aux_factory_dependencies,
     get_array_module,
     get_dims_along_axes,
     preserve_float_dtype,
@@ -1324,18 +1323,14 @@ def extract_levels(
 
     # Add extra coordinates
     coord_names = [coord.name() for coord in cube.coords()]
-    if coordinate in coord_names:
-        cube = _rechunk_aux_factory_dependencies(cube, coordinate)
-    else:
+    if coordinate not in coord_names:
         # Try to calculate air_pressure from altitude coordinate or
         # vice versa using US standard atmosphere for conversion.
         if coordinate == "air_pressure" and "altitude" in coord_names:
             # Calculate pressure level coordinate from altitude.
-            cube = _rechunk_aux_factory_dependencies(cube, "altitude")
             add_plev_from_altitude(cube)
         if coordinate == "altitude" and "air_pressure" in coord_names:
             # Calculate altitude coordinate from pressure levels.
-            cube = _rechunk_aux_factory_dependencies(cube, "air_pressure")
             add_altitude_from_plev(cube)
 
     src_levels = cube.coord(coordinate)

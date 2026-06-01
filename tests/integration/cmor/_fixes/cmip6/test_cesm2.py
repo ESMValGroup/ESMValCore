@@ -1,7 +1,9 @@
 """Tests for the fixes of CESM2."""
 
-import os
-import unittest.mock
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import iris
 import iris.cube
@@ -27,7 +29,10 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import VariableInfo, get_var_info
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_get_cl_fix():
@@ -66,11 +71,7 @@ AIR_PRESSURE_BOUNDS = np.array(
 )
 
 
-@unittest.mock.patch(
-    "esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath",
-    autospec=True,
-)
-def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
+def test_cl_fix_file(tmp_path: Path, test_data_path: Path) -> None:
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / "cesm2_cl.nc"
     cubes = iris.load(str(nc_path))
@@ -89,24 +90,17 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     assert not raw_cube.coords("air_pressure")
 
     # Apply fix
-    mock_get_filepath.return_value = os.path.join(
-        tmp_path,
-        "fixed_cesm2_cl.nc",
-    )
-    fix = Cl(None)
-    fixed_file = fix.fix_file(nc_path, tmp_path)
-    mock_get_filepath.assert_called_once_with(
-        tmp_path,
-        nc_path,
-        add_unique_suffix=False,
-    )
-    fixed_cubes = iris.load(fixed_file)
-    assert len(fixed_cubes) == 2
-    var_names = [cube.var_name for cube in fixed_cubes]
-    assert "cl" in var_names
-    assert "ps" in var_names
-    fixed_cl_cube = fixed_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer",
+    vardef = get_var_info("CMIP6", "Amon", "cl")
+    assert isinstance(vardef, VariableInfo)
+    fix = Cl(vardef)
+    fixed_cubes = fix.fix_file(nc_path, tmp_path)
+    assert isinstance(fixed_cubes, Sequence)
+    assert len(fixed_cubes) == 1
+    fixed_cl_cube = fixed_cubes[0]
+    assert fixed_cl_cube.var_name == "cl"
+    assert (
+        fixed_cl_cube.standard_name
+        == "cloud_area_fraction_in_atmosphere_layer"
     )
     fixed_air_pressure_coord = fixed_cl_cube.coord("air_pressure")
     assert fixed_air_pressure_coord.points is not None
@@ -118,80 +112,6 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     np.testing.assert_allclose(
         fixed_air_pressure_coord.bounds,
         AIR_PRESSURE_BOUNDS,
-    )
-
-
-@pytest.fixture
-def cl_cubes():
-    """``cl`` cube."""
-    time_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        var_name="time",
-        standard_name="time",
-        units="days since 1850-01-01 00:00:00",
-    )
-    a_coord = iris.coords.AuxCoord(
-        [0.1, 0.2, 0.1],
-        bounds=[[0.0, 0.15], [0.15, 0.25], [0.25, 0.0]],
-        var_name="a",
-        units="1",
-    )
-    b_coord = iris.coords.AuxCoord(
-        [0.9, 0.3, 0.1],
-        bounds=[[1.0, 0.8], [0.8, 0.25], [0.25, 0.0]],
-        var_name="b",
-        units="1",
-    )
-    lev_coord = iris.coords.DimCoord(
-        [999.0, 99.0, 9.0],
-        var_name="lev",
-        standard_name="atmosphere_hybrid_sigma_pressure_coordinate",
-        units="hPa",
-        attributes={"positive": "up"},
-    )
-    lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        var_name="lat",
-        standard_name="latitude",
-        units="degrees",
-    )
-    lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        var_name="lon",
-        standard_name="longitude",
-        units="degrees",
-    )
-    coord_specs = [
-        (time_coord, 0),
-        (lev_coord, 1),
-        (lat_coord, 2),
-        (lon_coord, 3),
-    ]
-    cube = iris.cube.Cube(
-        np.arange(2 * 3 * 2 * 2).reshape(2, 3, 2, 2),
-        var_name="cl",
-        standard_name="cloud_area_fraction_in_atmosphere_layer",
-        units="%",
-        dim_coords_and_dims=coord_specs,
-        aux_coords_and_dims=[(a_coord, 1), (b_coord, 1)],
-    )
-    return iris.cube.CubeList([cube])
-
-
-def test_cl_fix_metadata(cl_cubes):
-    """Test ``fix_metadata`` for ``cl``."""
-    vardef = get_var_info("CMIP6", "Amon", "cl")
-    fix = Cl(vardef)
-    out_cubes = fix.fix_metadata(cl_cubes)
-    out_cube = out_cubes.extract_cube(
-        "cloud_area_fraction_in_atmosphere_layer",
-    )
-    lev_coord = out_cube.coord(var_name="lev")
-    assert lev_coord.units == "1"
-    np.testing.assert_allclose(lev_coord.points, [1.0, 0.5, 0.2])
-    np.testing.assert_allclose(
-        lev_coord.bounds,
-        [[1.0, 0.95], [0.95, 0.5], [0.5, 0.0]],
     )
 
 

@@ -63,7 +63,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris",
+    "scitools-iris>=3.13",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",
@@ -223,7 +223,7 @@ geopy = "*"
 humanfriendly = "*"
 intake-esgf = ">=2025.10.22"
 intake-esm = "*"
-iris = "*"
+iris = ">=3.13"
 iris-esmf-regrid = ">=0.11.0"
 iris-grib = ">=0.20.0"
 isodate = ">=0.7.0"
