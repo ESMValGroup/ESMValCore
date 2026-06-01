@@ -1,0 +1,25 @@
+# Read data from the ESA Climate Data Centre (ESA CCI) using xcube.
+# More information available at
+# https://xcube.readthedocs.io/en/latest/dataaccess.html#esa-climate-data-centre-esa-cci-cciodp-ccizarr-esa-cci-kc.
+projects:
+  ESACCI:
+    data:
+      ccizarr:
+        type: "esmvalcore.io.xcube.XCubeDataSource"
+        data_store_id: "ccizarr"
+        priority: 1
+        values: &values
+          # Use this to define the mapping between the short_name used by
+          # ESMValCore and the variable name in the source dataset.
+          short_name:
+            prw: tcwv
+      esa-cci-kc:
+        type: "esmvalcore.io.xcube.XCubeDataSource"
+        data_store_id: "esa-cci-kc"
+        priority: 2
+        values: *values
+      cciodp:
+        type: "esmvalcore.io.xcube.XCubeDataSource"
+        data_store_id: "cciodp"
+        priority: 3
+        values: *values
