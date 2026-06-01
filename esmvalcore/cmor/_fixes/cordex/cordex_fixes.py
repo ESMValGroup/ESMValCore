@@ -1,11 +1,15 @@
 """Fixes that are shared between datasets and drivers."""
 
+from __future__ import annotations
+
 import logging
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 import cordex as cx
 import iris
 import iris.coords
+import iris.cube
 import numpy as np
 from cf_units import Unit
 from iris.coord_systems import LambertConformal, RotatedGeogCS
@@ -13,16 +17,22 @@ from iris.coord_systems import LambertConformal, RotatedGeogCS
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import xarray as xr
+
+
 logger = logging.getLogger(__name__)
 
 
 @lru_cache
-def _get_domain(data_domain):
+def _get_domain(data_domain: str) -> xr.Dataset:
     return cx.cordex_domain(data_domain, bounds=True)
 
 
 @lru_cache
-def _get_domain_info(data_domain):
+def _get_domain_info(data_domain: str) -> dict[str, str | float]:
     return cx.domain_info(data_domain)
 
 
@@ -143,13 +153,18 @@ class AllVars(Fix):
             )
             raise RecipeError(msg)
 
-    def _fix_rotated_coords(self, cube, domain, domain_info):
+    def _fix_rotated_coords(
+        self,
+        cube: iris.cube.Cube,
+        domain: xr.Dataset,
+        domain_info: dict[str, str | float],
+    ) -> None:
         """Fix rotated coordinates."""
         for dim_coord in ["rlat", "rlon"]:
             old_coord = cube.coord(domain[dim_coord].standard_name)
             old_coord_dims = old_coord.cube_dims(cube)
             points = domain[dim_coord].data
-            coord_system = iris.coord_systems.RotatedGeogCS(
+            coord_system = RotatedGeogCS(
                 grid_north_pole_latitude=domain_info["pollat"],
                 grid_north_pole_longitude=domain_info["pollon"],
             )
@@ -166,7 +181,11 @@ class AllVars(Fix):
             cube.remove_coord(old_coord)
             cube.add_dim_coord(new_coord, old_coord_dims)
 
-    def _fix_geographical_coords(self, cube, domain):
+    def _fix_geographical_coords(
+        self,
+        cube: iris.cube.Cube,
+        domain: xr.Dataset,
+    ) -> None:
         """Fix geographical coordinates."""
         for aux_coord in ["lat", "lon"]:
             old_coord = cube.coord(domain[aux_coord].standard_name)
@@ -191,7 +210,10 @@ class AllVars(Fix):
             ) + cube.coord(var_name="rlon").cube_dims(cube)
             cube.add_aux_coord(new_coord, aux_coord_dims)
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(
+        self,
+        cubes: Sequence[iris.cube.Cube],
+    ) -> Sequence[iris.cube.Cube]:
         """Fix CORDEX rotated grids.
 
         Set rotated and geographical coordinates to the
@@ -202,12 +224,13 @@ class AllVars(Fix):
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
+        cubes :
             Input cubes.
 
         Returns
         -------
-        iris.cube.CubeList
+        :
+            Fixed cubes.
         """
         data_domain = self.extra_facets["domain"]
         domain = _get_domain(data_domain)
