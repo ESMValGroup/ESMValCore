@@ -14,17 +14,20 @@ from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+import cordex as cx
 import dask.array as da
 import iris
 import iris.coords
 import numpy as np
 import stratify
+from cf_units import Unit
 from geopy.geocoders import Nominatim
 from iris.analysis import (
     AreaWeighted,
     Linear,
     Nearest,
 )
+from iris.coord_systems import RotatedGeogCS
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
@@ -194,6 +197,85 @@ def parse_cell_spec(spec: str) -> tuple[float, float]:
         raise ValueError(emsg.format(dlat))
 
     return dlon, dlat
+
+
+def is_cordex_domain(spec: str) -> bool:
+    """Return ``True`` if ``spec`` is a known CORDEX domain name.
+
+    Parameters
+    ----------
+    spec:
+        Candidate CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    bool
+        Whether ``spec`` is recognised by :mod:`cordex`.
+    """
+    try:
+        cx.domain_info(spec)
+    except KeyError:
+        return False
+    return True
+
+
+@functools.lru_cache
+def _cordex_stock_cube(domain_name: str) -> Cube:
+    """Create a stock cube for a CORDEX domain target grid.
+
+    Parameters
+    ----------
+    domain_name:
+        CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    iris.cube.Cube
+        Dummy cube with rotated-pole dimension coordinates and geographical
+        auxiliary coordinates matching the official domain specification.
+    """
+    domain = cx.cordex_domain(domain_name, bounds=True)
+    domain_info = cx.domain_info(domain_name)
+    coord_system = RotatedGeogCS(
+        grid_north_pole_latitude=domain_info["pollat"],
+        grid_north_pole_longitude=domain_info["pollon"],
+    )
+
+    coords_spec = []
+    for dim_index, dim_coord in enumerate(["rlat", "rlon"]):
+        var = domain[dim_coord]
+        coord = iris.coords.DimCoord(
+            var.data,
+            var_name=dim_coord,
+            standard_name=var.attrs.get("standard_name"),
+            long_name=var.attrs.get("long_name"),
+            units=Unit("degrees"),
+            coord_system=coord_system,
+        )
+        coord.guess_bounds()
+        coords_spec.append((coord, dim_index))
+
+    shape = (domain.sizes["rlat"], domain.sizes["rlon"])
+    dummy = np.empty(shape, dtype=np.int32)
+    cube = Cube(dummy, dim_coords_and_dims=coords_spec)
+
+    aux_dims = cube.coord_dims(cube.coord(var_name="rlat")) + cube.coord_dims(
+        cube.coord(var_name="rlon"),
+    )
+    for aux_coord in ["lat", "lon"]:
+        var = domain[aux_coord]
+        bounds_var = domain[f"{aux_coord}_vertices"]
+        coord = iris.coords.AuxCoord(
+            var.data,
+            var_name=aux_coord,
+            standard_name=var.attrs.get("standard_name"),
+            long_name=var.attrs.get("long_name"),
+            units=Unit(var.attrs.get("units", "degrees")),
+            bounds=bounds_var.data,
+        )
+        cube.add_aux_coord(coord, aux_dims)
+
+    return cube
 
 
 def _generate_cube_from_dimcoords(
@@ -608,19 +690,22 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
-        # Generate a target grid from the provided cell-specification
-        target_grid_cube = _global_stock_cube(
-            target_grid,
-            lat_offset,
-            lon_offset,
-        )
-        # Align the target grid coordinate system to the source
-        # coordinate system.
-        src_cs = cube.coord_system()
-        xcoord = target_grid_cube.coord(axis="x", dim_coords=True)
-        ycoord = target_grid_cube.coord(axis="y", dim_coords=True)
-        xcoord.coord_system = src_cs
-        ycoord.coord_system = src_cs
+        if is_cordex_domain(target_grid):
+            target_grid_cube = _cordex_stock_cube(target_grid)
+        else:
+            # Generate a target grid from the provided cell-specification
+            target_grid_cube = _global_stock_cube(
+                target_grid,
+                lat_offset,
+                lon_offset,
+            )
+            # Align the target grid coordinate system to the source
+            # coordinate system.
+            src_cs = cube.coord_system()
+            xcoord = target_grid_cube.coord(axis="x", dim_coords=True)
+            ycoord = target_grid_cube.coord(axis="y", dim_coords=True)
+            xcoord.coord_system = src_cs
+            ycoord.coord_system = src_cs
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid_cube = _regional_stock_cube(target_grid)
