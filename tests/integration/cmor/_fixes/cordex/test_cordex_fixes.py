@@ -13,7 +13,6 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     MOHCHadREM3GA705,
     TimeLongName,
 )
-from esmvalcore.exceptions import RecipeError
 
 
 @pytest.fixture
@@ -204,6 +203,7 @@ def test_rotated_grid_fix(cordex_cubes):
             "domain": "EUR-11",
             "dataset": "DATASET",
             "driver": "DRIVER",
+            "use_standard_grid": True,
         },
     )
     domain = cx.cordex_domain("EUR-11", bounds=True)
@@ -212,7 +212,7 @@ def test_rotated_grid_fix(cordex_cubes):
             cube_coord = cube.coord(var_name=coord)
             cube_coord.points = domain[coord].data + 1e-6
     out_cubes = fix.fix_metadata(cordex_cubes)
-    assert cordex_cubes is out_cubes
+    assert len(out_cubes) == len(cordex_cubes)
     for out_cube in out_cubes:
         for coord in ["rlat", "rlon", "lat", "lon"]:
             cube_coord = out_cube.coord(var_name=coord)
@@ -220,22 +220,27 @@ def test_rotated_grid_fix(cordex_cubes):
             np.testing.assert_array_equal(cube_coord.points, domain_coord)
 
 
-def test_rotated_grid_fix_error(cordex_cubes):
+def test_rotated_grid_fix_warning(cordex_cubes, caplog):
     fix = AllVars(
         vardef=None,
         extra_facets={
             "domain": "EUR-11",
             "dataset": "DATASET",
             "driver": "DRIVER",
+            "use_standard_grid": True,
         },
     )
+    domain = cx.cordex_domain("EUR-11", bounds=True)
+    for cube in cordex_cubes:
+        for coord in ["rlat", "rlon", "lat", "lon"]:
+            cube_coord = cube.coord(var_name=coord)
+            cube_coord.points = domain[coord].data + 1.0e-3
+    fix.fix_metadata(cordex_cubes)
     msg = (
-        "Differences between the original grid and the "
-        "standardised grid are above 10e-4 degrees."
+        "Maximum difference between original grid_latitude points and standard "
+        "EUR-11 domain points for dataset DATASET and driver DRIVER is: 0.001"
     )
-    with pytest.raises(RecipeError) as exc:
-        fix.fix_metadata(cordex_cubes)
-    assert msg == exc.value.message
+    assert msg in caplog.text
 
 
 def test_lambert_grid_warning(cubes, caplog):

@@ -11,14 +11,15 @@ import iris
 import iris.coords
 import iris.cube
 import numpy as np
+import pyproj
 from cf_units import Unit
-from iris.coord_systems import LambertConformal, RotatedGeogCS
+from iris.coord_systems import GeogCS, LambertConformal, RotatedGeogCS
+from iris.fileformats.pp import EARTH_RADIUS
 
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.exceptions import RecipeError
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
 
     import xarray as xr
 
@@ -132,26 +133,31 @@ class CLMcomCCLM4817(Fix):
 class AllVars(Fix):
     """General CORDEX grid fix."""
 
-    def _check_grid_differences(self, old_coord, new_coord):
+    def _check_grid_differences(
+        self,
+        old_cube: iris.cube.Cube,
+        new_cube: iris.cube.Cube,
+        coordinates: Iterable[str],
+        max_diff: float,
+    ) -> None:
         """Check differences between coords."""
-        diff = np.max(np.abs(old_coord.points - new_coord.points))
-        logger.debug(
-            "Maximum difference between original %s"
-            "points and standard %s domain points  "
-            "for dataset %s and driver %s is: %s.",
-            new_coord.var_name,
-            self.extra_facets["domain"],
-            self.extra_facets["dataset"],
-            self.extra_facets["driver"],
-            str(diff),
-        )
-
-        if diff > 10e-4:
-            msg = (
-                "Differences between the original grid and the "
-                f"standardised grid are above 10e-4 {new_coord.units}."
+        for coord_name in coordinates:
+            old_coord = old_cube.coord(coord_name)
+            new_coord = new_cube.coord(coord_name)
+            diff = np.max(np.abs(old_coord.points - new_coord.points))
+            log_function = logger.warning if diff > max_diff else logger.debug
+            log_function(
+                "Maximum difference between original %s "
+                "points and standard %s domain points "
+                "for dataset %s and driver %s is: %s.",
+                new_coord.standard_name,
+                self.extra_facets["domain"],
+                self.extra_facets["dataset"],
+                self.extra_facets["driver"],
+                str(diff),
             )
-            raise RecipeError(msg)
+            # TODO: Should we check bounds too?
+            # TODO: Handle 360 degree longitude wrap-around for longitude bounds?
 
     def _fix_rotated_coords(
         self,
@@ -176,7 +182,6 @@ class AllVars(Fix):
                 units=Unit("degrees"),
                 coord_system=coord_system,
             )
-            self._check_grid_differences(old_coord, new_coord)
             new_coord.guess_bounds()
             cube.remove_coord(old_coord)
             cube.add_dim_coord(new_coord, old_coord_dims)
@@ -204,11 +209,115 @@ class AllVars(Fix):
                 lon_inds = (new_coord.points < 0.0) & (old_coord.points > 0.0)
                 old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.0
 
-            self._check_grid_differences(old_coord, new_coord)
             aux_coord_dims = cube.coord(var_name="rlat").cube_dims(
                 cube,
             ) + cube.coord(var_name="rlon").cube_dims(cube)
             cube.add_aux_coord(new_coord, aux_coord_dims)
+
+    def _use_standard_lambert_conformal_grid(
+        self,
+        cube: iris.cube.Cube,
+    ) -> None:
+        """Use standard Lambert Conformal grid.
+
+        Parameters
+        ----------
+        cube :
+            Apply the standard Lambert Conformal grid to this cube.
+
+        """
+        domain_step = {
+            "11": 12500,
+            "22": 25000,
+            "44": 50000,
+        }
+
+        # Update the projection coordinates.
+        domain_resolution = self.extra_facets["domain"].split("-")[-1]
+        if domain_resolution not in domain_step:
+            logger.warning(
+                "Unable to use standard grid for dataset %s and driver %s "
+                "because domain resolution %s is not supported, choose from %s.",
+                self.extra_facets["dataset"],
+                self.extra_facets["driver"],
+                domain_resolution,
+                ", ".join(domain_step.keys()),
+            )
+            return
+
+        step = domain_step[domain_resolution]
+
+        # Update the projection coordinates and bounds.
+        x_coord = cube.coord("projection_x_coordinate")
+        x_size = x_coord.shape[0]
+        x_coord.points = step * np.linspace(
+            -0.5 * (x_size - 1),
+            0.5 * (x_size - 1),
+            x_size,
+        )
+        x_coord.units = "m"
+        x_coord.guess_bounds()
+
+        y_coord = cube.coord("projection_y_coordinate")
+        y_size = y_coord.shape[0]
+        y_coord.points = step * np.linspace(
+            -0.5 * (y_size - 1),
+            0.5 * (y_size - 1),
+            y_size,
+        )
+        y_coord.units = "m"
+        y_coord.guess_bounds()
+
+        # Define the transformation from projection coordinates to
+        # geographic coordinates.
+        transformer = pyproj.Transformer.from_crs(
+            crs_from=x_coord.coord_system.as_cartopy_crs(),
+            crs_to=GeogCS(EARTH_RADIUS).as_cartopy_crs(),
+            always_xy=True,
+        )
+
+        # Update the latitude and longitude points.
+        cube.coord("latitude").points, cube.coord("longitude").points = (
+            transformer.transform(
+                *np.meshgrid(x_coord.points, y_coord.points),
+                errcheck=True,
+            )
+        )
+
+        # Update the latitude and longitude bounds.
+        #
+        # Compute the bounds of the grid by indexing the bounds arrays
+        # according to
+        # https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#cell-boundaries
+        # and transforming the resulting bounds to lat/lon coordinates.
+        x_bounds = np.concatenate(
+            [x_coord.bounds[:1, 0], x_coord.bounds[:, 1]],
+        )
+        y_bounds = np.concatenate(
+            [y_coord.bounds[:1, 0], y_coord.bounds[:, 1]],
+        )
+        n_vertices = 4
+        x_idx = np.arange(x_size).reshape(1, x_size).repeat(
+            y_size,
+            axis=0,
+        ).reshape(x_size, y_size, 1) + np.array([0, 1, 1, 0]).reshape(
+            (1, 1, n_vertices),
+        )
+        y_idx = np.arange(y_size).reshape(y_size, 1).repeat(
+            x_size,
+            axis=1,
+        ).reshape(x_size, y_size, 1) + np.array([0, 0, 1, 1]).reshape(
+            (1, 1, n_vertices),
+        )
+        x_vertices = x_bounds[x_idx]
+        y_vertices = y_bounds[y_idx]
+        cube.coord("longitude").bounds, cube.coord("latitude").bounds = (
+            transformer.transform(
+                x_vertices,
+                y_vertices,
+                errcheck=True,
+            )
+        )
 
     def fix_metadata(
         self,
@@ -235,16 +344,53 @@ class AllVars(Fix):
         data_domain = self.extra_facets["domain"]
         domain = _get_domain(data_domain)
         domain_info = _get_domain_info(data_domain)
+
         for cube in cubes:
             coord_system = cube.coord_system()
-            if isinstance(coord_system, RotatedGeogCS):
-                self._fix_rotated_coords(cube, domain, domain_info)
-                self._fix_geographical_coords(cube, domain)
-            elif isinstance(coord_system, LambertConformal):
+            if isinstance(coord_system, LambertConformal):
                 logger.warning(
                     "Support for CORDEX datasets in a Lambert Conformal "
                     "coordinate system is ongoing. Certain preprocessor "
                     "functions may fail.",
                 )
+        if not self.extra_facets.get("use_standard_grid"):
+            return cubes
 
-        return cubes
+        result = []
+        for cube in cubes:
+            coord_system = cube.coord_system()
+            updated_cube = cube.copy()
+            if isinstance(coord_system, RotatedGeogCS):
+                self._fix_rotated_coords(updated_cube, domain, domain_info)
+                self._fix_geographical_coords(updated_cube, domain)
+                self._check_grid_differences(
+                    cube,
+                    updated_cube,
+                    coordinates=[
+                        "grid_latitude",
+                        "grid_longitude",
+                        "latitude",
+                        "longitude",
+                    ],
+                    max_diff=10e-4,  # degrees
+                )
+            elif isinstance(coord_system, LambertConformal):
+                self._use_standard_lambert_conformal_grid(updated_cube)
+                self._check_grid_differences(
+                    cube,
+                    updated_cube,
+                    coordinates=[
+                        "projection_x_coordinate",
+                        "projection_y_coordinate",
+                    ],
+                    max_diff=1000.0,  # meter
+                )
+                self._check_grid_differences(
+                    cube,
+                    updated_cube,
+                    coordinates=["latitude", "longitude"],
+                    max_diff=10e-4,  # degrees
+                )
+            result.append(updated_cube)
+
+        return result
