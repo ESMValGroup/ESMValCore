@@ -7,6 +7,9 @@ projects:
         rootpath: ~/climate_data
         dirname_template: "{exp}"
         filename_template: "{exp}_{var_type}*.nc"
+        ignore_warnings:
+          - message: "Failed to create 'height' dimension coordinate: The 'height' DimCoord bounds array must be strictly monotonic."
+            module: iris
       icon-outdata:
         <<: *icon
         dirname_template: "{exp}/outdata"

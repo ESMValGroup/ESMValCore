@@ -2472,7 +2472,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
         assert dataset.supplementaries == []
 
 
-def test_wrong_project(tmp_path, patched_datafinder, session):
+def test_wrong_branding_suffix(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -2484,7 +2484,8 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
               tos:
                 preprocessor: preproc
                 project: CMIP7
-                mip: Omon
+                mip: ocean
+                branding_suffix: wrong
                 exp: historical
                 start_year: 2000
                 end_year: 2005
@@ -2493,10 +2494,7 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'"
-    )
+    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
@@ -3888,14 +3886,13 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: CMIP7, CMIP6, CMIP5, CMIP3, "
-        "CORDEX, obs4MIPs, ana4MIPs, native6, ACCESS, CESM, EMAC, ICON, IPSLCM, "
-        'OBS6, OBS."'
+        'The following tables are available: .*."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
+    assert re.match(msg, exc.value.failed_tasks[0].message)
+    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
@@ -3923,7 +3920,7 @@ def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "align_metadata failed: Variable 'zzz' not available for table 'Amon' "
+        "align_metadata failed: Variable 'zzz' not available in table 'Amon' "
         "of project 'CMIP6'. Set `strict=False` to ignore this."
     )
     with pytest.raises(RecipeError) as exc:

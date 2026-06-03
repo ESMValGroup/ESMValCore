@@ -7,6 +7,7 @@ from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5 import (
     aladin63,
     wrf381p,
 )
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -99,3 +100,14 @@ def test_wrf381p_height_fix():
     fix = wrf381p.Tas(vardef)
     out_cubes = fix.fix_metadata([cube])
     assert out_cubes[0].coord("height").points == 2.0
+
+
+def test_get_cclm4_8_17fix() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "Amon",
+        "ts",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)

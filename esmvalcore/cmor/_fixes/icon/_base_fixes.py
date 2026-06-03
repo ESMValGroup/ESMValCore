@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 import shutil
@@ -162,9 +163,7 @@ class IconFix(NativeDatasetFix):
                 f"necessary to download the ICON horizontal grid file:\n"
                 f"{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         grid_url = cube.attributes[self.GRID_FILE_ATTR]
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name
@@ -223,9 +222,7 @@ class IconFix(NativeDatasetFix):
                     f"relative to the auxiliary_data_dir "
                     f"'{self.session['auxiliary_data_dir']}')"
                 )
-                raise FileNotFoundError(
-                    msg,
-                )
+                raise FileNotFoundError(msg)
             path = new_path
         return path
 
@@ -326,17 +323,17 @@ class IconFix(NativeDatasetFix):
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
         """Try to get grid from the ICON rootpath."""
-        glob_patterns: list[Path] = []
         for data_source in _get_data_sources(self.session, "ICON"):  # type: ignore[arg-type]
             if isinstance(data_source, esmvalcore.io.local.LocalDataSource):
-                glob_patterns.extend(
-                    data_source._get_glob_patterns(**self.extra_facets),  # noqa: SLF001
-                )
-        possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
-        for grid_path in possible_grid_paths:
-            if grid_path.is_file():
-                logger.debug("Using ICON grid file '%s'", grid_path)
-                return self._load_cubes(grid_path)
+                ds = copy.deepcopy(data_source)
+                ds.filename_template = grid_name
+                icon_grid_facets = dict(self.extra_facets)
+                icon_grid_facets.pop("timerange", None)
+                icon_grid_facets["frequency"] = "fx"
+                files = ds.find_data(**icon_grid_facets)
+                if files:
+                    logger.debug("Using ICON grid file '%s'", files[0])
+                    return files[0].to_iris()
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -516,21 +513,8 @@ class IconFix(NativeDatasetFix):
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
-                message="Ignoring netCDF variable .* invalid units .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris < 3.8
-            warnings.filterwarnings(
-                "ignore",
-                message="Ignoring invalid units .* on netCDF variable .*",
-                category=UserWarning,
-                module="iris",
-            )  # iris >= 3.8
-            warnings.filterwarnings(
-                "ignore",
                 message="Failed to create 'height' dimension coordinate: The "
-                "'height' DimCoord bounds array must be strictly "
-                "monotonic.",
+                "'height' DimCoord bounds array must be strictly monotonic.",
                 category=UserWarning,
                 module="iris",
             )
@@ -650,9 +634,7 @@ class AllVarsBase(IconFix):
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):
@@ -678,9 +660,7 @@ class AllVarsBase(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     def _get_z_coord(
         self,
@@ -987,9 +967,7 @@ class AllVarsBase(IconFix):
                     f"got {datetime_point}. Use `shift_time=false` in the "
                     f"recipe to disable this feature"
                 )
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
 
         # Decadal data
         if "dec" in freq:
@@ -1082,9 +1060,7 @@ class AllVarsBase(IconFix):
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         new_t_units = Unit(
             "days since 1850-01-01",
             calendar="proleptic_gregorian",

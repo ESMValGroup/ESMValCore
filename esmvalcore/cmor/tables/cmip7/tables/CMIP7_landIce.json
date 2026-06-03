@@ -1,7 +1,7 @@
 {
     "Header": {
-        "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: 639b8a5de8ec292e1b2696f4a87c562d",
+        "Conventions": "CF-1.12",
+        "checksum": "md5: 8303fc30b9d901710b7bc55f146cc041",
         "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "landIce",
-        "table_date": "2026-01-07 10:30:23",
+        "table_date": "2026-04-21 15:01:29",
         "table_id": "landIce",
         "type": "real",
         "valid_max": "",

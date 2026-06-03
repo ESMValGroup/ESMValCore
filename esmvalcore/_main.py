@@ -173,7 +173,7 @@ class Config:
     def __init__(self) -> None:
         from rich.console import Console
 
-        self.console = Console(soft_wrap=True)
+        self._console = Console(soft_wrap=True)
 
     def show(
         self,
@@ -196,6 +196,7 @@ class Config:
         """
         import yaml
         from nested_lookup import nested_delete
+        from rich.markdown import Markdown
         from rich.syntax import Syntax
 
         from esmvalcore.config import CFG
@@ -213,8 +214,8 @@ class Config:
             msg += ", excluding the keys " + ", ".join(
                 f"'{key}'" for key in filter
             )
-        self.console.print(f"{msg}:")
-        self.console.print(
+        self._console.print(Markdown(f"{msg}:\n<br>"))
+        self._console.print(
             Syntax(
                 yaml.safe_dump(cfg),
                 "yaml",
@@ -274,7 +275,7 @@ class Config:
                     f"- `{f.relative_to(config_dir)}`: {description(f)}"
                     for f in files
                 ]
-        self.console.print(Markdown("\n".join(msg)))
+        self._console.print(Markdown("\n".join(msg)))
 
     def copy(
         self,
@@ -460,28 +461,48 @@ class Recipes:
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
 
-    @staticmethod
-    def list() -> None:
+    def __init__(self) -> None:
+        from rich.console import Console
+
+        self._console = Console(soft_wrap=True)
+
+    def list(self) -> None:
         """List all installed recipes.
 
         Show all installed recipes, grouped by folder.
         """
-        from .config._diagnostics import DIAGNOSTICS
-        from .config._logging import configure_logging
+        import yaml
+        from rich.markdown import Markdown
 
-        configure_logging(console_log_level="info")
+        from .config._diagnostics import DIAGNOSTICS
+
         recipes_folder = DIAGNOSTICS.recipes
-        logger.info("Showing recipes installed in %s", recipes_folder)
-        print("# Installed recipes")  # noqa: T201
-        for recipe_root, _, files in sorted(os.walk(recipes_folder)):
-            root = os.path.relpath(recipe_root, recipes_folder)
-            if root == ".":
-                root = ""
-            if root:
-                print(f"\n# {root.replace(os.sep, ' - ').title()}")  # noqa: T201
+        messages = [f"# ESMValTool recipes available in `{DIAGNOSTICS.path}`"]
+        for recipe_root, _, files in sorted(recipes_folder.walk()):
+            subdir = recipe_root.relative_to(recipes_folder).as_posix()
+            if subdir == ".":
+                subdir = ""
+            if subdir:
+                messages.append(
+                    f"\n## {subdir.replace(os.sep, ' - ').title()}",
+                )
             for filename in sorted(files):
-                if filename.endswith(".yml"):
-                    print(os.path.join(root, filename))  # noqa: T201
+                recipe = recipe_root / filename
+                if recipe.suffix == ".yml":
+                    title = (
+                        (
+                            yaml.safe_load(
+                                recipe.read_text(encoding="utf-8"),
+                            )
+                            or {}
+                        )
+                        .get("documentation", {})
+                        .get("title", "")
+                    )
+                    messages.append(
+                        f"- `{recipe.relative_to(recipes_folder)}`: {title}",
+                    )
+        self._console.print(Markdown("\n".join(messages)))
 
     @staticmethod
     def get(recipe: str) -> None:
@@ -512,8 +533,7 @@ class Recipes:
         shutil.copy(installed_recipe, Path(recipe).name)
         logger.info("Recipe %s successfully copied", recipe)
 
-    @staticmethod
-    def show(recipe: str) -> None:
+    def show(self, recipe: str) -> None:
         """Show the given recipe in console.
 
         Use this command to see the contents of any installed recipe.
@@ -523,11 +543,12 @@ class Recipes:
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
+        from rich.markdown import Markdown
+        from rich.syntax import Syntax
+
         from .config._diagnostics import DIAGNOSTICS
-        from .config._logging import configure_logging
         from .exceptions import RecipeError
 
-        configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
             msg = (
@@ -535,10 +556,14 @@ class Recipes:
                 'execute "esmvaltool list"'
             )
             raise RecipeError(msg)
-        msg = f"Recipe {recipe}"
-        logger.info(msg)
-        logger.info("=" * len(msg))
-        print(installed_recipe.read_text(encoding="utf-8"))  # noqa: T201
+        self._console.print(Markdown(f"# Recipe `{recipe}`"))
+        self._console.print(
+            Syntax(
+                installed_recipe.read_text(encoding="utf-8"),
+                "yaml",
+                background_color="default",
+            ),
+        )
 
 
 class ESMValTool:
