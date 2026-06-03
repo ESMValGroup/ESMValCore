@@ -414,6 +414,54 @@ This feature is disabled by default, but enabled by default for models with
 known issues through the default
 `CORDEX extra facets file <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/extra_facets_cordex.yml>`__.
 
+.. warning::
+
+  If `use_standard_grid: true` is used, the tool will overwrite the existing grid
+  information. It is recommended to visualize the resulting data and compare it
+  to easily recognizable features (e.g. coastlines) to make sure the grid is
+  correct before using it in an aggregated manner.
+
+  Example Python script to visualize the grid of a CORDEX dataset and compare it
+  to coastlines:
+
+  .. code-block:: python
+
+      from esmvalcore.dataset import Dataset
+      import iris.quickplot
+      import matplotlib.pyplot as plt
+
+      ds = Dataset(
+          short_name="sftlf",
+          mip="fx",
+          project="CORDEX",
+          domain="EUR-11",
+          dataset="ALADIN63",
+          driver="CNRM-CERFACS-CNRM-CM5",
+          institute="CNRM",
+          exp="historical",
+          ensemble="r1i1p1",
+          rcm_version="v2",
+          use_standard_grid=True,
+      )
+      cube = ds.load()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["projection_x_coordinate", "projection_y_coordinate"],
+      )
+      plt.gca().coastlines()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["longitude", "latitude"],
+      )
+      plt.gca().coastlines()
+
+      plt.show()
+
+
 .. _`yaml`: https://yaml.org/refcard.html
 
 .. _Preprocessors:
