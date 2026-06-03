@@ -254,6 +254,8 @@ class Fix:
         if extra_facets is None:
             extra_facets = {}
 
+        extra_facets["dataset"] = dataset
+
         vardef = get_var_info(
             project,
             mip,
@@ -270,7 +272,6 @@ class Fix:
         fixes_modules = []
         if project == "cordex":
             driver = extra_facets["driver"].replace("-", "_").lower()
-            extra_facets["dataset"] = dataset
             with contextlib.suppress(ImportError):
                 fixes_modules.append(
                     importlib.import_module(

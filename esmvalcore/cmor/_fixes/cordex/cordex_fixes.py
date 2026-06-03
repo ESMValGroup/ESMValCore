@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING
@@ -35,6 +36,19 @@ def _get_domain(data_domain: str) -> xr.Dataset:
 @lru_cache
 def _get_domain_info(data_domain: str) -> dict[str, str | float]:
     return cx.domain_info(data_domain)
+
+
+_PROJECTION_STEP_IN_METERS = {
+    "11": 12500,
+    "22": 25000,
+    "44": 50000,
+}
+
+
+def _get_projection_step(domain: str) -> float | None:
+    """Get the projection step in meters for a given CORDEX domain."""
+    domain_resolution = domain.rsplit("-", maxsplit=1)[-1]
+    return _PROJECTION_STEP_IN_METERS.get(domain_resolution)
 
 
 class MOHCHadREM3GA705(Fix):
@@ -144,17 +158,24 @@ class AllVars(Fix):
         for coord_name in coordinates:
             old_coord = old_cube.coord(coord_name)
             new_coord = new_cube.coord(coord_name)
+            with contextlib.suppress(ValueError):
+                # Try to convert old_coord to the same units as new_coord for a
+                # a more informative log message.
+                old_coord = old_coord.copy()
+                old_coord.convert_units(new_coord.units)
             diff = np.max(np.abs(old_coord.points - new_coord.points))
             log = logger.warning if diff > max_diff else logger.debug
             log(
                 "Maximum difference between original %s "
                 "points and standard %s domain points "
-                "for variable %s from dataset %s and driver %s is: %s %s.",
+                "for variable %s from dataset %s is %s %s. "
+                "Consider visualizing the data on a map and comparing with "
+                "recognizable features such as coastlines to check that the "
+                "grid is correct.",
                 new_coord.standard_name,
                 self.extra_facets["domain"],
                 self.extra_facets["short_name"],
                 self.extra_facets["dataset"],
-                self.extra_facets["driver"],
                 str(diff),
                 new_coord.units,
             )
@@ -228,26 +249,16 @@ class AllVars(Fix):
             Apply the standard Lambert Conformal grid to this cube.
 
         """
-        domain_step = {
-            "11": 12500,
-            "22": 25000,
-            "44": 50000,
-        }
-
         # Update the projection coordinates.
-        domain_resolution = self.extra_facets["domain"].split("-")[-1]
-        if domain_resolution not in domain_step:
+        step = _get_projection_step(self.extra_facets["domain"])
+        if step is None:
             logger.warning(
-                "Unable to use standard grid for dataset %s and driver %s "
-                "because domain resolution %s is not supported, choose from %s.",
-                self.extra_facets["dataset"],
-                self.extra_facets["driver"],
-                domain_resolution,
-                ", ".join(domain_step.keys()),
+                "Unable to use standard Lambert Conformal grid for domain %s, "
+                "choose a domain ending with %s.",
+                self.extra_facets["domain"],
+                ", ".join(_PROJECTION_STEP_IN_METERS.keys()),
             )
             return
-
-        step = domain_step[domain_resolution]
 
         # Update the projection coordinates and bounds.
         x_coord = cube.coord("projection_x_coordinate")
@@ -362,6 +373,12 @@ class AllVars(Fix):
         for cube in cubes:
             coord_system = cube.coord_system()
             updated_cube = cube.copy()
+            # Set the maximum allowed difference between the original and
+            # standard grid points to 10% of the grid spacing:
+            max_tolerance_degrees = 0.1 * domain_info["dlon"]  # type: ignore[operator]
+            max_tolerance_meters = 0.1 * (
+                _get_projection_step(self.extra_facets["domain"]) or 10000.0
+            )
             if isinstance(coord_system, RotatedGeogCS):
                 self._fix_rotated_coords(updated_cube, domain, domain_info)
                 self._fix_geographical_coords(updated_cube, domain)
@@ -374,7 +391,7 @@ class AllVars(Fix):
                         "latitude",
                         "longitude",
                     ],
-                    max_diff=10e-4,  # degrees
+                    max_diff=max_tolerance_degrees,  # degrees
                 )
             elif isinstance(coord_system, LambertConformal):
                 self._use_standard_lambert_conformal_grid(updated_cube)
@@ -385,13 +402,13 @@ class AllVars(Fix):
                         "projection_x_coordinate",
                         "projection_y_coordinate",
                     ],
-                    max_diff=1000.0,  # meter
+                    max_diff=max_tolerance_meters,  # meter
                 )
                 self._check_grid_differences(
                     cube,
                     updated_cube,
                     coordinates=["latitude", "longitude"],
-                    max_diff=10e-4,  # degrees
+                    max_diff=max_tolerance_degrees,  # degrees
                 )
             result.append(updated_cube)
 
