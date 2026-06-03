@@ -208,7 +208,7 @@ def test_config_show(
     with arguments("esmvaltool", "config", "show", "--filter="):
         run()
     stdout = capsys.readouterr().out
-    expected_header = "Current configuration\n"
+    expected_header = "Current configuration:\n"
     assert expected_header in stdout
     cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
@@ -224,7 +224,7 @@ def test_config_show_single_project(
     with arguments("esmvaltool", "config", "show", "--project=CMIP7"):
         run()
     stdout = capsys.readouterr().out
-    expected_header = "# Current configuration for project 'CMIP7', excluding the keys 'extra_facets':\n"
+    expected_header = "Current configuration for project 'CMIP7', excluding the keys 'extra_facets':\n"
     assert expected_header in stdout
     cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
@@ -241,9 +241,7 @@ def test_config_show_filter(
     with arguments("esmvaltool", "config", "show", "--filter=projects"):
         run()
     stdout = capsys.readouterr().out
-    expected_header = (
-        "# Current configuration, excluding the keys 'projects':\n"
-    )
+    expected_header = "Current configuration, excluding the keys 'projects':\n"
     assert expected_header in stdout
     cfg_txt = stdout.split(expected_header)[1]
     cfg = yaml.safe_load(cfg_txt)
@@ -257,7 +255,7 @@ def test_config_show_brief_by_default(capsys: pytest.CaptureFixture) -> None:
         run()
     stdout = capsys.readouterr().out
     expected_header = (
-        "Current configuration, excluding the keys 'extra_facets'\n"
+        "Current configuration, excluding the keys 'extra_facets':\n"
     )
     assert expected_header in stdout
     # Check that the configuration that is listed by default is sufficiently
