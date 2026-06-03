@@ -157,16 +157,22 @@ class AllVars(Fix):
     ) -> None:
         """Check differences between coords."""
         for coord_name in coordinates:
-            old_coord = old_cube.coord(coord_name)
             new_coord = new_cube.coord(coord_name)
+            old_coord = old_cube.coord(coord_name).copy()
             with contextlib.suppress(
                 ValueError,
                 iris.exceptions.UnitConversionError,
             ):
                 # Try to convert old_coord to the same units as new_coord for a
                 # a more informative log message.
-                old_coord = old_coord.copy()
                 old_coord.convert_units(new_coord.units)
+            if coord_name == "longitude":
+                # Avoid issuing a warning due to the new coordinate being on the
+                # other side of the zero meridian compared to the old coordinate
+                # as described in https://github.com/ESMValGroup/ESMValCore/issues/2036.
+                # Check adapted from: https://github.com/ESMValGroup/ESMValCore/pull/2334.
+                lon_inds = (new_coord.points < 0.0) & (old_coord.points > 0.0)
+                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.0
             diff = np.max(np.abs(old_coord.points - new_coord.points))
             log = logger.warning if diff > max_diff else logger.debug
             log(
@@ -184,7 +190,6 @@ class AllVars(Fix):
                 new_coord.units,
             )
             # TODO: Should we check bounds too?
-            # TODO: Handle 360 degree longitude wrap-around for longitude bounds?
 
     def _fix_rotated_coords(
         self,
