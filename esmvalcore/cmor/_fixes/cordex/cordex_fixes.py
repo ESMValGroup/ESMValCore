@@ -145,16 +145,18 @@ class AllVars(Fix):
             old_coord = old_cube.coord(coord_name)
             new_coord = new_cube.coord(coord_name)
             diff = np.max(np.abs(old_coord.points - new_coord.points))
-            log_function = logger.warning if diff > max_diff else logger.debug
-            log_function(
+            log = logger.warning if diff > max_diff else logger.debug
+            log(
                 "Maximum difference between original %s "
                 "points and standard %s domain points "
-                "for dataset %s and driver %s is: %s.",
+                "for variable %s from dataset %s and driver %s is: %s %s.",
                 new_coord.standard_name,
                 self.extra_facets["domain"],
+                self.extra_facets["short_name"],
                 self.extra_facets["dataset"],
                 self.extra_facets["driver"],
                 str(diff),
+                new_coord.units,
             )
             # TODO: Should we check bounds too?
             # TODO: Handle 360 degree longitude wrap-around for longitude bounds?
@@ -277,7 +279,7 @@ class AllVars(Fix):
         )
 
         # Update the latitude and longitude points.
-        cube.coord("latitude").points, cube.coord("longitude").points = (
+        cube.coord("longitude").points, cube.coord("latitude").points = (
             transformer.transform(
                 *np.meshgrid(x_coord.points, y_coord.points),
                 errcheck=True,
