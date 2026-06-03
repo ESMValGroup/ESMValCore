@@ -234,11 +234,11 @@ def test_rotated_grid_fix_warning(cordex_cubes, caplog):
     for cube in cordex_cubes:
         for coord in ["rlat", "rlon", "lat", "lon"]:
             cube_coord = cube.coord(var_name=coord)
-            cube_coord.points = domain[coord].data + 1.0e-3
+            cube_coord.points = domain[coord].data * 1.2
     fix.fix_metadata(cordex_cubes)
     msg = (
         "Maximum difference between original grid_latitude points and standard "
-        "EUR-11 domain points for dataset DATASET and driver DRIVER is: 0.001"
+        "EUR-11 domain points for variable tas from dataset DATASET is 4.6"
     )
     assert msg in caplog.text
 

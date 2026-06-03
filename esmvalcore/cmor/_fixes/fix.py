@@ -254,8 +254,6 @@ class Fix:
         if extra_facets is None:
             extra_facets = {}
 
-        extra_facets["dataset"] = dataset
-
         vardef = get_var_info(
             project,
             mip,

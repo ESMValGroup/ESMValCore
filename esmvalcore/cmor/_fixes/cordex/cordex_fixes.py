@@ -11,6 +11,7 @@ import cordex as cx
 import iris
 import iris.coords
 import iris.cube
+import iris.exceptions
 import numpy as np
 import pyproj
 from cf_units import Unit
@@ -158,7 +159,10 @@ class AllVars(Fix):
         for coord_name in coordinates:
             old_coord = old_cube.coord(coord_name)
             new_coord = new_cube.coord(coord_name)
-            with contextlib.suppress(ValueError):
+            with contextlib.suppress(
+                ValueError,
+                iris.exceptions.UnitConversionError,
+            ):
                 # Try to convert old_coord to the same units as new_coord for a
                 # a more informative log message.
                 old_coord = old_coord.copy()
@@ -174,7 +178,7 @@ class AllVars(Fix):
                 "grid is correct.",
                 new_coord.standard_name,
                 self.extra_facets["domain"],
-                self.extra_facets["short_name"],
+                new_cube.var_name,
                 self.extra_facets["dataset"],
                 str(diff),
                 new_coord.units,
