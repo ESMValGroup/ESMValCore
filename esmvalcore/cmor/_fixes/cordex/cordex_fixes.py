@@ -41,8 +41,11 @@ def _get_domain_info(data_domain: str) -> dict[str, str | float]:
 
 _PROJECTION_STEP_IN_METERS = {
     "11": 12500,
+    "12": 12500,
     "22": 25000,
+    "25": 25000,
     "44": 50000,
+    "50": 50000,
 }
 
 

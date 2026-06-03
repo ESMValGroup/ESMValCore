@@ -392,6 +392,27 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
     )
 
 
+def test_lambert_conformal_grid_fix_domain_with_unknown_spacing() -> None:
+    """Test that the fix does not fail if the domain spacing is unknown."""
+    fixes = Fix.get_fixes(
+        project="CORDEX",
+        dataset="DATASET",
+        mip="mon",
+        short_name="tas",
+        extra_facets={
+            "domain": "EUR-11i",
+            "dataset": "DATASET",
+            "driver": "DRIVER",
+            "use_standard_grid": True,
+        },
+    )
+    fix = fixes[0]
+    assert isinstance(fix, AllVars)
+    cube = iris.cube.Cube([0])
+    (result,) = fix.fix_metadata([cube])
+    assert result == cube
+
+
 def test_lambert_grid_warning(cubes, caplog):
     fix = AllVars(
         vardef=None,
