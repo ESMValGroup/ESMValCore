@@ -13,6 +13,7 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     MOHCHadREM3GA705,
     TimeLongName,
 )
+from esmvalcore.cmor.fix import Fix
 
 
 @pytest.fixture
@@ -234,13 +235,161 @@ def test_rotated_grid_fix_warning(cordex_cubes, caplog):
     for cube in cordex_cubes:
         for coord in ["rlat", "rlon", "lat", "lon"]:
             cube_coord = cube.coord(var_name=coord)
-            cube_coord.points = domain[coord].data * 1.2
+            cube_coord.points = domain[coord].data + 1.0
     fix.fix_metadata(cordex_cubes)
     msg = (
         "Maximum difference between original grid_latitude points and standard "
-        "EUR-11 domain points for variable tas from dataset DATASET is 4.6"
+        "EUR-11 domain points for variable tas from dataset DATASET is 1.0"
     )
     assert msg in caplog.text
+
+
+@pytest.mark.parametrize("use_standard_grid", [True, False])
+def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
+    fixes = Fix.get_fixes(
+        project="CORDEX",
+        dataset="DATASET",
+        mip="mon",
+        short_name="tas",
+        extra_facets={
+            "domain": "EUR-11",
+            "dataset": "DATASET",
+            "driver": "DRIVER",
+            "use_standard_grid": use_standard_grid,
+        },
+    )
+    fix = fixes[0]
+    assert isinstance(fix, AllVars)
+
+    # Prepare some test data on a wrong Lambert Conformal grid.
+    lambert_crs = iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        secant_latitudes=(49.5,),
+    )
+    cube = iris.cube.Cube(
+        np.ones((3, 453, 453)),
+        var_name="tas",
+        units="K",
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    np.arange(0, 3),
+                    var_name="time",
+                    standard_name="time",
+                    units="days since 1850-1-1 00:00:00",
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    np.arange(0, 453),
+                    var_name="projection_y_coordinate",
+                    standard_name="projection_y_coordinate",
+                    coord_system=lambert_crs,
+                    units="km",
+                ),
+                1,
+            ),
+            (
+                iris.coords.DimCoord(
+                    np.arange(0, 453),
+                    var_name="projection_x_coordinate",
+                    standard_name="projection_x_coordinate",
+                    coord_system=lambert_crs,
+                    units="km",
+                ),
+                2,
+            ),
+        ],
+        aux_coords_and_dims=[
+            (
+                iris.coords.AuxCoord(
+                    np.ones((453, 453)),
+                    var_name="latitude",
+                    standard_name="latitude",
+                    units="degrees_north",
+                ),
+                (1, 2),
+            ),
+            (
+                iris.coords.AuxCoord(
+                    np.ones((453, 453)),
+                    var_name="longitude",
+                    standard_name="longitude",
+                    units="degrees_east",
+                ),
+                (1, 2),
+            ),
+        ],
+    )
+
+    (result,) = fix.fix_metadata([cube])
+    if not use_standard_grid:
+        assert result == cube
+        return
+
+    for coord_name in [
+        "projection_x_coordinate",
+        "projection_y_coordinate",
+        "latitude",
+        "longitude",
+    ]:
+        assert len(result.coords(coord_name)) == 1
+
+    x_coord = result.coord("projection_x_coordinate")
+    y_coord = result.coord("projection_y_coordinate")
+    assert x_coord.units == "m"
+    assert y_coord.units == "m"
+    assert x_coord.points.dtype == np.float64
+    assert y_coord.points.dtype == np.float64
+    assert x_coord.bounds is not None
+    assert y_coord.bounds is not None
+    assert x_coord.bounds.dtype == np.float64
+    assert y_coord.bounds.dtype == np.float64
+    assert x_coord.coord_system == lambert_crs
+    assert y_coord.coord_system == lambert_crs
+    np.testing.assert_array_almost_equal(
+        x_coord.points[[0, 1, 226, -1]],
+        [-2825000.0, -2812500.0, 0.0, 2825000.0],
+    )
+    np.testing.assert_array_almost_equal(
+        y_coord.points[[0, 1, 226, -1]],
+        [-2825000.0, -2812500.0, 0.0, 2825000.0],
+    )
+
+    lon_coord = result.coord("longitude")
+    lat_coord = result.coord("latitude")
+    assert lon_coord.units == "degrees_east"
+    assert lat_coord.units == "degrees_north"
+    assert lon_coord.points.dtype == np.float64
+    assert lat_coord.points.dtype == np.float64
+    assert lon_coord.bounds is not None
+    assert lat_coord.bounds is not None
+    assert lon_coord.bounds.dtype == np.float64
+    assert lat_coord.bounds.dtype == np.float64
+    assert lon_coord.coord_system is None
+    assert lat_coord.coord_system is None
+    np.testing.assert_array_almost_equal(lon_coord.points[0, 0], -14.26627)
+    np.testing.assert_array_almost_equal(
+        lon_coord.bounds[0, 0],
+        [
+            -14.29979978,
+            -14.19799928,
+            -14.23267916,
+            -14.33460134,
+        ],
+    )
+    np.testing.assert_array_almost_equal(lat_coord.points[0, 0], 20.922545)
+    np.testing.assert_array_almost_equal(
+        lat_coord.bounds[0, 0],
+        [
+            20.858380098,
+            20.890987413,
+            20.986725409,
+            20.954050931,
+        ],
+    )
 
 
 def test_lambert_grid_warning(cubes, caplog):

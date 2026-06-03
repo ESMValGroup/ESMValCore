@@ -267,23 +267,27 @@ class AllVars(Fix):
 
         # Update the projection coordinates and bounds.
         x_coord = cube.coord("projection_x_coordinate")
+        x_coord.var_name = "x"
+        x_coord.long_name = "x coordinate of projection"
+        x_coord.units = "m"
         x_size = x_coord.shape[0]
         x_coord.points = step * np.linspace(
             -0.5 * (x_size - 1),
             0.5 * (x_size - 1),
             x_size,
         )
-        x_coord.units = "m"
         x_coord.guess_bounds()
 
         y_coord = cube.coord("projection_y_coordinate")
+        y_coord.var_name = "y"
+        y_coord.long_name = "y coordinate of projection"
+        y_coord.units = "m"
         y_size = y_coord.shape[0]
         y_coord.points = step * np.linspace(
             -0.5 * (y_size - 1),
             0.5 * (y_size - 1),
             y_size,
         )
-        y_coord.units = "m"
         y_coord.guess_bounds()
 
         # Define the transformation from projection coordinates to
@@ -295,11 +299,17 @@ class AllVars(Fix):
         )
 
         # Update the latitude and longitude points.
-        cube.coord("longitude").points, cube.coord("latitude").points = (
-            transformer.transform(
-                *np.meshgrid(x_coord.points, y_coord.points),
-                errcheck=True,
-            )
+        lon_coord = cube.coord("longitude")
+        lat_coord = cube.coord("latitude")
+        lon_coord.var_name = "lon"
+        lat_coord.var_name = "lat"
+        lon_coord.long_name = "longitude"
+        lat_coord.long_name = "latitude"
+        lon_coord.units = "degrees_east"
+        lat_coord.units = "degrees_north"
+        lon_coord.points, lat_coord.points = transformer.transform(
+            *np.meshgrid(x_coord.points, y_coord.points),
+            errcheck=True,
         )
 
         # Update the latitude and longitude bounds.
@@ -329,12 +339,10 @@ class AllVars(Fix):
         )
         x_vertices = x_bounds[x_idx]
         y_vertices = y_bounds[y_idx]
-        cube.coord("longitude").bounds, cube.coord("latitude").bounds = (
-            transformer.transform(
-                x_vertices,
-                y_vertices,
-                errcheck=True,
-            )
+        lon_coord.bounds, lat_coord.bounds = transformer.transform(
+            x_vertices,
+            y_vertices,
+            errcheck=True,
         )
 
     def fix_metadata(
