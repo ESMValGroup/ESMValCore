@@ -109,6 +109,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
+      - {dataset: CCLM4-8-17, project: CORDEX, domain: EUR-11, driver: CNRM-CERFACS-CNRM-CM5, exp: historical, ensemble: r1i1p1, institute: CLMcom, rcm_version: v1, timerange: '2001/2004'}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: CMCC-CM2-SR5, project: CMIP6, exp: historical, ensemble: r1i1p1f1, timerange: '2001/P10Y', grid: gn}
       - {dataset: HadGEM3-GC31-MM, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
@@ -377,6 +378,41 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
+
+CORDEX datasets
+---------------
+
+The horizontal coordinates of CORDEX data are often not accurate. Therefore,
+the tool provides the option to specify that the standard CORDEX grid for the
+domain should be used instead of the grid defined in the files. This can be
+enabled by adding ``use_standard_grid: true`` and disabled by adding
+``use_standard_grid: false`` to the dataset definition of the CORDEX data.
+
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - dataset: CCLM4-8-17
+      rcm_version: v1
+      driver: CNRM-CERFACS-CNRM-CM5
+      institute: CLMcom
+      project: CORDEX
+      domain: EUR-11
+      exp: historical
+      ensemble: r1i1p1
+      use_standard_grid: true
+
+will use the standard CORDEX grid for the EUR-11 domain, as defined by the
+`py-cordex <https://py-cordex.readthedocs.io>`_ package for datasets on a
+rotated pole grid. For datasets on a Lambert conformal grid, ESMValCore provides
+an algorithm to calculate the standard grid, but this only works if the
+`grid mapping <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#grid-mappings-and-projections>`_
+is correct.
+
+This feature is disabled by default, but enabled by default for models with
+known issues through the default
+`CORDEX extra facets file <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/extra_facets_cordex.yml>`__.
 
 .. _`yaml`: https://yaml.org/refcard.html
 
