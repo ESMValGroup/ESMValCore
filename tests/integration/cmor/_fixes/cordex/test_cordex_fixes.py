@@ -1,5 +1,9 @@
 """Tests for general CORDEX fixes."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cordex as cx
 import iris
 import iris.cube
@@ -14,6 +18,9 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     TimeLongName,
 )
 from esmvalcore.cmor.fix import Fix
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 
 @pytest.fixture
@@ -392,7 +399,9 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
     )
 
 
-def test_lambert_conformal_grid_fix_domain_with_unknown_spacing() -> None:
+def test_lambert_conformal_grid_fix_domain_with_unknown_spacing(
+    mocker: pytest_mock.MockerFixture,
+) -> None:
     """Test that the fix does not fail if the domain spacing is unknown."""
     fixes = Fix.get_fixes(
         project="CORDEX",
@@ -408,7 +417,25 @@ def test_lambert_conformal_grid_fix_domain_with_unknown_spacing() -> None:
     )
     fix = fixes[0]
     assert isinstance(fix, AllVars)
-    cube = iris.cube.Cube([0])
+    mocker.patch.object(AllVars, "_check_grid_differences")
+    cube = iris.cube.Cube(
+        [0],
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [0],
+                    standard_name="projection_x_coordinate",
+                    coord_system=iris.coord_systems.LambertConformal(
+                        central_lat=49.5,
+                        central_lon=10.5,
+                        secant_latitudes=(49.5,),
+                    ),
+                    units="m",
+                ),
+                0,
+            ),
+        ],
+    )
     (result,) = fix.fix_metadata([cube])
     assert result == cube
 
