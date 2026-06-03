@@ -416,7 +416,7 @@ known issues through the default
 
 .. warning::
 
-  If `use_standard_grid: true` is used, the tool will overwrite the existing grid
+  If ``use_standard_grid: true`` is used, the tool will overwrite the existing grid
   information. It is recommended to visualize the resulting data and compare it
   to easily recognizable features (e.g. coastlines) to make sure the grid is
   correct before using it in an aggregated manner.
