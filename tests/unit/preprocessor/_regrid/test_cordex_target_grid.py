@@ -75,7 +75,7 @@ def test_cordex_stock_cube_eur11():
 
 @pytest.fixture
 def global_cube():
-    """Simple regular global cube for target-grid construction tests."""
+    """Return a simple regular global cube for target-grid construction tests."""
     lat_coord = iris.coords.DimCoord(
         np.linspace(-85, 85, 18),
         standard_name="latitude",
