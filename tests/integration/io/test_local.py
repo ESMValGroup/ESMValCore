@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import os
 import pprint
+import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import yaml
@@ -14,12 +16,16 @@ import esmvalcore.cmor.table
 import esmvalcore.config._config
 import esmvalcore.local
 from esmvalcore.config import CFG
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
     _parse_period,
 )
 from esmvalcore.local import _get_output_file, _select_drs, find_files
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 # Load test configuration
 with open(
@@ -81,6 +87,30 @@ def test_get_output_file(monkeypatch, cfg):
     output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
     expected = Path(cfg["output_file"])
     assert output_file == expected
+
+
+def test_get_output_file_missing_facets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that a RecipeError is raised if a required facet is missing."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
+    facets = {
+        "project": "CMIP6",
+        "mip": "Amon",
+        "short_name": "tas",
+    }
+    expected_message = (
+        "Unable to complete path 'CMIP6_{dataset}_Amon_{exp}_{ensemble}_tas"
+        "_{grid}' because the facets 'dataset', 'ensemble', 'exp', and 'grid' "
+        "have not been specified."
+    )
+    with pytest.raises(RecipeError, match=expected_message):
+        _get_output_file(facets, Path("/preproc/dir"))
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
@@ -146,6 +176,34 @@ def test_find_files(monkeypatch, root, cfg, mocker):
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     assert [Path(g) for g in globs] == sorted(ref_globs)
     esmvalcore.local._ensure_config_developer_drs.assert_called_once()
+
+
+def test_find_files_missing_facets(
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: pytest_mock.MockerFixture,
+) -> None:
+    """Test that a RecipeError is raised if a required facet is missing."""
+    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
+    monkeypatch.setitem(CFG, "drs", {"CMIP6": "default"})
+    monkeypatch.setitem(CFG, "rootpath", {"CMIP6": "/data/cmip6"})
+    facets = {
+        "project": "CMIP6",
+        "mip": "Amon",
+        "short_name": "tas",
+    }
+    expected_message = (
+        "Unable to complete path 'tas_Amon_{dataset}_{exp}_{ensemble}_{grid}*."
+        "nc' because the facets 'dataset', 'ensemble', 'exp', and 'grid' have "
+        "not been specified."
+    )
+    with pytest.raises(RecipeError, match=re.escape(expected_message)):
+        find_files(debug=True, **facets)
 
 
 def test_find_files_with_facets(monkeypatch, root):
@@ -214,6 +272,31 @@ def test_find_data(root, cfg):
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     for pattern in ref_globs:
         assert str(pattern) in data_source.debug_info
+
+
+def test_find_data_facet_missing() -> None:
+    """Test that a MissingFacetError is raised if a required facet is missing."""
+    data_source = LocalDataSource(
+        name="test-data-source",
+        project="CMIP6",
+        rootpath=Path("/data/cmip6"),
+        priority=1,
+        dirname_template="{dataset}/{exp}/{ensemble}",
+        filename_template="{short_name}.nc",
+    )
+    facets = {
+        "short_name": "tas",
+        "dataset": "test-dataset",
+        "exp": ["historical", "ssp585"],
+    }
+    expected_message = (
+        "Unable to complete paths 'test-dataset/historical/{ensemble}' and "
+        "'test-dataset/ssp585/{ensemble}' because the facet 'ensemble' has "
+        "not been specified."
+    )
+    files = data_source.find_data(**facets)
+    assert not files
+    assert data_source.debug_info == expected_message
 
 
 def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:

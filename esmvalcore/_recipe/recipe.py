@@ -77,10 +77,10 @@ PreprocessorSettings = dict[str, Any]
 PreprocessorProfile = dict[str, dict[str, Any]]
 
 
-DOWNLOAD_FILES = set()
+DOWNLOAD_FILES: set[DataElement] = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
-USED_DATASETS = []
+USED_DATASETS: list[Dataset] = []
 """Use a global variable to keep track of datasets that are actually used."""
 
 
