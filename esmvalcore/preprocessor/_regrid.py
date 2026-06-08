@@ -18,9 +18,10 @@ import cordex as cx
 import dask.array as da
 import iris
 import iris.coords
+import ncdata.iris_xarray
 import numpy as np
 import stratify
-from cf_units import Unit
+import xarray as xr
 from geopy.geocoders import Nominatim
 from iris.analysis import (
     AreaWeighted,
@@ -236,44 +237,33 @@ def _cordex_stock_cube(domain_name: str) -> Cube:
     """
     domain = cx.cordex_domain(domain_name, bounds=True)
     domain_info = cx.domain_info(domain_name)
+
+    data = xr.DataArray(
+        np.zeros((domain.sizes["rlat"], domain.sizes["rlon"]), dtype=np.int32),
+        dims=["rlat", "rlon"],
+        coords={
+            "rlat": domain["rlat"],
+            "rlon": domain["rlon"],
+            "lat": domain["lat"],
+            "lon": domain["lon"],
+        },
+        name="grid",
+    )
+    (cube,) = ncdata.iris_xarray.cubes_from_xarray(data.to_dataset())
+
     coord_system = RotatedGeogCS(
         grid_north_pole_latitude=domain_info["pollat"],
         grid_north_pole_longitude=domain_info["pollon"],
     )
+    for dim_coord in ("rlat", "rlon"):
+        coord = cube.coord(var_name=dim_coord)
+        coord.coord_system = coord_system
+        if not coord.has_bounds():
+            coord.guess_bounds()
 
-    coords_spec = []
-    for dim_index, dim_coord in enumerate(["rlat", "rlon"]):
-        var = domain[dim_coord]
-        coord = iris.coords.DimCoord(
-            var.data,
-            var_name=dim_coord,
-            standard_name=var.attrs.get("standard_name"),
-            long_name=var.attrs.get("long_name"),
-            units=Unit("degrees"),
-            coord_system=coord_system,
-        )
-        coord.guess_bounds()
-        coords_spec.append((coord, dim_index))
-
-    shape = (domain.sizes["rlat"], domain.sizes["rlon"])
-    dummy = np.empty(shape, dtype=np.int32)
-    cube = Cube(dummy, dim_coords_and_dims=coords_spec)
-
-    aux_dims = cube.coord_dims(cube.coord(var_name="rlat")) + cube.coord_dims(
-        cube.coord(var_name="rlon"),
-    )
-    for aux_coord in ["lat", "lon"]:
-        var = domain[aux_coord]
-        bounds_var = domain[f"{aux_coord}_vertices"]
-        coord = iris.coords.AuxCoord(
-            var.data,
-            var_name=aux_coord,
-            standard_name=var.attrs.get("standard_name"),
-            long_name=var.attrs.get("long_name"),
-            units=Unit(var.attrs.get("units", "degrees")),
-            bounds=bounds_var.data,
-        )
-        cube.add_aux_coord(coord, aux_dims)
+    for aux_coord in ("lat", "lon"):
+        coord = cube.coord(var_name=aux_coord)
+        coord.bounds = domain[f"{aux_coord}_vertices"].data
 
     return cube
 
