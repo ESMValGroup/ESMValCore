@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import dask.array as da
 import iris
 import iris.coords
+import iris.exceptions
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
@@ -776,64 +777,6 @@ def _get_name_and_shape_key(
     return (name, *shapes)
 
 
-def _copy_horizontal_coords(
-    src: Cube,
-    tgt: Cube,
-    overwrite: bool = False,
-) -> None:
-    """Copy horizontal coordinates from source to target cube.
-
-    Parameters
-    ----------
-    src:
-        Source cube to copy the coordinates from.
-    tgt:
-        Target cube to copy the coordinates to.
-    overwrite:
-        Whether to overwrite existing coordinates on the target cube.
-
-    """
-    src_horizontal_dims = get_dims_along_axes(src, ("X", "Y"))
-    tgt_horizontal_dims = get_dims_along_axes(tgt, ("X", "Y"))
-    for coord_name in [
-        "latitude",
-        "longitude",
-        "grid_latitude",
-        "grid_longitude",
-        "projection_y_coordinate",
-        "projection_x_coordinate",
-    ]:
-        if src.coords(coord_name):
-            if tgt.coords(coord_name):
-                if overwrite:
-                    coord_dims = tgt.coord_dims(coord_name)
-                    tgt.remove_coord(coord_name)
-                else:
-                    continue
-            elif src_horizontal_dims == tgt_horizontal_dims:
-                # Unable to determine coordinate dimensions: assume that the
-                # coordinate dimensions are the same as in the source cube if
-                # the horizontal dimensions of source and target cube match.
-                #
-                # This assumption may be too restrictive when the target cube
-                # has additional non-horizontal dimensions and will fail when the
-                # horizontal dimensions are transposed between source and target
-                # cube, but should work fine in the typical use case where the
-                # source cube (i.e. the target grid) is another, similar dataset.
-                coord_dims = src.coord_dims(coord_name)
-            else:
-                continue
-
-            target_coord = src.coord(coord_name).copy()
-            if (
-                isinstance(target_coord, iris.coords.DimCoord)
-                and len(coord_dims) == 1
-            ):
-                tgt.add_dim_coord(target_coord, coord_dims)
-            else:
-                tgt.add_aux_coord(target_coord, coord_dims)
-
-
 @preserve_float_dtype
 def regrid(
     cube: Cube,
@@ -967,10 +910,9 @@ def regrid(
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
-    if cube.coords("latitude") and cube.coords("longitude"):
-        if _horizontal_grid_is_close(cube, target_grid_cube):
-            _copy_horizontal_coords(target_grid_cube, cube, overwrite=True)
-            return cube
+    if _horizontal_grid_is_close(cube, target_grid_cube):
+        _update_horizontal_coords(target_grid_cube, cube)
+        return cube
 
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
@@ -980,7 +922,12 @@ def regrid(
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
     result = regridder(cube)
-    _copy_horizontal_coords(target_grid_cube, result, overwrite=False)
+    # Iris only supports regridding of 1D coordinates and iris-esmf-regrid
+    # uses only the DimCoords if both grid_latitude/grid_longitude or
+    # projection_x_coordinate/projection_y_coordinate DimCoords and latitude
+    # longitude AuxCoords are present, so we need to copy the 2D lat/lon
+    # AuxCoords from the target grid if they are not present on the result.
+    _update_2d_geographical_coords(target_grid_cube, result, overwrite=False)
     return result
 
 
@@ -1057,10 +1004,23 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     bool
         ``True`` if grids are close; ``False`` if not.
     """
-    # Go through the 2 expected horizontal coordinates longitude and latitude.
-    for coord in ["latitude", "longitude"]:
-        coord1 = cube1.coord(coord)
-        coord2 = cube2.coord(coord)
+    # Check that both cubes have an X and Y axis so we can compare.
+    if not all(
+        cube1.coords(axis=axis) and cube2.coords(axis=axis)
+        for axis in ("X", "Y")
+    ):
+        return False
+
+    for axis in ("X", "Y"):
+        # DimCoords are kept in-memory, so prefer those for performance.
+        try:
+            coord1 = cube1.coord(axis=axis, dim_coords=True)
+        except iris.exceptions.CoordinateNotFoundError:
+            coord1 = cube1.coord(axis=axis, dim_coords=False)
+        try:
+            coord2 = cube2.coord(axis=axis, dim_coords=True)
+        except iris.exceptions.CoordinateNotFoundError:
+            coord2 = cube2.coord(axis=axis, dim_coords=False)
 
         if coord1.has_bounds() and coord2.has_bounds():
             array1 = coord1.core_bounds()
@@ -1075,6 +1035,73 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
             return False
 
     return True
+
+
+def _update_2d_geographical_coords(
+    src: Cube,
+    tgt: Cube,
+    overwrite: bool,
+) -> None:
+    """Update 2D latitude and longitude coordinates.
+
+    Parameters
+    ----------
+    src:
+        Source cube to copy the coordinates from.
+    tgt:
+        Target cube to copy the coordinates to.
+    overwrite:
+        If ``True``, overwrite existing coordinates on the target cube. If
+        ``False``, only add the coordinates if they are not already present on the
+        target cube.
+    """
+    tgt_horizontal_dims = get_dims_along_axes(tgt, ("X", "Y"))
+    if len(tgt_horizontal_dims) == 2:
+        for coord_name in [
+            "latitude",
+            "longitude",
+        ]:
+            if (
+                src.coords(coord_name, dim_coords=False)
+                and src.coord(coord_name).ndim == 2
+            ):
+                if overwrite and tgt.coords(coord_name):
+                    tgt.remove_coord(coord_name)
+                if not tgt.coords(coord_name):
+                    tgt.add_aux_coord(
+                        src.coord(coord_name).copy(),
+                        tgt_horizontal_dims,
+                    )
+
+
+def _update_horizontal_coords(src: Cube, tgt: Cube) -> None:
+    """Update horizontal coordinates.
+
+    Parameters
+    ----------
+    src:
+        Source cube to copy the coordinates from.
+    tgt:
+        Target cube to copy the coordinates to.
+
+    """
+    # Copy the horizontal DimCoords.
+    for axis in ("X", "Y"):
+        for new_coord in src.coords(axis=axis, dim_coords=True):
+            if tgt.coords(
+                standard_name=new_coord.standard_name,
+                dim_coords=True,
+            ):
+                old_coord = tgt.coord(
+                    standard_name=new_coord.standard_name,
+                    dim_coords=True,
+                )
+                tgt_dims = tgt.coord_dims(old_coord)
+                tgt.remove_coord(old_coord)
+                tgt.add_dim_coord(new_coord.copy(), tgt_dims)
+
+    # Copy the 2D latitude and longitude coordinates.
+    _update_2d_geographical_coords(src, tgt, overwrite=True)
 
 
 def _create_cube(
