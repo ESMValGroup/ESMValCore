@@ -6,6 +6,7 @@ import dask.config
 import pytest
 import yaml
 
+import esmvalcore.cmor.table
 import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
@@ -161,23 +162,12 @@ def test_get_project_config(mocker):
 
 def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
-    project_cfg = {}
-    monkeypatch.setattr(_config, "CFG", project_cfg)
     root_path = importlib_files("esmvalcore")
-    default_dev_file = root_path / "config-developer.yml"
-    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_config_dir = root_path / "config" / "configurations" / "defaults"
     default_project_settings = dask.config.collect(
-        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")],
+        paths=[str(p) for p in default_config_dir.glob("*.yml")],
         env={},
     )["projects"]
-    # Add in projects without extra facets from the config developer file
-    # until we have transitioned all of its content to the new configuration
-    # system.
-    for project in yaml.safe_load(
-        default_dev_file.read_text(encoding="utf-8"),
-    ):
-        if project not in default_project_settings:
-            default_project_settings[project] = {}
 
     session = cfg_default.start_session("recipe_example")
 
@@ -185,7 +175,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "auxiliary_data_dir": Path.home() / "auxiliary_data",
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
-        "config_developer_file": default_dev_file,
         "dask": {
             "profiles": {
                 "local_threaded": {
@@ -238,6 +227,28 @@ def test_load_default_config(cfg_default, monkeypatch):
     for key, value in default_cfg.items():
         assert session[key] == value
 
+    # Check that project settings were loaded
+    assert set(session["projects"]) == {
+        # ESGF
+        "CMIP3",
+        "CMIP5",
+        "CMIP6",
+        "CMIP7",
+        "CORDEX",
+        "obs4MIPs",
+        "ana4MIPs",
+        # ESMValCore supported projects
+        "native6",
+        "ACCESS",
+        "CESM",
+        "EMAC",
+        "ICON",
+        "IPSLCM",
+        # ESMValTool CMORizers
+        "OBS",
+        "OBS6",
+    }
+
     # Check output directories
     assert str(session.session_dir).startswith(
         str(Path.home() / "esmvaltool_output" / "recipe_example"),
@@ -245,9 +256,6 @@ def test_load_default_config(cfg_default, monkeypatch):
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
-
-    # Check that projects were configured
-    assert project_cfg
 
 
 def test_rootpath_obs4mips_case_correction(monkeypatch):
@@ -313,8 +321,14 @@ def test_get_ignored_warnings_none(project, step):
     assert get_ignored_warnings(project, step) is None
 
 
-def test_get_ignored_warnings_emac():
+def test_get_ignored_warnings_emac(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test ``get_ignored_warnings``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     ignored_warnings = get_ignored_warnings("EMAC", "load")
     assert isinstance(ignored_warnings, list)
     assert ignored_warnings

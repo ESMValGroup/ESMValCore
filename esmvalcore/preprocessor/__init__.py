@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import logging
+import re
+import string
+from collections.abc import Sequence
+from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Any
 
@@ -14,7 +19,10 @@ from esmvalcore._provenance import TrackedFile
 from esmvalcore._task import BaseTask
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
+from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
+from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -62,6 +70,7 @@ from esmvalcore.preprocessor._regrid import (
     extract_levels,
     extract_location,
     extract_point,
+    is_dataset,
     regrid,
 )
 from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
@@ -102,18 +111,18 @@ from esmvalcore.preprocessor._volume import (
 from esmvalcore.preprocessor._weighting import weighting_landsea_fraction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
-    from pathlib import Path
+    from collections.abc import Callable, Iterable
 
     import prov.model
     from dask.delayed import Delayed
     from iris.cube import CubeList
 
     from esmvalcore.dataset import Dataset
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # File reformatting/CMORization
     "fix_file",
     # Load cubes from file
@@ -252,6 +261,107 @@ MULTI_MODEL_FUNCTIONS: set[str] = {
     "mask_multimodel",
     "mask_fillvalues",
 }
+
+
+def _get_preprocessor_filename(dataset: Dataset) -> Path:
+    """Get a filename for storing a preprocessed dataset.
+
+    Parameters
+    ----------
+    dataset:
+        The dataset that will be preprocessed.
+
+    Returns
+    -------
+    :
+        A path for storing a preprocessed file.
+    """
+
+    def is_facet_value(value: Any) -> bool:  # noqa: ANN401
+        """Check if a value is of type `esmvalcore.typing.FacetValue`."""
+        return isinstance(value, str | int | float) or (
+            isinstance(value, Sequence)
+            and all(isinstance(v, str) for v in value)
+        )
+
+    default_template = "_".join(
+        f"{{{k}}}"
+        for k in sorted(dataset.minimal_facets)
+        if is_facet_value(dataset.minimal_facets[k])
+        and k
+        not in ("timerange", "diagnostic", "variable_group", "preprocessor")
+    )
+    template = (
+        dataset.session["projects"]
+        .get(dataset.facets["project"], {})
+        .get("preprocessor_filename_template", default_template)
+    )
+    if template is default_template:
+        try:
+            # Use config-developer.yml for backward compatibility, remove in v2.16.
+            return _get_output_file(
+                dataset.facets,
+                dataset.session.preproc_dir,
+            )
+        except RecipeError:
+            pass
+
+    def normalize(value: FacetValue) -> str:
+        """Normalize a facet value to a string that can be used in a filename."""
+        if isinstance(value, str | int | float):
+            return re.sub("[^a-zA-Z0-9]+", "-", str(value))
+        return "-".join(normalize(v) for v in value)
+
+    normalized_facets = {
+        k: normalize(v) for k, v in dataset.facets.items() if is_facet_value(v)
+    }
+    required_facets = [
+        field[1] for field in string.Formatter().parse(template) if field[1]
+    ]
+    missing_facets = [f for f in required_facets if f not in dataset.facets]
+    if missing_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, missing facets: "
+            + ", ".join(f"'{f}'" for f in sorted(missing_facets))
+            + "."
+        )
+        raise RecipeError(msg)
+    wrong_type_facets = [
+        f
+        for f in required_facets
+        if (f in dataset.facets and f not in normalized_facets)
+    ]
+    if wrong_type_facets:
+        msg = (
+            f"Unable to create preprocessor filename from template '{template}' "
+            f"for {dataset}, facet values have invalid type: "
+            + ", ".join(
+                f"'{f}: {dataset.facets[f]}' has type {type(dataset.facets[f]).__name__}"
+                for f in sorted(wrong_type_facets)
+            )
+            + ", allowed types are str, int, float, or a sequence of str."
+        )
+        raise RecipeError(msg)
+    filename = template.format(**normalized_facets)
+    if "timerange" in dataset.facets:
+        start_time, end_time = _parse_period(dataset.facets["timerange"])
+        filename += f"_{start_time}-{end_time}"
+    suffix = ".nc"
+    max_filename_length = 255
+    max_base_length = max_filename_length - len(suffix)
+    if len(filename) > max_base_length:
+        digest_size = 4
+        digest = hashlib.shake_128(filename.encode()).hexdigest(digest_size)
+        suffix = f".{digest}{suffix}"
+        max_base_length = max_filename_length - len(suffix)
+    filename = f"{filename[:max_base_length]}{suffix}"
+    return Path(
+        dataset.session.preproc_dir,
+        dataset.facets.get("diagnostic", ""),  # type: ignore[arg-type]
+        dataset.facets.get("variable_group", ""),  # type: ignore[arg-type]
+        filename,
+    )
 
 
 def _get_itype(step: str) -> str:
@@ -519,8 +629,8 @@ class PreprocessorFile(TrackedFile):
         self,
         filename: Path,
         attributes: dict[str, Any] | None = None,
-        settings: dict[str, Any] | None = None,
-        datasets: list | None = None,
+        settings: dict[str, dict[str, Any]] | None = None,
+        datasets: list[Dataset] | None = None,
     ) -> None:
         if datasets is not None:
             # Load data using a Dataset
@@ -544,6 +654,22 @@ class PreprocessorFile(TrackedFile):
         # Set some preprocessor settings (move all defaults here?)
         if settings is None:
             settings = {}
+
+        # Create a copy of any datasets in settings. This drops the information
+        # in Dataset.files and avoids issues with deepcopying and pickling
+        # those files. This is needed because
+        # esmvalcore.io.intake_esgf.IntakeESGFDataset objects use a
+        # cached_requests.CachedSession object that cannot be deepcopied or
+        # pickled.
+        settings = {
+            fn: {
+                arg: (
+                    value.copy() if is_dataset(value) else copy.deepcopy(value)
+                )
+                for arg, value in kwargs.items()
+            }
+            for fn, kwargs in settings.items()
+        }
         self.settings = copy.deepcopy(settings)
         if attributes is None:
             attributes = {}

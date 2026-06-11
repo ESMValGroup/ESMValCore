@@ -16,7 +16,7 @@ import yamale
 
 import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _parse_period
+from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
@@ -48,6 +48,7 @@ def align_metadata(step_settings: dict[str, Any]) -> None:
     project = step_settings.get("target_project")
     mip = step_settings.get("target_mip")
     short_name = step_settings.get("target_short_name")
+    branding_suffix = step_settings.get("target_branding_suffix")
     strict = step_settings.get("strict", True)
 
     # Any missing arguments will be reported later
@@ -55,7 +56,12 @@ def align_metadata(step_settings: dict[str, Any]) -> None:
         return
 
     try:
-        _get_var_info(project, mip, short_name)
+        _get_var_info(
+            project,
+            mip,
+            short_name,
+            branding_suffix=branding_suffix,
+        )
     except ValueError as exc:
         if strict:
             msg = (
@@ -239,8 +245,9 @@ def data_availability(dataset: Dataset, log: bool = True) -> None:
         msg = f"Missing data for {dataset.summary(True)}"
         raise InputFilesNotFound(msg)
 
-    if "timerange" not in facets or any(
-        "timerange" not in f.facets for f in input_files
+    if (
+        "*" in facets.get("timerange", "*")  # type: ignore[operator]
+        or any("timerange" not in f.facets for f in input_files)
     ):
         return
 

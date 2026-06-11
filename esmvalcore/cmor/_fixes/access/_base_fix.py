@@ -75,9 +75,7 @@ class AccessFix(NativeDatasetFix):
         path = Path(self.extra_facets[facet])
         if not path.is_file():
             msg = f"'{path}' given by facet '{facet}' does not exist"
-            raise FileNotFoundError(
-                msg,
-            )
+            raise FileNotFoundError(msg)
         return path
 
     def load_ocean_grid_data(self, facet):

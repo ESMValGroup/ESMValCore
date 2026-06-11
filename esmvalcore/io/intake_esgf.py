@@ -23,6 +23,7 @@ create a file with the following content in your configuration directory:
 from __future__ import annotations
 
 import copy
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -32,9 +33,9 @@ import intake_esgf.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob, _ismatch
+from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.local import _parse_period
 
 if TYPE_CHECKING:
     import iris.cube
@@ -46,6 +47,8 @@ __all__ = [
     "IntakeESGFDataSource",
     "IntakeESGFDataset",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class _CachingCatalog(intake_esgf.ESGFCatalog):
@@ -122,7 +125,16 @@ class IntakeESGFDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-        self.catalog.to_path_dict(minimal_keys=False)
+        try:
+            self.catalog.to_path_dict(minimal_keys=False, quiet=True)
+        except intake_esgf.exceptions.DatasetLoadError:
+            logger.error(
+                "Failed to download dataset '%s' from the ESGF. Error messages:\n%s",
+                self.name,
+                self.catalog.session_log(),
+            )
+            raise
+
         for index in self.catalog.indices:
             # Set the sessions to None to avoid issues with pickling
             # requests_cache.CachedSession objects when max_parallel_tasks > 1.
@@ -225,7 +237,9 @@ class IntakeESGFDataSource(DataSource):
         """
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
-            facet: [str(values)] if isinstance(values, str | int) else values
+            facet: [str(values)]
+            if isinstance(values, str | int | float)
+            else values
             for facet, values in facets.items()
             if facet in self.facets
         }

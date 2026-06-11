@@ -18,17 +18,19 @@ from typing import TYPE_CHECKING, Any
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
-from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
-from esmvalcore.config import CFG
-from esmvalcore.config._config import (
-    get_activity,
-    get_institutes,
-    load_extra_facets,
+from esmvalcore.cmor.table import (
+    NoInfo,
+    _get_branding_suffixes,
+    _get_mips,
+    _update_cmor_facets,
+    get_tables,
 )
+from esmvalcore.config import CFG
+from esmvalcore.config._config import load_extra_facets
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import _dates_to_timerange, _get_output_file
-from esmvalcore.preprocessor import preprocess
+from esmvalcore.io.local import _dates_to_timerange
+from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -41,8 +43,8 @@ if TYPE_CHECKING:
     from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
-    "Dataset",
     "INHERITED_FACETS",
+    "Dataset",
     "datasets_to_recipe",
 ]
 
@@ -50,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 INHERITED_FACETS: list[str] = [
     "dataset",
+    "region",
     "domain",
     "driver",
     "grid",
@@ -93,9 +96,9 @@ class Dataset:
     Parameters
     ----------
     **facets
-        Facets describing the dataset. See
-        :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
-        the facet names used by ESMValCore and those used on ESGF.
+        Facets describing the dataset. See :ref:`facets` for the mapping between
+        the facet names used by ESMValCore and those used on ESGF and
+        :ref:`cmor_tables` to find out which variables are available.
 
     Attributes
     ----------
@@ -113,9 +116,11 @@ class Dataset:
         "rcm_version",
         "driver",
         "domain",
-        "activity",
         "exp",
         "ensemble",
+        "branding_suffix",
+        "frequency",
+        "region",
         "grid",
         "version",
     )
@@ -161,32 +166,6 @@ class Dataset:
 
         return datasets_from_recipe(recipe, session)
 
-    def _is_derived(self) -> bool:
-        """Return ``True`` for derived variables, ``False`` otherwise."""
-        return bool(self.facets.get("derive", False))
-
-    def _is_force_derived(self) -> bool:
-        """Return ``True`` for force-derived variables, ``False`` otherwise."""
-        return self._is_derived() and bool(
-            self.facets.get("force_derivation", False),
-        )
-
-    def _derivation_necessary(self) -> bool:
-        """Return ``True`` if derivation is necessary, ``False`` otherwise."""
-        # If variable cannot be derived, derivation is not necessary
-        if not self._is_derived():
-            return False
-
-        # If forced derivation is requested, derivation is necessary
-        if self._is_force_derived():
-            return True
-
-        # Otherwise, derivation is necessary of no files for the self dataset
-        # are found
-        ds_copy = self.copy()
-        ds_copy.supplementaries = []
-        return not ds_copy.files
-
     def _file_to_dataset(
         self,
         file: DataElement,
@@ -210,7 +189,13 @@ class Dataset:
         # If possible, remove unexpanded facets that can be automatically
         # populated.
         unexpanded = {f for f, v in dataset.facets.items() if _isglob(v)}
-        required_for_augment = {"project", "mip", "short_name", "dataset"}
+        required_for_augment = {
+            "project",
+            "mip",
+            "short_name",
+            "branding_suffix",
+            "dataset",
+        }
         if unexpanded and not unexpanded & required_for_augment:
             copy = dataset.copy()
             copy.supplementaries = []
@@ -230,10 +215,6 @@ class Dataset:
         """
         dataset_template = self.copy()
         dataset_template.supplementaries = []
-        if _isglob(dataset_template.facets.get("timerange")):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset_template.facets.pop("timerange")
 
         seen = set()
         partially_defined = []
@@ -333,10 +314,30 @@ class Dataset:
                 mips = [self.facets["mip"]]  # type: ignore
 
             for mip in mips:
-                dataset_template = self.copy(mip=mip)
-                for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
-                    expanded = True
-                    yield dataset
+                if _isglob(self.facets.get("branding_suffix", "")):
+                    available_branding_suffixes = _get_branding_suffixes(
+                        project=self.facets["project"],  # type: ignore[arg-type]
+                        mip=mip,
+                        short_name=self.facets["short_name"],  # type: ignore[arg-type]
+                    )
+                    branding_suffixes = [
+                        branding_suffix
+                        for branding_suffix in available_branding_suffixes
+                        if _ismatch(
+                            branding_suffix,
+                            self.facets["branding_suffix"],
+                        )
+                    ]
+                    dataset_templates = [
+                        self.copy(mip=mip, branding_suffix=branding_suffix)
+                        for branding_suffix in branding_suffixes
+                    ]
+                else:
+                    dataset_templates = [self.copy(mip=mip)]
+                for dataset_template in dataset_templates:
+                    for dataset in dataset_template._get_available_datasets():  # noqa: SLF001
+                        expanded = True
+                        yield dataset
 
         if not expanded:
             # If the definition contains no wildcards, no files were found,
@@ -650,10 +651,6 @@ class Dataset:
         **facets
             Facets describing the supplementary variable.
         """
-        if self._is_derived():
-            facets.setdefault("derive", False)
-        if self._is_force_derived():
-            facets.setdefault("force_derivation", False)
         supplementary = self.copy(**facets)
         supplementary.supplementaries = []
         self.supplementaries.append(supplementary)
@@ -727,14 +724,6 @@ class Dataset:
     def _augment_facets(self) -> None:
         extra_facets = self._get_extra_facets()
         _augment(self.facets, extra_facets)
-        if "institute" not in self.facets:
-            institute = get_institutes(self.facets)
-            if institute:
-                self.facets["institute"] = institute
-        if "activity" not in self.facets:
-            activity = get_activity(self.facets)
-            if activity:
-                self.facets["activity"] = activity
         _update_cmor_facets(self.facets)
         if self.facets.get("frequency") == "fx":
             self.facets.pop("timerange", None)
@@ -774,7 +763,7 @@ class Dataset:
             self._used_data_sources.append(data_source)
             # 'quick' mode: if files are available from a higher
             # priority source, do not search lower priority sources.
-            if self.session["search_data"] == "complete":
+            if self.session["search_data"] == "quick":
                 try:
                     check.data_availability(self, log=False)
                 except InputFilesNotFound:
@@ -819,7 +808,7 @@ class Dataset:
             supplementary_cube = supplementary_dataset._load()  # noqa: SLF001
             supplementary_cubes.append(supplementary_cube)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         cubes = preprocess(
             [cube],
             "add_supplementary_variables",
@@ -837,32 +826,44 @@ class Dataset:
             msg = check.get_no_data_message(self)
             raise InputFilesNotFound(msg)
 
-        output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        output_file = _get_preprocessor_filename(self)
         fix_dir_prefix = Path(
             self.session._fixed_file_dir,  # noqa: SLF001
             self._get_joined_summary_facets("_", join_lists=True) + "_",
         )
+        cmor_tables_available = not isinstance(
+            get_tables(
+                session=self.session,
+                project=self.facets["project"],  # type: ignore[arg-type]
+            ),
+            NoInfo,
+        )
 
         settings: dict[str, dict[str, Any]] = {}
-        settings["fix_file"] = {
-            "output_dir": fix_dir_prefix,
-            "add_unique_suffix": True,
-            "session": self.session,
-            **self.facets,
-        }
+        if cmor_tables_available:
+            settings["fix_file"] = {
+                "output_dir": fix_dir_prefix,
+                "add_unique_suffix": True,
+                "session": self.session,
+                **self.facets,
+            }
         settings["load"] = {}
-        settings["fix_metadata"] = {
-            "session": self.session,
-            **self.facets,
-        }
+        if cmor_tables_available:
+            settings["fix_metadata"] = {
+                "session": self.session,
+                **self.facets,
+            }
         settings["concatenate"] = {"check_level": self.session["check_level"]}
-        settings["cmor_check_metadata"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-        }
+
+        if cmor_tables_available:
+            settings["cmor_check_metadata"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+                "branding_suffix": self.facets.get("branding_suffix"),
+            }
         if "timerange" in self.facets:
             settings["clip_timerange"] = {
                 "timerange": self.facets["timerange"],
@@ -871,13 +872,15 @@ class Dataset:
             "session": self.session,
             **self.facets,
         }
-        settings["cmor_check_data"] = {
-            "check_level": self.session["check_level"],
-            "cmor_table": self.facets["project"],
-            "mip": self.facets["mip"],
-            "frequency": self.facets["frequency"],
-            "short_name": self.facets["short_name"],
-        }
+        if cmor_tables_available:
+            settings["cmor_check_data"] = {
+                "check_level": self.session["check_level"],
+                "cmor_table": self.facets["project"],
+                "mip": self.facets["mip"],
+                "frequency": self.facets["frequency"],
+                "short_name": self.facets["short_name"],
+                "branding_suffix": self.facets.get("branding_suffix"),
+            }
 
         result: Sequence[PreprocessorItem] = self.files
         for step, kwargs in settings.items():
@@ -960,6 +963,7 @@ class Dataset:
         dataset.supplementaries = []
         dataset.augment_facets()
         if "timerange" not in dataset.facets:
+            # timerange facet may be removed in augment_facets for time-independent data.
             self.facets.pop("timerange", None)
             return
 

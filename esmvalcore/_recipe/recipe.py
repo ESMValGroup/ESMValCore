@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from esmvalcore import __version__, esgf
+import esmvalcore.io.esgf
+from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
@@ -22,11 +23,10 @@ from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.local import (
+from esmvalcore.io.local import (
     GRIB_FORMATS,
     _dates_to_timerange,
     _get_multiproduct_filename,
-    _get_output_file,
     _parse_period,
     _truncate_dates,
 )
@@ -37,6 +37,7 @@ from esmvalcore.preprocessor import (
     MULTI_MODEL_FUNCTIONS,
     PreprocessingTask,
     PreprocessorFile,
+    _get_preprocessor_filename,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
@@ -75,10 +76,10 @@ PreprocessorSettings = dict[str, Any]
 PreprocessorProfile = dict[str, dict[str, Any]]
 
 
-DOWNLOAD_FILES = set()
+DOWNLOAD_FILES: set[DataElement] = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
-USED_DATASETS = []
+USED_DATASETS: list[Dataset] = []
 """Use a global variable to keep track of datasets that are actually used."""
 
 
@@ -519,7 +520,12 @@ def _update_multiproduct(
 
     if step == "ensemble_statistics":
         check.ensemble_statistics_preproc(settings)
-        grouping = ["project", "dataset", "exp", "sub_experiment"]
+        grouping: tuple[str, ...] | None = (
+            "project",
+            "dataset",
+            "exp",
+            "sub_experiment",
+        )
     else:
         check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
@@ -677,11 +683,7 @@ def _get_preprocessor_products(
         _schedule_for_download(input_datasets)
         _log_input_files(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
-
-        filename = _get_output_file(
-            dataset.facets,
-            dataset.session.preproc_dir,
-        )
+        filename = _get_preprocessor_filename(dataset)
         product = PreprocessorFile(
             filename=filename,
             attributes=dataset.facets,
@@ -1327,7 +1329,7 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
-        esgf.download(self._download_files)
+        esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
 

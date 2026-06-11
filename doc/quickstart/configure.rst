@@ -685,22 +685,76 @@ Example:
 
 The following project-specific options are available:
 
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| Option                        | Description                            | Type                        | Default value                          |
-+===============================+========================================+=============================+========================================+
-| ``data``                      | Data sources are used to find input    | :obj:`dict`                 | {}                                     |
-|                               | data and have to be configured before  |                             |                                        |
-|                               | running the tool. See                  |                             |                                        |
-|                               | :ref:`config-data-sources` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets``              | Extra key-value pairs ("*facets*")     | :obj:`dict`                 | See                                    |
-|                               | added to datasets in addition to the   |                             | :ref:`config-extra-facets-defaults`    |
-|                               | facets defined in the recipe. See      |                             |                                        |
-|                               | :ref:`config-extra-facets` for         |                             |                                        |
-|                               | details.                               |                             |                                        |
-+-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+.. list-table::
+   :widths: 15 50 15 20
+   :header-rows: 1
 
+   * - Option
+     - Description
+     - Type
+     - Default value
+   * - ``cmor_table``
+     - :ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore can work with. Refer to :ref:`cmor_table_configuration` for available options.
+     - :obj:`dict`
+     - ``{"type": "esmvalcore.cmor.table.NoInfo"}``
+   * - ``data``
+     - Data sources are used to find input data and have to be configured before running the tool. Refer to :ref:`config-data-sources` for details.
+     - :obj:`dict`
+     - ``{}``
+   * - ``extra_facets``
+     - Extra key-value pairs ("*facets*") added to datasets in addition to the facets defined in the recipe. Refer to  :ref:`config-extra-facets` for details.
+     - :obj:`dict`
+     - Refer to :ref:`config-extra-facets-defaults`.
+   * - ``preprocessor_filename_template``
+     - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
+     - :obj:`str`
+     - Refer to :ref:`config-preprocessor-filename-template`.
+
+.. _cmor_table_configuration:
+
+CMOR table configuration
+------------------------
+
+:ref:`CMOR tables <cmor_tables>` are used to define the variables that ESMValCore
+can work with.
+
+Default values are provided in
+`defaults/cmor_tables.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/cmor_tables.yml>`__,
+for example:
+
+.. literalinclude:: ../configurations/defaults/cmor_tables.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/cmor_tables.yml``
+    :end-before: CMIP3:
+
+The ``type`` parameter defines which class is used to read the CMOR tables for a
+project, it should be a subclass of :class:`esmvalcore.cmor.table.InfoBase`.
+The other parameters are passed as keyword arguments to the class when it is
+created. See :mod:`esmvalcore.cmor.table` for a description of the built-in
+classes for reading CMOR tables and their parameters.
+
+Most users will not need to change the CMOR table configuration. However, if you
+have variables you would like to use which are not in the standard tables,
+it is recommended that you start from the default configuration and extend the
+list of ``paths`` with the directory where your custom CMOR tables are stored.
+
+If you have data that is not described in a CMOR table at all and do not need
+interoperability with typical climate model data, you can use
+the :class:`esmvalcore.cmor.table.NoInfo` class to indicate that no CMOR table
+is available. In that case you will need to provide all necessary facets
+for loading and saving the data in the :ref:`recipe <recipe>` or
+:class:`~esmvalcore.dataset.Dataset`, and
+:ref:`CMOR checks <cmor_check_strictness>` will be skipped.
+
+.. warning::
+
+    While it is possible to work with datasets that are not described in a CMOR
+    table, the :ref:`preprocessor functions <preprocessor>` and
+    :ref:`diagnostics <esmvaltool:recipes>` have been designed to work with
+    CMORized data and may not work as expected with non-CMORized data.
+
+    Our ambition is that :ref:`preprocessor functions <preprocessor>` support
+    data that follows the `CF Conventions <https://cfconventions.org/>`_.
 
 .. _config-data-sources:
 
@@ -732,8 +786,8 @@ There are three modules available as part of ESMValCore that provide data source
 - :mod:`esmvalcore.io.intake_esgf`: Use the
   `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
   is available from ESGF.
-- :mod:`esmvalcore.local`: Use :mod:`glob` patterns to find files on a filesystem.
-- :mod:`esmvalcore.esgf`: Use the legacy `esgf-pyclient
+- :mod:`esmvalcore.io.local`: Use :mod:`glob` patterns to find files on a filesystem.
+- :mod:`esmvalcore.io.esgf`: Use the legacy `esgf-pyclient
   <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
   from ESGF.
 
@@ -755,7 +809,7 @@ commands:
     esmvaltool config copy data-local-esmvaltool.yml
 
 This will use the :mod:`esmvalcore.io.intake_esgf` module to access data
-that is available through ESGF and use :mod:`esmvalcore.local` to find
+that is available through ESGF and use :mod:`esmvalcore.io.local` to find
 observational and reanalysis datasets that have been
 :ref:`CMORized with ESMValTool <esmvaltool:inputdata_observations>`
 (``OBS6`` and ``OBS`` projects for CMIP6- and CMIP5-style CMORization
@@ -805,7 +859,7 @@ and tailor it for your system.
 .. note::
 
     Deduplicating data found via :mod:`esmvalcore.io.intake_esgf` data sources
-    and the :mod:`esmvalcore.local` data sources has not yet been implemented.
+    and the :mod:`esmvalcore.io.local` data sources has not yet been implemented.
     Therefore it is recommended not to use the configuration option
     ``search_data: complete`` when using both data sources for the same project.
     The ``search_data: quick`` option can be safely used.
@@ -831,7 +885,7 @@ This is particularly useful for native datasets which do not follow the CMOR
 standard by default and consequently produce a lot of warnings when handled by
 Iris.
 This can be configured using the ``ignore_warnings`` argument to
-:class:`esmvalcore.local.LocalDataSource`.
+:class:`esmvalcore.io.local.LocalDataSource`.
 
 Here is an example on how to ignore specific warnings when loading data from
 the ``EMAC`` model in its native format:
@@ -847,12 +901,11 @@ The keyword arguments specified in the list items are directly passed to
 Extra Facets
 ------------
 
-It can be useful to automatically add extra key-value pairs to variables or
-datasets without explicitly specifying them in the recipe.
-These key-value pairs can be used for :ref:`finding data
-<extra-facets-data-finder>` or for providing extra information to the functions
-that :ref:`fix data <extra-facets-fixes>` before passing it on to the
-preprocessor.
+It can be useful to automatically add extra :ref:`facets <facets>` to variables
+or datasets without explicitly specifying them in the recipe.
+These facets can be used for :ref:`finding data <extra-facets-data-finder>` or
+for providing extra information to the functions that
+:ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
 
 To support this, we provide the **extra facets** facilities.
 Facets are the key-value pairs described in :ref:`Datasets`.
@@ -954,6 +1007,30 @@ Default extra facets are specified in ``extra_facets_*.yml`` files located in
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/config/configurations/defaults>`__
 directory.
 
+.. _config-preprocessor-filename-template:
+
+Preprocessor output filenames
+-----------------------------
+
+The filename to use for saving :ref:`preprocessed data <preprocessed_datasets>`
+when running a :ref:`recipe <recipe>` is configured using ``preprocessor_filename_template``,
+similar to the filename template in :class:`esmvalcore.io.local.LocalDataSource`.
+
+Default values are provided in ``defaults/preprocessor_filename_template.yml``,
+for example:
+
+.. literalinclude:: ../configurations/defaults/preprocessor_filename_template.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/preprocessor_filename_template.yml``
+    :end-before: # Observational
+
+The facet names from the template are replaced with the facet values from the
+recipe to create a filename. The extension ``.nc`` (and if applicable, a start
+and end time) will automatically be appended to the filename.
+
+If no ``preprocessor_filename_template`` is configured for a project, the facets
+describing the dataset in the recipe, as stored in
+:attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
 
 .. _config-esgf:
 
@@ -964,7 +1041,7 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 Refer to :ref:`config-data-sources` for instructions on how to set this up. This
-section describes additional configuration options for the :mod:`esmvalcore.esgf`
+section describes additional configuration options for the :mod:`esmvalcore.io.esgf`
 module, which is based on the legacy esgf-pyclient_ library. Most users
 will not need this.
 
@@ -987,7 +1064,7 @@ will not need this.
 Configuration file
 ------------------
 An optional configuration file can be created for configuring how the
-:class:`esmvalcore.esgf.ESGFDataSource` uses esgf-pyclient_
+:class:`esmvalcore.io.esgf.ESGFDataSource` uses esgf-pyclient_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
 
@@ -1009,7 +1086,7 @@ The default settings are:
 
     search_connection:
       urls:
-        .. - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
+        - 'https://esgf-node.ornl.gov/esgf-1-5-bridge'
         - 'https://esgf.ceda.ac.uk/esg-search'
         - 'https://esgf-data.dkrz.de/esg-search'
         - 'https://esgf-node.ipsl.upmc.fr/esg-search'
@@ -1071,190 +1148,162 @@ resort.
 Developer configuration file
 ============================
 
-Most users and diagnostic developers will not need to change this file,
-but it may be useful to understand its content.
-The settings from this file are being moved to the
-:ref:`new configuration system <config_overview>`. In particular, the
-``input_dir``, ``input_file``, and ``ignore_warnings`` settings have already
-been replaced by the :class:`esmvalcore.local.LocalDataSource` that can be
-configured via :ref:`data sources <config-data-sources>`.
-The developer configuration file will be installed along with ESMValCore and can
-also be viewed on GitHub:
-`esmvalcore/config-developer.yml
-<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
-This configuration file describes the CMOR tables for several
-key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS), and for native output data for some
-models (ICON, IPSL, ... see :ref:`configure_native_models`).
+.. deprecated:: 2.14.0
 
-Users can get a copy of this file with default values by running
+  The developer configuration file is deprecated and will no longer be supported
+  in v2.16.0. Please use the :ref:`project-specific configuration <config-projects>`
+  instead.
 
-.. code-block:: bash
-
-  esmvaltool config get_config_developer --path=${TARGET_FOLDER}
-
-If the option ``--path`` is omitted, the file will be created in
-``~/.esmvaltool``.
-
-.. note::
-
-  Remember to change the configuration option ``config_developer_file`` if you
-  want to use a custom config developer file.
+  See the `v2.13.0 <https://docs.esmvaltool.org/projects/ESMValCore/en/v2.13.0/quickstart/configure.html#developer-configuration-file>`__
+  documentation for previous usage of the developer configuration file.
 
 .. warning::
 
-  For now, make sure that the custom ``config-developer.yml`` is **not** saved
-  in the ESMValTool/Core configuration directories (see
-  :ref:`config_yaml_files` for details).
-  This will change in the future due to the :ref:`redesign of ESMValTool/Core's
-  configuration <config_overview>`.
+    Make sure that **no** ``config-developer.yml`` file is saved
+    in the ESMValCore configuration directories (see
+    :ref:`config_overview` for details), as it does not contain configuration
+    options that are valid in the new configuration system.
 
-Example of the CMIP6 project configuration:
+Upgrade instructions for finding files
+--------------------------------------
 
-.. code-block:: yaml
+The ``input_dir``, ``input_file``, and ``ignore_warnings`` settings have
+been replaced by :class:`esmvalcore.io.local.LocalDataSource`, which can be
+configured via :ref:`data sources <config-data-sources>`.
 
-   CMIP6:
-     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
-     cmor_type: 'CMIP6'
-     cmor_strict: true
+Example 1: A config-developer.yml file specifying a directory structure for
+CMIP6 data:
 
-Preprocessor output files
--------------------------
+.. code:: yaml
 
-The filename to use for preprocessed data is configured using ``output_file``,
-similar to the filename template in :class:`esmvalcore.local.LocalDataSource`.
-Note that the extension ``.nc`` (and if applicable, a start and end time) will
-automatically be appended to the filename.
+    CMIP6:
+      input_dir:
+        ESGF: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+      input_file: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
 
-.. _cmor_table_configuration:
+and associated ``rootpath`` and ``drs`` settings:
 
-Project CMOR table configuration
---------------------------------
+.. code:: yaml
 
-ESMValCore comes bundled with several CMOR tables, which are stored in the directory
-`esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_.
-These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
+    rootpath:
+      CMIP6: ~/climate_data
+    drs:
+      CMIP6: ESGF
 
-For every ``project`` that can be used in the recipe, there are four settings
-related to CMOR table settings available:
+would translate to the following new configuration:
 
-* ``cmor_type``: can be ``CMIP5`` if the CMOR table is in the same format as the
-  CMIP5 table or ``CMIP6`` if the table is in the same format as the CMIP6 table.
-* ``cmor_strict``: if this is set to ``false``, the CMOR table will be
-  extended with variables from the :ref:`custom_cmor_tables` (by default loaded
-  from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
-  use variables with a ``mip`` which is different from the MIP table in which
-  they are defined. Note that this option is always enabled for
-  :ref:`derived variables <Variable derivation>`.
-* ``cmor_path``: path to the CMOR table.
-  Relative paths are with respect to `esmvalcore/cmor/tables`_.
-  Defaults to the value provided in ``cmor_type`` written in lower case.
-* ``cmor_default_table_prefix``: Prefix that needs to be added to the ``mip``
-  to get the name of the file containing the ``mip`` table.
-  Defaults to the value provided in ``cmor_type``.
+.. code:: yaml
 
-.. _custom_cmor_tables:
+    projects:
+      CMIP6:
+        data:
+          local:
+            type: esmvalcore.io.local.LocalDataSource
+            rootpath: ~/climate_data
+            dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+            filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
 
-Custom CMOR tables
-------------------
+Upgrade instructions for naming preprocessor output files
+---------------------------------------------------------
 
-As mentioned in the previous section, the CMOR tables of projects that use
-``cmor_strict: false`` will be extended with custom CMOR tables.
-For :ref:`derived variables <Variable derivation>` (the ones with ``derive:
-true`` in the recipe), the custom CMOR tables will always be considered.
-By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
-<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
-However, by using the special project ``custom`` in the
-``config-developer.yml`` file with the option ``cmor_path``, a custom location
-for these custom CMOR tables can be specified.
-In this case, the default custom tables are extended with those entries from
-the custom location (in case of duplication, the custom location tables take
-precedence).
+The ``output_file`` setting has been replaced by the
+``preprocessor_filename_template`` settings described in
+:ref:`config-preprocessor-filename-template`.
 
-Example:
+Example 1: A config-developer.yml file specifying preprocessor output filenames
+for CMIP6 data:
 
-.. code-block:: yaml
+.. code:: yaml
 
-   custom:
-     cmor_path: ~/my/own/custom_tables
-
-This path can be given as relative path (relative to `esmvalcore/cmor/tables`_)
-or as absolute path.
-Other options given for this special table will be ignored.
-
-Custom tables in this directory need to follow the naming convention
-``CMOR_{short_name}.dat`` and need to be given in CMIP5 format.
-
-Example for the file ``CMOR_asr.dat``:
-
-.. code-block::
-
-   SOURCE: CMIP5
-   !============
-   variable_entry:    asr
-   !============
-   modeling_realm:    atmos
-   !----------------------------------
-   ! Variable attributes:
-   !----------------------------------
-   standard_name:
-   units:             W m-2
-   cell_methods:      time: mean
-   cell_measures:     area: areacella
-   long_name:         Absorbed shortwave radiation
-   !----------------------------------
-   ! Additional variable information:
-   !----------------------------------
-   dimensions:        longitude latitude time
-   type:              real
-   positive:          down
-   !----------------------------------
-   !
-
-It is also possible to use a special coordinates file ``CMOR_coordinates.dat``,
-which will extend the entries from the default one
-(`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
-<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
+    CMIP6:
+      output_file: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}"
 
 
-.. _configure_native_models:
+would translate to the following new configuration:
 
-Configuring datasets in native format
--------------------------------------
+.. code:: yaml
 
-ESMValCore can be configured for handling native model output formats and
-specific reanalysis/observation datasets without preliminary reformatting.
-These datasets can be either hosted under the ``native6`` project (mostly
-native reanalysis/observational datasets) or under a dedicated project, e.g.,
-``ICON`` (mostly native models).
+    projects:
+      CMIP6:
+        preprocessor_filename_template: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}"
 
-Example:
+Upgrade instructions for using custom CMOR tables
+-------------------------------------------------
+
+The CMOR tables can now be configured via :ref:`cmor_table_configuration`. The
+following mapping applies:
+
+- ``cmor_type`` has been replaced by ``type``
+- ``cmor_strict`` has been replaced by ``strict``
+- ``cmor_path`` has been replaced by ``paths``
+- ``cmor_default_table_prefix`` is no longer needed.
+
+Because it is now possible to configure multiple paths to directories containing
+CMOR tables per project, the ``custom`` project for specifying additional custom
+CMOR tables is no longer needed nor supported.
+
+Example 1: A config-developer.yml file specifying different CMIP6 CMOR tables
+than the default ones, augmented by the default custom CMOR tables:
 
 .. code-block:: yaml
 
-   native6:
-     cmor_strict: false
-     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
-     cmor_type: 'CMIP6'
-     cmor_default_table_prefix: 'CMIP6_'
+  CMIP6:
+    cmor_path: /path/to/cmip6-cmor-tables
+    cmor_strict: true
+    cmor_type: CMIP6
 
-   ICON:
-     cmor_strict: false
-     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
-     cmor_type: 'CMIP6'
-     cmor_default_table_prefix: 'CMIP6_'
+would translate to the following new configuration:
 
-A detailed description on how to add support for further native datasets is
-given :ref:`here <add_new_fix_native_datasets>`.
+.. code-block:: yaml
 
-.. hint::
+  projects:
+    CMIP6:
+      cmor_table:
+        type: esmvalcore.cmor.table.CMIP6Info
+        strict: true
+        paths:
+          - /path/to/cmip6-cmor-tables
+          - cmip6-custom
 
-   When using native datasets, it might be helpful to specify a custom location
-   for the :ref:`custom_cmor_tables`.
-   This allows reading arbitrary variables from native datasets.
-   Note that this requires the option ``cmor_strict: false`` in the
-   :ref:`project configuration <configure_native_models>` used for the native
-   model output.
+where the ``cmip6-custom`` relative path refers to
+`esmvalcore/cmor/tables/cmip6-custom <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6-custom>`__
+and ``type`` refers to :class:`esmvalcore.cmor.table.CMIP6Info`.
 
+Example 2: A config-developer.yml file specifying additional custom CMOR tables:
+
+.. code:: yaml
+
+  CMIP6:
+    cmor_path: cmip6
+    cmor_strict: true
+    cmor_type: CMIP6
+  custom:
+    cmor_path: /path/to/custom-cmip5-style-tables
+
+would translate to the following new configuration:
+
+.. code:: yaml
+
+  projects:
+    CMIP6:
+      cmor_table:
+        type: esmvalcore.cmor.table.CMIP6Info
+        strict: true
+        paths:
+          - cmip6
+          - cmip6-custom
+          - /path/to/custom-cmip6-style-tables
+
+where the relative paths ``cmip6`` and ``cmip6-custom`` refer to
+`esmvalcore/cmor/tables/cmip6 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6>`__
+and
+`esmvalcore/cmor/tables/cmip6-custom <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6-custom>`__
+respectively and the directory ``/path/to/custom-cmip6-style-tables`` contains
+the additional custom CMOR tables in CMIP6 format. A script to translate custom
+CMIP5 format tables to CMIP6 format tables is available
+`here <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/tables/cmip6-custom/convert-cmip5-to-cmip6.py>`__.
+Note that it is no longer possible to mix CMIP6-style tables with custom
+CMIP5-style tables for the same project.
 
 .. _config-ref:
 

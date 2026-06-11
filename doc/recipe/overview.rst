@@ -73,12 +73,12 @@ the following:
 Recipe section: ``datasets``
 ============================
 
-The ``datasets`` section includes dictionaries that, via key-value pairs or
-"facets", define standardized data specifications:
+The ``datasets`` section includes dictionaries that, via :ref:`facets <facets>`,
+define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
-  ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
+  ``OBS`` for observational data, ``ana4MIPs`` for ana4MIPs data,
   ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``rcp85``).
@@ -109,6 +109,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
+      - {dataset: CCLM4-8-17, project: CORDEX, domain: EUR-11, driver: CNRM-CERFACS-CNRM-CM5, exp: historical, ensemble: r1i1p1, institute: CLMcom, rcm_version: v1, timerange: '2001/2004'}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: CMCC-CM2-SR5, project: CMIP6, exp: historical, ensemble: r1i1p1f1, timerange: '2001/P10Y', grid: gn}
       - {dataset: HadGEM3-GC31-MM, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
@@ -378,6 +379,89 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
 
+CORDEX datasets
+---------------
+
+The horizontal coordinates of CORDEX data are often not accurate. Therefore,
+the tool provides the option to specify that the standard CORDEX grid for the
+domain should be used instead of the grid defined in the files. This can be
+enabled by adding ``use_standard_grid: true`` and disabled by adding
+``use_standard_grid: false`` to the dataset definition of the CORDEX data.
+
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - dataset: CCLM4-8-17
+      rcm_version: v1
+      driver: CNRM-CERFACS-CNRM-CM5
+      institute: CLMcom
+      project: CORDEX
+      domain: EUR-11
+      exp: historical
+      ensemble: r1i1p1
+      use_standard_grid: true
+
+will use the standard CORDEX grid for the EUR-11 domain, as defined by the
+`py-cordex <https://py-cordex.readthedocs.io>`_ package for datasets on a
+rotated pole grid. For datasets on a Lambert conformal grid, ESMValCore provides
+an algorithm to calculate the standard grid, but this only works if the
+`grid mapping <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#grid-mappings-and-projections>`_
+is correct.
+
+This feature is disabled by default, but enabled by default for models with
+known issues through the default
+`CORDEX extra facets file <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/configurations/defaults/extra_facets_cordex.yml>`__.
+
+.. warning::
+
+  If ``use_standard_grid: true`` is used, the tool will overwrite the existing grid
+  information. It is recommended to visualize the resulting data and compare it
+  to easily recognizable features (e.g. coastlines) to make sure the grid is
+  correct before using it in an aggregated manner.
+
+  Example Python script to visualize the grid of a CORDEX dataset and compare it
+  to coastlines:
+
+  .. code-block:: python
+
+      from esmvalcore.dataset import Dataset
+      import iris.quickplot
+      import matplotlib.pyplot as plt
+
+      ds = Dataset(
+          short_name="sftlf",
+          mip="fx",
+          project="CORDEX",
+          domain="EUR-11",
+          dataset="ALADIN63",
+          driver="CNRM-CERFACS-CNRM-CM5",
+          institute="CNRM",
+          exp="historical",
+          ensemble="r1i1p1",
+          rcm_version="v2",
+          use_standard_grid=True,
+      )
+      cube = ds.load()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["projection_x_coordinate", "projection_y_coordinate"],
+      )
+      plt.gca().coastlines()
+
+      plt.figure()
+      iris.quickplot.pcolormesh(
+          cube,
+          coords=["longitude", "latitude"],
+      )
+      plt.gca().coastlines()
+
+      plt.show()
+
+
 .. _`yaml`: https://yaml.org/refcard.html
 
 .. _Preprocessors:
@@ -435,7 +519,7 @@ Recipe section: ``diagnostics``
 The diagnostics section includes one or more diagnostics. Each diagnostic
 section will include:
 
-- the variable(s) to preprocess, including the preprocessor to be applied to each variable;
+- the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
@@ -563,7 +647,7 @@ running the tool (a lower number means higher priority).
 
 Variable and dataset definitions
 --------------------------------
-To define a variable/dataset combination that corresponds to an actual
+To define a :ref:`variable <cmor_tables>`/dataset combination that corresponds to an actual
 variable from a dataset, the keys in each variable section
 are combined with the keys of each dataset definition. If two versions of the same
 key are provided, then the key in the datasets section will take precedence

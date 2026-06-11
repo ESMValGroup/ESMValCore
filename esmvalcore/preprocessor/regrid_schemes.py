@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "IrisESMFRegrid",
     "GenericFuncScheme",
     "GenericRegridder",
+    "IrisESMFRegrid",
     "UnstructuredLinear",
     "UnstructuredLinearRegridder",
     "UnstructuredNearest",

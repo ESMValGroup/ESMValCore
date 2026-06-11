@@ -28,11 +28,11 @@ from iris.analysis import (
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
+import esmvalcore.cmor.table
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
     add_plev_from_altitude,
 )
-from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
     _rechunk_aux_factory_dependencies,
@@ -1403,15 +1403,15 @@ def get_cmor_levels(cmor_table: str, coordinate: str) -> list[float]:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    if cmor_table not in CMOR_TABLES:
+    if cmor_table not in esmvalcore.cmor.table.CMOR_TABLES:
         msg = f"Level definition cmor_table '{cmor_table}' not available"
         raise ValueError(msg)
 
-    if coordinate not in CMOR_TABLES[cmor_table].coords:
+    if coordinate not in esmvalcore.cmor.table.CMOR_TABLES[cmor_table].coords:
         msg = f"Coordinate {coordinate} not available for {cmor_table}"
         raise ValueError(msg)
 
-    cmor = CMOR_TABLES[cmor_table].coords[coordinate]
+    cmor = esmvalcore.cmor.table.CMOR_TABLES[cmor_table].coords[coordinate]
 
     if cmor.requested:
         return [float(level) for level in cmor.requested]

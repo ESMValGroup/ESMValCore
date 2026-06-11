@@ -54,11 +54,38 @@ def example_data_source(tmp_path: Path) -> dict[str, str]:
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
     return {
-        "type": "esmvalcore.local.LocalDataSource",
+        "type": "esmvalcore.io.local.LocalDataSource",
         "rootpath": str(rootpath),
         "dirname_template": "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}",
         "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc",
     }
+
+
+@pytest.mark.parametrize("timerange", ["1850/185002", "*", "*/P2M", "1860/*"])
+def test_find_data(
+    example_data_source: dict[str, str],
+    session: Session,
+    timerange: str,
+) -> None:
+    tas = Dataset(
+        short_name="tas",
+        mip="Amon",
+        project="CMIP5",
+        dataset="CanESM2",
+        ensemble="r1i1p1",
+        exp="historical",
+        timerange=timerange,
+    )
+    tas.add_supplementary(short_name="areacella", mip="fx", ensemble="r0i0p0")
+    tas.session = session
+    tas.session["projects"]["CMIP5"]["data"] = {
+        "example-data-source": example_data_source,
+    }
+
+    assert len(tas.files) == 1
+    assert "timerange" in tas.files[0].facets
+    assert len(tas.supplementaries[0].files) == 1
+    assert "timerange" not in tas.supplementaries[0].files
 
 
 def test_load(example_data_source: dict[str, str], session: Session) -> None:

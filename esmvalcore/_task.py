@@ -17,7 +17,7 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from pathlib import Path, PosixPath
+from pathlib import Path
 from shutil import which
 
 import dask
@@ -29,15 +29,6 @@ from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
 from .config._dask import get_distributed_client
 from .config._diagnostics import DIAGNOSTICS, TAGS
-
-
-def path_representer(dumper, data):
-    """For printing pathlib.Path objects in yaml files."""
-    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
-
-
-yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
-yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
@@ -177,16 +168,12 @@ def _py2ncl(value, var_name=""):
                 type_ = type(value[0])
             if any(not isinstance(v, type_) for v in value):
                 msg = f"NCL array cannot be mixed type: {value}"
-                raise ValueError(
-                    msg,
-                )
+                raise ValueError(msg)
             txt += "(/{}/)".format(", ".join(_py2ncl(v) for v in value))
     elif isinstance(value, dict):
         if not var_name:
             msg = f"NCL does not support nested dicts: {value}"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         txt += "True\n"
         for key in value:
             txt += f"{var_name}@{key} = {_py2ncl(value[key])}\n"
@@ -272,9 +259,7 @@ class BaseTask:
         """Initialize task provenance activity."""
         if self.activity is not None:
             msg = f"Provenance of {self} already initialized"
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         self.activity = get_task_provenance(self, recipe_entity)
 
     def flatten(self):
@@ -445,18 +430,14 @@ class DiagnosticTask(BaseTask):
                 msg = (
                     f"{err_msg}: program '{interpreters[ext]}' not installed."
                 )
-                raise DiagnosticError(
-                    msg,
-                )
+                raise DiagnosticError(msg)
             cmd.append(interpreter)
         elif not os.access(script_file, os.X_OK):
             msg = (
                 f"{err_msg}: non-executable file with unknown extension "
                 f"'{script_file.suffix}'."
             )
-            raise DiagnosticError(
-                msg,
-            )
+            raise DiagnosticError(msg)
 
         cmd.extend(args.get(ext, []))
         cmd.append(str(script_file))
@@ -674,9 +655,7 @@ class DiagnosticTask(BaseTask):
             f"Diagnostic script {self.script} failed with return code {returncode}. See the log "
             f"in {self.log}"
         )
-        raise DiagnosticError(
-            msg,
-        )
+        raise DiagnosticError(msg)
 
     def _collect_provenance(self) -> None:
         """Process provenance information provided by the diagnostic script."""
@@ -726,7 +705,8 @@ class DiagnosticTask(BaseTask):
         valid = True
         for filename, orig_attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
-            attributes = deepcopy(orig_attributes)
+            attributes = deepcopy(attrs)
+            attributes.update(deepcopy(orig_attributes))
             ancestor_files = attributes.pop("ancestors", [])
             if not ancestor_files:
                 logger.warning(
@@ -763,8 +743,6 @@ class DiagnosticTask(BaseTask):
                         self.script,
                         self.name,
                     )
-
-            attributes.update(deepcopy(attrs))
 
             TAGS.replace_tags_in_dict(attributes)
 

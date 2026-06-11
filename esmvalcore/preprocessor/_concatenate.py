@@ -11,7 +11,7 @@ import numpy as np
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.esgf.facets import FACETS
+from esmvalcore.io.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
@@ -164,7 +164,9 @@ def _fix_calendars(cubes: Sequence[Cube]) -> None:
         [calendars.count(calendar) for calendar in unique_calendars],
     )
     calendar_index = int(
-        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()),
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()).ravel()[
+            0
+        ],
     )
 
     for cube in cubes:

@@ -26,6 +26,12 @@ release candidate to test the recipes in ESMValTool. If bugs are found
 during the testing phase of the release candidate, make as many release
 candidates for ESMValCore as needed in order to fix them.
 
+.. figure:: /figures/release-timeline-doodle-esmvalcore.png
+   :width: 95%
+   :align:   center
+
+   Example of a release timeline for ESMValCore (in this case for 2.11.0)
+
 To make a new release of the package, be it a release candidate or the final release,
 follow these steps:
 
@@ -131,11 +137,13 @@ on that branch.
 
 The package is automatically uploaded to the
 `PyPI <https://pypi.org/project/ESMValCore/>`__
-by a GitHub action.
-If has failed for some reason, build and upload the package manually by
-following the instructions below.
+by a GitHub action. Note that for security reasons, the upload needs to be
+approved by someone from the
+`ESMValGroup/technical-lead-development-team <https://github.com/orgs/ESMValGroup/teams/technical-lead-development-team>`__
+who is not the author of the release.
 
-Follow these steps to create a new Python package:
+If the automatic build and upload has failed for some reason, do it manually by
+following these instructions:
 
 -  Check out the tag corresponding to the release,
    e.g. ``git checkout tags/v2.1.0``
@@ -143,9 +151,9 @@ Follow these steps to create a new Python package:
    of ``git status`` and by running ``git clean -xdf`` to remove any files
    ignored by git.
 -  Install the required packages:
-   ``python3 -m pip install --upgrade pep517 twine``
+   ``python3 -m pip install --upgrade build twine``
 -  Build the package:
-   ``python3 -m pep517.build --source --binary --out-dir dist/ .``
+   ``python3 -m build``
    This command should generate two files in the ``dist`` directory, e.g.
    ``ESMValCore-2.3.1-py3-none-any.whl`` and ``ESMValCore-2.3.1.tar.gz``.
 -  Upload the package:
@@ -189,22 +197,14 @@ Contact the feedstock maintainers if you want to become a maintainer yourself.
 9. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are two main Docker container images available for ESMValCore on
+There is one main Docker container images available for ESMValCore on
 `Dockerhub <https://hub.docker.com/r/esmvalgroup/esmvalcore/tags>`_:
 
 - ``esmvalgroup/esmvalcore:stable``, built from `docker/Dockerfile <https://github.com/ESMValGroup/ESMValCore/blob/main/docker/Dockerfile>`_,
   this is a tag that is always the same as the latest released version.
   This image is only built by Dockerhub when a new release is created.
-- ``esmvalgroup/esmvalcore:development``, built from `docker/Dockerfile.dev <https://github.com/ESMValGroup/ESMValCore/blob/main/docker/Dockerfile.dev>`_,
-  this is a tag that always contains the latest conda environment for
-  ESMValCore, including any test dependencies.
-  It is used by `CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_ to run the unit tests.
-  This speeds up running the tests, as it avoids the need to build the conda
-  environment for every test run.
-  This image is built by Dockerhub every time there is a new commit to the
-  ``main`` branch on Github.
 
-In addition to the two images mentioned above, there is an image available
+In addition to the image mentioned above, there is an image available
 for every release (e.g. ``esmvalgroup/esmvalcore:v2.5.0``).
 When working on the Docker images, always try to follow the
 `best practices <https://docs.docker.com/develop/develop-images/dockerfile_best-practices/>`__.
@@ -229,7 +229,7 @@ the container image for v2.5.0 of the tool run:
 
    git checkout v2.5.0
    git clean -x
-   docker build -t esmvalgroup/esmvalcore:v2.5.0 . -f docker/Dockerfile
+   docker build --pull -t esmvalgroup/esmvalcore:v2.5.0 . -f docker/Dockerfile
    docker push esmvalgroup/esmvalcore:v2.5.0
 
 (when making updates, you may want to add .post0, .post1, .. to the version

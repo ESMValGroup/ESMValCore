@@ -11,11 +11,11 @@ import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe.check
-import esmvalcore.esgf
+import esmvalcore.io.esgf
 from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import LocalFile
+from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessorFile
 
 if TYPE_CHECKING:
@@ -182,7 +182,7 @@ def test_data_availability_no_data(
     dataset._used_data_sources = [mock_data_source]
     with pytest.raises(RecipeError) as exc:
         check.data_availability(dataset)
-    assert str(exc.value) == "Missing data for Dataset: tas"
+    assert str(exc.value) == "Missing data for Dataset: tas, mon"
     assert len(caplog.records) == 2
     assert caplog.records[0].message == "\n".join(
         [
@@ -313,7 +313,9 @@ def test_data_availability_nonexistent(tmp_path):
         context=None,
     )
     dest_folder = tmp_path
-    input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
+    input_files = [
+        esmvalcore.io.esgf.ESGFFile([result]).local_file(dest_folder),
+    ]
     dataset = Dataset(**var)
     dataset.files = input_files
     check.data_availability(dataset)

@@ -89,7 +89,7 @@ def test_run_recipe(
     session["remove_preproc_dir"] = False
     session["projects"]["CMIP6"]["data"] = {
         "local": {
-            "type": "esmvalcore.local.LocalDataSource",
+            "type": "esmvalcore.io.local.LocalDataSource",
             "rootpath": sample_data_config["rootpath"]["CMIP6"][0],
             "dirname_template": "{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}",
             "filename_template": "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc",

@@ -55,7 +55,7 @@ using the ``OBS`` root path set to:
 
   .. code-block:: yaml
 
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+    OBS: /gws/ssde/j25a/esmeval/obsdata-v2
 
 and the dataset:
 
@@ -68,7 +68,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 .. code-block::
 
-  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+  /gws/ssde/j25a/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Observational datasets CMORized by ESMValTool are organized in Tiers depending on
 their level of public availability.
@@ -84,15 +84,6 @@ formatted according to a CMIP data request) through the ``native6`` project
 project, e.g., ``ICON`` (mostly native models).
 A detailed description of how to include new native datasets is given
 :ref:`here <add_new_fix_native_datasets>`.
-
-.. hint::
-
-   When using native datasets, it might be helpful to specify a custom location
-   for the :ref:`custom_cmor_tables`.
-   This allows reading arbitrary variables from native datasets.
-   Note that this requires the option ``cmor_strict: false`` in the
-   :ref:`project configuration <configure_native_models>` used for the native
-   model output.
 
 .. _read_native_obs:
 
@@ -166,13 +157,11 @@ in its native GRIB format.
 To read these data with ESMValCore, use the data definition for the ``native6``
 project:
 
-.. literalinclude:: ../configurations/data-hpc-dkrz.yml
+.. literalinclude:: ../configurations/data-hpc-dkrz-era5-grib.yml
     :language: yaml
-    :caption: Contents of ``data-hpc-dkrz.yml``
-    :start-at: # ERA5 data in GRIB format:
-    :end-before: OBS6:
+    :caption: Contents of ``data-hpc-dkrz-era5-grib.yml``
 
-To use this configuration, run ``esmvaltool config copy data-hpc-dkrz.yml``.
+To use this configuration, run ``esmvaltool config copy data-hpc-dkrz-era5-grib.yml``.
 
 The `naming conventions
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
@@ -837,7 +826,7 @@ file name than for the netCDF4 variable name.
 
 To apply the extra facets for this purpose, simply use the corresponding tag in
 the applicable ``filename_template`` or ``dirname_template`` in
-:class:`esmvalcore.local.LocalDataSource`.
+:class:`esmvalcore.io.local.LocalDataSource`.
 
 For example, given the extra facets
 
@@ -861,5 +850,5 @@ a corresponding entry in the configuration file could look like:
 
 The same replacement mechanism can be employed everywhere where tags can be
 used, particularly in ``dirname_template`` and ``filename_template`` in
-:class:`esmvalcore.local.LocalDataSource`, and in ``output_file`` in
-:ref:`config-developer.yml <config-developer>`.
+:class:`esmvalcore.io.local.LocalDataSource`, and in ``preprocessor_filename_template``
+under :ref:`config-projects`.

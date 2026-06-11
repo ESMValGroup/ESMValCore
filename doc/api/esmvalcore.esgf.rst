@@ -5,6 +5,7 @@ esmvalcore.esgf
 ---------------
 .. automodule:: esmvalcore.esgf
    :no-inherited-members:
+   :no-index:
 
 esmvalcore.esgf.facets
 ----------------------

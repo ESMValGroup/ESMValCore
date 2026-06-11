@@ -9,6 +9,7 @@ import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
+import iris.cube
 import iris.exceptions
 import iris.fileformats
 import isodate
@@ -664,6 +665,15 @@ class TestExtractSeason(tests.Test):
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord("season_year")
 
+    def test_invalid_month_combination_fail(self):
+        """Test function for custom seasons."""
+        msg = (
+            r"Unable to extract Season 'FJ': combination of months not "
+            r"possible"
+        )
+        with pytest.raises(ValueError, match=msg):
+            extract_season(self.cube, "FJ")
+
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
@@ -988,6 +998,26 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([3.0, 6.0, 9.0])
         assert_array_equal(result.data, expected)
 
+        assert not result.coords("clim_season")
+        assert not result.coords("season_year")
+
+    def test_season_mean_no_keep_group_coordinates(self):
+        """Test for season average of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(
+            cube,
+            "mean",
+            keep_group_coordinates=False,
+        )
+        expected = np.array([3.0, 6.0, 9.0])
+        assert_array_equal(result.data, expected)
+
+        assert not result.coords("clim_season")
+        assert not result.coords("season_year")
+
     def test_season_median(self):
         """Test for season median of a 1D field."""
         data = np.arange(12)
@@ -1110,6 +1140,14 @@ class TestSeasonalStatistics(tests.Test):
         with pytest.raises(ValueError, match=re.escape(msg)):
             seasonal_statistics(cube, "mean")
 
+    def test_invalid_season_fail(self):
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        msg = "Minimum of 2 months is required per season in ('J', 'F')"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            seasonal_statistics(cube, "mean", seasons=["J", "F"])
+
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
@@ -1148,6 +1186,37 @@ class TestMonthlyStatistics(tests.Test):
             ],
         )
         assert_array_equal(result.data, expected)
+
+        assert not result.coords("month_number")
+        assert not result.coords("year")
+
+    def test_mean_no_keep_group_coordinates(self):
+        """Test average of a 1D field."""
+        data = np.arange(24)
+        times = np.arange(7, 360, 15)
+        cube = self._create_cube(data, times)
+
+        result = monthly_statistics(cube, "mean", keep_group_coordinates=False)
+        expected = np.array(
+            [
+                0.5,
+                2.5,
+                4.5,
+                6.5,
+                8.5,
+                10.5,
+                12.5,
+                14.5,
+                16.5,
+                18.5,
+                20.5,
+                22.5,
+            ],
+        )
+        assert_array_equal(result.data, expected)
+
+        assert not result.coords("month_number")
+        assert not result.coords("year")
 
     def test_median(self):
         """Test median of a 1D field."""
@@ -1264,6 +1333,29 @@ class TestHourlyStatistics(tests.Test):
         expected = np.array([0.5, 2.5, 4.5, 6.5])
         assert_array_equal(result.data, expected)
 
+        assert not result.coords("hour_group")
+        assert not result.coords("day_of_year")
+        assert not result.coords("year")
+
+    def test_mean_keep_group_coordinates(self):
+        """Test average of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(
+            cube,
+            12,
+            "mean",
+            keep_group_coordinates=True,
+        )
+        expected = np.array([0.5, 2.5, 4.5, 6.5])
+        assert_array_equal(result.data, expected)
+
+        assert result.coords("hour_group")
+        assert result.coords("day_of_year")
+        assert result.coords("year")
+
     def test_median(self):
         """Test median of a 1D field."""
         data = np.arange(8)
@@ -1306,7 +1398,7 @@ class TestHourlyStatistics(tests.Test):
 
 
 class TestDailyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
+    """Test :func:`esmvalcore.preprocessor._time.daily_statistics`."""
 
     @staticmethod
     def _create_cube(data, times):
@@ -1327,6 +1419,22 @@ class TestDailyStatistics(tests.Test):
         result = daily_statistics(cube, "mean")
         expected = np.array([1.5, 5.5])
         assert_array_equal(result.data, expected)
+
+        assert not result.coords("day_of_year")
+        assert not result.coords("year")
+
+    def test_mean_no_keep_group_coordinates(self):
+        """Test average of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = daily_statistics(cube, "mean", keep_group_coordinates=True)
+        expected = np.array([1.5, 5.5])
+        assert_array_equal(result.data, expected)
+
+        assert result.coords("day_of_year")
+        assert result.coords("year")
 
     def test_median(self):
         """Test median of a 1D field."""
@@ -1679,36 +1787,48 @@ def make_time_series(number_years=2):
     return iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
 
+@pytest.mark.parametrize("keep_group_coordinates", [True, False])
 @pytest.mark.parametrize("existing_coord", [True, False])
-def test_annual_average(existing_coord):
+def test_annual_average(existing_coord, keep_group_coordinates):
     """Test for annual average."""
     cube = make_time_series(number_years=2)
     if existing_coord:
         iris.coord_categorisation.add_year(cube, "time")
 
-    result = annual_statistics(cube)
+    result = annual_statistics(
+        cube,
+        keep_group_coordinates=keep_group_coordinates,
+    )
     expected = np.array([1.0, 1.0])
     assert_array_equal(result.data, expected)
     expected_time = np.array([180.0, 540.0])
     assert_array_equal(result.coord("time").points, expected_time)
+    assert bool(result.coords("year")) is keep_group_coordinates
 
 
+@pytest.mark.parametrize("keep_group_coordinates", [True, False])
 @pytest.mark.parametrize("existing_coord", [True, False])
-def test_annual_sum(existing_coord):
+def test_annual_sum(existing_coord, keep_group_coordinates):
     """Test for annual sum."""
     cube = make_time_series(number_years=2)
     if existing_coord:
         iris.coord_categorisation.add_year(cube, "time")
 
-    result = annual_statistics(cube, "sum")
+    result = annual_statistics(
+        cube,
+        "sum",
+        keep_group_coordinates=keep_group_coordinates,
+    )
     expected = np.array([12.0, 12.0])
     assert_array_equal(result.data, expected)
     expected_time = np.array([180.0, 540.0])
     assert_array_equal(result.coord("time").points, expected_time)
+    assert bool(result.coords("year")) is keep_group_coordinates
 
 
+@pytest.mark.parametrize("keep_group_coordinates", [True, False])
 @pytest.mark.parametrize("existing_coord", [True, False])
-def test_decadal_average(existing_coord):
+def test_decadal_average(existing_coord, keep_group_coordinates):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
     if existing_coord:
@@ -1725,15 +1845,23 @@ def test_decadal_average(existing_coord):
             get_decade,
         )
 
-    result = decadal_statistics(cube)
+    result = decadal_statistics(
+        cube,
+        keep_group_coordinates=keep_group_coordinates,
+    )
     expected = np.array([1.0, 1.0])
     assert_array_equal(result.data, expected)
     expected_time = np.array([1800.0, 5400.0])
     assert_array_equal(result.coord("time").points, expected_time)
+    assert bool(result.coords("decade")) is keep_group_coordinates
 
 
+@pytest.mark.parametrize("keep_group_coordinates", [True, False])
 @pytest.mark.parametrize("existing_coord", [True, False])
-def test_decadal_average_time_dependent_fx(existing_coord):
+def test_decadal_average_time_dependent_fx(
+    existing_coord,
+    keep_group_coordinates,
+):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
     measure = iris.coords.CellMeasure(
@@ -1764,15 +1892,20 @@ def test_decadal_average_time_dependent_fx(existing_coord):
             "time",
             get_decade,
         )
-    result = decadal_statistics(cube)
+    result = decadal_statistics(
+        cube,
+        keep_group_coordinates=keep_group_coordinates,
+    )
     assert result.cell_measure("ocean_volume").data.shape == (1,)
     assert result.ancillary_variable("land_ice_area_fraction").data.shape == (
         1,
     )
+    assert bool(result.coords("decade")) is keep_group_coordinates
 
 
+@pytest.mark.parametrize("keep_group_coordinates", [True, False])
 @pytest.mark.parametrize("existing_coord", [True, False])
-def test_decadal_sum(existing_coord):
+def test_decadal_sum(existing_coord, keep_group_coordinates):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
     if existing_coord:
@@ -1789,11 +1922,16 @@ def test_decadal_sum(existing_coord):
             get_decade,
         )
 
-    result = decadal_statistics(cube, "sum")
+    result = decadal_statistics(
+        cube,
+        "sum",
+        keep_group_coordinates=keep_group_coordinates,
+    )
     expected = np.array([120.0, 120.0])
     assert_array_equal(result.data, expected)
     expected_time = np.array([1800.0, 5400.0])
     assert_array_equal(result.coord("time").points, expected_time)
+    assert bool(result.coords("decade")) is keep_group_coordinates
 
 
 def make_map_data(number_years=2):
@@ -1997,6 +2135,21 @@ def test_standardized_anomalies(period):
     resultdata = np.ma.masked_invalid(result.data)
     assert_array_equal(resultdata, expected)
     assert result.units == "1"
+
+
+def test_standardized_anomalies_invalid_period():
+    time_coord = iris.coords.DimCoord(
+        [15, 100, 380],
+        standard_name="time",
+        units="days since 2000-01-01",
+    )
+    cube = iris.cube.Cube([1, 2, 3], dim_coords_and_dims=[(time_coord, 0)])
+    msg = (
+        r"Cannot safely apply preprocessor to this dataset since the full "
+        r"time period of this dataset is not a multiple of the period 'month'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        anomalies(cube, period="month", standardize=True)
 
 
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)

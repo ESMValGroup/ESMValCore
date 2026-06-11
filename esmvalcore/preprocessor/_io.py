@@ -20,9 +20,9 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore._task import write_ncl_settings
 from esmvalcore.exceptions import ESMValCoreLoadWarning
+from esmvalcore.io.local import LocalFile
 from esmvalcore.io.protocol import DataElement
 from esmvalcore.iris_helpers import dataset_to_iris
-from esmvalcore.local import LocalFile
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -40,6 +40,28 @@ VARIABLE_KEYS = {
     "reference_dataset",
     "alternative_dataset",
 }
+
+
+def _drop_range_attributes(cube: Cube) -> Cube:
+    """Drop range related attributes from cube and its components."""
+    drop_attrs = (
+        "actual_range",
+        "valid_max",
+        "valid_min",
+        "valid_range",
+    )
+    cube = cube.copy()
+    for attr in drop_attrs:
+        cube.attributes.pop(attr, None)
+        for coord in cube.dim_coords:
+            coord.attributes.pop(attr, None)
+        for aux_coord in cube.aux_coords:
+            aux_coord.attributes.pop(attr, None)
+        for cell_measure in cube.cell_measures():
+            cell_measure.attributes.pop(attr, None)
+        for ancillary_variable in cube.ancillary_variables():
+            ancillary_variable.attributes.pop(attr, None)
+    return cube
 
 
 def load(
@@ -133,7 +155,9 @@ def load(
             )
             warnings.warn(warn_msg, ESMValCoreLoadWarning, stacklevel=2)
 
-    return cubes
+    # Drop range related attributes as these are likely to be
+    # invalidated by preprocessing the data.
+    return CubeList(_drop_range_attributes(cube) for cube in cubes)
 
 
 def _load_zarr(

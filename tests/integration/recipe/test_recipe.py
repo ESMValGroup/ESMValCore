@@ -18,8 +18,9 @@ import yaml
 from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
-import esmvalcore
 import esmvalcore._task
+import esmvalcore.io.esgf
+import esmvalcore.io.local
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_datasets,
@@ -30,8 +31,11 @@ from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _get_output_file
-from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
+from esmvalcore.preprocessor import (
+    DEFAULT_ORDER,
+    PreprocessingTask,
+    _get_preprocessor_filename,
+)
 from tests.integration.test_provenance import check_provenance
 
 if TYPE_CHECKING:
@@ -467,8 +471,7 @@ def test_simple_recipe(
             dataset = next(
                 d
                 for d in datasets
-                if _get_output_file(d.facets, session.preproc_dir)
-                == product.filename
+                if _get_preprocessor_filename(d) == product.filename
             )
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
@@ -787,21 +790,21 @@ TEST_ISO_TIMERANGE = [
     ),
     ("1990/*", "1990-2019"),
     ("*/1992", "1990-1992"),
-    ("1990/P2Y", "1990-P2Y"),
-    ("19900101/P2Y2M1D", "19900101-P2Y2M1D"),
+    ("1990/P2Y", "19900101-19920101"),
+    ("19900101/P2Y2M1D", "19900101-19920302"),
     (
         "19900101T0000/P2Y2M1DT12H00M00S",
-        "19900101T0000-P2Y2M1DT12H00M00S",
+        "19900101T000000-19920302T120000",
     ),
-    ("P2Y/1992", "P2Y-1992"),
-    ("P1Y2M1D/19920101", "P1Y2M1D-19920101"),
-    ("P1Y2M1D/19920101T120000", "P1Y2M1D-19920101T120000"),
-    ("P2Y/*", "P2Y-2019"),
-    ("P2Y2M1D/*", "P2Y2M1D-2019"),
-    ("P2Y21DT12H00M00S/*", "P2Y21DT12H00M00S-2019"),
-    ("*/P2Y", "1990-P2Y"),
-    ("*/P2Y2M1D", "1990-P2Y2M1D"),
-    ("*/P2Y21DT12H00M00S", "1990-P2Y21DT12H00M00S"),
+    ("P2Y/1992", "19900101-19920101"),
+    ("P1Y2M1D/19920101", "19901031-19920101"),
+    ("P1Y2M1D/19920101T120000", "19901031T120000-19920101T120000"),
+    ("P2Y/*", "20170101-20190101"),
+    ("P2Y2M1D/*", "20161031-20190101"),
+    ("P2Y21DT12H00M00S/*", "20161211-20190101"),
+    ("*/P2Y", "19900101-19920101"),
+    ("*/P2Y2M1D", "19900101-19920302"),
+    ("*/P2Y21DT12H00M00S", "19900101-19920122"),
 ]
 
 
@@ -968,6 +971,11 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     )
 
     assert product.settings["regrid"]["target_grid"] == reference.datasets[0]
+    # Check that the target dataset does not have files, to prevent pickling
+    # errors: https://github.com/ESMValGroup/ESMValCore/issues/2989.
+    # The files can be found again at load time.
+    assert product.settings["regrid"]["target_grid"]._files is None
+
     assert product.settings["extract_levels"]["levels"] == levels
 
     get_reference_levels.assert_called_once_with(reference.datasets[0])
@@ -1500,6 +1508,64 @@ def simulate_diagnostic_run(diagnostic_task):
 
     diagnostic_task._collect_provenance()
     return record
+
+
+def test_preprocessor_file_ancestors_are_input_files(
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+) -> None:
+    """Test that the ancestors of a preprocessor file are the input files."""
+    content = dedent("""
+        datasets:
+          - dataset: BCC-ESM1
+            project: CMIP6
+            exp: historical
+            ensemble: r1i1p1f1
+            grid: gn
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                exp: 1pctCO2
+          - dataset: bcc-csm1-1
+            project: CMIP5
+            exp: historical
+            ensemble: r1i1p1
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                ensemble: r0i0p0
+
+        preprocessors:
+          regrid:
+            regrid:
+              target_grid: BCC-ESM1
+              scheme: linear
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: regrid
+                mip: Amon
+                timerange: 2000/2005
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+    assert len(recipe.tasks) == 1
+    task = next(iter(recipe.tasks))
+    assert len(task.products) == 2
+    for preprocessor_file in task.products:
+        assert len(preprocessor_file.datasets) == 1
+        dataset = preprocessor_file.datasets[0]
+        assert len(dataset.files) == 1
+        assert len(dataset.supplementaries[0].files) == 1
+        assert len(preprocessor_file._ancestors) == 2
+        assert dataset.files[0] is preprocessor_file._ancestors[0].filename
+        assert (
+            dataset.supplementaries[0].files[0]
+            is preprocessor_file._ancestors[1].filename
+        )
 
 
 def test_diagnostic_task_provenance(
@@ -2406,7 +2472,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
         assert dataset.supplementaries == []
 
 
-def test_wrong_project(tmp_path, patched_datafinder, session):
+def test_wrong_branding_suffix(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -2418,7 +2484,8 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
               tos:
                 preprocessor: preproc
                 project: CMIP7
-                mip: Omon
+                mip: ocean
+                branding_suffix: wrong
                 exp: historical
                 start_year: 2000
                 end_year: 2005
@@ -2427,10 +2494,7 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'"
-    )
+    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
@@ -2513,12 +2577,12 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
         """)
 
     mocker.patch.object(
-        esmvalcore.esgf,
+        esmvalcore.io.esgf,
         "download",
         create_autospec=True,
     )
     mocker.patch.object(
-        esmvalcore.local.LocalFile,
+        esmvalcore.io.local.LocalFile,
         "prepare",
         create_autospec=True,
     )
@@ -2530,8 +2594,8 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore.esgf.download.assert_called()
-    esmvalcore.local.LocalFile.prepare.assert_called()
+    esmvalcore.io.esgf.download.assert_called()
+    esmvalcore.io.local.LocalFile.prepare.assert_called()
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session["max_parallel_tasks"],
     )
@@ -3291,7 +3355,7 @@ def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
                 additional_datasets:
                   - {dataset: CanESM5,    group: ref, reference_for_bias: true}
                   - {dataset: CESM2,      group: ref, reference_for_bias: true}
-                  - {dataset: MPI-ESM-LR, group: notref}
+                  - {dataset: MPI-ESM1-2-LR, group: notref}
 
             scripts: null
         """)
@@ -3559,7 +3623,7 @@ def test_distance_metrics_two_refs_with_mmm(
                 additional_datasets:
                   - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
                   - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
-                  - {dataset: MPI-ESM-LR}
+                  - {dataset: MPI-ESM1-2-LR}
 
             scripts: null
         """)
@@ -3822,14 +3886,13 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
-        "OBS6, native6, obs4MIPs, ana4mips, EMAC, CORDEX, IPSLCM, ICON, CESM, "
-        'ACCESS, ORAS5."'
+        'The following tables are available: .*."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
+    assert re.match(msg, exc.value.failed_tasks[0].message)
+    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
@@ -3857,7 +3920,7 @@ def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "align_metadata failed: Variable 'zzz' not available for table 'Amon' "
+        "align_metadata failed: Variable 'zzz' not available in table 'Amon' "
         "of project 'CMIP6'. Set `strict=False` to ignore this."
     )
     with pytest.raises(RecipeError) as exc:

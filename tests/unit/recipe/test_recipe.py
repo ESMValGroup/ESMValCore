@@ -11,8 +11,8 @@ import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
-from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.io.esgf._download import ESGFFile
 from tests import PreprocessorFile
 
 
@@ -839,7 +839,7 @@ def test_limit_datasets():
 def test_get_default_settings(mocker):
     mocker.patch.object(
         _recipe,
-        "_get_output_file",
+        "_get_preprocessor_filename",
         autospec=True,
         return_value=Path("/path/to/file.nc"),
     )

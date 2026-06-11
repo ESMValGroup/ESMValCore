@@ -1,12 +1,16 @@
 """Tests for the fixes for driver CNRM-CERFACS-CNRM-CM5."""
 
 import iris
+import iris.coords
+import iris.cube
 import pytest
 
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5 import (
+    aladin53,
     aladin63,
     wrf381p,
 )
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -41,11 +45,49 @@ def test_get_hadrem3ga705_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "HadREM3-GA7-05",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
     assert isinstance(fix[0], Fix)
+
+
+def test_fix_aladin53_sftlf() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "ALADIN53",
+        "fx",
+        "sftlf",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert isinstance(fixes[0], aladin53.Sftlf)
+    cube = iris.cube.Cube(
+        [0, 1.0],
+        var_name="sftlf",
+        units="%",
+    )
+    (result,) = fixes[0].fix_metadata([cube])
+    assert result.data.tolist() == [0, 100.0]
+    assert result.units == "%"
+
+
+def test_fix_aladin53_ts() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "ALADIN53",
+        "day",
+        "ts",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert isinstance(fixes[0], aladin53.Ts)
+    cube = iris.cube.Cube(
+        [0, 1.0],
+        var_name="ts",
+        units="K",
+    )
+    (result,) = fixes[0].fix_metadata([cube])
+    assert result.data.tolist() == [273.15, 274.15]
+    assert result.units == "K"
 
 
 @pytest.mark.parametrize("short_name", ["pr", "tas"])
@@ -53,7 +95,7 @@ def test_get_aladin63_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "ALADIN63",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
@@ -76,7 +118,7 @@ def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "WRF381P",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
@@ -99,3 +141,14 @@ def test_wrf381p_height_fix():
     fix = wrf381p.Tas(vardef)
     out_cubes = fix.fix_metadata([cube])
     assert out_cubes[0].coord("height").points == 2.0
+
+
+def test_get_cclm4_8_17fix() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "mon",
+        "ts",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)

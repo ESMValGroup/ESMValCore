@@ -72,9 +72,7 @@ class DerivedVariable(DerivedVariableBase):
                 f"Amoc calculation: {cube_orig} doesn't contain"
                 f" atlantic_arctic_ocean."
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.0)
