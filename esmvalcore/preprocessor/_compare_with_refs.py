@@ -8,10 +8,12 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
+import dask.array.stats
 import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
+from iris.coords import AncillaryVariable
 from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
@@ -47,6 +49,7 @@ def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
     bias_type: BiasType = "absolute",
+    ttest: bool = False,
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
 ) -> set[PreprocessorFile] | CubeList:
@@ -81,6 +84,11 @@ def bias(
     bias_type:
         Bias type that is calculated. Must be one of ``'absolute'`` (dataset -
         ref) or ``'relative'`` ((dataset - ref) / ref).
+    ttest:
+        If ``True`` calculate the p-value according to the Welch's Test between
+        dataset and reference. The p-value is attached as an ancillary variable
+        to the dataset. A Welch's Test is chosen, since unequal variances and
+        sample sizes are likely.
     denominator_mask_threshold:
         Threshold to mask values close to zero in the denominator (i.e., the
         reference dataset) during the calculation of relative biases. All
@@ -138,7 +146,7 @@ def bias(
 
     # If input is an Iterable of Cube objects, calculate bias for each element
     if all_cubes_given:
-        cubes = [_calculate_bias(c, reference, bias_type) for c in products]
+        cubes = [_calculate_bias(c, reference, bias_type, ttest) for c in products]
         return CubeList(cubes)
 
     # Otherwise, iterate over all input products, calculate bias and adapt
@@ -150,7 +158,7 @@ def bias(
         cube = concatenate(product.cubes)
 
         # Calculate bias
-        cube = _calculate_bias(cube, reference, bias_type)
+        cube = _calculate_bias(cube, reference, bias_type, ttest)
 
         # Adapt metadata and provenance information
         product.attributes["units"] = str(cube.units)
@@ -196,9 +204,12 @@ def _get_ref(
     return (reference, ref_product)
 
 
-def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
+def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: bool) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
+
+    if ttest:
+        p_value, remaining_axis = _calculate_ttest(cube, reference)
 
     if bias_type == "absolute":
         cube = cube - reference
@@ -215,8 +226,27 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
 
     cube.metadata = cube_metadata
     cube.units = new_units
+    # Attach ancillary variable after the calculation
+    # otherwise, it will be lost
+    if ttest:
+        cube.add_ancillary_variable(
+            AncillaryVariable(p_value,
+                              long_name="pvalue"),
+            remaining_axis)
 
     return cube
+
+
+def _calculate_ttest(cube: Cube, reference: Cube) -> Cube:
+    """Calculate the Welch's t-test and attach p_value as an ancillary variable."""
+    axis = cube.coord_dims("time")[0]
+    remaining_axis = sorted(set(range(cube.ndim)) - set([axis]))
+
+    ttest = dask.array.stats.ttest_ind(cube, reference, 0, False)
+    shape = tuple([list(cube.shape)[dim] for dim in remaining_axis])
+    p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
+
+    return p_value, remaining_axis
 
 
 MetricType = Literal[
