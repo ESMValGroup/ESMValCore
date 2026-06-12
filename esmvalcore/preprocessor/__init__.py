@@ -31,7 +31,7 @@ from esmvalcore.preprocessor._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
+from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric, ttest
 from esmvalcore.preprocessor._concatenate import concatenate
 from esmvalcore.preprocessor._cycles import amplitude
 from esmvalcore.preprocessor._dask_progress import _compute_with_progress
@@ -219,6 +219,7 @@ __all__ = [  # noqa: RUF022
     # Comparison with reference datasets
     "bias",
     "distance_metric",
+    "ttest",
     # Remove supplementary variables from cube
     "remove_supplementary_variables",
     # Save to file
@@ -256,6 +257,7 @@ FINAL_STEPS: tuple[str, ...] = DEFAULT_ORDER[
 MULTI_MODEL_FUNCTIONS: set[str] = {
     "bias",
     "distance_metric",
+    "ttest",
     "ensemble_statistics",
     "multi_model_statistics",
     "mask_multimodel",

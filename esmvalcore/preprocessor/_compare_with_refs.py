@@ -45,6 +45,107 @@ logger = logging.getLogger(__name__)
 BiasType = Literal["absolute", "relative"]
 
 
+def ttest(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    reference: Cube | None = None,
+    siglvl: float = 0.05,
+) -> set[PreprocessorFile] | CubeList:
+    """Calculate the ttest between dataset and reference dataset.
+
+    The reference dataset needs to be broadcastable to all input `products`.
+    This supports `iris' rich broadcasting abilities
+    <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
+    :func:`esmvalcore.preprocessor.regrid` and/or
+    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+
+    Notes
+    -----
+    The reference dataset can be specified with the `reference` argument. If
+    `reference` is ``None``, exactly one input dataset in the `products` set
+    needs to have the facet ``reference_for_bias: true`` defined in the recipe.
+    Please do **not** specify the option `reference` when using this
+    preprocessor function in a recipe.
+
+    Parameters
+    ----------
+    products:
+        Input datasets/cubes for which the significance is calculated relative
+        to a reference dataset/cube.
+    reference:
+        Cube which is used as reference for the bttest calculation. If ``None``,
+        `products` needs to be a :obj:`set` of
+        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
+        dataset in `products` needs the facet ``reference_for_bias: true``. Do
+        not specify this argument in a recipe.
+    siglvl:
+        significance level which is used to create the mask of significant and
+        non-significant data points.
+
+    Returns
+    -------
+    set[PreprocessorFile] | CubeList
+        Output datasets/cubes. Will be a :obj:`set` of
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
+        `products` is also one, a :class:`~iris.cube.CubeList` otherwise.
+        The cubes contain an attached ancillary variable which is a mask of the
+        cube defining significant (1) and non-significant (0) values related
+        to the bias (in terms of absolute) of cube and reference.
+
+    Raises
+    ------
+    ValueError
+        Not exactly one input datasets contains the facet ``reference_for_bias:
+        true`` if ``reference=None``; ``reference=None`` and the input products
+        are given as iterable of :class:`~iris.cube.Cube` objects;
+        ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
+    """
+    ref_product = None
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
+
+    # Get reference cube if not explicitly given
+    if reference is None:
+        if all_cubes_given:
+            msg = (
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `reference`"
+            )
+            raise ValueError(msg)
+        (reference, ref_product) = _get_ref(products, "reference_for_bias")
+    else:
+        ref_product = None
+
+    # If input is an Iterable of Cube objects, calculate ttest for each element
+    if all_cubes_given:
+        cubes = [_calculate_ttest(c, reference, siglvl) for c in products]
+        return CubeList(cubes)
+
+    # Otherwise, iterate over all input products, calculate ttest and adapt
+    # metadata and provenance information accordingly
+    output_products = set()
+    for product in products:
+        if product == ref_product:
+            continue
+        cube = concatenate(product.cubes)
+
+        # Calculate ttest
+        cube = _calculate_ttest(cube, reference, siglvl)
+
+        # Adapt metadata and provenance information
+        product.attributes["units"] = str(cube.units)
+        if ref_product is not None:
+            product.wasderivedfrom(ref_product)
+
+        product.cubes = CubeList([cube])
+        output_products.add(product)
+    print(cube)
+    # Add reference dataset to output (always)
+    if ref_product is not None:
+        output_products.add(ref_product)
+
+    return output_products
+
+
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
@@ -208,8 +309,8 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: boo
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
-    if ttest:
-        p_value, remaining_axis = _calculate_ttest(cube, reference)
+    # if ttest:
+    #     p_value, remaining_axis = _calculate_ttest(cube, reference)
 
     if bias_type == "absolute":
         cube = cube - reference
@@ -226,27 +327,51 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: boo
 
     cube.metadata = cube_metadata
     cube.units = new_units
+
     # Attach ancillary variable after the calculation
     # otherwise, it will be lost
-    if ttest:
-        cube.add_ancillary_variable(
-            AncillaryVariable(p_value,
-                              long_name="pvalue"),
-            remaining_axis)
+    # if ttest:
+    #     cube.add_ancillary_variable(
+    #         AncillaryVariable(p_value,
+    #                           long_name="pvalue"),
+    #         remaining_axis)
 
     return cube
 
 
-def _calculate_ttest(cube: Cube, reference: Cube) -> Cube:
-    """Calculate the Welch's t-test and attach p_value as an ancillary variable."""
+# def _calculate_ttest(cube: Cube, reference: Cube) -> Cube:
+ #    """Calculate the Welch's t-test and attach p_value as an ancillary variable."""
+ #    axis = cube.coord_dims("time")[0]
+ #    remaining_axis = sorted(set(range(cube.ndim)) - set([axis]))
+
+ #    ttest = dask.array.stats.ttest_ind(cube, reference, 0, False)
+ #    shape = tuple([list(cube.shape)[dim] for dim in remaining_axis])
+ #    p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
+
+ #    return p_value, remaining_axis
+
+
+def _calculate_ttest(cube: Cube, reference: Cube, siglvl: float) -> Cube:
+    """Calculate the Welch's t-test and attach a mask of significance."""
+    cube_metadata = cube.metadata
+
     axis = cube.coord_dims("time")[0]
-    remaining_axis = sorted(set(range(cube.ndim)) - set([axis]))
+    remaining_axes = sorted(set(range(cube.ndim)) - set([axis]))
 
     ttest = dask.array.stats.ttest_ind(cube, reference, 0, False)
-    shape = tuple([list(cube.shape)[dim] for dim in remaining_axis])
+    shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
     p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
 
-    return p_value, remaining_axis
+    significance = da.where(p_value <= siglvl, 1, 0)
+
+    cube.add_ancillary_variable(
+        AncillaryVariable(significance, long_name="significance"),
+        remaining_axes
+    )
+
+    cube.metadata = cube_metadata
+
+    return cube
 
 
 MetricType = Literal[
@@ -267,7 +392,7 @@ def distance_metric(
     keep_reference_dataset: bool = True,
     **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
-    r"""Calculate distance metrics.
+    """Calculate distance metrics.
 
     All input datasets need to have identical dimensional coordinates. This can
     for example be ensured with the preprocessors
