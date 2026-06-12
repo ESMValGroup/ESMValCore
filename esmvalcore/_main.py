@@ -607,7 +607,7 @@ class ESMValTool:
         for project, version in self._extra_packages.items():
             print(f"{project}: {version}")  # noqa: T201
 
-    def run(self, recipe, **kwargs):
+    def run(self, recipe, session_name=None, **kwargs):
         """Execute an ESMValTool recipe.
 
         `esmvaltool run` executes the given recipe. To see a list of available
@@ -617,6 +617,15 @@ class ESMValTool:
         A list of possible flags is given here:
         https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#configuration-options
 
+        Parameters
+        ----------
+        recipe:
+            Path to the recipe to run.
+        session_name:
+            Name of the session output subdirectory (relative to the configured ``output_dir``).
+            When given, this value is used instead of the default ``<recipe.stem>_<timestamp>``.
+
+            If the given name already exists, a suffix is added to the session name to avoid overwriting existing data.
         """
         from .config import CFG
         from .exceptions import InvalidConfigParameter
@@ -651,6 +660,8 @@ class ESMValTool:
 
         CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
+        if session_name is not None:
+            session.session_name = str(session_name)
 
         self._run(recipe, session, cli_config_dir)
 
