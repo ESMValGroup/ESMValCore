@@ -39,7 +39,7 @@ def _make_coord(
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
         standard_name=name,
-        units="degrees",
+        units="degrees_north" if name == "latitude" else "degrees_east",
     )
     coord.guess_bounds()
     return coord

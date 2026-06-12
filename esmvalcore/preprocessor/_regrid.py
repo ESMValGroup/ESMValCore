@@ -1012,23 +1012,23 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     bool
         ``True`` if grids are close; ``False`` if not.
     """
-    # Check that both cubes have an X and Y axis so we can compare.
-    if not all(
-        cube1.coords(axis=axis) and cube2.coords(axis=axis)
-        for axis in ("X", "Y")
-    ):
-        return False
-
     for axis in ("X", "Y"):
         # DimCoords are kept in-memory, so prefer those for performance.
         try:
             coord1 = cube1.coord(axis=axis, dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
-            coord1 = cube1.coord(axis=axis, dim_coords=False)
-        try:
-            coord2 = cube2.coord(axis=axis, dim_coords=True)
-        except iris.exceptions.CoordinateNotFoundError:
-            coord2 = cube2.coord(axis=axis, dim_coords=False)
+            try:
+                coord1 = cube1.coord(axis=axis, dim_coords=False)
+            except iris.exceptions.CoordinateNotFoundError:
+                # No horizontal coordinate found.
+                return False
+
+        for coord2 in cube2.coords(axis=axis):
+            if coord2.shape == coord1.shape:
+                break
+        else:
+            # No matching coordinate found.
+            return False
 
         if coord1.has_bounds() and coord2.has_bounds():
             array1 = coord1.core_bounds()
