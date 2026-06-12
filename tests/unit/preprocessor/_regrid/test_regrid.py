@@ -3,6 +3,9 @@
 import dask
 import dask.array as da
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 
@@ -36,7 +39,7 @@ def _make_coord(
     coord = iris.coords.DimCoord(
         np.linspace(start, stop, step),
         standard_name=name,
-        units="degrees",
+        units="degrees_north" if name == "latitude" else "degrees_east",
     )
     coord.guess_bounds()
     return coord
@@ -236,6 +239,72 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool) -> None:
     cube2 = _make_cube(**cube2_spec)
 
     assert _horizontal_grid_is_close(cube1, cube2) == expected
+
+
+def test_horizontal_grid_is_close_aux_coords():
+    """Test for `_horizontal_grid_is_close`."""
+    cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    lat = cube1.coord("latitude")
+    lon = cube1.coord("longitude")
+    cube1.remove_coord(lat)
+    cube1.remove_coord(lon)
+    cube1.add_aux_coord(lat, 0)
+    cube1.add_aux_coord(lon, 1)
+
+    lat = cube2.coord("latitude")
+    lon = cube2.coord("longitude")
+    cube2.remove_coord(lat)
+    cube2.remove_coord(lon)
+    cube2.add_aux_coord(lat, 0)
+    cube2.add_aux_coord(lon, 1)
+
+    assert _horizontal_grid_is_close(cube1, cube2) is True
+
+
+@pytest.mark.parametrize("close", [True, False])
+def test_horizontal_grid_is_close_rotated(close):
+    """Test for `_horizontal_grid_is_close`."""
+    cs = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="grid_latitude",
+                    units="degrees",
+                    coord_system=cs,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="grid_longitude",
+                    units="degrees",
+                    coord_system=cs,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    if not close:
+        cube2.coord("grid_latitude").points = (
+            cube2.coord("grid_latitude").points + 1.0
+        )
+
+    assert _horizontal_grid_is_close(cube1, cube2) is close
+
+
+def test_horizontal_grid_is_close_no_coords():
+    """Test for `_horizontal_grid_is_close`."""
+    cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube1.remove_coord("latitude")
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
 
 
 def test_regrid_is_skipped_if_grids_are_the_same_dim_coord(mocker):
