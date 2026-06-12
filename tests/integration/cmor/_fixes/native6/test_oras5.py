@@ -149,18 +149,6 @@ def check_model_level_metadata(cube):
     return height
 
 
-def check_air_pressure_metadata(cube):
-    """Check metadata of air_pressure coordinate."""
-    assert cube.coords("air_pressure", dim_coords=False)
-    plev = cube.coord("air_pressure", dim_coords=False)
-    assert plev.var_name == "plev"
-    assert plev.standard_name == "air_pressure"
-    assert plev.long_name == "pressure"
-    assert plev.units == "Pa"
-    assert plev.attributes == {"positive": "down"}
-    return plev
-
-
 def check_lat(cube):
     """Check latitude coordinate of cube."""
     assert cube.coords("latitude", dim_coords=False)
@@ -433,17 +421,38 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
         fix._add_coord_from_grid_file(tos_cube, "latitude")
 
 
-def test_add_latitude_fail(cubes_2d):
+def test_add_latitude_fail(cubes_2d, test_data_path, tmp_path):
     """Test fix."""
     # Remove latitude and grid file attribute from tas cube to test automatic
     # addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
     fix.extra_facets["make_unstructured"] = True
-    fix.extra_facets["horizontal_grid"] = None
+    grid = iris.load_cube(str(test_data_path / "oras5_grid.nc"))
+    grid.remove_coord("latitude")
+    iris.save(grid, tmp_path / "grid.nc")
+    fix.extra_facets["horizontal_grid"] = tmp_path / "grid.nc"
     cubes = CubeList([tos_cube])
 
     msg = "Failed to add missing latitude coordinate to cube"
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
+
+
+def test_add_longitude_fail(cubes_2d, test_data_path, tmp_path):
+    """Test fix."""
+    # Remove latitude and grid file attribute from tas cube to test automatic
+    # addition
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    fix.extra_facets["make_unstructured"] = True
+    grid = iris.load_cube(str(test_data_path / "oras5_grid.nc"))
+    grid.remove_coord("longitude")
+    iris.save(grid, tmp_path / "grid.nc")
+    fix.extra_facets["horizontal_grid"] = tmp_path / "grid.nc"
+    cubes = CubeList([tos_cube])
+
+    msg = "Failed to add missing longitude coordinate to cube"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes)
 
