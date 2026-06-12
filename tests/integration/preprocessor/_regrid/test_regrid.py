@@ -166,6 +166,48 @@ class Test:
         result.data = np.round(result.data, 1)
         assert_array_equal(result.data, expected)
 
+    @pytest.mark.parametrize("close", [True, False])
+    def test_regrid__nearest_cordex_result_has_all_coords(self, close):
+        """Test that the result of regridding has both 1D and 2D lat and lon."""
+        target_grid = self.multidim_cube.copy()
+        if not close:
+            target_grid.coord("grid_longitude").points = (
+                target_grid.coord("grid_longitude").points + 0.1
+            )
+            target_grid.coord("longitude").points = (
+                target_grid.coord("longitude").points + 0.1
+            )
+        result = regrid(
+            self.multidim_cube,
+            target_grid,
+            "nearest",
+        )
+        expected = np.ma.masked_array(
+            [
+                [
+                    [3.0, 3.0],
+                    [3.0, 3.0],
+                ],
+                [
+                    [7.0, 7.0],
+                    [7.0, 7.0],
+                ],
+                [
+                    [11.0, 11.0],
+                    [11.0, 11.0],
+                ],
+            ],
+            mask=False,
+        )
+        for coord in (
+            "latitude",
+            "longitude",
+            "grid_latitude",
+            "grid_longitude",
+        ):
+            assert result.coord(coord) == target_grid.coord(coord)
+        assert_array_equal(result.data, expected)
+
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__linear_file(self, tmp_path, cache_weights):
         file = tmp_path / "file.nc"
