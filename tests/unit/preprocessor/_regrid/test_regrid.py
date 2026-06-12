@@ -303,8 +303,6 @@ def test_horizontal_grid_is_close_no_coords():
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube1.remove_coord("latitude")
-    cube2.remove_coord("latitude")
-    cube2.remove_coord("longitude")
 
     assert _horizontal_grid_is_close(cube1, cube2) is False
 
