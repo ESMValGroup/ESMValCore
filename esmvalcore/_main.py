@@ -626,8 +626,6 @@ class ESMValTool:
             When given, this value is used instead of the default ``<recipe.stem>_<timestamp>``.
 
             If the given name already exists, a suffix is added to the session name to avoid overwriting existing data.
-        **kwargs:
-            Command line arguments to override configuration parameters.
         """
         from .config import CFG
         from .exceptions import InvalidConfigParameter
