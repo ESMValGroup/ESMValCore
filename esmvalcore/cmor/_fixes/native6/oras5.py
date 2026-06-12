@@ -401,11 +401,6 @@ class AllVars(Oras5Fix, AllVars_ICON):
 
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
-        # Remove any already-present dimensional coordinate describing the mesh
-        # dimension
-        if cube.coords(dimensions=mesh_idx, dim_coords=True):
-            cube.remove_coord(cube.coord(dimensions=mesh_idx, dim_coords=True))
-
         # Add dimensional coordinate that describes the mesh dimension
         index_coord = DimCoord(
             np.arange(cube.shape[mesh_idx[0]]),

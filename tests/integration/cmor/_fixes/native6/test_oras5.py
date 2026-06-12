@@ -415,6 +415,60 @@ def test_add_time_fail():
         fix._add_time(cube, cubes)
 
 
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
+    """Test fix."""
+    # Remove latitude from tas cube to test automatic addition
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    fix.extra_facets["make_unstructured"] = True
+    tos_cube = fix._fix_cube(tos_cube)
+    index_coord = DimCoord(np.arange(156), var_name="ncells")
+    tos_cube.add_dim_coord(index_coord, 1)
+
+    msg = (
+        "Cannot determine coordinate dimension for coordinate 'latitude', "
+        "cube does not contain a single unnamed dimension"
+    )
+    with pytest.raises(ValueError, match=msg):
+        fix._add_coord_from_grid_file(tos_cube, "latitude")
+
+
+def test_add_latitude_fail(cubes_2d):
+    """Test fix."""
+    # Remove latitude and grid file attribute from tas cube to test automatic
+    # addition
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    fix.extra_facets["make_unstructured"] = True
+    fix.extra_facets["horizontal_grid"] = None
+    cubes = CubeList([tos_cube])
+
+    msg = "Failed to add missing latitude coordinate to cube"
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
+
+
+def test_vardef_none(cubes_2d, monkeypatch):
+    """Test fix."""
+    # Remove latitude and grid file attribute from tas cube to test automatic
+    # addition
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    monkeypatch.setattr(fix.vardef, "coordinates", {})
+    cubes = CubeList([tos_cube])
+    fix.fix_metadata(cubes)
+
+
+def test_invalid_time_units(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix("Omon", "tos")
+    for cube in cubes_2d:
+        cube.coord("time").attributes["invalid_units"] = "month as %Y%m%d.%f"
+    msg = "Expected time units"
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes_2d)
+
+
 @mock.patch.object(Oras5Fix, "_get_grid_from_cube_attr", autospec=True)
 def test_get_horizontal_grid_from_facet_cached_in_dict(
     mock_get_grid_from_cube_attr,
@@ -879,7 +933,7 @@ def test_get_bounds_cached_from_facet(cubes_2d, cubes_3d):
     ).all()
 
 
-def test_get_coord_cached_from_facet(cubes_2d, cubes_3d):
+def test_get_coord_cached_from_facet(cubes_2d):
     """Test fix."""
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     tos_cube2 = tos_cube.copy()
