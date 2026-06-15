@@ -298,8 +298,12 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
                 ),
                 1,
             ),
+        ],
+        aux_coords_and_dims=[
+            # If the x coordinate is not monotonic, it may be demoted to an
+            # auxiliary coordinate on load.
             (
-                iris.coords.DimCoord(
+                iris.coords.AuxCoord(
                     np.arange(0, 453),
                     var_name="projection_x_coordinate",
                     standard_name="projection_x_coordinate",
@@ -308,8 +312,6 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
                 ),
                 2,
             ),
-        ],
-        aux_coords_and_dims=[
             (
                 iris.coords.AuxCoord(
                     np.ones((453, 453)),
@@ -344,8 +346,8 @@ def test_lambert_conformal_grid_fix(use_standard_grid: bool) -> None:
     ]:
         assert len(result.coords(coord_name)) == 1
 
-    x_coord = result.coord("projection_x_coordinate")
-    y_coord = result.coord("projection_y_coordinate")
+    x_coord = result.coord("projection_x_coordinate", dim_coords=True)
+    y_coord = result.coord("projection_y_coordinate", dim_coords=True)
     assert x_coord.units == "m"
     assert y_coord.units == "m"
     assert x_coord.points.dtype == np.float64
