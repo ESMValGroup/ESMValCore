@@ -25,6 +25,12 @@ projects:
       paths:
         - cmip3/Tables
         - cmip3-custom
+  CORDEX-CMIP6:
+    cmor_table:
+      type: esmvalcore.cmor.table.CMIP6Info
+      paths:
+        - cordex-cmip6/Tables
+        - cmip6-custom
   CORDEX:
     cmor_table:
       type: esmvalcore.cmor.table.CMIP5Info
