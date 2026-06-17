@@ -30,6 +30,7 @@ projects:
       type: esmvalcore.cmor.table.CMIP6Info
       paths:
         - cordex-cmip6/Tables
+        - cordex-cmip6-custom
         - cmip6-custom
   CORDEX:
     cmor_table:
