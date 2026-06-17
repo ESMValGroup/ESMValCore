@@ -7,7 +7,7 @@ A facet is a key-value pair that describes a certain property of a dataset and
 enables `faceted search <https://en.wikipedia.org/wiki/Faceted_search>`_, for
 example as provided by `ESGF <https://esgf-node.ornl.gov/search>`__.
 The facets used on ESGF are closely related to the global attributes defined by
-the `controlled vocubulary <https://en.wikipedia.org/wiki/Controlled_vocabulary>`__
+the `controlled vocabulary <https://en.wikipedia.org/wiki/Controlled_vocabulary>`__
 used by the various "project"s hosted on ESGF. A "project" is a collection of
 datasets that share certain properties, e.g.
 `CMIP7 <https://wcrp-cmip.org/cmip-phases/cmip7/>`__ is a project.
@@ -31,39 +31,39 @@ CMIP7
 `Official CMIP7 facets <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Global_Attributes/>`__.
 
 .. note::
-    This mapping is preliminary as no CMIP7 data bas been published on ESGF yet.
+    This mapping is preliminary as no CMIP7 data has been published on ESGF yet.
 
-+----------------------+---------------------------+
-| ESMValCore facet     | ESGF facet                |
-+======================+===========================+
-| ``activity``         | ``activity_id``           |
-+----------------------+---------------------------+
-| ``branding_suffix``  | ``branding_suffix``       |
-+----------------------+---------------------------+
-| ``dataset``          | ``source_id``             |
-+----------------------+---------------------------+
-| ``ensemble``         | ``variant_label``         |
-+----------------------+---------------------------+
-| ``exp``              | ``experiment_id``         |
-+----------------------+---------------------------+
-| ``frequency``        | ``frequency``             |
-+----------------------+---------------------------+
-| ``grid``             | ``grid_label``            |
-+----------------------+---------------------------+
-| ``mip``              | ``realm``                 |
-+----------------------+---------------------------+
-| ``institute``        | ``institution_id``        |
-+----------------------+---------------------------+
-| ``realm``            | ``realm``                 |
-+----------------------+---------------------------+
-| ``region``           | ``region``                |
-+----------------------+---------------------------+
-| ``project``          | ``project`` / ``mip_era`` |
-+----------------------+---------------------------+
-| ``short_name``       | ``variable_id``           |
-+----------------------+---------------------------+
-| ``version``          | ``version``               |
-+----------------------+---------------------------+
++----------------------+------------------------------+
+| ESMValCore facet     | ESGF facet                   |
++======================+==============================+
+| ``activity``         | ``activity_id``              |
++----------------------+------------------------------+
+| ``branding_suffix``  | ``variable_branding_suffix`` |
++----------------------+------------------------------+
+| ``dataset``          | ``source_id``                |
++----------------------+------------------------------+
+| ``ensemble``         | ``variant_label``            |
++----------------------+------------------------------+
+| ``exp``              | ``experiment_id``            |
++----------------------+------------------------------+
+| ``frequency``        | ``frequency``                |
++----------------------+------------------------------+
+| ``grid``             | ``grid_label``               |
++----------------------+------------------------------+
+| ``mip``              | ``realm``                    |
++----------------------+------------------------------+
+| ``institute``        | ``institution_id``           |
++----------------------+------------------------------+
+| ``realm``            | ``realm``                    |
++----------------------+------------------------------+
+| ``region``           | ``region``                   |
++----------------------+------------------------------+
+| ``project``          | ``project`` / ``mip_era``    |
++----------------------+------------------------------+
+| ``short_name``       | ``variable_id``              |
++----------------------+------------------------------+
+| ``version``          | ``version``                  |
++----------------------+------------------------------+
 
 CMIP6
 -----
