@@ -238,10 +238,6 @@ ORAS5
 
 ORAS5 data can be downloaded in netCDF from the Copernicus Climate Data Store
 `(CDS) <https://cds.climate.copernicus.eu/datasets/reanalysis-oras5?tab=download>`__.
-Place the files in the ``/Tier3/ORAS5/single_levels`` or ``/Tier3/ORAS5/all_levels``
-subdirectory (depending on whether it is 2D or 3D data) of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the default DRS
-for ``native6`` described :ref:`above <read_native_obs>`).
 
 - Supported variables: ``uo``, ``vo``, ``tos``, ``sos``, ``zos``, ``mlotst``,
   ``thetao``, ``so``, ``hfds``, ``tauuo``.
