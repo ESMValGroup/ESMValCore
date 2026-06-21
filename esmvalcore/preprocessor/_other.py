@@ -130,7 +130,7 @@ def _get_var_info(
                 if branding_suffix
                 else ""
             )
-            + f"not available for table '{mip}' of project '{project}'"
+            + f"not available in table '{mip}' of project '{project}'"
         )
         raise ValueError(msg)
     return var_info

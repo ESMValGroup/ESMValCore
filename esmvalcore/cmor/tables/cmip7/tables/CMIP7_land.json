@@ -1,7 +1,7 @@
 {
     "Header": {
-        "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: 89aaa165cf5f763c1e23869b096baa29",
+        "Conventions": "CF-1.12",
+        "checksum": "md5: 6b68c6296b3c628046d858794d99add9",
         "cmor_version": "3.13",
         "generic_levels": "",
         "int_missing_value": "-999",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "land",
-        "table_date": "2026-01-07 10:30:23",
+        "table_date": "2026-04-21 15:01:29",
         "table_id": "land",
         "type": "real",
         "valid_max": "",

@@ -224,6 +224,11 @@
       "affiliation": "SMHI, Sweden",
       "name": "Lenhardt, Julien",
       "orcid": "https://orcid.org/0000-0002-9949-3989"
+    },
+    {
+      "affiliation": "Climate Resource, Australia",
+      "name": "Lewis, Jared",
+      "orcid": "https://orcid.org/0000-0002-8155-8924"
     }
   ],
   "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
