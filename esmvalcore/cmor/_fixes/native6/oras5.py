@@ -52,22 +52,22 @@ class Oras5Fix(IconFix):
         )
 
         # Get the unique nodes as dask arrays
-        node_lon = da.from_array(nodes_unique[:, 0])
-        node_lat = da.from_array(nodes_unique[:, 1])
+        node_lon = nodes_unique[:, 0]
+        node_lat = nodes_unique[:, 1]
 
         # Get dimensions (N_faces x M_nodes)
         n_faces = len(face_lat.core_points())
         n_nodes = int(len(indices) / n_faces)
 
         # Reshape indices to N_faces x M_nodes dask array
-        indices = da.reshape(da.from_array(indices), (n_nodes, n_faces)).T
+        indices = np.reshape(indices, (n_nodes, n_faces)).T
 
         # Create the necessary mask
-        mask = da.full(da.shape(indices), False)
+        mask = np.full(np.shape(indices), False)
 
         # Define the connectivity
         connectivity = Connectivity(
-            indices=da.ma.masked_array(indices, mask=mask),
+            indices=np.ma.masked_array(indices, mask=mask),
             cf_role="face_node_connectivity",
             start_index=0,
             location_axis=0,
@@ -107,7 +107,7 @@ class Oras5Fix(IconFix):
         cube: iris.cube.Cube
             Cube for which the ORS5 horizontal grid is retrieved. If the facet
             `horizontal_grid` is not specified by the user, it raises a
-            NotImplementedError.
+            KeyError.
 
         Returns
         -------
@@ -119,7 +119,7 @@ class Oras5Fix(IconFix):
         FileNotFoundError
             Path specified by `horizontal_grid` facet (absolute or relative to
             `auxiliary_data_dir`) does not exist.
-        NotImplementedError
+        KeyError
             No `horizontal_grid` facet is defined.
 
         """
@@ -130,14 +130,16 @@ class Oras5Fix(IconFix):
                 f"Full path to suitable ORAS5 grid must be specified in facet "
                 f"'horizontal_grid' for cube: {cube}"
             )
-            raise NotImplementedError(
-                msg,
-            )
+            raise KeyError(msg)
 
         return grid
 
     def _get_grid_from_facet(self) -> CubeList:
-        """Get horizontal grid from user-defined facet `horizontal_grid`."""
+        """Get horizontal grid from user-defined facet `horizontal_grid`.
+
+        This facet needs to be the path to an appropriate grid file.
+
+        """
         grid_path = self._get_path_from_facet(
             "horizontal_grid",
             "Horizontal grid file",
@@ -176,7 +178,7 @@ class Oras5Fix(IconFix):
         FileNotFoundError
             Path specified by `horizontal_grid` facet (absolute or relative to
             `auxiliary_data_dir`) does not exist.
-        NotImplementedError
+        KeyError
             No `horizontal_grid` facet is defined.
 
         """
@@ -202,7 +204,6 @@ class AllVars(Oras5Fix, AllVars_ICON):
 
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata."""
-        cubes = self.add_additional_cubes(cubes)
         cube = self.get_cube(cubes)
 
         cube = self._fix_cube(cube)
@@ -236,7 +237,17 @@ class AllVars(Oras5Fix, AllVars_ICON):
         return CubeList([cube])
 
     def _fix_cube(self, cube: Cube) -> Cube:
-        """Remove redundant cells and predetermine how to handle grid."""
+        """Remove redundant cells and predetermine how to handle grid.
+
+        This fix allows for handling the ORAS5 grid flexibly as either
+        "irregular" (2D lat/lon arrays), or as unstructured
+        (1D lat/lon arrays) with the extra option to add a UGRID
+        mesh to the cube.
+
+        The behavior can be adjusted by setting the facets `make_unstructured`
+        or `ugrid`, which are both False per default.
+
+        """
         # Remove redundant cells
         cube = cube[..., :-1, 1:-1]
 
@@ -329,9 +340,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
                 f"'{coord_name}', cube does not contain a single unnamed "
                 f"dimension:\n{cube}"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         coord_dims: tuple[()] | tuple[int] = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):

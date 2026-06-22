@@ -248,7 +248,14 @@ ORAS5 data can be downloaded in netCDF from the Copernicus Climate Data Store
   Be aware that for the variables ``uo``, and ``tauuo`` you need to use the
   ``oras5_mesh_u.nc`` grid and for the variable ``vo`` the ``oras5_mesh_v.nc``
   grid, respectively. For all other supported variables you need the
-  ``oras5_mesh_T.nc`` grid file.
+  ``oras5_mesh_T.nc`` grid file. The path to the appropriate grid file needs to
+  be passed as the ``horizontal_grid`` facet in the recipe.
+
+.. note:: The implemented fix for ORAS5 allows to handle the grid flexibly as
+  either "irregular" (2D lat/lon arrays), or as unstructured (1D lat/lon arrays)
+  with the extra option to add a UGRID mesh to the cube. The behavior can be
+  adjusted by setting the facets ``make_unstructured`` or ``ugrid`` in the recipe,
+  which are both False per default.
 
 .. note:: For ORAS5 the rotated meridional and zonal velocities are available.
   Per default ESMValCore expects that you use those. Otherwise, you need to specify

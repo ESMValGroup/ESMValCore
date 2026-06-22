@@ -1,15 +1,13 @@
 """Test the ICON on-the-fly CMORizer."""
 
-from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
 import iris
 import numpy as np
 import pytest
-from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import CellMethod, DimCoord
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.native6.oras5
@@ -17,7 +15,6 @@ from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.native6.oras5 import AllVars, Oras5Fix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 
 TEST_GRID_FILE_URI = (
@@ -405,7 +402,6 @@ def test_add_time_fail():
 
 def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
     """Test fix."""
-    # Remove latitude from tas cube to test automatic addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
     fix.extra_facets["make_unstructured"] = True
@@ -441,7 +437,7 @@ def test_add_latitude_fail(cubes_2d, test_data_path, tmp_path):
 
 def test_add_longitude_fail(cubes_2d, test_data_path, tmp_path):
     """Test fix."""
-    # Remove latitude and grid file attribute from tas cube to test automatic
+    # Remove longitude and grid file attribute from tas cube to test automatic
     # addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
@@ -459,8 +455,6 @@ def test_add_longitude_fail(cubes_2d, test_data_path, tmp_path):
 
 def test_vardef_none(cubes_2d, monkeypatch):
     """Test fix."""
-    # Remove latitude and grid file attribute from tas cube to test automatic
-    # addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
     monkeypatch.setattr(fix.vardef, "coordinates", {})
@@ -482,9 +476,9 @@ def test_invalid_time_units(cubes_2d):
 def test_get_horizontal_grid_from_facet_cached_in_dict(
     mock_get_grid_from_cube_attr,
     tmp_path,
+    session,
 ):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     # Save temporary grid file (this will not be used; however, it is necessary
@@ -516,9 +510,9 @@ def test_get_horizontal_grid_from_facet(
     mock_get_grid_from_cube_attr,
     grid_path,
     tmp_path,
+    session,
 ):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     # Make sure that grid specified by cube attribute is NOT used
@@ -544,9 +538,8 @@ def test_get_horizontal_grid_from_facet(
     mock_get_grid_from_cube_attr.assert_not_called()
 
 
-def test_get_horizontal_grid_from_facet_fail(tmp_path):
+def test_get_horizontal_grid_from_facet_fail(tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     cube = Cube(0)
@@ -557,9 +550,8 @@ def test_get_horizontal_grid_from_facet_fail(tmp_path):
         fix.get_horizontal_grid(cube)
 
 
-def test_get_horizontal_grid_none(tmp_path):
+def test_get_horizontal_grid_none(tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     cube = Cube(0)
@@ -567,275 +559,8 @@ def test_get_horizontal_grid_none(tmp_path):
     del fix.extra_facets["horizontal_grid"]
 
     msg = "Full path to suitable ORAS5 grid must be specified in facet 'horizontal_grid'"
-    with pytest.raises(NotImplementedError, match=msg):
+    with pytest.raises(KeyError, match=msg):
         fix.get_horizontal_grid(cube)
-
-
-@pytest.mark.parametrize(
-    ("frequency", "dt_in", "dt_out", "bounds"),
-    [
-        (
-            "dec",
-            [(2000, 1, 1)],
-            [(1995, 1, 1)],
-            [[(1990, 1, 1), (2000, 1, 1)]],
-        ),
-        (
-            "yr",
-            [(2000, 1, 1), (2001, 1, 1)],
-            [(1999, 7, 2, 12), (2000, 7, 2)],
-            [[(1999, 1, 1), (2000, 1, 1)], [(2000, 1, 1), (2001, 1, 1)]],
-        ),
-        (
-            "mon",
-            [(2000, 1, 1)],
-            [(1999, 12, 16, 12)],
-            [[(1999, 12, 1), (2000, 1, 1)]],
-        ),
-        (
-            "mon",
-            [(2000, 11, 30, 23, 45), (2000, 12, 31, 23)],
-            [(2000, 11, 16), (2000, 12, 16, 12)],
-            [[(2000, 11, 1), (2000, 12, 1)], [(2000, 12, 1), (2001, 1, 1)]],
-        ),
-        (
-            "day",
-            [(2000, 1, 1, 12)],
-            [(2000, 1, 1)],
-            [[(1999, 12, 31, 12), (2000, 1, 1, 12)]],
-        ),
-        (
-            "6hr",
-            [(2000, 1, 5, 14), (2000, 1, 5, 20)],
-            [(2000, 1, 5, 11), (2000, 1, 5, 17)],
-            [
-                [(2000, 1, 5, 8), (2000, 1, 5, 14)],
-                [(2000, 1, 5, 14), (2000, 1, 5, 20)],
-            ],
-        ),
-        (
-            "3hr",
-            [(2000, 1, 1)],
-            [(1999, 12, 31, 22, 30)],
-            [[(1999, 12, 31, 21), (2000, 1, 1)]],
-        ),
-        (
-            "1hr",
-            [(2000, 1, 5, 14), (2000, 1, 5, 15)],
-            [(2000, 1, 5, 13, 30), (2000, 1, 5, 14, 30)],
-            [
-                [(2000, 1, 5, 13), (2000, 1, 5, 14)],
-                [(2000, 1, 5, 14), (2000, 1, 5, 15)],
-            ],
-        ),
-    ],
-)
-def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
-    """Test ``_shift_time_coord``."""
-    cube = Cube(0, cell_methods=[CellMethod("mean", "time")])
-    datetimes = [datetime(*dt) for dt in dt_in]
-    time_units = Unit("days since 1950-01-01", calendar="proleptic_gregorian")
-    time_coord = DimCoord(
-        time_units.date2num(datetimes),
-        standard_name="time",
-        var_name="time",
-        long_name="time",
-        units=time_units,
-    )
-
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    fix._shift_time_coord(cube, time_coord)
-
-    dt_out = [datetime(*dt) for dt in dt_out]
-    bounds = [[datetime(*dt1), datetime(*dt2)] for (dt1, dt2) in bounds]
-    np.testing.assert_allclose(
-        time_coord.points,
-        time_coord.units.date2num(dt_out),
-    )
-    np.testing.assert_allclose(
-        time_coord.bounds,
-        time_coord.units.date2num(bounds),
-    )
-
-
-@pytest.mark.parametrize(
-    ("frequency", "dt_in"),
-    [
-        ("dec", [(2000, 1, 15)]),
-        ("yr", [(2000, 1, 1), (2001, 1, 1)]),
-        ("mon", [(2000, 6, 15)]),
-        ("day", [(2000, 1, 1), (2001, 1, 2)]),
-        ("6hr", [(2000, 6, 15, 12)]),
-        ("3hr", [(2000, 1, 1, 4), (2000, 1, 1, 7)]),
-        ("1hr", [(2000, 1, 1, 4), (2000, 1, 1, 5)]),
-    ],
-)
-def test_shift_time_point_measurement(frequency, dt_in):
-    """Test ``_shift_time_coord``."""
-    cube = Cube(0, cell_methods=[CellMethod("point", "time")])
-    datetimes = [datetime(*dt) for dt in dt_in]
-    time_units = Unit("days since 1950-01-01", calendar="proleptic_gregorian")
-    time_coord = DimCoord(
-        time_units.date2num(datetimes),
-        standard_name="time",
-        var_name="time",
-        long_name="time",
-        units=time_units,
-    )
-
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    fix._shift_time_coord(cube, time_coord)
-
-    np.testing.assert_allclose(
-        time_coord.points,
-        time_coord.units.date2num(datetimes),
-    )
-    assert time_coord.bounds is None
-
-
-@pytest.mark.parametrize(
-    "frequency",
-    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
-)
-def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
-    """Test ``_shift_time_coord``."""
-    cube = Cube(0, cell_methods=[CellMethod("mean", "time")])
-    time_units = Unit("hours since 1950-01-01", calendar="proleptic_gregorian")
-    time_coord = DimCoord(
-        [1, 2, 3],
-        standard_name="time",
-        var_name="time",
-        long_name="time",
-        units=time_units,
-    )
-
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    msg = "Cannot shift time coordinate: Rounding to closest day failed."
-    with pytest.raises(ValueError, match=msg):
-        fix._shift_time_coord(cube, time_coord)
-
-
-@pytest.mark.parametrize(
-    "frequency",
-    ["dec", "yr", "yrPt", "mon", "monC", "monPt"],
-)
-def test_shift_time_coord_not_first_of_month(frequency):
-    """Test ``_get_previous_timestep``."""
-    cube = Cube(0, cell_methods=[CellMethod("mean", "time")])
-    time_units = Unit("days since 1950-01-01", calendar="proleptic_gregorian")
-    time_coord = DimCoord(
-        [1.5],
-        standard_name="time",
-        var_name="time",
-        long_name="time",
-        units=time_units,
-    )
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    msg = (
-        "Cannot shift time coordinate: expected first of the month at 00:00:00"
-    )
-    with pytest.raises(ValueError, match=msg):
-        fix._shift_time_coord(cube, time_coord)
-
-
-@pytest.mark.parametrize("frequency", ["fx", "subhrPt", "invalid_freq"])
-def test_shift_time_coord_invalid_freq(frequency):
-    """Test ``_get_previous_timestep``."""
-    cube = Cube(0, cell_methods=[CellMethod("mean", "time")])
-    time_units = Unit("days since 1950-01-01", calendar="proleptic_gregorian")
-    time_coord = DimCoord(
-        [1.5, 2.5],
-        standard_name="time",
-        var_name="time",
-        long_name="time",
-        units=time_units,
-    )
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    msg = (
-        "Cannot shift time coordinate: failed to determine previous time step"
-    )
-    with pytest.raises(ValueError, match=msg):
-        fix._shift_time_coord(cube, time_coord)
-
-
-# Test _get_previous_timestep
-
-
-@pytest.mark.parametrize(
-    ("frequency", "datetime_in", "datetime_out"),
-    [
-        ("dec", (2000, 1, 1), (1990, 1, 1)),
-        ("yr", (2000, 1, 1), (1999, 1, 1)),
-        ("yrPt", (2001, 6, 1), (2000, 6, 1)),
-        ("mon", (2001, 1, 1), (2000, 12, 1)),
-        ("mon", (2001, 2, 1), (2001, 1, 1)),
-        ("mon", (2001, 3, 1), (2001, 2, 1)),
-        ("mon", (2001, 4, 1), (2001, 3, 1)),
-        ("monC", (2000, 5, 1), (2000, 4, 1)),
-        ("monC", (2000, 6, 1), (2000, 5, 1)),
-        ("monC", (2000, 7, 1), (2000, 6, 1)),
-        ("monC", (2000, 8, 1), (2000, 7, 1)),
-        ("monPt", (2002, 9, 1), (2002, 8, 1)),
-        ("monPt", (2002, 10, 1), (2002, 9, 1)),
-        ("monPt", (2002, 11, 1), (2002, 10, 1)),
-        ("monPt", (2002, 12, 1), (2002, 11, 1)),
-        ("day", (2000, 1, 1), (1999, 12, 31)),
-        ("day", (2000, 3, 1), (2000, 2, 29)),
-        ("day", (2187, 3, 14), (2187, 3, 13)),
-        ("6hr", (2000, 3, 14, 15), (2000, 3, 14, 9)),
-        ("6hrPt", (2000, 1, 1), (1999, 12, 31, 18)),
-        ("6hrCM", (2000, 1, 1, 1), (1999, 12, 31, 19)),
-        ("3hr", (2000, 3, 14, 15), (2000, 3, 14, 12)),
-        ("3hrPt", (2000, 1, 1), (1999, 12, 31, 21)),
-        ("3hrCM", (2000, 1, 1, 1), (1999, 12, 31, 22)),
-        ("1hr", (2000, 3, 14, 15), (2000, 3, 14, 14)),
-        ("1hrPt", (2000, 1, 1), (1999, 12, 31, 23)),
-        ("1hrCM", (2000, 1, 1, 1), (2000, 1, 1)),
-        ("hr", (2000, 3, 14), (2000, 3, 13, 23)),
-    ],
-)
-def test_get_previous_timestep(frequency, datetime_in, datetime_out):
-    """Test ``_get_previous_timestep``."""
-    datetime_in = datetime(*datetime_in)
-    datetime_out = datetime(*datetime_out)
-
-    fix = get_allvars_fix("Omon", "tos")
-    fix.extra_facets["frequency"] = frequency
-
-    new_datetime = fix._get_previous_timestep(datetime_in)
-
-    assert new_datetime == datetime_out
-
-
-def test_get_grid_url():
-    """Test fix."""
-    cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
-    fix = get_allvars_fix("Omon", "tos")
-    (grid_url, grid_name) = fix._get_grid_url(cube)
-    assert grid_url == TEST_GRID_FILE_URI
-    assert grid_name == TEST_GRID_FILE_NAME
-
-
-def test_get_grid_url_fail():
-    """Test fix."""
-    cube = Cube(0)
-    fix = get_allvars_fix("Omon", "tos")
-    msg = (
-        "Cube does not contain the attribute 'grid_file_uri' necessary to "
-        "download the ICON horizontal grid file"
-    )
-    with pytest.raises(ValueError, match=msg):
-        fix._get_grid_url(cube)
 
 
 # Test get_mesh
@@ -861,9 +586,8 @@ def test_get_mesh_not_cached_from_attr(monkeypatch):
     fix._create_mesh.assert_called_once_with(cube)
 
 
-def test_get_mesh_cached_from_facet(monkeypatch, tmp_path):
+def test_get_mesh_cached_from_facet(monkeypatch, session, tmp_path):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     # Save temporary grid file (this will not be used; however, it is necessary
@@ -885,9 +609,8 @@ def test_get_mesh_cached_from_facet(monkeypatch, tmp_path):
     fix._create_mesh.assert_not_called()
 
 
-def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
+def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
 
     # Save temporary grid file (this will not be used; however, it is necessary
@@ -986,9 +709,8 @@ def test_get_coord_cached_from_facet(cubes_2d):
         ("b.nc", "Grid file", "{tmp_path}/b.nc"),
     ],
 )
-def test_get_path_from_facet(path, description, output, tmp_path):
+def test_get_path_from_facet(path, description, output, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Omon", "tos", session=session)
@@ -1012,9 +734,8 @@ def test_get_path_from_facet(path, description, output, tmp_path):
         ("b.nc", "Grid file"),
     ],
 )
-def test_get_path_from_facet_fail(path, description, tmp_path):
+def test_get_path_from_facet_fail(path, description, tmp_path, session):
     """Test fix."""
-    session = CFG.start_session("my session")
     session["auxiliary_data_dir"] = tmp_path
     path = path.format(tmp_path=tmp_path)
     fix = get_allvars_fix("Omon", "tos", session=session)
@@ -1022,43 +743,3 @@ def test_get_path_from_facet_fail(path, description, tmp_path):
 
     with pytest.raises(FileNotFoundError, match=description):
         fix._get_path_from_facet("test_path", description=description)
-
-
-# Test add_additional_cubes
-
-
-@pytest.mark.parametrize("facet", ["zg_file", "zghalf_file"])
-@pytest.mark.parametrize("path", ["{tmp_path}/a.nc", "a.nc"])
-def test_add_additional_cubes(path, facet, tmp_path):
-    """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-    path = path.format(tmp_path=tmp_path)
-    fix = get_allvars_fix("Omon", "tos", session=session)
-    fix.extra_facets[facet] = path
-
-    # Save temporary cube
-    cube = Cube(0, var_name=facet)
-    iris.save(cube, tmp_path / "a.nc")
-
-    cubes = CubeList([])
-    new_cubes = fix.add_additional_cubes(cubes)
-
-    assert new_cubes is cubes
-    assert len(cubes) == 1
-    assert cubes[0].var_name == facet
-
-
-@pytest.mark.parametrize("facet", ["zg_file", "zghalf_file"])
-@pytest.mark.parametrize("path", ["{tmp_path}/a.nc", "a.nc"])
-def test_add_additional_cubes_fail(path, facet, tmp_path):
-    """Test fix."""
-    session = CFG.start_session("my session")
-    session["auxiliary_data_dir"] = tmp_path
-    path = path.format(tmp_path=tmp_path)
-    fix = get_allvars_fix("Omon", "tos", session=session)
-    fix.extra_facets[facet] = path
-
-    cubes = CubeList([])
-    with pytest.raises(FileNotFoundError, match="File"):
-        fix.add_additional_cubes(cubes)
