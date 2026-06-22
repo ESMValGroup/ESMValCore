@@ -1030,6 +1030,14 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
             # No matching coordinate found.
             return False
 
+        if coord1.coord_system != coord2.coord_system:
+            return False
+
+        if coord1.units != coord2.units:
+            # If someone has time to work on this, this comparison could be made
+            # smarter by converting the units.
+            return False
+
         if coord1.has_bounds() and coord2.has_bounds():
             array1 = coord1.core_bounds()
             array2 = coord2.core_bounds()

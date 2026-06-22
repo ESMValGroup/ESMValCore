@@ -241,7 +241,7 @@ def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool) -> None:
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
-def test_horizontal_grid_is_close_aux_coords():
+def test_horizontal_grid_is_close_aux_coords() -> None:
     """Test for `_horizontal_grid_is_close`."""
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
@@ -263,7 +263,7 @@ def test_horizontal_grid_is_close_aux_coords():
 
 
 @pytest.mark.parametrize("close", [True, False])
-def test_horizontal_grid_is_close_rotated(close):
+def test_horizontal_grid_is_close_rotated(close: bool) -> None:
     """Test for `_horizontal_grid_is_close`."""
     cs = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
     cube1 = iris.cube.Cube(
@@ -298,7 +298,78 @@ def test_horizontal_grid_is_close_rotated(close):
     assert _horizontal_grid_is_close(cube1, cube2) is close
 
 
-def test_horizontal_grid_is_close_no_coords():
+def test_horizontal_grid_is_close_different_coord_system() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cs1 = iris.coord_systems.RotatedGeogCS(6.08, -166.92)
+    cs2 = iris.coord_systems.RotatedGeogCS(7.08, -166.92)
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="grid_latitude",
+                    units="degrees",
+                    coord_system=cs1,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="grid_longitude",
+                    units="degrees",
+                    coord_system=cs1,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    cube2.coord("grid_longitude").coord_system = cs2
+    cube2.coord("grid_latitude").coord_system = cs2
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
+
+
+def test_horizontal_grid_is_close_different_units() -> None:
+    """Test for `_horizontal_grid_is_close`."""
+    cs = iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        secant_latitudes=(49.5,),
+    )
+    cube1 = iris.cube.Cube(
+        np.zeros((2, 3)),
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [1, 2],
+                    standard_name="projection_x_coordinate",
+                    units="m",
+                    coord_system=cs,
+                ),
+                0,
+            ),
+            (
+                iris.coords.DimCoord(
+                    [1, 2, 3],
+                    standard_name="projection_y_coordinate",
+                    units="m",
+                    coord_system=cs,
+                ),
+                1,
+            ),
+        ],
+    )
+    cube2 = cube1.copy()
+    cube2.coord("projection_x_coordinate").units = "km"
+    cube2.coord("projection_y_coordinate").units = "km"
+
+    assert _horizontal_grid_is_close(cube1, cube2) is False
+
+
+def test_horizontal_grid_is_close_no_coords() -> None:
     """Test for `_horizontal_grid_is_close`."""
     cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     cube2 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)

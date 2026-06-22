@@ -181,9 +181,9 @@ class Test:
     @pytest.mark.parametrize("close", [True, False])
     def test_regrid__nearest_cordex_result_has_all_coords(
         self,
-        use_src_coords,
-        close,
-    ):
+        use_src_coords: list[str],
+        close: bool,
+    ) -> None:
         """Test that the result of regridding has both 1D and 2D lat and lon."""
         target_grid = self.multidim_cube.copy()
         offset = 1e-9 if close else 0.1
