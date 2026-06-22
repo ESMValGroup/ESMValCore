@@ -311,7 +311,7 @@ class AllVars(Fix):
         lon_coord.units = "degrees_east"
         lat_coord.units = "degrees_north"
         lon_coord.points, lat_coord.points = transformer.transform(
-            *np.meshgrid(x_coord.points, y_coord.points),
+            *np.meshgrid(x_coord.points, y_coord.points),  # type: ignore[call-overload]
             errcheck=True,
         )
 

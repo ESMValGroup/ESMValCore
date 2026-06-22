@@ -141,6 +141,10 @@ ignore_missing_imports = true
 enable_error_code = [
     "truthy-bool",
 ]
+exclude = [
+  "^doc/conf.py$",
+  "esmvalcore/cmor/tables/",
+]
 
 # Configure linters
 
@@ -296,6 +300,7 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 # Other development tools.
 [tool.pixi.feature.dev.dependencies]
 "jupyterlab" = "*"
+"mypy" = "*"
 "pre-commit" = "*"
 "py-spy" = "*"
 
@@ -314,4 +319,5 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 # Tasks for use with `pixi run <task>`.
 [tool.pixi.tasks]
 test = {cmd = "pytest", description = "Run the tests"}
+type-check = {cmd = "mypy esmvalcore", description = "Run the type checks"}
 doc = {cmd = "sphinx-build doc html", description = "Build the documentation"}

@@ -25,7 +25,7 @@ from esmvalcore.io.protocol import DataElement
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, MutableMapping, Sequence
 
     from dask.delayed import Delayed
 
@@ -163,7 +163,7 @@ def load(
 def _load_zarr(
     file: str | Path,
     ignore_warnings: list[dict[str, Any]] | None = None,
-    backend_kwargs: dict[str, Any] | None = None,
+    backend_kwargs: Mapping[str, Any] | None = None,
 ) -> CubeList:
     # note on ``chunks`` kwarg to ``xr.open_dataset()``
     # docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
@@ -177,7 +177,7 @@ def _load_zarr(
     # https://github.com/pp-mo/ncdata/issues/139
 
     time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-    open_kwargs = {
+    open_kwargs: MutableMapping[str, Any] = {
         "consolidated": False,
         "decode_times": time_coder,
         "engine": "zarr",

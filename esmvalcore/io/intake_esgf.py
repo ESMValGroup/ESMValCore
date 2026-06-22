@@ -38,6 +38,8 @@ from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     import iris.cube
 
     from esmvalcore.typing import Facets, FacetValue
@@ -85,7 +87,7 @@ class _CachingCatalog(intake_esgf.ESGFCatalog):
         quiet: bool = False,
     ) -> dict[str, list[str | Path]]:
         """Return the current search as a dictionary of paths to files."""
-        kwargs = {
+        kwargs: Mapping[str, Any] = {
             "prefer_streaming": prefer_streaming,
             "globus_endpoint": globus_endpoint,
             "globus_path": globus_path,
@@ -250,7 +252,7 @@ class IntakeESGFDataSource(DataSource):
             if not any(_isglob(v) for v in values)
         }
         # Translate "our" facets to ESGF facets and "our" values to ESGF values.
-        query = {
+        query: dict[str, Any] = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
                 for v in non_glob_facets[our_facet]
