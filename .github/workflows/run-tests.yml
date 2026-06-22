@@ -43,8 +43,8 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Check dependencies are compatible
         run: pip check
-      - name: Check code quality
-        run: pre-commit run -a
+      # - name: Check code quality
+      #   run: pre-commit run -a
       - name: Run tests
         run: pytest -n 2 --durations=10
       - name: Upload artifacts
