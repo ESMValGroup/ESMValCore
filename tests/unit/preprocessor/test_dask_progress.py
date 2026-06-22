@@ -21,7 +21,11 @@ def test_compute_with_progress(
 ):
     caplog.set_level(logging.INFO)
     if use_distributed:
-        client = distributed.Client(n_workers=1, threads_per_worker=1)
+        client = distributed.Client(
+            n_workers=1,
+            threads_per_worker=1,
+            silence_logs=logging.INFO,
+        )
     else:
         client = None
 
