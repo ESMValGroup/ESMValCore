@@ -259,7 +259,9 @@ ORAS5 data can be downloaded in netCDF from the Copernicus Climate Data Store
 
 .. note:: For ORAS5 the rotated meridional and zonal velocities are available.
   Per default ESMValCore expects that you use those. Otherwise, you need to specify
-  the ``raw_name`` of the unrotated velocities in the recipe.
+  the ``raw_name`` of the unrotated velocities in the recipe. Those would be
+  ``vomecrty``and ``vozocrtx``, instead of ``vomecrtn`` and ``vozocrte``, for
+  meridional and zonal velocities.
 
 .. _read_native_models:
 

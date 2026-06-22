@@ -1,4 +1,4 @@
-"""Test the ICON on-the-fly CMORizer."""
+"""Test the ORAS5 on-the-fly CMORizer."""
 
 from pathlib import Path
 from unittest import mock
@@ -14,13 +14,9 @@ import esmvalcore.cmor._fixes.native6.oras5
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.native6.oras5 import AllVars, Oras5Fix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.dataset import Dataset
 
-TEST_GRID_FILE_URI = (
-    "https://github.com/ESMValGroup/ESMValCore/raw/main/tests/integration/"
-    "cmor/_fixes/test_data/oras5_grid.nc"
-)
 TEST_GRID_FILE_NAME = "oras5_grid.nc"
 
 
@@ -137,13 +133,12 @@ def check_time(cube):
 def check_model_level_metadata(cube):
     """Check metadata of model_level coordinate."""
     assert cube.coords("depth", dim_coords=True)
-    height = cube.coord("depth", dim_coords=True)
-    assert height.var_name == "lev"
-    assert height.standard_name is None
-    assert height.long_name == "model level number"
-    assert height.units == "m"
-    assert height.attributes == {"positive": "down"}
-    return height
+    depth = cube.coord("depth", dim_coords=True)
+    assert depth.var_name == "lev"
+    assert depth.standard_name == "depth"
+    assert depth.long_name == "ocean depth coordinate"
+    assert depth.units == "m"
+    assert depth.attributes == {"positive": "down"}
 
 
 def check_lat(cube):
@@ -281,6 +276,7 @@ def test_thetao_fix(cubes_3d):
     cube = check_thetao_metadata(fixed_cubes)
     check_time(cube)
     check_lat_lon(cube)
+    check_model_level_metadata(cube)
     assert cube.shape == (1, 75, 13 * 12)
 
 
@@ -350,7 +346,7 @@ def test_tos_no_mesh_unstructured(cubes_2d):
 def test_empty_standard_name_fix(cubes_2d, monkeypatch):
     """Test fix."""
     fix = get_allvars_fix("Omon", "tos")
-    # We know that tas has a standard name, but this being native model output
+    # We know that tos has a standard name, but this being native model output
     # there may be variables with no standard name. The code is designed to
     # handle this gracefully and here we test it with an artificial, but
     # realistic case.
@@ -371,7 +367,7 @@ def test_empty_standard_name_fix(cubes_2d, monkeypatch):
 
 def test_add_time(cubes_2d, cubes_3d):
     """Test fix."""
-    # Remove time from tas cube to test automatic addition
+    # Remove time from tos cube to test automatic addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     thetao_cube = cubes_3d.extract_cube(NameConstraint(var_name="votemper"))
     tos_cube = tos_cube[0]
@@ -419,7 +415,7 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
 
 def test_add_latitude_fail(cubes_2d, test_data_path, tmp_path):
     """Test fix."""
-    # Remove latitude and grid file attribute from tas cube to test automatic
+    # Remove latitude and grid file attribute from tos cube to test automatic
     # addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
@@ -437,7 +433,7 @@ def test_add_latitude_fail(cubes_2d, test_data_path, tmp_path):
 
 def test_add_longitude_fail(cubes_2d, test_data_path, tmp_path):
     """Test fix."""
-    # Remove longitude and grid file attribute from tas cube to test automatic
+    # Remove longitude and grid file attribute from tos cube to test automatic
     # addition
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
@@ -453,13 +449,64 @@ def test_add_longitude_fail(cubes_2d, test_data_path, tmp_path):
         fix.fix_metadata(cubes)
 
 
-def test_vardef_none(cubes_2d, monkeypatch):
+def test_only_time(cubes_2d, monkeypatch):
     """Test fix."""
     tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
     fix = get_allvars_fix("Omon", "tos")
-    monkeypatch.setattr(fix.vardef, "coordinates", {})
+    # We know that tos has dimensions time, latitude, longitude, but the
+    # ORAS5 CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tos to create
+    # an artificial test case.
+    coord_info = CoordinateInfo("time")
+    coord_info.standard_name = "time"
+    monkeypatch.setattr(fix.vardef, "coordinates", {"time": coord_info})
     cubes = CubeList([tos_cube])
-    fix.fix_metadata(cubes)
+    fixed_cube = fix.fix_metadata(cubes)
+    cube = check_tos_metadata(fixed_cube)
+    assert cube.coords("time")
+    check_time(cube)
+    assert cube.coords("longitude") == []
+    assert cube.coords("latitude") == []
+
+
+def test_only_longitude(cubes_2d, monkeypatch):
+    """Test fix."""
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    # We know that tos has dimensions time, latitude, longitude, but the
+    # ORAS5 CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tos to create
+    # an artificial test case.
+    coord_info = CoordinateInfo("longitude")
+    coord_info.standard_name = "longitude"
+    monkeypatch.setattr(fix.vardef, "coordinates", {"longitude": coord_info})
+    cubes = CubeList([tos_cube])
+    fixed_cube = fix.fix_metadata(cubes)
+    cube = check_tos_metadata(fixed_cube)
+    assert cube.coords("time") == cubes[0].coords("time")
+    assert cube.coords("longitude")
+    check_lon(cube)
+    assert cube.coords("latitude") == []
+
+
+def test_only_latitude(cubes_2d, monkeypatch):
+    """Test fix."""
+    tos_cube = cubes_2d.extract_cube(NameConstraint(var_name="sosstsst"))
+    fix = get_allvars_fix("Omon", "tos")
+    # We know that tos has dimensions time, latitude, longitude, but the
+    # ORAS5 CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tos to create
+    # an artificial test case.
+    coord_info = CoordinateInfo("latitude")
+    coord_info.standard_name = "latitude"
+    monkeypatch.setattr(fix.vardef, "coordinates", {"latitude": coord_info})
+    cubes = CubeList([tos_cube])
+    fixed_cube = fix.fix_metadata(cubes)
+    cube = check_tos_metadata(fixed_cube)
+    assert cube.coords("time") == cubes[0].coords("time")
+    assert cube.coords("longitude") == []
+    assert cube.coords("latitude")
+    check_lat(cube)
 
 
 def test_invalid_time_units(cubes_2d):
@@ -488,7 +535,7 @@ def test_get_horizontal_grid_from_facet_cached_in_dict(
     iris.save(wrong_grid_cube, tmp_path / "grid.nc")
 
     # Make sure that grid specified by cube attribute is NOT used
-    cube = Cube(0, attributes={"grid_file_uri": "cached_grid_url.nc"})
+    cube = Cube(0)
     grid_cube = Cube(0, var_name="grid")
     fix = get_allvars_fix("Omon", "tos", session=session)
     fix.extra_facets["horizontal_grid"] = grid_path
@@ -516,7 +563,7 @@ def test_get_horizontal_grid_from_facet(
     session["auxiliary_data_dir"] = tmp_path
 
     # Make sure that grid specified by cube attribute is NOT used
-    cube = Cube(0, attributes={"grid_file_uri": "cached_grid_url.nc"})
+    cube = Cube(0)
 
     # Save temporary grid file
     grid_path = grid_path.format(tmp_path=tmp_path)
@@ -568,7 +615,7 @@ def test_get_horizontal_grid_none(tmp_path, session):
 
 def test_get_mesh_cached_from_attr(monkeypatch):
     """Test fix."""
-    cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
+    cube = Cube(0)
     fix = get_allvars_fix("Omon", "tos")
     monkeypatch.setattr(fix, "_create_mesh", mock.Mock())
     fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.mesh
@@ -579,7 +626,7 @@ def test_get_mesh_cached_from_attr(monkeypatch):
 
 def test_get_mesh_not_cached_from_attr(monkeypatch):
     """Test fix."""
-    cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
+    cube = Cube(0)
     fix = get_allvars_fix("Omon", "tos")
     monkeypatch.setattr(fix, "_create_mesh", mock.Mock())
     fix.get_mesh(cube)
@@ -596,7 +643,7 @@ def test_get_mesh_cached_from_facet(monkeypatch, session, tmp_path):
     grid_cube = Cube(0, var_name="grid")
     iris.save(grid_cube, tmp_path / "grid.nc")
 
-    cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
+    cube = Cube(0)
     fix = get_allvars_fix("Omon", "tos", session=session)
     fix.extra_facets["horizontal_grid"] = grid_path
     monkeypatch.setattr(fix, "_create_mesh", mock.Mock())
@@ -619,7 +666,7 @@ def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path, session):
     grid_cube = Cube(0, var_name="grid")
     iris.save(grid_cube, tmp_path / "grid.nc")
 
-    cube = Cube(0, attributes={"grid_file_uri": TEST_GRID_FILE_URI})
+    cube = Cube(0)
     fix = get_allvars_fix("Omon", "tos", session=session)
     fix.extra_facets["horizontal_grid"] = grid_path
     monkeypatch.setattr(fix, "_create_mesh", mock.Mock())
