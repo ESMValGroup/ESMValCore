@@ -40,6 +40,7 @@ CMOR standard
 ~~~~~~~~~~~~~
 
 -  Update CMIP7 CMOR tables to DR-1.2.2.3-v1.0.6 (:pull:`3070`) by :user:`bouweandela`
+-  Add CORDEX-CMIP6 support (:pull:`3112`) by :user:`bouweandela`
 
 Configuration
 ~~~~~~~~~~~~~
@@ -95,7 +96,6 @@ Improvements
 -  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
 -  Support automatic addition of supplementary variables for CORDEX (:pull:`3098`) by :user:`bouweandela`
 -  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
--  Add CORDEX-CMIP6 support (:pull:`3112`) by :user:`bouweandela`
 
 .. _changelog-v2-14-0:
 
