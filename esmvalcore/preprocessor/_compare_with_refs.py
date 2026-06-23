@@ -48,7 +48,9 @@ BiasType = Literal["absolute", "relative"]
 def ttest(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
-    siglvl: float = 0.05,
+    coordinate: str | None = 'time',
+    equal_var: bool = False,
+    **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
     """Calculate the ttest between dataset and reference dataset.
 
@@ -73,24 +75,31 @@ def ttest(
         Input datasets/cubes for which the significance is calculated relative
         to a reference dataset/cube.
     reference:
-        Cube which is used as reference for the bttest calculation. If ``None``,
+        Cube which is used as reference for the ttest calculation. If ``None``,
         `products` needs to be a :obj:`set` of
         `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
         dataset in `products` needs the facet ``reference_for_bias: true``. Do
         not specify this argument in a recipe.
-    siglvl:
-        significance level which is used to create the mask of significant and
-        non-significant data points.
+    coordinate:
+        Coordinate axis of the input along which to compute the statistic.
+        Default is 'time'.
+    equal_var:
+        If False (default), perform Welch's t-test, which does not assume equal
+        population variances. Can be set to True, to perform a standard
+        independent 2 sample test that assumes equal population variances, if
+        equality is assured
+    **kwargs:
+        Any other parameter allowed by dask.array.ttest_ind.
 
     Returns
     -------
     set[PreprocessorFile] | CubeList
         Output datasets/cubes. Will be a :obj:`set` of
-        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
-        `products` is also one, a :class:`~iris.cube.CubeList` otherwise.
-        The cubes contain an attached ancillary variable which is a mask of the
-        cube defining significant (1) and non-significant (0) values related
-        to the bias (in terms of absolute) of cube and reference.
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if `products`
+        is also one, a :class:`~iris.cube.CubeList` otherwise.  The cubes
+        contain an attached ancillary variable which is the p-value w.r.t. the
+        chosen ttest related to the bias (in terms of absolute) of cube and
+        reference.
 
     Raises
     ------
@@ -99,6 +108,7 @@ def ttest(
         true`` if ``reference=None``; ``reference=None`` and the input products
         are given as iterable of :class:`~iris.cube.Cube` objects;
         ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
+
     """
     ref_product = None
     all_cubes_given = all(isinstance(p, Cube) for p in products)
@@ -117,7 +127,8 @@ def ttest(
 
     # If input is an Iterable of Cube objects, calculate ttest for each element
     if all_cubes_given:
-        cubes = [_calculate_ttest(c, reference, siglvl) for c in products]
+        cubes = [_calculate_ttest(c, reference, coordinate, equal_var, **kwargs)
+                 for c in products]
         return CubeList(cubes)
 
     # Otherwise, iterate over all input products, calculate ttest and adapt
@@ -129,7 +140,8 @@ def ttest(
         cube = concatenate(product.cubes)
 
         # Calculate ttest
-        cube = _calculate_ttest(cube, reference, siglvl)
+        cube = _calculate_ttest(cube, reference, coordinate, equal_var,
+                                **kwargs)
 
         # Adapt metadata and provenance information
         product.attributes["units"] = str(cube.units)
@@ -138,7 +150,7 @@ def ttest(
 
         product.cubes = CubeList([cube])
         output_products.add(product)
-    print(cube)
+
     # Add reference dataset to output (always)
     if ref_product is not None:
         output_products.add(ref_product)
@@ -185,11 +197,6 @@ def bias(
     bias_type:
         Bias type that is calculated. Must be one of ``'absolute'`` (dataset -
         ref) or ``'relative'`` ((dataset - ref) / ref).
-    ttest:
-        If ``True`` calculate the p-value according to the Welch's Test between
-        dataset and reference. The p-value is attached as an ancillary variable
-        to the dataset. A Welch's Test is chosen, since unequal variances and
-        sample sizes are likely.
     denominator_mask_threshold:
         Threshold to mask values close to zero in the denominator (i.e., the
         reference dataset) during the calculation of relative biases. All
@@ -309,8 +316,9 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: boo
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
-    # if ttest:
-    #     p_value, remaining_axis = _calculate_ttest(cube, reference)
+    # save ancillary variables as they get removed in the bias calculation
+    anc_var = cube.ancillary_variables()
+    anc_var_dims = [ cube.ancillary_variable_dims(anc) for anc in anc_var ]
 
     if bias_type == "absolute":
         cube = cube - reference
@@ -328,44 +336,30 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: boo
     cube.metadata = cube_metadata
     cube.units = new_units
 
-    # Attach ancillary variable after the calculation
-    # otherwise, it will be lost
-    # if ttest:
-    #     cube.add_ancillary_variable(
-    #         AncillaryVariable(p_value,
-    #                           long_name="pvalue"),
-    #         remaining_axis)
+    # reattach ancillary variables
+    for anc, dims in zip(anc_var, anc_var_dims):
+        cube.add_ancillary_variable(anc, dims)
 
     return cube
 
 
-# def _calculate_ttest(cube: Cube, reference: Cube) -> Cube:
- #    """Calculate the Welch's t-test and attach p_value as an ancillary variable."""
- #    axis = cube.coord_dims("time")[0]
- #    remaining_axis = sorted(set(range(cube.ndim)) - set([axis]))
-
- #    ttest = dask.array.stats.ttest_ind(cube, reference, 0, False)
- #    shape = tuple([list(cube.shape)[dim] for dim in remaining_axis])
- #    p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
-
- #    return p_value, remaining_axis
-
-
-def _calculate_ttest(cube: Cube, reference: Cube, siglvl: float) -> Cube:
-    """Calculate the Welch's t-test and attach a mask of significance."""
+def _calculate_ttest(cube: Cube, reference: Cube, coordinate, equal_var, **kwargs) -> Cube:
+    """Calculate the Welch's t-test and attach the p-value."""
     cube_metadata = cube.metadata
 
-    axis = cube.coord_dims("time")[0]
+    axis = cube.coord_dims(coordinate)[0]
     remaining_axes = sorted(set(range(cube.ndim)) - set([axis]))
 
-    ttest = dask.array.stats.ttest_ind(cube, reference, 0, False)
+    ttest = dask.array.stats.ttest_ind(cube,
+                                       reference,
+                                       axis=axis,
+                                       equal_var=equal_var)
     shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
+
     p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
 
-    significance = da.where(p_value <= siglvl, 1, 0)
-
     cube.add_ancillary_variable(
-        AncillaryVariable(significance, long_name="significance"),
+        AncillaryVariable(p_value, long_name="p_value"),
         remaining_axes
     )
 
