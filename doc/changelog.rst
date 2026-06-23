@@ -16,7 +16,7 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Add `use_standard_grid` option for CORDEX datasets (:pull:`3059`) by :user:`bouweandela`
+-  Add ``use_standard_grid`` option for CORDEX datasets (:pull:`3059`) by :user:`bouweandela`
 
     .. admonition:: Upgrade instructions
 
