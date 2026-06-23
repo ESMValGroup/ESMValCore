@@ -5,8 +5,8 @@ Changelog
 
 .. _changelog-v2-15-0:
 
-v2.15.0.dev38+g8e9202a40
-------------------------
+v2.15.0
+-------
 Highlights
 
 TODO: add highlights
@@ -16,9 +16,17 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
-
 -  Add `use_standard_grid` option for CORDEX datasets (:pull:`3059`) by :user:`bouweandela`
+
+    .. admonition:: Upgrade instructions
+
+      For CORDEX datasets, replacing the grid by a standard grid is no longer
+      done automatically if grid differences are small, but needs to be enabled
+      on a per-dataset basis by adding ``use_standard_grid: true`` to the
+      dataset definition in the recipe (or default
+      :ref:`extra facets <config-extra-facets>` for the CORDEX project to make
+      it permanent). Refer to :ref:`cordex_datasets` for additional information.
+
 
 Bug fixes
 ~~~~~~~~~
@@ -31,7 +39,7 @@ Bug fixes
 CMOR standard
 ~~~~~~~~~~~~~
 
--  Update CMOR tables to DR-1.2.2.3-v1.0.6 (:pull:`3070`) by :user:`bouweandela`
+-  Update CMIP7 CMOR tables to DR-1.2.2.3-v1.0.6 (:pull:`3070`) by :user:`bouweandela`
 
 Configuration
 ~~~~~~~~~~~~~
@@ -44,7 +52,7 @@ Documentation
 -  Fix a typo in ESMValCore ESGF data source documentation (:pull:`3016`) by :user:`bouweandela`
 -  Update path to CEDA-JASMIN esmeval gws (group workspace) (:pull:`3041`) by :user:`valeriupredoi`
 -  Fix the PDF build of the documentation (:pull:`3068`) by :user:`bouweandela`
--  Add `mip` to CMIP7 facets documentation page (:pull:`3019`) by :user:`bouweandela`
+-  Add ``mip`` to CMIP7 facets documentation page (:pull:`3019`) by :user:`bouweandela`
 -  Update links to CMIP guidance (:pull:`3075`) by :user:`bouweandela`
 -  Update release instructions related to Docker (:pull:`3078`) by :user:`bouweandela`
 -  Update dataset GitHub issue template (:pull:`3107`) by :user:`bouweandela`
@@ -70,11 +78,6 @@ Preprocessor
 
 -  Drop range related attributes on load (:pull:`3072`) by :user:`bouweandela`
 
-Release
-~~~~~~~
-
--  Update to v2.14.0 (:pull:`3013`) by :user:`schlunma`
-
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
@@ -89,7 +92,6 @@ Improvements
 -  Gracefully handle the case of missing facets required by ``esmvalcore.io.local.LocalDataSource`` (:pull:`3021`) by :user:`bouweandela`
 -  Mention the branding suffix in the error message when no entry can be found in CMOR tables (:pull:`3083`) by :user:`bouweandela`
 -  Nicer looking command line output (:pull:`3079`) by :user:`bouweandela`
--  Update pixi lockfile (:pull:`3094`) by :user:`github-actions[bot]`
 -  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
 -  Support automatic addition of supplementary variables for CORDEX (:pull:`3098`) by :user:`bouweandela`
 -  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
