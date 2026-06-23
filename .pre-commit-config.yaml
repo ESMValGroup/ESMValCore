@@ -38,7 +38,7 @@ repos:
         additional_dependencies:
           - "types-PyYAML"
           - "types-requests"
-          - "numpy"
+          - "numpy==2.4.6"
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:
