@@ -1329,7 +1329,11 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
-        logger.info("Downloading missing data (this may take a while...)")
+        logger.info(
+            "Downloading missing data (this may take a while...). Details can be "
+            "found in the debug log at %s",
+            self.session.main_log_debug,
+        )
         esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
