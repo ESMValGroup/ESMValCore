@@ -1,0 +1,17 @@
+# Extra facets for the CORDEX project.
+
+projects:
+  CORDEX:
+    extra_facets:
+      ALADIN53:
+        '*':
+          '*':
+            use_standard_grid: true
+      ALADIN63:
+        '*':
+          '*':
+            use_standard_grid: true
+      HIRHAM5:
+        '*':
+          '*':
+            use_standard_grid: true

@@ -178,6 +178,7 @@ class Config:
     def show(
         self,
         filter: tuple[str] | None = ("extra_facets",),  # noqa: A002
+        project: str | None = None,
     ) -> None:
         """Show the current configuration.
 
@@ -185,7 +186,12 @@ class Config:
         ----------
         filter:
             Filter this list of keys. By default, the `extra_facets`
-            key is filtered out, as it can be very large.
+            key is filtered out, as it can be very large. For example, to show
+            the full configuration, use `--filter=` and to filter out both
+            the `data` and `extra_facets` keys use `--filter=data,extra_facets`.
+        project:
+            Only show configuration for this project. For example, to only show
+            the configuration for the CMIP7 project, use `--project=CMIP7`.
 
         """
         import yaml
@@ -196,17 +202,19 @@ class Config:
         from esmvalcore.config import CFG
 
         cfg = dict(CFG)
+        msg = "# Current configuration"
+        if project and "projects" in cfg and project in cfg["projects"]:
+            cfg = {"projects": {project: cfg["projects"][project]}}
+            msg += f" for project '{project}'"
         if filter:
+            if isinstance(filter, str):
+                filter = (filter,)  # noqa: A001
             for key in filter:
                 cfg = nested_delete(cfg, key)
-        exclude_msg = (
-            ", excluding the keys " + ", ".join(f"'{f}'" for f in filter)
-            if filter
-            else ""
-        )
-        self._console.print(
-            Markdown(f"# Current configuration{exclude_msg}\n<br>"),
-        )
+            msg += ", excluding the keys " + ", ".join(
+                f"'{key}'" for key in filter
+            )
+        self._console.print(Markdown(f"{msg}:\n<br>"))
         self._console.print(
             Syntax(
                 yaml.safe_dump(cfg),
@@ -599,7 +607,7 @@ class ESMValTool:
         for project, version in self._extra_packages.items():
             print(f"{project}: {version}")  # noqa: T201
 
-    def run(self, recipe, **kwargs):
+    def run(self, recipe, session_name=None, **kwargs):
         """Execute an ESMValTool recipe.
 
         `esmvaltool run` executes the given recipe. To see a list of available
@@ -609,6 +617,15 @@ class ESMValTool:
         A list of possible flags is given here:
         https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#configuration-options
 
+        Parameters
+        ----------
+        recipe:
+            Path to the recipe to run.
+        session_name:
+            Name of the session output subdirectory (relative to the configured ``output_dir``).
+            When given, this value is used instead of the default ``<recipe.stem>_<timestamp>``.
+
+            If the given name already exists, a suffix is added to the session name to avoid overwriting existing data.
         """
         from .config import CFG
         from .exceptions import InvalidConfigParameter
@@ -643,6 +660,8 @@ class ESMValTool:
 
         CFG["resume_from"] = parse_resume(CFG["resume_from"], recipe)
         session = CFG.start_session(recipe.stem)
+        if session_name is not None:
+            session.session_name = str(session_name)
 
         self._run(recipe, session, cli_config_dir)
 
