@@ -228,6 +228,11 @@ authors:
     family-names: Lenhardt
     given-names: Julien
     orcid: "https://orcid.org/0000-0002-9949-3989"
+  -
+    affiliation: "Climate Resource, Australia"
+    family-names: Lewis
+    given-names: Jared
+    orcid: "https://orcid.org/0000-0002-8155-8924"
 
 cff-version: 1.2.0
 date-released: 2026-03-10

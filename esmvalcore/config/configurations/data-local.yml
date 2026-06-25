@@ -29,6 +29,13 @@ projects:
         rootpath: ~/climate_data
         dirname_template: "{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}"
         filename_template: "{short_name}_*.nc"
+  CORDEX-CMIP6:
+    data:
+      local:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: ~/climate_data
+        dirname_template: "{project}/{activity}/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}_{dataset}_{rcm_version}_{frequency}*.nc"
   CORDEX:
     data:
       local:
