@@ -20,12 +20,12 @@ Backwards incompatible changes
 
    .. admonition:: Upgrade instructions
 
-   For CORDEX datasets, replacing the grid by a standard grid is no longer
-   done automatically if grid differences are small, but needs to be enabled
-   on a per-dataset basis by adding ``use_standard_grid: true`` to the
-   dataset definition in the recipe (or default
-   :ref:`extra facets <config-extra-facets>` for the CORDEX project to make
-   it permanent). Refer to :ref:`cordex_datasets` for additional information.
+      For CORDEX datasets, replacing the grid by a standard grid is no longer
+      done automatically if grid differences are small, but needs to be enabled
+      on a per-dataset basis by adding ``use_standard_grid: true`` to the
+      dataset definition in the recipe (or default
+      :ref:`extra facets <config-extra-facets>` for the CORDEX project to make
+      it permanent). Refer to :ref:`cordex_datasets` for additional information.
 
 
 Bug fixes
