@@ -7,12 +7,10 @@ import yaml
 import esmvalcore
 import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
-from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import (
     ValidationError,
     _handle_deprecation,
     _listify_validator,
-    deprecate_extra_facets_dir,
     validate_bool,
     validate_bool_or_none,
     validate_check_level,
@@ -362,23 +360,3 @@ def test_validate_config_developer(tmp_path, monkeypatch):
 
     # Restore original config-developer file
     validate_config_developer(None)
-
-
-# TODO: remove in v2.15.0
-def test_extra_facets_dir_tuple_deprecated(monkeypatch):
-    """Test extra_facets_dir."""
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        monkeypatch.setitem(CFG, "extra_facets_dir", ("/extra/facets",))
-    assert CFG["extra_facets_dir"] == [Path("/extra/facets")]
-
-
-# TODO: remove in v2.15.0
-def test_deprecate_extra_facets_dir(monkeypatch):
-    """Test deprecate_extra_facets_dir."""
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
-    msg = (
-        r"Since the environment variable "
-        r"ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG is set"
-    )
-    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
-        deprecate_extra_facets_dir({}, "value", "validated_value")
