@@ -7,15 +7,12 @@ import pytest
 import yaml
 
 import esmvalcore.cmor.table
-import esmvalcore.config._config
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
-    _deep_update,
     get_ignored_warnings,
-    load_extra_facets,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+from esmvalcore.exceptions import RecipeError
 
 BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
     "configurations",
@@ -46,28 +43,6 @@ def test_builtin_config_files_have_description(config_file: Path) -> None:
     # Add a basic check that the description is meaningful
     assert len(description) > 15
     assert description.endswith(".")
-
-
-TEST_DEEP_UPDATE = [
-    ([{}], {}),
-    ([{"a": 1, "b": 2}, {"a": 3}], {"a": 3, "b": 2}),
-    (
-        [
-            {"a": {"b": 1, "c": {"d": 2}}, "e": {"f": 4, "g": 5}},
-            {"a": {"b": 2, "c": 3}},
-        ],
-        {"a": {"b": 2, "c": 3}, "e": {"f": 4, "g": 5}},
-    ),
-]
-
-
-# TODO: remove in v2.15.0
-@pytest.mark.parametrize(("dictionaries", "expected_merged"), TEST_DEEP_UPDATE)
-def test_deep_update(dictionaries, expected_merged):
-    merged = dictionaries[0]
-    for update in dictionaries[1:]:
-        merged = _deep_update(merged, update)
-    assert expected_merged == merged
 
 
 BASE_PATH = importlib_files("tests") / "sample_data" / "extra_facets"
@@ -120,31 +95,6 @@ TEST_LOAD_EXTRA_FACETS = [
         },
     ),
 ]
-
-
-# TODO: Remove in v2.15.0
-@pytest.mark.parametrize(
-    ("project", "extra_facets_dir", "expected"),
-    TEST_LOAD_EXTRA_FACETS,
-)
-def test_load_extra_facets(project, extra_facets_dir, expected):
-    extra_facets = load_extra_facets(project, extra_facets_dir)
-    assert extra_facets == expected
-
-
-# TODO: Remove in v2.15.0
-def test_load_extra_facets_deprecation(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        esmvalcore.config._config,
-        "USER_EXTRA_FACETS",
-        tmp_path,
-    )
-    msg = (
-        r"Usage of extra facets located in ~/.esmvaltool/extra_facets has "
-        r"been deprecated"
-    )
-    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
-        load_extra_facets("PROJECT", ())
 
 
 def test_get_project_config(mocker):
