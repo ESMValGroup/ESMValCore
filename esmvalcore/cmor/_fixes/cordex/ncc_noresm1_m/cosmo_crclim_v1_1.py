@@ -1,20 +1,7 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from esmvalcore.cmor.fix import Fix
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from iris.cube import Cube
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cosmo_crclim_v1_1 import (
+    Snw as BaseSnw,
+)
 
 
-class Snw(Fix):
+class Snw(BaseSnw):
     """Fixes for snw."""
-
-    def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
-        cube = self.get_cube_from_list(cubes)
-        cube = cube.copy()
-        cube.remove_coord("height")
-        return [cube]
