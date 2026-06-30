@@ -91,8 +91,6 @@ class AllVars(Fix):
         from latitude longitude bounds and replaces the original
         coordinate representation with Iris mesh coordinates.
         """
-        if not self._can_create_mesh(cube):
-            return
 
         lat = cube.coord("latitude")
         lon = cube.coord("longitude")
@@ -166,6 +164,7 @@ class AllVars(Fix):
             for std_name, var_name in varnames_to_change.items():
                 if cube.coords(std_name):
                     cube.coord(std_name).var_name = var_name
-            self._fix_unstructured_mesh(cube)
+            if self._can_create_mesh(cube):
+                self._fix_unstructured_mesh(cube)
 
         return cubes
