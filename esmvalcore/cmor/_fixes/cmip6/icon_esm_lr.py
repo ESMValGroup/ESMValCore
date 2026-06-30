@@ -45,9 +45,12 @@ class AllVars(Fix):
     def _get_node_coords_and_connectivity(lat_bounds, lon_bounds):
         """Build unique mesh nodes and face-node connectivity.
 
-        Cell vertices are converted to cartesian coordinates to
-        identify shared nodes. Duplicate vertices are
-        removed and a face-node connectivity array is generated.
+        Cell vertices are converted to cartesian coordinates before
+        deduplication so shared nodes can be identified reliably. This avoids
+        duplicate pole nodes, where the same physical point may be represented
+        by different longitude values. The unique nodes are then converted back
+        to longitude/latitude coordinates, and the inverse indices are used to
+        build the face-node connectivity.
         """
         lat_rad = np.deg2rad(lat_bounds)
         lon_rad = np.deg2rad(lon_bounds)
@@ -73,7 +76,8 @@ class AllVars(Fix):
             return_inverse=True,
         )
 
-        # we create face-node connectivity and back to lon/lat
+        # rounding can move the cartesian coords slightly away
+        # so normalize before converting the unique nodes back to lon/lat
         connectivity = inverse.reshape(lat_bounds.shape)
         norm = np.linalg.norm(unique_nodes, axis=1)
         unit_nodes = unique_nodes / norm[:, np.newaxis]
@@ -91,7 +95,6 @@ class AllVars(Fix):
         from latitude longitude bounds and replaces the original
         coordinate representation with Iris mesh coordinates.
         """
-
         lat = cube.coord("latitude")
         lon = cube.coord("longitude")
         mesh_dim = cube.coord_dims(lat)
