@@ -68,6 +68,7 @@ Fixes for datasets
 -  Avoid crash in fixes for time-independent CORDEX data (:pull:`3032`) by :user:`bouweandela`
 -  Add support for freshly downloaded ERA5 hourly data (:pull:`3087`) by :user:`schlunma`
 -  Add support for variables ``phcint`` and ``amoc`` to ICON-XPP CMORizer (:pull:`3025`) by :user:`schlunma`
+-  Add support for reading ORAS5 data (:pull:`2422`) by :user:`jmalles`
 
 Installation
 ~~~~~~~~~~~~
@@ -78,6 +79,7 @@ Preprocessor
 ~~~~~~~~~~~~
 
 -  Drop range related attributes on load (:pull:`3072`) by :user:`bouweandela`
+-  Copy additional coordinates when regridding (:pull:`3048`) by :user:`bouweandela`
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
