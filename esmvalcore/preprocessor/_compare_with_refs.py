@@ -628,45 +628,41 @@ def t_test(
     This is a test for the null hypothesis that 2 independent samples (dataset
     and reference dataset) have identical average (expected) values.
 
-    The reference dataset needs to be broadcastable to all input `products`.
-    This supports `iris' rich broadcasting abilities
-    <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
-    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
-    :func:`esmvalcore.preprocessor.regrid` and/or
-    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+    All input datasets need to have the same shape. To ensure this, the
+    preprocessors :func:`esmvalcore.preprocessor.regrid`  might be helpful.
 
     Notes
     -----
-    The reference dataset can be specified with the `reference` argument. If
-    `reference` is ``None``, exactly one input dataset in the `products` set
-    needs to have the facet ``reference_for_t_test: true`` defined in the
-    recipe. Please do **not** specify the option `reference` when using this
+    The reference dataset can be specified with the ``reference`` argument. If
+    ``reference`` is ``None``, exactly one input dataset in the ``products``
+    set needs to have the facet ``reference_for_t_test: true`` defined in the
+    recipe. Please do **not** specify the option ``reference`` when using this
     preprocessor function in a recipe.
 
     Parameters
     ----------
     products:
-        Input datasets/cubes for which the significance is calculated relative
-        to a reference dataset/cube.
+        Input datasets/cubes for which the t-test is performed relative to a
+        reference dataset/cube.
     reference:
         Cube which is used as reference for the t-test calculation. If
         ``None``, `products` needs to be a :obj:`set` of
-        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
-        dataset in `products` needs the facet ``reference_for_t_test: true``.
-        Do not specify this argument in a recipe.
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and exactly
+        one dataset in ``products`` needs the facet ``reference_for_t_test:
+        true``. Do not specify this argument in a recipe.
     coordinate:
         Coordinate axis of the input along which to compute the statistic.
     **kwargs:
         Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`
-        (not all input data are lazy) or
-        :func:`dask.array.stats.ttest_ind.ttest_ind` (all input data are lazy).
+        (not all input data are lazy) or :func:`dask.array.stats.ttest_ind`
+        (all input data are lazy).
 
     Returns
     -------
     :
         Output datasets/cubes. Will be a :obj:`set` of
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
-        `products` is also one, a :class:`~iris.cube.CubeList` otherwise. The
+        ``products`` is also one, a :class:`~iris.cube.CubeList` otherwise. The
         cubes contain an attached ancillary variable which is the p-value
         w.r.t. the chosen t-test.
 
@@ -742,7 +738,7 @@ def _calculate_t_test(
         raise CoordinateMultiDimError(cube.coord(coordinate))
     axis = cube.coord_dims(coordinate)[0]
     remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
-    shape = tuple(cube.shape[a] for a in remaining_axes)
+    target_shape = tuple(cube.shape[a] for a in remaining_axes)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
         t_test = dask.array.stats.ttest_ind(
@@ -752,7 +748,7 @@ def _calculate_t_test(
             **kwargs,
         )
         # For some reason, t_test.pvalue is not a da.array, but a dask.Delayed
-        p_value_arr = da.from_delayed(t_test.pvalue, shape, cube.dtype)
+        p_value_arr = da.from_delayed(t_test.pvalue, target_shape, cube.dtype)
         p_value_arr = da.ma.masked_invalid(p_value_arr)
     else:
         # Avoid realizing cube.data
