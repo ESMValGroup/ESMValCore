@@ -33,12 +33,19 @@ logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
-    "activity",
-    "driver",
+    "mip",
+    "short_name",
+    "branding_suffix",
     "dataset",
+    "rcm_version",
+    "driver",
+    "ensemble",
     "exp",
     "sub_experiment",
-    "ensemble",
+    "frequency",
+    "domain",
+    "region",
+    "grid",
     "version",
 )
 """List of keys to be used to compose the alias, ordered by priority."""
