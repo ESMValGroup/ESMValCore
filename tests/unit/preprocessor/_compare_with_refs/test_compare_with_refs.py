@@ -8,7 +8,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import AncillaryVariable, CellMeasure, CellMethod
+from iris.coords import CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
@@ -939,6 +939,22 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
         )
 
 
+def assert_correct_p_value(cube: Cube, *, is_lazy: bool = False) -> None:
+    assert len(cube.ancillary_variables()) == 1
+    p_value = cube.ancillary_variables()[0]
+    assert p_value.standard_name is None
+    assert p_value.long_name == "p-value"
+    assert p_value.var_name == "pvalue"
+    assert p_value.units == "1"
+    assert p_value.attributes == {}
+    assert p_value.has_lazy_data() is is_lazy
+    assert p_value.dtype == np.float32
+    np.testing.assert_allclose(
+        p_value.data,
+        [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+    )
+
+
 @pytest.mark.parametrize("use_reference_product", [True, False])
 def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # noqa: PLR0915
     """Test calculation of t_test with products."""
@@ -962,16 +978,6 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
 
     out_products = t_test(products, reference=reference)
 
-    expected_ancillary_variable = AncillaryVariable(
-        np.array(
-            [[1.0, 0.6666667], [0.42264974, 0.46547753]],
-            dtype=np.float32,
-        ),
-        long_name="p-value",
-        var_name="pvalue",
-        units="1",
-    )
-
     assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == len(products)
@@ -988,7 +994,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert out_cube.units == "K"
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    assert out_cube.ancillary_variables() == [expected_ancillary_variable]
+    assert_correct_p_value(out_cube)
     assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
     assert product_a.mock_ancestors == expected_ancestors
 
@@ -1004,7 +1010,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert out_cube.units == "K"
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    assert out_cube.ancillary_variables() == [expected_ancillary_variable]
+    assert_correct_p_value(out_cube)
     assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
     assert product_b.mock_ancestors == expected_ancestors
 
@@ -1026,7 +1032,66 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
         assert product_ref.mock_ancestors == set()
 
 
-def test_t_test_reference_none_cubes(regular_cubes):
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes(regular_cubes, ref_cubes, lazy):
+    """Test calculation of t_test with cubes."""
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if lazy:
+        cube.data = cube.lazy_data()
+        ref_cube.data = ref_cube.lazy_data()
+
+    out_cubes = t_test([cube], ref_cube)
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube, is_lazy=lazy)
+
+
+@pytest.mark.parametrize("ref_lazy", [True, False])
+def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
+    """Test calculation of t_test with cubes."""
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if ref_lazy:
+        ref_cube.data = ref_cube.lazy_data()
+    else:
+        cube.data = cube.lazy_data()
+
+    out_cubes = t_test([cube], ref_cube)
+
+    assert cube.has_lazy_data() is not ref_lazy
+    assert ref_cube.has_lazy_data() is ref_lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is not ref_lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube)
+
+
+def test_t_test_reference_none_cubes_fail(regular_cubes):
     """Test t_test with reference=None and cubes given."""
     msg = (
         r"A list of Cubes is given to this preprocessor; please specify a "
@@ -1036,7 +1101,7 @@ def test_t_test_reference_none_cubes(regular_cubes):
         t_test(regular_cubes)
 
 
-def test_no_reference_for_t_test(regular_cubes, ref_cubes):
+def test_no_reference_for_t_test_fail(regular_cubes, ref_cubes):
     """Test fail when no reference_for_t_test is given."""
     products = {
         PreprocessorFile(regular_cubes, "A", {}),
@@ -1048,7 +1113,7 @@ def test_no_reference_for_t_test(regular_cubes, ref_cubes):
         t_test(products)
 
 
-def test_two_references_for_t_test(regular_cubes, ref_cubes):
+def test_two_references_for_t_test_fail(regular_cubes, ref_cubes):
     """Test fail when two reference_for_t_test products are given."""
     products = {
         PreprocessorFile(regular_cubes, "A", {"reference_for_t_test": False}),
