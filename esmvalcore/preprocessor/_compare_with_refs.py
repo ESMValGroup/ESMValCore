@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
+import dask.array.stats
 import iris.analysis
 import iris.analysis.stats
 import numpy as np
@@ -738,24 +739,37 @@ def _calculate_t_test(
     if coordinate is None:
         axis = None
         remaining_axes = ()
+        shape = ()
     else:
         axis = cube.coord_dims(coordinate)[0]
         remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
+        shape = tuple(cube.shape[a] for a in remaining_axes)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
-        ttest_func = da.stats.ttest_ind
+        t_test = dask.array.stats.ttest_ind(
+            cube.core_data(),
+            reference.core_data(),
+            axis=axis,
+            **kwargs,
+        )
+        # For some reason, t_test.pvalue is not a da.array, but a dask.Delayed
+        p_value_arr = da.from_delayed(t_test.pvalue, shape, cube.dtype)
     else:
-        ttest_func = ttest_ind
-    t_test = ttest_func(
-        cube.core_data(),
-        reference.core_data(),
-        axis=axis,
-        **kwargs,
-    )
+        # Avoid realizing cube.data
+        cube_data = (
+            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data
+        )
+        ref_data = (
+            reference.lazy_data().compute()
+            if reference.has_lazy_data()
+            else reference.data
+        )
+        t_test = ttest_ind(cube_data, ref_data, axis=axis, **kwargs)
+        p_value_arr = t_test.pvalue
 
     cube.add_ancillary_variable(
         AncillaryVariable(
-            t_test.pvalue,
+            p_value_arr,
             long_name="p-value",
             var_name="pvalue",
             units="1",
