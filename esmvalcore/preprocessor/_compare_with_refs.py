@@ -13,8 +13,7 @@ import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
-from iris.coords import AncillaryVariable
-from iris.coords import CellMethod
+from iris.coords import AncillaryVariable, AuxCoord, CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 from scipy.stats import wasserstein_distance
 
@@ -45,14 +44,13 @@ logger = logging.getLogger(__name__)
 BiasType = Literal["absolute", "relative"]
 
 
-def ttest(
+def t_test(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
-    coordinate: str | None = 'time',
-    equal_var: bool = False,
+    coordinate: str | None = "time",
     **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
-    """Calculate the ttest between dataset and reference dataset.
+    """Calculate the t-test between dataset and reference dataset.
 
     The reference dataset needs to be broadcastable to all input `products`.
     This supports `iris' rich broadcasting abilities
@@ -75,7 +73,7 @@ def ttest(
         Input datasets/cubes for which the significance is calculated relative
         to a reference dataset/cube.
     reference:
-        Cube which is used as reference for the ttest calculation. If ``None``,
+        Cube which is used as reference for the t-test calculation. If ``None``,
         `products` needs to be a :obj:`set` of
         `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
         dataset in `products` needs the facet ``reference_for_bias: true``. Do
@@ -83,13 +81,8 @@ def ttest(
     coordinate:
         Coordinate axis of the input along which to compute the statistic.
         Default is 'time'.
-    equal_var:
-        If False (default), perform Welch's t-test, which does not assume equal
-        population variances. Can be set to True, to perform a standard
-        independent 2 sample test that assumes equal population variances, if
-        equality is assured
     **kwargs:
-        Any other parameter allowed by dask.array.ttest_ind.
+        Additional keyword arguments passed to :func:`dask.array.ttest_ind`.
 
     Returns
     -------
@@ -98,7 +91,7 @@ def ttest(
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if `products`
         is also one, a :class:`~iris.cube.CubeList` otherwise.  The cubes
         contain an attached ancillary variable which is the p-value w.r.t. the
-        chosen ttest related to the bias (in terms of absolute) of cube and
+        chosen t-test related to the bias (in terms of absolute) of cube and
         reference.
 
     Raises
@@ -125,13 +118,15 @@ def ttest(
     else:
         ref_product = None
 
-    # If input is an Iterable of Cube objects, calculate ttest for each element
+    # If input is an Iterable of Cube objects, calculate t-test for each element
     if all_cubes_given:
-        cubes = [_calculate_ttest(c, reference, coordinate, equal_var, **kwargs)
-                 for c in products]
+        cubes = [
+            _calculate_t_test(c, reference, coordinate, **kwargs)
+            for c in products
+        ]
         return CubeList(cubes)
 
-    # Otherwise, iterate over all input products, calculate ttest and adapt
+    # Otherwise, iterate over all input products, calculate t-test and adapt
     # metadata and provenance information accordingly
     output_products = set()
     for product in products:
@@ -139,9 +134,8 @@ def ttest(
             continue
         cube = concatenate(product.cubes)
 
-        # Calculate ttest
-        cube = _calculate_ttest(cube, reference, coordinate, equal_var,
-                                **kwargs)
+        # Calculate t-test
+        cube = _calculate_t_test(cube, reference, coordinate, **kwargs)
 
         # Adapt metadata and provenance information
         product.attributes["units"] = str(cube.units)
@@ -162,7 +156,6 @@ def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
     bias_type: BiasType = "absolute",
-    ttest: bool = False,
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
 ) -> set[PreprocessorFile] | CubeList:
@@ -254,7 +247,7 @@ def bias(
 
     # If input is an Iterable of Cube objects, calculate bias for each element
     if all_cubes_given:
-        cubes = [_calculate_bias(c, reference, bias_type, ttest) for c in products]
+        cubes = [_calculate_bias(c, reference, bias_type) for c in products]
         return CubeList(cubes)
 
     # Otherwise, iterate over all input products, calculate bias and adapt
@@ -266,7 +259,7 @@ def bias(
         cube = concatenate(product.cubes)
 
         # Calculate bias
-        cube = _calculate_bias(cube, reference, bias_type, ttest)
+        cube = _calculate_bias(cube, reference, bias_type)
 
         # Adapt metadata and provenance information
         product.attributes["units"] = str(cube.units)
@@ -312,13 +305,19 @@ def _get_ref(
     return (reference, ref_product)
 
 
-def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: bool) -> Cube:
+def _calculate_bias(
+    cube: Cube,
+    reference: Cube,
+    bias_type: BiasType,
+) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
     # save ancillary variables as they get removed in the bias calculation
-    anc_var = cube.ancillary_variables()
-    anc_var_dims = [ cube.ancillary_variable_dims(anc) for anc in anc_var ]
+    ancillary_variables_and_dims = [
+        (a, cube.ancillary_variable_dims(a))
+        for a in cube.ancillary_variables()
+    ]
 
     if bias_type == "absolute":
         cube = cube - reference
@@ -337,30 +336,37 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType, ttest: boo
     cube.units = new_units
 
     # reattach ancillary variables
-    for anc, dims in zip(anc_var, anc_var_dims):
-        cube.add_ancillary_variable(anc, dims)
+    for ancillary_variable, dims in ancillary_variables_and_dims:
+        cube.add_ancillary_variable(ancillary_variable, dims)
 
     return cube
 
 
-def _calculate_ttest(cube: Cube, reference: Cube, coordinate, equal_var, **kwargs) -> Cube:
+def _calculate_t_test(
+    cube: Cube,
+    reference: Cube,
+    coordinate: str | AuxCoord | DimCoord,
+    **kwargs: Any,
+) -> Cube:
     """Calculate the Welch's t-test and attach the p-value."""
     cube_metadata = cube.metadata
 
     axis = cube.coord_dims(coordinate)[0]
-    remaining_axes = sorted(set(range(cube.ndim)) - set([axis]))
+    remaining_axes = sorted(set(range(cube.ndim)) - {axis})
 
-    ttest = dask.array.stats.ttest_ind(cube,
-                                       reference,
-                                       axis=axis,
-                                       equal_var=equal_var)
+    t_test = dask.array.stats.ttest_ind(
+        cube,
+        reference,
+        axis=axis,
+        **kwargs,
+    )
     shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
 
-    p_value = da.from_delayed(ttest.pvalue, shape, dtype=float)
+    p_value = da.from_delayed(t_test.pvalue, shape, dtype=float)
 
     cube.add_ancillary_variable(
         AncillaryVariable(p_value, long_name="p_value"),
-        remaining_axes
+        remaining_axes,
     )
 
     cube.metadata = cube_metadata
@@ -386,7 +392,7 @@ def distance_metric(
     keep_reference_dataset: bool = True,
     **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
-    """Calculate distance metrics.
+    r"""Calculate distance metrics.
 
     All input datasets need to have identical dimensional coordinates. This can
     for example be ensured with the preprocessors
