@@ -221,9 +221,9 @@ __all__ = [  # noqa: RUF022
     # Multi model statistics
     "multi_model_statistics",
     # Comparison with reference datasets
+    "t_test",
     "bias",
     "distance_metric",
-    "t_test",
     # Remove supplementary variables from cube
     "remove_supplementary_variables",
     # Save to file
@@ -261,11 +261,11 @@ FINAL_STEPS: tuple[str, ...] = DEFAULT_ORDER[
 MULTI_MODEL_FUNCTIONS: set[str] = {
     "bias",
     "distance_metric",
-    "t_test",
     "ensemble_statistics",
     "multi_model_statistics",
     "mask_multimodel",
     "mask_fillvalues",
+    "t_test",
 }
 
 
