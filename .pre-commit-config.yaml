@@ -31,14 +31,20 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v2.1.0"
+  - repo: local
     hooks:
-      - id: mypy
-        additional_dependencies:
-          - "types-PyYAML"
-          - "types-requests"
-          - "numpy"
+      - id: type-check
+        name: type-check
+        entry: "pixi run --locked type-check"
+        # This uses local pixi installation
+        language: system
+        types:
+          - python
+        pass_filenames: false
+        # use require_serial so that script is only called once per commit
+        require_serial: true
+        verbose: false
+        always_run: false
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:
