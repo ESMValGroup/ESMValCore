@@ -8,13 +8,15 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import dask
 import dask.array as da
+import dask.array.stats
 import iris.analysis
 import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
-from iris.coords import CellMethod
+from iris.coords import AncillaryVariable, CellMethod
 from iris.cube import Cube, CubeList
-from scipy.stats import wasserstein_distance
+from iris.exceptions import CoordinateMultiDimError
+from scipy.stats import ttest_ind, wasserstein_distance
 
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
@@ -33,7 +35,7 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from iris.coords import Coord
+    from iris.coords import AuxCoord, Coord, DimCoord
 
     from esmvalcore.preprocessor import PreprocessorFile
 
@@ -200,6 +202,16 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
+    # Save ancillary variables and cell measures as they get removed in the
+    # bias calculation
+    ancillary_variables_and_dims = [
+        (a, cube.ancillary_variable_dims(a))
+        for a in cube.ancillary_variables()
+    ]
+    cell_measures_and_dims = [
+        (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()
+    ]
+
     if bias_type == "absolute":
         cube = cube - reference
         new_units = cube.units
@@ -215,6 +227,12 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
 
     cube.metadata = cube_metadata
     cube.units = new_units
+
+    # Reattach ancillary variables and cell measures
+    for ancillary_variable, dims in ancillary_variables_and_dims:
+        cube.add_ancillary_variable(ancillary_variable, dims)
+    for cell_measure, dims in cell_measures_and_dims:
+        cube.add_cell_measure(cell_measure, dims)
 
     return cube
 
@@ -597,3 +615,172 @@ def _get_emd(
     if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
         return np.ma.masked  # this is safe because PMFs will be masked arrays
     return wasserstein_distance(bin_centers, bin_centers, arr, ref_arr)
+
+
+def t_test(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    reference: Cube | None = None,
+    coordinate: str | AuxCoord | DimCoord = "time",
+    **kwargs: Any,
+) -> set[PreprocessorFile] | CubeList:
+    """Perform t-test between dataset and reference dataset.
+
+    This is a test for the null hypothesis that 2 independent samples (dataset
+    and reference dataset) have identical average (expected) values.
+
+    All input datasets need to have the same shape. To ensure this, the
+    preprocessors :func:`esmvalcore.preprocessor.regrid`  might be helpful.
+
+    Notes
+    -----
+    The reference dataset can be specified with the ``reference`` argument. If
+    ``reference`` is ``None``, exactly one input dataset in the ``products``
+    set needs to have the facet ``reference_for_t_test: true`` defined in the
+    recipe. Please do **not** specify the option ``reference`` when using this
+    preprocessor function in a recipe.
+
+    Parameters
+    ----------
+    products:
+        Input datasets/cubes for which the t-test is performed relative to a
+        reference dataset/cube.
+    reference:
+        Cube which is used as reference for the t-test calculation. If
+        ``None``, `products` needs to be a :obj:`set` of
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and exactly
+        one dataset in ``products`` needs the facet ``reference_for_t_test:
+        true``. Do not specify this argument in a recipe.
+    coordinate:
+        Coordinate axis of the input along which to compute the statistic.
+    **kwargs:
+        Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`
+        (not all input data are lazy) or :func:`dask.array.stats.ttest_ind`
+        (all input data are lazy).
+
+    Returns
+    -------
+    :
+        Output datasets/cubes. Will be a :obj:`set` of
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
+        ``products`` is also one, a :class:`~iris.cube.CubeList` otherwise. The
+        cubes contain an attached ancillary variable which is the p-value
+        w.r.t. the chosen t-test.
+
+    Raises
+    ------
+    ValueError
+        Not exactly one input datasets contains the facet
+        ``reference_for_t_test: true`` if ``reference=None``;
+        ``reference=None`` and the input products are given as iterable of
+        :class:`~iris.cube.Cube` objects.
+    CoordinateMultiDimError
+        ``coordinate`` is not 1D.
+
+    """
+    ref_product = None
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
+
+    # Get reference cube if not explicitly given
+    if reference is None:
+        if all_cubes_given:
+            msg = (
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `reference`"
+            )
+            raise ValueError(msg)
+        (reference, ref_product) = _get_ref(products, "reference_for_t_test")
+    else:
+        ref_product = None
+
+    # If input is an Iterable of Cube objects, calculate t-test for each element
+    if all_cubes_given:
+        cubes = [
+            _calculate_t_test(c, reference, coordinate, **kwargs)
+            for c in products
+        ]
+        return CubeList(cubes)
+
+    # Otherwise, iterate over all input products, calculate t-test and adapt
+    # metadata and provenance information accordingly
+    output_products = set()
+    for product in products:
+        if product == ref_product:
+            continue
+        cube = concatenate(product.cubes)
+
+        # Calculate t-test
+        cube = _calculate_t_test(cube, reference, coordinate, **kwargs)
+
+        # Adapt metadata and provenance information
+        if ref_product is not None:
+            product.wasderivedfrom(ref_product)
+
+        product.cubes = CubeList([cube])
+        output_products.add(product)
+
+    # Add reference dataset to output
+    if ref_product is not None:
+        output_products.add(ref_product)
+
+    return output_products
+
+
+def _calculate_t_test(
+    cube: Cube,
+    reference: Cube,
+    coordinate: str | AuxCoord | DimCoord,
+    **kwargs: Any,
+) -> Cube:
+    """Calculate the t-test and attach the p-value as ancillary variable to cube."""
+    cube = cube.copy()  # do not modify input cube
+
+    if cube.coord(coordinate).ndim > 1:
+        raise CoordinateMultiDimError(cube.coord(coordinate))
+    axis = cube.coord_dims(coordinate)[0]
+    remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
+    target_shape = tuple(cube.shape[a] for a in remaining_axes)
+
+    if cube.has_lazy_data() and reference.has_lazy_data():
+        t_test = dask.array.stats.ttest_ind(
+            da.ma.filled(cube.core_data(), np.nan),
+            da.ma.filled(reference.core_data(), np.nan),
+            axis=axis,
+            **kwargs,
+        )
+        # For some reason, t_test.pvalue is not a da.array, but a dask.Delayed
+        p_value_arr = da.from_delayed(t_test.pvalue, target_shape, cube.dtype)
+        p_value_arr = da.ma.masked_invalid(p_value_arr)
+    else:
+        # Avoid realizing cube.data
+        cube_data = np.ma.filled(
+            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data,
+            np.nan,
+        )
+        ref_data = np.ma.filled(
+            reference.lazy_data().compute()
+            if reference.has_lazy_data()
+            else reference.data,
+            np.nan,
+        )
+        t_test = ttest_ind(cube_data, ref_data, axis=axis, **kwargs)
+        p_value_arr = np.ma.masked_invalid(t_test.pvalue)
+
+    # Ensure that float dtype from parents is inherited
+    if (
+        np.issubdtype(cube.dtype, np.floating)
+        and np.issubdtype(reference.dtype, np.floating)
+        and cube.dtype == reference.dtype
+    ):
+        p_value_arr = p_value_arr.astype(cube.dtype)
+
+    cube.add_ancillary_variable(
+        AncillaryVariable(
+            p_value_arr,
+            long_name="p-value",
+            var_name="pvalue",
+            units="1",
+        ),
+        remaining_axes,
+    )
+
+    return cube
