@@ -44,114 +44,6 @@ logger = logging.getLogger(__name__)
 BiasType = Literal["absolute", "relative"]
 
 
-def t_test(
-    products: set[PreprocessorFile] | Iterable[Cube],
-    reference: Cube | None = None,
-    coordinate: str | None = "time",
-    **kwargs: Any,
-) -> set[PreprocessorFile] | CubeList:
-    """Calculate the t-test between dataset and reference dataset.
-
-    The reference dataset needs to be broadcastable to all input `products`.
-    This supports `iris' rich broadcasting abilities
-    <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
-    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
-    :func:`esmvalcore.preprocessor.regrid` and/or
-    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
-
-    Notes
-    -----
-    The reference dataset can be specified with the `reference` argument. If
-    `reference` is ``None``, exactly one input dataset in the `products` set
-    needs to have the facet ``reference_for_bias: true`` defined in the recipe.
-    Please do **not** specify the option `reference` when using this
-    preprocessor function in a recipe.
-
-    Parameters
-    ----------
-    products:
-        Input datasets/cubes for which the significance is calculated relative
-        to a reference dataset/cube.
-    reference:
-        Cube which is used as reference for the t-test calculation. If ``None``,
-        `products` needs to be a :obj:`set` of
-        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
-        dataset in `products` needs the facet ``reference_for_bias: true``. Do
-        not specify this argument in a recipe.
-    coordinate:
-        Coordinate axis of the input along which to compute the statistic.
-        Default is 'time'.
-    **kwargs:
-        Additional keyword arguments passed to :func:`dask.array.ttest_ind`.
-
-    Returns
-    -------
-    set[PreprocessorFile] | CubeList
-        Output datasets/cubes. Will be a :obj:`set` of
-        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if `products`
-        is also one, a :class:`~iris.cube.CubeList` otherwise.  The cubes
-        contain an attached ancillary variable which is the p-value w.r.t. the
-        chosen t-test related to the bias (in terms of absolute) of cube and
-        reference.
-
-    Raises
-    ------
-    ValueError
-        Not exactly one input datasets contains the facet ``reference_for_bias:
-        true`` if ``reference=None``; ``reference=None`` and the input products
-        are given as iterable of :class:`~iris.cube.Cube` objects;
-        ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
-
-    """
-    ref_product = None
-    all_cubes_given = all(isinstance(p, Cube) for p in products)
-
-    # Get reference cube if not explicitly given
-    if reference is None:
-        if all_cubes_given:
-            msg = (
-                "A list of Cubes is given to this preprocessor; please "
-                "specify a `reference`"
-            )
-            raise ValueError(msg)
-        (reference, ref_product) = _get_ref(products, "reference_for_bias")
-    else:
-        ref_product = None
-
-    # If input is an Iterable of Cube objects, calculate t-test for each element
-    if all_cubes_given:
-        cubes = [
-            _calculate_t_test(c, reference, coordinate, **kwargs)
-            for c in products
-        ]
-        return CubeList(cubes)
-
-    # Otherwise, iterate over all input products, calculate t-test and adapt
-    # metadata and provenance information accordingly
-    output_products = set()
-    for product in products:
-        if product == ref_product:
-            continue
-        cube = concatenate(product.cubes)
-
-        # Calculate t-test
-        cube = _calculate_t_test(cube, reference, coordinate, **kwargs)
-
-        # Adapt metadata and provenance information
-        product.attributes["units"] = str(cube.units)
-        if ref_product is not None:
-            product.wasderivedfrom(ref_product)
-
-        product.cubes = CubeList([cube])
-        output_products.add(product)
-
-    # Add reference dataset to output (always)
-    if ref_product is not None:
-        output_products.add(ref_product)
-
-    return output_products
-
-
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
@@ -338,38 +230,6 @@ def _calculate_bias(
     # reattach ancillary variables
     for ancillary_variable, dims in ancillary_variables_and_dims:
         cube.add_ancillary_variable(ancillary_variable, dims)
-
-    return cube
-
-
-def _calculate_t_test(
-    cube: Cube,
-    reference: Cube,
-    coordinate: str | AuxCoord | DimCoord,
-    **kwargs: Any,
-) -> Cube:
-    """Calculate the Welch's t-test and attach the p-value."""
-    cube_metadata = cube.metadata
-
-    axis = cube.coord_dims(coordinate)[0]
-    remaining_axes = sorted(set(range(cube.ndim)) - {axis})
-
-    t_test = dask.array.stats.ttest_ind(
-        cube,
-        reference,
-        axis=axis,
-        **kwargs,
-    )
-    shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
-
-    p_value = da.from_delayed(t_test.pvalue, shape, dtype=float)
-
-    cube.add_ancillary_variable(
-        AncillaryVariable(p_value, long_name="p_value"),
-        remaining_axes,
-    )
-
-    cube.metadata = cube_metadata
 
     return cube
 
@@ -752,3 +612,143 @@ def _get_emd(
     if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
         return np.ma.masked  # this is safe because PMFs will be masked arrays
     return wasserstein_distance(bin_centers, bin_centers, arr, ref_arr)
+
+
+def t_test(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    reference: Cube | None = None,
+    coordinate: str | None = "time",
+    **kwargs: Any,
+) -> set[PreprocessorFile] | CubeList:
+    """Calculate the t-test between dataset and reference dataset.
+
+    The reference dataset needs to be broadcastable to all input `products`.
+    This supports `iris' rich broadcasting abilities
+    <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
+    :func:`esmvalcore.preprocessor.regrid` and/or
+    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+
+    Notes
+    -----
+    The reference dataset can be specified with the `reference` argument. If
+    `reference` is ``None``, exactly one input dataset in the `products` set
+    needs to have the facet ``reference_for_bias: true`` defined in the recipe.
+    Please do **not** specify the option `reference` when using this
+    preprocessor function in a recipe.
+
+    Parameters
+    ----------
+    products:
+        Input datasets/cubes for which the significance is calculated relative
+        to a reference dataset/cube.
+    reference:
+        Cube which is used as reference for the t-test calculation. If ``None``,
+        `products` needs to be a :obj:`set` of
+        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
+        dataset in `products` needs the facet ``reference_for_bias: true``. Do
+        not specify this argument in a recipe.
+    coordinate:
+        Coordinate axis of the input along which to compute the statistic.
+        Default is 'time'.
+    **kwargs:
+        Additional keyword arguments passed to :func:`dask.array.ttest_ind`.
+
+    Returns
+    -------
+    set[PreprocessorFile] | CubeList
+        Output datasets/cubes. Will be a :obj:`set` of
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if `products`
+        is also one, a :class:`~iris.cube.CubeList` otherwise.  The cubes
+        contain an attached ancillary variable which is the p-value w.r.t. the
+        chosen t-test related to the bias (in terms of absolute) of cube and
+        reference.
+
+    Raises
+    ------
+    ValueError
+        Not exactly one input datasets contains the facet ``reference_for_bias:
+        true`` if ``reference=None``; ``reference=None`` and the input products
+        are given as iterable of :class:`~iris.cube.Cube` objects;
+        ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
+
+    """
+    ref_product = None
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
+
+    # Get reference cube if not explicitly given
+    if reference is None:
+        if all_cubes_given:
+            msg = (
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `reference`"
+            )
+            raise ValueError(msg)
+        (reference, ref_product) = _get_ref(products, "reference_for_bias")
+    else:
+        ref_product = None
+
+    # If input is an Iterable of Cube objects, calculate t-test for each element
+    if all_cubes_given:
+        cubes = [
+            _calculate_t_test(c, reference, coordinate, **kwargs)
+            for c in products
+        ]
+        return CubeList(cubes)
+
+    # Otherwise, iterate over all input products, calculate t-test and adapt
+    # metadata and provenance information accordingly
+    output_products = set()
+    for product in products:
+        if product == ref_product:
+            continue
+        cube = concatenate(product.cubes)
+
+        # Calculate t-test
+        cube = _calculate_t_test(cube, reference, coordinate, **kwargs)
+
+        # Adapt metadata and provenance information
+        product.attributes["units"] = str(cube.units)
+        if ref_product is not None:
+            product.wasderivedfrom(ref_product)
+
+        product.cubes = CubeList([cube])
+        output_products.add(product)
+
+    # Add reference dataset to output (always)
+    if ref_product is not None:
+        output_products.add(ref_product)
+
+    return output_products
+
+
+def _calculate_t_test(
+    cube: Cube,
+    reference: Cube,
+    coordinate: str | AuxCoord | DimCoord,
+    **kwargs: Any,
+) -> Cube:
+    """Calculate the Welch's t-test and attach the p-value."""
+    cube_metadata = cube.metadata
+
+    axis = cube.coord_dims(coordinate)[0]
+    remaining_axes = sorted(set(range(cube.ndim)) - {axis})
+
+    t_test = dask.array.stats.ttest_ind(
+        cube,
+        reference,
+        axis=axis,
+        **kwargs,
+    )
+    shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
+
+    p_value = da.from_delayed(t_test.pvalue, shape, dtype=float)
+
+    cube.add_ancillary_variable(
+        AncillaryVariable(p_value, long_name="p_value"),
+        remaining_axes,
+    )
+
+    cube.metadata = cube_metadata
+
+    return cube
