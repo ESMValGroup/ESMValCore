@@ -33,9 +33,6 @@ logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
-    "mip",
-    "short_name",
-    "branding_suffix",
     "dataset",
     "rcm_version",
     "driver",
