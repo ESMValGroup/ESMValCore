@@ -11,9 +11,9 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import CellMeasure, CellMethod
+from iris.coords import AuxCoord, CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateNotFoundError
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from esmvalcore.preprocessor._compare_with_refs import (
     bias,
@@ -957,6 +957,7 @@ def assert_correct_p_value(
     assert p_value.attributes == {}
     assert p_value.has_lazy_data() is is_lazy
     assert p_value.dtype == np.float32
+    print(p_value.data)
     if np.ma.is_masked(data):
         np.testing.assert_equal(p_value.data.mask, data.mask)
     np.testing.assert_allclose(p_value.data, data)
@@ -1152,6 +1153,16 @@ def test_t_test_cubes_masked(regular_cubes, ref_cubes, lazy):
     )
 
 
+def test_t_test_multidim_coord_fail(regular_cubes):
+    """Test t_test with multidimensional coordinate."""
+    cube = regular_cubes[0]
+    x_coord = AuxCoord([[0, 0], [0, 0]], var_name="x")
+    cube.add_aux_coord(x_coord, (0, 1))
+    msg = r"Multi-dimensional coordinate not supported: 'x'"
+    with pytest.raises(CoordinateMultiDimError, match=re.escape(msg)):
+        t_test([cube], reference=cube, coordinate=x_coord)
+
+
 def test_t_test_reference_none_cubes_fail(regular_cubes):
     """Test t_test with reference=None and cubes given."""
     msg = (
@@ -1187,6 +1198,5 @@ def test_two_references_for_t_test_fail(regular_cubes, ref_cubes):
 
 
 # ADD:
-# - masked data
-# - coordinate=None
+# - 1D case
 # - **kwargs

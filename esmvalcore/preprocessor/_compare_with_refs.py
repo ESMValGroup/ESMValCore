@@ -15,6 +15,7 @@ import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import AncillaryVariable, CellMethod
 from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateMultiDimError
 from scipy.stats import ttest_ind, wasserstein_distance
 
 from esmvalcore.iris_helpers import (
@@ -617,7 +618,7 @@ def _get_emd(
 def t_test(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
-    coordinate: str | AuxCoord | DimCoord | None = "time",
+    coordinate: str | AuxCoord | DimCoord = "time",
     **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
     """Perform t-test between dataset and reference dataset.
@@ -652,8 +653,7 @@ def t_test(
         dataset in `products` needs the facet ``reference_for_t_test: true``.
         Do not specify this argument in a recipe.
     coordinate:
-        Coordinate axis of the input along which to compute the statistic. If
-        ``None``, the input will be raveled before computing the statistic.
+        Coordinate axis of the input along which to compute the statistic.
     **kwargs:
         Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`
         (not all input data are lazy) or
@@ -675,6 +675,8 @@ def t_test(
         ``reference_for_t_test: true`` if ``reference=None``;
         ``reference=None`` and the input products are given as iterable of
         :class:`~iris.cube.Cube` objects.
+    CoordinateMultiDimError
+        ``coordinate`` is not 1D.
 
     """
     ref_product = None
@@ -728,21 +730,17 @@ def t_test(
 def _calculate_t_test(
     cube: Cube,
     reference: Cube,
-    coordinate: str | AuxCoord | DimCoord | None,
+    coordinate: str | AuxCoord | DimCoord,
     **kwargs: Any,
 ) -> Cube:
     """Calculate the t-test and attach the p-value as ancillary variable to cube."""
     cube = cube.copy()  # do not modify input cube
 
-    remaining_axes: tuple[int, ...]
-    if coordinate is None:
-        axis = None
-        remaining_axes = ()
-        shape = ()
-    else:
-        axis = cube.coord_dims(coordinate)[0]
-        remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
-        shape = tuple(cube.shape[a] for a in remaining_axes)
+    if cube.coord(coordinate).ndim > 1:
+        raise CoordinateMultiDimError(cube.coord(coordinate))
+    axis = cube.coord_dims(coordinate)[0]
+    remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
+    shape = tuple(cube.shape[a] for a in remaining_axes)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
         t_test = dask.array.stats.ttest_ind(
