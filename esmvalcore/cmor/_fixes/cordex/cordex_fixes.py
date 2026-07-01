@@ -12,6 +12,7 @@ import iris
 import iris.coords
 import iris.cube
 import iris.exceptions
+import iris.util
 import numpy as np
 import pyproj
 from cf_units import Unit
@@ -292,6 +293,18 @@ class AllVars(Fix):
             y_size,
         )
         y_coord.guess_bounds()
+
+        # If the original coordinate was not monotonic, it has been downgraded
+        # to an auxiliary coordinate, so promote it back to a dimension
+        # coordinate.
+        iris.util.promote_aux_coord_to_dim_coord(
+            cube,
+            "projection_x_coordinate",
+        )
+        iris.util.promote_aux_coord_to_dim_coord(
+            cube,
+            "projection_y_coordinate",
+        )
 
         # Define the transformation from projection coordinates to
         # geographic coordinates.
