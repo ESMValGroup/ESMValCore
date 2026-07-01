@@ -746,25 +746,36 @@ def _calculate_t_test(
 
     if cube.has_lazy_data() and reference.has_lazy_data():
         t_test = dask.array.stats.ttest_ind(
-            cube.core_data(),
-            reference.core_data(),
+            da.ma.filled(cube.core_data(), np.nan),
+            da.ma.filled(reference.core_data(), np.nan),
             axis=axis,
             **kwargs,
         )
         # For some reason, t_test.pvalue is not a da.array, but a dask.Delayed
         p_value_arr = da.from_delayed(t_test.pvalue, shape, cube.dtype)
+        p_value_arr = da.ma.masked_invalid(p_value_arr)
     else:
         # Avoid realizing cube.data
-        cube_data = (
-            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data
+        cube_data = np.ma.filled(
+            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data,
+            np.nan,
         )
-        ref_data = (
+        ref_data = np.ma.filled(
             reference.lazy_data().compute()
             if reference.has_lazy_data()
-            else reference.data
+            else reference.data,
+            np.nan,
         )
         t_test = ttest_ind(cube_data, ref_data, axis=axis, **kwargs)
-        p_value_arr = t_test.pvalue
+        p_value_arr = np.ma.masked_invalid(t_test.pvalue)
+
+    # Ensure that float dtype from parents is inherited
+    if (
+        np.issubdtype(cube.dtype, np.floating)
+        and np.issubdtype(reference.dtype, np.floating)
+        and cube.dtype == reference.dtype
+    ):
+        p_value_arr = p_value_arr.astype(cube.dtype)
 
     cube.add_ancillary_variable(
         AncillaryVariable(
