@@ -733,7 +733,6 @@ def _calculate_t_test(
 ) -> Cube:
     """Calculate the t-test and attach the p-value as ancillary variable to cube."""
     cube = cube.copy()  # do not modify input cube
-    cube_metadata = cube.metadata
 
     remaining_axes: tuple[int, ...]
     if coordinate is None:
@@ -776,6 +775,5 @@ def _calculate_t_test(
         ),
         remaining_axes,
     )
-    cube.metadata = cube_metadata
 
     return cube
