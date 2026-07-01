@@ -11,7 +11,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import AuxCoord, CellMeasure, CellMethod
+from iris.coords import AncillaryVariable, AuxCoord, CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
@@ -349,6 +349,41 @@ def test_bias_products_and_ref_cube(
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     product_a.wasderivedfrom.assert_not_called()
     assert product_a.mock_ancestors == set()
+
+
+@pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
+def test_bias_cubes_preserve_metadata(
+    regular_cubes,
+    ref_cubes,
+    bias_type,
+    data,
+    units,
+):
+    """Test calculation of bias with cubes."""
+    cube = regular_cubes[0]
+    ancillary_var = AncillaryVariable([0, 1], var_name="a")
+    cell_measure = CellMeasure([0, 1], var_name="c")
+    cube.add_ancillary_variable(ancillary_var, 0)
+    cube.add_cell_measure(cell_measure, 1)
+    ref_cube = ref_cubes[0]
+
+    out_cubes = bias(regular_cubes, ref_cube, bias_type=bias_type)
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == units
+    assert out_cube.dim_coords == cube.dim_coords
+    assert out_cube.aux_coords == cube.aux_coords
+    assert out_cube.ancillary_variables() == [ancillary_var]
+    assert out_cube.ancillary_variable_dims(ancillary_var) == (0,)
+    assert out_cube.cell_measures() == [cell_measure]
+    assert out_cube.cell_measure_dims(cell_measure) == (1,)
 
 
 def test_no_reference_for_bias(regular_cubes, ref_cubes):

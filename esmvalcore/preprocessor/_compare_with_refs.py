@@ -198,18 +198,18 @@ def _get_ref(
     return (reference, ref_product)
 
 
-def _calculate_bias(
-    cube: Cube,
-    reference: Cube,
-    bias_type: BiasType,
-) -> Cube:
+def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
-    # save ancillary variables as they get removed in the bias calculation
+    # Save ancillary variables and cell measures as they get removed in the
+    # bias calculation
     ancillary_variables_and_dims = [
         (a, cube.ancillary_variable_dims(a))
         for a in cube.ancillary_variables()
+    ]
+    cell_measures_and_dims = [
+        (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()
     ]
 
     if bias_type == "absolute":
@@ -228,9 +228,11 @@ def _calculate_bias(
     cube.metadata = cube_metadata
     cube.units = new_units
 
-    # Reattach ancillary variables
+    # Reattach ancillary variables and cell measures
     for ancillary_variable, dims in ancillary_variables_and_dims:
         cube.add_ancillary_variable(ancillary_variable, dims)
+    for cell_measure, dims in cell_measures_and_dims:
+        cube.add_cell_measure(cell_measure, dims)
 
     return cube
 
