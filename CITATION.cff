@@ -233,13 +233,18 @@ authors:
     family-names: Lewis
     given-names: Jared
     orcid: "https://orcid.org/0000-0002-8155-8924"
+  -
+    affiliation: "METU, Turkey"
+    family-names: Acar
+    given-names: Ali Osman
+    orcid: "https://orcid.org/0000-0002-9813-8387"
 
 cff-version: 1.2.0
-date-released: 2026-03-10
+date-released: 2026-06-30
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.14.0"
+version: "v2.15.0rc2"
 ...
