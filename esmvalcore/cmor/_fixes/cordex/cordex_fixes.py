@@ -71,6 +71,8 @@ class MOHCHadREM3GA705(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
+            if self.vardef.standard_name:
+                cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
             cube.coord("latitude").var_name = "lat"
             cube.coord("longitude").var_name = "lon"
