@@ -105,36 +105,20 @@ TEST_BIAS = [
 ]
 
 
-@pytest.mark.parametrize("use_reference_product", [True, False])
 @pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
-def test_bias_products(
-    regular_cubes,
-    ref_cubes,
-    bias_type,
-    data,
-    units,
-    use_reference_product,
-):
+def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     """Test calculation of bias with products."""
+    ref_product = PreprocessorFile(
+        ref_cubes,
+        "REF",
+        {"reference_for_bias": True},
+    )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
         PreprocessorFile(regular_cubes, "B", {"dataset": "b"}),
+        ref_product,
     }
-
-    if use_reference_product:
-        ref_product = PreprocessorFile(
-            ref_cubes,
-            "REF",
-            {"reference_for_bias": True},
-        )
-        products.add(ref_product)
-        expected_ancestors = {ref_product}
-        reference = None
-    else:
-        expected_ancestors = set()
-        reference = ref_cubes[0]
-
-    out_products = bias(products, reference=reference, bias_type=bias_type)
+    out_products = bias(products, bias_type=bias_type)
 
     assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
@@ -152,8 +136,8 @@ def test_bias_products(
     assert out_cube.units == units
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
-    assert product_a.mock_ancestors == expected_ancestors
+    product_a.wasderivedfrom.assert_called_once()
+    assert product_a.mock_ancestors == {ref_product}
 
     product_b = out_dict["B"]
     assert product_b.filename == "B"
@@ -167,8 +151,8 @@ def test_bias_products(
     assert out_cube.units == units
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
-    assert product_b.mock_ancestors == expected_ancestors
+    product_b.wasderivedfrom.assert_called_once()
+    assert product_b.mock_ancestors == {ref_product}
 
 
 @pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
