@@ -957,7 +957,6 @@ def assert_correct_p_value(
     assert p_value.attributes == {}
     assert p_value.has_lazy_data() is is_lazy
     assert p_value.dtype == np.float32
-    print(p_value.data)
     if np.ma.is_masked(data):
         np.testing.assert_equal(p_value.data.mask, data.mask)
     np.testing.assert_allclose(p_value.data, data)
@@ -1079,6 +1078,40 @@ def test_t_test_cubes(regular_cubes, ref_cubes, lazy):
     )
 
 
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy):
+    """Test calculation of t_test with 1D cubes."""
+    cube = regular_cubes[0][0, :, 0]
+    ref_cube = ref_cubes[0][0, :, 0]
+    if lazy:
+        cube.data = cube.lazy_data()
+        ref_cube.data = ref_cube.lazy_data()
+
+    out_cubes = t_test(
+        [cube],
+        ref_cube,
+        coordinate="latitude",
+        equal_var=False,
+    )
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == cube.dim_coords
+    assert out_cube.aux_coords == cube.aux_coords
+    assert_correct_p_value(out_cube, [0.4999999701976776], is_lazy=lazy)
+
+
 @pytest.mark.parametrize("ref_lazy", [True, False])
 def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
     """Test calculation of t_test with cubes."""
@@ -1195,8 +1228,3 @@ def test_two_references_for_t_test_fail(regular_cubes, ref_cubes):
     msg = r"Expected exactly 1 dataset with 'reference_for_t_test: true', found 2"
     with pytest.raises(ValueError, match=re.escape(msg)):
         t_test(products)
-
-
-# ADD:
-# - 1D case
-# - **kwargs
