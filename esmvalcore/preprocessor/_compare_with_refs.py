@@ -14,7 +14,7 @@ import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import AncillaryVariable, CellMethod
 from iris.cube import Cube, CubeList
-from scipy.stats import wasserstein_distance, ttest_ind
+from scipy.stats import ttest_ind, wasserstein_distance
 
 from esmvalcore.iris_helpers import (
     ignore_iris_vague_metadata_warnings,
@@ -167,7 +167,7 @@ def bias(
     return output_products
 
 
-def     _get_ref(
+def _get_ref(
     products: Iterable[PreprocessorFile],
     ref_tag: str,
 ) -> tuple[Cube, PreprocessorFile]:
@@ -226,7 +226,7 @@ def _calculate_bias(
     cube.metadata = cube_metadata
     cube.units = new_units
 
-    # reattach ancillary variables
+    # Reattach ancillary variables
     for ancillary_variable, dims in ancillary_variables_and_dims:
         cube.add_ancillary_variable(ancillary_variable, dims)
 
@@ -673,7 +673,7 @@ def t_test(
         Not exactly one input datasets contains the facet
         ``reference_for_t_test: true`` if ``reference=None``;
         ``reference=None`` and the input products are given as iterable of
-        :class:`~iris.cube.Cube` objectss.
+        :class:`~iris.cube.Cube` objects.
 
     """
     ref_product = None
@@ -717,7 +717,7 @@ def t_test(
         product.cubes = CubeList([cube])
         output_products.add(product)
 
-    # Add reference dataset to output (always)
+    # Add reference dataset to output
     if ref_product is not None:
         output_products.add(ref_product)
 
@@ -731,20 +731,21 @@ def _calculate_t_test(
     **kwargs: Any,
 ) -> Cube:
     """Calculate the t-test and attach the p-value as ancillary variable to cube."""
+    cube = cube.copy()  # do not modify input cube
     cube_metadata = cube.metadata
 
+    remaining_axes: tuple[int, ...]
     if coordinate is None:
         axis = None
-        remaining_axes = list(range(cube.ndim))
+        remaining_axes = ()
     else:
         axis = cube.coord_dims(coordinate)[0]
-        remaining_axes = sorted(set(range(cube.ndim)) - {axis})
+        remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
 
     if cube.has_lazy_data() and reference.has_lazy_data():
         ttest_func = da.stats.ttest_ind
     else:
         ttest_func = ttest_ind
-
     t_test = ttest_func(
         cube.core_data(),
         reference.core_data(),
@@ -752,17 +753,15 @@ def _calculate_t_test(
         **kwargs,
     )
 
-    print(t_test.pvalue)
-    assert 0
-    shape = tuple([list(cube.shape)[dim] for dim in remaining_axes])
-
-    p_value = da.from_delayed(t_test.pvalue, shape, dtype=float)
-
     cube.add_ancillary_variable(
-        AncillaryVariable(p_value, long_name="p_value"),
+        AncillaryVariable(
+            t_test.pvalue,
+            long_name="p-value",
+            var_name="pvalue",
+            units="1",
+        ),
         remaining_axes,
     )
-
     cube.metadata = cube_metadata
 
     return cube
