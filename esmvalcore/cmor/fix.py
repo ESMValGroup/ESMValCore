@@ -99,11 +99,12 @@ def fix_file(  # noqa: PLR0913
         session=session,
         frequency=frequency,
     ):
-        result = fix.fix_file(
-            result,
-            output_dir,
-            add_unique_suffix=add_unique_suffix,
-        )
+        if isinstance(result, Path):
+            result = fix.fix_file(
+                result,
+                output_dir,
+                add_unique_suffix=add_unique_suffix,
+            )
 
     if isinstance(file, LocalFile):
         # This happens when this function is called from

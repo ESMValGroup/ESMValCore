@@ -156,6 +156,12 @@ def get_var_info(
 ) -> VariableInfo | None:
     """Get variable information.
 
+    .. deprecated:: 2.15.0
+        The ``get_var_info`` function is deprecated and will be removed in
+        ESMValCore v2.17.0. Please use :func:`~esmvalcore.cmor.table.get_tables`
+        to retrieve the tables for a project and :meth:`InfoBase.get_variable`
+        to retrieve a variable from a table.
+
     Note
     ----
     If `project=CORDEX` and the `mip` ends with 'hr', it is cropped to 'h'
@@ -211,7 +217,7 @@ def read_cmor_tables(cfg_developer: Path | None = None) -> None:
 
         The config-developer.yml file based configuration is deprecated and
         will no longer be supported in ESMValCore v2.16.0. Please use
-        :func:`~esmvalcore.cmor.table.load_cmor_tables` instead of this function.
+        :func:`~esmvalcore.cmor.table.get_tables` instead of this function.
 
     Parameters
     ----------
