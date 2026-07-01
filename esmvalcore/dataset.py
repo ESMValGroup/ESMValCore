@@ -12,8 +12,11 @@ from copy import deepcopy
 from fnmatch import fnmatchcase
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
+from iris.cube import CubeList
+
+import esmvalcore.preprocessor._derive
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
@@ -983,3 +986,112 @@ class Dataset:
             # Update the timerange
             check.valid_time_selection(timerange)
             self.set_facet("timerange", timerange)
+
+
+class DerivedDataset:
+    """A dataset representing a variable that can be derived from other variables.
+
+    Parameters
+    ----------
+    **facets
+        Facets describing the dataset. See :ref:`facets` for the mapping between
+        the facet names used by ESMValCore and those used on ESGF and
+        :ref:`cmor_tables` to find out which variables are available.
+
+    Attributes
+    ----------
+    facets:
+        The facets describing the variable to be derived. This should at least
+        include the ``'short_name'``, ``'mip'``, and ``'project'`` facets, but
+        may include other facets as well.
+
+    """
+
+    def __init__(self, **facets: FacetValue) -> None:
+        self.facets: Facets = facets
+        self._session: Session | None = None
+
+    def __repr__(self) -> str:
+        """Create a string representation."""
+        return (
+            f"{self.__class__.__name__}("
+            + ", ".join(f"{k}={v}" for k, v in self.facets.items())
+            + ")"
+        )
+
+    @property
+    def session(self) -> Session:
+        """A :obj:`esmvalcore.config.Session` associated with the dataset."""
+        if self._session is None:
+            session_name = f"session-{uuid.uuid4()}"
+            self._session = CFG.start_session(session_name)
+        return self._session
+
+    @session.setter
+    def session(self, session: Session | None) -> None:
+        self._session = session
+
+    @property
+    def required(self) -> list[Facets]:
+        """The facets of the datasets required to derive the variable."""
+        return esmvalcore.preprocessor._derive.get_required(  # noqa: SLF001
+            short_name=self.facets["short_name"],  # type: ignore
+            project=self.facets["project"],  # type: ignore
+        )
+
+    def derive(self, cubes: Iterable[Cube]) -> Cube:
+        """Derive the variable from the input cubes.
+
+        Parameters
+        ----------
+        cubes
+            The cubes to derive the variable from. These should correspond to
+            the datasets described by :obj:`DerivedDataset.required`.
+        """
+        var_info = get_tables(
+            session=CFG,
+            project=self.facets["project"],  # type: ignore
+        ).get_variable(
+            table_name=self.facets["mip"],  # type: ignore
+            short_name=self.facets["short_name"],  # type: ignore
+            derived=True,
+        )
+        return esmvalcore.preprocessor.derive(
+            cubes=CubeList(cubes),
+            short_name=var_info.short_name,  # type: ignore[union-attr]
+            long_name=var_info.long_name,  # type: ignore[union-attr]
+            units=var_info.units,  # type: ignore[union-attr]
+            standard_name=var_info.standard_name,  # type: ignore[union-attr]
+        )
+
+    def from_files(self) -> Iterator[Self]:
+        """Create derived datasets based on the available files.
+
+        Yields
+        ------
+        :
+            Derived datasets representing the available files.
+        """
+        template = Dataset(**self.facets)
+        template.session = self.session
+        for dataset in template.copy(**self.required[0]).from_files():
+            for facets in self.required[1:]:
+                if not dataset.copy(**facets).files:
+                    break
+            else:
+                facets = self.facets | {
+                    k: v
+                    for k, v in dataset.facets.items()
+                    if k in self.facets
+                    and _isglob(self.facets[k])
+                    and not _isglob(v)
+                }
+                yield self.__class__(**facets)
+
+    def load(self) -> Cube:
+        """Load the derived variable as a cube."""
+        template = Dataset(**self.facets)
+        template.session = self.session
+        datasets = (template.copy(**facets) for facets in self.required)
+        cubes = (d.load() for d in datasets)
+        return self.derive(cubes)
