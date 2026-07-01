@@ -233,6 +233,11 @@ authors:
     family-names: Lewis
     given-names: Jared
     orcid: "https://orcid.org/0000-0002-8155-8924"
+  -
+    affiliation: "METU, Turkey"
+    family-names: Acar
+    given-names: Ali Osman
+    orcid: "https://orcid.org/0000-0002-9813-8387"
 
 cff-version: 1.2.0
 date-released: 2026-06-30
