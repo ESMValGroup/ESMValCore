@@ -1,17 +1,22 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._compare_with_refs`."""
 
 import contextlib
+import re
 
 import dask.array as da
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import CellMeasure, CellMethod
+from iris.coords import AncillaryVariable, CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
+from esmvalcore.preprocessor._compare_with_refs import (
+    bias,
+    distance_metric,
+    t_test,
+)
 from tests import PreprocessorFile
 
 
@@ -100,20 +105,36 @@ TEST_BIAS = [
 ]
 
 
+@pytest.mark.parametrize("use_reference_product", [True, False])
 @pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
-def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
+def test_bias_products(
+    regular_cubes,
+    ref_cubes,
+    bias_type,
+    data,
+    units,
+    use_reference_product,
+):
     """Test calculation of bias with products."""
-    ref_product = PreprocessorFile(
-        ref_cubes,
-        "REF",
-        {"reference_for_bias": True},
-    )
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
         PreprocessorFile(regular_cubes, "B", {"dataset": "b"}),
-        ref_product,
     }
-    out_products = bias(products, bias_type=bias_type)
+
+    if use_reference_product:
+        ref_product = PreprocessorFile(
+            ref_cubes,
+            "REF",
+            {"reference_for_bias": True},
+        )
+        products.add(ref_product)
+        expected_ancestors = {ref_product}
+        reference = None
+    else:
+        expected_ancestors = set()
+        reference = ref_cubes[0]
+
+    out_products = bias(products, reference=reference, bias_type=bias_type)
 
     assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
@@ -131,8 +152,8 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert out_cube.units == units
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    product_a.wasderivedfrom.assert_called_once()
-    assert product_a.mock_ancestors == {ref_product}
+    assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_a.mock_ancestors == expected_ancestors
 
     product_b = out_dict["B"]
     assert product_b.filename == "B"
@@ -146,8 +167,8 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert out_cube.units == units
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
-    product_b.wasderivedfrom.assert_called_once()
-    assert product_b.mock_ancestors == {ref_product}
+    assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_b.mock_ancestors == expected_ancestors
 
 
 @pytest.mark.parametrize(("bias_type", "data", "units"), TEST_BIAS)
@@ -382,8 +403,8 @@ def test_invalid_bias_type(regular_cubes, ref_cubes):
         bias(products, bias_type="invalid_bias_type")
 
 
-def test_reference_none_cubes(regular_cubes):
-    """Test reference=None with with cubes."""
+def test_bias_reference_none_cubes(regular_cubes):
+    """Test bias with reference=None and cubes given."""
     msg = (
         "A list of Cubes is given to this preprocessor; please specify a "
         "`reference`"
@@ -932,3 +953,124 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
             reference=ref_cube,
             coords=["time", "latitude"],
         )
+
+
+@pytest.mark.parametrize("use_reference_product", [True, False])
+def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # noqa: PLR0915
+    """Test calculation of t_test with products."""
+    products = {
+        PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
+        PreprocessorFile(regular_cubes, "B", {"dataset": "b"}),
+    }
+
+    if use_reference_product:
+        ref_product = PreprocessorFile(
+            ref_cubes,
+            "REF",
+            {"reference_for_t_test": True},
+        )
+        products.add(ref_product)
+        expected_ancestors = {ref_product}
+        reference = None
+    else:
+        expected_ancestors = set()
+        reference = ref_cubes[0]
+
+    out_products = t_test(products, reference=reference)
+
+    expected_ancillary_variable = AncillaryVariable(
+        np.array(
+            [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+            dtype=np.float32,
+        ),
+        long_name="p-value",
+        var_name="pvalue",
+        units="1",
+    )
+
+    assert isinstance(out_products, set)
+    out_dict = products_set_to_dict(out_products)
+    assert len(out_dict) == len(products)
+
+    product_a = out_dict["A"]
+    assert product_a.filename == "A"
+    assert product_a.attributes == {"dataset": "a"}
+    assert len(product_a.cubes) == 1
+    out_cube = product_a.cubes[0]
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, regular_cubes[0].data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert out_cube.ancillary_variables() == [expected_ancillary_variable]
+    assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_a.mock_ancestors == expected_ancestors
+
+    product_b = out_dict["B"]
+    assert product_b.filename == "B"
+    assert product_b.attributes == {"dataset": "b"}
+    assert len(product_b.cubes) == 1
+    out_cube = product_b.cubes[0]
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, regular_cubes[0].data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert out_cube.ancillary_variables() == [expected_ancillary_variable]
+    assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
+    assert product_b.mock_ancestors == expected_ancestors
+
+    if use_reference_product:
+        product_ref = out_dict["REF"]
+        assert product_ref.filename == "REF"
+        assert product_ref.attributes == {"reference_for_t_test": True}
+        assert len(product_ref.cubes) == 1
+        out_cube = product_ref.cubes[0]
+        assert out_cube.dtype == np.float32
+        assert_allclose(out_cube.data, ref_cubes[0].data)
+        assert out_cube.var_name == "tas"
+        assert out_cube.standard_name == "air_temperature"
+        assert out_cube.units == "K"
+        assert out_cube.dim_coords == ref_cubes[0].dim_coords
+        assert out_cube.aux_coords == ref_cubes[0].aux_coords
+        assert out_cube.ancillary_variables() == []
+        product_ref.wasderivedfrom.assert_not_called()
+        assert product_ref.mock_ancestors == set()
+
+
+def test_t_test_reference_none_cubes(regular_cubes):
+    """Test t_test with reference=None and cubes given."""
+    msg = (
+        r"A list of Cubes is given to this preprocessor; please specify a "
+        r"`reference`"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(regular_cubes)
+
+
+def test_no_reference_for_t_test(regular_cubes, ref_cubes):
+    """Test fail when no reference_for_t_test is given."""
+    products = {
+        PreprocessorFile(regular_cubes, "A", {}),
+        PreprocessorFile(regular_cubes, "B", {}),
+        PreprocessorFile(ref_cubes, "REF", {}),
+    }
+    msg = r"Expected exactly 1 dataset with 'reference_for_t_test: true', found 0"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(products)
+
+
+def test_two_references_for_t_test(regular_cubes, ref_cubes):
+    """Test fail when two reference_for_t_test products are given."""
+    products = {
+        PreprocessorFile(regular_cubes, "A", {"reference_for_t_test": False}),
+        PreprocessorFile(ref_cubes, "REF1", {"reference_for_t_test": True}),
+        PreprocessorFile(ref_cubes, "REF2", {"reference_for_t_test": True}),
+    }
+    msg = r"Expected exactly 1 dataset with 'reference_for_t_test: true', found 2"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        t_test(products)
