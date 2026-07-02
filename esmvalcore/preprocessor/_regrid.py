@@ -12,7 +12,7 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard
 
 import cordex as cx
 import dask.array as da
@@ -29,7 +29,6 @@ from iris.analysis import (
     Linear,
     Nearest,
 )
-from iris.coord_systems import RotatedGeogCS
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
@@ -201,7 +200,7 @@ def parse_cell_spec(spec: str) -> tuple[float, float]:
     return dlon, dlat
 
 
-def is_cordex_domain(spec: str) -> bool:
+def is_cordex_domain(spec: object) -> TypeGuard[str]:
     """Return ``True`` if ``spec`` is a known CORDEX domain name.
 
     Parameters
@@ -214,6 +213,8 @@ def is_cordex_domain(spec: str) -> bool:
     bool
         Whether ``spec`` is recognised by :mod:`cordex`.
     """
+    if not isinstance(spec, str):
+        return False
     try:
         cx.domain_info(spec)
     except KeyError:
@@ -236,35 +237,18 @@ def _cordex_stock_cube(domain_name: str) -> Cube:
         Dummy cube with rotated-pole dimension coordinates and geographical
         auxiliary coordinates matching the official domain specification.
     """
-    domain = cx.cordex_domain(domain_name, bounds=True)
-    domain_info = cx.domain_info(domain_name)
+    domain = cx.cordex_domain(domain_name, bounds=True).reset_coords()
+    domain["data"] = xr.zeros_like(domain.lon)
+    domain.data.attrs = {
+        "coordinates": "lat lon",
+        "grid_mapping": "rotated_latitude_longitude",
+    }
+    domain.lat.attrs["bounds"] = "lat_vertices"
+    domain.lon.attrs["bounds"] = "lon_vertices"
 
-    data = xr.DataArray(
-        np.zeros((domain.sizes["rlat"], domain.sizes["rlon"]), dtype=np.int32),
-        dims=["rlat", "rlon"],
-        coords={
-            "rlat": domain["rlat"],
-            "rlon": domain["rlon"],
-            "lat": domain["lat"],
-            "lon": domain["lon"],
-        },
-        name="grid",
-    )
-    (cube,) = ncdata.iris_xarray.cubes_from_xarray(data.to_dataset())
-
-    coord_system = RotatedGeogCS(
-        grid_north_pole_latitude=domain_info["pollat"],
-        grid_north_pole_longitude=domain_info["pollon"],
-    )
-    for dim_coord in ("rlat", "rlon"):
-        coord = cube.coord(var_name=dim_coord)
-        coord.coord_system = coord_system
-        if not coord.has_bounds():
-            coord.guess_bounds()
-
-    for aux_coord in ("lat", "lon"):
-        coord = cube.coord(var_name=aux_coord)
-        coord.bounds = domain[f"{aux_coord}_vertices"].data
+    (cube,) = ncdata.iris_xarray.cubes_from_xarray(domain)
+    cube.coord("grid_latitude").guess_bounds()
+    cube.coord("grid_longitude").guess_bounds()
 
     return cube
 
@@ -680,6 +664,8 @@ def _get_target_grid_cube(
         target_grid_cube = target_grid.load()  # type: ignore
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
+    elif is_cordex_domain(target_grid):
+        target_grid_cube = _cordex_stock_cube(target_grid)
     elif isinstance(target_grid, str):
         if is_cordex_domain(target_grid):
             target_grid_cube = _cordex_stock_cube(target_grid)
@@ -887,6 +873,9 @@ def regrid(
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
         Alternatively, a :class:`~esmvalcore.dataset.Dataset` can be provided.
+        Alternatively, a CORDEX domain name may be provided, for example
+        ``EUR-11``. Any domain name recognized by the :mod:`cordex` package
+        can be used.
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.

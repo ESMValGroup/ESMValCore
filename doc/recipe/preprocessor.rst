@@ -819,9 +819,9 @@ CORDEX domain name as ``target_grid``. For example, to regrid to the
           scheme: linear
 
 Any domain name recognized by the ``cordex`` package can be used, for example
-``EUR-11``. This creates the target grid from the official CORDEX
-domain definition instead of interpreting the value as an ``MxN`` grid
-specification.
+``EUR-11``. A list of available domains can be found in the
+`cordex introduction <https://py-cordex.readthedocs.io/en/latest/notebooks/introduction.html>`__.
+This creates the target grid from the official CORDEX domain definition.
 
 Regridding on an ``MxN`` grid specification
 -------------------------------------------

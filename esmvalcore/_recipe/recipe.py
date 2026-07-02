@@ -181,14 +181,14 @@ def _update_target_grid(
         )[0]
         check.data_availability(representative_ds)
         settings["regrid"]["target_grid"] = representative_ds
-    else:
+    elif is_cordex_domain(grid):
+        pass
+    elif isinstance(grid, str):
         # Check that MxN grid spec is correct
-        target_grid = settings["regrid"]["target_grid"]
-        if isinstance(target_grid, str) and not is_cordex_domain(target_grid):
-            parse_cell_spec(target_grid)
+        parse_cell_spec(grid)
+    elif isinstance(grid, dict):
         # Check that cdo spec is correct
-        elif isinstance(target_grid, dict):
-            _spec_to_latlonvals(**target_grid)
+        _spec_to_latlonvals(**grid)
 
 
 def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
