@@ -42,10 +42,15 @@ class Test:
         )
 
         # Setup cube with multiple horizontal dimensions
-        self.multidim_cube = _make_cube(data, grid="rotated", aux_coord=False)
+        self.multidim_cube = _make_cube(
+            data,
+            grid="rotated",
+            dtype=np.float64,
+            aux_coord=False,
+        )
         lats, lons = np.meshgrid(
-            np.arange(1, data.shape[-2] + 1),
-            np.arange(1, data.shape[-1] + 1),
+            np.arange(1, data.shape[-2] + 1).astype(np.float64),
+            np.arange(1, data.shape[-1] + 1).astype(np.float64),
         )
         self.multidim_cube.add_aux_coord(
             iris.coords.AuxCoord(
@@ -165,6 +170,45 @@ class Test:
         expected = np.ma.masked_array([[[1.5]], [[5.5]], [[9.5]]], mask=False)
         result.data = np.round(result.data, 1)
         assert_array_equal(result.data, expected)
+
+    @pytest.mark.parametrize(
+        "use_src_coords",
+        [
+            ["latitude", "longitude"],
+            ["grid_latitude", "grid_longitude"],
+        ],
+    )
+    @pytest.mark.parametrize("close", [True, False])
+    def test_regrid__nearest_cordex_result_has_all_coords(
+        self,
+        use_src_coords: list[str],
+        close: bool,
+    ) -> None:
+        """Test that the result of regridding has both 1D and 2D lat and lon."""
+        target_grid = self.multidim_cube.copy()
+        offset = 1e-9 if close else 0.1
+        target_grid.coord("grid_longitude").points = (
+            target_grid.coord("grid_longitude").points + offset
+        )
+        target_grid.coord("grid_longitude").bounds = (
+            target_grid.coord("grid_longitude").bounds + offset
+        )
+        target_grid.coord("longitude").points = (
+            target_grid.coord("longitude").points + offset
+        )
+        result = regrid(
+            self.multidim_cube,
+            target_grid,
+            "nearest",
+            use_src_coords=use_src_coords,
+        )
+        for coord in (
+            "latitude",
+            "longitude",
+            "grid_latitude",
+            "grid_longitude",
+        ):
+            assert result.coord(coord) == target_grid.coord(coord)
 
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__linear_file(self, tmp_path, cache_weights):

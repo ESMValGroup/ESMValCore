@@ -3,20 +3,18 @@
 
 from __future__ import annotations
 
-import collections.abc
 import logging
 import os
-import warnings
-from functools import lru_cache
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
 
 from esmvalcore.cmor.table import read_cmor_tables
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+from esmvalcore.exceptions import RecipeError
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
@@ -24,64 +22,6 @@ logger = logging.getLogger(__name__)
 TASKSEP = os.sep
 
 CFG: dict[str, Any] = {}
-
-# TODO: remove in v2.15.0
-USER_EXTRA_FACETS = Path.home() / ".esmvaltool" / "extra_facets"
-
-
-# TODO: remove in v2.15.0
-def _deep_update(dictionary, update):
-    for key, value in update.items():
-        if isinstance(value, collections.abc.Mapping):
-            dictionary[key] = _deep_update(dictionary.get(key, {}), value)
-        else:
-            dictionary[key] = value
-    return dictionary
-
-
-# TODO: remove in v2.15.0
-@lru_cache
-def load_extra_facets(
-    project: str,
-    extra_facets_dir: tuple[Path],
-) -> dict[str, dict[str, Any]]:
-    """Load deprecated extra facets."""
-    warn_if_old_extra_facets_exist()
-    config: dict[str, dict[str, Any]] = {}
-    config_paths = [Path.home() / ".esmvaltool" / "extra_facets"]
-    config_paths.extend([Path(p) for p in extra_facets_dir])
-    for config_path in config_paths:
-        config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
-        for config_file_path in sorted(config_file_paths):
-            logger.debug("Loading extra facets from %s", config_file_path)
-            with config_file_path.open(encoding="utf-8") as config_file:
-                config_piece = yaml.safe_load(config_file)
-            if config_piece:
-                _deep_update(config, config_piece)
-    return config
-
-
-# TODO: remove in v2.15.0
-def warn_if_old_extra_facets_exist() -> None:
-    """Warn user if deprecated dask configuration file exists."""
-    if USER_EXTRA_FACETS.exists() and not os.environ.get(
-        "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG",
-    ):
-        deprecation_msg = (
-            "Usage of extra facets located in ~/.esmvaltool/extra_facets has "
-            "been deprecated in ESMValCore version 2.13.0 and is scheduled "
-            "for removal in version 2.15.0. Please use the configuration "
-            "option `extra_facets` instead (see "
-            "https://github.com/ESMValGroup/ESMValCore/pull/2747 for "
-            "details). To silent this warning and ignore deprecated extra "
-            "facets, set the environment variable "
-            "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG=1."
-        )
-        warnings.warn(
-            deprecation_msg,
-            ESMValCoreDeprecationWarning,
-            stacklevel=2,
-        )
 
 
 def load_config_developer(

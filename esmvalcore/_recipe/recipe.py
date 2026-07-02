@@ -1329,9 +1329,15 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
+        logger.info(
+            "Downloading missing data (this may take a while...). Details can be "
+            "found in the debug log at %s",
+            self.session.main_log_debug,
+        )
         esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
+        logger.info("Successfully downloaded missing data")
 
         self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
         logger.info(

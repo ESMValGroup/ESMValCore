@@ -778,7 +778,7 @@ class CMIP6Info(InfoBase):
                 self.tables[table_name] = table
             table = self.tables[table_name]
 
-            generic_levels = header["generic_levels"].split()
+            generic_levels = header.get("generic_levels", "").split()
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():

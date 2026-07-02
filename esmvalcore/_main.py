@@ -40,8 +40,6 @@ from typing import TYPE_CHECKING
 
 import fire
 
-from esmvalcore.config._config import warn_if_old_extra_facets_exist
-
 if TYPE_CHECKING:
     from esmvalcore.config import Session
 
@@ -670,8 +668,6 @@ class ESMValTool:
         if cli_config_dir is not None:
             CFG.update_from_dirs([cli_config_dir])
         CFG.nested_update(kwargs)
-
-        warn_if_old_extra_facets_exist()
 
     @staticmethod
     def _create_session_dir(session):
