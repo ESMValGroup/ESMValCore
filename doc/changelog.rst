@@ -32,7 +32,7 @@ Backwards incompatible changes
    .. admonition:: Upgrade instructions
 
       If you have defined extra facets, please move them to
-      the new configuration system as described in the 
+      the new configuration system as described in the
       `corresponding pull request <https://github.com/ESMValGroup/ESMValCore/pull/3137#backward-incompatible>`__.
 
 Bug fixes
