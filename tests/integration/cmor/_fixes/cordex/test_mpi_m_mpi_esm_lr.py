@@ -3,6 +3,7 @@
 import pytest
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
+from esmvalcore.cmor._fixes.cordex.mpi_m_mpi_esm_lr import cosmo_crclim_v1_1
 from esmvalcore.cmor.fix import Fix
 
 
@@ -50,3 +51,14 @@ def test_get_cclm4_8_17fix() -> None:
         extra_facets={"driver": "MPI-M-MPI-ESM-LR"},
     )
     assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)
+
+
+def test_get_cosmo_crclim_v1_1_fix() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "COSMO-crCLIM-v1-1",
+        "day",
+        "snw",
+        extra_facets={"driver": "MPI-M-MPI-ESM-LR"},
+    )
+    assert any(isinstance(fix, cosmo_crclim_v1_1.Snw) for fix in fixes)
