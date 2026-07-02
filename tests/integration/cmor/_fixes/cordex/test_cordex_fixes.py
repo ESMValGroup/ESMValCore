@@ -18,13 +18,14 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     TimeLongName,
 )
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 if TYPE_CHECKING:
     import pytest_mock
 
 
 @pytest.fixture
-def cubes():
+def cubes() -> iris.cube.CubeList:
     correct_time_coord = iris.coords.DimCoord(
         [0.0],
         var_name="time",
@@ -83,7 +84,7 @@ def cubes():
 
 
 @pytest.fixture
-def cordex_cubes():
+def cordex_cubes() -> iris.cube.CubeList:
     coord_system = iris.coord_systems.RotatedGeogCS(
         grid_north_pole_latitude=39.25,
         grid_north_pole_longitude=-162,
@@ -134,8 +135,15 @@ def cordex_cubes():
         ("longitude", "lon", "longitude"),
     ],
 )
-def test_mohchadrem3ga705_fix_metadata(cubes, coord, var_name, long_name):
-    fix = MOHCHadREM3GA705(None)
+def test_mohchadrem3ga705_fix_metadata(
+    cubes: iris.cube.CubeList,
+    coord: str,
+    var_name: str,
+    long_name: str,
+) -> None:
+    vardef = get_var_info("CORDEX", "day", "ts")
+    assert vardef is not None
+    fix = MOHCHadREM3GA705(vardef)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
@@ -148,7 +156,9 @@ def test_mohchadrem3ga705_fix_metadata_no_time_coord(
 ) -> None:
     for cube in cubes:
         cube.remove_coord("time")
-    fix = MOHCHadREM3GA705(None)  # type: ignore[arg-type]
+    vardef = get_var_info("CORDEX", "day", "ts")
+    assert vardef is not None
+    fix = MOHCHadREM3GA705(vardef)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
