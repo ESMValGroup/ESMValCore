@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import total_ordering
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -35,13 +34,18 @@ RecipeDumper.add_representer(
         "tag:yaml.org,2002:map",
         {
             k: data[k]
-            for k in [
-                "documentation",
-                "preprocessors",
-                "datasets",
-                "diagnostics",
-            ]
-            if k in data
+            for k in sorted(
+                data,
+                key=lambda x: (
+                    {
+                        "documentation": 0,
+                        "preprocessors": 2,
+                        "datasets": 3,
+                        "diagnostics": 4,
+                    }.get(x, 1),
+                    x,
+                ),
+            )
         }.items(),
         flow_style=False,
     ),
@@ -63,13 +67,18 @@ RecipeDumper.add_representer(
         "tag:yaml.org,2002:map",
         {
             k: strip(data[k]) if k == "description" else data[k]
-            for k in [
-                "title",
-                "description",
-                "authors",
-                "maintainer",
-            ]
-            if k in data
+            for k in sorted(
+                data,
+                key=lambda x: (
+                    {
+                        "title": 0,
+                        "description": 1,
+                        "authors": 2,
+                        "maintainer": 3,
+                    }.get(x, 4),
+                    x,
+                ),
+            )
         }.items(),
         flow_style=False,
     ),
@@ -84,7 +93,7 @@ RecipeDumper.add_representer(
     RecipePreprocessor,
     lambda dumper, data: dumper.represent_mapping(
         "tag:yaml.org,2002:map",
-        data.items(),
+        data.items(),  # Prevents sorting.
         flow_style=False,
     ),
 )
@@ -100,7 +109,10 @@ RecipeDumper.add_representer(
         "tag:yaml.org,2002:seq",
         sorted(
             data,
-            key=lambda x: (x.get("project", ""), x.items()),
+            key=lambda x: (
+                x.get("project", ""),
+                tuple((k, str(v)) for k, v in x.items()),
+            ),
         ),
         flow_style=False,
     ),
@@ -207,8 +219,20 @@ RecipeDumper.add_representer(
 )
 
 
-def convert_to_recipe_objects(recipe: dict) -> Recipe:
-    """Convert the recipe dictionary to Recipe objects for YAML representation."""
+def convert_to_recipe_objects(recipe: dict) -> Recipe:  # noqa: C901
+    """Convert the recipe dictionary to Recipe objects for YAML representation.
+
+    Parameters
+    ----------
+    recipe:
+        The recipe to convert.
+
+    Returns
+    -------
+    :
+        The recipe with relevant elements replaced by Recipe* classes used
+        to tell the YAML dumper how to write the recipe.
+    """
     recipe = Recipe(recipe)
     if "documentation" in recipe:
         recipe["documentation"] = RecipeDocumentation(recipe["documentation"])
