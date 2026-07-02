@@ -238,35 +238,18 @@ def _cordex_stock_cube(domain_name: str) -> Cube:
         Dummy cube with rotated-pole dimension coordinates and geographical
         auxiliary coordinates matching the official domain specification.
     """
-    domain = cx.cordex_domain(domain_name, bounds=True)
-    domain_info = cx.domain_info(domain_name)
+    domain = cx.cordex_domain(domain_name, bounds=True).reset_coords()
+    domain["data"] = xr.zeros_like(domain.lon)
+    domain.data.attrs = {
+        "coordinates": "lat lon",
+        "grid_mapping": "rotated_latitude_longitude",
+    }
+    domain.lat.attrs["bounds"] = "lat_vertices"
+    domain.lon.attrs["bounds"] = "lon_vertices"
 
-    data = xr.DataArray(
-        np.zeros((domain.sizes["rlat"], domain.sizes["rlon"]), dtype=np.int32),
-        dims=["rlat", "rlon"],
-        coords={
-            "rlat": domain["rlat"],
-            "rlon": domain["rlon"],
-            "lat": domain["lat"],
-            "lon": domain["lon"],
-        },
-        name="grid",
-    )
-    (cube,) = ncdata.iris_xarray.cubes_from_xarray(data.to_dataset())
-
-    coord_system = RotatedGeogCS(
-        grid_north_pole_latitude=domain_info["pollat"],
-        grid_north_pole_longitude=domain_info["pollon"],
-    )
-    for dim_coord in ("rlat", "rlon"):
-        coord = cube.coord(var_name=dim_coord)
-        coord.coord_system = coord_system
-        if not coord.has_bounds():
-            coord.guess_bounds()
-
-    for aux_coord in ("lat", "lon"):
-        coord = cube.coord(var_name=aux_coord)
-        coord.bounds = domain[f"{aux_coord}_vertices"].data
+    (cube,) = ncdata.iris_xarray.cubes_from_xarray(domain)
+    cube.coord("grid_latitude").guess_bounds()
+    cube.coord("grid_longitude").guess_bounds()
 
     return cube
 
