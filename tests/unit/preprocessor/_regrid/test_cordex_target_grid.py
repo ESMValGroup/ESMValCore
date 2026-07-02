@@ -6,8 +6,6 @@ import iris.coords
 import numpy as np
 import pytest
 
-from esmvalcore._recipe import recipe as recipe_module
-from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor._regrid import (
     _cordex_stock_cube,
     _get_target_grid_cube,
@@ -38,6 +36,12 @@ def clear_lru_cache():
 def test_is_cordex_domain(spec, expected):
     """Test CORDEX domain name detection."""
     assert is_cordex_domain(spec) is expected
+
+
+def test_is_cordex_domain_rejects_non_string():
+    """Test CORDEX domain detection rejects non-string input."""
+    assert is_cordex_domain(11) is False
+    assert is_cordex_domain({"domain": "EUR-11"}) is False
 
 
 def test_parse_cell_spec_rejects_cordex_domain():
@@ -97,37 +101,5 @@ def global_cube():
 def test_get_target_grid_cube_cordex_domain(global_cube):
     """Test target grid cube construction for a CORDEX domain."""
     target = _get_target_grid_cube(global_cube, "EUR-11")
-    assert target.coord(var_name="rlat") is not None
-    assert target.coord(var_name="rlon") is not None
-
-
-def test_update_target_grid_accepts_cordex_domain():
-    """Test recipe preprocessing accepts CORDEX domain target grids."""
-    dataset = Dataset(
-        dataset="RCA4",
-        project="CORDEX",
-        domain="EUR-11",
-        diagnostic="bias",
-        variable_group="ts",
-        preprocessor="ts_pp",
-    )
-    settings = {"regrid": {"target_grid": "EUR-11", "scheme": "linear"}}
-
-    recipe_module._update_target_grid(dataset, [dataset], settings)
-
-    assert settings["regrid"]["target_grid"] == "EUR-11"
-
-
-def test_update_target_grid_still_validates_mxn():
-    """Test invalid MxN target grids are still rejected."""
-    dataset = Dataset(
-        dataset="RCA4",
-        project="CORDEX",
-        diagnostic="bias",
-        variable_group="ts",
-        preprocessor="ts_pp",
-    )
-    settings = {"regrid": {"target_grid": "EUR-11x", "scheme": "linear"}}
-
-    with pytest.raises(ValueError, match="Invalid MxN cell specification"):
-        recipe_module._update_target_grid(dataset, [dataset], settings)
+    assert target.coords(var_name="rlat")
+    assert target.coords(var_name="rlon")

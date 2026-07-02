@@ -806,6 +806,38 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
         assert expected_call in mock_diag_task.mock_calls
 
 
+def test_update_target_grid_accepts_cordex_domain():
+    """Test recipe preprocessing accepts CORDEX domain target grids."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        domain="EUR-11",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {"regrid": {"target_grid": "EUR-11", "scheme": "linear"}}
+
+    _recipe._update_target_grid(dataset, [dataset], settings)
+
+    assert settings["regrid"]["target_grid"] == "EUR-11"
+
+
+def test_update_target_grid_still_validates_mxn():
+    """Test invalid MxN target grids are still rejected."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {"regrid": {"target_grid": "EUR-11x", "scheme": "linear"}}
+
+    with pytest.raises(ValueError, match="Invalid MxN cell specification"):
+        _recipe._update_target_grid(dataset, [dataset], settings)
+
+
 def test_update_regrid_time():
     """Test `_update_regrid_time."""
     dataset = Dataset(frequency="mon")
