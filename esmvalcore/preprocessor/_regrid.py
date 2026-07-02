@@ -29,7 +29,6 @@ from iris.analysis import (
     Linear,
     Nearest,
 )
-from iris.coord_systems import RotatedGeogCS
 from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
@@ -872,6 +871,9 @@ def regrid(
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
         Alternatively, a :class:`~esmvalcore.dataset.Dataset` can be provided.
+        Alternatively, a CORDEX domain name may be provided, for example
+        ``EUR-11``. Any domain name recognized by the :mod:`cordex` package
+        can be used.
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
