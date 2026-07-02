@@ -12,7 +12,7 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard
 
 import cordex as cx
 import dask.array as da
@@ -200,7 +200,7 @@ def parse_cell_spec(spec: str) -> tuple[float, float]:
     return dlon, dlat
 
 
-def is_cordex_domain(spec: str) -> bool:
+def is_cordex_domain(spec: object) -> TypeGuard[str]:
     """Return ``True`` if ``spec`` is a known CORDEX domain name.
 
     Parameters
@@ -664,23 +664,22 @@ def _get_target_grid_cube(
         target_grid_cube = target_grid.load()  # type: ignore
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
+    elif is_cordex_domain(target_grid):
+        target_grid_cube = _cordex_stock_cube(target_grid)
     elif isinstance(target_grid, str):
-        if is_cordex_domain(target_grid):
-            target_grid_cube = _cordex_stock_cube(target_grid)
-        else:
-            # Generate a target grid from the provided cell-specification
-            target_grid_cube = _global_stock_cube(
-                target_grid,
-                lat_offset,
-                lon_offset,
-            )
-            # Align the target grid coordinate system to the source
-            # coordinate system.
-            src_cs = cube.coord_system()
-            xcoord = target_grid_cube.coord(axis="x", dim_coords=True)
-            ycoord = target_grid_cube.coord(axis="y", dim_coords=True)
-            xcoord.coord_system = src_cs
-            ycoord.coord_system = src_cs
+        # Generate a target grid from the provided cell-specification
+        target_grid_cube = _global_stock_cube(
+            target_grid,
+            lat_offset,
+            lon_offset,
+        )
+        # Align the target grid coordinate system to the source
+        # coordinate system.
+        src_cs = cube.coord_system()
+        xcoord = target_grid_cube.coord(axis="x", dim_coords=True)
+        ycoord = target_grid_cube.coord(axis="y", dim_coords=True)
+        xcoord.coord_system = src_cs
+        ycoord.coord_system = src_cs
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid_cube = _regional_stock_cube(target_grid)
