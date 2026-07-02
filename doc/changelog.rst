@@ -27,6 +27,13 @@ Backwards incompatible changes
       :ref:`extra facets <config-extra-facets>` for the CORDEX project to make
       it permanent). Refer to :ref:`cordex_datasets` for additional information.
 
+-  Remove configuration option ``extra_facets_dir`` and do not read extra facets from  ``~/.esmvaltool/extra_facets/`` (:pull:`3137`) by :user:`schlunma`
+
+   .. admonition:: Upgrade instructions
+
+      If you have defined extra facets, please move them to
+      the new configuration system as described in the
+      `corresponding pull request <https://github.com/ESMValGroup/ESMValCore/pull/3137#backward-incompatible>`__.
 
 Bug fixes
 ~~~~~~~~~
@@ -69,6 +76,7 @@ Fixes for datasets
 -  Add support for freshly downloaded ERA5 hourly data (:pull:`3087`) by :user:`schlunma`
 -  Add support for variables ``phcint`` and ``amoc`` to ICON-XPP CMORizer (:pull:`3025`) by :user:`schlunma`
 -  Add support for reading ORAS5 data (:pull:`2422`) by :user:`jmalles`
+-  Add mesh fix for CMIP6 ICON-ESM-LR conservative regridding (:pull:`3090`) by :user:`alioacar`
 
 Installation
 ~~~~~~~~~~~~
@@ -98,6 +106,7 @@ Improvements
 -  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
 -  Support automatic addition of supplementary variables for CORDEX (:pull:`3098`) by :user:`bouweandela`
 -  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
+-  Inform user about data downloads (:pull:`3130`) by :user:`schlunma`
 
 .. _changelog-v2-14-0:
 
