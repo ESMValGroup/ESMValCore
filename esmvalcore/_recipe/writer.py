@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -111,7 +112,15 @@ RecipeDumper.add_representer(
             data,
             key=lambda x: (
                 x.get("project", ""),
-                tuple((k, str(v)) for k, v in x.items()),
+                tuple(
+                    (
+                        k,
+                        [int(i) if i else 0 for i in re.split(r"\D", x[k])]
+                        if k == "ensemble" and isinstance(x[k], str)
+                        else str(x[k]),
+                    )
+                    for k in sorted(x)
+                ),
             ),
         ),
         flow_style=False,
