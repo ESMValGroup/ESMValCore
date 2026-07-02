@@ -29,10 +29,11 @@ Backwards incompatible changes
 
 -  Remove configuration option ``extra_facets_dir`` and do not read extra facets from  ``~/.esmvaltool/extra_facets/`` (:pull:`3137`) by :user:`schlunma`
 
-   .. admonition:: Extra facets information
+   .. admonition:: Upgrade instructions
 
       If you have defined extra facets, please move them to
-      the new configuration system as described in :ref:`config-extra-facets`.
+      the new configuration system as described in the 
+      `corresponding pull request <https://github.com/ESMValGroup/ESMValCore/pull/3137#backward-incompatible>`__.
 
 Bug fixes
 ~~~~~~~~~
