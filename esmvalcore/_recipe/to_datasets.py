@@ -39,9 +39,6 @@ _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "ensemble",
     "exp",
     "sub_experiment",
-    "frequency",
-    "domain",
-    "region",
     "grid",
     "version",
 )
