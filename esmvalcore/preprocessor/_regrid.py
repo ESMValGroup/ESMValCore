@@ -214,6 +214,8 @@ def is_cordex_domain(spec: str) -> bool:
     bool
         Whether ``spec`` is recognised by :mod:`cordex`.
     """
+    if not isinstance(spec, str):
+        return False
     try:
         cx.domain_info(spec)
     except KeyError:
