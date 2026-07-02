@@ -838,6 +838,32 @@ def test_update_target_grid_still_validates_mxn():
         _recipe._update_target_grid(dataset, [dataset], settings)
 
 
+def test_update_target_grid_validates_regional_dict():
+    """Test regional dict target grids are still validated."""
+    dataset = Dataset(
+        dataset="RCA4",
+        project="CORDEX",
+        diagnostic="bias",
+        variable_group="ts",
+        preprocessor="ts_pp",
+    )
+    settings = {
+        "regrid": {
+            "target_grid": {
+                "start_longitude": 0,
+                "end_longitude": 360,
+                "step_longitude": 5,
+                "start_latitude": -90,
+                "end_latitude": 90,
+                "step_latitude": 5,
+            },
+            "scheme": "linear",
+        },
+    }
+
+    _recipe._update_target_grid(dataset, [dataset], settings)
+
+
 def test_update_regrid_time():
     """Test `_update_regrid_time."""
     dataset = Dataset(frequency="mon")
