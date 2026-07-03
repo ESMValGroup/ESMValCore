@@ -24,3 +24,15 @@ class Clivi(Fix):
         cube.units = "g m-2"
         cube.convert_units("kg m-2")
         return [cube]
+
+
+class Prw(Fix):
+    """Fixes for variable prw."""
+
+    def fix_metadata(
+        self,
+        cubes: Sequence[iris.cube.Cube],
+    ) -> Sequence[iris.cube.Cube]:
+        cube = self.get_cube_from_list(iris.cube.CubeList(cubes)).copy()
+        cube.data = cube.core_data() / 200.0
+        return [cube]

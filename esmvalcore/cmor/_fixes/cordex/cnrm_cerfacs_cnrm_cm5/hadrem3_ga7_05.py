@@ -28,3 +28,16 @@ class Clivi(Fix):
         cube = self.get_cube_from_list(iris.cube.CubeList(cubes)).copy()
         cube.data = cube.core_data() * 0.1
         return [cube]
+
+
+class Sic(Fix):
+    """Fixes for variable sic."""
+
+    def fix_metadata(
+        self,
+        cubes: Sequence[iris.cube.Cube],
+    ) -> Sequence[iris.cube.Cube]:
+        cube = self.get_cube_from_list(iris.cube.CubeList(cubes)).copy()
+        cube.units = 1
+        cube.convert_units("%")
+        return [cube]
