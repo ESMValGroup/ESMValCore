@@ -113,6 +113,8 @@ class RichDistributedProgressBar(
         self.progress.update(self.task_id, completed=completed, total=all)
 
     def _draw_stop(self, **kwargs):
+        self._draw_bar(0, 1)   # force final 100%
+        super()._draw_stop(**kwargs)
         if kwargs.get("status") == "finished":
             self._draw_bar(remaining=0, all=self.progress.tasks[0].total)
         self.progress.stop()
