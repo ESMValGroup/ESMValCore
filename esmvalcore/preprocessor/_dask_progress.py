@@ -229,6 +229,7 @@ def _compute_with_progress(
     # = 0: show progress bar
     # > 0: log progress at this interval
     print("Use distributed?", use_distributed)
+    print("Logging interval", log_progress_interval)
     if log_progress_interval < 0.0:
         dask.compute(delayeds)
     elif use_distributed:
