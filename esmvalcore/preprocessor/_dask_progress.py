@@ -115,8 +115,9 @@ class RichDistributedProgressBar(
     def _draw_stop(self, **kwargs):
         if kwargs.get("status") == "finished":
             self._draw_bar(remaining=0, all=self.progress.tasks[0].total)
-        self.progress.stop()
+        logger.info(self.progress.tasks[0].total)
         logger.info("Finished.")
+        self.progress.stop()
 
 
 class ProgressLogger(dask.diagnostics.ProgressBar):
