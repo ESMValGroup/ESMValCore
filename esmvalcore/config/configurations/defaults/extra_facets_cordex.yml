@@ -27,7 +27,3 @@ projects:
         '*':
           '*':
             use_standard_grid: true  # lat/lon coords missing bounds
-      WRF381P:
-        '*':
-          '*':
-            use_standard_grid: true  # https://github.com/ESMValGroup/ESMValCore/issues/3145
