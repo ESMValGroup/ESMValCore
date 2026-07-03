@@ -46,6 +46,7 @@ def test_compute_with_progress(
     if interval < 0.0:
         assert not progressbar
     else:
+        print("Progressbar", progressbar)
         assert "100%" in progressbar
     if client is not None:
         client.shutdown()
