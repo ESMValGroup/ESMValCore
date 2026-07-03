@@ -249,6 +249,9 @@ def _cordex_stock_cube(domain_name: str) -> Cube:
     (cube,) = ncdata.iris_xarray.cubes_from_xarray(domain)
     cube.coord("grid_latitude").guess_bounds()
     cube.coord("grid_longitude").guess_bounds()
+    # Restore the units that iris changed to degrees.
+    cube.coord("latitude").units = domain.lat.attrs["units"]
+    cube.coord("longitude").units = domain.lon.attrs["units"]
 
     return cube
 
