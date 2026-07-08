@@ -12,15 +12,14 @@ from typing import TYPE_CHECKING
 import dask.config
 from distributed import Client
 
-from esmvalcore.config import CFG
-from esmvalcore.exceptions import (
-    InvalidConfigParameter,
-)
+from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from distributed.deploy import Cluster
+
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +75,9 @@ def validate_dask_config(dask_config: Mapping) -> None:
 
 
 @contextlib.contextmanager
-def get_distributed_client() -> Generator[None | Client]:
+def get_distributed_client(session: Session) -> Generator[None | Client]:
     """Get a Dask distributed client."""
-    dask_config = deepcopy(CFG["dask"])
+    dask_config = deepcopy(session["dask"])
     validate_dask_config(dask_config)
 
     # Set up cluster and client according to the selected profile
