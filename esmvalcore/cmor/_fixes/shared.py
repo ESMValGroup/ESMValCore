@@ -321,7 +321,6 @@ def get_altitude_to_pressure_func() -> Callable[[ArrayLike], ArrayLike]:
     -------
     callable
         Function that converts altitude to air pressure.
-
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
