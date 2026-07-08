@@ -308,7 +308,7 @@ def ensure_c_contiguous_input(
     """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
 
     def wrapped_func(x: ArrayLike) -> ArrayLike:
-        return func(x)
+        return func(np.ascontiguousarray(x))
 
     return wrapped_func
 
