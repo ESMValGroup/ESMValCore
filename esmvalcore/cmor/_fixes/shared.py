@@ -19,7 +19,10 @@ from scipy.interpolate import interp1d
 from esmvalcore.iris_helpers import date2num
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from iris.coords import Coord
+    from numpy.typing import ArrayLike
 
 logger = logging.getLogger(__name__)
 
@@ -299,24 +302,37 @@ def cube_to_aux_coord(cube):
     )
 
 
+def ensure_c_contiguous_input(
+    func: Callable[[ArrayLike], ArrayLike],
+) -> Callable[[ArrayLike], ArrayLike]:
+    """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
+
+    def wrapped_func(x: ArrayLike) -> ArrayLike:
+        return func(x)
+
+    return wrapped_func
+
+
 @cache
-def get_altitude_to_pressure_func():
+def get_altitude_to_pressure_func() -> Callable[[ArrayLike], ArrayLike]:
     """Get function converting altitude [m] to air pressure [Pa].
 
     Returns
     -------
     callable
         Function that converts altitude to air pressure.
+
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    return interp1d(
+    interpolator = interp1d(
         data_frame["Altitude [m]"],
         data_frame["Pressure [Pa]"],
         kind="cubic",
         fill_value="extrapolate",
     )
+    return ensure_c_contiguous_input(interpolator)
 
 
 def get_bounds_cube(cubes, coord_var_name):
@@ -369,12 +385,13 @@ def get_pressure_to_altitude_func():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    return interp1d(
+    interpolator = interp1d(
         data_frame["Pressure [Pa]"],
         data_frame["Altitude [m]"],
         kind="cubic",
         fill_value="extrapolate",
     )
+    return ensure_c_contiguous_input(interpolator)
 
 
 def fix_bounds(cube, cubes, coord_var_names):
