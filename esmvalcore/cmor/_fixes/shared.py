@@ -374,7 +374,7 @@ def get_bounds_cube(cubes, coord_var_name):
 
 
 @cache
-def get_pressure_to_altitude_func():
+def get_pressure_to_altitude_func() -> Callable[[ArrayLike], ArrayLike]:
     """Get function converting air pressure [Pa] to altitude [m].
 
     Returns
