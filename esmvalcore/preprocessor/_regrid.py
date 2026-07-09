@@ -12,14 +12,17 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard
 
+import cordex as cx
 import dask.array as da
 import iris
 import iris.coords
 import iris.exceptions
+import ncdata.iris_xarray
 import numpy as np
 import stratify
+import xarray as xr
 from geopy.geocoders import Nominatim
 from iris.analysis import (
     AreaWeighted,
@@ -195,6 +198,59 @@ def parse_cell_spec(spec: str) -> tuple[float, float]:
         raise ValueError(emsg.format(dlat))
 
     return dlon, dlat
+
+
+def is_cordex_domain(spec: object) -> TypeGuard[str]:
+    """Return ``True`` if ``spec`` is a known CORDEX domain name.
+
+    Parameters
+    ----------
+    spec:
+        Candidate CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    bool
+        Whether ``spec`` is recognised by :mod:`cordex`.
+    """
+    if not isinstance(spec, str):
+        return False
+    try:
+        cx.domain_info(spec)
+    except KeyError:
+        return False
+    return True
+
+
+@functools.lru_cache
+def _cordex_stock_cube(domain_name: str) -> Cube:
+    """Create a stock cube for a CORDEX domain target grid.
+
+    Parameters
+    ----------
+    domain_name:
+        CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    iris.cube.Cube
+        Dummy cube with rotated-pole dimension coordinates and geographical
+        auxiliary coordinates matching the official domain specification.
+    """
+    domain = cx.cordex_domain(domain_name, bounds=True).reset_coords()
+    domain["data"] = xr.zeros_like(domain.lon)
+    domain.data.attrs = {
+        "coordinates": "lat lon",
+        "grid_mapping": "rotated_latitude_longitude",
+    }
+    domain.lat.attrs["bounds"] = "lat_vertices"
+    domain.lon.attrs["bounds"] = "lon_vertices"
+
+    (cube,) = ncdata.iris_xarray.cubes_from_xarray(domain)
+    cube.coord("grid_latitude").guess_bounds()
+    cube.coord("grid_longitude").guess_bounds()
+
+    return cube
 
 
 def _generate_cube_from_dimcoords(
@@ -608,6 +664,8 @@ def _get_target_grid_cube(
         target_grid_cube = target_grid.load()  # type: ignore
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
+    elif is_cordex_domain(target_grid):
+        target_grid_cube = _cordex_stock_cube(target_grid)
     elif isinstance(target_grid, str):
         # Generate a target grid from the provided cell-specification
         target_grid_cube = _global_stock_cube(
@@ -812,6 +870,9 @@ def regrid(
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
         Alternatively, a :class:`~esmvalcore.dataset.Dataset` can be provided.
+        Alternatively, a CORDEX domain name may be provided, for example
+        ``EUR-11``. Any domain name recognized by the :mod:`cordex` package
+        can be used.
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.

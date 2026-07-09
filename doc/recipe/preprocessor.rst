@@ -803,6 +803,26 @@ or ana4MIPs datasets can be used); in this case the `scheme` is
           target_grid: ERA-Interim
           scheme: linear
 
+Regridding on a CORDEX domain grid
+----------------------------------
+
+It is also possible to regrid to a standard CORDEX domain by using the
+CORDEX domain name as ``target_grid``. For example, to regrid to the
+``EUR-11`` domain:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: EUR-11
+          scheme: linear
+
+Any domain name recognized by the ``cordex`` package can be used, for example
+``EUR-11``. A list of available domains can be found in the
+`cordex introduction <https://py-cordex.readthedocs.io/en/latest/notebooks/introduction.html>`__.
+This creates the target grid from the official CORDEX domain definition.
+
 Regridding on an ``MxN`` grid specification
 -------------------------------------------
 
