@@ -314,7 +314,7 @@ def ensure_c_contiguous_input[T](
 
 
 @cache
-def get_altitude_to_pressure_func() -> Callable[[ArrayLike], ArrayLike]:
+def get_altitude_to_pressure_func() -> Callable[[ArrayLike], np.ndarray]:
     """Get function converting altitude [m] to air pressure [Pa].
 
     Returns
@@ -373,7 +373,7 @@ def get_bounds_cube(cubes, coord_var_name):
 
 
 @cache
-def get_pressure_to_altitude_func() -> Callable[[ArrayLike], ArrayLike]:
+def get_pressure_to_altitude_func() -> Callable[[ArrayLike], np.ndarray]:
     """Get function converting air pressure [Pa] to altitude [m].
 
     Returns
