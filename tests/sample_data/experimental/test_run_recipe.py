@@ -39,7 +39,7 @@ def get_mock_distributed_client(monkeypatch):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield None
 
     monkeypatch.setattr(
