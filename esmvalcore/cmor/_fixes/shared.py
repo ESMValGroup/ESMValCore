@@ -302,12 +302,12 @@ def cube_to_aux_coord(cube):
     )
 
 
-def ensure_c_contiguous_input(
-    func: Callable[[ArrayLike], ArrayLike],
-) -> Callable[[ArrayLike], ArrayLike]:
+def ensure_c_contiguous_input[T](
+    func: Callable[[np.ndarray], T],
+) -> Callable[[ArrayLike], T]:
     """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
 
-    def wrapped_func(x: ArrayLike) -> ArrayLike:
+    def wrapped_func(x: ArrayLike) -> T:
         return func(np.ascontiguousarray(x))
 
     return wrapped_func
