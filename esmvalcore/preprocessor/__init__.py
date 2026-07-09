@@ -117,6 +117,7 @@ if TYPE_CHECKING:
     from dask.delayed import Delayed
     from iris.cube import CubeList
 
+    from esmvalcore.config import Session
     from esmvalcore.dataset import Dataset
     from esmvalcore.typing import FacetValue
 
@@ -855,7 +856,11 @@ class PreprocessingTask(BaseTask):
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _run(self, _: list[str]) -> list[str]:  # noqa: C901,PLR0912
+    def _run(  # noqa: C901,PLR0912
+        self,
+        input_files: list[str],  # noqa: ARG002
+        session: Session,
+    ) -> list[str]:
         """Run the preprocessor."""
         for product in self.products:
             product.activity = self.activity
@@ -906,7 +911,11 @@ class PreprocessingTask(BaseTask):
                 "Computing and saving data for preprocessing task %s",
                 self.name,
             )
-            _compute_with_progress(delayeds, description=self.name)
+            _compute_with_progress(
+                delayeds,
+                session=session,
+                description=self.name,
+            )
         finally:
             if self.scheduler_lock is not None:
                 self.scheduler_lock.release()
