@@ -333,6 +333,6 @@ def to_yaml(
     if file:
         recipe_file = Path(file)
         recipe_file.parent.mkdir(parents=True, exist_ok=True)
-        recipe_file.write_text(txt, encoding="utf-8")
+        recipe_file.write_text(f"{txt}\n", encoding="utf-8")
 
     return txt
