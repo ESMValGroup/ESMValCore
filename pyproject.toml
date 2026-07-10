@@ -278,6 +278,7 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 "pytest-html" = "!=2.1.0"
 "pytest-metadata" = ">=1.5.1"
 "pytest-mock" = "*"
+"pytest-regressions" = "*"
 "pytest-xdist" = "*"
 
 # Test R support

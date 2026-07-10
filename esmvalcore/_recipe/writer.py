@@ -199,8 +199,8 @@ RecipeDumper.add_representer(
                         "description": 0,
                         "realms": 1,
                         "themes": 2,
-                        "variables": 3,
-                        "additional_datasets": 4,
+                        "additional_datasets": 3,
+                        "variables": 4,
                         "scripts": 5,
                     }.get(x, 6),
                     x,
@@ -221,7 +221,17 @@ RecipeDumper.add_representer(
     lambda dumper, data: dumper.represent_mapping(
         "tag:yaml.org,2002:map",
         {
-            k: data[k] for k in sorted(data, key=lambda x: (x != "script", x))
+            k: data[k]
+            for k in sorted(
+                data,
+                key=lambda x: (
+                    {
+                        "ancestors": 0,
+                        "script": 1,
+                    }.get(x, 2),
+                    x,
+                ),
+            )
         }.items(),
         flow_style=False,
     ),
