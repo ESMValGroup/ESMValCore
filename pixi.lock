@@ -21564,7 +21564,7 @@ packages:
   - fire
   - geopy
   - humanfriendly
-  - intake-esgf>=2025.10.22
+  - intake-esgf>=2026.4.28
   - intake-esm
   - iris-grib>=0.20.0
   - isodate>=0.7.0
