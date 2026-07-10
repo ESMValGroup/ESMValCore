@@ -292,8 +292,6 @@ def convert_to_recipe_objects(recipe: dict) -> Recipe:  # noqa: C901
 def add_blank_lines_between_top_level_items(yaml_text: str) -> str:
     """Insert blank lines between top-level YAML sections."""
     lines = yaml_text.splitlines()
-    if not lines:
-        return yaml_text
 
     top_level_keys = {
         "documentation",
