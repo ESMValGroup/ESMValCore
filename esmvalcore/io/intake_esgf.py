@@ -242,10 +242,7 @@ class IntakeESGFDataSource(DataSource):
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
             # Subset the catalog to a single dataset.
-            cat = self.catalog.clone()
-            cat.file_start = self.catalog.file_start
-            cat.file_end = self.catalog.file_end
-            cat.project = self.catalog.project
+            cat = copy.deepcopy(self.catalog)
             cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
             # Ensure only the requested variable is included in the dataset.
             # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
