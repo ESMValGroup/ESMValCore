@@ -42,6 +42,8 @@ Bug fixes
 -  Avoid a crash when running ``esmvaltool config show`` with Python 3.14 (:pull:`3064`) by :user:`bouweandela`
 -  Remove accidentally added ``esmvaltool config console`` command (:pull:`3066`) by :user:`bouweandela`
 -  Fix drs path for dir for cmip5 at CEDA JASMIN (:pull:`3076`) by :user:`valeriupredoi`
+-  Ensure that input arrays to ``scipy.interpolate.interp1d`` functions are C-contiguous (:pull:`3151`) by :user:`schlunma`
+
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -77,6 +79,7 @@ Fixes for datasets
 -  Add support for variables ``phcint`` and ``amoc`` to ICON-XPP CMORizer (:pull:`3025`) by :user:`schlunma`
 -  Add support for reading ORAS5 data (:pull:`2422`) by :user:`jmalles`
 -  Add mesh fix for CMIP6 ICON-ESM-LR conservative regridding (:pull:`3090`) by :user:`alioacar`
+-  Fix CORDEX ALADIN53 tas coordinates (:pull:`3110`) by :user:`bouweandela`
 
 Installation
 ~~~~~~~~~~~~
@@ -88,6 +91,13 @@ Preprocessor
 
 -  Drop range related attributes on load (:pull:`3072`) by :user:`bouweandela`
 -  Copy additional coordinates when regridding (:pull:`3048`) by :user:`bouweandela`
+-  Add CORDEX domain target grids for regridding (:pull:`3096`) by :user:`ghossh`
+
+Issues introduced since last release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Drop ``valid_range`` correction from AIRS-2-0 fix (:pull:`3153`) by :user:`schlunma`
+-  Fix dask progress logging (:pull:`3154`) by :user:`bouweandela`
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
@@ -95,6 +105,7 @@ Automatic testing
 -  Avoid depending on the order of the configured project in a unit test (:pull:`3023`) by :user:`valeriupredoi`
 -  Ensure CMOR tables are loaded and match configuration when running tests (:pull:`3086`) by :user:`bouweandela`
 -  Update CircleCI Codecov orb version to 6.0.0 (:pull:`3104`) by :user:`valeriupredoi`
+-  Fix pre-commit mypy error "TypeAliasType" not callable (:pull:`3118`) by :user:`flicj191` & (:pull:`3129`) by :user:`bouweandela`
 
 Improvements
 ~~~~~~~~~~~~
