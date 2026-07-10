@@ -17,12 +17,16 @@ class RecipeDumper(yaml.SafeDumper):
 
     def increase_indent(
         self,
-        flow=False,
-        indentless=False,  # noqa: ARG002
-    ):
+        flow: bool = False,
+        indentless: bool = False,  # noqa: ARG002
+    ) -> None:
         """Increase indentation level."""
         # Increase the indentation level for lists that are values in a mapping.
         return super().increase_indent(flow, False)
+
+
+# The following classes are used to mark certain elements in the recipe so
+# the YAML dumper recognizes them and knows how to format them.
 
 
 class Recipe(dict):
