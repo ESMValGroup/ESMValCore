@@ -97,6 +97,7 @@ html/
 
 # Data files
 *.nc
+!tests/sample_data/intake-esm/data/**/*.nc
 *.nc4
 *.grb
 *.grib

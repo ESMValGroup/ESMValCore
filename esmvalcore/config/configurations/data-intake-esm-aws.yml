@@ -1,0 +1,29 @@
+# Documentation example: intake-esm catalog (AWS)
+# Use `esmvaltool config copy data-intake-esm-aws.yml` to copy this example
+# to your configuration directory, then update the `catalog` URL if needed.
+projects:
+  CMIP6:
+    data:
+      aws-catalog:
+        type: esmvalcore.io.intake_esm.IntakeEsmDataSource
+        facets:
+          activity: "activity_id"
+          dataset: "source_id"
+          ensemble: "member_id"
+          exp: "experiment_id"
+          institute: "institution_id"
+          grid: "grid_label"
+          mip: "table_id"
+          short_name: "variable_id"
+          version: "version"
+          timerange: "time_range"
+        time_separator: "/"
+        catalog: "https://cmip6-pds.s3.amazonaws.com/pangeo-cmip6.json"
+        to_dask_kwargs:
+          xarray_open_kwargs:
+            decode_cf: false
+            decode_times: false
+            decode_coords: false
+          xarray_combine_by_coords_kwargs:
+            compat: "override"
+            coords: "minimal"
