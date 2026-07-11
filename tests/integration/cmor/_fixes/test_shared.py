@@ -1,5 +1,7 @@
 """Tests for shared functions for fixes."""
 
+from __future__ import annotations
+
 import dask.array as da
 import iris
 import iris.coords
@@ -22,6 +24,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typesea_coord,
     add_scalar_typesi_coord,
     cube_to_aux_coord,
+    ensure_c_contiguous_input,
     fix_bounds,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
@@ -786,3 +789,16 @@ def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
     msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
     with pytest.raises(NotImplementedError, match=msg):
         get_time_bounds(time_coord, freq)
+
+
+def test_ensure_c_contiguous_input() -> None:
+    def identity[T](x: T) -> T:
+        return x
+
+    wrapped_identity = ensure_c_contiguous_input(identity)
+
+    f_arr = np.ones((2, 3), order="F")
+    assert f_arr.flags["C_CONTIGUOUS"] is False
+
+    c_arr = wrapped_identity(f_arr)
+    assert c_arr.flags["C_CONTIGUOUS"] is True

@@ -1340,7 +1340,7 @@ class Recipe:
             file.prepare()
         logger.info("Successfully downloaded missing data")
 
-        self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
+        self.tasks.run(self.session)
         logger.info(
             "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,

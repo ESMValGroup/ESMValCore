@@ -2596,9 +2596,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
     esmvalcore.io.esgf.download.assert_called()
     esmvalcore.io.local.LocalFile.prepare.assert_called()
-    recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=session["max_parallel_tasks"],
-    )
+    recipe.tasks.run.assert_called_once_with(session)
     recipe.write_filled_recipe.assert_called_once()
     recipe.write_html_summary.assert_called_once()
 
