@@ -59,13 +59,13 @@ class Recipe:
         """Return html representation."""
         return self.render()
 
-    def to_yaml(self, file: os.PathLike | None = None) -> str | None:
+    def to_yaml(self, file: os.PathLike | None = None) -> str:
         """Write recipe to a YAML file.
 
         Parameters
         ----------
-        file :
-            A path-like object to write the YAML data to.
+        file:
+            If provided, the recipe will be written to this file too.
 
         Returns
         -------
