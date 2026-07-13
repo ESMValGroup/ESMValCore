@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from enum import IntEnum
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
@@ -22,7 +23,7 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
 )
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import get_tables
 from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from iris.cube import Cube
 
     from esmvalcore.cmor.table import CoordinateInfo
+    from esmvalcore.config import Session
 
 
 class CheckLevels(IntEnum):
@@ -947,14 +949,24 @@ def _get_cmor_checker(
     mip: str,
     short_name: str,
     *,
+    session: Session | None,
     branding_suffix: str | None = None,
     frequency: None | str = None,
-    fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker."""
-    var_info = get_var_info(
-        project,
+    if session is None:
+        warnings.warn(
+            "Not providing a `session` argument or using `session=None` "
+            "is deprecated and will no longer be supported in v2.17.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from esmvalcore.config import CFG  # noqa: PLC0415
+
+        session = CFG.start_session("cmor_check")
+
+    var_info = get_tables(session, project).get_variable(
         mip,
         short_name,
         branding_suffix=branding_suffix,
@@ -965,19 +977,19 @@ def _get_cmor_checker(
             cube,
             var_info,
             frequency=frequency,
-            fail_on_error=fail_on_error,
             check_level=check_level,
         )
 
     return _checker
 
 
-def cmor_check_metadata(
+def cmor_check_metadata(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
     short_name: str,
     *,
+    session: Session | None = None,
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
@@ -996,6 +1008,8 @@ def cmor_check_metadata(
         Variable's MIP.
     short_name:
         Variable's short name.
+    session:
+        The session to use.
     branding_suffix:
         A suffix that will be appended to ``short_name`` when looking up the
         variable in the CMOR table. Used by the CMIP7 project.
@@ -1004,6 +1018,11 @@ def cmor_check_metadata(
         variable.
     check_level:
         Level of strictness of the checks.
+
+        .. deprecated: 2.15.0
+            The ``check_level`` parameter is deprecated and will be removed in
+            version 2.17.0. Please set the desired strictness level using
+            ``session["check_level"]`` instead.
 
     Returns
     -------
@@ -1017,17 +1036,19 @@ def cmor_check_metadata(
         short_name,
         branding_suffix=branding_suffix,
         frequency=frequency,
+        session=session,
         check_level=check_level,
     )
     return checker(cube).check_metadata()
 
 
-def cmor_check_data(
+def cmor_check_data(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
     short_name: str,
     *,
+    session: Session | None = None,
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
@@ -1044,6 +1065,8 @@ def cmor_check_data(
         Variable's MIP.
     short_name:
         Variable's short name
+    session:
+        The session to use.
     branding_suffix:
         A suffix that will be appended to ``short_name`` when looking up the
         variable in the CMOR table. Used by the CMIP7 project.
@@ -1052,6 +1075,11 @@ def cmor_check_data(
         variable.
     check_level:
         Level of strictness of the checks.
+
+        .. deprecated: 2.15.0
+            The ``check_level`` parameter is deprecated and will be removed in
+            version 2.17.0. Please set the desired strictness level using
+            ``session["check_level"]`` instead.
 
     Returns
     -------
@@ -1065,17 +1093,19 @@ def cmor_check_data(
         short_name,
         branding_suffix=branding_suffix,
         frequency=frequency,
+        session=session,
         check_level=check_level,
     )
     return checker(cube).check_data()
 
 
-def cmor_check(
+def cmor_check(  # noqa: PLR0913
     cube: Cube,
     cmor_table: str,
     mip: str,
     short_name: str,
     *,
+    session: Session | None = None,
     branding_suffix: str | None = None,
     frequency: str | None = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
@@ -1095,6 +1125,8 @@ def cmor_check(
         Variable's MIP.
     short_name:
         Variable's short name.
+    session:
+        The session to use.
     branding_suffix:
         A suffix that will be appended to ``short_name`` when looking up the
         variable in the CMOR table. Used by the CMIP7 project.
@@ -1103,6 +1135,11 @@ def cmor_check(
         variable.
     check_level:
         Level of strictness of the checks.
+
+        .. deprecated: 2.15.0
+            The ``check_level`` parameter is deprecated and will be removed in
+            version 2.17.0. Please set the desired strictness level using
+            ``session["check_level"]`` instead.
 
     Returns
     -------
@@ -1117,6 +1154,7 @@ def cmor_check(
         short_name,
         branding_suffix=branding_suffix,
         frequency=frequency,
+        session=session,
         check_level=check_level,
     )
     return cmor_check_data(
@@ -1126,5 +1164,6 @@ def cmor_check(
         short_name,
         branding_suffix=branding_suffix,
         frequency=frequency,
+        session=session,
         check_level=check_level,
     )
