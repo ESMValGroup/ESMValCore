@@ -1,9 +1,6 @@
 """Fixes for rcm HadREM3-GA7-05 driven by NCC-NorESM1-M."""
 
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.hadrem3_ga7_05 import (
-    Clivi as BaseClivi,
-)
-from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.hadrem3_ga7_05 import (
     Sic as BaseSic,
 )
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
@@ -11,10 +8,6 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
 )
 
 AllVars = BaseFix
-
-
-class Clivi(BaseClivi):
-    """Fixes for variable clivi."""
 
 
 class Sic(BaseSic):
