@@ -1,4 +1,4 @@
-"""Tests for the fixes of CanESM5."""
+"""Tests for the fixes of CanESM5-1."""
 
 import iris
 import numpy as np
