@@ -1,13 +1,20 @@
-"""Fixes for CanESM5 model."""
+"""Fixes for CanESM5-1 model."""
 
 import dask.array as da
 
-from esmvalcore.cmor._fixes.common import RenamePsStandardName
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
+Cl = ClFixHybridPressureCoord
 
-class AllVars(RenamePsStandardName):
-    """Fixes for all variables, relevant only for variables with hybrid-sigma pressure levels."""
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
+
+
+Ps = ClFixHybridPressureCoord
 
 
 class Co2(Fix):
