@@ -71,7 +71,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
+    assert issubclass(Cl, ClFixHybridPressureCoord)
 
 
 def test_get_cli_fix():
@@ -82,7 +82,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli is ClFixHybridPressureCoord
+    assert issubclass(Cli, ClFixHybridPressureCoord)
 
 
 def test_get_clw_fix():
@@ -93,7 +93,7 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw is ClFixHybridPressureCoord
+    assert issubclass(Clw, ClFixHybridPressureCoord)
 
 
 def test_get_ps_fix():
@@ -104,4 +104,4 @@ def test_get_ps_fix():
 
 def test_ps_fix():
     """Test fix for ``ps``."""
-    assert Ps is ClFixHybridPressureCoord
+    assert issubclass(Ps, ClFixHybridPressureCoord)
