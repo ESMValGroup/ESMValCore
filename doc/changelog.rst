@@ -9,7 +9,10 @@ v2.15.0
 -------
 Highlights
 
-TODO: add highlights
+Improvements for supporting CORDEX data including:
+- CMOR tables for CORDEX-CMIP6 (see :pull:`3112`)
+- Dataset fixes (see :pull:`3033`, :pull:`3110`, :pull:`3032`)
+- Preprocessor and regridding support (see :pull:`3059`, :pull:`3048`, :pull:`3096`, :pull:`3098`)
 
 This release includes
 
@@ -55,12 +58,14 @@ Configuration
 ~~~~~~~~~~~~~
 
 -  Add an HPC configuration file for SMHI (NSC) machine (Freja) (:pull:`3028`) by :user:`jlenh`
+-  Update path to CEDA-JASMIN esmeval gws (group workspace) (:pull:`3041`) by :user:`valeriupredoi`
+-  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
+-  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
 
 Documentation
 ~~~~~~~~~~~~~
 
 -  Fix a typo in ESMValCore ESGF data source documentation (:pull:`3016`) by :user:`bouweandela`
--  Update path to CEDA-JASMIN esmeval gws (group workspace) (:pull:`3041`) by :user:`valeriupredoi`
 -  Fix the PDF build of the documentation (:pull:`3068`) by :user:`bouweandela`
 -  Add ``mip`` to CMIP7 facets documentation page (:pull:`3019`) by :user:`bouweandela`
 -  Update links to CMIP guidance (:pull:`3075`) by :user:`bouweandela`
@@ -85,19 +90,16 @@ Installation
 ~~~~~~~~~~~~
 
 -  Use pixi to manage development conda environments (:pull:`3044`) by :user:`bouweandela`
+-  Run all tests on lockfile update (:pull:`3119`) by :user:`bouweandela`
+-  Fix progress logging with Dask v2026 (:pull:`3154`) by :user:`bouweandela`
 
 Preprocessor
 ~~~~~~~~~~~~
 
 -  Drop range related attributes on load (:pull:`3072`) by :user:`bouweandela`
+-  Drop ``valid_range`` correction from AIRS-2-0 fix (:pull:`3153`) by :user:`schlunma`
 -  Copy additional coordinates when regridding (:pull:`3048`) by :user:`bouweandela`
 -  Add CORDEX domain target grids for regridding (:pull:`3096`) by :user:`ghossh`
-
-Issues introduced since last release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--  Drop ``valid_range`` correction from AIRS-2-0 fix (:pull:`3153`) by :user:`schlunma`
--  Fix dask progress logging (:pull:`3154`) by :user:`bouweandela`
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
@@ -114,9 +116,7 @@ Improvements
 -  Gracefully handle the case of missing facets required by ``esmvalcore.io.local.LocalDataSource`` (:pull:`3021`) by :user:`bouweandela`
 -  Mention the branding suffix in the error message when no entry can be found in CMOR tables (:pull:`3083`) by :user:`bouweandela`
 -  Nicer looking command line output (:pull:`3079`) by :user:`bouweandela`
--  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
 -  Support automatic addition of supplementary variables for CORDEX (:pull:`3098`) by :user:`bouweandela`
--  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
 -  Inform user about data downloads (:pull:`3130`) by :user:`schlunma`
 
 .. _changelog-v2-14-0:
