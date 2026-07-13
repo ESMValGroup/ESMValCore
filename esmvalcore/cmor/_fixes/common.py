@@ -246,3 +246,31 @@ class SiconcFixScalarCoord(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesi_coord(cube)
         return iris.cube.CubeList([cube])
+
+class RenamePsStandardName(Fix):
+    """."""
+
+    def fix_metadata(self, cubes):
+        """Fix standard name
+        Fix standard_name for Surface Air Pressure (ps).
+        See discussion in
+        https://github.com/ESMValGroup/ESMValCore/issues/2613
+        Cube has two coordinates called air_pressure: an AuxCoord ps
+        and a DerivedCoord that is 4D and derived using formula terms,
+        we are setting the former's standard_name to "surface_air_pressure".
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cube = self.get_cube_from_list(cubes)
+
+        for cube in cubes:
+            for coord in cube.coords():
+                if (coord.var_name == "ps") and (coord.standard_name == "air_pressure"):
+                    coord.standard_name = "surface_air_pressure"
+
+        return cubes
