@@ -1,8 +1,5 @@
 """Fixes for rcm HIRHAM5 driven by MOHC-HadGEM2."""
 
-from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.hirham5 import (
-    Clivi as BaseClivi,
-)
 from esmvalcore.cmor.fix import Fix
 
 
@@ -27,7 +24,3 @@ class Pr(Fix):
             cube.coord("longitude").attributes = {}
 
         return cubes
-
-
-class Clivi(BaseClivi):
-    """Fixes for variable clivi."""
