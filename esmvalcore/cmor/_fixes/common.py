@@ -268,6 +268,7 @@ class RenamePsStandardName(Fix):
         -------
         iris.cube.CubeList
         """
+        
         cube = self.get_cube_from_list(cubes)
         for cube in cubes:
             for coord in cube.coords():
