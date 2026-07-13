@@ -1,4 +1,4 @@
-"""Tests for the fixes of CanESM5-1."""
+"""Tests for the fixes of CanESM5-1-1."""
 
 import iris
 import numpy as np
@@ -12,7 +12,7 @@ from esmvalcore.cmor.fix import Fix
 
 def test_get_co2_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "co2")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "co2")
     assert fix == [Co2(None), GenericFix(None)]
 
 
@@ -48,7 +48,7 @@ def gpp_cube():
 
 def test_get_gpp_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Lmon", "gpp")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Lmon", "gpp")
     assert fix == [Gpp(None), GenericFix(None)]
 
 
@@ -65,7 +65,7 @@ def test_gpp_fix_data(gpp_cube):
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "cl")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "cl")
     assert fix == [Cl(None), GenericFix(None)]
 
 
@@ -76,7 +76,7 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "cli")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "cli")
     assert fix == [Cli(None), GenericFix(None)]
 
 
@@ -87,7 +87,7 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "clw")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "clw")
     assert fix == [Clw(None), GenericFix(None)]
 
 
@@ -98,7 +98,7 @@ def test_clw_fix():
 
 def test_get_ps_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes("CMIP6", "CanESM5", "Amon", "ps")
+    fix = Fix.get_fixes("CMIP6", "CanESM5-1", "Amon", "ps")
     assert fix == [Ps(None), GenericFix(None)]
 
 
