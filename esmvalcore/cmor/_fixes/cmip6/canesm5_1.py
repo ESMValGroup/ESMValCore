@@ -1,27 +1,32 @@
 """Fixes for CanESM5-1 model."""
 
-from esmvalcore.cmor._fixes.cmip6.canesm5 import Cl, Cli, Clw, Co2, Gpp, Ps
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Cli as BaseCli
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Clw as BaseClw
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2 as BaseCo2
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Gpp as BaseGpp
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Ps as BasePs
 
 
-class Cl(Cl):
+class Cl(BaseCl):
     """Fixes for cl."""
 
 
-class Cli(Cli):
+class Cli(BaseCli):
     """Fixes for cli."""
 
 
-class Clw(Clw):
+class Clw(BaseClw):
     """Fixes for clw."""
 
 
-class Ps(Ps):
+class Ps(BasePs):
     """Fixes for ps."""
 
 
-class Co2(Co2):
+class Co2(BaseCo2):
     """Fixes for co2."""
 
 
-class Gpp(Gpp):
+class Gpp(BaseGpp):
     """Fixes for gpp."""
