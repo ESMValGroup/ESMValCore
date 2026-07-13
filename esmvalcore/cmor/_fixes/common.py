@@ -247,8 +247,9 @@ class SiconcFixScalarCoord(Fix):
         add_scalar_typesi_coord(cube)
         return iris.cube.CubeList([cube])
 
+
 class RenamePsStandardName(Fix):
-    """."""
+    """Rename the standard_name of ps coordinate to surface_air_pressure."""
 
     def fix_metadata(self, cubes):
         """Fix standard name
@@ -258,19 +259,22 @@ class RenamePsStandardName(Fix):
         Cube has two coordinates called air_pressure: an AuxCoord ps
         and a DerivedCoord that is 4D and derived using formula terms,
         we are setting the former's standard_name to "surface_air_pressure".
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
             Input cubes.
+
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
-
         for cube in cubes:
             for coord in cube.coords():
-                if (coord.var_name == "ps") and (coord.standard_name == "air_pressure"):
+                if (coord.var_name == "ps") and (
+                    coord.standard_name == "air_pressure"
+                ):
                     coord.standard_name = "surface_air_pressure"
-
         return cubes
