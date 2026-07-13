@@ -252,8 +252,7 @@ class RenamePsStandardName(Fix):
     """Rename the standard_name of ps coordinate to surface_air_pressure."""
 
     def fix_metadata(self, cubes):
-        """Fix standard name
-        Fix standard_name for Surface Air Pressure (ps).
+        """Fix standard_name for Surface Air Pressure (ps).
         See discussion in
         https://github.com/ESMValGroup/ESMValCore/issues/2613
         Cube has two coordinates called air_pressure: an AuxCoord ps
@@ -268,7 +267,6 @@ class RenamePsStandardName(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         for cube in cubes:
