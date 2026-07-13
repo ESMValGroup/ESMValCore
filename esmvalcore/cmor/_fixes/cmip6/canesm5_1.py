@@ -3,6 +3,7 @@
 import dask.array as da
 
 from esmvalcore.cmor._fixes.fix import Fix
+from ..common import RenamePsStandardName
 
 class AllVars(RenamePsStandardName):
     """

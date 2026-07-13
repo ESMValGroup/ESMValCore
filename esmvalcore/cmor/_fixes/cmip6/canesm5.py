@@ -3,13 +3,14 @@
 import dask.array as da
 
 from esmvalcore.cmor._fixes.fix import Fix
+from ..common import RenamePsStandardName
 
 class AllVars(RenamePsStandardName):
     """
     Fixes for all variables.
     Relevant only for variables with hybrid-sigma pressure levels
     """
-    
+
 class Co2(Fix):
     """Fixes for co2."""
 
