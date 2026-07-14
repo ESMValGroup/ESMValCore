@@ -1,10 +1,14 @@
 """Tests for the fixes for driver MOHC-HadGEM2-ES."""
 
 import iris
+import iris.coords
+import iris.cube
+import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
 from esmvalcore.cmor._fixes.cordex.mohc_hadgem2_es import (
+    cclm4_8_17,
     cosmo_crclim_v1_1,
     hirham5,
     wrf381p,
@@ -172,6 +176,68 @@ def test_get_cclm4_8_17fix() -> None:
         extra_facets={"driver": "MOHC-HadGEM2-ES"},
     )
     assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)
+
+
+def test_cclm4_8_17_clivi() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "day",
+        "clivi",
+        extra_facets={"driver": "MOHC-HadGEM2-ES"},
+    )
+    assert any(isinstance(fix, cclm4_8_17.Clivi) for fix in fixes)
+
+    cube = iris.cube.Cube(
+        np.array([1.8e-5], dtype=np.float32),
+        var_name="clivi",
+        standard_name="atmosphere_cloud_ice_content",
+        units="kg m-2",
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [0.0],
+                    var_name="time",
+                ),
+                0,
+            ),
+        ],
+    )
+    fix = next(fix for fix in fixes if isinstance(fix, cclm4_8_17.Clivi))
+    result = fix.fix_metadata([cube])
+    assert result[0].units == "kg m-2"
+    np.testing.assert_allclose(result[0].data, [1.8e-2])
+
+
+def test_cclm4_8_17_prw() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "day",
+        "prw",
+        extra_facets={"driver": "MOHC-HadGEM2-ES"},
+    )
+    assert any(isinstance(fix, cclm4_8_17.Prw) for fix in fixes)
+
+    cube = iris.cube.Cube(
+        np.array([0.014], dtype=np.float32),
+        var_name="prw",
+        standard_name="atmosphere_water_vapor_content",
+        units="kg m-2",
+        dim_coords_and_dims=[
+            (
+                iris.coords.DimCoord(
+                    [0.0],
+                    var_name="time",
+                ),
+                0,
+            ),
+        ],
+    )
+    fix = next(fix for fix in fixes if isinstance(fix, cclm4_8_17.Prw))
+    result = fix.fix_metadata([cube])
+    assert result[0].units == "kg m-2"
+    np.testing.assert_allclose(result[0].data, [14.0])
 
 
 def test_get_cosmo_crclim_v1_1_fix() -> None:
