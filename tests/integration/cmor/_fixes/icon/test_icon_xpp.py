@@ -14,9 +14,12 @@ from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import AllVarsBase
 from esmvalcore.cmor._fixes.icon.icon_xpp import (
     AllVars,
+    BaresoilFrac,
     Clwvi,
+    CropFrac,
     Evspsbl,
     Gpp,
+    GrassFrac,
     Hfls,
     Hfss,
     Msftmz,
@@ -25,6 +28,8 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     Rsutcs,
     Rtmt,
     Rtnt,
+    ShrubFrac,
+    TreeFrac,
     Zg,
 )
 from esmvalcore.cmor.fix import Fix
