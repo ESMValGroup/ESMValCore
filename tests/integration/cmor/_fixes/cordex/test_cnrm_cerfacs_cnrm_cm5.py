@@ -10,6 +10,7 @@ import pytest
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5 import (
     aladin53,
     aladin63,
+    hadrem3_ga7_05,
     wrf381p,
 )
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
@@ -52,6 +53,28 @@ def test_get_hadrem3ga705_fix(short_name):
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
     assert isinstance(fix[0], Fix)
+
+
+def test_hadrem3_ga7_05_sic() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "HadREM3-GA7-05",
+        "day",
+        "sic",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, hadrem3_ga7_05.Sic) for fix in fixes)
+
+    cube = iris.cube.Cube(
+        np.array([0.5], dtype=np.float32),
+        var_name="sic",
+        standard_name="sea_ice_area_fraction",
+        units="%",
+    )
+    fix = next(fix for fix in fixes if isinstance(fix, hadrem3_ga7_05.Sic))
+    result = fix.fix_metadata([cube])
+    assert result[0].units == "%"
+    np.testing.assert_allclose(result[0].data, [50.0])
 
 
 def test_fix_aladin53_sftlf() -> None:
@@ -193,7 +216,7 @@ def test_wrf381p_height_fix():
         var_name="tas",
         dim_coords_and_dims=[(time_coord, 0)],
     )
-    vardef = get_var_info("CMIP6", "Amon", "tas")
+    vardef = get_var_info("CORDEX", "day", "tas")
     fix = wrf381p.Tas(vardef)
     out_cubes = fix.fix_metadata([cube])
     assert out_cubes[0].coord("height").points == 2.0
@@ -208,3 +231,33 @@ def test_get_cclm4_8_17fix() -> None:
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
     assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)
+
+
+def test_cosmo_crclim_v1_1_snw_drop_height_coord():
+    height_coord = iris.coords.AuxCoord(
+        [2.0],
+        var_name="height",
+        standard_name="height",
+        long_name="height",
+    )
+    cube = iris.cube.Cube(
+        [10.0],
+        var_name="snw",
+        aux_coords_and_dims=[(height_coord, 0)],
+    )
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "COSMO-crCLIM-v1-1",
+        "day",
+        "snw",
+        extra_facets={
+            "driver": "CNRM-CERFACS-CNRM-CM5",
+            "domain": "EUR-11",
+        },
+    )
+    cubes = [cube]
+    for fix in fixes:
+        cubes = fix.fix_metadata(cubes)
+    assert len(cubes) == 1
+    assert cubes[0].var_name == "snw"
+    assert not cubes[0].coords("height")
