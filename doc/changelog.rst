@@ -7,7 +7,9 @@ Changelog
 
 v2.15.0
 -------
+
 Highlights
+~~~~~~~~~~
 
 Improvements for supporting CORDEX data including:
 - CMOR tables for CORDEX-CMIP6 (see :pull:`3112`)
