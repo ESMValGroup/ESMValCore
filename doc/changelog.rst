@@ -7,9 +7,12 @@ Changelog
 
 v2.15.0
 -------
+
 Highlights
+~~~~~~~~~~
 
 Improvements for supporting CORDEX data including:
+
 - CMOR tables for CORDEX-CMIP6 (see :pull:`3112`)
 - Dataset fixes (see :pull:`3033`, :pull:`3110`, :pull:`3032`)
 - Preprocessor and regridding support (see :pull:`3059`, :pull:`3048`, :pull:`3096`, :pull:`3098`)
@@ -46,7 +49,7 @@ Bug fixes
 -  Remove accidentally added ``esmvaltool config console`` command (:pull:`3066`) by :user:`bouweandela`
 -  Fix drs path for dir for cmip5 at CEDA JASMIN (:pull:`3076`) by :user:`valeriupredoi`
 -  Ensure that input arrays to ``scipy.interpolate.interp1d`` functions are C-contiguous (:pull:`3151`) by :user:`schlunma`
-
+-  Avoid crash on missing session when caching fails with intake-esgf (:pull:`3159`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -85,6 +88,7 @@ Fixes for datasets
 -  Add support for reading ORAS5 data (:pull:`2422`) by :user:`jmalles`
 -  Add mesh fix for CMIP6 ICON-ESM-LR conservative regridding (:pull:`3090`) by :user:`alioacar`
 -  Fix CORDEX ALADIN53 tas coordinates (:pull:`3110`) by :user:`bouweandela`
+-  CMIP6 CanESM CMOR fixes for variables with model level coordinates (:pull:`3165`) by :user:`k-a-webb`
 
 Installation
 ~~~~~~~~~~~~
@@ -92,6 +96,7 @@ Installation
 -  Use pixi to manage development conda environments (:pull:`3044`) by :user:`bouweandela`
 -  Run all tests on lockfile update (:pull:`3119`) by :user:`bouweandela`
 -  Fix progress logging with Dask v2026 (:pull:`3154`) by :user:`bouweandela`
+-  Open log files in append mode (:pull:`3163`) by :user:`bouweandela`
 
 Preprocessor
 ~~~~~~~~~~~~
