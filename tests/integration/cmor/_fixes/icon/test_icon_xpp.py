@@ -646,6 +646,81 @@ def test_gpp_fix(cubes_regular_grid):
     )
 
 
+# Test landfraction fixes
+
+
+def check_lfrac_auxcoord(cube, long_name):
+    assert cube.coords("area_type")
+    typelfrac = cube.coord("area_type")
+    assert typelfrac.standard_name == "area_type"
+    assert typelfrac.long_name == "long_name"
+
+
+def test_get_grassfrac_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "grassFrac")
+    assert fix == [GrassFrac(None), AllVars(None), GenericFix(None)]
+
+
+def test_grassfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "grassFrac")
+    check_lfrac_auxcoord(fixed_cube, "Grass area type")
+
+
+def test_get_shrubfrac_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "shrubFrac")
+    assert fix == [ShrubFrac(None), AllVars(None), GenericFix(None)]
+
+
+def test_shrubfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "shrubFrac")
+    check_lfrac_auxcoord(fixed_cube, "Shrub area type")
+
+
+def test_get_baresoilfrac_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "baresoilFrac")
+    assert fix == [BaresoilFrac(None), AllVars(None), GenericFix(None)]
+
+
+def test_baresoilfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "baresoilFrac")
+    check_lfrac_auxcoord(fixed_cube, "Baresoil area type")
+
+
+def test_get_treefrac_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "treeFrac")
+    assert fix == [TreeFrac(None), AllVars(None), GenericFix(None)]
+
+
+def test_treefrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "treeFrac")
+    check_lfrac_auxcoord(fixed_cube, "Tree area type")
+
+
+def test_get_cropfrac_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "cropFrac")
+    assert fix == [CropFrac(None), AllVars(None), GenericFix(None)]
+
+
+def test_cropfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "cropFrac")
+    check_lfrac_auxcoord(fixed_cube, "Crop area type")
+
+
 # Test hfls (for extra fix)
 
 
