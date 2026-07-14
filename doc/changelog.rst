@@ -12,6 +12,7 @@ Highlights
 ~~~~~~~~~~
 
 Improvements for supporting CORDEX data including:
+
 - CMOR tables for CORDEX-CMIP6 (see :pull:`3112`)
 - Dataset fixes (see :pull:`3033`, :pull:`3110`, :pull:`3032`)
 - Preprocessor and regridding support (see :pull:`3059`, :pull:`3048`, :pull:`3096`, :pull:`3098`)
