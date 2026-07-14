@@ -1,7 +1,7 @@
 {
     "Header": {
-        "Conventions": "CF-1.12 CMIP-7.0",
-        "checksum": "md5: b5ca0635d7c666d8be101836025ad9f4",
+        "Conventions": "CF-1.12",
+        "checksum": "md5: d65c212a32b02d43006b8b39e034908d",
         "cmor_version": "3.13",
         "generic_levels": "olevel olevhalf",
         "int_missing_value": "-999",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "ocnBgchem",
-        "table_date": "2026-01-07 10:30:23",
+        "table_date": "2026-04-21 15:01:29",
         "table_id": "ocnBgchem",
         "type": "real",
         "valid_max": "",

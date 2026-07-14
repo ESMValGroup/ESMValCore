@@ -2012,69 +2012,6 @@ def test_load_fail(session):
         dataset.load()
 
 
-# TODO: Remove in v2.15.0
-def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
-    dataset = Dataset(
-        project="CMIP5",
-        mip="Amon",
-        dataset="ACCESS1-3",
-        short_name="test",
-    )
-    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-                  institute: new-institute
-            """)
-        .strip()
-        .format(**dataset.facets),
-    )
-    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
-
-    extra_facets = dataset._get_extra_facets()
-
-    assert extra_facets == {
-        "product": ["output1", "output2"],
-        "key": "value",
-        "institute": "new-institute",
-    }
-
-
-# TODO: Remove in v2.15.0
-def test_get_extra_facets_ignore_deprecated_facets(tmp_path, monkeypatch):
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
-
-    dataset = Dataset(
-        project="CMIP5",
-        mip="Amon",
-        dataset="ACCESS1-3",
-        short_name="test",
-    )
-    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-                  institute: new-institute
-            """)
-        .strip()
-        .format(**dataset.facets),
-    )
-    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
-
-    extra_facets = dataset._get_extra_facets()
-
-    assert extra_facets == {
-        "product": ["output1", "output2"],
-        "institute": ["CSIRO-BOM"],
-    }
-
-
 def test_get_extra_facets(monkeypatch):
     raw_extra_facets = {
         "not_TEST-MODEL": {

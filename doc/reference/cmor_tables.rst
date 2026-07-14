@@ -43,7 +43,7 @@ define the near-surface air temperature variable in the CMIP6 Amon table:
 In some cases the ``short_name`` (called ``out_name`` in the CMOR tables) of a
 variable may differ from the name used as a key in the CMOR table.
 This is always the case for CMIP7, where the
-`branded variable name <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__
+`branded variable name <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__
 is used, which is composed of the ``short_name`` followed
 by an underscore and the ``branding_suffix``. For example, the facets
 ``project: CMIP7, mip: atmos, short_name: tas, branding_suffix: tavg-h2m-hxy-u``

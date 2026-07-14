@@ -21,6 +21,8 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "msftmz", "optional": True},
                 {"short_name": "msftyz", "optional": True},
             ]
+        elif project == "ICON":
+            required = [{"short_name": "msftmz", "mip": "Omon"}]
         else:
             msg = f"Project {project} can not be used for Amoc derivation."
             raise ValueError(msg)

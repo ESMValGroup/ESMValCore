@@ -17,27 +17,23 @@ import textwrap
 import threading
 import time
 from copy import deepcopy
-from pathlib import Path, PosixPath
+from pathlib import Path
 from shutil import which
+from typing import TYPE_CHECKING
 
 import dask
+import dask.config
 import psutil
 import yaml
 from distributed import Client
 
-from ._citation import _write_citation_files
-from ._provenance import TrackedFile, get_task_provenance
-from .config._dask import get_distributed_client
-from .config._diagnostics import DIAGNOSTICS, TAGS
+from esmvalcore._citation import _write_citation_files
+from esmvalcore._provenance import TrackedFile, get_task_provenance
+from esmvalcore.config._dask import get_distributed_client
+from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 
-
-def path_representer(dumper, data):
-    """For printing pathlib.Path objects in yaml files."""
-    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
-
-
-yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
-yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -279,20 +275,24 @@ class BaseTask:
         tasks.add(self)
         return tasks
 
-    def run(self, input_files: list[str] | None = None) -> None:
+    def run(
+        self,
+        session: Session,
+        input_files: list[str] | None = None,
+    ) -> list[str]:
         """Run task."""
         if not self.output_files:
             if input_files is None:
                 input_files = []
             for task in self.ancestors:
-                input_files.extend(task.run())
+                input_files.extend(task.run(session))
             logger.info(
                 "Starting task %s in process [%s]",
                 self.name,
                 os.getpid(),
             )
             start = datetime.datetime.now()
-            self.output_files = self._run(input_files)
+            self.output_files = self._run(input_files, session=session)
             runtime = datetime.datetime.now() - start
             logger.info(
                 "Successfully completed task %s (priority %s) in %s",
@@ -304,7 +304,7 @@ class BaseTask:
         return self.output_files
 
     @abc.abstractmethod
-    def _run(self, input_files: list[str]) -> list[str]:
+    def _run(self, input_files: list[str], session: Session) -> list[str]:
         """Run task."""
 
     def get_product_attributes(self) -> dict:
@@ -358,7 +358,11 @@ class ResumeTask(BaseTask):
 
         super().__init__(ancestors=None, name=name, products=products)
 
-    def _run(self, _: list[str]) -> list[str]:
+    def _run(
+        self,
+        input_files: list[str],  # noqa: ARG002
+        session: Session,  # noqa: ARG002
+    ) -> list[str]:
         """Return the result of a previous run."""
         metadata = self.get_product_attributes()
 
@@ -597,7 +601,11 @@ class DiagnosticTask(BaseTask):
             env=complete_env,
         )
 
-    def _run(self, input_files):
+    def _run(
+        self,
+        input_files: list[str],
+        session: Session,  # noqa: ARG002
+    ) -> list[str]:
         """Run the diagnostic script."""
         if self.script is None:  # Run only preprocessor
             return []
@@ -812,17 +820,17 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: int | None = None) -> None:
+    def run(self, session: Session) -> None:
         """Run tasks.
 
         Parameters
         ----------
-        max_parallel_tasks : int
-            Number of processes to run. If `1`, run the tasks sequentially.
+        session:
+            The current session.
         """
-        with get_distributed_client() as client:
+        with get_distributed_client(session) as client:
             if client is None:
-                address = None
+                address: str | None = None
             else:
                 address = client.scheduler.address
                 for task in self.flatten():
@@ -834,19 +842,19 @@ class TaskSet(set):
                         # Python script.
                         task.settings["scheduler_address"] = address
 
-            if max_parallel_tasks == 1:
-                self._run_sequential()
+            if session["max_parallel_tasks"] == 1:
+                self._run_sequential(session)
             else:
-                self._run_parallel(address, max_parallel_tasks)
+                self._run_parallel(address, session)
 
-    def _run_sequential(self) -> None:
+    def _run_sequential(self, session: Session) -> None:
         """Run tasks sequentially."""
         n_tasks = len(self.flatten())
         logger.info("Running %s tasks sequentially", n_tasks)
 
         tasks = self.get_independent()
         for task in sorted(tasks, key=lambda t: t.priority):
-            task.run()
+            task.run(session)
 
     def _get_dask_config(self, max_parallel_tasks: int) -> dict:
         """Configure the threaded Dask scheduler.
@@ -893,14 +901,19 @@ class TaskSet(set):
         )
         return {"num_workers": n_workers}
 
-    def _run_parallel(self, scheduler_address, max_parallel_tasks):
+    def _run_parallel(
+        self,
+        scheduler_address: str | None,
+        session: Session,
+    ) -> None:
         """Run tasks in parallel."""
         scheduled = self.flatten()
-        running = {}
+        running: dict[BaseTask, multiprocessing.pool.ApplyResult] = {}
 
         n_tasks = n_scheduled = len(scheduled)
         n_running = 0
 
+        max_parallel_tasks = session["max_parallel_tasks"]
         if max_parallel_tasks is None:
             max_parallel_tasks = available_cpu_count()
         max_parallel_tasks = min(max_parallel_tasks, n_tasks)
@@ -939,7 +952,12 @@ class TaskSet(set):
                         if all(done(t) for t in task.ancestors):
                             future = pool.apply_async(
                                 _run_task,
-                                [task, scheduler_address, scheduler_lock],
+                                [
+                                    task,
+                                    session,
+                                    scheduler_address,
+                                    scheduler_lock,
+                                ],
                             )
                             running[task] = future
                             scheduled.remove(task)
@@ -980,7 +998,12 @@ def _copy_results(task, future):
     task.output_files, task.products = future.get()
 
 
-def _run_task(task, scheduler_address, scheduler_lock):
+def _run_task(
+    task: BaseTask,
+    session: Session,
+    scheduler_address: str | None,
+    scheduler_lock: threading.Lock | None,
+) -> tuple[list[str], set[TrackedFile]]:
     """Run task and return the result."""
     if scheduler_address is None:
         client = contextlib.nullcontext()
@@ -989,6 +1012,6 @@ def _run_task(task, scheduler_address, scheduler_lock):
 
     with client:
         task.scheduler_lock = scheduler_lock
-        output_files = task.run()
+        output_files = task.run(session)
 
     return output_files, task.products

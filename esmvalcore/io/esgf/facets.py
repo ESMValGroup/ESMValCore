@@ -58,7 +58,6 @@ FACETS = {
         "exp": "experiment",
         "frequency": "time_frequency",
         "institute": "institute",
-        "product": "product",
         "short_name": "variable",
     },
     "obs4MIPs": {

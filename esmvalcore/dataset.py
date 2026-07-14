@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import fnmatch
 import logging
-import os
 import pprint
 import re
 import textwrap
@@ -26,7 +25,6 @@ from esmvalcore.cmor.table import (
     get_tables,
 )
 from esmvalcore.config import CFG
-from esmvalcore.config._config import load_extra_facets
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _dates_to_timerange
@@ -694,29 +692,6 @@ class Dataset:
                 )
                 for var in variables:
                     facets = raw_extra_facets[dataset_name][mip][var]
-                    extra_facets.update(facets)
-
-        # Add deprecated user-defined extra facets
-        # TODO: remove in v2.15.0
-        if os.environ.get("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG"):
-            return extra_facets
-        project_details = load_extra_facets(
-            self.facets["project"],
-            tuple(self.session["extra_facets_dir"]),
-        )
-        dataset_names = self._pattern_filter(project_details, self["dataset"])  # type: ignore[arg-type]
-        for dataset_name in dataset_names:
-            mips = self._pattern_filter(
-                project_details[dataset_name],
-                self["mip"],  # type: ignore[arg-type]
-            )
-            for mip in mips:
-                variables = self._pattern_filter(
-                    project_details[dataset_name][mip],
-                    self["short_name"],  # type: ignore[arg-type]
-                )
-                for var in variables:
-                    facets = project_details[dataset_name][mip][var]
                     extra_facets.update(facets)
 
         return extra_facets

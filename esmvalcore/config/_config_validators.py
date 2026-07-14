@@ -360,20 +360,6 @@ def validate_diagnostics(
     return validated_diagnostics
 
 
-# TODO: remove in v2.15.0
-def validate_extra_facets_dir(value):
-    """Validate extra_facets_dir."""
-    if isinstance(value, tuple):
-        msg = (
-            "Specifying `extra_facets_dir` as tuple has been deprecated in "
-            "ESMValCore version 2.13.0 and is scheduled for removal in "
-            "version 2.15.0. Please use a list instead."
-        )
-        warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-        value = list(value)
-    return validate_pathlist(value)
-
-
 def validate_cmor_tables(value: dict) -> None:
     """Validate the CMOR table configuration."""
     # This has the side-effect of updating `esmvalcore.cmor.tables.CMOR_TABLES`.
@@ -454,8 +440,6 @@ _validators = {
     "skip_nonexistent": validate_bool,
     # From recipe
     "write_ncl_interface": validate_bool,
-    # TODO: remove in v2.15.0
-    "extra_facets_dir": validate_extra_facets_dir,
 }
 
 
@@ -485,44 +469,6 @@ def _handle_deprecation(
     # This function is called by the deprecation functions, which are called by
     # ValidatedConfig.__setitem__, so the calling site is 4 levels away.
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=4)
-
-
-# TODO: remove in v2.15.0
-def deprecate_extra_facets_dir(
-    validated_config: ValidatedConfig,
-    value: str | Path,
-    validated_value: str | Path,
-) -> None:
-    """Deprecate ``extra_facets_dir`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``extra_facets_dir`` option.
-    validated_value:
-        Validated value for ``extra_facets_dir`` option.
-
-    """
-    validated_config  # noqa: B018
-    value  # noqa: B018
-    validated_value  # noqa: B018
-    option = "extra_facets_dir"
-    deprecated_version = "2.13.0"
-    remove_version = "2.15.0"
-    more_info = (
-        " Please use the option `extra_facets` instead (see "
-        "https://github.com/ESMValGroup/ESMValCore/pull/2747 for details)."
-    )
-    if os.environ.get("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG"):
-        more_info += (
-            " Since the environment variable "
-            "ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG is set, "
-            "`extra_facets_dir` is ignored. To silent this warning, omit "
-            "`extra_facets_dir`."
-        )
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
 
 
 def deprecate_rootpath(
@@ -669,7 +615,6 @@ def deprecate_config_developer_file(
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
-    "extra_facets_dir": deprecate_extra_facets_dir,  # TODO: remove in v2.15.0
     "drs": deprecate_drs,  # TODO: remove in v2.16.0
     "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
     "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
@@ -682,6 +627,5 @@ _deprecators: dict[str, Callable] = {
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecated_options_defaults: dict[str, Any] = {
-    "extra_facets_dir": [],  # TODO: remove in v2.15.0
     "download_dir": "~/climate_data",  # TODO: remove in v2.16.0
 }
