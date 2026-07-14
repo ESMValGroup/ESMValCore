@@ -185,7 +185,7 @@ def test_session_setter():
                 "units": "m2",
                 "modeling_realm": ["atmos", "land"],
                 "frequency": "fx",
-                # Added from extra facets YAML file
+                # Added from extra facets
                 "raw_name": "cell_area",
             },
         ),
