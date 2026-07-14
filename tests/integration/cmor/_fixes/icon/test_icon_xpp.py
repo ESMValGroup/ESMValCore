@@ -669,9 +669,11 @@ def test_get_grassfrac_fix():
 
 def test_grassfrac_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
-    cube.var_name = "pplcc_grass_fract_box"
-    fixed_cube = fix_metadata(cube, "Lmon", "grassFrac")
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "pplcc_grass_fract_box"
+    fixed_cubes = fix_metadata(cubes, "Lmon", "grassFrac")
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
     assert fixed_cube.var_name == "grassFrac"
     check_lfrac_auxcoord(fixed_cube, "Grass area type")
 
@@ -684,9 +686,11 @@ def test_get_shrubfrac_fix():
 
 def test_shrubfrac_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
-    cube.var_name = "pplcc_shrub_fract_box"
-    fixed_cube = fix_metadata(cube, "Lmon", "shrubFrac")
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "pplcc_shrub_fract_box"
+    fixed_cubes = fix_metadata(cubes, "Lmon", "shrubFrac")
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
     assert fixed_cube.var_name == "shrubFrac"
     check_lfrac_auxcoord(fixed_cube, "Shrub area type")
 
@@ -699,10 +703,12 @@ def test_get_baresoilfrac_fix():
 
 def test_baresoilfrac_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
-    cube.var_name = "pplcc_baresoil_fract_box"
-    fixed_cube = fix_metadata(cube, "Lmon", "baresoilFrac")
-    assert cube.var_name == "baresoilFrac"
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "pplcc_baresoil_fract_box"
+    fixed_cubes = fix_metadata(cubes, "Lmon", "baresoilFrac")
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "baresoilFrac"
     check_lfrac_auxcoord(fixed_cube, "Baresoil area type")
 
 
@@ -714,9 +720,11 @@ def test_get_treefrac_fix():
 
 def test_treefrac_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
-    cube.var_name = "pplcc_tree_fract_box"
-    fixed_cube = fix_metadata(cube, "Lmon", "treeFrac")
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "pplcc_tree_fract_box"
+    fixed_cubes = fix_metadata(cubes, "Lmon", "treeFrac")
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
     assert fixed_cube.var_name == "treeFrac"
     check_lfrac_auxcoord(fixed_cube, "Tree area type")
 
@@ -729,9 +737,11 @@ def test_get_cropfrac_fix():
 
 def test_cropfrac_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
-    cube.var_name = "pplcc_crop_fract_box"
-    fixed_cube = fix_metadata(cube, "Lmon", "cropFrac")
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = "pplcc_crop_fract_box"
+    fixed_cubes = fix_metadata(cubes, "Lmon", "cropFrac")
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
     assert fixed_cube.var_name == "cropFrac"
     check_lfrac_auxcoord(fixed_cube, "Crop area type")
 
