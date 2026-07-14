@@ -658,7 +658,7 @@ def check_lfrac_auxcoord(cube, long_name):
     assert cube.coords("area_type")
     typelfrac = cube.coord("area_type")
     assert typelfrac.standard_name == "area_type"
-    assert typelfrac.long_name == "long_name"
+    assert typelfrac.long_name == long_name
 
 
 def test_get_grassfrac_fix():
