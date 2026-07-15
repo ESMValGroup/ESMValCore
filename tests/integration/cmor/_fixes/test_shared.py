@@ -21,9 +21,6 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
-    add_scalar_typeland_coord,
-    add_scalar_typesea_coord,
-    add_scalar_typesi_coord,
     cube_to_aux_coord,
     ensure_c_contiguous_input,
     fix_bounds,
@@ -431,14 +428,19 @@ def test_add_scalar_areatype_coord(cube_in, var_name, long_name, value):
     else:
         cube_out = add_scalar_areatype_coord(
             cube_in,
-            var_name,
-            long_name,
-            value,
+            var_name=var_name,
+            long_name=long_name,
+            value=value,
         )
     assert cube_out is cube_in
     coord = cube_in.coord("area_type")
     assert coord == areatype_coord
-    cube_out_2 = add_scalar_areatype_coord(cube_out)
+    cube_out_2 = add_scalar_areatype_coord(
+        cube_out,
+        var_name,
+        long_name,
+        value,
+    )
     assert cube_out_2 is cube_out
     coord = cube_in.coord("area_type")
     assert coord == areatype_coord
@@ -523,90 +525,6 @@ def test_add_scalar_lambda550nm_coord(cube_in):
     assert cube_out_2 is cube_out
     coord = cube_in.coord("radiation_wavelength")
     assert coord == lambda550nm_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typeland"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typeland_coord(cube_in, typeland):
-    """Test adding of scalar typeland coordinate."""
-    cube_in = cube_in.copy()
-    if typeland is None:
-        typeland = "default"
-    typeland_coord = iris.coords.AuxCoord(
-        typeland,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Land area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typeland == "default":
-        cube_out = add_scalar_typeland_coord(cube_in)
-    else:
-        cube_out = add_scalar_typeland_coord(cube_in, typeland)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typeland_coord
-    cube_out_2 = add_scalar_typeland_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typeland_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typesea"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typesea_coord(cube_in, typesea):
-    """Test adding of scalar typesea coordinate."""
-    cube_in = cube_in.copy()
-    if typesea is None:
-        typesea = "default"
-    typesea_coord = iris.coords.AuxCoord(
-        typesea,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Ocean area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typesea == "default":
-        cube_out = add_scalar_typesea_coord(cube_in)
-    else:
-        cube_out = add_scalar_typesea_coord(cube_in, typesea)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typesea_coord
-    cube_out_2 = add_scalar_typesea_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typesea_coord
-
-
-@pytest.mark.parametrize(("cube_in", "typesi"), TEST_ADD_SCALAR_COORD)
-def test_add_scalar_typesi_coord(cube_in, typesi):
-    """Test adding of scalar typesi coordinate."""
-    cube_in = cube_in.copy()
-    if typesi is None:
-        typesi = "sea_ice"
-    typesi_coord = iris.coords.AuxCoord(
-        typesi,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Sea Ice area type",
-        units=Unit("no unit"),
-    )
-    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-        cube_in.coord("area_type")
-    if typesi == "sea_ice":
-        cube_out = add_scalar_typesi_coord(cube_in)
-    else:
-        cube_out = add_scalar_typesi_coord(cube_in, typesi)
-    assert cube_out is cube_in
-    coord = cube_in.coord("area_type")
-    assert coord == typesi_coord
-    cube_out_2 = add_scalar_typesi_coord(cube_out)
-    assert cube_out_2 is cube_out
-    coord = cube_in.coord("area_type")
-    assert coord == typesi_coord
 
 
 def test_cube_to_aux_coord():

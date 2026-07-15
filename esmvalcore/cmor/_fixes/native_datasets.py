@@ -15,7 +15,6 @@ from .shared import (
     add_scalar_areatype_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
-    add_scalar_typesi_coord,
 )
 
 if TYPE_CHECKING:
@@ -48,7 +47,11 @@ class NativeDatasetFix(Fix):
         if "lambda550nm" in self.vardef.dimensions:
             add_scalar_lambda550nm_coord(cube)
         if "typesi" in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, "sea_ice")
+            add_scalar_areatype_coord(
+                cube,
+                long_name="Sea ice area type",
+                value="sea_ice",
+            )
         if "typenatgr" in self.vardef.dimensions:
             add_scalar_areatype_coord(
                 cube,

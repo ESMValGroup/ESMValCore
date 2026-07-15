@@ -240,23 +240,6 @@ def add_scalar_lambda550nm_coord(cube):
     return cube
 
 
-def add_scalar_typeland_coord(cube, value="default"):
-    """Add scalar coordinate 'typeland' with value of `value`."""
-    logger.debug("Adding typeland coordinate (%s)", value)
-    typeland_coord = iris.coords.AuxCoord(
-        value,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Land area type",
-        units=Unit("no unit"),
-    )
-    try:
-        cube.coord("area_type")
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typeland_coord, ())
-    return cube
-
-
 def add_scalar_areatype_coord(
     cube,
     var_name="type",
@@ -279,40 +262,6 @@ def add_scalar_areatype_coord(
         cube.coord("area_type")
     except iris.exceptions.CoordinateNotFoundError:
         cube.add_aux_coord(areatype_coord, ())
-    return cube
-
-
-def add_scalar_typesea_coord(cube, value="default"):
-    """Add scalar coordinate 'typesea' with value of `value`."""
-    logger.debug("Adding typesea coordinate (%s)", value)
-    typesea_coord = iris.coords.AuxCoord(
-        value,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Ocean area type",
-        units=Unit("no unit"),
-    )
-    try:
-        cube.coord("area_type")
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typesea_coord, ())
-    return cube
-
-
-def add_scalar_typesi_coord(cube, value="sea_ice"):
-    """Add scalar coordinate 'typesi' with value of `value`."""
-    logger.debug("Adding typesi coordinate (%s)", value)
-    typesi_coord = iris.coords.AuxCoord(
-        value,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Sea Ice area type",
-        units=Unit("no unit"),
-    )
-    try:
-        cube.coord("area_type")
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typesi_coord, ())
     return cube
 
 
