@@ -760,7 +760,7 @@ def cubes_regular_grid():
         long_name="latitude",
         units="degrees_north",
     )
-    lon_coord = iris.DimCoord(
+    lon_coord = iris.coords.DimCoord(
         [-1.0, 1.0],
         var_name="clon",
         standard_name="longitude",
