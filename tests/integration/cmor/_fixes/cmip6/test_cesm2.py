@@ -791,10 +791,13 @@ def test_get_sftlf_fix():
 
 def test_sftlf_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "sftlf"
     vardef = get_var_info("CMIP6", "fx", "sftlf")
     fix = Sftlf(vardef)
-    fixed_cube = fix.fix_metadata(cube)
+    fixed_cubes = fix.fix_metadata(cubes)
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "sftlf"
     check_lfrac_auxcoord(fixed_cube, "Land area type")
 
 
@@ -806,8 +809,11 @@ def test_get_sftof_fix():
 
 def test_sftof_fix(cubes_regular_grid):
     """Test fix."""
-    cube = cubes_regular_grid[0]
+    cubes = cubes_regular_grid
+    cubes[0].var_name = "sftof"
     vardef = get_var_info("CMIP6", "fx", "sftof")
     fix = Sftlf(vardef)
-    fixed_cube = fix.fix_metadata(cube)
+    fixed_cubes = fix.fix_metadata(cubes)
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.var_name == "sftof"
     check_lfrac_auxcoord(fixed_cube, "Ocean area type")
