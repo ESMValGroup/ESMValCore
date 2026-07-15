@@ -811,8 +811,8 @@ def test_sftof_fix(cubes_regular_grid):
     """Test fix."""
     cubes = cubes_regular_grid
     cubes[0].var_name = "sftof"
-    vardef = get_var_info("CMIP6", "fx", "sftof")
-    fix = Sftlf(vardef)
+    vardef = get_var_info("CMIP6", "Ofx", "sftof")
+    fix = Sftof(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     fixed_cube = fixed_cubes[0]
     assert fixed_cube.var_name == "sftof"
