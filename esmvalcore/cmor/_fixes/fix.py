@@ -254,7 +254,7 @@ class Fix:
         if extra_facets is None:
             extra_facets = {}
 
-        vardef = get_var_info(
+        vardef: VariableInfo = get_var_info(  # type: ignore[assignment]  # TODO: add check and raise error if vardef is None
             project,
             mip,
             short_name,
@@ -302,7 +302,7 @@ class Fix:
                 if fix_name in classes:
                     fixes.append(
                         classes[fix_name](
-                            vardef,  # type: ignore[arg-type]  # TODO: add check and raise error if vardef is None
+                            vardef,
                             extra_facets=extra_facets,
                             session=session,
                             frequency=frequency,
