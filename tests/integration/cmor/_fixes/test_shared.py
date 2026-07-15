@@ -17,6 +17,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
+    add_scalar_areatype_coord,
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
@@ -401,6 +402,46 @@ TEST_ADD_SCALAR_COORD = [
     (CUBE_2.copy(), 100.0),
 ]
 TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
+
+
+@pytest.mark.parametrize(
+    ("cube_in", "var_name", "long_name", "value"),
+    TEST_ADD_SCALAR_COORD,
+)
+def test_add_scalar_areatype_coord(cube_in, var_name, long_name, value):
+    """Test adding of scalar typeland coordinate."""
+    cube_in = cube_in.copy()
+    if var_name is None:
+        var_name = "type"
+    if long_name is None:
+        long_name = "area type"
+    if value is None:
+        value = "default"
+    areatype_coord = iris.coords.AuxCoord(
+        value,
+        var_name=var_name,
+        standard_name="area_type",
+        long_name=long_name,
+        units=Unit("no unit"),
+    )
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord("area_type")
+    if var_name == "type" and long_name == "area type" and value == "default":
+        cube_out = add_scalar_areatype_coord(cube_in)
+    else:
+        cube_out = add_scalar_areatype_coord(
+            cube_in,
+            var_name,
+            long_name,
+            value,
+        )
+    assert cube_out is cube_in
+    coord = cube_in.coord("area_type")
+    assert coord == areatype_coord
+    cube_out_2 = add_scalar_areatype_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord("area_type")
+    assert coord == areatype_coord
 
 
 @pytest.mark.parametrize(("cube_in", "depth"), TEST_ADD_SCALAR_COORD)
