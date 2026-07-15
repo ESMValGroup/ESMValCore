@@ -889,7 +889,15 @@ def ensemble_statistics(
     :func:`esmvalcore.preprocessor.multi_model_statistics` for
     the full description of the core statistics function.
     """
-    ensemble_grouping = ("project", "dataset", "exp", "sub_experiment")
+    ensemble_grouping = (
+        "project",
+        "exp",
+        "dataset",
+        "rcm_version",
+        "driver",
+        "grid",
+        "sub_experiment",
+    )
     return multi_model_statistics(
         products=products,
         span=span,

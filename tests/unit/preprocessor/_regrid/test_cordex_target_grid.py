@@ -75,6 +75,10 @@ def test_cordex_stock_cube_eur11():
     assert cube.coord(var_name="rlon").has_bounds()
     assert cube.coord(var_name="lat").has_bounds()
     assert cube.coord(var_name="lon").has_bounds()
+    assert cube.coord(var_name="rlat").units == "degrees"
+    assert cube.coord(var_name="rlon").units == "degrees"
+    assert cube.coord(var_name="lat").units == "degrees_north"
+    assert cube.coord(var_name="lon").units == "degrees_east"
 
 
 @pytest.fixture
