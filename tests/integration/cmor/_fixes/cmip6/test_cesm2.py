@@ -792,7 +792,7 @@ def test_get_sftlf_fix():
 def test_sftlf_fix(cubes_regular_grid):
     """Test fix."""
     cube = cubes_regular_grid[0]
-    vardef = get_var_info("CMIP6", "fx", "Sftlf")
+    vardef = get_var_info("CMIP6", "fx", "sftlf")
     fix = Sftlf(vardef)
     fixed_cube = fix.fix_metadata(cube)
     check_lfrac_auxcoord(fixed_cube, "Land area type")
