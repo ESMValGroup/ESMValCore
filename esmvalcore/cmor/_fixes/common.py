@@ -250,7 +250,7 @@ class SiconcFixScalarCoord(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_areatype_coord(
             cube,
-            long_name="Sea ice area type",
+            long_name="Sea Ice area type",
             value="sea_ice",
         )
         return iris.cube.CubeList([cube])
