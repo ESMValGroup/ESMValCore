@@ -12,6 +12,7 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.iris_helpers import safe_convert_units
 
 from .shared import (
+    add_scalar_areatype_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
     add_scalar_typesi_coord,
@@ -48,6 +49,41 @@ class NativeDatasetFix(Fix):
             add_scalar_lambda550nm_coord(cube)
         if "typesi" in self.vardef.dimensions:
             add_scalar_typesi_coord(cube, "sea_ice")
+        if "typenatgr" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typenatgr",
+                long_name="Natural grass area type",
+                value="natural_grasses",
+            )
+        if "typeshrub" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typeshrub",
+                long_name="Shrub area type",
+                value="shrubs",
+            )
+        if "typebare" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typebare",
+                long_name="surface type",
+                value="bare_ground",
+            )
+        if "typetree" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typetree",
+                long_name="Tree area type",
+                value="trees",
+            )
+        if "typecrop" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typecrop",
+                long_name="Crop area type",
+                value="crops",
+            )
 
     def fix_var_metadata(self, cube: Cube) -> None:
         """Fix variable metadata of cube (in-place).

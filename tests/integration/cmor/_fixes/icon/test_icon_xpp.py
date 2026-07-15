@@ -14,12 +14,9 @@ from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import AllVarsBase
 from esmvalcore.cmor._fixes.icon.icon_xpp import (
     AllVars,
-    BaresoilFrac,
     Clwvi,
-    CropFrac,
     Evspsbl,
     Gpp,
-    GrassFrac,
     Hfls,
     Hfss,
     Msftmz,
@@ -28,8 +25,6 @@ from esmvalcore.cmor._fixes.icon.icon_xpp import (
     Rsutcs,
     Rtmt,
     Rtnt,
-    ShrubFrac,
-    TreeFrac,
     Zg,
 )
 from esmvalcore.cmor.fix import Fix
@@ -649,101 +644,6 @@ def test_gpp_fix(cubes_regular_grid):
             ],
         ],
     )
-
-
-# Test landfraction fixes
-
-
-def check_lfrac_auxcoord(cube, long_name):
-    assert cube.coords("area_type")
-    typelfrac = cube.coord("area_type")
-    assert typelfrac.standard_name == "area_type"
-    assert typelfrac.long_name == long_name
-
-
-def test_get_grassfrac_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "grassFrac")
-    assert fix == [GrassFrac(None), AllVars(None), GenericFix(None)]
-
-
-def test_grassfrac_fix(cubes_regular_grid):
-    """Test fix."""
-    cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "pplcc_grass_fract_box"
-    fixed_cubes = fix_metadata(cubes, "Lmon", "grassFrac")
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.var_name == "grassFrac"
-    check_lfrac_auxcoord(fixed_cube, "Grass area type")
-
-
-def test_get_shrubfrac_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "shrubFrac")
-    assert fix == [ShrubFrac(None), AllVars(None), GenericFix(None)]
-
-
-def test_shrubfrac_fix(cubes_regular_grid):
-    """Test fix."""
-    cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "pplcc_shrub_fract_box"
-    fixed_cubes = fix_metadata(cubes, "Lmon", "shrubFrac")
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.var_name == "shrubFrac"
-    check_lfrac_auxcoord(fixed_cube, "Shrub area type")
-
-
-def test_get_baresoilfrac_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "baresoilFrac")
-    assert fix == [BaresoilFrac(None), AllVars(None), GenericFix(None)]
-
-
-def test_baresoilfrac_fix(cubes_regular_grid):
-    """Test fix."""
-    cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "pplcc_baresoil_fract_box"
-    fixed_cubes = fix_metadata(cubes, "Lmon", "baresoilFrac")
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.var_name == "baresoilFrac"
-    check_lfrac_auxcoord(fixed_cube, "Baresoil area type")
-
-
-def test_get_treefrac_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "treeFrac")
-    assert fix == [TreeFrac(None), AllVars(None), GenericFix(None)]
-
-
-def test_treefrac_fix(cubes_regular_grid):
-    """Test fix."""
-    cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "pplcc_tree_fract_box"
-    fixed_cubes = fix_metadata(cubes, "Lmon", "treeFrac")
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.var_name == "treeFrac"
-    check_lfrac_auxcoord(fixed_cube, "Tree area type")
-
-
-def test_get_cropfrac_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes("ICON", "ICON-XPP", "Lmon", "cropFrac")
-    assert fix == [CropFrac(None), AllVars(None), GenericFix(None)]
-
-
-def test_cropfrac_fix(cubes_regular_grid):
-    """Test fix."""
-    cubes = CubeList([cubes_regular_grid[0].copy()])
-    cubes[0].var_name = "pplcc_crop_fract_box"
-    fixed_cubes = fix_metadata(cubes, "Lmon", "cropFrac")
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.var_name == "cropFrac"
-    check_lfrac_auxcoord(fixed_cube, "Crop area type")
 
 
 # Test hfls (for extra fix)

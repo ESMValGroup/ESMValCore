@@ -257,6 +257,31 @@ def add_scalar_typeland_coord(cube, value="default"):
     return cube
 
 
+def add_scalar_areatype_coord(
+    cube,
+    var_name="type",
+    long_name="area type",
+    value="default",
+):
+    """Add scalar coordinate for area type.
+
+    Information given with var_name `var_name', long_name `long_name`, and value of `value`.
+    """
+    logger.debug("Adding areatype coordinate (%s)", value)
+    areatype_coord = iris.coords.AuxCoord(
+        value,
+        var_name=var_name,
+        standard_name="area_type",
+        long_name=long_name,
+        units=Unit("no unit"),
+    )
+    try:
+        cube.coord("area_type")
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(areatype_coord, ())
+    return cube
+
+
 def add_scalar_typesea_coord(cube, value="default"):
     """Add scalar coordinate 'typesea' with value of `value`."""
     logger.debug("Adding typesea coordinate (%s)", value)
