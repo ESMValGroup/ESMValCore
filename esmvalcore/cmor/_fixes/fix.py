@@ -296,12 +296,13 @@ class Fix:
                     fixes_module,
                     inspect.isclass,
                 )
+                if issubclass(value, Fix)
             }
             for fix_name in (short_name, mip.lower(), "allvars"):
                 if fix_name in classes:
                     fixes.append(
                         classes[fix_name](
-                            vardef,
+                            vardef,  # type: ignore[arg-type]  # TODO: add check and raise error if vardef is None
                             extra_facets=extra_facets,
                             session=session,
                             frequency=frequency,
