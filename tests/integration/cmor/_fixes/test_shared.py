@@ -403,7 +403,12 @@ TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 @pytest.mark.parametrize(
     ("cube_in", "var_name", "long_name", "value"),
-    TEST_ADD_SCALAR_COORD,
+    [
+        (CUBE_1.copy(), None, None, None),
+        (CUBE_1.copy(), "type", "Land area type", "default"),
+        (CUBE_2.copy(), "typetree", "Tree area type", "trees"),
+        (CUBE_2.copy(), "type", "Sea Ice area type", "sea_ice"),
+    ],
 )
 def test_add_scalar_areatype_coord(cube_in, var_name, long_name, value):
     """Test adding of scalar typeland coordinate."""

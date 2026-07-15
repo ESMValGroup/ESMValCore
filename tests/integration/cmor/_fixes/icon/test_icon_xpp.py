@@ -1313,3 +1313,48 @@ def test_zg_fix(cubes_regular_grid):
         cube.data,
         [[[0.0, 0.10197162], [0.20394324, 0.30591486]]],
     )
+
+
+# Test landfraction fixes
+
+
+def check_lfrac_auxcoord(cube, long_name):
+    assert cube.coords("area_type")
+    typelfrac = cube.coord("area_type")
+    assert typelfrac.standard_name == "area_type"
+    assert typelfrac.long_name == "long_name"
+
+
+def test_grassfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "grassFrac")
+    check_lfrac_auxcoord(fixed_cube, "Grass area type")
+
+
+def test_shrubfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "shrubFrac")
+    check_lfrac_auxcoord(fixed_cube, "Shrub area type")
+
+
+def test_baresoilfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "baresoilFrac")
+    check_lfrac_auxcoord(fixed_cube, "Baresoil area type")
+
+
+def test_treefrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "treeFrac")
+    check_lfrac_auxcoord(fixed_cube, "Tree area type")
+
+
+def test_cropfrac_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    fixed_cube = fix_metadata(cube, "Lmon", "cropFrac")
+    check_lfrac_auxcoord(fixed_cube, "Crop area type")
