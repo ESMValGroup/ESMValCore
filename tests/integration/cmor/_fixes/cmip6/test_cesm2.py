@@ -807,7 +807,7 @@ def test_get_sftof_fix():
 def test_sftof_fix(cubes_regular_grid):
     """Test fix."""
     cube = cubes_regular_grid[0]
-    vardef = get_var_info("CMIP6", "fx", "Sftof")
+    vardef = get_var_info("CMIP6", "fx", "sftof")
     fix = Sftlf(vardef)
     fixed_cube = fix.fix_metadata(cube)
     check_lfrac_auxcoord(fixed_cube, "Ocean area type")
