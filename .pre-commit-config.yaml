@@ -25,23 +25,31 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.17"
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
   - repo: local
     hooks:
-      - id: type-check
-        name: type-check
-        entry: "pixi run --locked type-check"
-        # This uses local pixi installation
+      - id: ruff-check
+        name: ruff check
+        entry: "pixi run --locked ruff check --force-exclude --fix"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
+      - id: ruff-format
+        name: ruff format
+        entry: "pixi run --locked ruff format --force-exclude"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
+      - id: mypy
+        name: mypy
+        entry: "pixi run --locked mypy"
         language: system
         types:
           - python
         pass_filenames: false
-        # use require_serial so that script is only called once per commit
         require_serial: true
         verbose: false
         always_run: false
