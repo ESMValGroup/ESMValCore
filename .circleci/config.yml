@@ -18,15 +18,15 @@ jobs:
           name: Check dependencies are compatible
           command: pixi run --as-is pip check
       - run:
-          name: Generate mypy cache key
-          command: date '+%Y-%W' | tee mypy_cache_key.txt
+          name: Generate pre-commit cache key
+          command: date '+%Y-%W' | tee pre_commit_cache_key.txt
       - restore_cache:
-          key: pre-commit-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
+          key: pre-commit-{{ .Branch }}-{{ checksum "pre_commit_cache_key.txt" }}
       - run:
           name: Check code quality
           command: pixi run --as-is pre-commit run -a
       - save_cache:
-          key: pre-commit-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
+          key: pre-commit-{{ .Branch }}-{{ checksum "pre_commit_cache_key.txt" }}
           paths:
             - ~/.cache/pre-commit
             - ./.mypy_cache
