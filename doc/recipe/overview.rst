@@ -379,6 +379,8 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
 
+.. _cordex_datasets:
+
 CORDEX datasets
 ---------------
 

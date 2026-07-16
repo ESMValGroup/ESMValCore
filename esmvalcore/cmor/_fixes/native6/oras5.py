@@ -67,7 +67,7 @@ class Oras5Fix(IconFix):
 
         # Define the connectivity
         connectivity = Connectivity(
-            indices=np.ma.masked_array(indices, mask=mask),
+            indices=np.ma.MaskedArray(indices, mask=mask),
             cf_role="face_node_connectivity",
             start_index=0,
             location_axis=0,

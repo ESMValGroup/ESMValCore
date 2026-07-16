@@ -1770,7 +1770,7 @@ def _transform_to_lst_eager(
     mask = broadcast_to_shape(mask, new_data.shape, (time_dim, lon_dim))
     new_mask = mask | np.ma.getmaskarray(new_data)
 
-    return np.ma.masked_array(new_data, mask=new_mask)
+    return np.ma.MaskedArray(new_data, mask=new_mask)
 
 
 def _transform_to_lst_lazy(
