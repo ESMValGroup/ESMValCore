@@ -18,6 +18,9 @@ jobs:
           name: Check dependencies are compatible
           command: pixi run --as-is pip check
       - run:
+          name: Check code quality
+          command: pixi run --as-is pre-commit run -a
+      - run:
           name: Run tests
           command: |
             pixi run --as-is test --cov -n 4 --durations=10 --junitxml=test-reports/report.xml
