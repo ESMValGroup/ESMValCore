@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12",
-        "checksum": "md5: 6b68c6296b3c628046d858794d99add9",
-        "cmor_version": "3.13",
+        "checksum": "md5: f6cbf320d4dcc751b39e9a1a32f658b6",
+        "cmor_version": "3.15",
         "generic_levels": "",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "land",
-        "table_date": "2026-04-21 15:01:29",
+        "table_date": "2026-07-09 13:08:05",
         "table_id": "land",
         "type": "real",
         "valid_max": "",
@@ -2547,6 +2547,22 @@
             "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_14C_due_to_all_land_processes",
             "units": "kg m-2 s-1"
         },
+        "netAtmosLandCO2Flux_tavg-u-hxy-lnd": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where land time: mean",
+            "comment": "",
+            "dimensions": [
+                "longitude",
+                "latitude",
+                "time"
+            ],
+            "long_name": "Net Flux of CO2 Between Atmosphere and Land (Positive into Land) as a Result of All Processes [kgC m-2 s-1]",
+            "modeling_realm": "land",
+            "out_name": "netAtmosLandCO2Flux",
+            "positive": "down",
+            "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon",
+            "units": "kg m-2 s-1"
+        },
         "nppLeaf_tavg-u-hxy-lnd": {
             "cell_measures": "",
             "cell_methods": "area: mean where land time: mean",
@@ -3277,7 +3293,7 @@
         },
         "rsus_tavg-u-hxy-lnd": {
             "cell_measures": "",
-            "cell_methods": "area: mean where land",
+            "cell_methods": "area: time: mean where land",
             "comment": "",
             "dimensions": [
                 "longitude",
@@ -3470,23 +3486,6 @@
             "standard_name": "air_temperature",
             "units": "K"
         },
-        "tas_tavg-h2m-hxy-u": {
-            "cell_measures": "",
-            "cell_methods": "area: time: mean",
-            "comment": "",
-            "dimensions": [
-                "longitude",
-                "latitude",
-                "time",
-                "height2m"
-            ],
-            "long_name": "Near-Surface Air Temperature",
-            "modeling_realm": "land",
-            "out_name": "tas",
-            "positive": "",
-            "standard_name": "air_temperature",
-            "units": "K"
-        },
         "tran_tavg-u-hxy-lnd": {
             "cell_measures": "",
             "cell_methods": "area: mean where land time: mean",
@@ -3648,7 +3647,7 @@
                 "time"
             ],
             "long_name": "Surface Temperature Where Land or Sea Ice",
-            "modeling_realm": "land",
+            "modeling_realm": "land seaIce",
             "out_name": "tslsi",
             "positive": "",
             "standard_name": "surface_temperature",
@@ -3664,7 +3663,7 @@
                 "time1"
             ],
             "long_name": "Surface Temperature Where Land or Sea Ice",
-            "modeling_realm": "land",
+            "modeling_realm": "land seaIce",
             "out_name": "tslsi",
             "positive": "",
             "standard_name": "surface_temperature",
