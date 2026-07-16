@@ -28,6 +28,17 @@ def test_generic_fix_empty_long_name(generic_fix, monkeypatch):
     assert cube == sentinel.cube
 
 
+def test_generic_fix_invalid_standard_name(generic_fix, monkeypatch):
+    """Keep original cube standard name for invalid CMOR standard name."""
+    # Artificially set CMOR standard_name to an invalid CF standard name.
+    monkeypatch.setattr(generic_fix.vardef, "standard_name", "invalid_name")
+
+    cube = Cube(0, standard_name="air_temperature")
+    fixed_cube = generic_fix._fix_standard_name(cube)
+
+    assert fixed_cube.standard_name == "air_temperature"
+
+
 def test_generic_fix_empty_units(generic_fix, monkeypatch):
     """Test ``GenericFix``."""
     # Artificially set latitude units to empty string for test

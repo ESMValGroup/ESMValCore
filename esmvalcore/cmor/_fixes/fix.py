@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import dask
+import iris.std_names
 import numpy as np
 from cf_units import Unit
 from iris.coords import CoordExtent
@@ -500,13 +501,25 @@ class GenericFix(Fix):
             return cube
 
         if cube.standard_name != self.vardef.standard_name:
-            self._warning_msg(
-                cube,
-                "Standard name changed from '%s' to '%s'",
-                cube.standard_name,
-                self.vardef.standard_name,
-            )
-            cube.standard_name = self.vardef.standard_name
+            if self.vardef.standard_name in iris.std_names.STD_NAMES:
+                self._warning_msg(
+                    cube,
+                    "Standard name changed from '%s' to '%s'",
+                    cube.standard_name,
+                    self.vardef.standard_name,
+                )
+                cube.standard_name = self.vardef.standard_name
+            else:
+                self._warning_msg(
+                    cube,
+                    "Standard name '%s' in the CMOR table is not a valid CF "
+                    "standard name according to version %s of the CF standard "
+                    "names table as used by `iris.std_names.STD_NAMES`, "
+                    "keeping original value '%s'",
+                    self.vardef.standard_name,
+                    iris.std_names.CF_STANDARD_NAMES_TABLE_VERSION,
+                    cube.standard_name,
+                )
 
         return cube
 
