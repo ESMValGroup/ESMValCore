@@ -21,13 +21,14 @@ jobs:
           name: Generate mypy cache key
           command: date '+%Y-%W' | tee mypy_cache_key.txt
       - restore_cache:
-          key: types-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
+          key: pre-commit-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
       - run:
           name: Check code quality
           command: pixi run --as-is pre-commit run -a
       - save_cache:
-          key: types-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
+          key: pre-commit-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
           paths:
+            - ~/.cache/pre-commit
             - ./.mypy_cache
       - run:
           name: Run tests
