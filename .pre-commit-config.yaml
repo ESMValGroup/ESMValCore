@@ -51,8 +51,6 @@ repos:
           - python
         pass_filenames: false
         require_serial: true
-        verbose: false
-        always_run: false
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:
