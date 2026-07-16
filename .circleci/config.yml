@@ -15,20 +15,20 @@ jobs:
       - checkout
       - pixi/pixi_setup
       - run:
+          name: Check dependencies are compatible
+          command: pixi run --as-is pip check
+      - run:
           name: Generate mypy cache key
           command: date '+%Y-%W' | tee mypy_cache_key.txt
       - restore_cache:
-          key: type-check-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
-      - run:
-          name: Check dependencies are compatible
-          command: pixi run --as-is pip check
-      - save_cache:
-          key: type-check-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
-          paths:
-            - ./.mypy_cache
+          key: types-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
       - run:
           name: Check code quality
           command: pixi run --as-is pre-commit run -a
+      - save_cache:
+          key: types-{{ .Branch }}-{{ checksum "mypy_cache_key.txt" }}
+          paths:
+            - ./.mypy_cache
       - run:
           name: Run tests
           command: |
