@@ -30,6 +30,7 @@ jobs:
           paths:
             - ~/.cache/pre-commit
             - ./.mypy_cache
+            - ./.ruff_cache
       - run:
           name: Run tests
           command: |
