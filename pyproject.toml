@@ -305,6 +305,12 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 "pre-commit" = "*"
 "py-spy" = "*"
 "ruff" = "*"
+# Mypy type stubs
+"pandas-stubs" = "*"
+"scipy-stubs" = "*"
+"types-PyYAML" = "*"
+"types-psutil" = "*"
+"types-shapely" = "*"
 
 # Feature for running tests with Python 3.12.
 [tool.pixi.feature.py312.dependencies]
