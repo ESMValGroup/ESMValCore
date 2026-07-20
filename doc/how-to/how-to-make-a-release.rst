@@ -17,6 +17,8 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `DockerHub <https://hub.docker.com/orgs/esmvalgroup>`__,
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
+   
+   Also, permissions to create tags in the GitHub repository.
 
 The release of ESMValCore is tied to the release of ESMValTool.
 The detailed steps can be found in the ESMValTool
@@ -52,24 +54,18 @@ follow these steps:
 
 All tests should pass before making a release (branch).
 
-2. Create a release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create a branch off the ``main`` branch and push it to GitHub.
-Ask someone with administrative permissions to set up branch protection rules
-for it so only you and the person helping you with the release can push to it.
-
-3. Increase the version number
+2. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version number is automatically generated from the information provided by
-git using [setuptools-scm](https://pypi.org/project/setuptools-scm/), but a
+git using `setuptools-scm <https://pypi.org/project/setuptools-scm/>`__, but a
 static version number is stored in ``CITATION.cff``.
 Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
-Make a pull request and get it merged into ``main`` and cherry pick it into
-the release branch.
+Make a pull request and get it merged into ``main``. If updated after release
+branch is created, cherry pick it into the release branch.
 
-4. Add release notes
+3. Add release notes
 ~~~~~~~~~~~~~~~~~~~~
 Use the script
 :ref:`esmvaltool/utils/draft_release_notes.py <draft_release_notes.py>`
@@ -87,9 +83,15 @@ may include, as well as a brief description on how to upgrade a deprecated featu
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
-Make a pull request and get it merged into ``main`` and cherry pick it into
-the release branch.
+Make a pull request and get it merged into ``main``. If updated after release
+branch is created, cherry pick it into the release branch.
 
+4. Create a release branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create a branch off the ``main`` branch and push it to GitHub. This should be named
+in the format ``v2.1.x`` where ``2.1`` is the version number.
+Ask someone with administrative permissions to set up branch protection rules
+for it so only you and the person helping you with the release can push to it.
 
 5. Make the (pre-)release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,39 +102,20 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``main``).
 
-Create a tag and tick the `This is a pre-release` box if working with a release candidate.
+Create a tag corresponding to the release candidate or final release,
+e.g. ``v2.1.0rc1`` or ``v2.1.0``. You can add a link to the relevant changelog in the
+release notes.
 
-6. Mark the release in the main branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When the (pre-)release is tagged, it is time to merge the release branch back into `main`.
-We do this for two reasons, namely, one, to mark the point up to which commits in `main`
-have been considered for inclusion into the present release, and, two, to inform
-setuptools-scm about the version number so that it creates the correct version number in
-`main`.
-However, unlike in a normal merge, we do not want to integrate any of the changes from the
-release branch into main.
-This is because all changes that should be in both branches, i.e. bug fixes, originate from
-`main` anyway and the only other changes in the release branch relate to the release itself.
-To take this into account, we perform the merge in this case on the command line using `the
-ours merge strategy <https://git-scm.com/docs/merge-strategies#Documentation/merge-strategies.txt-ours-1>`__
-(``git merge -s ours``), not to be confused with the ``ours`` option to the ort merge strategy
-(``git merge -X ours``).
-For details about merge strategies, see the above-linked page.
-To execute the merge use following sequence of steps
-
-.. code-block:: bash
-
-   git fetch
-   git checkout main
-   git pull
-   git merge -s ours v2.1.x
-   git push
+If this is the **first** release candidate, create the release and tag off the `main` branch. 
+We do this to inform `setuptools-scm <https://setuptools-scm.readthedocs.io/>`__ about
+the version number so that it creates the correct version number in `main`.
+Only the first release candidate tag `main` is sufficient for this automatic versioning.
+Tick the `This is a pre-release` box if working with a release candidate.
 
 Note that the release branch remains intact and you should continue any work on the release
 on that branch.
 
-7. Create and upload the PyPI package
+6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -146,7 +129,7 @@ If the automatic build and upload has failed for some reason, do it manually by
 following these instructions:
 
 -  Check out the tag corresponding to the release,
-   e.g. ``git checkout tags/v2.1.0``
+   e.g. ``git checkout tags/v2.1.0``
 -  Make sure your current working directory is clean by checking the output
    of ``git status`` and by running ``git clean -xdf`` to remove any files
    ignored by git.
@@ -165,7 +148,7 @@ following these instructions:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-8. Create the Conda package
+7. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
@@ -194,7 +177,7 @@ conda-forge some time later.
 Contact the feedstock maintainers if you want to become a maintainer yourself.
 
 
-9. Check the Docker images
+8. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is one main Docker container images available for ESMValCore on
