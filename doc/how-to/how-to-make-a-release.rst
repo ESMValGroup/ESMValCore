@@ -17,7 +17,7 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `DockerHub <https://hub.docker.com/orgs/esmvalgroup>`__,
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
-   
+
    Also, permissions to create tags in the GitHub repository.
 
 The release of ESMValCore is tied to the release of ESMValTool.
