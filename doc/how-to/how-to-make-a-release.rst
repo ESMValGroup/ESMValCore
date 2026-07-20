@@ -13,12 +13,20 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    The previous release manager ensures the current release manager has the
    required administrative permissions to make the release.
    Consider the following services:
-   `conda-forge <https://github.com/conda-forge/esmvalcore-feedstock>`__,
-   `DockerHub <https://hub.docker.com/orgs/esmvalgroup>`__,
-   `PyPI <https://pypi.org/project/ESMValCore/>`__, and
-   `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
+   `esmvalcore-feedstock <https://github.com/conda-forge/esmvalcore-feedstock>`__ for
+   making the conda-forge package, and
+   `esmvaltool.dkrz.de <https://esmvaltool.dkrz.de>`__ for uploading recipe
+   runs for the ESMValTool release.
 
-   Also, permissions to create tags in the GitHub repository.
+   Ask someone with administrative permissions to add you to the
+   `@release-managers <https://github.com/orgs/ESMValGroup/teams/release-managers>`_
+   team because only members of this team have permission to create tags in the
+   GitHub repository.
+
+   If the automation fails, you may need access to the following services:
+   `PyPI <https://pypi.org/project/ESMValCore/>`__,
+   `DockerHub <https://hub.docker.com/orgs/esmvalgroup>`__,
+   `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
 The release of ESMValCore is tied to the release of ESMValTool.
 The detailed steps can be found in the ESMValTool
@@ -72,6 +80,12 @@ Use the script
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
+Ensure that any pull request labelled as
+`issue introduced since last release <https://github.com/ESMValGroup/ESMValCore/pulls?q=is%3Apr+label%3A%22issue+introduced+since+last+release%22+is%3Aclosed>`__
+is listed on the same line as the pull request that introduced the issue.
+This label is intended for pull requests that fix a mistake that is was
+introduced after the last release and therefore is not a bug that is present in
+any released version of the code.
 Open a discussion to allow members of the development team to nominate pull
 requests as highlights. Add the most voted pull requests as highlights at the
 beginning of changelog. After the highlights section, list any backward
@@ -86,35 +100,40 @@ Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``main``. If updated after release
 branch is created, cherry pick it into the release branch.
 
-4. Create a release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create a branch off the ``main`` branch and push it to GitHub. This should be named
-in the format ``v2.1.x`` where ``2.1`` is the version number.
-Ask someone with administrative permissions to set up branch protection rules
-for it so only you and the person helping you with the release can push to it.
-
-5. Make the (pre-)release on GitHub
+4. Make the (pre-)release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
 successfully.
 Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
-and create the new release from the release branch (i.e. not from ``main``).
+and create the new release.
 
-Create a tag corresponding to the release candidate or final release,
-e.g. ``v2.1.0rc1`` or ``v2.1.0``. You can add a link to the relevant changelog in the
+Create a tag corresponding to the release candidate or final release, e.g.
+``v2.1.0rc1`` or ``v2.1.0``. You can add a link to the relevant changelog in the
 release notes.
-
-If this is the *first* release candidate, create the release and tag off the ``main`` branch.
-We do this to inform `setuptools-scm <https://setuptools-scm.readthedocs.io/>`__ about
-the version number so that it creates the correct version number in ``main``.
-Only the first release candidate tag ``main`` is sufficient for this automatic versioning.
 
 Tick the `This is a pre-release` box if working with a release candidate.
 
-Note that the release branch remains intact and you should continue any work on the release
-on that branch.
+If this is the *first* release candidate, create the release and tag off the
+``main`` branch. We do this to inform
+`setuptools-scm <https://setuptools-scm.readthedocs.io/>`_ about the release,
+so that it increases the version number in ``main``. All subsequent release
+candidates and the final release are created off the release branch.
+
+5. Create a release branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a branch off the first release candidate tag and push it to GitHub.
+This step only needs to be performed once for every minor release.
+For the ``v2.1`` release, the command to create the release branch would be:
+``git checkout -b v2.1.x tags/v2.1.0rc1``, where ``v2.1.0rc1`` is the tag of the
+first release candidate.
+Release branches must be named ``vX.Y.x`` where ``X`` is the major and ``Y`` is
+the minor version number of the release to ensure setuptools-scm_ provides the
+correct version number for the release.
+Ask someone with administrative permissions to set up branch protection rules
+for it so only you and the person helping you with the release can push to it.
 
 6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
