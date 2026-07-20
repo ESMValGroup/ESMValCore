@@ -106,10 +106,11 @@ Create a tag corresponding to the release candidate or final release,
 e.g. ``v2.1.0rc1`` or ``v2.1.0``. You can add a link to the relevant changelog in the
 release notes.
 
-If this is the **first** release candidate, create the release and tag off the `main` branch. 
+If this is the *first* release candidate, create the release and tag off the ``main`` branch.
 We do this to inform `setuptools-scm <https://setuptools-scm.readthedocs.io/>`__ about
-the version number so that it creates the correct version number in `main`.
-Only the first release candidate tag `main` is sufficient for this automatic versioning.
+the version number so that it creates the correct version number in ``main``.
+Only the first release candidate tag ``main`` is sufficient for this automatic versioning.
+
 Tick the `This is a pre-release` box if working with a release candidate.
 
 Note that the release branch remains intact and you should continue any work on the release
