@@ -3034,7 +3034,7 @@ Example:
 .. code-block:: yaml
 
     preprocessors:
-      preproc_t_test:
+      welchs_t_test:
         t_test:
           coords: [time]
           equal_var: false
