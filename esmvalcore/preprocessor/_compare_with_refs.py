@@ -629,7 +629,7 @@ def t_test(
     and reference dataset) have identical average (expected) values.
 
     All input datasets need to have the same shape. To ensure this, the
-    preprocessors :func:`esmvalcore.preprocessor.regrid`  might be helpful.
+    preprocessors :func:`esmvalcore.preprocessor.regrid` might be helpful.
 
     Handles lazy data and masked data.
 

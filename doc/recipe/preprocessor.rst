@@ -3017,9 +3017,9 @@ For example:
 Here, the t-test for MIROC6 is calculated relative to the the multi-model mean
 from the models CanESM5 and CESM2.
 
-All datasets need to have the same shape and coordinates.
-To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
-:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+All datasets need to have the same shape.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` might
+be helpful.
 
 The ``t_test`` preprocessor supports the following arguments in the recipe:
 
