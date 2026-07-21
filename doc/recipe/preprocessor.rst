@@ -2638,8 +2638,11 @@ This module contains the following preprocessor functions:
 
 * ``bias``: Calculate absolute or relative biases with respect to a reference
   dataset.
-* ``distance_metric``: Calculate absolute or relative biases with respect to a
-  reference dataset.
+* ``distance_metric``: Calculate distance metrics with respect to a reference
+  dataset.
+* ``t_test``: Calculate t-test (null hypothesis: 2 independent samples have
+  identical mean) with respect to a reference dataset and attach the
+  corresponding p-value as ancillary variable to the data.
 
 ``bias``
 --------
@@ -2937,8 +2940,90 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-.. _Other:
+.. _t_test:
 
+``t_test``
+----------
+
+This function performs a :func:`t-test <scipy.stats.ttest_ind>` (null
+hypothesis: 2 independent samples have identical mean) with respect to a
+reference dataset and attaches the corresponding p-value as ancillary variable
+to the data.
+For this, exactly one input dataset needs to be declared as
+``reference_for_t_test: true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_t_test: true}
+
+In the example above, ERA-Interim is used as reference dataset for the t-test
+calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_metric: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_t_test: true}
+    - {dataset: CESM2,   group: ref, reference_for_t_test: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_t_test:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      t_test:
+
+Here, the t-test for MIROC6 is calculated relative to the the multi-model mean
+from the models CanESM5 and CESM2.
+
+All datasets need to have the same shape and coordinates.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+
+The ``t_test`` preprocessor supports the following arguments in the recipe:
+
+* ``coords`` (:obj:`list` of :obj:`str`, default: ``None``): Coordinates over
+  which the t-test is calculated.
+  If ``None``, calculate the metric over all coordinates, which results in a
+  scalar cube.
+* Other parameters are passed to :func:`scipy.stats.ttest_ind`.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_t_test:
+        t_test:
+          coords: [time]
+          equal_var: false
+          nan_policy: omit
+
+This will perform a `Welch's t-test
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__, which does not assume
+equal variances between the samples, and omit all masked values for the t-test
+calculation (the default behavior is to return masked values if at least one
+input value is masked).
+
+See also :func:`esmvalcore.preprocessor.t_test`.
+
+
+.. _Other:
 
 Other
 =====
