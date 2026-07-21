@@ -40,21 +40,24 @@ handlers:
     level: INFO
     formatter: brief
     filename: main_log.txt
-    mode: w
+    encoding: utf-8
+    mode: a
     filters: [only_ours, no_cmor, no_external_warnings, no_intake_esgf]
   debug_log_file:
     class: logging.FileHandler
     level: DEBUG
     formatter: debug
     filename: main_log_debug.txt
-    mode: w
+    encoding: utf-8
+    mode: a
     filters: [only_ours]
   cmor_log: # only contains output from CMOR check and generic fixes
     class: logging.FileHandler
     level: INFO
     formatter: brief
     filename: cmor_log.txt
-    mode: w
+    encoding: utf-8
+    mode: a
     filters: [only_cmor]
 root:
   level: DEBUG

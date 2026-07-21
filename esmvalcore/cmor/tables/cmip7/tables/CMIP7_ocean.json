@@ -1,8 +1,8 @@
 {
     "Header": {
         "Conventions": "CF-1.12",
-        "checksum": "md5: 60093c4d62defac62647106e1b31fb3f",
-        "cmor_version": "3.13",
+        "checksum": "md5: d2f724ea234d94e15bdf08e953e119c8",
+        "cmor_version": "3.15",
         "generic_levels": "olevel olevhalf",
         "int_missing_value": "-999",
         "missing_value": "1e20",
@@ -11,7 +11,7 @@
         "positive": "",
         "product": "model-output",
         "realm": "ocean",
-        "table_date": "2026-04-21 15:01:29",
+        "table_date": "2026-07-09 13:08:05",
         "table_id": "ocean",
         "type": "real",
         "valid_max": "",
@@ -84,21 +84,6 @@
             "standard_name": "region",
             "units": "1"
         },
-        "bigthetao_tavg-ol-hm-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "olevel",
-                "time"
-            ],
-            "long_name": "Global Average Sea Water Conservative Temperature",
-            "modeling_realm": "ocean",
-            "out_name": "bigthetao",
-            "positive": "",
-            "standard_name": "sea_water_conservative_temperature",
-            "units": "degC"
-        },
         "bigthetao_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -127,6 +112,20 @@
                 "op20bar"
             ],
             "long_name": "Sea Water Conservative Temperature at 200 meters",
+            "modeling_realm": "ocean",
+            "out_name": "bigthetao",
+            "positive": "",
+            "standard_name": "sea_water_conservative_temperature",
+            "units": "degC"
+        },
+        "bigthetao_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Average Sea Water Conservative Temperature",
             "modeling_realm": "ocean",
             "out_name": "bigthetao",
             "positive": "",
@@ -1833,8 +1832,8 @@
             "modeling_realm": "ocean",
             "out_name": "sfacrossline",
             "positive": "",
-            "standard_name": "ocean_salt_transport_across_line",
-            "units": "W"
+            "standard_name": "ocean_salt_mass_transport_across_line",
+            "units": "kg s-1"
         },
         "sfdsi_tavg-u-hxy-sea": {
             "cell_measures": "",
@@ -2013,21 +2012,6 @@
             "standard_name": "northward_ocean_salt_transport_due_to_overturning",
             "units": "kg s-1"
         },
-        "so_tavg-ol-hm-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "olevel",
-                "time"
-            ],
-            "long_name": "Global Mean Sea Water Salinity",
-            "modeling_realm": "ocean",
-            "out_name": "so",
-            "positive": "",
-            "standard_name": "sea_water_salinity",
-            "units": "1E-03"
-        },
         "so_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -2039,6 +2023,20 @@
                 "time"
             ],
             "long_name": "Sea Water Salinity",
+            "modeling_realm": "ocean",
+            "out_name": "so",
+            "positive": "",
+            "standard_name": "sea_water_salinity",
+            "units": "1E-03"
+        },
+        "so_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Mean Sea Water Salinity",
             "modeling_realm": "ocean",
             "out_name": "so",
             "positive": "",
@@ -2417,21 +2415,6 @@
             "standard_name": "sea_water_potential_temperature",
             "units": "degC"
         },
-        "thetao_tavg-ol-hm-sea": {
-            "cell_measures": "",
-            "cell_methods": "area: mean where sea time: mean",
-            "comment": "",
-            "dimensions": [
-                "olevel",
-                "time"
-            ],
-            "long_name": "Global Average Sea Water Potential Temperature",
-            "modeling_realm": "ocean",
-            "out_name": "thetao",
-            "positive": "",
-            "standard_name": "sea_water_potential_temperature",
-            "units": "degC"
-        },
         "thetao_tavg-ol-hxy-sea": {
             "cell_measures": "",
             "cell_methods": "area: mean where sea time: mean",
@@ -2460,6 +2443,20 @@
                 "op20bar"
             ],
             "long_name": "Sea Water Potential Temperature at 200 meters",
+            "modeling_realm": "ocean",
+            "out_name": "thetao",
+            "positive": "",
+            "standard_name": "sea_water_potential_temperature",
+            "units": "degC"
+        },
+        "thetao_tavg-u-hm-sea": {
+            "cell_measures": "",
+            "cell_methods": "area: mean where sea time: mean",
+            "comment": "",
+            "dimensions": [
+                "time"
+            ],
+            "long_name": "Global Average Sea Water Potential Temperature",
             "modeling_realm": "ocean",
             "out_name": "thetao",
             "positive": "",

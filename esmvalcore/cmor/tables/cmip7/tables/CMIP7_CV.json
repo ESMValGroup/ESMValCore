@@ -1,10 +1,10 @@
 {
     "CV": {
-        "Conventions": {
-            "CF-1.11": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html",
-            "CF-1.12": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.12/cf-conventions.html",
-            "CF-1.13": "https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html"
-        },
+        "Conventions": [
+            "CF-1.11",
+            "CF-1.12",
+            "CF-1.13"
+        ],
         "DRS": {
             "directory_path_example": "MIP-DRS7/CMIP7/CMIP/CNRM-CERFACS/CNRM-ESM2-1e/1pctCO2/r1i1p1f1/glb/mon/rsus/tavg-h2m-hxy-u/g101/20251104",
             "directory_path_template": "<drs_specs><mip_era><activity_id><institution_id><source_id><experiment_id><variant_label><region><frequency><variable_id><branding_suffix><grid_label><version>",
@@ -17,7 +17,9 @@
             "CFMIP": "Cloud feedback model intercomparison project. Focussed primarily on cloud feedbacks with a secondary focus on understanding of response to forcing, model biases, circulation, regional-scale precipitation, and non-linear changes.",
             "CMIP": "CMIP core common experiments i.e. the DECK (Diagnostic, Evaluation and Characterization of Klima).",
             "DAMIP": "Detection and attribution model intercomparison project: exploration of the role of individual forcings (both anthropogenic and natural) in past and future climate change.",
+            "DCPP": "Decadal climate prediction project: Coordinated multi-model investigation into decadal climate prediction, predictability, and variability",
             "GeoMIP": "Geoengineering model intercomparison project: exploration of the climate response to solar radiation manipulation.",
+            "LMIP": "Land (offline) Model Intercomparison Project: advancing understanding of the impacts of land-use and land-cover change (LULCC) on climate",
             "PMIP": "Palaeoclimate modelling intercomparison project: assessment of paleoclimate i.e. climate thousands of years or more in the past.",
             "RFMIP": "Radiative Forcing Model Intercomparison Project: characterisation of radiative forcing within models.",
             "ScenarioMIP": "Future scenario experiments. Exploration of the future climate under a (selected) range of possible boundary conditions. In CMIP7, the priority tier for experiments is conditional on whether you are doing emissions- or concentration-driven simulations. There is no way to express this in the CVs (nor time to implement something to handle this conditionality). This means that, for your particular situation, some experiments may be at a lower tier than is listed in the CVs. For example, the `vl` scenario is tier 1 for concentration-driven models and tier 2 for emissions-driven models. However, in the CVs, we have used the highest priority tier (across all the possible conditionalities). Hence `vl` is listed as tier 1 in the CVs (even though it is actually tier 2 for emissions-driven models).For details, please see the full description in the ScenarioMIP description papers."
@@ -243,6 +245,34 @@
                 "start_year": 1870,
                 "tier": 1
             },
+            "dcppB-forecast-cmip6": {
+                "activity_id": [
+                    "DCPP"
+                ],
+                "description": "Simulation to examine forced climate change and variability up to 10 years into the future. This forecast is initialised from observations with forcing from ssp245 applied over its extent.",
+                "end_year": 2035,
+                "experiment": "Simulation to examine forced climate change and variability up to 10 years into the future. This forecast is initialised from observations with forcing from ssp245 applied over its extent.",
+                "experiment_id": "dcppB-forecast-cmip6",
+                "min_number_yrs_per_sim": 10,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": "",
+                "tier": 1
+            },
+            "eocene-5x": {
+                "activity_id": [
+                    "PMIP"
+                ],
+                "description": "The experiment is designed to represent the Early Eocene Climatic Optimum (EECO), ~50 million years ago. The Eocene was a time period of high CO2, and plate tectonic movements meant that the continents were in different positions compared to today. Vegetation was also different to today. Because paleoclimate proxy data exist for this period, it provides a test of how well a model can represent a high CO2 world. Compared to piControl, the topography, CO2, and land-surface types (vegetation and ice sheets) are modified. The experiment can be initialised from previous Eocene simulations, or from idealised initial states which are provided. The experiment should be run for as long as possible, and equilibration criteria are stipulated. However, only the final 100 years are uploaded to the ESGF.",
+                "end_year": "",
+                "experiment": "The experiment is designed to represent the Early Eocene Climatic Optimum (EECO), ~50 million years ago. The Eocene was a time period of high CO2, and plate tectonic movements meant that the continents were in different positions compared to today. Vegetation was also different to today. Because paleoclimate proxy data exist for this period, it provides a test of how well a model can represent a high CO2 world. Compared to piControl, the topography, CO2, and land-surface types (vegetation and ice sheets) are modified. The experiment can be initialised from previous Eocene simulations, or from idealised initial states which are provided. The experiment should be run for as long as possible, and equilibration criteria are stipulated. However, only the final 100 years are uploaded to the ESGF.",
+                "experiment_id": "eocene-5x",
+                "min_number_yrs_per_sim": 100,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": "",
+                "tier": 2
+            },
             "esm-flat10": {
                 "activity_id": [
                     "C4MIP"
@@ -351,9 +381,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
+                "description": "CMIP7 ScenarioMIP High emission scenario - A scenario with emissions as high as judged to be plausible, based on assuming developments that include a rollback of current mitigation policies. This scenario is expected to result in forcings below SSP5-8.5. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
+                "experiment": "CMIP7 ScenarioMIP High emission scenario - A scenario with emissions as high as judged to be plausible, based on assuming developments that include a rollback of current mitigation policies. This scenario is expected to result in forcings below SSP5-8.5. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-h`).",
                 "experiment_id": "esm-scen7-h",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -369,9 +399,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
+                "description": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `esm-scen7-h`. Requires interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
+                "experiment": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `esm-scen7-h`. Requires interactive chemistry. Models without interactive chemistry should run `esm-scen7-h-Aer` instead.",
                 "experiment_id": "esm-scen7-h-AQ",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -387,9 +417,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-Aq` instead.",
+                "description": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `esm-scen7-h`. Intended for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-AQ` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-Aq` instead.",
+                "experiment": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `esm-scen7-h`. Intended for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-h-AQ` instead.",
                 "experiment_id": "esm-scen7-h-Aer",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -423,9 +453,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
+                "description": "CMIP7 ScenarioMIP High-to-Low emission scenario - A scenario that follows approximately the same emissions pathway as the High, but changes course in the second half of the century, applying strong mitigation measures to reach net zero CO2 emissions by 2100. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
+                "experiment": "CMIP7 ScenarioMIP High-to-Low emission scenario - A scenario that follows approximately the same emissions pathway as the High, but changes course in the second half of the century, applying strong mitigation measures to reach net zero CO2 emissions by 2100. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-hl`).",
                 "experiment_id": "esm-scen7-hl",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -459,9 +489,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
+                "description": "CMIP7 ScenarioMIP Low emission scenario - The Low emission scenario is designed to be consistent with the pursuit of holding warming to a level likely below 2C, without returning to 1.5C before the end of the century.  Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
+                "experiment": "CMIP7 ScenarioMIP Low emission scenario - The Low emission scenario is designed to be consistent with the pursuit of holding warming to a level likely below 2C, without returning to 1.5C before the end of the century.  Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-l`).",
                 "experiment_id": "esm-scen7-l",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -495,9 +525,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
+                "description": "CMIP7 ScenarioMIP Low-to-Negative emission scenario - A scenario with a higher overshoot of the 1.5C goal, followed by stringent climate policies resulting in net-negative greenhouse gas emissions to return to lower warming levels, thus supporting research into the reversibility of climate outcomes and their impacts. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
+                "experiment": "CMIP7 ScenarioMIP Low-to-Negative emission scenario - A scenario with a higher overshoot of the 1.5C goal, followed by stringent climate policies resulting in net-negative greenhouse gas emissions to return to lower warming levels, thus supporting research into the reversibility of climate outcomes and their impacts. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ln`).",
                 "experiment_id": "esm-scen7-ln",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -531,9 +561,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
+                "description": "CMIP7 ScenarioMIP Medium emission scenario - A middle scenario exploring consequences of extending current policies and trends into the future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
+                "experiment": "CMIP7 ScenarioMIP Medium emission scenario - A middle scenario exploring consequences of extending current policies and trends into the future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-m`).",
                 "experiment_id": "esm-scen7-m",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -567,9 +597,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
+                "description": "CMIP7 ScenarioMIP Medium-to-Low emission scenario - A scenario exploring a delayed increase in mitigation efforts, short of the Paris temperature goal but achieving net-zero CO2 emissions by the end of the century. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
+                "experiment": "CMIP7 ScenarioMIP Medium-to-Low emission scenario - A scenario exploring a delayed increase in mitigation efforts, short of the Paris temperature goal but achieving net-zero CO2 emissions by the end of the century. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-ml`).",
                 "experiment_id": "esm-scen7-ml",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -603,9 +633,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
+                "description": "CMIP7 ScenarioMIP Very Low emission scenario - The Very Low emission scenario is designed to keep the temperature level as low as plausible given feasibility constraints. This scenario is thus relevant for the low end of the Paris range (staying as close as plausible to 1.5C at the time of peak warming and limiting warming to 1.5C by the end of the century). Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
+                "experiment": "CMIP7 ScenarioMIP Very Low emission scenario - The Very Low emission scenario is designed to keep the temperature level as low as plausible given feasibility constraints. This scenario is thus relevant for the low end of the Paris range (staying as close as plausible to 1.5C at the time of peak warming and limiting warming to 1.5C by the end of the century). Run with prescribed carbon dioxide emissions (for prescribed carbon dioxide concentrations, see `scen7-vl`).",
                 "experiment_id": "esm-scen7-vl",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -621,9 +651,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
+                "description": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `esm-scen7-h`. All other forcings evolve as in `esm-scen7-vl`. Requires interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
+                "experiment": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `esm-scen7-h`. All other forcings evolve as in `esm-scen7-vl`. Requires interactive chemistry. Models without interactive chemistry should run `esm-scen7-vl-Aer` instead.",
                 "experiment_id": "esm-scen7-vl-AQ",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -639,9 +669,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-Aq` instead.",
+                "description": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `esm-scen7-h`. All other forcings evolve as in `esm-scen7-vl`. Intended for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-AQ` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-Aq` instead.",
+                "experiment": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `esm-scen7-h`. All other forcings evolve as in `esm-scen7-vl`. Intended for models without interactive chemistry. Models with interactive chemistry should run `esm-scen7-vl-AQ` instead.",
                 "experiment_id": "esm-scen7-vl-Aer",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -675,9 +705,9 @@
                 "activity_id": [
                     "DAMIP"
                 ],
-                "description": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "description": "Response to historical greenhouse gas forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
                 "end_year": 2035,
-                "experiment": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "experiment": "Response to historical greenhouse gas forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
                 "experiment_id": "hist-GHG",
                 "min_number_yrs_per_sim": 186,
                 "parent_activity_id": [
@@ -711,11 +741,47 @@
                 "activity_id": [
                     "DAMIP"
                 ],
-                "description": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "description": "Response to historical natural forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
                 "end_year": 2035,
-                "experiment": "Response to historical aerosol forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
+                "experiment": "Response to historical natural forcing (with extension using forcings from the `m` scenario simulation). All other conditions are kept the same as piControl.",
                 "experiment_id": "hist-nat",
                 "min_number_yrs_per_sim": 186,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "hist-piAQ": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `piControl`. All other forcings evolve as in `historical`. Requires interactive chemistry. Models without interactive chemistry should run `hist-piAer` instead. (Renamed from `hist-piNTCF` in AerChemMIP phase 1.)",
+                "end_year": 2021,
+                "experiment": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `piControl`. All other forcings evolve as in `historical`. Requires interactive chemistry. Models without interactive chemistry should run `hist-piAer` instead. (Renamed from `hist-piNTCF` in AerChemMIP phase 1.)",
+                "experiment_id": "hist-piAQ",
+                "min_number_yrs_per_sim": 172,
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
+                "start_year": 1850,
+                "tier": 1
+            },
+            "hist-piAer": {
+                "activity_id": [
+                    "AerChemMIP"
+                ],
+                "description": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `piControl`. All other forcings evolve as in `historical`. Intended for models without interactive chemistry. Models with interactive chemistry should run `hist-piAQ` instead. (Identical to `hist-piAer` in AerChemMIP phase 1.)",
+                "end_year": 2021,
+                "experiment": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `piControl`. All other forcings evolve as in `historical`. Intended for models without interactive chemistry. Models with interactive chemistry should run `hist-piAQ` instead. (Identical to `hist-piAer` in AerChemMIP phase 1.)",
+                "experiment_id": "hist-piAer",
+                "min_number_yrs_per_sim": 172,
                 "parent_activity_id": [
                     "CMIP"
                 ],
@@ -743,6 +809,20 @@
                 "start_year": 1850,
                 "tier": 1
             },
+            "land-hist": {
+                "activity_id": [
+                    "LMIP"
+                ],
+                "description": "Land-only version of `historical` with prescribed climate and weather inputs required to drive land models.",
+                "end_year": 2021,
+                "experiment": "Land-only version of `historical` with prescribed climate and weather inputs required to drive land models.",
+                "experiment_id": "land-hist",
+                "min_number_yrs_per_sim": 121,
+                "parent_activity_id": [],
+                "parent_experiment_id": [],
+                "start_year": 1901,
+                "tier": 1
+            },
             "piClim-4xCO2": {
                 "activity_id": [
                     "CMIP"
@@ -765,9 +845,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day methane effective radiative forcing (ERF). Same as `piClim-control`, except methane concentrations or emissions (as appropriate for the model) use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-CH4",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -783,9 +863,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide concentrations or emissions (as appropriate for the model) use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-N2O",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -801,9 +881,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day nitrous oxide (NOx) effective radiative forcing (ERF). Same as `piClim-control`, except nitrous oxide (NOx) emissions use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-NOx",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -819,9 +899,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day ozone-depleting substances' effective radiative forcing (ERF). Same as `piClim-control`, except ozone-depleting substances concentrations use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-ODS",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -837,9 +917,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day sulfur (dioxide) effective radiative forcing (ERF). Same as `piClim-control`, except sulfur emissions use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-SO2",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -855,9 +935,9 @@
                 "activity_id": [
                     "RFMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day aerosol effective radiative forcing (ERF). Same as `piClim-control`, except anthropogenic aerosol emissions use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-aer",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -873,9 +953,9 @@
                 "activity_id": [
                     "CMIP"
                 ],
-                "description": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "description": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (2021 values for CMIP7).",
                 "end_year": "",
-                "experiment": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (typically the last year of the `historical` simulation within the same CMIP era e.g. 2014 values for CMIP6, 2021 values for CMIP7).",
+                "experiment": "In combination with `piClim-control`, quantifies present-day total anthropogenic effective radiative forcing (ERF). Same as `piClim-control`, except all anthropogenic forcings use present-day values (2021 values for CMIP7).",
                 "experiment_id": "piClim-anthro",
                 "min_number_yrs_per_sim": 30,
                 "parent_activity_id": [
@@ -909,13 +989,17 @@
                 "activity_id": [
                     "RFMIP"
                 ],
-                "description": "Simulation of the historical and future period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). Aerosol emissions follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) while all other forcings follow `piControl` to allow for a (approximate) diagnosis of transient historical aerosol effective radiative forcing (ERF) (can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF).",
+                "description": "In combination with `piClim-control`, quantifies transient aerosol effective radiative forcing (ERF) over the historical period and the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup). This can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF.",
                 "end_year": 2100,
-                "experiment": "Simulation of the historical and future period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). Aerosol emissions follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) while all other forcings follow `piControl` to allow for a (approximate) diagnosis of transient historical aerosol effective radiative forcing (ERF) (can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF).",
+                "experiment": "In combination with `piClim-control`, quantifies transient aerosol effective radiative forcing (ERF) over the historical period and the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup). This can be compared with `piClim-aer` which provides a more precise quantification of present-day aerosol ERF.",
                 "experiment_id": "piClim-histaer",
                 "min_number_yrs_per_sim": 251,
-                "parent_activity_id": [],
-                "parent_experiment_id": [],
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
                 "start_year": 1850,
                 "tier": 1
             },
@@ -923,13 +1007,17 @@
                 "activity_id": [
                     "RFMIP"
                 ],
-                "description": "Simulation of the historical period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). All forcings follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) to allow for a (approximate) diagnosis of transient historical effective radiative forcing (ERF) (can be compared with the `piClim-*` experiments which provide a more precise quantification of present-day ERF from various forcers).",
+                "description": "In combination with `piClim-control`, quantifies transient effective radiative forcing (ERF) over the historical period and the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup). This complements the `piClim-*` experiments which provide a more precise quantification of present-day ERF for various forcing components.",
                 "end_year": 2100,
-                "experiment": "Simulation of the historical period with prescribed sea-surface temperatures and sea-ice concentrations (the slightly confusing name is a legacy thing). All forcings follow the `historical` experiment then the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup) to allow for a (approximate) diagnosis of transient historical effective radiative forcing (ERF) (can be compared with the `piClim-*` experiments which provide a more precise quantification of present-day ERF from various forcers).",
+                "experiment": "In combination with `piClim-control`, quantifies transient effective radiative forcing (ERF) over the historical period and the `scen7-m` or `esm-scen7-m` experiment (whichever is relevant to your model setup). This complements the `piClim-*` experiments which provide a more precise quantification of present-day ERF for various forcing components.",
                 "experiment_id": "piClim-histall",
                 "min_number_yrs_per_sim": 251,
-                "parent_activity_id": [],
-                "parent_experiment_id": [],
+                "parent_activity_id": [
+                    "CMIP"
+                ],
+                "parent_experiment_id": [
+                    "piControl"
+                ],
                 "start_year": 1850,
                 "tier": 1
             },
@@ -969,9 +1057,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
+                "description": "CMIP7 ScenarioMIP High emission scenario - A scenario with emissions as high as judged to be plausible, based on assuming developments that include a rollback of current mitigation policies. This scenario is expected to result in forcings below SSP5-8.5. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
+                "experiment": "CMIP7 ScenarioMIP High emission scenario - A scenario with emissions as high as judged to be plausible, based on assuming developments that include a rollback of current mitigation policies. This scenario is expected to result in forcings below SSP5-8.5. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-h`).",
                 "experiment_id": "scen7-h",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -987,9 +1075,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
+                "description": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `scen7-h`. Requires interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
+                "experiment": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `scen7-h`. Requires interactive chemistry. Models without interactive chemistry should run `scen7-h-Aer` instead.",
                 "experiment_id": "scen7-h-AQ",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1005,9 +1093,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-Aq` instead.",
+                "description": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `scen7-h`. Intended for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-AQ` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP high emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-Aq` instead.",
+                "experiment": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) are held constant at present-day (2021) levels. All other forcings evolve as in `scen7-h`. Intended for models without interactive chemistry. Models with interactive chemistry should run `scen7-h-AQ` instead.",
                 "experiment_id": "scen7-h-Aer",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1041,9 +1129,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
+                "description": "CMIP7 ScenarioMIP High-to-Low emission scenario - A scenario that follows approximately the same emissions pathway as the High, but changes course in the second half of the century, applying strong mitigation measures to reach net zero CO2 emissions by 2100. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP High followed by low (from 2060) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
+                "experiment": "CMIP7 ScenarioMIP High-to-Low emission scenario - A scenario that follows approximately the same emissions pathway as the High, but changes course in the second half of the century, applying strong mitigation measures to reach net zero CO2 emissions by 2100. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-hl`).",
                 "experiment_id": "scen7-hl",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1077,9 +1165,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
+                "description": "CMIP7 ScenarioMIP Low emission scenario - The Low emission scenario is designed to be consistent with the pursuit of holding warming to a level likely below 2C, without returning to 1.5C before the end of the century.  Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
+                "experiment": "CMIP7 ScenarioMIP Low emission scenario - The Low emission scenario is designed to be consistent with the pursuit of holding warming to a level likely below 2C, without returning to 1.5C before the end of the century.  Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-l`).",
                 "experiment_id": "scen7-l",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1113,9 +1201,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
+                "description": "CMIP7 ScenarioMIP Low-to-Negative emission scenario - A scenario with a higher overshoot of the 1.5C goal, followed by stringent climate policies resulting in net-negative greenhouse gas emissions to return to lower warming levels, thus supporting research into the reversibility of climate outcomes and their impacts. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP low followed by negative (steep reductions begin in 2040, negative from TBD) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
+                "experiment": "CMIP7 ScenarioMIP Low-to-Negative emission scenario - A scenario with a higher overshoot of the 1.5C goal, followed by stringent climate policies resulting in net-negative greenhouse gas emissions to return to lower warming levels, thus supporting research into the reversibility of climate outcomes and their impacts. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ln`).",
                 "experiment_id": "scen7-ln",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1149,9 +1237,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
+                "description": "CMIP7 ScenarioMIP Medium emission scenario - A middle scenario exploring consequences of extending current policies and trends into the future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
+                "experiment": "CMIP7 ScenarioMIP Medium emission scenario - A middle scenario exploring consequences of extending current policies and trends into the future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-m`).",
                 "experiment_id": "scen7-m",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1185,9 +1273,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
+                "description": "CMIP7 ScenarioMIP Medium-to-Low emission scenario - A scenario exploring a delayed increase in mitigation efforts, short of the Paris temperature goal but achieving net-zero CO2 emissions by the end of the century. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP medium followed by low (from 2040) emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
+                "experiment": "CMIP7 ScenarioMIP Medium-to-Low emission scenario - A scenario exploring a delayed increase in mitigation efforts, short of the Paris temperature goal but achieving net-zero CO2 emissions by the end of the century. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-ml`).",
                 "experiment_id": "scen7-ml",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1221,9 +1309,9 @@
                 "activity_id": [
                     "ScenarioMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
+                "description": "CMIP7 ScenarioMIP Very Low emission scenario - The Very Low emission scenario is designed to keep the temperature level as low as plausible given feasibility constraints. This scenario is thus relevant for the low end of the Paris range (staying as close as plausible to 1.5C at the time of peak warming and limiting warming to 1.5C by the end of the century). Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
+                "experiment": "CMIP7 ScenarioMIP Very Low emission scenario - The Very Low emission scenario is designed to keep the temperature level as low as plausible given feasibility constraints. This scenario is thus relevant for the low end of the Paris range (staying as close as plausible to 1.5C at the time of peak warming and limiting warming to 1.5C by the end of the century). Run with prescribed carbon dioxide concentrations (for prescribed carbon dioxide emissions, see `esm-scen7-vl`).",
                 "experiment_id": "scen7-vl",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1239,9 +1327,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
+                "description": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `scen7-h`. All other forcings evolve as in `scen7-vl`. Requires interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models with interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
+                "experiment": "Used to diagnose climate and air quality responses to the regionally heterogeneous evolution of anthropogenic non-CH4 SLCF emissions. Anthropogenic non-CH4 tropospheric O3 precursor emissions (NMVOCs, CO, NOx), aerosols, and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `scen7-h`. All other forcings evolve as in `scen7-vl`. Requires interactive chemistry. Models without interactive chemistry should run `scen7-vl-Aer` instead.",
                 "experiment_id": "scen7-vl-AQ",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1257,9 +1345,9 @@
                 "activity_id": [
                     "AerChemMIP"
                 ],
-                "description": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-Aq` instead.",
+                "description": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `scen7-h`. All other forcings evolve as in `scen7-vl`. Intended for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-AQ` instead.",
                 "end_year": 2100,
-                "experiment": "PLACEHOLDER TBC. CMIP7 ScenarioMIP very low emissions future. Altered to use high aerosol and tropospheric non-methane ozone precursor emissions. This is for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-Aq` instead.",
+                "experiment": "Used to diagnose climate responses to the regionally heterogeneous evolution of anthropogenic aerosol emissions. Anthropogenic aerosols and aerosol precursor emissions (BC, OC, NH3, SO2) evolve as in `scen7-h`. All other forcings evolve as in `scen7-vl`. Intended for models without interactive chemistry. Models with interactive chemistry should run `scen7-vl-AQ` instead.",
                 "experiment_id": "scen7-vl-Aer",
                 "min_number_yrs_per_sim": 79,
                 "parent_activity_id": [
@@ -1345,11 +1433,116 @@
             }
         },
         "grid_label": {
-            "g100": "",
-            "g101": "",
-            "g102": "",
-            "g103": "",
-            "g104": "",
+            "g100": "Horizontal grid cell with a regular latitude longitude grid type and 1.25 x 0.9 degree resolution.",
+            "g101": "Horizontal grid cell with a linear spectral gaussian grid type and 1.4 x 1.4 degree resolution.",
+            "g102": "Ocean tripolar grid with 105704 cells.",
+            "g103": "U-grid cells on ocean tripolar configuration (eORCA1) for x-velocity.",
+            "g104": "V-grid cells on ocean tripolar configuration (eORCA1) for y-velocity.",
+            "g105": "Regular latitude-longitude output grid for atmosphere (based on TL127 spectral grid), 1.4 x 1.4 degree resolution.",
+            "g106": "Horizontal grid cell with a regular latitude longitude grid type and 1 x 1 degree resolution.",
+            "g107": "Horizontal grid cell with a tripolar grid type.",
+            "g108": "Horizontal grid cell with a regular latitude longitude grid type and 1.875 x 1.25 degree resolution.",
+            "g109": "Horizontal grid cell with a regular latitude longitude grid type and 1.875 x 1.25 degree resolution.",
+            "g110": "Horizontal grid cell with a regular latitude longitude grid type and 1.875 x 1.25 degree resolution.",
+            "g111": "Horizontal grid cell with a regular latitude longitude grid type and 2.5 x 1.3 degree resolution.",
+            "g112": "Horizontal grid cell with a tripolar grid type and 1 x 1 degree resolution.",
+            "g113": "Horizontal grid cell with a regular latitude longitude grid type and 0.25 x 0.25 degree resolution.",
+            "g114": "Horizontal grid cell with a regular gaussian grid type and 0.7 x 0.7 degree resolution.",
+            "g115": "Horizontal grid cell with a regular latitude longitude grid type and 1.875 x 1.25 degree resolution.",
+            "g116": "Horizontal grid cell with a tripolar grid type.",
+            "g117": "Horizontal grid cell with a hierarchical discrete global grid grid type and 1.25 x 0.9424 degree resolution.",
+            "g118": "Horizontal grid cell with a tripolar grid type.",
+            "g119": "Horizontal grid cell with a tripolar grid type.",
+            "g120": "Horizontal grid cell with a spectral gaussian grid type and 2.8 x 2.8 degree resolution.",
+            "g121": "Horizontal grid cell with a regular gaussian grid type and 0.75 x 0.75 degree resolution.",
+            "g122": "Horizontal grid cell with a reduced gaussian grid type and 36 x 36 km resolution.",
+            "g123": "Horizontal grid cell with a regular latitude longitude grid type and 2 x 2 degree resolution.",
+            "g124": "Horizontal grid cell with a tripolar grid type.",
+            "g125": "Horizontal grid cell with a tripolar grid type.",
+            "g126": "Horizontal grid cell with a tripolar grid type.",
+            "g127": "Horizontal grid cell with a tripolar grid type and 1 x 1 degree resolution.",
+            "g128": "Horizontal grid cell with a tripolar grid type.",
+            "g129": "Horizontal grid cell with a regular latitude longitude grid type and 0.27778 x 0.28125 degree resolution.",
+            "g130": "Horizontal grid cell with a unstructured triangular grid type.",
+            "g131": "Horizontal grid cell with a regular latitude longitude grid type and 0.5 x 0.5 degree resolution.",
+            "g132": "Horizontal grid cell with a unstructured triangular grid type.",
+            "g133": "Horizontal grid cell with a cubed sphere grid type and 0.9375 x 0.9375 degree resolution.",
+            "g134": "Horizontal grid cell with a regular latitude longitude grid type and 1.4 x 1.4 degree resolution.",
+            "g135": "Horizontal grid cell with a tripolar grid type.",
+            "g136": "Horizontal grid cell with a icosahedral geodesic grid type and 20 x 20 km resolution.",
+            "g137": "Horizontal grid cell with a regular latitude longitude grid type and 0.28125 x 0.1875 degree resolution.",
+            "g138": "Horizontal grid cell with a regular latitude longitude grid type and 0.28125 x 0.1875 degree resolution.",
+            "g139": "Horizontal grid cell with a regular latitude longitude grid type and 0.28125 x 0.1875 degree resolution.",
+            "g140": "Horizontal grid cell with a regular latitude longitude grid type and 0.28125 x 0.1875 degree resolution.",
+            "g141": "Horizontal grid cell with a spectral reduced gaussian grid type and 80 x 80 km resolution.",
+            "g142": "Horizontal grid cell with a icosahedral geodesic grid type and 80 x 80 km resolution.",
+            "g143": "Horizontal grid cell with a tripolar grid type.",
+            "g144": "Horizontal grid cell with a yin yang grid type and 1 x 1 degree resolution.",
+            "g145": "Horizontal grid cell with a yin yang grid type and 1 x 1 degree resolution.",
+            "g146": "Horizontal grid cell with a yin yang grid type and 1 x 1 degree resolution.",
+            "g147": "Horizontal grid cell with a tripolar grid type.",
+            "g148": "Horizontal grid cell with a tripolar grid type.",
+            "g149": "Horizontal grid cell with a tripolar grid type.",
+            "g150": "Horizontal grid cell with a regular latitude longitude grid type and 1 x 1 degree resolution.",
+            "g151": "Horizontal grid cell with a regular latitude longitude grid type and 1.4 x 1.4 degree resolution.",
+            "g152": "Horizontal grid cell with a regular latitude longitude grid type and 1.4 x 1.4 degree resolution.",
+            "g153": "Horizontal grid cell with a tripolar grid type.",
+            "g154": "Horizontal grid cell with a tripolar grid type.",
+            "g155": "Horizontal grid cell with a tripolar grid type.",
+            "g156": "Horizontal grid cell with a tripolar grid type.",
+            "g157": "Horizontal grid cell with a tripolar grid type.",
+            "g158": "Horizontal grid cell with a regular latitude longitude grid type and 0.5 x 0.5 degree resolution.",
+            "g159": "Horizontal grid cell with a regular latitude longitude grid type and 0.5 x 0.5 degree resolution.",
+            "g160": "Horizontal grid cell with a tripolar grid type and 0.25 x 0.25 degree resolution.",
+            "g161": "Horizontal grid cell with a tripolar grid type.",
+            "g162": "Horizontal grid cell with a tripolar grid type.",
+            "g163": "Horizontal grid cell with a regular latitude longitude grid type and 0.5 x 0.5 degree resolution.",
+            "g164": "Horizontal grid cell with a tripolar grid type.",
+            "g165": "Horizontal grid cell with a tripolar grid type.",
+            "g166": "Horizontal grid cell with a tripolar grid type.",
+            "g167": "Horizontal grid cell with a regular latitude longitude grid type and 1.25 x 0.9424 degree resolution.",
+            "g168": "Horizontal grid cell with a tripolar grid type.",
+            "g169": "Horizontal grid cell with a tripolar grid type.",
+            "g170": "Horizontal grid cell with a tripolar grid type and 0.25 x 0.16 degree resolution.",
+            "g171": "Horizontal grid cell with a tripolar grid type and 0.25 x 0.16 degree resolution.",
+            "g172": "Horizontal grid cell with a tripolar grid type and 0.25 x 0.16 degree resolution.",
+            "g173": "Horizontal grid cell with a cubed sphere grid type and 0.9375 x 0.9375 degree resolution.",
+            "g174": "Horizontal grid cell with a cubed sphere grid type and 0.9375 x 0.9375 degree resolution.",
+            "g175": "Horizontal grid cell with a cubed sphere grid type and 0.9375 x 0.9375 degree resolution.",
+            "g176": "Horizontal grid cell with a spectral reduced gaussian grid type.",
+            "g177": "Horizontal grid cell with a spectral reduced gaussian grid type.",
+            "g178": "Horizontal grid cell with a spectral reduced gaussian grid type.",
+            "g179": "Horizontal grid cell with a regular latitude longitude grid type and 3.75 x 2.5 degree resolution.",
+            "g180": "Horizontal grid cell with a regular gaussian grid type and 3.75 x 2.25 degree resolution.",
+            "g181": "Horizontal grid cell with a tripolar grid type and 1 x 0.9 degree resolution.",
+            "g182": "Horizontal grid cell with a tripolar grid type and 0.25 x 0.25 degree resolution.",
+            "g183": "Horizontal grid cell with a regular gaussian grid type and 3.75 x 2.25 degree resolution.",
+            "g184": "Horizontal grid cell with a cubed sphere grid type and 1.00 x 1.00 degree resolution.",
+            "g185": "Horizontal grid cell with a plane projection grid type and 5 x 5 km resolution.",
+            "g186": "Horizontal grid cell with a tripolar grid type.",
+            "g187": "Horizontal grid cell with a icosahedral geodesic dual grid type and 20 x 20 km resolution.",
+            "g188": "Horizontal grid cell with a icosahedral geodesic dual grid type and 80 x 80 km resolution.",
+            "g189": "Horizontal grid cell with a regular latitude longitude grid type and 1.25 x 1.25 degree resolution.",
+            "g190": "Horizontal grid cell with a regular latitude longitude grid type and 360 x 180 degree resolution.",
+            "g191": "Horizontal grid cell with a plane projection grid type and 8 x 8 km resolution.",
+            "g192": "Horizontal grid cell with a plane projection grid type and 8 x 8 km resolution.",
+            "g193": "Horizontal grid cell with a plane projection grid type and 4 x 4 km resolution.",
+            "g194": "Horizontal grid cell with a plane projection grid type and 4 x 4 km resolution.",
+            "g195": "Horizontal grid cell with a displaced pole grid type and 0.5 x 0.25 degree resolution.",
+            "g196": "Horizontal grid cell with a cubed sphere grid type and 1 x 1 degree resolution.",
+            "g197": "Horizontal grid cell with a cubed sphere grid type and 1 x 1 degree resolution.",
+            "g198": "Horizontal grid cell with a regular latitude longitude grid type and 3.75 x 2.5 degree resolution.",
+            "g200": "Horizontal grid cell with a regular latitude longitude grid type and 1.25 x 1.25 degree resolution.",
+            "g201": "Horizontal grid cell with a regular latitude longitude grid type and 2.0 x 1.5 degree resolution.",
+            "g202": "Horizontal grid cell with a tripolar grid type.",
+            "g203": "Horizontal grid cell with a tripolar grid type.",
+            "g204": "Horizontal grid cell with a tripolar grid type.",
+            "g205": "Horizontal grid cell with a tripolar grid type.",
+            "g206": "Horizontal grid cell with a tripolar grid type.",
+            "g207": "Horizontal grid cell with a regular latitude longitude grid type and 1.0 x 0.92 degree resolution.",
+            "g208": "Horizontal grid cell with a regular gaussian grid type and 1.125 x 1.12 degree resolution.",
+            "g209": "Horizontal grid cell with a regular gaussian grid type and 1.875 x 1.86 degree resolution.",
+            "g210": "Horizontal grid cell with a regular gaussian grid type and 2.8125 x 2.79 degree resolution.",
             "g999": ""
         },
         "horizontal_label": {
@@ -1361,14 +1554,38 @@
             "hyb": "Data that is a function of the y horizontal dimension (i.e., often just a function of latitude), representing a zonal-mean or zonal-sum or some other aggregate across the x dimension for individual ocean basins (e.g., a zonal mean across each of the ocean basins)."
         },
         "initialization_index": [
-            "^i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}$",
-            "^i[[:digit:]]\\{1,\\}$"
+            "^i[[:digit:]]\\{1,\\}$",
+            "^i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}$"
         ],
         "institution_id": {
+            "AWI": "Alfred Wegener Institute for Polar and Marine Research",
+            "BAS": "British Antarctic Survey",
+            "BNU": "Beaconhouse National University",
+            "CAS": "Chinese Academy of Sciences",
             "CCCma": "Environment and Climate Change Canada",
+            "CNRM": "Centre National de Recherches Meteorologiques",
             "CNRM-CERFACS": "CNRM (Centre National de Recherches Meteorologiques, Toulouse 31057, France), CERFACS (Centre Europeen de Recherche et de Formation Avancee en Calcul Scientifique, Toulouse 31057, France)",
+            "DMI": "DMI",
+            "DWD": "German Meteorological Service (Deutscher Wetterdienst)",
+            "EC-Earth-Consortium": "EC-Earth-Consortium",
+            "FMI": "Finnish Meteorological Institute",
             "IPSL": "Institut Pierre-Simon Laplace",
-            "MOHC": "Met Office Hadley Centre"
+            "KIOST": "A consortium of Korean research institutions contributing to CMIP7 through Earth system modeling. Led by the Korea Institute of Ocean Science and Technology (KIOST) in collaboration with Hanyang University (HYU).",
+            "KNMI": "Royal Netherlands Meteorological Institute",
+            "METNo": "Norwegian Meteorological Institute",
+            "MOHC": "Met Office Hadley Centre",
+            "MPI-M": "Max Planck Institute for Meteorology",
+            "MRI": "MRI (Meteorological Research Institute) conducts research for the improvement of information issued by JMA (Japan Meteorological Agency) on weather, earthquakes, volcanic activity, climatic conditions and other phenomena.",
+            "NCAR": "The National Science Foundation National Center for Atmospheric Research (NSF NCAR) manages the development and maintenance of the Community Earth System Model (CESM).",
+            "NCAS": "Uks",
+            "NERC": "Natural Environment Research Council",
+            "NOAA-GFDL": "US National Oceanic and Atmospheric Administration's Geophysical Fluid Dynamics Laboratory.",
+            "SMHI": "SMHI",
+            "SYSU": "Sun Yat-sen University, a public university in Guangzhou, China.",
+            "UAF": "University of Alaska Fairbanks",
+            "UKNCSP": "UKNCSP is a strategic partnership between the Met Office and six NERC-funded research centres in the UK. This partnership is consist of British Antarctic Survey(BAS), British Geological Survey(BGS), Met Office, National Centre for Atmospheric Science (NCAS), National Centre for Earth Observation(NCEO), National Oceanography Centre (NOC), UK Centre for Ecology & Hydrology (UKCEH) with a mission to unite and harness UK climate science capability, advance international partnerships, and drive solutions for a resilient, net-zero world.",
+            "UNSW": "UNSW",
+            "dlr": "The German Aerospace Center DLR is the Federal Republic of Germany\u2019s research centre for aviation, space, energy, transport, and security. The DLR Institute of Atmospheric Physics conducts research into the physics and chemistry of the global atmosphere, from the ground up to the upper edge of the middle atmosphere at an altitude of approximately 120 km."
         },
         "license": {
             "license_id": {
@@ -1428,11 +1645,11 @@
             "sh": "The Southern Hemisphere."
         },
         "required_global_attributes": [
+            "Conventions",
             "activity_id",
             "area_label",
             "branded_variable",
             "branding_suffix",
-            "Conventions",
             "creation_date",
             "data_specs_version",
             "drs_specs",
@@ -1459,13 +1676,45 @@
             "vertical_label"
         ],
         "source_id": {
+            "ACCESS-ESM1-6": {
+                "source": "ACCESS-ESM1-6: aerosol: classic; atmosphere: um7-3; land-surface: cable3; ocean-biogeochemistry: wombatlite; ocean: mom5; sea-ice: cice5",
+                "source_id": "ACCESS-ESM1-6"
+            },
+            "AWI-ESM3-4-2-veg-HR": {
+                "source": "AWI-ESM3-4-2-veg-HR: atmosphere: openifs-48r1; ocean: fesom-2-7; land-surface: lpj-guess-4-1; sea-ice: fesim-2-7",
+                "source_id": "AWI-ESM3-4-2-veg-HR"
+            },
             "CNRM-ESM2-1e": {
                 "source": "CNRM-ESM2-1e: aerosol: TACTIC_v2; atmosphere: Arpege-Climat Version 6.3; atmospheric_chemistry: REPROBUS-C (v2.0); land_surface: SURFEX v8 modeling platform; ocean: NEMO : Nucleus for European Modelling of the Ocean version 3.6 (OPA); ocean_biogeochemistry: Pelagic Interaction Scheme for Carbon and Ecosystem Studies model volume 2 version trace gases (PISCESv2-gas); sea_ice: GELATO",
                 "source_id": "CNRM-ESM2-1e"
             },
-            "DUMMY-MODEL": {
-                "source": "DUMMY-MODEL: aerosol: Dummy Aerosol; atmosphere: Dummy Atmosphere; atmospheric_chemistry: Dummy Atmospheric Chemistry; land_surface: Dummy Land Surface; ocean: Dummy Ocean; ocean_biogeochemistry: Dummy Ocean Biogeochemistry; sea_ice: Dummy Sea Ice",
-                "source_id": "DUMMY-MODEL"
+            "CanESM5-1": {
+                "source": "CanESM5-1: atmosphere: canam5-1; aerosol: canam5-1-aerosol; land-surface: class-ctem-v3-6-2; ocean: cannemo5-1; ocean-biogeochemistry: cmoc; sea-ice: lim2",
+                "source_id": "CanESM5-1"
+            },
+            "CanESM6-0-MR": {
+                "source": "CanESM6-0-MR: atmosphere: canam6; aerosol: canam6-aerosol; land-surface: classicv1-5; ocean: cannemo6-0; ocean-biogeochemistry: cmoc; sea-ice: si3-cannemo",
+                "source_id": "CanESM6-0-MR"
+            },
+            "EC-Earth3-ESM-1-1": {
+                "source": "EC-Earth3-ESM-1-1: atmosphere: ifs-cy36r4-l91; ocean: nemo-v3-6; land-surface: lpj-guess-4-1; land-ice: pism-v1-2-line; atmospheric-chemistry: co2box-v1-0",
+                "source_id": "EC-Earth3-ESM-1-1"
+            },
+            "ICON-XPP-1-1-ED": {
+                "source": "ICON-XPP-1-1-ED: atmosphere: icon-a-1-1; ocean-biogeochemistry: hamocc; ocean: icon-o-1-1; hd-hydrological-discharge: h134; icon-land-1-1: h134; fesim2: h129",
+                "source_id": "ICON-XPP-1-1-ED"
+            },
+            "MRI-ESM3-4": {
+                "source": "MRI-ESM3-4: atmosphere: mri-agcm4-4; aerosol: masingar-mk-3r2; atmospheric-chemistry: mri-ccm3-2; land-surface: mri-agcm4-4-land-surface; ocean: mricom-5-4; ocean-biogeochemistry: mricom-5-4-ocean-biogeochemistry; sea-ice: mricom-5-4-sea-ice",
+                "source_id": "MRI-ESM3-4"
+            },
+            "UKCM2-0-LL": {
+                "source": "UKCM2-0-LL: aerosol: glomap-mode; sea-ice: si3-gosi9; ocean: nemo-gosi9; atmosphere: metum-ga9; land-surface: jules-gl9",
+                "source_id": "UKCM2-0-LL"
+            },
+            "UKCM2a-0-HH": {
+                "source": "UKCM2a-0-HH: atmosphere: metum-ga9a; aerosol: glomap-mode; land-surface: jules-gl9; ocean: nemo-gosi9; sea-ice: si3-gosi9",
+                "source_id": "UKCM2a-0-HH"
             }
         },
         "temporal_label": {
@@ -1481,11 +1730,12 @@
             "tsum": "Data is the sum over each time period (i.e. each reported interval defined by its time bounds)."
         },
         "tracking_id": [
-            "^hdl:21.14107/[0-9A-Fa-f]\\{8\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{4\\}-[0-9A-Fa-f]\\{12\\}$"
+            "^hdl:21\\.14107/[a-fA-F0-9]\\{8\\}-[a-fA-F0-9]\\{4\\}-[a-fA-F0-9]\\{4\\}-[a-fA-F0-9]\\{4\\}-[a-fA-F0-9]\\{12\\}$"
         ],
+        "tracking_prefix": "hdl:21.14107",
         "variant_label": [
-            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$",
-            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{1,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$"
+            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{1,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$",
+            "^r[[:digit:]]\\{1,\\}i[[:digit:]]\\{4\\}[[:digit:]]\\{2\\}[abcde]\\{0,\\}p[[:digit:]]\\{1,\\}f[[:digit:]]\\{1,\\}$"
         ],
         "vertical_label": {
             "1000hPa": "Data is reported at an atmospheric pressure of 1000 hPa.",
@@ -1503,6 +1753,7 @@
             "al": "Data is reported on the model's atmospheric model levels.",
             "alh": "Data is reported on the model's atmospheric model half-levels (i.e. at the interfaces between model vertical layers).",
             "d0m": "Data is reported at the surface.",
+            "d1000m": "Data is reported at a vertical depth of 1000m.",
             "d100cm": "Data is reported at a vertical depth of 1m (100cm).",
             "d100m": "Data is reported at a vertical depth of 100m.",
             "d10cm": "Data is reported at a vertical depth of 0.1m (10cm).",
@@ -1517,6 +1768,7 @@
             "ol": "Data is reported on the model's ocean model levels.",
             "olh": "Data is reported on the model's ocean model half-levels (i.e. at the interfaces between model vertical layers).",
             "ols": "Data is reported for the surface level of the model's ocean model.",
+            "op20bar": "Data is reported at a hydrostatic pressure depth of 20.2bar (a pressure level which is close to 200m in a standard ocean profile)",
             "op4": "Data is reported at 4 ocean pressure layers.",
             "p19": "Data is reported at 19 pressure levels.",
             "p27": "Data is reported at 27 pressure levels.",

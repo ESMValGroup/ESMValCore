@@ -113,6 +113,11 @@ def fix():
         ("height10m", "height", 10.0),
         ("lambda550nm", "radiation_wavelength", 550.0),
         ("typesi", "area_type", "sea_ice"),
+        ("typenatgr", "area_type", "natural_grasses"),
+        ("typeshrub", "area_type", "shrubs"),
+        ("typebare", "area_type", "bare_ground"),
+        ("typetree", "area_type", "trees"),
+        ("typecrop", "area_type", "crops"),
     ],
 )
 def test_fix_scalar_coords(
