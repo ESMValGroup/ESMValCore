@@ -664,8 +664,8 @@ def t_test(
         Output datasets/cubes. Will be a :obj:`set` of
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
         ``products`` is also one, a :class:`~iris.cube.CubeList` otherwise. The
-        cubes contain an attached ancillary variable which is the p-value
-        w.r.t. the chosen t-test which can be accessed with
+        cubes contain an attached :class:`~iris.coords.AncillaryVariable` which
+        is the p-value w.r.t. the chosen t-test. It can be accessed with
         ``cube.ancillary_variable("p-value")``.
 
     Raises
