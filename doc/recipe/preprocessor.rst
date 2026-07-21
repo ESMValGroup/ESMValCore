@@ -2949,7 +2949,33 @@ This function performs a :func:`t-test <scipy.stats.ttest_ind>` (null
 hypothesis: 2 independent samples have identical mean) with respect to a
 reference dataset and attaches the corresponding p-value as ancillary variable
 to the data.
-For this, exactly one input dataset needs to be declared as
+
+With `Iris <https://scitools-iris.readthedocs.io/>`__, the p-value can be accessed with the following code:
+
+.. code-block:: python
+
+   import iris
+   cube = iris.load_cube("esmvaltool_output/recipe_t_test_20260721_095242/preproc/t-test/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-2005.nc")
+   p_value = cube.ancillary_variable("p-value")
+   print(p_value)
+
+The returned p-value looks like this:
+
+.. code-block::
+
+  AncillaryVariable :  p-value / (1)
+      data: [
+          [0.21600565   , 0.18489039   , ..., 0.3673955    , 0.27788544   ],
+          [0.3407415    , 0.3905643    , ..., --           , 0.58700126   ],
+          ...,
+          [--           , --           , ..., --           , --           ],
+          [--           , --           , ..., --           , --           ]]
+      shape: (18, 36)
+      dtype: float32
+      long_name: 'p-value'
+      var_name: 'pvalue'
+
+For this preprocessor, exactly one input dataset needs to be declared as
 ``reference_for_t_test: true`` in the recipe, e.g.,
 
 .. code-block:: yaml
