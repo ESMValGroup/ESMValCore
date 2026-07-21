@@ -3043,7 +3043,7 @@ Example:
 This will perform a `Welch's t-test
 <https://en.wikipedia.org/wiki/Welch%27s_t-test>`__, which does not assume
 equal variances between the samples
-In addtion, all masked values will be omitted in the t-test calculation (the
+In addition, all masked values will be omitted in the t-test calculation (the
 default behavior is to return masked values if at least one input value is
 masked).
 
