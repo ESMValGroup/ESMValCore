@@ -656,9 +656,7 @@ def t_test(
         Coordinates over which the t-test is calculated. If ``None``, calculate
         the t-test over all coordinates, which results in a scalar cube.
     **kwargs:
-        Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`
-        (not all input data are lazy) or :func:`dask.array.stats.ttest_ind`
-        (all input data are lazy).
+        Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`.
 
     Returns
     -------
@@ -667,7 +665,8 @@ def t_test(
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
         ``products`` is also one, a :class:`~iris.cube.CubeList` otherwise. The
         cubes contain an attached ancillary variable which is the p-value
-        w.r.t. the chosen t-test.
+        w.r.t. the chosen t-test which can be accessed with
+        ``cube.ancillary_variable("p-value")``.
 
     Raises
     ------
