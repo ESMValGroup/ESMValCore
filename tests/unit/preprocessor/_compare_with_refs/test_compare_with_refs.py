@@ -13,7 +13,7 @@ import pytest
 from cf_units import Unit
 from iris.coords import AncillaryVariable, AuxCoord, CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.preprocessor._compare_with_refs import (
     bias,
@@ -981,6 +981,7 @@ def assert_correct_p_value(
     cube: Cube,
     data: Any,  # noqa: ANN401
     *,
+    dims: tuple[int, ...],
     is_lazy: bool = False,
 ) -> None:
     assert len(cube.ancillary_variables()) == 1
@@ -992,14 +993,15 @@ def assert_correct_p_value(
     assert p_value.attributes == {}
     assert p_value.has_lazy_data() is is_lazy
     assert p_value.dtype == np.float32
+    print("p-value:", p_value.data)
     if np.ma.is_masked(data):
         np.testing.assert_equal(p_value.data.mask, data.mask)
     np.testing.assert_allclose(p_value.data, data)
+    assert cube.ancillary_variable_dims(p_value) == dims
 
 
 @pytest.mark.parametrize("use_reference_product", [True, False])
 def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # noqa: PLR0915
-    """Test calculation of t_test with products."""
     products = {
         PreprocessorFile(regular_cubes, "A", {"dataset": "a"}),
         PreprocessorFile(regular_cubes, "B", {"dataset": "b"}),
@@ -1018,7 +1020,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
         expected_ancestors = set()
         reference = ref_cubes[0]
 
-    out_products = t_test(products, reference=reference)
+    out_products = t_test(products, reference=reference, coords=["time"])
 
     assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
@@ -1039,6 +1041,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert_correct_p_value(
         out_cube,
         [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        dims=(1, 2),
     )
     assert product_a.wasderivedfrom.call_count == len(expected_ancestors)
     assert product_a.mock_ancestors == expected_ancestors
@@ -1058,6 +1061,7 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
     assert_correct_p_value(
         out_cube,
         [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        dims=(1, 2),
     )
     assert product_b.wasderivedfrom.call_count == len(expected_ancestors)
     assert product_b.mock_ancestors == expected_ancestors
@@ -1080,16 +1084,17 @@ def test_t_test_products(regular_cubes, ref_cubes, use_reference_product):  # no
         assert product_ref.mock_ancestors == set()
 
 
+@pytest.mark.parametrize("coords_as_str", [True, False])
 @pytest.mark.parametrize("lazy", [True, False])
-def test_t_test_cubes(regular_cubes, ref_cubes, lazy):
-    """Test calculation of t_test with cubes."""
+def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy, coords_as_str):
     cube = regular_cubes[0]
     ref_cube = ref_cubes[0]
     if lazy:
-        cube.data = cube.lazy_data()
-        ref_cube.data = ref_cube.lazy_data()
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+    coords = ["time"] if coords_as_str else [cube.coord("time")]
 
-    out_cubes = t_test([cube], ref_cube)
+    out_cubes = t_test([cube], ref_cube, coords=coords)
 
     assert cube.has_lazy_data() is lazy
     assert ref_cube.has_lazy_data() is lazy
@@ -1109,23 +1114,113 @@ def test_t_test_cubes(regular_cubes, ref_cubes, lazy):
     assert_correct_p_value(
         out_cube,
         [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        dims=(1, 2),
         is_lazy=lazy,
     )
 
 
+@pytest.mark.parametrize(
+    ("dims", "p_value", "out_dims"),
+    [
+        ((0, 1), [0.4679941236972809, 0.3202061057090759], (2,)),
+        ((0, 2), [0.6890520453453064, 0.17230847477912903], (1,)),
+    ],
+)
 @pytest.mark.parametrize("lazy", [True, False])
-def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy):
-    """Test calculation of t_test with 1D cubes."""
-    cube = regular_cubes[0][0, :, 0]
-    ref_cube = ref_cubes[0][0, :, 0]
+def test_t_test_cubes_2d(
+    regular_cubes,
+    ref_cubes,
+    lazy,
+    dims,
+    p_value,
+    out_dims,
+):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    x_coord = AuxCoord([[0, 0], [0, 0]], var_name="x")
+    cube.add_aux_coord(x_coord, dims)
+    ref_cube.add_aux_coord(x_coord, dims)
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+
+    out_cubes = t_test([cube], reference=ref_cube, coords=["x"])
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube, p_value, dims=out_dims, is_lazy=lazy)
+
+
+@pytest.mark.parametrize(
+    ("coords", "p_value", "out_dims"),
+    [
+        (("time", "latitude"), [0.4679941236972809, 0.3202061057090759], (2,)),
+        (
+            ("time", "longitude"),
+            [0.6890520453453064, 0.17230847477912903],
+            (1,),
+        ),
+    ],
+)
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_multiple_coords(
+    regular_cubes,
+    ref_cubes,
+    lazy,
+    coords,
+    p_value,
+    out_dims,
+):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
     if lazy:
         cube.data = cube.lazy_data()
         ref_cube.data = ref_cube.lazy_data()
 
+    out_cubes = t_test([cube], reference=ref_cube, coords=coords)
+
+    assert cube.has_lazy_data() is lazy
+    assert ref_cube.has_lazy_data() is lazy
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.has_lazy_data() is lazy
+    assert out_cube.dtype == np.float32
+    assert_allclose(out_cube.data, cube.data)
+    assert out_cube.var_name == "tas"
+    assert out_cube.standard_name == "air_temperature"
+    assert out_cube.units == "K"
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+    assert_correct_p_value(out_cube, p_value, dims=out_dims, is_lazy=lazy)
+
+
+@pytest.mark.parametrize("lazy", [True, False])
+def test_t_test_cubes_scalar_result(regular_cubes, ref_cubes, lazy):
+    cube = regular_cubes[0]
+    ref_cube = ref_cubes[0]
+    if lazy:
+        cube.data = cube.lazy_data().rechunk((1, 1, 1))
+        ref_cube.data = ref_cube.lazy_data().rechunk((1, 1, 1))
+
     out_cubes = t_test(
         [cube],
         ref_cube,
-        coordinate="latitude",
         equal_var=False,
     )
 
@@ -1144,12 +1239,16 @@ def test_t_test_cubes_1d(regular_cubes, ref_cubes, lazy):
     assert out_cube.units == "K"
     assert out_cube.dim_coords == cube.dim_coords
     assert out_cube.aux_coords == cube.aux_coords
-    assert_correct_p_value(out_cube, [0.4999999701976776], is_lazy=lazy)
+    assert_correct_p_value(
+        out_cube,
+        [0.20223067700862885],
+        dims=(),
+        is_lazy=lazy,
+    )
 
 
 @pytest.mark.parametrize("ref_lazy", [True, False])
 def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
-    """Test calculation of t_test with cubes."""
     cube = regular_cubes[0]
     ref_cube = ref_cubes[0]
     if ref_lazy:
@@ -1157,7 +1256,7 @@ def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
     else:
         cube.data = cube.lazy_data()
 
-    out_cubes = t_test([cube], ref_cube)
+    out_cubes = t_test([cube], ref_cube, coords=["time"])
 
     assert cube.has_lazy_data() is not ref_lazy
     assert ref_cube.has_lazy_data() is ref_lazy
@@ -1177,12 +1276,12 @@ def test_t_test_cubes_partly_lazy(regular_cubes, ref_cubes, ref_lazy):
     assert_correct_p_value(
         out_cube,
         [[1.0, 0.6666667], [0.42264974, 0.46547753]],
+        dims=(1, 2),
     )
 
 
 @pytest.mark.parametrize("lazy", [True, False])
 def test_t_test_cubes_masked(regular_cubes, ref_cubes, lazy):
-    """Test calculation of t_test with cubes (masked data)."""
     cube = regular_cubes[0]
     cube.data = np.ma.masked_inside(cube.data, 1.5, 3.5)
     cube.data = np.ma.masked_greater(cube.data, 6.5)
@@ -1197,7 +1296,7 @@ def test_t_test_cubes_masked(regular_cubes, ref_cubes, lazy):
         cube.data = cube.lazy_data()
         ref_cube.data = ref_cube.lazy_data()
 
-    out_cubes = t_test([cube], ref_cube)
+    out_cubes = t_test([cube], ref_cube, coords=["time"])
 
     assert cube.has_lazy_data() is lazy
     assert ref_cube.has_lazy_data() is lazy
@@ -1217,18 +1316,9 @@ def test_t_test_cubes_masked(regular_cubes, ref_cubes, lazy):
     assert_correct_p_value(
         out_cube,
         np.ma.masked_invalid([[1.0, np.nan], [np.nan, np.nan]]),
+        dims=(1, 2),
         is_lazy=lazy,
     )
-
-
-def test_t_test_multidim_coord_fail(regular_cubes):
-    """Test t_test with multidimensional coordinate."""
-    cube = regular_cubes[0]
-    x_coord = AuxCoord([[0, 0], [0, 0]], var_name="x")
-    cube.add_aux_coord(x_coord, (0, 1))
-    msg = r"Multi-dimensional coordinate not supported: 'x'"
-    with pytest.raises(CoordinateMultiDimError, match=re.escape(msg)):
-        t_test([cube], reference=cube, coordinate=x_coord)
 
 
 def test_t_test_reference_none_cubes_fail(regular_cubes):

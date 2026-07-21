@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import string
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -15,7 +16,6 @@ import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import AncillaryVariable, CellMethod
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateMultiDimError
 from scipy.stats import ttest_ind, wasserstein_distance
 
 from esmvalcore.iris_helpers import (
@@ -35,7 +35,7 @@ from esmvalcore.preprocessor._shared import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from iris.coords import AuxCoord, Coord, DimCoord
+    from iris.coords import Coord
 
     from esmvalcore.preprocessor import PreprocessorFile
 
@@ -620,7 +620,7 @@ def _get_emd(
 def t_test(
     products: set[PreprocessorFile] | Iterable[Cube],
     reference: Cube | None = None,
-    coordinate: str | AuxCoord | DimCoord = "time",
+    coords: Iterable[Coord] | Iterable[str] | None = None,
     **kwargs: Any,
 ) -> set[PreprocessorFile] | CubeList:
     """Perform t-test between dataset and reference dataset.
@@ -630,6 +630,8 @@ def t_test(
 
     All input datasets need to have the same shape. To ensure this, the
     preprocessors :func:`esmvalcore.preprocessor.regrid`  might be helpful.
+
+    Handles lazy data and masked data.
 
     Notes
     -----
@@ -650,8 +652,9 @@ def t_test(
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and exactly
         one dataset in ``products`` needs the facet ``reference_for_t_test:
         true``. Do not specify this argument in a recipe.
-    coordinate:
-        Coordinate axis of the input along which to compute the statistic.
+    coords:
+        Coordinates over which the t-test is calculated. If ``None``, calculate
+        the t-test over all coordinates, which results in a scalar cube.
     **kwargs:
         Additional keyword arguments passed to :func:`scipy.stats.ttest_ind`
         (not all input data are lazy) or :func:`dask.array.stats.ttest_ind`
@@ -673,8 +676,6 @@ def t_test(
         ``reference_for_t_test: true`` if ``reference=None``;
         ``reference=None`` and the input products are given as iterable of
         :class:`~iris.cube.Cube` objects.
-    CoordinateMultiDimError
-        ``coordinate`` is not 1D.
 
     """
     ref_product = None
@@ -695,7 +696,7 @@ def t_test(
     # If input is an Iterable of Cube objects, calculate t-test for each element
     if all_cubes_given:
         cubes = [
-            _calculate_t_test(c, reference, coordinate, **kwargs)
+            _calculate_t_test(c, reference, coords=coords, **kwargs)
             for c in products
         ]
         return CubeList(cubes)
@@ -709,7 +710,7 @@ def t_test(
         cube = concatenate(product.cubes)
 
         # Calculate t-test
-        cube = _calculate_t_test(cube, reference, coordinate, **kwargs)
+        cube = _calculate_t_test(cube, reference, coords=coords, **kwargs)
 
         # Adapt metadata and provenance information
         if ref_product is not None:
@@ -728,51 +729,60 @@ def t_test(
 def _calculate_t_test(
     cube: Cube,
     reference: Cube,
-    coordinate: str | AuxCoord | DimCoord,
+    *,
+    coords: Iterable[Coord] | Iterable[str] | None = None,
     **kwargs: Any,
 ) -> Cube:
     """Calculate the t-test and attach the p-value as ancillary variable to cube."""
     cube = cube.copy()  # do not modify input cube
 
-    if cube.coord(coordinate).ndim > 1:
-        raise CoordinateMultiDimError(cube.coord(coordinate))
-    axis = cube.coord_dims(coordinate)[0]
-    remaining_axes = tuple(sorted(set(range(cube.ndim)) - {axis}))
-    target_shape = tuple(cube.shape[a] for a in remaining_axes)
+    # Ensure that data is not chunked along desired coords
+    coords = get_all_coords(cube, coords)
+    cube = rechunk_cube(cube, coords)
+    reference = rechunk_cube(reference, coords)
+
+    axes = get_all_coord_dims(cube, coords)
+    n_axes = len(axes)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
-        t_test = dask.array.stats.ttest_ind(
-            da.ma.filled(cube.core_data(), np.nan),
-            da.ma.filled(reference.core_data(), np.nan),
-            axis=axis,
+        # da.apply_gufunc transposes the input array so that the axes given by
+        # the `axes` argument to da.apply_gufunc are the rightmost dimensions.
+        # Thus, we need to use `along_axes=(ndim-n_axes, ..., ndim-2, ndim-1)`
+        # for _get_pvalue_from_ttest_ind here.
+        axes_in_chunk = tuple(range(cube.ndim - n_axes, cube.ndim))
+
+        # The call signature depends also on the number of axes in `axes`, and
+        # will be (a,b,...)->(nbins) where a,b,... are the data dimensions that
+        # are collapsed, and nbins the number of bin centers
+        in_signature = f"({','.join(list(string.ascii_lowercase)[:n_axes])})"
+        p_value_arr = da.apply_gufunc(
+            _get_pvalue_from_ttest_ind,
+            f"{in_signature},{in_signature}->()",
+            cube.lazy_data(),
+            reference.lazy_data(),
+            axes=[axes, axes, ()],
+            output_dtypes=cube.dtype,
+            along_axes=axes_in_chunk,
             **kwargs,
         )
-        # For some reason, t_test.pvalue is not a da.array, but a dask.Delayed
-        p_value_arr = da.from_delayed(t_test.pvalue, target_shape, cube.dtype)
-        p_value_arr = da.ma.masked_invalid(p_value_arr)
     else:
         # Avoid realizing cube.data
-        cube_data = np.ma.filled(
-            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data,
-            np.nan,
+        cube_data = (
+            cube.lazy_data().compute() if cube.has_lazy_data() else cube.data
         )
-        ref_data = np.ma.filled(
+        ref_data = (
             reference.lazy_data().compute()
             if reference.has_lazy_data()
-            else reference.data,
-            np.nan,
+            else reference.data
         )
-        t_test = ttest_ind(cube_data, ref_data, axis=axis, **kwargs)
-        p_value_arr = np.ma.masked_invalid(t_test.pvalue)
+        p_value_arr = _get_pvalue_from_ttest_ind(
+            cube_data,
+            ref_data,
+            along_axes=axes,
+            **kwargs,
+        )
 
-    # Ensure that float dtype from parents is inherited
-    if (
-        np.issubdtype(cube.dtype, np.floating)
-        and np.issubdtype(reference.dtype, np.floating)
-        and cube.dtype == reference.dtype
-    ):
-        p_value_arr = p_value_arr.astype(cube.dtype)
-
+    remaining_axes = tuple(sorted(set(range(cube.ndim)) - set(axes)))
     cube.add_ancillary_variable(
         AncillaryVariable(
             p_value_arr,
@@ -784,3 +794,22 @@ def _calculate_t_test(
     )
 
     return cube
+
+
+@preserve_float_dtype
+def _get_pvalue_from_ttest_ind(
+    arr: np.ndarray,
+    ref_arr: np.ndarray,
+    *,
+    along_axes: int | Iterable[int] | None,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Calculate :func:`scipy.stats.ttest_ind` and return p-value."""
+    # To support masked arrays, first convert masked values to NaNs;
+    # afterwards, convert NaNs back to masked values
+    arr = np.ma.filled(arr, np.nan)
+    ref_arr = np.ma.filled(ref_arr, np.nan)
+
+    t_test_result = ttest_ind(arr, ref_arr, axis=along_axes, **kwargs)
+
+    return np.ma.masked_invalid(t_test_result.pvalue)
