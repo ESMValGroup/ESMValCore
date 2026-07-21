@@ -79,13 +79,18 @@ Use the script
 :ref:`esmvaltool/utils/draft_release_notes.py <draft_release_notes.py>`
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
-previous release.
+previous release date.
+Review the results, and if anything needs changing, change it on GitHub and
+re-run the script until the changelog looks acceptable.
+Copy the result to the file ``doc/changelog.rst``.
+
 Ensure that any pull request labelled as
 `issue introduced since last release <https://github.com/ESMValGroup/ESMValCore/pulls?q=is%3Apr+label%3A%22issue+introduced+since+last+release%22+is%3Aclosed>`__
 is listed on the same line as the pull request that introduced the issue.
 This label is intended for pull requests that fix a mistake that is was
 introduced after the last release and therefore is not a bug that is present in
 any released version of the code.
+
 Open a discussion to allow members of the development team to nominate pull
 requests as highlights. Add the most voted pull requests as highlights at the
 beginning of changelog. After the highlights section, list any backward
@@ -94,9 +99,7 @@ incompatible changes that the release may include. The
 lists the information that should be provided by the developer of any backward
 incompatible change. Make sure to also list any deprecations that the release
 may include, as well as a brief description on how to upgrade a deprecated feature.
-Review the results, and if anything needs changing, change it on GitHub and
-re-run the script until the changelog looks acceptable.
-Copy the result to the file ``doc/changelog.rst``.
+
 Make a pull request and get it merged into ``main``. If updated after release
 branch is created, cherry pick it into the release branch.
 
@@ -129,9 +132,11 @@ This step only needs to be performed once for every minor release.
 For the ``v2.1`` release, the command to create the release branch would be:
 ``git checkout -b v2.1.x tags/v2.1.0rc1``, where ``v2.1.0rc1`` is the tag of the
 first release candidate.
+
 Release branches must be named ``vX.Y.x`` where ``X`` is the major and ``Y`` is
 the minor version number of the release to ensure setuptools-scm_ provides the
 correct version number for the release.
+
 Ask someone with administrative permissions to set up branch protection rules
 for it so only you and the person helping you with the release can push to it.
 
