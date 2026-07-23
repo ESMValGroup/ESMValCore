@@ -26,7 +26,7 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.21"
+    rev: "v0.15.22"
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -44,7 +44,7 @@ repos:
     hooks:
       - id: yamllint
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.2"
+    rev: "v2.4.3"
     hooks:
       - id: codespell
   - repo: https://github.com/python-jsonschema/check-jsonschema
@@ -54,7 +54,7 @@ repos:
       - id: check-github-workflows
       - id: check-circle-ci
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.26.1
+    rev: v1.27.0
     hooks:
       - id: zizmor
         args: [--fix=safe]
