@@ -1,16 +1,38 @@
-"""Access data using :meth:`xarray <xarray.open_dataset>`.
+"""Access data using :meth:`xarray.open_dataset`.
 
-Run the command ``esmvaltool config copy data-gcs-era5.yml`` to update
-your :ref:`configuration <config-data-sources>` to use this module. This will
-create a file with the following content in your configuration directory:
+To use this module, copy one of the following
+:ref:`configuration <config-data-sources>` files to your configuration
+directory:
 
-.. literalinclude:: ../configurations/data-gcs-era5.yml
-   :language: yaml
-   :caption: Contents of ``data-gcs-era5.yml``
+1. ``data-cds-era5.yml``
 
-This will enable access to `ERA5 data stored in Google Cloud Storage <https://github.com/google-research/arco-era5>`__.
-You will need to install the `gcsfs <https://pypi.org/project/gcsfs/>`_ package
-alongside ESMValCore in order to use this data source.
+    Enable access to ERA5 data stored in the
+    `Copernicus Climate Data Store (CDS) <https://cds.climate.copernicus.eu/>`__:
+
+    .. code-block:: console
+
+        esmvaltool config copy data-cds-era5.yml
+
+    Then edit the copied file and insert your
+    `CDS API key <https://cds.climate.copernicus.eu/how-to-api>`__.
+
+2. ``data-gcs-era5.yml``
+
+    Enable access to `ERA5 data stored in Google Cloud Storage
+    <https://github.com/google-research/arco-era5>`__:
+
+    .. code-block:: console
+
+        esmvaltool config copy data-gcs-era5.yml
+
+    The file content is:
+
+    .. literalinclude:: ../configurations/data-gcs-era5.yml
+        :language: yaml
+        :caption: Contents of ``data-gcs-era5.yml``
+
+    Install `gcsfs <https://pypi.org/project/gcsfs/>`_ alongside ESMValCore to
+    use this data source.
 
 """
 
