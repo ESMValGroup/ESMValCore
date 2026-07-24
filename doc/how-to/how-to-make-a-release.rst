@@ -70,7 +70,7 @@ git using `setuptools-scm <https://pypi.org/project/setuptools-scm/>`__, but a
 static version number is stored in ``CITATION.cff``.
 Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
-Make a pull request and get it merged into ``main``. If updated after release
+Make a pull request and get it merged into ``main``. If updated after the release
 branch is created, cherry pick it into the release branch.
 
 3. Add release notes
@@ -87,7 +87,7 @@ Copy the result to the file ``doc/changelog.rst``.
 Ensure that any pull request labelled as
 `issue introduced since last release <https://github.com/ESMValGroup/ESMValCore/pulls?q=is%3Apr+label%3A%22issue+introduced+since+last+release%22+is%3Aclosed>`__
 is listed on the same line as the pull request that introduced the issue.
-This label is intended for pull requests that fix a mistake that is was
+This label is intended for pull requests that fix a mistake that was
 introduced after the last release and therefore is not a bug that is present in
 any released version of the code.
 
@@ -95,12 +95,12 @@ Open a discussion to allow members of the development team to nominate pull
 requests as highlights. Add the most voted pull requests as highlights at the
 beginning of changelog. After the highlights section, list any backward
 incompatible changes that the release may include. The
-:ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
+:ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`
 lists the information that should be provided by the developer of any backward
 incompatible change. Make sure to also list any deprecations that the release
 may include, as well as a brief description on how to upgrade a deprecated feature.
 
-Make a pull request and get it merged into ``main``. If updated after release
+Make a pull request and get it merged into ``main``. If updated after the release
 branch is created, cherry pick it into the release branch.
 
 4. Make the (pre-)release on GitHub
@@ -137,8 +137,6 @@ Release branches must be named ``vX.Y.x`` where ``X`` is the major and ``Y`` is
 the minor version number of the release to ensure setuptools-scm_ provides the
 correct version number for the release.
 
-Ask someone with administrative permissions to set up branch protection rules
-for it so only you and the person helping you with the release can push to it.
 
 6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
