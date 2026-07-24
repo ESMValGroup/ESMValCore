@@ -1,24 +1,21 @@
-# Read ERA5 data in zarr format on Climate Data Store (see
+# Read ERA5 data in zarr format on Climate Data Store.
+# Go to
 # https://github.com/ecmwf-training/dss-notebooks/blob/main/datasets%2Freanalysis-era5-single-levels%2Farco-access.ipynb
-# for details).
-#
-# Available URLs:
-# Geo-chunked surface levels data (optimised for time-series at a single location):
-# https://arco.datastores.ecmwf.int/cadl-arco-geo-002/arco/reanalysis_era5_single_levels/sfc/geoChunked.zarr
-#
-# Time-chunked surface levels data (optimised for global map at a single time step):
-# https://arco.datastores.ecmwf.int/cadl-arco-time-002/arco/reanalysis_era5_single_levels/sfc/timeChunked.zarr
-#
-# Geo-chunked wave data (optimised for time-series at a single location):
-# https://arco.datastores.ecmwf.int/cadl-arco-geo-003/arco/reanalysis_era5_single_levels/wav/geoChunked.zarr
-#
-# Time-chunked wave data (optimised for global map at a single time step):
-# https://arco.datastores.ecmwf.int/cadl-arco-time-003/arco/reanalysis_era5_single_levels/wav/timeChunked.zarr
+# for further information.
 projects:
   native6:
     data:
       cds-era5-zarr:
         type: esmvalcore.io.xarray.XarrayDataSource
+        # Available stores:
+        # - Geo-chunked surface levels data (optimised for time-series at a single location):
+        #   https://arco.datastores.ecmwf.int/cadl-arco-geo-002/arco/reanalysis_era5_single_levels/sfc/geoChunked.zarr
+        # - Time-chunked surface levels data (optimised for global map at a single time step):
+        #   https://arco.datastores.ecmwf.int/cadl-arco-time-002/arco/reanalysis_era5_single_levels/sfc/timeChunked.zarr
+        # - Geo-chunked wave data (optimised for time-series at a single location):
+        #   https://arco.datastores.ecmwf.int/cadl-arco-geo-003/arco/reanalysis_era5_single_levels/wav/geoChunked.zarr
+        # - Time-chunked wave data (optimised for global map at a single time step):
+        #   https://arco.datastores.ecmwf.int/cadl-arco-time-003/arco/reanalysis_era5_single_levels/wav/timeChunked.zarr
         store: "https://arco.datastores.ecmwf.int/cadl-arco-time-002/arco/reanalysis_era5_single_levels/sfc/timeChunked.zarr"
         options:
           chunks: "auto"
