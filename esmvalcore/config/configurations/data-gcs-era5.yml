@@ -1,6 +1,5 @@
-# Read ERA5 data in zarr format on Google cloud (see
-# https://github.com/google-research/arco-era5
-# for details).
+# Read ERA5 data in zarr format on Google Cloud Storage.
+# Go to https://github.com/google-research/arco-era5 for further information.
 projects:
   native6:
     data:
