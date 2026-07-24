@@ -69,7 +69,7 @@ dependencies = [
     "xarray",
     "yamale",
     "zarr>3",
-    # For esmvalcore.io.zarr
+    # For esmvalcore.io.xarray with Google Cloud Storage data.
     "gcsfs",
 ]
 description = "A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts"
@@ -254,7 +254,7 @@ shapely = ">=2.0.0"
 xarray = "*"
 yamale = "*"
 zarr = ">3"
-# For esmvalcore.io.zarr
+# For esmvalcore.io.xarray with Google Cloud Storage data.
 "gcsfs" = "*"
 
 [tool.pixi.workspace]
