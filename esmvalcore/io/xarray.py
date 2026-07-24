@@ -13,8 +13,14 @@ directory:
 
         esmvaltool config copy data-cds-era5.yml
 
-    Then edit the copied file and insert your
-    `CDS API key <https://cds.climate.copernicus.eu/how-to-api>`__.
+    The file content is:
+
+    .. literalinclude:: ../configurations/data-cds-era5.yml
+        :language: yaml
+        :caption: Contents of ``data-cds-era5.yml``
+
+    Then edit the copied file and replace the text ``<INSERT YOUR CDS API KEY HERE>``
+    with your personal `CDS API key <https://cds.climate.copernicus.eu/how-to-api>`__.
 
 2. ``data-gcs-era5.yml``
 
@@ -24,12 +30,6 @@ directory:
     .. code-block:: console
 
         esmvaltool config copy data-gcs-era5.yml
-
-    The file content is:
-
-    .. literalinclude:: ../configurations/data-gcs-era5.yml
-        :language: yaml
-        :caption: Contents of ``data-gcs-era5.yml``
 
     Install `gcsfs <https://pypi.org/project/gcsfs/>`_ alongside ESMValCore to
     use this data source.
@@ -59,7 +59,7 @@ class XarrayDataset(DataElement):
     """A dataset that can load data using :meth:`xarray <xarray.open_dataset>`."""
 
     name: str
-    """A unique name identifying the data."""
+    """A unique name identifying the dataset."""
 
     facets: Facets = field(repr=False)
     """Facets are key-value pairs that were used to find this data."""
@@ -132,7 +132,7 @@ class XarrayDataSource(DataSource):
     """The priority of the data source. Lower values have priority."""
 
     variables: dict[str, str]
-    """Mapping between the ESMValCore short_names and dataset variable names."""
+    """Mapping between the dataset variable name and ESMValCore ``short_name``."""
 
     facets: Facets
     """Facets that will be added to the data elements found using this data source."""
