@@ -302,7 +302,6 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 [tool.pixi.feature.dev.dependencies]
 "jupyterlab" = "*"
 "mypy" = "*"
-"pixi" = "*"
 "pre-commit" = "*"
 "py-spy" = "*"
 "ruff" = "*"
