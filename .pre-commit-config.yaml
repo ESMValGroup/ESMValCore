@@ -35,7 +35,7 @@ repos:
             mamba install -y -c conda-forge pixi
             pixi run --locked ruff check --force-exclude --fix "$@"
           ' --
-        language: system
+        language: conda  # system
         require_serial: true
         types_or:
           - python
@@ -48,7 +48,7 @@ repos:
             mamba install -y -c conda-forge pixi
             pixi run --locked ruff format --force-exclude "$@"
           '--
-        language: system
+        language: conda  # system
         require_serial: true
         types_or:
           - python
@@ -61,7 +61,7 @@ repos:
             mamba install -y -c conda-forge pixi
             pixi run --locked mypy "$@"
           '--
-        language: system
+        language: conda  # system
         types:
           - python
         pass_filenames: false
