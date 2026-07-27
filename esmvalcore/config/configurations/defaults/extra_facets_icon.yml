@@ -129,8 +129,13 @@ projects:
           zg: {raw_name: geopot, var_type: atm_3d_ml}
 
           # 2D land variables
-          gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d_ml}
-          lai: {raw_name: pheno_lai_box, var_type: jsb_2d_ml, raw_units: '1'}
+          gpp: {raw_name: assimi_gross_assimilation_box, var_type: jsb_2d}
+          lai: {raw_name: pheno_lai_box, var_type: jsb_2d, raw_units: '1'}
+          baresoilFrac: {raw_name: pplcc_baresoil_fract_box, var_type: jsb_2d, raw_units: '1'}
+          grassFrac: {raw_name: pplcc_grass_fract_box, var_type: jsb_2d, raw_units: '1'}
+          treeFrac: {raw_name: pplcc_tree_fract_box, var_type: jsb_2d, raw_units: '1'}
+          shrubFrac: {raw_name: pplcc_shrub_fract_box, var_type: jsb_2d, raw_units: '1'}
+          cropFrac: {raw_name: pplcc_crop_fract_box, var_type: jsb_2d, raw_units: '1'}
 
           # 1D ocean variables
           amoc: {var_type: oce_moc}
