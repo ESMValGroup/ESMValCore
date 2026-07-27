@@ -40,7 +40,7 @@ repos:
           - jupyter
       - id: ruff-format
         name: ruff format
-        entry: "pixi run --locked ruff format --force-exclude"
+        entry: "mamba install -c conda-forge pixi && pixi run --locked ruff format --force-exclude"
         language: system
         require_serial: true
         types_or:
@@ -48,7 +48,7 @@ repos:
           - jupyter
       - id: mypy
         name: mypy
-        entry: "pixi run --locked mypy"
+        entry: "mamba install -c conda-forge pixi && pixi run --locked mypy"
         language: system
         types:
           - python
