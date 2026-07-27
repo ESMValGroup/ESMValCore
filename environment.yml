@@ -1,0 +1,8 @@
+---
+name: pre-commit
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+  - pixi
