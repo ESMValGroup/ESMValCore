@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: ruff-check
         name: ruff check
-        entry: "export PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked ruff check --force-exclude --fix"
+        entry: "env PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked ruff check --force-exclude --fix"
         language: system
         require_serial: true
         types_or:
@@ -37,7 +37,7 @@ repos:
           - jupyter
       - id: ruff-format
         name: ruff format
-        entry: "export PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked ruff format --force-exclude"
+        entry: "env PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked ruff format --force-exclude"
         language: system
         require_serial: true
         types_or:
@@ -45,7 +45,7 @@ repos:
           - jupyter
       - id: mypy
         name: mypy
-        entry: "export PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked mypy"
+        entry: "env PRE_COMMIT_USE_MAMBA=1 && mamba install -c conda-forge pixi && pixi run --locked mypy"
         language: system
         types:
           - python
