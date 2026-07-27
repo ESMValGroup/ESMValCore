@@ -29,36 +29,27 @@ repos:
     hooks:
       - id: ruff-check
         name: ruff check
-        entry: >
-          bash -c '
-            export PRE_COMMIT_USE_MAMBA=1
-            pixi run --locked ruff check --force-exclude --fix "$@"
-          ' --
-        language: conda  # system
+        entry: "pixi run --locked ruff check --force-exclude --fix"
+        additional_dependencies: ['pixi']
+        language: python  # system
         require_serial: true
         types_or:
           - python
           - jupyter
       - id: ruff-format
         name: ruff format
-        entry: >
-          bash -c '
-            export PRE_COMMIT_USE_MAMBA=1
-            pixi run --locked ruff format --force-exclude "$@"
-          '--
-        language: conda  # system
+        entry: "pixi run --locked ruff format --force-exclude"
+        additional_dependencies: ['pixi']
+        language: python  # system
         require_serial: true
         types_or:
           - python
           - jupyter
       - id: mypy
         name: mypy
-        entry: >
-          bash -c '
-            export PRE_COMMIT_USE_MAMBA=1
-            pixi run --locked mypy "$@"
-          '--
-        language: conda  # system
+        entry: "pixi run --locked mypy"
+        additional_dependencies: ['pixi']
+        language: python  # system
         types:
           - python
         pass_filenames: false
