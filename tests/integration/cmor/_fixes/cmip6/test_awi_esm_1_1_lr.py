@@ -33,16 +33,22 @@ def sea_ice_scalar_cubes(request):
         var_name=var_name,
         dim_coords_and_dims=[(time_coord, 0)],
     )
-    nodes_coord = iris.coords.DimCoord(
+    cube_anonymous_dim = iris.cube.Cube(
+        np.ones((1, 3)),
+        var_name=var_name,
+        dim_coords_and_dims=[(time_coord, 1)],
+    )
+    nodes_coord = iris.coords.AuxCoord(
         np.arange(1),
         var_name="nodes",
     )
-    cube_bad = iris.cube.Cube(
+    cube_aux_nodes = iris.cube.Cube(
         np.ones((1, 3)),
         var_name=var_name,
-        dim_coords_and_dims=[(time_coord, 1), (nodes_coord, 0)],
+        dim_coords_and_dims=[(time_coord, 1)],
+        aux_coords_and_dims=[(nodes_coord, 0)],
     )
-    return iris.cube.CubeList([cube_ok, cube_bad])
+    return iris.cube.CubeList([cube_ok, cube_anonymous_dim, cube_aux_nodes])
 
 
 def test_get_tas_fix():

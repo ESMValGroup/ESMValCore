@@ -40,12 +40,24 @@ class FesomSeaIceScalar(Fix):
     """
 
     def fix_metadata(self, cubes):
-        """Squeeze out the spurious length-1 dimension named nodes."""
+        """Remove dimension of length 1 if it is either anonymous (without mapped coordinate) or called 'nodes'."""
         fixed_cubes = []
         for cube in cubes:
+            mask_remove = [
+                cube.shape[dim] == 1 and not cube.coords(dimensions=dim)
+                for dim in range(cube.ndim)
+            ]
             if cube.coords("nodes"):
-                indices = [slice(None)] * cube.ndim
-                indices[cube.coord_dims("nodes")[0]] = 0
+                dim = cube.coord_dims("nodes")[
+                    0
+                ]  # assumes single coordinate 'nodes'
+                if cube.shape[dim] == 1:
+                    mask_remove[dim] = True
+
+            if any(mask_remove):
+                indices = [
+                    0 if remove else slice(None) for remove in mask_remove
+                ]
                 fixed_cubes.append(cube[tuple(indices)])
             else:
                 fixed_cubes.append(cube)
