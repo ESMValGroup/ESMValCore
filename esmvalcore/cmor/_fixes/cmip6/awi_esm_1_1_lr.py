@@ -1,6 +1,15 @@
 """Fixes for AWI-ESM-1-1-LR model."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from esmvalcore.cmor._fixes.fix import Fix
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from iris.cube import Cube
 
 
 class AllVars(Fix):
@@ -39,7 +48,7 @@ class FesomSeaIceScalar(Fix):
     (a scalar hemispheric integral over time only).
     """
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: Sequence[Cube]) -> list[Cube]:
         """Remove dimension of length 1 if it is either anonymous (without mapped coordinate) or called 'nodes'."""
         fixed_cubes = []
         for cube in cubes:
