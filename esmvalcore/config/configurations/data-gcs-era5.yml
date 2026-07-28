@@ -1,0 +1,19 @@
+# Read ERA5 data in zarr format on Google Cloud Storage.
+# Go to https://github.com/google-research/arco-era5 for further information.
+projects:
+  native6:
+    data:
+      gcs-era5-zarr:
+        type: esmvalcore.io.xarray.XarrayDataSource
+        store: "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
+        options:
+          chunks: "auto"
+          engine: "zarr"
+          storage_options:
+            token: anon
+        variables:
+          2m_temperature: tas
+          total_precipitation: pr
+        facets:
+          dataset: "ERA5"
+          frequency: "1hr"
