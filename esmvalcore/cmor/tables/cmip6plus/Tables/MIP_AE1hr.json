@@ -1,0 +1,89 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.041667,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AE1hr"
+  },
+  "variable_entry": {
+    "sfno2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "1hr",
+      "long_name": "NO2 Volume Mixing Ratio in Lowest Model Layer",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfno2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrogen_dioxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sfo3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "1hr",
+      "long_name": "O3 Volume Mixing Ratio in Lowest Model Layer",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfo3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sfpm25": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction of atmospheric particulate compounds with an aerodynamic diameter of less than or equal to 2.5 micrometers. To specify the relative humidity and temperature at which the particle size applies, provide scalar coordinate variables with the standard names of 'relative_humidity' and 'air_temperature'.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "1hr",
+      "long_name": "PM2.5 Mass Mixing Ratio in Lowest Model Layer",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sfpm25",
+      "positive": "",
+      "standard_name": "mass_fraction_of_pm2p5_ambient_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
