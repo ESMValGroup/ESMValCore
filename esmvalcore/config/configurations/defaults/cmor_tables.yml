@@ -17,7 +17,7 @@ projects:
     cmor_table:
       type: esmvalcore.cmor.table.CMIP6Info
       paths:
-        - cmip6plus/Tables  
+        - cmip6plus/Tables
         - cmip6-custom
   CMIP5:
     cmor_table:
