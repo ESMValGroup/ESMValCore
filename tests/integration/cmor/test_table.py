@@ -706,7 +706,7 @@ def test_get_mips_cmip5() -> None:
 def test_get_mips_cmip7() -> None:
     """Test ``_get_mips``."""
     mips = _get_mips(project="CMIP7", short_name="tas")
-    expected = {"atmos", "land", "landIce"}
+    expected = {"atmos", "landIce"}
     assert set(mips) == expected
 
 

@@ -2591,8 +2591,16 @@ Currently, the following special conversions are supported:
 
 * ``precipitation_flux`` (``kg m-2 s-1``) --
   ``lwe_precipitation_rate`` (``mm day-1``)
+* ``water_evaporation_flux`` (``kg m-2 s-1``) --
+  ``lwe_water_evaporation_rate`` (``mm day-1``)
+* ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
+* ``water_evapotranspiration_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
 * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
   ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
+* ``surface_air_pressure`` (``Pa``) --
+  ``atmosphere_mass_of_air_per_unit_area`` (``kg m-2``)
 
 .. hint::
    Names in the list correspond to ``standard_names`` of the input data.

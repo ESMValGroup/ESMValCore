@@ -410,6 +410,10 @@ _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
         ("lwe_water_evaporation_rate", "mm s-1"),
     ],
     [
+        ("water_evapotranspiration_flux", "kg m-2 s-1"),
+        (None, "mm s-1"),  # no standard_name for evapotranspiration
+    ],
+    [
         ("water_potential_evaporation_flux", "kg m-2 s-1"),
         (None, "mm s-1"),  # no standard_name for potential evaporation rate
     ],
