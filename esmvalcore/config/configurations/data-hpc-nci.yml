@@ -81,7 +81,7 @@ projects:
         rootpath: /g/data/rt52/era5
         dirname_template: "{level}/{nci_type}/{era5_shortname}/*"
         filename_template: "*.nc"
-      mswep_era5: #&MSWEP 
+      mswep_era5: #&MSWEP
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/av17/access-nri/esmvaltool/native6/Tier3
         dirname_template: "{dataset}/{version}/{frequency}/{short_name}"
@@ -115,7 +115,7 @@ projects:
         rootpath: /g/data/av17/access-nri/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
-  CORDEX-CMIP6:      
+  CORDEX-CMIP6:
     data:
       CCAM: &cordex-cmip6
         type: esmvalcore.io.local.LocalDataSource
@@ -135,4 +135,4 @@ projects:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ob53/BARRA2/output/reanalysis
         dirname_template: "{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
-        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}_{dataset}_{rcm_version}_{mip}*.nc"   
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}_{dataset}_{rcm_version}_{mip}*.nc"
