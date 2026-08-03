@@ -121,6 +121,18 @@ class TestConvertUnits(tests.Test):
             [[0.0, 86400.0], [172800.0, 259200.0]],
         )
 
+    def test_convert_water_evapotranspiration_flux(self):
+        """Test special conversion of water_evapotranspiration_flux."""
+        self.arr.standard_name = "water_evapotranspiration_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, None)
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
     def test_convert_rate_without_standard_name(self):
         """Test conversion of a flux without a standard name."""
         self.arr.units = "mm s-1"
