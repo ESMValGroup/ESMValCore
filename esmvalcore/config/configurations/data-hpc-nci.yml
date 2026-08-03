@@ -12,7 +12,7 @@ projects:
         rootpath: /g/data/fs38/publications
       av17:
         <<: *cmip6
-        rootpath:  /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data
+        rootpath: /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data
   CMIP5:
     data:
       r87: &cmip5
