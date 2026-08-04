@@ -56,6 +56,16 @@ class Gpp(IconFix):
         return cubes
 
 
+class Hfbasin(OceanBasinVariable):
+    """Fixes for ``hfbasin``."""
+
+    basin_to_var = BasinToVariableMapping(
+        atlantic_arctic_ocean="atlantic_hfbasin",
+        indian_pacific_ocean="pacific_hfbasin",
+        global_ocean="global_hfbasin",
+    )
+
+
 Hfls = NegateData
 
 
