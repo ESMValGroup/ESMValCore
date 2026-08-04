@@ -125,6 +125,9 @@ xfail_strict = true
 [tool.coverage.run]
 parallel = true
 source = ["esmvalcore"]
+omit = [
+    "typing.py",
+]
 
 [tool.coverage.report]
 exclude_lines = [
