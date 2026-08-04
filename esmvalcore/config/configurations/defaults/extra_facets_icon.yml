@@ -141,6 +141,7 @@ projects:
           amoc: {var_type: oce_moc}
 
           # 2D ocean variables
+          hfbasin: {var_type: oce_moc, lat_var: lat}
           hfds: {raw_name: HeatFlux_Total, var_type: oce_dbg}
           mlotst: {raw_name: mld, var_type: oce_dbg}
           siconc: {raw_name: conc, var_type: oce_ice, raw_units: '1'}
