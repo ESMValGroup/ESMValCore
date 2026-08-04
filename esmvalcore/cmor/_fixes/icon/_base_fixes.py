@@ -1169,8 +1169,9 @@ class OceanBasinVariable(IconFix):
 
         final_cube = preprocessed_cubes.merge_cube()
 
-        # Swap time and basin coordinates
-        final_cube.transpose([1, 0, 2, 3])
+        # Dimension order should be (time, basin, ...)
+        new_order = [1, 0, *range(2, final_cube.ndim)]
+        final_cube.transpose(new_order)
 
         # By default, merge_cube() sorts the coordinate alphabetically (i.e.,
         # atlantic_arctic_ocean -> global_ocean -> indian_pacific_ocean). Thus,
