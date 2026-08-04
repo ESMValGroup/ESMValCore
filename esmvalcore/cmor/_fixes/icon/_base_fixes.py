@@ -1157,6 +1157,8 @@ class OceanBasinVariable(IconFix):
             basin_var_name = getattr(self.basin_to_var, basin)
             cube = self.get_cube(cubes, var_name=basin_var_name)
             cube.var_name = self.vardef.short_name
+            cube.standard_name = None
+            cube.long_name = None
             cube.attributes.locals = {}
 
             # Remove longitude coordinate (with length 1)
