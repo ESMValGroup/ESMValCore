@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask.array as da
 import iris
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class Oras5Fix(IconFix):
     """Base class for all ORAS5 fixes."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize ORAS5 fix."""
         super().__init__(*args, **kwargs)
         self._horizontal_grids: dict[str, CubeList] = {}
