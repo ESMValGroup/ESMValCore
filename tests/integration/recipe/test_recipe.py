@@ -2625,7 +2625,9 @@ def test_representative_dataset_regular_var(
     datasets = _representative_datasets(dataset)
     assert len(datasets) == 1
     filename = datasets[0].files[0]
-    assert filename.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990-1999.nc"
+    assert (
+        filename.name == "atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml__1990-1999.nc"
+    )
 
 
 @pytest.mark.parametrize("force_derivation", [True, False])
