@@ -1279,7 +1279,7 @@ get_input_filelist:
       - amip/outdata
       - amip/output
     file_patterns:
-      - amip_atm_2d_ml*.nc
+      - amip_atm_2d_ml_*.nc
     found_files:
       - amip/amip_atm_2d_ml_20000201T000000Z.nc
       - amip/amip_atm_2d_ml_20000301T000000Z.nc
@@ -1306,7 +1306,7 @@ get_input_filelist:
     dirs:
       - amip
     file_patterns:
-      - amip_atm_2d_ml*.nc
+      - amip_atm_2d_ml_*.nc
     found_files:
       - amip/amip_atm_2d_ml_20000201T000000Z.nc
       - amip/amip_atm_2d_ml_20000301T000000Z.nc
@@ -1337,7 +1337,7 @@ get_input_filelist:
       - amip/outdata
       - amip/output
     file_patterns:
-      - amip_var*.nc
+      - amip_var_*.nc
     found_files:
       - amip/amip_var_20000301T000000Z.nc
       - amip/outdata/amip_var_20000401T000000Z.nc
@@ -1365,7 +1365,7 @@ get_input_filelist:
     dirs:
       - amip
     file_patterns:
-      - amip_var*.nc
+      - amip_var_*.nc
     found_files:
       - amip/amip_var_20000301T000000Z.nc
 
