@@ -461,7 +461,7 @@ output.
 The default naming conventions for input directories and files for ICON are
 
 * input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
-* input files: ``{exp}_{var_type}*.nc``
+* input files: ``{exp}_{var_type}_*.nc``
 
 as configured in:
 

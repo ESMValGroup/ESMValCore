@@ -1285,7 +1285,7 @@ get_input_filelist:
       - amip/amip_atm_2d_ml_20000301T000000Z.nc
 
   - dirname_template: "{exp}"
-    filename_template: "{exp}_{var_type}*.nc"
+    filename_template: "{exp}_{var_type}_*.nc"
     variable:
       variable_group: test
       short_name: tas
@@ -1344,7 +1344,7 @@ get_input_filelist:
       - amip/outdata/amip_var_20000501T000000Z.nc
 
   - dirname_template: "{exp}"
-    filename_template: "{exp}_{var_type}*.nc"
+    filename_template: "{exp}_{var_type}_*.nc"
     variable:
       variable_group: test
       short_name: tas

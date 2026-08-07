@@ -184,7 +184,7 @@ ICON:
       - '{exp}/outdata'
       - '{exp}/output'
   input_file:
-    default: '{exp}_{var_type}*.nc'
+    default: '{exp}_{var_type}_*.nc'
   output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
