@@ -44,13 +44,15 @@ class Gpp(IconFix):
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata.
 
-        Convert photosynthesis flux from mol(co2) m-2 s-1 to kg m-2 s-1.
-        Molar mass of CO2(kg) is 44.0095 g/mol
+        Convert photosynthesis flux from `mol(CO2) m-2 s-1` to `kgC m-2 s-1`.
+        Since mol(CO2) == mol(C), we can simply use molar mass of C for this
+        conversion (M(C) = 12.011 g/mol).
 
         """
         cube = self.get_cube(cubes)
-        cube.data = cube.core_data() * 44.0095 / 1000
-        cube.units = "kg m-2 s-1"
+        conversion_factor = 12.011 / 1000.0  # = M(C) / 1000 g/kg  [kgC/mol]
+        cube.data = cube.core_data() * conversion_factor
+        cube.units = "kg m-2 s-1"  # kgC m-2 s-1
         cube.attributes.pop("invalid_units", None)
 
         return cubes
