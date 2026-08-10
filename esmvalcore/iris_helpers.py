@@ -402,6 +402,15 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # mm s-1 for precipitation
 _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
     [
+        ("precipitation_amount", "kg m-2"),
+        ("lwe_thickness_of_precipitation_amount", "mm"),
+    ],
+    [
+        ("surface_snow_amount", "kg m-2"),
+        ("lwe_thickness_of_snowfall_amount", "mm"),
+    ],
+
+    [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
     ],
