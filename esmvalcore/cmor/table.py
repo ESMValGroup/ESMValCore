@@ -916,6 +916,21 @@ class Obs4MIPsInfo(CMIP6Info):
                 table = self.tables.pop(name)
                 self.tables[name[len(table_id_prefix) :]] = table
 
+    def _load_controlled_vocabulary(self, path: Path) -> None:
+        """Load controlled vocabulary."""
+        # Get institute
+        source_id_file = path.parent / "obs4MIPs_source_id.json"
+        if source_id_file.is_file():
+            with open(source_id_file, encoding="utf-8") as file:
+                table_data = json.loads(file.read())
+                try:
+                    sources = table_data["source_id"]
+                    for source_id in sources:
+                        institution = sources[source_id]["institution_id"]
+                        self.institutes[source_id] = institution
+                except (KeyError, AttributeError):
+                    pass
+
 
 @total_ordering
 class TableInfo(dict):
