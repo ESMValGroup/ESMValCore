@@ -1,0 +1,52 @@
+---
+name: Test and Cov Fork PR
+
+permissions: {}
+
+# runs only on a forked PR targeting ESMValCore main
+on:
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: pixi run bash -e {0}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    # run action ONLY on a fork PR
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        environment:
+          # perhaps add test-r to be complete?
+          - test-py314
+    name: ${{ matrix.os }} ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+        with:
+          frozen: true
+          environments: ${{ matrix.environment }}
+      - name: Check dependencies are compatible
+        run: pip check
+      - name: Check code quality
+        run: pre-commit run -a
+      - name: Run tests
+        run: pytest -n 2 --durations=10 --cov --cov-branch --cov-report=xml
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: ./coverage.xml
+      - name: Check the command line interface
+        run: |
+          esmvaltool version
+          esmvaltool -- --help
