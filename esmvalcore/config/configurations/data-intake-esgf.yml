@@ -63,6 +63,7 @@ projects:
         facets:
           dataset: "source_id"
           frequency: "frequency"
+          grid: "grid_label"
           institute: "institution_id"
           project: "project"
           short_name: "variable_id"
