@@ -222,8 +222,8 @@ class TestCMIP6Info:
         )
 
 
-class Testobs4mipsInfo:
-    """Tests for the obs4mips info class."""
+class Testobs4MIPsInfo:
+    """Tests for the Obs4MIPs info class."""
 
     @pytest.fixture
     def variables_info(self) -> Obs4MIPsInfo:
@@ -237,7 +237,7 @@ class Testobs4mipsInfo:
 
     def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
-        assert variables_info.get_table("monStderr").frequency == "mon"
+        assert variables_info.get_table("Amon").frequency == "mon"
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -246,16 +246,12 @@ class Testobs4mipsInfo:
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
-    def test_get_variable_ndvistderr(self, variables_info):
-        """Get ndviStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "obs4MIPs_monStderr",
-            "ndviStderr",
-        )
-        assert var.short_name == "ndviStderr"
+    def test_get_variable_ccb(self, variables_info):
+        """Get ccb variable."""
+        var = variables_info.get_variable("Amon", "ccb")
+        assert var.short_name == "ccb"
+        assert var.standard_name == "air_pressure_at_convective_cloud_base"
+        assert var.long_name == "Air Pressure at Convective Cloud Base"
         assert var.frequency == "mon"
 
     def test_get_variable_hus(self, variables_info):
@@ -271,14 +267,8 @@ class Testobs4mipsInfo:
         assert var.frequency == "mon"
 
     def test_get_variable_from_custom(self, variables_info):
-        """Get prStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "monStderr",
-            "prStderr",
-        )
+        """Get prStderr variable."""
+        var = variables_info.get_variable("Amon", "prStderr")
         assert var.short_name == "prStderr"
         assert var.frequency == "mon"
 
