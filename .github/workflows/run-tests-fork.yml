@@ -34,7 +34,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
           frozen: true
-          environments: ${{ matrix.environment }}
+          environments: test-py314
       - name: Check dependencies are compatible
         run: pip check
       - name: Run tests
