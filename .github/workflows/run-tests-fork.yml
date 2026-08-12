@@ -18,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     # run action ONLY on a fork PR
     if: github.event.pull_request.head.repo.full_name != github.repository
-    strategy:
-      fail-fast: false
     name: ubuntu-latest test-py314
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
