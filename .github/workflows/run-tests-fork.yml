@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     # run action ONLY on a fork PR
     if: github.event.pull_request.head.repo.full_name != github.repository
     strategy:
