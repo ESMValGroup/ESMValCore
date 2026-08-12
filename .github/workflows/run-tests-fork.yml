@@ -20,11 +20,6 @@ jobs:
     if: github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-        environment:
-          - test-py314
     name: ubuntu-latest test-py314
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
