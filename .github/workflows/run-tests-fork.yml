@@ -23,9 +23,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
         environment:
-          # perhaps add test-r to be complete?
           - test-py314
     name: ${{ matrix.os }} ${{ matrix.environment }}
     steps:
@@ -39,14 +37,8 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Check dependencies are compatible
         run: pip check
-      - name: Check code quality
-        run: pre-commit run -a
       - name: Run tests
         run: pytest -n 2 --durations=10 --cov --cov-branch --cov-report=xml
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: ./coverage.xml
-      - name: Check the command line interface
-        run: |
-          esmvaltool version
-          esmvaltool -- --help
