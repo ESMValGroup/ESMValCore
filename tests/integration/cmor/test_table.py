@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -293,6 +294,30 @@ class Testobs4MIPsInfo:
     def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
         assert variables_info.get_variable("Omon", "tras") is None
+
+    def test_no_cv_file_availble(self, tmp_path: Path) -> None:
+        tmp_tables_path = tmp_path / "Tables"
+        tmp_tables_path.mkdir(parents=True, exist_ok=True)
+
+        original_coordinate_table = (
+            Path(esmvalcore.cmor.table.__file__).parent
+            / "tables"
+            / "obs4mips"
+            / "Tables"
+            / "obs4MIPs_coordinate.json"
+        )
+        shutil.copy2(original_coordinate_table, tmp_tables_path)
+
+        # Use coordinates table also as source_id table to simulate missing
+        # source_id information
+        shutil.copy2(
+            original_coordinate_table,
+            tmp_path / "obs4MIPs_source_id.json",
+        )
+
+        Obs4MIPsInfo(
+            paths=[tmp_tables_path],
+        )  # should not fail without CV file
 
 
 class TestCMIP5Info:
