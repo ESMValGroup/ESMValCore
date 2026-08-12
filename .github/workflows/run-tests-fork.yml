@@ -15,17 +15,12 @@ defaults:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     # run action ONLY on a fork PR
     if: github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-        environment:
-          - test-py314
-    name: ${{ matrix.os }} ${{ matrix.environment }}
+    name: ubuntu-latest test-py314
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,7 +29,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
           frozen: true
-          environments: ${{ matrix.environment }}
+          environments: test-py314
       - name: Check dependencies are compatible
         run: pip check
       - name: Run tests
