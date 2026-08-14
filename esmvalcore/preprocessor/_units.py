@@ -38,6 +38,11 @@ def convert_units(cube: Cube, units: str | Unit) -> Cube:
 
     Currently, the following special conversions are supported:
 
+
+    * ``precipitation_amount`` (``kg m-2``) --
+      ``lwe_thickness_of_precipitation_amount`` (``mm``)
+    * ``surface_snow_amount`` (``kg m-2``) --
+      ``lwe_thickness_of_snowfall_amount`` (``mm``)
     * ``precipitation_flux`` (``kg m-2 s-1``) --
       ``lwe_precipitation_rate`` (``mm day-1``)
     * ``water_evaporation_flux`` (``kg m-2 s-1``) --

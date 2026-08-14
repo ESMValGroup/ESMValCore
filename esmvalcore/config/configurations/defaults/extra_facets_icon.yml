@@ -97,6 +97,7 @@ projects:
           prw: {raw_name: tqv_dia, var_type: atm_2d_ml}
           ps: {raw_name: pres_sfc, var_type: atm_2d_ml}
           psl: {raw_name: pres_msl, var_type: atm_2d_ml}
+          qep: {var_type: atm_2d_ml}
           rlns: {raw_name: thb_s, var_type: atm_2d_ml}
           rlut: {raw_name: thb_t, var_type: atm_2d_ml}
           rlutcs: {raw_name: lwflx_up_clr, var_type: atm_2d_ml}
