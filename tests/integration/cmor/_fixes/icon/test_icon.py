@@ -153,7 +153,7 @@ def simple_unstructured_cube():
     )
 
 
-def _get_fix(mip, short_name, fix_name, session=None):
+def _get_fix(mip, short_name, branding_suffix, fix_name, session=None):
     """Load a fix from esmvalcore.cmor._fixes.icon.icon."""
     dataset = Dataset(
         project="ICON",
@@ -164,20 +164,37 @@ def _get_fix(mip, short_name, fix_name, session=None):
     extra_facets = dataset._get_extra_facets()
     extra_facets["frequency"] = "mon"
     extra_facets["exp"] = "amip"
-    vardef = get_var_info(project="ICON", mip=mip, short_name=short_name)
+    vardef = get_var_info(
+        project="ICON",
+        mip=mip,
+        short_name=short_name,
+        branding_suffix=branding_suffix,
+    )
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
     return cls(vardef, extra_facets=extra_facets, session=session)
 
 
-def get_fix(mip, short_name, session=None):
+def get_fix(mip, short_name, *, branding_suffix=None, session=None):
     """Load a variable fix from esmvalcore.cmor._fixes.icon.icon."""
     fix_name = short_name[0].upper() + short_name[1:]
-    return _get_fix(mip, short_name, fix_name, session=session)
+    return _get_fix(
+        mip,
+        short_name,
+        branding_suffix,
+        fix_name,
+        session=session,
+    )
 
 
-def get_allvars_fix(mip, short_name, session=None):
+def get_allvars_fix(mip, short_name, *, branding_suffix=None, session=None):
     """Load the AllVars fix from esmvalcore.cmor._fixes.icon.icon."""
-    return _get_fix(mip, short_name, "AllVars", session=session)
+    return _get_fix(
+        mip,
+        short_name,
+        branding_suffix,
+        "AllVars",
+        session=session,
+    )
 
 
 def fix_metadata(cubes, mip, short_name, session=None):
@@ -652,7 +669,7 @@ def test_get_lwp_fix():
 @pytest.mark.online
 def test_lwp_fix(cubes_atm_2d, session):
     """Test fix."""
-    fix = get_allvars_fix("AERmon", "lwp", session)
+    fix = get_allvars_fix("AERmon", "lwp", session=session)
     fixed_cubes = fix.fix_metadata(cubes_atm_2d)
 
     assert len(fixed_cubes) == 1
@@ -1085,19 +1102,19 @@ def test_get_ch4clim_fix():
 def test_ch4clim_fix(cubes_regular_grid):
     """Test fix."""
     cube = cubes_regular_grid[0]
-    cube.var_name = "ch4Clim"
+    cube.var_name = "ch4"
     cube.units = "mol mol-1"
     cube.coord("time").units = "no_unit"
     cube.coord("time").attributes["invalid_units"] = "day as %Y%m%d.%f"
     cube.coord("time").points = [18500201.0]
     cube.coord("time").long_name = "wrong_time_name"
 
-    fix = get_allvars_fix("Amon", "ch4Clim")
+    fix = get_allvars_fix("Amon", "ch4", branding_suffix="Clim")
     fixed_cubes = fix.fix_metadata(cubes_regular_grid)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-    assert cube.var_name == "ch4Clim"
+    assert cube.var_name == "ch4"
     assert cube.standard_name == "mole_fraction_of_methane_in_air"
     assert cube.long_name == "Mole Fraction of CH4"
     assert cube.units == "mol mol-1"

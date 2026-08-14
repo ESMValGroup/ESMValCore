@@ -54,11 +54,6 @@ compress_netcdf: false
 # step. These files are numbered according to the preprocessing order.
 save_intermediary_cubes: false
 
-# Path to custom ``config-developer.yml`` file
-# This can be used to customise project configurations. See
-# ``config-developer.yml`` for an example. Set to ``null`` to use the default.
-config_developer_file: null
-
 # Use a profiling tool for the diagnostic run --- [false]/true
 # A profiler tells you which functions in your code take most time to run.
 # Only available for Python diagnostics.

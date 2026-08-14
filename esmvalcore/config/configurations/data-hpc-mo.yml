@@ -3,7 +3,7 @@ projects:
   CMIP6:
     data:
       mo: &cmip6
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
@@ -14,7 +14,7 @@ projects:
   CMIP5:
     data:
       mo: &cmip5
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
@@ -25,7 +25,7 @@ projects:
   CORDEX:
     data:
       mo: &cordex
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
@@ -36,28 +36,28 @@ projects:
   obs4MIPs:
     data:
       mo:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/esmval/ESMValTool/obs
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{short_name}_*.nc"
   native6:
     data:
       mo:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/esmval/ESMValTool/rawobs
         dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
   OBS6:
     data:
       mo:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/esmval/ESMValTool/obs
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
   OBS:
     data:
       mo:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /data/users/esmval/ESMValTool/obs
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

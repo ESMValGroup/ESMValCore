@@ -347,9 +347,7 @@ def find_files(*, project, short_name, dataset, **facets):
             f"Unable to download from ESGF, because project {project} is not"
             " on it or is not supported by the esmvalcore.io.esgf module."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # The project is required for the function to work.
     facets["project"] = project

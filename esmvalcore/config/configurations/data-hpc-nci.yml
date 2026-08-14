@@ -3,7 +3,7 @@ projects:
   CMIP6:
     data:
       oi10: &cmip6
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/oi10/replicas
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
@@ -16,7 +16,7 @@ projects:
   CMIP5:
     data:
       r87: &cmip5
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/r87/DRSv3/CMIP5
         dirname_template: "{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
@@ -33,35 +33,35 @@ projects:
   CMIP3:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/r87/DRSv3/CMIP3
         dirname_template: "{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}"
         filename_template: "{short_name}_*.nc"
   obs4MIPs:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{short_name}_*.nc"
   native6:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/xp65/public/apps/esmvaltool/native6
         dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
   OBS6:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
   OBS:
     data:
       local:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"

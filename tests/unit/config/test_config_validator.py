@@ -5,13 +5,12 @@ import pytest
 import yaml
 
 import esmvalcore
+import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
-from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import (
     ValidationError,
     _handle_deprecation,
     _listify_validator,
-    deprecate_extra_facets_dir,
     validate_bool,
     validate_bool_or_none,
     validate_check_level,
@@ -228,10 +227,26 @@ def generate_validator_testcases(valid):
         {
             "validator": validate_projects,
             "success": (
-                ({"CMIP6": {}}, {"CMIP6": {}}),
+                (
+                    {"CMIP6": {}},
+                    {
+                        "CMIP6": {
+                            "cmor_table": {
+                                "type": "esmvalcore.cmor.table.NoInfo",
+                            },
+                        },
+                    },
+                ),
                 (
                     {"CMIP6": {"extra_facets": {}}},
-                    {"CMIP6": {"extra_facets": {}}},
+                    {
+                        "CMIP6": {
+                            "cmor_table": {
+                                "type": "esmvalcore.cmor.table.NoInfo",
+                            },
+                            "extra_facets": {},
+                        },
+                    },
                 ),
             ),
             "fail": (
@@ -311,13 +326,14 @@ def test_handle_deprecation(remove_version):
 def test_validate_config_developer_none():
     """Test ``validate_config_developer``."""
     path = validate_config_developer(None)
-    assert path == Path(esmvalcore.__file__).parent / "config-developer.yml"
+    assert path is None
 
 
-def test_validate_config_developer(tmp_path):
+def test_validate_config_developer(tmp_path, monkeypatch):
     """Test ``validate_config_developer``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
     custom_table_path = (
-        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "custom"
+        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "cmip5-custom"
     )
     cfg_dev = {
         "custom": {"cmor_path": custom_table_path},
@@ -344,23 +360,3 @@ def test_validate_config_developer(tmp_path):
 
     # Restore original config-developer file
     validate_config_developer(None)
-
-
-# TODO: remove in v2.15.0
-def test_extra_facets_dir_tuple_deprecated(monkeypatch):
-    """Test extra_facets_dir."""
-    with pytest.warns(ESMValCoreDeprecationWarning):
-        monkeypatch.setitem(CFG, "extra_facets_dir", ("/extra/facets",))
-    assert CFG["extra_facets_dir"] == [Path("/extra/facets")]
-
-
-# TODO: remove in v2.15.0
-def test_deprecate_extra_facets_dir(monkeypatch):
-    """Test deprecate_extra_facets_dir."""
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
-    msg = (
-        r"Since the environment variable "
-        r"ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG is set"
-    )
-    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
-        deprecate_extra_facets_dir({}, "value", "validated_value")

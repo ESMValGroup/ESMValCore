@@ -15,11 +15,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from esmvalcore.config import CFG
-from esmvalcore.config._config import get_ignored_warnings, get_project_config
+from esmvalcore.config._config import CFG as CONFIG_DEVELOPER
+from esmvalcore.config._config import (
+    get_ignored_warnings,
+    get_project_config,
+    load_config_developer,
+)
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
     _filter_versions_called_latest,
+    _MissingFacetError,
     _replace_tags,
     _select_latest_version,
 )
@@ -35,6 +42,17 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_config_developer_drs() -> Path:
+    """Ensure that directory structure from config-developer.yml is loaded."""
+    config_developer_file = CFG.get("config_developer_file")
+    if not config_developer_file:
+        config_developer_file = Path(__file__).parent / "config-developer.yml"
+    if not CONFIG_DEVELOPER:
+        # Load the config-developer.yml file, but do not update the CMOR tables.
+        load_config_developer(config_developer_file, set_cmor_tables=False)
+    return config_developer_file
 
 
 def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
@@ -61,6 +79,7 @@ _LEGACY_DATA_SOURCES_WARNED: set[str] = set()
 
 def _get_data_sources(project: str) -> list[LocalDataSource]:
     """Get a list of data sources."""
+    config_developer_file = _ensure_config_developer_drs()
     rootpaths = CFG["rootpath"]
     default_drs = {
         "CMIP3": "ESGF",
@@ -110,7 +129,7 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
                         "and 'drs' settings and the path templates from '%s'"
                     ),
                     project,
-                    CFG["config_developer_file"],
+                    config_developer_file,
                 )
                 _LEGACY_DATA_SOURCES_WARNED.add(project)
             return sources
@@ -145,7 +164,10 @@ class DataSource(LocalDataSource):
 
     def get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
         """Compose the globs that will be used to look for files."""
-        return self._get_glob_patterns(**facets)
+        try:
+            return self._get_glob_patterns(**facets)
+        except _MissingFacetError as exc:
+            raise RecipeError(exc.args[0]) from exc
 
     def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
         """Extract facets from path."""
@@ -254,7 +276,10 @@ def find_files(
     if debug:
         globs = []
         for data_source in data_sources:
-            globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            try:
+                globs.extend(data_source._get_glob_patterns(**facets))  # noqa: SLF001
+            except _MissingFacetError as exc:
+                raise RecipeError(exc.args[0]) from exc
         return files, sorted(globs)
     return files
 
@@ -264,6 +289,7 @@ _GET_OUTPUT_FILE_WARNED: set[str] = set()
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     """Return the full path to the output (preprocessed) file."""
+    _ensure_config_developer_drs()
     project = variable["project"]
     cfg = get_project_config(project)
     if project not in _GET_OUTPUT_FILE_WARNED:
@@ -282,7 +308,10 @@ def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     if isinstance(variable.get("exp"), (list, tuple)):
         variable = dict(variable)
         variable["exp"] = "-".join(variable["exp"])
-    outfile = _replace_tags(cfg["output_file"], variable)[0]
+    try:
+        outfile = _replace_tags(cfg["output_file"], variable)[0]
+    except _MissingFacetError as exc:
+        raise RecipeError(exc.args[0]) from exc
     if "timerange" in variable:
         timerange = variable["timerange"].replace("/", "-")
         outfile = Path(f"{outfile}_{timerange}")

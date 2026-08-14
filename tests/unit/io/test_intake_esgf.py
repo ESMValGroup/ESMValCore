@@ -6,6 +6,7 @@ import importlib.resources
 from typing import TYPE_CHECKING
 
 import intake_esgf
+import intake_esgf.exceptions
 import iris.cube
 import pandas as pd
 import pytest
@@ -35,7 +36,29 @@ def test_prepare(mocker: MockerFixture) -> None:
     dataset = IntakeESGFDataset(name="id", facets={}, catalog=cat)
 
     dataset.prepare()
-    to_path_mock.assert_called_once_with(minimal_keys=False)
+    to_path_mock.assert_called_once_with(minimal_keys=False, quiet=True)
+
+
+def test_prepare_fails(mocker: MockerFixture) -> None:
+    """IntakeESGFDataset.prepare should should log catalog.session_log() on failure."""
+    cat = intake_esgf.ESGFCatalog()
+    exc = intake_esgf.exceptions.DatasetLoadError(
+        ["CMCC.CMCC - CMS.historical.day.atmos.day.r1i1p1.sfcWind"],
+        None,
+    )
+    to_path_mock = mocker.patch.object(
+        cat,
+        "to_path_dict",
+        autospec=True,
+        side_effect=exc,
+    )
+    session_log_mock = mocker.patch.object(cat, "session_log", autospec=True)
+    dataset = IntakeESGFDataset(name="id", facets={}, catalog=cat)
+
+    with pytest.raises(intake_esgf.exceptions.DatasetLoadError):
+        dataset.prepare()
+    to_path_mock.assert_called_once_with(minimal_keys=False, quiet=True)
+    session_log_mock.assert_called_once_with()
 
 
 def test_attributes_raises_before_to_iris() -> None:

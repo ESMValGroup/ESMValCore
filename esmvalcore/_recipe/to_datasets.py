@@ -33,12 +33,13 @@ logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
-    "activity",
-    "driver",
-    "dataset",
     "exp",
-    "sub_experiment",
+    "dataset",
+    "rcm_version",
+    "driver",
     "ensemble",
+    "sub_experiment",
+    "grid",
     "version",
 )
 """List of keys to be used to compose the alias, ordered by priority."""
@@ -252,11 +253,17 @@ def _append_missing_supplementaries(
 
             supplementary_facets: Facets = {
                 facet: "*"
-                for facet in FACETS.get(project, ["mip"])
+                for facet in (
+                    *tuple(FACETS.get(project, [])),
+                    "mip",
+                )
                 if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
-            if "version" in facets:
-                supplementary_facets["version"] = "*"
+            for key in ("frequency", "version"):
+                # Do not inherit these facets as they tend to differ from the
+                # main variable.
+                if key in facets:
+                    supplementary_facets[key] = "*"
             supplementary_facets["short_name"] = short_name
             supplementaries.append(supplementary_facets)
 
@@ -596,5 +603,7 @@ def _representative_datasets(dataset: Dataset) -> list[Dataset]:
     copy.supplementaries = []
     representative_datasets = _get_input_datasets(copy)
     for representative_dataset in representative_datasets:
-        representative_dataset.supplementaries = dataset.supplementaries
+        representative_dataset.supplementaries = [
+            d.copy() for d in dataset.supplementaries
+        ]
     return representative_datasets

@@ -21,6 +21,8 @@ class DerivedVariable(DerivedVariableBase):
                 {"short_name": "msftmz", "optional": True},
                 {"short_name": "msftyz", "optional": True},
             ]
+        elif project == "ICON":
+            required = [{"short_name": "msftmz", "mip": "Omon"}]
         else:
             msg = f"Project {project} can not be used for Amoc derivation."
             raise ValueError(msg)
@@ -72,9 +74,7 @@ class DerivedVariable(DerivedVariableBase):
                 f"Amoc calculation: {cube_orig} doesn't contain"
                 f" atlantic_arctic_ocean."
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.0)

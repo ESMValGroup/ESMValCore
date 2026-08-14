@@ -17,7 +17,8 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     fix_accumulated_units,
 )
 from esmvalcore.cmor.fix import fix_metadata
-from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
+from esmvalcore.cmor.table import get_tables
+from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import cmor_check_metadata
 
@@ -26,18 +27,22 @@ COMMENT = (
     f"{datetime.datetime.now().year}"
 )
 
+CMOR_TABLES = {
+    "native6": get_tables(CFG, "native6"),
+}
+
 
 def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes("native6", "ERA5", "E1hr", "evspsbl")
-    vardef = get_var_info("native6", "E1hr", "evspsbl")
+    vardef = CMOR_TABLES["native6"].get_variable("E1hr", "evspsbl")
     assert fix == [Evspsbl(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes("native6", "ERA5", "Amon", "zg")
-    vardef = get_var_info("native6", "E1hr", "evspsbl")
+    vardef = CMOR_TABLES["native6"].get_variable("E1hr", "evspsbl")
     assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
@@ -64,6 +69,17 @@ def _era5_latitude():
         long_name="latitude",
         var_name="latitude",
         units=Unit("degrees"),
+    )
+
+
+def _era5_latitude_w_direction():
+    return DimCoord(
+        np.array([90.0, 0.0, -90.0]),
+        standard_name="latitude",
+        long_name="latitude",
+        var_name="latitude",
+        units=Unit("degrees"),
+        attributes={"stored_direction": "decreasing"},
     )
 
 
@@ -392,6 +408,8 @@ def evspsbl_era5_hourly():
             (_era5_longitude(), 2),
         ],
     )
+    # Test time units of newly downloaded ERA5 data (2026-05-20)
+    cube.coord("time").convert_units("seconds since 1970-01-01")
     return CubeList([cube])
 
 
@@ -674,8 +692,6 @@ def ptype_cmor_e1hr():
         ],
         attributes={"comment": COMMENT},
     )
-    cube.coord("latitude").long_name = "latitude"
-    cube.coord("longitude").long_name = "longitude"
     return CubeList([cube])
 
 
@@ -752,8 +768,6 @@ def rlns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
@@ -984,8 +998,6 @@ def rsns_cmor_e1hr():
         ],
         attributes={"comment": COMMENT, "positive": "down"},
     )
-    cube.coord("latitude").long_name = "latitude"  # from custom table
-    cube.coord("longitude").long_name = "longitude"  # from custom table
     return CubeList([cube])
 
 
@@ -1578,3 +1590,38 @@ def test_unstructured_grid(unstructured_grid_cubes):
     assert lon.bounds is None
 
     assert fixed_cube.attributes["GRIB_PARAM"] == "(1, 1)"
+
+
+@pytest.fixture
+def cube_latitude_w_direction():
+    """Sample cube with latitude coordinate with direction."""
+    time = DimCoord(
+        [-31, 0, 31],
+        standard_name="time",
+        units="days since 1850-01-01",
+    )
+    cube = Cube(
+        _era5_data("mon"),
+        standard_name="air_temperature",
+        units="K",
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_latitude_w_direction(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def test_latitude_w_direction(cube_latitude_w_direction):
+    """Test removal of latitude stored_direction attribute."""
+    fixed_cubes = fix_metadata(
+        cube_latitude_w_direction,
+        "tas",
+        "native6",
+        "era5",
+        "Amon",
+    )
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.coord("latitude") == _cmor_latitude()

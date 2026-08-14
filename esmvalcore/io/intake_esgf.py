@@ -23,8 +23,8 @@ create a file with the following content in your configuration directory:
 from __future__ import annotations
 
 import copy
+import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake_esgf
@@ -47,54 +47,7 @@ __all__ = [
     "IntakeESGFDataset",
 ]
 
-
-class _CachingCatalog(intake_esgf.ESGFCatalog):
-    """An ESGF catalog that caches to_path_dict results."""
-
-    def __init__(self):
-        super().__init__()
-        self._result = {}
-
-    @classmethod
-    def from_catalog(
-        cls,
-        catalog: intake_esgf.ESGFCatalog,
-    ) -> _CachingCatalog:
-        """Create a CachingCatalog from an existing ESGFCatalog."""
-        cat = cls()
-        cat.indices = catalog.indices
-        cat.local_cache = catalog.local_cache
-        cat.esg_dataroot = catalog.esg_dataroot
-        cat.file_start = catalog.file_start
-        cat.file_end = catalog.file_end
-        cat.project = catalog.project
-        cat.df = catalog.df
-        return cat
-
-    def to_path_dict(
-        self,
-        prefer_streaming: bool = False,
-        globus_endpoint: str | None = None,
-        globus_path: Path = Path("/"),
-        minimal_keys: bool = True,
-        ignore_facets: None | str | list[str] = None,
-        separator: str = ".",
-        quiet: bool = False,
-    ) -> dict[str, list[str | Path]]:
-        """Return the current search as a dictionary of paths to files."""
-        kwargs = {
-            "prefer_streaming": prefer_streaming,
-            "globus_endpoint": globus_endpoint,
-            "globus_path": globus_path,
-            "minimal_keys": minimal_keys,
-            "ignore_facets": ignore_facets,
-            "separator": separator,
-            "quiet": quiet,
-        }
-        key = tuple((k, v) for k, v in kwargs.items() if k != "quiet")
-        if key not in self._result:
-            self._result[key] = super().to_path_dict(**kwargs)
-        return self._result[key]
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -122,20 +75,15 @@ class IntakeESGFDataset(DataElement):
 
     def prepare(self) -> None:
         """Prepare the data for access."""
-        self.catalog.to_path_dict(minimal_keys=False)
-        for index in self.catalog.indices:
-            # Set the sessions to None to avoid issues with pickling
-            # requests_cache.CachedSession objects when max_parallel_tasks > 1.
-            # After the prepare step, the sessions for interacting with the
-            # search indices are not needed anymore as all file paths required
-            # to load the data have been found. To make sure we do not
-            # accidentally use the sessions later on, we set them to None
-            # instead of e.g. requests.Session objects.
-            #
-            # This seems the safest/fastest solution as it avoids accessing the
-            # sqlite database backing the cached_requests.CachedSession from
-            # multiple processes on multiple machines.
-            index.session = None
+        try:
+            self.catalog.to_path_dict(minimal_keys=False, quiet=True)
+        except intake_esgf.exceptions.DatasetLoadError:
+            logger.error(
+                "Failed to download dataset '%s' from the ESGF. Error messages:\n%s",
+                self.name,
+                self.catalog.session_log(),
+            )
+            raise
 
     @property
     def attributes(self) -> dict[str, Any]:
@@ -293,11 +241,9 @@ class IntakeESGFDataSource(DataSource):
         }
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
-            # Use a caching catalog to avoid searching the indices after
-            # calling the ESGFFile.prepare method.
-            cat = _CachingCatalog.from_catalog(self.catalog)
             # Subset the catalog to a single dataset.
-            cat.df = cat.df[cat.df.key == dataset_id]
+            cat = copy.deepcopy(self.catalog)
+            cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
             # Ensure only the requested variable is included in the dataset.
             # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
             if "short_name" in normalized_facets:

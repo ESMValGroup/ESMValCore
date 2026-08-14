@@ -551,9 +551,7 @@ class ESGFFile(DataElement):
                     f" downloaded from {url}: expected {checksum}, but got"
                     f" {local_checksum}. Try downloading the file again."
                 )
-                raise DownloadError(
-                    msg,
-                )
+                raise DownloadError(msg)
 
         shutil.move(tmp_file, local_file)
         log_speed(url, self.size, duration.total_seconds())

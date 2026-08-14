@@ -48,6 +48,7 @@ def align_metadata(step_settings: dict[str, Any]) -> None:
     project = step_settings.get("target_project")
     mip = step_settings.get("target_mip")
     short_name = step_settings.get("target_short_name")
+    branding_suffix = step_settings.get("target_branding_suffix")
     strict = step_settings.get("strict", True)
 
     # Any missing arguments will be reported later
@@ -55,7 +56,12 @@ def align_metadata(step_settings: dict[str, Any]) -> None:
         return
 
     try:
-        _get_var_info(project, mip, short_name)
+        _get_var_info(
+            project,
+            mip,
+            short_name,
+            branding_suffix=branding_suffix,
+        )
     except ValueError as exc:
         if strict:
             msg = (

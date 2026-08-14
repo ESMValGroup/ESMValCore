@@ -402,12 +402,24 @@ def has_unstructured_grid(cube: Cube) -> bool:
 # mm s-1 for precipitation
 _SPECIAL_UNIT_CONVERSIONS: list[list[tuple[str | None, str]]] = [
     [
+        ("precipitation_amount", "kg m-2"),
+        ("lwe_thickness_of_precipitation_amount", "mm"),
+    ],
+    [
+        ("surface_snow_amount", "kg m-2"),
+        ("lwe_thickness_of_snowfall_amount", "mm"),
+    ],
+    [
         ("precipitation_flux", "kg m-2 s-1"),
         ("lwe_precipitation_rate", "mm s-1"),
     ],
     [
         ("water_evaporation_flux", "kg m-2 s-1"),
         ("lwe_water_evaporation_rate", "mm s-1"),
+    ],
+    [
+        ("water_evapotranspiration_flux", "kg m-2 s-1"),
+        (None, "mm s-1"),  # no standard_name for evapotranspiration
     ],
     [
         ("water_potential_evaporation_flux", "kg m-2 s-1"),
@@ -522,9 +534,7 @@ def safe_convert_units(cube: Cube, units: str | Unit) -> Cube:
             f"standard_name changed from '{old_standard_name}' to "
             f"'{cube.standard_name}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return cube
 
 
@@ -624,9 +634,7 @@ def dataset_to_iris(
             f"Expected type ncdata.NcData or xr.Dataset for dataset, got "
             f"type {type(dataset)}"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     with ignore_warnings_context(ignore_warnings):
         cubes = conversion_func(dataset)

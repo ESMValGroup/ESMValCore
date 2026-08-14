@@ -6,15 +6,13 @@ import dask.config
 import pytest
 import yaml
 
-import esmvalcore.config._config
+import esmvalcore.cmor.table
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
-    _deep_update,
     get_ignored_warnings,
-    load_extra_facets,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+from esmvalcore.exceptions import RecipeError
 
 BUILTIN_CONFIG_DIR = Path(esmvalcore.config.__file__).parent.joinpath(
     "configurations",
@@ -45,28 +43,6 @@ def test_builtin_config_files_have_description(config_file: Path) -> None:
     # Add a basic check that the description is meaningful
     assert len(description) > 15
     assert description.endswith(".")
-
-
-TEST_DEEP_UPDATE = [
-    ([{}], {}),
-    ([{"a": 1, "b": 2}, {"a": 3}], {"a": 3, "b": 2}),
-    (
-        [
-            {"a": {"b": 1, "c": {"d": 2}}, "e": {"f": 4, "g": 5}},
-            {"a": {"b": 2, "c": 3}},
-        ],
-        {"a": {"b": 2, "c": 3}, "e": {"f": 4, "g": 5}},
-    ),
-]
-
-
-# TODO: remove in v2.15.0
-@pytest.mark.parametrize(("dictionaries", "expected_merged"), TEST_DEEP_UPDATE)
-def test_deep_update(dictionaries, expected_merged):
-    merged = dictionaries[0]
-    for update in dictionaries[1:]:
-        merged = _deep_update(merged, update)
-    assert expected_merged == merged
 
 
 BASE_PATH = importlib_files("tests") / "sample_data" / "extra_facets"
@@ -121,31 +97,6 @@ TEST_LOAD_EXTRA_FACETS = [
 ]
 
 
-# TODO: Remove in v2.15.0
-@pytest.mark.parametrize(
-    ("project", "extra_facets_dir", "expected"),
-    TEST_LOAD_EXTRA_FACETS,
-)
-def test_load_extra_facets(project, extra_facets_dir, expected):
-    extra_facets = load_extra_facets(project, extra_facets_dir)
-    assert extra_facets == expected
-
-
-# TODO: Remove in v2.15.0
-def test_load_extra_facets_deprecation(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        esmvalcore.config._config,
-        "USER_EXTRA_FACETS",
-        tmp_path,
-    )
-    msg = (
-        r"Usage of extra facets located in ~/.esmvaltool/extra_facets has "
-        r"been deprecated"
-    )
-    with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
-        load_extra_facets("PROJECT", ())
-
-
 def test_get_project_config(mocker):
     mock_result = mocker.Mock()
     mocker.patch.object(_config, "CFG", {"CMIP6": mock_result})
@@ -161,14 +112,10 @@ def test_get_project_config(mocker):
 
 def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
-    project_cfg = {}
-    monkeypatch.setattr(_config, "CFG", project_cfg)
     root_path = importlib_files("esmvalcore")
-    default_dev_file = root_path / "config-developer.yml"
-    config_dir = root_path / "config" / "configurations" / "defaults"
+    default_config_dir = root_path / "config" / "configurations" / "defaults"
     default_project_settings = dask.config.collect(
-        paths=[str(p) for p in config_dir.glob("extra_facets_*.yml")]
-        + [str(config_dir / "preprocessor_filename_template.yml")],
+        paths=[str(p) for p in default_config_dir.glob("*.yml")],
         env={},
     )["projects"]
 
@@ -178,7 +125,6 @@ def test_load_default_config(cfg_default, monkeypatch):
         "auxiliary_data_dir": Path.home() / "auxiliary_data",
         "check_level": CheckLevels.DEFAULT,
         "compress_netcdf": False,
-        "config_developer_file": default_dev_file,
         "dask": {
             "profiles": {
                 "local_threaded": {
@@ -237,7 +183,9 @@ def test_load_default_config(cfg_default, monkeypatch):
         "CMIP3",
         "CMIP5",
         "CMIP6",
+        "CMIP7",
         "CORDEX",
+        "CORDEX-CMIP6",
         "obs4MIPs",
         "ana4MIPs",
         # ESMValCore supported projects
@@ -259,9 +207,6 @@ def test_load_default_config(cfg_default, monkeypatch):
     for path in ("preproc", "work", "run"):
         assert getattr(session, path + "_dir") == session.session_dir / path
     assert session.plot_dir == session.session_dir / "plots"
-
-    # Check that projects were configured
-    assert project_cfg
 
 
 def test_rootpath_obs4mips_case_correction(monkeypatch):
@@ -327,8 +272,14 @@ def test_get_ignored_warnings_none(project, step):
     assert get_ignored_warnings(project, step) is None
 
 
-def test_get_ignored_warnings_emac():
+def test_get_ignored_warnings_emac(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test ``get_ignored_warnings``."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     ignored_warnings = get_ignored_warnings("EMAC", "load")
     assert isinstance(ignored_warnings, list)
     assert ignored_warnings

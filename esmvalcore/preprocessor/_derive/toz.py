@@ -4,7 +4,7 @@ import cf_units
 import iris
 from scipy import constants
 
-from esmvalcore.cmor.table import CMOR_TABLES
+import esmvalcore.cmor.table
 from esmvalcore.iris_helpers import ignore_iris_vague_metadata_warnings
 from esmvalcore.preprocessor._regrid import extract_levels, regrid
 
@@ -48,7 +48,9 @@ def add_longitude_coord(cube):
 def interpolate_hybrid_plevs(cube):
     """Interpolate hybrid pressure levels."""
     # Use CMIP6's plev19 target levels (in Pa)
-    target_levels = CMOR_TABLES["CMIP6"].coords["plev19"].requested
+    target_levels = (
+        esmvalcore.cmor.table.CMOR_TABLES["CMIP6"].coords["plev19"].requested
+    )
     cube.coord("air_pressure").convert_units("Pa")
     return extract_levels(
         cube,

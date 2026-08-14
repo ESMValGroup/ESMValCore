@@ -1,5 +1,7 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
 
+import re
+
 import iris
 import iris.fileformats
 import numpy as np
@@ -116,6 +118,12 @@ WEIGHTING_LANDSEA_FRACTION = [
     (CUBE_ANCILLARY_4, "land", CUBE_4_L),
     (CUBE_ANCILLARY_4, "sea", CUBE_4_O),
 ]
+
+
+def test_weighting_landsea_fraction_invalid_area_type_fail() -> None:
+    msg = r"Expected 'land' or 'sea' for area_type"
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        weighting.weighting_landsea_fraction(CUBE_3, "invalid")  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(

@@ -12,9 +12,9 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.iris_helpers import safe_convert_units
 
 from .shared import (
+    add_scalar_areatype_coord,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
-    add_scalar_typesi_coord,
 )
 
 if TYPE_CHECKING:
@@ -47,7 +47,46 @@ class NativeDatasetFix(Fix):
         if "lambda550nm" in self.vardef.dimensions:
             add_scalar_lambda550nm_coord(cube)
         if "typesi" in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, "sea_ice")
+            add_scalar_areatype_coord(
+                cube,
+                long_name="Sea Ice area type",
+                value="sea_ice",
+            )
+        if "typenatgr" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typenatgr",
+                long_name="Natural grass area type",
+                value="natural_grasses",
+            )
+        if "typeshrub" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typeshrub",
+                long_name="Shrub area type",
+                value="shrubs",
+            )
+        if "typebare" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typebare",
+                long_name="surface type",
+                value="bare_ground",
+            )
+        if "typetree" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typetree",
+                long_name="Tree area type",
+                value="trees",
+            )
+        if "typecrop" in self.vardef.dimensions:
+            add_scalar_areatype_coord(
+                cube,
+                var_name="typecrop",
+                long_name="Crop area type",
+                value="crops",
+            )
 
     def fix_var_metadata(self, cube: Cube) -> None:
         """Fix variable metadata of cube (in-place).
@@ -86,9 +125,7 @@ class NativeDatasetFix(Fix):
                     f"Failed to fix invalid units '{invalid_units}' for "
                     f"variable '{self.vardef.short_name}'"
                 )
-                raise ValueError(
-                    msg,
-                ) from exc
+                raise ValueError(msg) from exc
         safe_convert_units(cube, self.vardef.units)
 
         # Fix attributes
@@ -132,9 +169,7 @@ class NativeDatasetFix(Fix):
                 f"Variable '{var_name}' used to extract "
                 f"'{self.vardef.short_name}' is not available in input file"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 
     def fix_regular_time(

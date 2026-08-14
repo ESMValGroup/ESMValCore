@@ -72,7 +72,9 @@ Please keep the following considerations in mind when programming:
   what exactly is being changed.
 - :ref:`preprocessor_functions` are Python functions (and not classes) so they
   are easy to understand and implement for scientific contributors.
-- No additional CMOR checks should be implemented inside preprocessor functions.
+- No additional CMOR checks should be implemented inside preprocessor functions,
+  though it is our ambition to make preprocessor functions work with any data that
+  follows the `CF Conventions <https://cfconventions.org/>`_.
   The input cube is fixed and confirmed to follow the specification in
   `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
   before applying any other preprocessor functions.
@@ -82,7 +84,8 @@ Please keep the following considerations in mind when programming:
   recipe to the relevant CMOR table.
 - The ESMValCore package is based on :ref:`iris <iris_docs>`.
   Preprocessor functions should preferably be small and just call the relevant
-  iris code.
+  iris code. This automatically ensures that the preprocessor functions work with
+  data that follows the CF Conventions.
   Code that is more involved and more broadly applicable than just in the
   ESMValCore, should be implemented in iris instead.
 - Any settings in the recipe that can be checked before loading the data should
@@ -300,7 +303,7 @@ What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Functionality that is visible to users should be documented.
-Any documentation that is visible on `readthedocs <https://docs.esmvaltool.org>`_
+Any documentation that is visible on `readthedocs <https://docs.esmvaltool.org/projects/ESMValCore>`__
 should be well written and adhere to the standards for documentation.
 Examples of this include:
 
@@ -334,7 +337,8 @@ How to build and view the documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Whenever you make a pull request or push new commits to an existing pull
-request, readthedocs will automatically build the documentation.
+request, `readthedocs <https://app.readthedocs.org/projects/esmvalcore/>`_
+will automatically build the documentation.
 The link to the documentation will be shown in the list of checks below your
 pull request.
 Click 'Details' behind the check ``docs/readthedocs.org:esmvalcore`` to preview
@@ -357,19 +361,26 @@ or
 
 to build it from scratch.
 
+Alternatively, the pixi task ``doc`` can be used:
+
+.. code-block:: bash
+
+   pixi run doc
+
 Make sure that your newly added documentation builds without warnings or
 errors and looks correctly formatted.
-`CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_
-will build the documentation with the command:
+readthedocs_ will build the documentation with the command:
 
 .. code-block:: bash
 
    sphinx-build -W doc doc/build
 
-This will catch mistakes that can be detected automatically.
+to catch mistakes that can be detected automatically.
 
 The configuration file for Sphinx_ is
-`doc/shinx/source/conf.py <https://github.com/ESMValGroup/ESMValTool/blob/main/doc/sphinx/source/conf.py>`_.
+`doc/conf.py <https://github.com/ESMValGroup/ESMValCore/blob/main/doc/conf.py>`_
+and the configuration file for ReadTheDocs is
+`.readthedocs.yaml <https://github.com/ESMValGroup/ESMValCore/blob/main/.readthedocs.yaml>`_.
 
 See :ref:`esmvaltool:esmvalcore-documentation-integration` for information on
 how the ESMValCore documentation is integrated into the complete ESMValTool
@@ -407,9 +418,13 @@ is cloned and run the command
 
    pytest
 
-Optionally you can skip tests which require additional dependencies for
-supported diagnostic script languages by adding ``-m 'not installation'`` to the
-previous command. If you are working in a place with a slow internet connection,
+or
+
+.. code-block:: bash
+
+    pixi run test
+
+If you are working in a place with a slow internet connection,
 you may want to skip tests that require an internet connection by adding
 ``-m 'not online'`` to the command.
 To only run tests from a single file, run the command
@@ -436,7 +451,8 @@ for more information on the available commands.
 
 Whenever you make a pull request or push new commits to an existing pull
 request, the tests in the ``tests`` directory of the branch associated with the
-pull request will be run automatically on CircleCI_.
+pull request will be run automatically on
+`CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_.
 The results appear at the bottom of the pull request.
 Click on 'Details' for more information on a specific test job.
 
@@ -633,23 +649,31 @@ See this `statement <https://www.apache.org/licenses/GPL-compatibility.html>`__
 by the authors of the Apache 2.0 license for more information.
 
 When adding or removing dependencies, please consider applying the changes in
-the following files:
+the following locations in ``pyproject.toml``:
 
-- ``environment.yml``
-  contains all the development dependencies; these are all from
-  `conda-forge <https://conda-forge.org/>`_
-- ``pyproject.toml``
-  contains all Python dependencies, regardless of their installation source
+- ``dependencies``
+  contains dependencies that can be installed from `PyPI <https://pypi.org/>`_
+- ``[tool.pixi.dependencies]``
+  contains dependencies that can be installed from `conda-forge <https://conda-forge.org/>`_
 
-Note that packages may have a different name on
-`conda-forge <https://conda-forge.org/>`__ than on `PyPI <https://pypi.org/>`_.
+it is strongly preferred that those two lists are kept in sync, apart from
+differences in how packages are named. Run the command ``pixi lock``
+after making changes to the dependencies to update the ``pixi.lock`` file, which
+is used to make sure that the same versions of packages are installed for
+all ESMValCore developers.
 
-Several test jobs on CircleCI_ related to the installation of the tool will only
-run if you change the dependencies.
-These will be skipped for most pull requests.
+There are also three feature groups for development dependencies:
 
-When reviewing a pull request where dependencies are added or removed, always
-check that the changes have been applied in all relevant files.
+- ``[tool.pixi.feature.dev]`` contains tools that are useful for development
+- ``[tool.pixi.feature.doc]`` contains tools that are needed to build the documentation
+- ``[tool.pixi.feature.test]`` contains tools that are needed to run the tests
+
+.. tip::
+
+   When reviewing a pull request where dependencies are added or removed, always
+   check that the changes have been applied to both the PyPI and the conda-forge
+   dependencies and that the ``pixi.lock`` file has been updated by running
+   ``pixi lock`` after the changes were made.
 
 .. _authors:
 

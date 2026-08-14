@@ -1,5 +1,6 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -303,7 +304,16 @@ class Test(tests.Test):
         # test for expected failures:
         with self.assertRaises(ValueError):
             extract_named_regions(region_cube, "reg_A")
+        with self.assertRaises(ValueError):
             extract_named_regions(region_cube, ["region1", "reg_A"])
+
+    def test_extract_named_region_invalid_regions_type_fail(self) -> None:
+        msg = r'Regions "123" is not an acceptable format.'
+        with pytest.raises(TypeError, match=re.escape(msg)):
+            extract_named_regions(Cube(0), 123)  # type: ignore[arg-type]
+        msg = r'Regions ".*" is not an acceptable format.'
+        with pytest.raises(TypeError, match=msg):
+            extract_named_regions(Cube(0), {"region1": "region2"})  # type: ignore[arg-type]
 
 
 def create_irregular_grid_cube(data, lons, lats):

@@ -803,6 +803,26 @@ or ana4MIPs datasets can be used); in this case the `scheme` is
           target_grid: ERA-Interim
           scheme: linear
 
+Regridding on a CORDEX domain grid
+----------------------------------
+
+It is also possible to regrid to a standard CORDEX domain by using the
+CORDEX domain name as ``target_grid``. For example, to regrid to the
+``EUR-11`` domain:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: EUR-11
+          scheme: linear
+
+Any domain name recognized by the ``cordex`` package can be used, for example
+``EUR-11``. A list of available domains can be found in the
+`cordex introduction <https://py-cordex.readthedocs.io/en/latest/notebooks/introduction.html>`__.
+This creates the target grid from the official CORDEX domain definition.
+
 Regridding on an ``MxN`` grid specification
 -------------------------------------------
 
@@ -1406,7 +1426,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * `hour`: Number of hours per period.
+    * `hours`: Number of hours per period.
       Must be a divisor of 24, i.e., (1, 2, 3, 4, 6, 8, 12).
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
@@ -1541,6 +1561,10 @@ Parameters:
    For `sum`, the units of the resulting cube are multiplied by the
    corresponding time units (e.g., days).
 
+   If a period other than `full` is used, time points will be put into bins,
+   which may shift existing time points. For example, for `period=hourly`, a
+   time point at 01:30h will be moved to the corresponding full hour (01:00h).
+
 Examples:
     * Monthly climatology:
 
@@ -1646,14 +1670,14 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
 
 * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
     .. code-block:: yaml
 
         resample_hours:
-          hours: 12
+          interval: 12
           offset: 6
 
 * Convert to 3-hourly data using bilinear interpolation:
@@ -1661,7 +1685,7 @@ Examples:
     .. code-block:: yaml
 
         resample_hours:
-          hours: 3
+          interval: 3
           interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
@@ -2565,10 +2589,22 @@ For example, this enables conversions between precipitation fluxes measured in
 versa).
 Currently, the following special conversions are supported:
 
+* ``precipitation_amount`` (``kg m-2``) --
+  ``lwe_thickness_of_precipitation_amount`` (``mm``)
+* ``surface_snow_amount`` (``kg m-2``) --
+  ``lwe_thickness_of_snowfall_amount`` (``mm``)
 * ``precipitation_flux`` (``kg m-2 s-1``) --
   ``lwe_precipitation_rate`` (``mm day-1``)
+* ``water_evaporation_flux`` (``kg m-2 s-1``) --
+  ``lwe_water_evaporation_rate`` (``mm day-1``)
+* ``water_potential_evaporation_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
+* ``water_evapotranspiration_flux`` (``kg m-2 s-1``) --
+  ``None`` (``mm day-1``)
 * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
   ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
+* ``surface_air_pressure`` (``Pa``) --
+  ``atmosphere_mass_of_air_per_unit_area`` (``kg m-2``)
 
 .. hint::
    Names in the list correspond to ``standard_names`` of the input data.
@@ -2944,6 +2980,10 @@ recipe:
 * ``target_short_name`` (:obj:`str`; optional): Variable short name from which
   target metadata is read.
   If not given, use the short names of the corresponding variables defined in
+  the recipe.
+* ``target_branding_suffix`` (:obj:`str`; optional): Variable branding suffix from which
+  target metadata is read.
+  If not given, use the branding suffixes of the corresponding variables defined in
   the recipe.
 * ``strict`` (:obj:`str`; optional, default: ``True``): If ``True``, raise an
   error if desired metadata cannot be read for variable ``target_short_name``

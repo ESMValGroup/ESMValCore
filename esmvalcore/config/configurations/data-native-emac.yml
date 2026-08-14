@@ -3,7 +3,7 @@ projects:
   EMAC:
     data:
       emac:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{exp}/{channel}"
         filename_template: "{exp}*{channel}{postproc_flag}.nc"

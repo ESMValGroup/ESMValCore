@@ -182,7 +182,7 @@ def test_data_availability_no_data(
     dataset._used_data_sources = [mock_data_source]
     with pytest.raises(RecipeError) as exc:
         check.data_availability(dataset)
-    assert str(exc.value) == "Missing data for Dataset: tas"
+    assert str(exc.value) == "Missing data for Dataset: tas, mon"
     assert len(caplog.records) == 2
     assert caplog.records[0].message == "\n".join(
         [

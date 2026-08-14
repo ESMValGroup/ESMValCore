@@ -3,12 +3,12 @@ projects:
   IPSLCM:
     data:
       ipslcm-varname:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{out}/{freq}"
         filename_template: "{simulation}_*_{ipsl_varname}.nc"
       ipslcm-group:
-        type: "esmvalcore.io.local.LocalDataSource"
+        type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{out}/{freq}"
         filename_template: "{simulation}_*_{group}.nc"

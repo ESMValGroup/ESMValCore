@@ -55,7 +55,7 @@ using the ``OBS`` root path set to:
 
   .. code-block:: yaml
 
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+    OBS: /gws/ssde/j25a/esmeval/obsdata-v2
 
 and the dataset:
 
@@ -68,7 +68,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 .. code-block::
 
-  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+  /gws/ssde/j25a/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Observational datasets CMORized by ESMValTool are organized in Tiers depending on
 their level of public availability.
@@ -84,15 +84,6 @@ formatted according to a CMIP data request) through the ``native6`` project
 project, e.g., ``ICON`` (mostly native models).
 A detailed description of how to include new native datasets is given
 :ref:`here <add_new_fix_native_datasets>`.
-
-.. hint::
-
-   When using native datasets, it might be helpful to specify a custom location
-   for the :ref:`custom_cmor_tables`.
-   This allows reading arbitrary variables from native datasets.
-   Note that this requires the option ``cmor_strict: false`` in the
-   :ref:`project configuration <configure_native_models>` used for the native
-   model output.
 
 .. _read_native_obs:
 
@@ -166,13 +157,11 @@ in its native GRIB format.
 To read these data with ESMValCore, use the data definition for the ``native6``
 project:
 
-.. literalinclude:: ../configurations/data-hpc-dkrz.yml
+.. literalinclude:: ../configurations/data-hpc-dkrz-era5-grib.yml
     :language: yaml
-    :caption: Contents of ``data-hpc-dkrz.yml``
-    :start-at: # ERA5 data in GRIB format:
-    :end-before: OBS6:
+    :caption: Contents of ``data-hpc-dkrz-era5-grib.yml``
 
-To use this configuration, run ``esmvaltool config copy data-hpc-dkrz.yml``.
+To use this configuration, run ``esmvaltool config copy data-hpc-dkrz-era5-grib.yml``.
 
 The `naming conventions
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
@@ -241,6 +230,38 @@ for ``native6`` described :ref:`above <read_native_obs>`).
 For more info: http://www.gloh2o.org/
 
 Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/.
+
+.. _read_native_oras5:
+
+ORAS5
+^^^^^
+
+ORAS5 data can be downloaded in netCDF from the Copernicus Climate Data Store
+`(CDS) <https://cds.climate.copernicus.eu/datasets/reanalysis-oras5?tab=download>`__.
+
+- Supported variables: ``uo``, ``vo``, ``tos``, ``sos``, ``zos``, ``mlotst``,
+  ``thetao``, ``so``, ``hfds``, ``tauuo``.
+- Tier: 3
+
+.. note:: For ORAS5 you need the grid files to read the data properly, which
+  can be downloaded `here <https://nc.uni-bremen.de/public.php/dav/files/nJBXTYbQe5diPof/?accept=zip>`__.
+  Be aware that for the variables ``uo``, and ``tauuo`` you need to use the
+  ``oras5_mesh_u.nc`` grid and for the variable ``vo`` the ``oras5_mesh_v.nc``
+  grid, respectively. For all other supported variables you need the
+  ``oras5_mesh_T.nc`` grid file. The path to the appropriate grid file needs to
+  be passed as the ``horizontal_grid`` facet in the recipe.
+
+  The implemented fix for ORAS5 allows to handle the grid flexibly as
+  either "irregular" (2D lat/lon arrays), or as unstructured (1D lat/lon arrays)
+  with the extra option to add a UGRID mesh to the cube. The behavior can be
+  adjusted by setting the facets ``make_unstructured`` or ``ugrid`` in the recipe,
+  which are both False per default.
+
+.. note:: For ORAS5 the rotated meridional and zonal velocities are available.
+  Per default ESMValCore expects that you use those. Otherwise, you need to specify
+  the ``raw_name`` of the unrotated velocities in the recipe. Those would be
+  ``vomecrty`` and ``vozocrtx``, instead of ``vomecrtn`` and ``vozocrte``, for
+  meridional and zonal velocities.
 
 .. _read_native_models:
 

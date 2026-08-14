@@ -173,9 +173,7 @@ def update_weights_kwargs(
     kwargs = dict(kwargs)
     if not aggregator_accept_weights(aggregator) and "weights" in kwargs:
         msg = f"Aggregator '{operator}' does not support 'weights' option"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
         kwargs["weights"] = weights
         if cube is not None and callback is not None:
@@ -232,9 +230,7 @@ def get_normalized_cube(
             f"Expected 'subtract' or 'divide' for `normalize`, got "
             f"'{normalize}'"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Keep old metadata except for units
     new_units = normalized_cube.units
@@ -274,9 +270,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
             f"Cannot preserve float dtype during function '{func.__name__}', "
             f"function takes no arguments"
         )
-        raise TypeError(
-            msg,
-        )
+        raise TypeError(msg)
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> DataType:
@@ -298,9 +292,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
                 f"type {type(result)} do not have the necessary attribute "
                 f"'dtype'"
             )
-            raise TypeError(
-                msg,
-            )
+            raise TypeError(msg)
 
         return result
 
@@ -381,9 +373,7 @@ def get_weights(
                 f"`cell_area` can be given to the cube as supplementary "
                 f"variable)"
             )
-            raise CoordinateNotFoundError(
-                msg,
-            )
+            raise CoordinateNotFoundError(msg)
         try_adding_calculated_cell_area(cube)
         area_weights = cube.cell_measure("cell_area").core_data()
         if cube.has_lazy_data():
@@ -438,18 +428,14 @@ def get_coord_weights(
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"without bounds"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     if coord.core_bounds().shape[-1] != 2:
         msg = (
             f"Cannot calculate weights for coordinate '{coord.name()}' "
             f"with {coord.core_bounds().shape[-1]} bounds per point, expected "
             f"2 bounds per point"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     # Calculate weights of same shape as coordinate and make sure to use
     # identical chunks as parent cube for non-scalar lazy data
@@ -573,9 +559,7 @@ def get_all_coords(
                 f"{cube.summary(shorten=True)} must not have unnamed "
                 f"dimensions"
             )
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
     return coords
 
 

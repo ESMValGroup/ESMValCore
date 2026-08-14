@@ -819,6 +819,15 @@ class Test(tests.Test):
         expected = np.ones((3, 2))
         self.assert_array_equal(result.data, expected)
 
+    def test_extract_trajectory_different_lengths(self) -> None:
+        """Test that ValueError is raised when lat/lon have different lengths."""
+        with self.assertRaises(ValueError) as err:
+            extract_trajectory(self.grid_3d, [1.5, 2.5], [2.0], 2)
+        self.assertEqual(
+            "Longitude & Latitude coordinates have different lengths",
+            str(err.exception),
+        )
+
     def test__get_first_unmasked_data(self):
         """Test to get first unmasked value of an array along an axis."""
         (z_axis,) = self.grid_4d_2.coord_dims(

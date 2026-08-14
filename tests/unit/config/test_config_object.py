@@ -5,6 +5,7 @@ from textwrap import dedent
 import pytest
 
 import esmvalcore
+import esmvalcore.cmor.table
 import esmvalcore.config._config_object
 from esmvalcore.config import CFG, Config, Session
 from esmvalcore.config._config_object import DEFAULT_CONFIG_DIR
@@ -42,6 +43,48 @@ def test_config_update():
 
     with pytest.raises(InvalidConfigParameter):
         config.update(fail_dict)
+
+
+@pytest.mark.parametrize("update_format", ["mapping", "kwargs", "tuple"])
+def test_config_update_config_developer_set_last(
+    monkeypatch: pytest.MonkeyPatch,
+    update_format: str,
+) -> None:
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    new_config = {
+        "config_developer_file": Path(esmvalcore.__file__).parent
+        / "config-developer.yml",
+        "projects": {
+            "CMIP6": {
+                "cmor_table": {
+                    "type": "esmvalcore.cmor.table.NoInfo",
+                },
+            },
+        },
+    }
+    config = Config({"output_dir": "directory"})
+    if update_format == "mapping":
+        config.update(new_config)
+    elif update_format == "kwargs":
+        config.update(**new_config)
+    elif update_format == "tuple":
+        config.update(tuple(new_config.items()))
+
+    assert len(esmvalcore.cmor.table.CMOR_TABLES) > 1
+    assert "CMIP6" in esmvalcore.cmor.table.CMOR_TABLES
+    assert isinstance(
+        esmvalcore.cmor.table.CMOR_TABLES["CMIP6"],
+        esmvalcore.cmor.table.CMIP6Info,
+    )
+
+
+def test_config_update_too_many_args() -> None:
+    config = Config({"output_dir": "directory"})
+    with pytest.raises(
+        TypeError,
+        match=r"Expected at most 1 positional argument, got 2",
+    ):
+        config.update(1, 2)
 
 
 def test_set_bad_item():

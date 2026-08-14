@@ -153,9 +153,7 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
             "Use of shapefiles with irregular grids not yet implemented, "
             "land-sea mask not applied."
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return cube
 
@@ -528,9 +526,7 @@ def _get_shape(cubes):
     shapes = {cube.shape for cube in cubes}
     if len(shapes) > 1:
         msg = f"Expected cubes with identical shapes, got shapes {shapes}"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     return next(iter(shapes))
 
 
@@ -616,9 +612,7 @@ def mask_multimodel(products):
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {product_types}"
     )
-    raise TypeError(
-        msg,
-    )
+    raise TypeError(msg)
 
 
 def mask_fillvalues(
@@ -685,9 +679,7 @@ def mask_fillvalues(
                 valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
                 msg = f"Unable to handle {mask.ndim} dimensional data"
-                raise NotImplementedError(
-                    msg,
-                )
+                raise NotImplementedError(msg)
             combined_mask = array_module.where(
                 valid,
                 combined_mask | mask,
@@ -730,9 +722,7 @@ def _get_fillvalues_mask(
             f"Fraction of missing values {threshold_fraction} should be "
             f"between 0 and 1.0"
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     nr_time_points = len(cube.coord("time").points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."

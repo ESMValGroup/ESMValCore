@@ -109,10 +109,10 @@ def test_repr_supplementary():
 @pytest.mark.parametrize(
     ("separator", "join_lists", "output"),
     [
-        ("_", False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
-        ("_", True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
-        (" ", False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
-        (" ", True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+        ("_", False, "1_d_dom_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ("_", True, "1_d_dom_e1-e2_ens2-ens1_g1_v1"),
+        (" ", False, "1 d dom ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (" ", True, "1 d dom e1-e2 ens2-ens1 g1 v1"),
     ],
 )
 def test_get_joined_summary_facet(separator, join_lists, output):
@@ -1005,6 +1005,138 @@ def test_from_files_with_globs(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_with_globs_cmip7(
+    monkeypatch: pytest.MonkeyPatch,
+    session: Session,
+) -> None:
+    """Test `from_files` with wildcards in dataset and supplementary."""
+    rootpath = Path("/path/to/data")
+    file1 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f3",
+        "glb",
+        "mon",
+        "tas",
+        "tavg-h2m-hxy-u",
+        "gn",
+        "v20260109",
+        "tas_tavg-h2m-hxy-u_mon_glb_gn_PCMDI-test-1-0_historical_r1i1p1f3_185001-201412.nc",
+    )
+    file1.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f3",
+        "frequency": "mon",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "tas",
+        "timerange": "185001/201412",
+        "version": "v20260109",
+    }
+    file2 = esmvalcore.io.local.LocalFile(
+        rootpath,
+        "MIP-DRS7",
+        "CMIP7",
+        "CMIP",
+        "PCMDI",
+        "PCMDI-test-1-0",
+        "historical",
+        "r1i1p1f1",
+        "glb",
+        "fx",
+        "areacella",
+        "ti-u-hxy-u",
+        "gn",
+        "v20260110",
+        "areacella_ti-u-hxy-u_fx_glb_gn_PCMDI-test-1-0_historical_r1i1p1f1.nc",
+    )
+    file2.facets = {
+        "activity": "CMIP",
+        "branding_suffix": "tavg-h2m-hxy-u",
+        "dataset": "PCMDI-test-1-0",
+        "drs_specs": "MIP-DRS7",
+        "exp": "historical",
+        "ensemble": "r1i1p1f1",
+        "frequency": "fx",
+        "grid": "gn",
+        "institute": "PCMDI",
+        "mip": "atmos",
+        "project": "CMIP7",
+        "region": "glb",
+        "short_name": "areacella",
+        "version": "v20260109",
+    }
+    dataset = Dataset(
+        activity="*",
+        dataset="*",
+        ensemble="*",
+        exp="historical",
+        frequency="mon",
+        grid="*",
+        institute="*",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+        branding_suffix="tavg-h2m-hxy-u",
+    )
+    dataset.add_supplementary(
+        short_name="areacella",
+        frequency="fx",
+        branding_suffix="*",
+        ensemble="*",
+    )
+    dataset.facets["timerange"] = "*"
+    dataset.session = session
+    print(dataset)
+
+    monkeypatch.setattr(Dataset, "find_files", mock_find_files(file1, file2))
+
+    datasets = list(dataset.from_files())
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(
+        ads.session == session for ds in datasets for ads in ds.supplementaries
+    )
+
+    expected = Dataset(
+        activity="CMIP",
+        branding_suffix="tavg-h2m-hxy-u",
+        dataset="PCMDI-test-1-0",
+        ensemble="r1i1p1f3",
+        exp="historical",
+        frequency="mon",
+        grid="gn",
+        institute="PCMDI",
+        mip="atmos",
+        project="CMIP7",
+        region="glb",
+        short_name="tas",
+    )
+    expected.add_supplementary(
+        short_name="areacella",
+        branding_suffix="ti-u-hxy-u",
+        frequency="fx",
+        ensemble="r1i1p1f1",
+    )
+    expected.facets["timerange"] = "185001/201412"
+    expected.session = session
+
+    assert datasets == [expected]
+
+
 def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and files with missing facets.
 
@@ -1755,7 +1887,7 @@ def test_load(mocker, session):
     fix_dir_prefix = Path(
         session.preproc_dir,
         "fixed_files",
-        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_",
+        "chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_yr_",
     )
     _get_preprocessor_filename = mocker.patch.object(
         esmvalcore.dataset,
@@ -1833,6 +1965,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "clip_timerange": {
@@ -1854,6 +1987,7 @@ def test_load(mocker, session):
             "cmor_table": "CMIP5",
             "mip": "Oyr",
             "short_name": "chl",
+            "branding_suffix": None,
             "frequency": "yr",
         },
         "concatenate": {
@@ -1876,69 +2010,6 @@ def test_load_fail(session):
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
-
-
-# TODO: Remove in v2.15.0
-def test_get_deprecated_extra_facets(tmp_path, monkeypatch):
-    dataset = Dataset(
-        project="CMIP5",
-        mip="Amon",
-        dataset="ACCESS1-3",
-        short_name="test",
-    )
-    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-                  institute: new-institute
-            """)
-        .strip()
-        .format(**dataset.facets),
-    )
-    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
-
-    extra_facets = dataset._get_extra_facets()
-
-    assert extra_facets == {
-        "product": ["output1", "output2"],
-        "key": "value",
-        "institute": "new-institute",
-    }
-
-
-# TODO: Remove in v2.15.0
-def test_get_extra_facets_ignore_deprecated_facets(tmp_path, monkeypatch):
-    monkeypatch.setenv("ESMVALTOOL_USE_NEW_EXTRA_FACETS_CONFIG", "1")
-
-    dataset = Dataset(
-        project="CMIP5",
-        mip="Amon",
-        dataset="ACCESS1-3",
-        short_name="test",
-    )
-    extra_facets_file = tmp_path / f"{dataset['project'].lower()}-test.yml"
-    extra_facets_file.write_text(
-        textwrap.dedent("""
-            {dataset}:
-              {mip}:
-                {short_name}:
-                  key: value
-                  institute: new-institute
-            """)
-        .strip()
-        .format(**dataset.facets),
-    )
-    monkeypatch.setitem(CFG, "extra_facets_dir", [str(tmp_path)])
-
-    extra_facets = dataset._get_extra_facets()
-
-    assert extra_facets == {
-        "product": ["output1", "output2"],
-        "institute": ["CSIRO-BOM"],
-    }
 
 
 def test_get_extra_facets(monkeypatch):
@@ -2108,15 +2179,15 @@ def test_get_extra_facets_icon_xpp():
     dataset = Dataset(
         project="ICON",
         mip="Omon",
-        short_name="so",
+        short_name="thetao",
         dataset="ICON-XPP",
     )
 
     extra_facets = dataset._get_extra_facets()
 
     assert extra_facets == {
-        "raw_name": "so",
-        "raw_units": "0.001",
+        "raw_name": "to",
+        "raw_units": "degC",
         "var_type": "oce_def",
     }
 
@@ -2160,140 +2231,3 @@ def test_get_extra_facets_native6():
         "grib_id": "130",
         "tres": "1M",
     }
-
-
-OBS6_SAT_FACETS: Facets = {
-    "project": "OBS6",
-    "dataset": "SAT",
-    "mip": "Amon",
-    "tier": 2,
-    "type": "sat",
-    "timerange": "1980/2000",
-}
-
-
-def test_is_derived_no_derivation():
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
-    assert dataset._is_derived() is False
-
-
-def test_is_derived_derivation():
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
-    assert dataset._is_derived() is True
-
-
-def test_is_force_derived_no_derivation_no_force():
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
-    assert dataset._is_force_derived() is False
-
-
-def test_is_force_derived_no_derivation_force():
-    dataset = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="tas",
-        force_derivation=True,
-    )
-    assert dataset._is_force_derived() is False
-
-
-def test_is_force_derived_derivation_no_force():
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
-    assert dataset._is_force_derived() is False
-
-
-def test_is_force_derived_derivation_force():
-    dataset = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="lwcre",
-        derive=True,
-        force_derivation=True,
-    )
-    assert dataset._is_force_derived() is True
-
-
-def test_derivation_necessary_no_derivation():
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="tas")
-    assert dataset._derivation_necessary() is False
-
-
-def test_derivation_necessary_no_force_derivation_no_files(
-    session: Session,
-) -> None:
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
-    dataset.session = session
-    assert dataset._derivation_necessary() is True
-
-
-def test_derivation_necessary_no_force_derivation(tmp_path, session):
-    dataset = Dataset(**OBS6_SAT_FACETS, short_name="lwcre", derive=True)
-    dataset.session = session
-
-    input_dir = tmp_path / "Tier2" / "SAT"
-    input_dir.mkdir(parents=True, exist_ok=True)
-    lwcre_file = esmvalcore.io.local.LocalFile(
-        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
-    )
-    lwcre_file.touch()
-
-    assert dataset._derivation_necessary() is False
-
-
-def test_derivation_necessary_force_derivation(tmp_path, session):
-    dataset = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="lwcre",
-        derive=True,
-        force_derivation=True,
-    )
-    dataset.session = session
-
-    input_dir = tmp_path / "Tier2" / "SAT"
-    input_dir.mkdir(parents=True, exist_ok=True)
-    lwcre_file = esmvalcore.io.local.LocalFile(
-        input_dir / "OBS6_SAT_sat_1_Amon_lwcre_1980-2000.nc",
-    )
-    lwcre_file.touch()
-
-    assert dataset._derivation_necessary() is True
-
-
-def test_add_supplementary_to_derived():
-    dataset = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="lwcre",
-        derive=True,
-        force_derivation=True,
-    )
-
-    dataset.add_supplementary(short_name="pr")
-
-    expected_supplementary = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="pr",
-        derive=False,
-        force_derivation=False,
-    )
-    assert dataset.supplementaries[0] == expected_supplementary
-
-
-def test_add_derived_supplementary_to_derived():
-    dataset = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="lwcre",
-        derive=True,
-        force_derivation=True,
-    )
-
-    dataset.add_supplementary(
-        short_name="swcre",
-        derive=True,
-        force_derivation=True,
-    )
-
-    expected_supplementary = Dataset(
-        **OBS6_SAT_FACETS,
-        short_name="swcre",
-        derive=True,
-        force_derivation=True,
-    )
-    assert dataset.supplementaries[0] == expected_supplementary

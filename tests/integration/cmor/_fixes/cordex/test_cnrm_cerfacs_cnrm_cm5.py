@@ -1,12 +1,19 @@
 """Tests for the fixes for driver CNRM-CERFACS-CNRM-CM5."""
 
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
+import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5 import (
+    aladin53,
     aladin63,
+    hadrem3_ga7_05,
     wrf381p,
 )
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import CLMcomCCLM4817
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -41,11 +48,125 @@ def test_get_hadrem3ga705_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "HadREM3-GA7-05",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
     assert isinstance(fix[0], Fix)
+
+
+def test_hadrem3_ga7_05_sic() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "HadREM3-GA7-05",
+        "day",
+        "sic",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, hadrem3_ga7_05.Sic) for fix in fixes)
+
+    cube = iris.cube.Cube(
+        np.array([0.5], dtype=np.float32),
+        var_name="sic",
+        standard_name="sea_ice_area_fraction",
+        units="%",
+    )
+    fix = next(fix for fix in fixes if isinstance(fix, hadrem3_ga7_05.Sic))
+    result = fix.fix_metadata([cube])
+    assert result[0].units == "%"
+    np.testing.assert_allclose(result[0].data, [50.0])
+
+
+def test_fix_aladin53_sftlf() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "ALADIN53",
+        "fx",
+        "sftlf",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert isinstance(fixes[0], aladin53.Sftlf)
+    cube = iris.cube.Cube(
+        [0, 1.0],
+        var_name="sftlf",
+        units="%",
+    )
+    (result,) = fixes[0].fix_metadata([cube])
+    assert result.data.tolist() == [0, 100.0]
+    assert result.units == "%"
+
+
+def test_fix_aladin53_ts() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "ALADIN53",
+        "day",
+        "ts",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert isinstance(fixes[0], aladin53.Ts)
+    cube = iris.cube.Cube(
+        [0, 1.0],
+        var_name="ts",
+        units="K",
+    )
+    (result,) = fixes[0].fix_metadata([cube])
+    assert result.data.tolist() == [273.15, 274.15]
+    assert result.units == "K"
+
+
+def test_fix_aladin53_tas() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "ALADIN53",
+        "day",
+        "tas",
+        extra_facets={
+            "driver": "CNRM-CERFACS-CNRM-CM5",
+            "domain": "EUR-11",
+        },
+    )
+    assert isinstance(fixes[0], aladin53.AllVars)
+    wrong_coord_system = iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        secant_latitudes=(49.5,),
+        false_easting=400000.0,
+        false_northing=-100000.0,
+    )
+    cube = iris.cube.Cube(
+        np.array([0, 1.0]).reshape(1, 2),
+        var_name="tas",
+        units="K",
+        aux_coords_and_dims=[
+            (
+                iris.coords.AuxCoord(
+                    [0.0],
+                    standard_name="projection_y_coordinate",
+                    units="m",
+                    coord_system=wrong_coord_system,
+                ),
+                (0,),
+            ),
+            (
+                iris.coords.AuxCoord(
+                    [0.0, 1.0],
+                    standard_name="projection_x_coordinate",
+                    units="m",
+                    coord_system=wrong_coord_system,
+                ),
+                (1,),
+            ),
+        ],
+    )
+    (result,) = fixes[0].fix_metadata([cube])
+    assert result.coord_system() == iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        secant_latitudes=(49.5,),
+        false_easting=0,
+        false_northing=0,
+    )
 
 
 @pytest.mark.parametrize("short_name", ["pr", "tas"])
@@ -53,7 +174,7 @@ def test_get_aladin63_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "ALADIN63",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
@@ -76,7 +197,7 @@ def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
         "CORDEX",
         "WRF381P",
-        "Amon",
+        "mon",
         short_name,
         extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
     )
@@ -95,7 +216,48 @@ def test_wrf381p_height_fix():
         var_name="tas",
         dim_coords_and_dims=[(time_coord, 0)],
     )
-    vardef = get_var_info("CMIP6", "Amon", "tas")
+    vardef = get_var_info("CORDEX", "day", "tas")
     fix = wrf381p.Tas(vardef)
     out_cubes = fix.fix_metadata([cube])
     assert out_cubes[0].coord("height").points == 2.0
+
+
+def test_get_cclm4_8_17fix() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "CCLM4-8-17",
+        "mon",
+        "ts",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, CLMcomCCLM4817) for fix in fixes)
+
+
+def test_cosmo_crclim_v1_1_snw_drop_height_coord():
+    height_coord = iris.coords.AuxCoord(
+        [2.0],
+        var_name="height",
+        standard_name="height",
+        long_name="height",
+    )
+    cube = iris.cube.Cube(
+        [10.0],
+        var_name="snw",
+        aux_coords_and_dims=[(height_coord, 0)],
+    )
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "COSMO-crCLIM-v1-1",
+        "day",
+        "snw",
+        extra_facets={
+            "driver": "CNRM-CERFACS-CNRM-CM5",
+            "domain": "EUR-11",
+        },
+    )
+    cubes = [cube]
+    for fix in fixes:
+        cubes = fix.fix_metadata(cubes)
+    assert len(cubes) == 1
+    assert cubes[0].var_name == "snw"
+    assert not cubes[0].coords("height")

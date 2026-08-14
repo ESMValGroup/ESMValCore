@@ -3,6 +3,372 @@
 Changelog
 =========
 
+.. _changelog-v2-15-0:
+
+v2.15.0
+-------
+
+Highlights
+~~~~~~~~~~
+
+Improvements for supporting CORDEX data including:
+
+- CMOR tables for CORDEX-CMIP6 (see :pull:`3112`)
+- Dataset fixes (see :pull:`3033`, :pull:`3110`, :pull:`3032`)
+- Preprocessor and regridding support (see :pull:`3059`, :pull:`3048`, :pull:`3096`, :pull:`3098`)
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Add ``use_standard_grid`` option for CORDEX datasets (:pull:`3059`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      For CORDEX datasets, replacing the grid by a standard grid is no longer
+      done automatically if grid differences are small, but needs to be enabled
+      on a per-dataset basis by adding ``use_standard_grid: true`` to the
+      dataset definition in the recipe (or default
+      :ref:`extra facets <config-extra-facets>` for the CORDEX project to make
+      it permanent). Refer to :ref:`cordex_datasets` for additional information.
+
+-  Remove configuration option ``extra_facets_dir`` and do not read extra facets from  ``~/.esmvaltool/extra_facets/`` (:pull:`3137`) by :user:`schlunma`
+
+   .. admonition:: Upgrade instructions
+
+      If you have defined extra facets, please move them to
+      the new configuration system as described in the
+      `corresponding pull request <https://github.com/ESMValGroup/ESMValCore/pull/3137#backward-incompatible>`__.
+
+Bug fixes
+~~~~~~~~~
+
+-  Make sure that histogram weights are Dask arrays when cube has lazy data (:pull:`3038`) by :user:`schlunma`
+-  Avoid a crash when running ``esmvaltool config show`` with Python 3.14 (:pull:`3064`) by :user:`bouweandela`
+-  Remove accidentally added ``esmvaltool config console`` command (:pull:`3066`) by :user:`bouweandela`
+-  Fix drs path for dir for cmip5 at CEDA JASMIN (:pull:`3076`) by :user:`valeriupredoi`
+-  Ensure that input arrays to ``scipy.interpolate.interp1d`` functions are C-contiguous (:pull:`3151`) by :user:`schlunma`
+-  Avoid crash on missing session when caching fails with intake-esgf (:pull:`3159`) by :user:`bouweandela`
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  Update CMIP7 CMOR tables to DR-1.2.2.3-v1.0.6 (:pull:`3070`) by :user:`bouweandela`
+-  Add CORDEX-CMIP6 support (:pull:`3112`) by :user:`bouweandela`
+
+Configuration
+~~~~~~~~~~~~~
+
+-  Add an HPC configuration file for SMHI (NSC) machine (Freja) (:pull:`3028`) by :user:`jlenh`
+-  Update path to CEDA-JASMIN esmeval gws (group workspace) (:pull:`3041`) by :user:`valeriupredoi`
+-  Add the option to only show the configuration for a single project (:pull:`3020`) by :user:`bouweandela`
+-  Add support for specifying the output directory from the command line (:pull:`3101`) by :user:`lewisjared`
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Fix a typo in ESMValCore ESGF data source documentation (:pull:`3016`) by :user:`bouweandela`
+-  Fix the PDF build of the documentation (:pull:`3068`) by :user:`bouweandela`
+-  Add ``mip`` to CMIP7 facets documentation page (:pull:`3019`) by :user:`bouweandela`
+-  Update links to CMIP guidance (:pull:`3075`) by :user:`bouweandela`
+-  Update release instructions related to Docker (:pull:`3078`) by :user:`bouweandela`
+-  Update dataset GitHub issue template (:pull:`3107`) by :user:`bouweandela`
+-  Update CMIP7 facets documentation page (:pull:`3111`) by :user:`bouweandela`
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Expand ICON-XPP fix for new model version (:pull:`3014`) by :user:`schlunma`
+-  Modify ERA5 fixes to support data produced by the new GRIB to netcdf converter version of ECMWF (:pull:`3030`) by :user:`jlenh`
+-  Fix endianness of CORDEX CCLM4-8-17 data (:pull:`3033`) by :user:`bouweandela`
+-  Avoid crash in fixes for time-independent CORDEX data (:pull:`3032`) by :user:`bouweandela`
+-  Add support for freshly downloaded ERA5 hourly data (:pull:`3087`) by :user:`schlunma`
+-  Add support for variables ``phcint`` and ``amoc`` to ICON-XPP CMORizer (:pull:`3025`) by :user:`schlunma`
+-  Add support for reading ORAS5 data (:pull:`2422`) by :user:`jmalles`
+-  Add mesh fix for CMIP6 ICON-ESM-LR conservative regridding (:pull:`3090`) by :user:`alioacar`
+-  Fix CORDEX ALADIN53 tas coordinates (:pull:`3110`) by :user:`bouweandela`
+-  CMIP6 CanESM CMOR fixes for variables with model level coordinates (:pull:`3165`) by :user:`k-a-webb`
+
+Installation
+~~~~~~~~~~~~
+
+-  Use pixi to manage development conda environments (:pull:`3044`) by :user:`bouweandela`
+-  Run all tests on lockfile update (:pull:`3119`) by :user:`bouweandela`
+-  Fix progress logging with Dask v2026 (:pull:`3154`) by :user:`bouweandela`
+-  Open log files in append mode (:pull:`3163`) by :user:`bouweandela`
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Drop range related attributes on load (:pull:`3072`) by :user:`bouweandela`
+-  Drop ``valid_range`` correction from AIRS-2-0 fix (:pull:`3153`) by :user:`schlunma`
+-  Copy additional coordinates when regridding (:pull:`3048`) by :user:`bouweandela`
+-  Add CORDEX domain target grids for regridding (:pull:`3096`) by :user:`ghossh`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Avoid depending on the order of the configured project in a unit test (:pull:`3023`) by :user:`valeriupredoi`
+-  Ensure CMOR tables are loaded and match configuration when running tests (:pull:`3086`) by :user:`bouweandela`
+-  Update CircleCI Codecov orb version to 6.0.0 (:pull:`3104`) by :user:`valeriupredoi`
+-  Fix pre-commit mypy error "TypeAliasType" not callable (:pull:`3118`) by :user:`flicj191` & (:pull:`3129`) by :user:`bouweandela`
+
+Improvements
+~~~~~~~~~~~~
+
+-  Improve code quality and test coverage (:pull:`3029`) by :user:`schlunma`
+-  Gracefully handle the case of missing facets required by ``esmvalcore.io.local.LocalDataSource`` (:pull:`3021`) by :user:`bouweandela`
+-  Mention the branding suffix in the error message when no entry can be found in CMOR tables (:pull:`3083`) by :user:`bouweandela`
+-  Nicer looking command line output (:pull:`3079`) by :user:`bouweandela`
+-  Support automatic addition of supplementary variables for CORDEX (:pull:`3098`) by :user:`bouweandela`
+-  Inform user about data downloads (:pull:`3130`) by :user:`schlunma`
+
+.. _changelog-v2-14-0:
+
+v2.14.0
+-------
+
+Highlights
+~~~~~~~~~~
+
+- Support for intake-esgf and new ``esmvaltool config`` commands have been added (See :ref:`config-data-sources`)
+- A new way to configure the CMOR tables and the possibility to use data that is not described in a CMOR table have been implemented (see :ref:`cmor_table_configuration`)
+- CMIP7 data is now supported (see :pull:`2935`)
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Remove support for ``~/.esmvaltool/config-user.yml`` and ``~/.esmvaltool/dask.yml`` (:pull:`2878`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Move the file ``~/.esmvaltool/config-user.yml`` to
+      ``~/.config/esmvaltool/config-user.yml`` and replace
+      ``~/.esmvaltool/dask.yml`` by the `new way of configuring Dask
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#dask-configuration>`__.
+
+-  Remove deprecated ESMPy regridding schemes (:pull:`2879`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      In most cases, users do not need to do anything as the `default
+      regridding schemes
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#default-regridding-schemes>`__
+      have been updated so these schemes are no longer used.
+
+      If you were using these schemes from Python or through a `Generic
+      regridding scheme
+      <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#generic-regridding-schemes>`__
+      in your recipe, you will need to update it to use
+      :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` instead.
+
+-  Add preliminary CMIP7 support (:pull:`2935`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Most users will not be affected by these changes, which were introduced to
+      keep the function signatures easy to read.
+
+      1. It is no longer possible to pass ``derive`` as a positional argument to
+         the :meth:`esmvalcore.cmor.table.CMIP6Info.get_variable` method.  Please
+         use ``derive=True`` or ``derive=False`` instead of ``True`` or ``False``
+         respectively.
+      2. Similarly, ``frequency`` and ``check_level`` are now keyword only
+         arguments for the functions
+         :func:`~esmvalcore.cmor.check.cmor_check_metadata`,
+         :func:`~esmvalcore.cmor.check.cmor_check_data`, and
+         :func:`~esmvalcore.cmor.check.cmor_check`.
+      3. The argument ``table`` to the method
+         :meth:`esmvalcore.cmor.table.CustomInfo.get_variable` has been renamed to
+         ``table_name`` so the signature of this method matches with the same
+         method on the parent class
+         :meth:`esmvalcore.cmor.table.InfoBase.get_variable`.
+
+-  Unify handling of group coordinates in temporal statistics preprocessors (:pull:`2787`) by :user:`schlunma`
+
+   .. admonition:: Upgrade instructions
+
+      This PR changes the default behavior of the preprocessor functions
+
+      - :func:`~esmvalcore.preprocessor.monthly_statistics` (group coordinates ``month_number`` and ``year``)
+      - :func:`~esmvalcore.preprocessor.seasonal_statistics` (group coordinates ``clim_season`` and ``season_year``)
+      - :func:`~esmvalcore.preprocessor.annual_statistics` (group coordinate ``year``)
+      - :func:`~esmvalcore.preprocessor.decadal_statistics` (group coordinate ``decade``)
+
+      Previously, the returned cubes of these preprocessor functions contained
+      the corresponding group coordinates. Now, those coordinates are not
+      present in the returned cubes anymore.
+
+      To restore the old behavior, use ``keep_group_coordinates=True``.
+
+-  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      Importing :mod:`esmvalcore.cmor.table` no longer reads the built-in
+      ``config-developer.yml`` file and users of the deprecated
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object have to load their
+      configuration by importing :mod:`esmvalcore.config` before the
+      :obj:`~esmvalcore.cmor.table.CMOR_TABLES` object is populated.
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Move the ``esmvalcore.local`` and ``esmvalcore.esgf`` modules into the ``esmvalcore.io`` module (:pull:`2911`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      - Importing ``esmvalcore.local`` is deprecated and will be removed in v2.16. It can be imported as ``esmvalcore.io.local`` instead.
+      - Importing ``esmvalcore.esgf`` is deprecated and will be removed in v2.16. It can be imported as ``esmvalcore.io.esgf`` instead.
+
+-  Move preprocessor output filename template to new configuration (:pull:`2923`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      If you have defined projects in ``config-developer.yml`` that are not in
+      the default config-developer.yml file shipped with ESMValCore, then you
+      will need to move the value of 'output_file' to
+
+      .. code-block:: yaml
+
+         projects:
+           <insert project name here>:
+             preprocessor_filename_template: <insert output_file value here>
+
+-  Improve ana4MIPs support in the new configuration (:pull:`2932`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      The name of the project is ``ana4MIPs``, see e.g. `here
+      <https://reanalyses.org/tags/ana4mips>`__. Using the name ``ana4mips`` in
+      all lowercase is deprecated, and support for it will be removed in
+      v2.16.0 of ESMValCore.
+
+
+-  Make CMOR tables configurable through new configuration system and deprecate config-developer.yml (:pull:`2946`) by :user:`bouweandela`
+
+   .. admonition:: Upgrade instructions
+
+      - ``config-developer.yml`` and the configuration setting
+        ``config_developer_file``: upgrade instructions are available `here
+        <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#developer-configuration-file>`__.
+      - In the module :mod:`esmvalcore.cmor.table`,
+         - the function ``read_cmor_tables`` which reads the tables based on
+           the deprecated config-developer file has been deprecated.
+         - the ``cmor_tables_path``, ``default``, and ``default_table_prefix``
+           arguments to various CMOR table reader classes and the class
+           ``CustomInfo`` for reading custom CMOR tables have been deprecated
+           because they are no longer needed with the new configuration format.
+         - the global variable ``CMOR_TABLES`` holding the CMOR tables has been
+           deprecated because of :issue:`2954`.
+
+Bug fixes
+~~~~~~~~~
+
+-  Fix a bug where the mask_fillvalues preprocessor only recorded provenance for the first result (:pull:`2904`) by :user:`bouweandela`
+-  Fixed behavior of ``--search_data=quick`` and ``--search_data=complete`` (:pull:`2937`) by :user:`schlunma`
+-  Two fixes in preprocessor documentation (:pull:`2966`) by :user:`LisaBock`
+-  Do not overwrite provenance information written by ``ProvenanceLogger`` (:pull:`2987`) by :user:`schlunma`
+-  Avoid modifying supplementary variables (:pull:`2992`) by :user:`bouweandela`
+-  Avoid issue with deepcopying/pickling IntakeESGFDatasets (:pull:`2990`) by :user:`bouweandela`
+-  Repair fix_file (:pull:`2993`) by :user:`bouweandela`
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  Add CCI lst v3 cmor tables (:pull:`2458`) by :user:`morobking`
+-  Add the option to ignore the ``branding_suffix`` for derived CMIP7 and custom variables (:pull:`2982`) by :user:`bouweandela`
+-  Avoid hardcoded time coordinate names in CMOR check (:pull:`2981`) by :user:`bouweandela`
+
+Configuration
+~~~~~~~~~~~~~
+
+-  Avoid logging the configuration multiple times (:pull:`2869`) by :user:`bouweandela`
+-  Add an interface for adding new data sources and add support for intake-esgf as a first example (:pull:`2765`) by :user:`bouweandela`
+-  Add BSC data configuration (:pull:`2907`) by :user:`sloosvel`
+-  Moved ``dkrz-era5`` data source in DKRZ default config to separate file (:pull:`2996`) by :user:`schlunma`
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Make sure all input arrays passed to ``dask.array.apply_gufunc`` are Dask arrays (:pull:`2969`) by :user:`schlunma`
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Fix indentation and add links in changelog for v2.13 (:pull:`2862`) by :user:`bouweandela`
+-  Documentation layout to highlight 2 packages (:pull:`2732`) by :user:`flicj191`
+-  Document that we follow SPEC 0 (:pull:`2885`) by :user:`bouweandela`
+-  Add missing preprocessor name rolling_window_statistics to example. (:pull:`2890`) by :user:`katjaweigel`
+-  Fix stable documentation build (:pull:`2893`) by :user:`bouweandela`
+-  Move ESMValCore release documentation to How-to guide section (:pull:`2889`) by :user:`jlenh`
+-  Add ENES-RI Zenodo community (:pull:`2894`) by :user:`bouweandela`
+-  Fix the name and version number on readthedocs (:pull:`2926`) by :user:`bouweandela`
+-  Add updated release timeline doodle (:pull:`2899`) by :user:`jlenh`
+-  Fix tiny doc bug in (legacy) ESGF configuration (:pull:`2945`) by :user:`valeriupredoi`
+-  Pin sphinx<9 (:pull:`2949`) by :user:`valeriupredoi`
+-  Add Matomo page view tracking for the documentation (:pull:`2955`) by :user:`bouweandela`
+-  Add notes to ``climate_statistics`` docs about shifting of time coordinate (:pull:`2967`) by :user:`schlunma`
+-  Update documentation on derived variables with new CMOR tables configuration (:pull:`2979`) by :user:`schlunma`
+-  Update contact info (:pull:`2985`) by :user:`axel-lauer`
+-  Update contact email in documentation (:pull:`3008`) by :user:`axel-lauer`
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Fix ERA5 native6 fix to handle single monthly-averaged NetCDF files. (:pull:`2512`) by :user:`rbeucher`
+-  Expand ICON extra facets (:pull:`2965`) by :user:`schlunma`
+-  Copy fixes for obs4MIPs dataset SSMI RSSv07r00 to RSS-v7 (:pull:`2968`) by :user:`bouweandela`
+-  Expand ICON-XPP fix for new model version (:pull:`3014`) by :user:`schlunma`
+
+Installation
+~~~~~~~~~~~~
+
+-  Drop support for Python 3.11 (:pull:`2905`) by :user:`bouweandela`
+-  Pin iris <3.14.1 to align with iris-esmf-regrid (:pull:`2925`) by :user:`bouweandela`
+-  Update pyproject.toml with new license and license-files settings (:pull:`2924`) by :user:`bouweandela`
+-  Support for Python 3.14.0 (:pull:`2850`) by :user:`valeriupredoi`
+-  Make the tool compatible with numpy 2.4 (:pull:`2941`) by :user:`bouweandela`
+-  Update PyPI publish action (:pull:`2939`) by :user:`bouweandela`
+-  Unpin pandas (:pull:`2961`) by :user:`valeriupredoi`
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Extend preprocessor anomalies (:pull:`2871`) by :user:`axel-lauer`
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Ignore user configuration in configuration reload test (:pull:`2903`) by :user:`bouweandela`
+-  Remove an outdated file that is part of the ESMValTool tests (:pull:`2944`) by :user:`bouweandela`
+-  Improve the security of GitHub Action workflows (:pull:`2952`) by :user:`bouweandela`
+-  Run s3 zarr tests only if s3 object store is online (:pull:`2958`) by :user:`valeriupredoi`
+-  Correction to #2958 - add bucket to S3 url (:pull:`2959`) by :user:`valeriupredoi`
+-  Fix CMOR test fails in OSX due to case discrepancy tables -> Tables (:pull:`2975`) by :user:`valeriupredoi`
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Add derived variable lapserate (:pull:`2872`) by :user:`axel-lauer`
+-  Fix derivation for sea ice extent (siextent) (:pull:`2648`) by :user:`axel-lauer`
+
+Improvements
+~~~~~~~~~~~~
+
+-  Update logger to include esmvaltool logs (:pull:`2886`) by :user:`bouweandela`
+-  Enable annotations ruff rule (:pull:`2880`) by :user:`bouweandela`
+-  Fix issue with wildcards in timerange after introducing data sources (:pull:`2900`) by :user:`bouweandela`
+-  Automatically sort ``__all__`` in Python modules (:pull:`2913`) by :user:`bouweandela`
+-  Sort ``__all__`` in Python modules (:pull:`2914`) by :user:`bouweandela`
+-  Better debug message when local data is not found within the requested timerange (:pull:`2927`) by :user:`bouweandela`
+-  Add float to FacetValue and improve preprocessor filename template error message (:pull:`2931`) by :user:`bouweandela`
+-  Removed unused code from ``Dataset`` class (:pull:`2963`) by :user:`schlunma`
+-  Smarter limit on preprocessor filename length (:pull:`3011`) by :user:`bouweandela`
+
 .. _changelog-v2-13-0:
 
 v2.13.0
@@ -813,7 +1179,7 @@ Bug fixes
 ~~~~~~~~~
 
 -  Respect ``ignore_warnings`` settings from the project configuration in config-developer.yml in :func:`esmvalcore.dataset.Dataset.load` (:pull:`2046`) by :user:`schlunma`
--  Fixed usage of custom location for :ref:`custom CMOR tables <custom_cmor_tables>` (:pull:`2052`) by :user:`schlunma`
+-  Fixed usage of custom location for custom CMOR tables (:pull:`2052`) by :user:`schlunma`
 -  Fix issue with writing index.html when :ref:`running a recipe <running>` with ``--resume-from`` (:pull:`2055`) by :user:`bouweandela`
 -  Fixed bug in ICON CMORizer that lead to shifted time coordinates (:pull:`2038`) by :user:`schlunma`
 -  Include ``-`` in allowed characters for bibtex references (:pull:`2097`) by :user:`alistairsellar`

@@ -971,6 +971,11 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     )
 
     assert product.settings["regrid"]["target_grid"] == reference.datasets[0]
+    # Check that the target dataset does not have files, to prevent pickling
+    # errors: https://github.com/ESMValGroup/ESMValCore/issues/2989.
+    # The files can be found again at load time.
+    assert product.settings["regrid"]["target_grid"]._files is None
+
     assert product.settings["extract_levels"]["levels"] == levels
 
     get_reference_levels.assert_called_once_with(reference.datasets[0])
@@ -1505,6 +1510,64 @@ def simulate_diagnostic_run(diagnostic_task):
     return record
 
 
+def test_preprocessor_file_ancestors_are_input_files(
+    tmp_path: Path,
+    patched_datafinder: None,
+    session: Session,
+) -> None:
+    """Test that the ancestors of a preprocessor file are the input files."""
+    content = dedent("""
+        datasets:
+          - dataset: BCC-ESM1
+            project: CMIP6
+            exp: historical
+            ensemble: r1i1p1f1
+            grid: gn
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                exp: 1pctCO2
+          - dataset: bcc-csm1-1
+            project: CMIP5
+            exp: historical
+            ensemble: r1i1p1
+            supplementary_variables:
+              - short_name: sftlf
+                mip: fx
+                ensemble: r0i0p0
+
+        preprocessors:
+          regrid:
+            regrid:
+              target_grid: BCC-ESM1
+              scheme: linear
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: regrid
+                mip: Amon
+                timerange: 2000/2005
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+    assert len(recipe.tasks) == 1
+    task = next(iter(recipe.tasks))
+    assert len(task.products) == 2
+    for preprocessor_file in task.products:
+        assert len(preprocessor_file.datasets) == 1
+        dataset = preprocessor_file.datasets[0]
+        assert len(dataset.files) == 1
+        assert len(dataset.supplementaries[0].files) == 1
+        assert len(preprocessor_file._ancestors) == 2
+        assert dataset.files[0] is preprocessor_file._ancestors[0].filename
+        assert (
+            dataset.supplementaries[0].files[0]
+            is preprocessor_file._ancestors[1].filename
+        )
+
+
 def test_diagnostic_task_provenance(
     tmp_path,
     patched_datafinder,
@@ -1667,10 +1730,10 @@ def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901,
                   - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1, institute: CAS}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: CMP, exp: a, dataset: GF3, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: CMP, exp: a, dataset: GF2, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, exp: b, dataset: EC, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, exp: b, dataset: HA, ensemble: r1, institute: fake}
                   - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
                   - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
@@ -1695,13 +1758,13 @@ def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901,
                 assert dataset["alias"] == "my_alias"
         elif dataset["project"] == "CMIP6":
             if dataset["dataset"] == "GF3":
-                assert dataset["alias"] == "CMIP6_CMP_GF3"
+                assert dataset["alias"] == "CMIP6_a_GF3"
             elif dataset["dataset"] == "GF2":
-                assert dataset["alias"] == "CMIP6_CMP_GF2"
+                assert dataset["alias"] == "CMIP6_a_GF2"
             elif dataset["dataset"] == "EC":
-                assert dataset["alias"] == "CMIP6_HRMP_EC"
+                assert dataset["alias"] == "CMIP6_b_EC"
             else:
-                assert dataset["alias"] == "CMIP6_HRMP_HA"
+                assert dataset["alias"] == "CMIP6_b_HA"
         elif dataset["project"] == "CORDEX":
             if dataset["driver"] == "ICHEC-EC-EARTH":
                 assert dataset["alias"] == "CORDEX_ICHEC-EC-EARTH"
@@ -2409,7 +2472,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
         assert dataset.supplementaries == []
 
 
-def test_wrong_project(tmp_path, patched_datafinder, session):
+def test_wrong_branding_suffix(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -2421,7 +2484,8 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
               tos:
                 preprocessor: preproc
                 project: CMIP7
-                mip: Omon
+                mip: ocean
+                branding_suffix: wrong
                 exp: historical
                 start_year: 2000
                 end_year: 2005
@@ -2430,10 +2494,7 @@ def test_wrong_project(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'"
-    )
+    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg
@@ -2535,9 +2596,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
     esmvalcore.io.esgf.download.assert_called()
     esmvalcore.io.local.LocalFile.prepare.assert_called()
-    recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=session["max_parallel_tasks"],
-    )
+    recipe.tasks.run.assert_called_once_with(session)
     recipe.write_filled_recipe.assert_called_once()
     recipe.write_html_summary.assert_called_once()
 
@@ -3294,7 +3353,7 @@ def test_bias_two_refs_with_mmm(tmp_path, patched_datafinder, session):
                 additional_datasets:
                   - {dataset: CanESM5,    group: ref, reference_for_bias: true}
                   - {dataset: CESM2,      group: ref, reference_for_bias: true}
-                  - {dataset: MPI-ESM-LR, group: notref}
+                  - {dataset: MPI-ESM1-2-LR, group: notref}
 
             scripts: null
         """)
@@ -3562,7 +3621,7 @@ def test_distance_metrics_two_refs_with_mmm(
                 additional_datasets:
                   - {dataset: CESM2, ensemble: r1i1p1f1, reference_for_metric: true}
                   - {dataset: CESM2, ensemble: r2i1p1f1, reference_for_metric: true}
-                  - {dataset: MPI-ESM-LR}
+                  - {dataset: MPI-ESM1-2-LR}
 
             scripts: null
         """)
@@ -3825,14 +3884,13 @@ def test_align_metadata_invalid_project(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "align_metadata failed: \"No CMOR tables available for project 'ZZZ'. "
-        "The following tables are available: custom, CMIP6, CMIP5, CMIP3, OBS, "
-        "OBS6, native6, obs4MIPs, ana4MIPs, EMAC, CORDEX, IPSLCM, ICON, CESM, "
-        'ACCESS."'
+        'The following tables are available: .*."'
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
+    assert re.match(msg, exc.value.failed_tasks[0].message)
+    assert "CMIP7" in exc.value.failed_tasks[0].message
 
 
 def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
@@ -3860,7 +3918,7 @@ def test_align_metadata_invalid_name(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "align_metadata failed: Variable 'zzz' not available for table 'Amon' "
+        "align_metadata failed: Variable 'zzz' not available in table 'Amon' "
         "of project 'CMIP6'. Set `strict=False` to ignore this."
     )
     with pytest.raises(RecipeError) as exc:

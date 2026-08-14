@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
+import esmvalcore
+import esmvalcore.cmor.table
+from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import (
@@ -73,6 +77,25 @@ def test_multimodel_functions_in_default_order():
             },
             "CMIP6_GFDL-ESM4_fx_historical_r1i1p1f1_areacella_gn.nc",
         ),
+        (
+            {
+                "project": "CMIP6",
+                "mip": "fx",
+                "short_name": "areacella",
+                "dataset": "really-way-too-long-dataset-name" * 10,
+                "ensemble": "r1i1p1f1",
+                "exp": "historical",
+                "version": "v20191115",
+                "grid": "gn",
+            },
+            (
+                "CMIP6_really-way-too-long-dataset-namereally-way-too-long-"
+                "dataset-namereally-way-too-long-dataset-namereally-way-too-"
+                "long-dataset-namereally-way-too-long-dataset-namereally-way-"
+                "too-long-dataset-namereally-way-too-long-dataset-namereally-"
+                "way-to.d1439569.nc"
+            ),
+        ),
     ],
 )
 def test_get_preprocessor_filename(
@@ -86,6 +109,8 @@ def test_get_preprocessor_filename(
     result = _get_preprocessor_filename(dataset)
     expected = session.preproc_dir / filename
     assert result == expected
+    # Check that the filename is not too long for most filesystems.
+    assert len(result.name) <= 255
 
 
 def test_get_preprocessor_filename_missing_facet(session: Session) -> None:
@@ -147,9 +172,16 @@ def test_get_preprocessor_filename_default(
 
 
 def test_get_preprocessor_filename_falls_back_to_config_developer(
+    monkeypatch: pytest.MonkeyPatch,
     session: Session,
 ) -> None:
     """Test the function `_get_preprocessor_filename`."""
+    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
+    monkeypatch.setitem(
+        CFG,
+        "config_developer_file",
+        Path(esmvalcore.__path__[0], "config-developer.yml"),
+    )
     session["projects"]["CMIP6"].pop("preprocessor_filename_template")
     dataset = Dataset(
         project="CMIP6",

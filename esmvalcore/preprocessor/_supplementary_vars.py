@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import iris.coords
 
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PREPROCESSOR_SUPPLEMENTARIES = {}
+
+class RequiredSupplementaries(TypedDict):
+    variables: list[str]
+    required: Literal["require_at_least_one", "prefer_at_least_one"]
+
+
+PREPROCESSOR_SUPPLEMENTARIES: dict[str, RequiredSupplementaries] = {}
 
 
 def register_supplementaries(
@@ -82,9 +88,7 @@ def add_cell_measure(
     """
     if measure not in ["area", "volume"]:
         msg = f"measure name must be 'area' or 'volume', got {measure} instead"
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
     coord_dims = tuple(
         range(cube.ndim - len(cell_measure_cube.shape), cube.ndim),
     )
