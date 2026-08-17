@@ -34,7 +34,10 @@ class DerivedVariable(DerivedVariableBase):
         """Compute permafrost extent.
 
         Permafrost is assumed if
-          - soil temperature in the deepest level is < 0°C
+          - soil temperature at depth=2m is < 0°C
+            Note: In Burke et al., soil temperature < 0°C in the deepest
+                  level is used. This has been modified to depth=2m to be
+                  consistent with ESACCI-PERMAFROST data.
           - for at least 24 consecutive months
           - ice covered part of grid cell is excluded
         Reference: Burke, E. J., Y. Zhang, and G. Krinner:
@@ -92,11 +95,14 @@ class DerivedVariable(DerivedVariableBase):
 
         mask = iris.analysis.maths.multiply(mrsos_yr, landfrac)
 
-        # extract deepest soil level
+        # extract soil temperature at depth=2m
         soiltemp = cubes.extract_cube(NameConstraint(var_name="tsl"))
         z_coord = soiltemp.coord(axis="Z")
-        zmax = np.max(z_coord.core_points())
-        soiltemp = soiltemp.extract(iris.Constraint(depth=zmax))
+        soiltemp = soiltemp.interpolate(
+            [(z_coord.standard_name, 2.0)],
+            scheme=iris.analysis.Linear(),
+        )
+        # create mask (0 = soil temperature >= 0°C, 1 = soil temperature < 0°C)
         soiltemp.data = da.where(
             soiltemp.core_data() < THRESH_TEMPERATURE,
             1,
