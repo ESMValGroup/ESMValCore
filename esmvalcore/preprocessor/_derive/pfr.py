@@ -2,11 +2,14 @@
 
 import logging
 
+import cftime
 import dask.array as da
 import iris
 import numpy as np
 from iris import NameConstraint
 from iris.time import PartialDateTime
+
+from esmvalcore.preprocessor._rolling_window import rolling_window_statistics
 
 from ._baseclass import DerivedVariableBase
 
@@ -14,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 THRESH_TEMPERATURE = 273.15
-FROZEN_MONTHS = 24  # valid range: 12-36
+FROZEN_YEARS = 2
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -112,38 +115,84 @@ class DerivedVariable(DerivedVariableBase):
         iris.coord_categorisation.add_year(soiltemp, "time")
         # prepare cube for permafrost extent with yearly time steps
         pfr_yr = soiltemp.aggregated_by(["year"], iris.analysis.MEAN)
-        # get years to process
-        year_coord = pfr_yr.coord("year")
-        # calculate time period before and after current year to include
-        # in test for permafrost
-        test_period = (FROZEN_MONTHS - 12) / 2
-        # loop over all years and test if frost is present throughout
-        # the whole test period, i.e. [year-test_period, year+test_period]
 
-        for tidx, year in enumerate(year_coord.points):
-            # extract test period
-            pdt1 = PartialDateTime(
-                year=year - 1,
-                month=13 - test_period,
-                day=1,
-            )
-            pdt2 = PartialDateTime(year=year + 1, month=test_period + 1, day=1)
-            daterange = iris.Constraint(
+        # create cube containing a copy of the first year
+        # but with a modified time coordinate saying "year-1"
+
+        # get first year
+        year = pfr_yr.coord("year").points[0]
+        # create Iris constraint to select first year from time series
+        pdt1 = PartialDateTime(year=year, month=1, day=1)
+        pdt2 = PartialDateTime(year=year+1, month=1, day=1)
+        yr_range = iris.Constraint(
                 time=lambda cell, pdt1=pdt1, pdt2=pdt2: pdt1
                 <= cell.point
                 < pdt2,
+        )
+        first_yr = pfr_yr.extract(yr_range)
+        aux_coord = first_yr.coord("time")
+        # promote time coordinate to axis for concatenation
+        first_yr = iris.util.new_axis(first_yr, aux_coord)
+        time_coord = first_yr.coord("time")
+        # shift time coordinate by one -1 year
+        dtime = time_coord.units.num2date(time_coord.points)[0]
+        shifted_datetime = cftime.datetime(
+            dtime.year - 1, dtime.month, dtime.day,
+            dtime.hour, dtime.minute, dtime.second,
+            calendar=time_coord.units.calendar,
+        )
+        time_coord.points = np.asarray(
+            time_coord.units.date2num(shifted_datetime), dtype=np.float64,
+        )
+        # update time bounds accordingly
+        bnds = time_coord.units.num2date(time_coord.bounds)
+        shifted_bnds = [
+            (
+                dt[0].replace(year=dt[0].year - 1),
+                dt[1].replace(year=dt[1].year - 1),
             )
-            soiltemp_window = soiltemp.extract(daterange)
-            # remove auxiliary coordinate 'year' to avoid lots of warnings
-            # from iris
-            soiltemp_window.remove_coord("year")
-            # calculate mean over test period
-            test_cube = soiltemp_window.collapsed("time", iris.analysis.MEAN)
-            # if all months in test period show soil tempeatures below zero
-            # then mark grid cell with "1" as permafrost and "0" otherwise
-            pfr_yr.data[tidx, :, :] = da.where(test_cube.core_data() > 0.99, 1, 0)
+            for dt in bnds
+        ]
+        time_coord.bounds = time_coord.units.date2num(shifted_bnds).astype(
+            np.float64,
+        )
+        # also update aux_coordinate "year"
+        first_yr.remove_coord("year")
+        iris.coord_categorisation.add_year(first_yr, "time")
 
+        # now concatenate cube with time shifted by -1 years
+        # and the original yearly time series
+        new_cube = iris.cube.CubeList([first_yr, pfr_yr]).concatenate_cube()
+
+        # calculate rolling window statistics on cube with yearly time steps
+        # window lenght = 2 --> 24 months
+        pfr_rws = rolling_window_statistics(
+            new_cube,
+            coordinate="time",
+            operator="mean",
+            window_length=FROZEN_YEARS,
+        )
+
+        # The window (lenght = 2) of the "rollowing window statistics"
+        # for time step t uses the period [t, t+1]. As we inserted a
+        # copy of the first year as new first time step in "new_cube",
+        # we get:
+        # pfr_rws(0) = mean(year_1, year_1),
+        # pfr_rws(1) = mean(year_1, year_2),
+        # pfr_rws(2) = mean(year_2, year_3)
+        # pfr_rws(n-1) = mean(year_n-2, year_n-1)
+        # Out of n time steps, "rolling window statistics" with a window
+        # lenght of 2 returns n-1 new time steps. This is the same number
+        # of time steps contained in the original cube "pfr_yr".
+
+        # pfr_yr(t) = 1 --> T_soil <= 0°C during all of year(t-1) and year(t)
+        #           = 0 --> T_soil was > 0°C for at least one month in the
+        #                   two year time period
+        pfr_yr.data = da.where(pfr_rws.core_data() > 0.99, 1, 0)
+
+        # mask out glaciated grid cells
         pfr_yr = pfr_yr * mask
+        # update metadata
         pfr_yr.units = "%"
         pfr_yr.rename("Permafrost extent")
         pfr_yr.var_name = "pfr"
