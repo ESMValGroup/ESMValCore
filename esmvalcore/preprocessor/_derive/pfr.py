@@ -123,11 +123,9 @@ class DerivedVariable(DerivedVariableBase):
         year = pfr_yr.coord("year").points[0]
         # create Iris constraint to select first year from time series
         pdt1 = PartialDateTime(year=year, month=1, day=1)
-        pdt2 = PartialDateTime(year=year+1, month=1, day=1)
+        pdt2 = PartialDateTime(year=year + 1, month=1, day=1)
         yr_range = iris.Constraint(
-                time=lambda cell, pdt1=pdt1, pdt2=pdt2: pdt1
-                <= cell.point
-                < pdt2,
+            time=lambda cell, pdt1=pdt1, pdt2=pdt2: pdt1 <= cell.point < pdt2,
         )
         first_yr = pfr_yr.extract(yr_range)
         aux_coord = first_yr.coord("time")
@@ -137,12 +135,17 @@ class DerivedVariable(DerivedVariableBase):
         # shift time coordinate by one -1 year
         dtime = time_coord.units.num2date(time_coord.points)[0]
         shifted_datetime = cftime.datetime(
-            dtime.year - 1, dtime.month, dtime.day,
-            dtime.hour, dtime.minute, dtime.second,
+            dtime.year - 1,
+            dtime.month,
+            dtime.day,
+            dtime.hour,
+            dtime.minute,
+            dtime.second,
             calendar=time_coord.units.calendar,
         )
         time_coord.points = np.asarray(
-            time_coord.units.date2num(shifted_datetime), dtype=np.float64,
+            time_coord.units.date2num(shifted_datetime),
+            dtype=np.float64,
         )
         # update time bounds accordingly
         bnds = time_coord.units.num2date(time_coord.bounds)
@@ -165,7 +168,7 @@ class DerivedVariable(DerivedVariableBase):
         new_cube = iris.cube.CubeList([first_yr, pfr_yr]).concatenate_cube()
 
         # calculate rolling window statistics on cube with yearly time steps
-        # window lenght = 2 --> 24 months
+        # window length = 2 --> 24 months
         pfr_rws = rolling_window_statistics(
             new_cube,
             coordinate="time",
@@ -173,7 +176,7 @@ class DerivedVariable(DerivedVariableBase):
             window_length=FROZEN_YEARS,
         )
 
-        # The window (lenght = 2) of the "rollowing window statistics"
+        # The window (length = 2) of the "rollowing window statistics"
         # for time step t uses the period [t, t+1]. As we inserted a
         # copy of the first year as new first time step in "new_cube",
         # we get:
@@ -182,7 +185,7 @@ class DerivedVariable(DerivedVariableBase):
         # pfr_rws(2) = mean(year_2, year_3)
         # pfr_rws(n-1) = mean(year_n-2, year_n-1)
         # Out of n time steps, "rolling window statistics" with a window
-        # lenght of 2 returns n-1 new time steps. This is the same number
+        # length of 2 returns n-1 new time steps. This is the same number
         # of time steps contained in the original cube "pfr_yr".
 
         # pfr_yr(t) = 1 --> T_soil <= 0°C during all of year(t-1) and year(t)
