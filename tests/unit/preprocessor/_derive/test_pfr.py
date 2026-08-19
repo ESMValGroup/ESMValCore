@@ -11,8 +11,7 @@ from iris import NameConstraint
 from esmvalcore.preprocessor._derive import pfr
 
 
-@pytest.fixture
-def cubes():
+def cubes(permafrost=1):
     time_coord = iris.coords.DimCoord(
         [
             0.0,
@@ -80,6 +79,11 @@ def cubes():
         units="K",
         standard_name="soil_temperature",
     )
+    # if requested (permafrost=0), set one time step of the 2-m soil
+    # temperature to a value above 0°C --> will result in
+    # "no permafrost" pixels
+    if permafrost == 0:
+        tsl_data[10, 1, :, :] = 275.0
     coord_specs = [
         (time_coord, 0),
         (copy.deepcopy(lat_coord), 1),
@@ -111,65 +115,80 @@ def cubes():
     return iris.cube.CubeList([tsl_cube, sftlf_cube, mrsos_cube])
 
 
-def test_pfr_calculation(cubes):
-    """Test function ``calculate``."""
+def test_pfr_calculation_0():
+    """Test function ``calculate`` for 'no permafrost' case."""
+    test_cubes = cubes(permafrost=0)
     derived_var = pfr.DerivedVariable()
-    out_cube = derived_var.calculate(cubes)
+    out_cube = derived_var.calculate(test_cubes)
+    assert out_cube.units == cf_units.Unit("%")
+    out_data = out_cube.data
+    expected = np.zeros_like(out_cube.data)
+    np.testing.assert_array_equal(out_data, expected)
+
+
+def test_pfr_calculation_1():
+    """Test function ``calculate`` for permafrost case."""
+    test_cubes = cubes()
+    derived_var = pfr.DerivedVariable()
+    out_cube = derived_var.calculate(test_cubes)
     assert out_cube.units == cf_units.Unit("%")
     out_data = out_cube.data
     expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
 
 
-def test_pfr_calculation_minor_latlon_differences(cubes):
+def test_pfr_calculation_minor_latlon_differences():
     """Test function ``calculate``."""
     # small differences (i.e. < 1.0e-4) in lat/lon coordinates
     # in sftlf and mrsos
+    test_cubes = cubes()
     derived_var = pfr.DerivedVariable()
-    for cube in cubes:
+    for cube in test_cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
-    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    sftlf_cube = test_cubes.extract_cube(NameConstraint(var_name="sftlf"))
     x_coord = sftlf_cube.coord(axis="X")
     y_coord = sftlf_cube.coord(axis="Y")
     x_coord.points = x_coord.core_points() + 1.0e-5
     y_coord.points = y_coord.core_points() + 1.0e-5
-    out_cube = derived_var.calculate(cubes)
+    out_cube = derived_var.calculate(test_cubes)
     # small differences are corrected automatically --> expect same results
     out_data = out_cube.data
     expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
 
 
-def test_pfr_calculation_major_lat_differences(cubes):
+def test_pfr_calculation_major_lat_differences():
     """Test function ``calculate``."""
     # larger deviations in latitudes should trigger an error
+    test_cubes = cubes()
     derived_var = pfr.DerivedVariable()
-    for cube in cubes:
+    for cube in test_cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
-    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    sftlf_cube = test_cubes.extract_cube(NameConstraint(var_name="sftlf"))
     y_coord = sftlf_cube.coord(axis="Y")
     org_y_pts = copy.deepcopy(y_coord.core_points())
     y_coord.points = y_coord.core_points() + 1.0e-2
     with pytest.raises(ValueError):
-        derived_var.calculate(cubes)
+        derived_var.calculate(test_cubes)
     y_coord.points = org_y_pts
 
 
-def test_pfr_calculation_major_lon_differences(cubes):
+def test_pfr_calculation_major_lon_differences():
     """Test function ``calculate``."""
     # larger deviations in longitudes should trigger an error
+    test_cubes = cubes()
     derived_var = pfr.DerivedVariable()
-    for cube in cubes:
+    for cube in test_cubes:
         if cube.coords("year"):
             cube.remove_coord("year")
-    sftlf_cube = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+    sftlf_cube = test_cubes.extract_cube(NameConstraint(var_name="sftlf"))
     x_coord = sftlf_cube.coord(axis="X")
     org_x_pts = copy.deepcopy(x_coord.core_points())
     x_coord.points = x_coord.core_points() + 1.0e-2
     with pytest.raises(ValueError):
-        derived_var.calculate(cubes)
+        derived_var.calculate(test_cubes)
     x_coord.points = org_x_pts
 
 
