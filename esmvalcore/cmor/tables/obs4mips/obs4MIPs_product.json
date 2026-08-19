@@ -1,5 +1,7 @@
 {
     "product":[
+        "derived",
+        "site-observations",
         "observations",
         "reanalysis"
     ]
