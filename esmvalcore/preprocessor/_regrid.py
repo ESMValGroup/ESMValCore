@@ -1018,6 +1018,8 @@ def regrid(
     # same coordinates when using the regridded cubes as input to the
     # multi-model statistics or similar preprocessor functions later on.
     _update_horizontal_coords(target_grid_cube, result, overwrite=False)
+    _copy_cell_measures(cube, target_grid_cube, result)
+
     return result
 
 
@@ -1172,6 +1174,35 @@ def _update_horizontal_coords(src: Cube, tgt: Cube, overwrite: bool) -> None:
                 tgt.remove_coord(coord.name())
             if not tgt.coords(coord.name()):
                 tgt.add_aux_coord(coord.copy(), tgt_horizontal_dims)
+
+
+def _copy_cell_measures(
+    cube: Cube,
+    target_grid_cube: Cube,
+    result: Cube,
+) -> None:
+    """Copy cell measures from the target grid to the result cube.
+
+    Copy cell measures from the target grid to the result cube if they are
+    present on the source cube and target grid, to make it look like cell
+    measures are "preserved" during regridding.
+    """
+    for cell_measure in target_grid_cube.cell_measures():
+        if cube.cell_measures(
+            cell_measure.standard_name,
+        ) and target_grid_cube.cell_measures(cell_measure.standard_name):
+            cm_dims = target_grid_cube.cell_measure_dims(cell_measure)
+            cm_slice = tuple(
+                slice(None) if dim in cm_dims else 0
+                for dim in range(target_grid_cube.ndim)
+            )
+            result.add_cell_measure(
+                cell_measure.copy(),
+                tuple(
+                    result.coord_dims(dim_coord)[0]
+                    for dim_coord in target_grid_cube[cm_slice].dim_coords
+                ),
+            )
 
 
 def _create_cube(
