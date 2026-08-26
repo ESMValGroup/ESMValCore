@@ -1,5 +1,6 @@
 """Fixes for CNRM-ESM2-1 model."""
 
+from .cnrm_cm6_1 import O3 as BaseO3  # noqa: N811
 from .cnrm_cm6_1 import Cl as BaseCl
 from .cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from .cnrm_cm6_1 import Cli as BaseCli
@@ -16,6 +17,9 @@ Cli = BaseCli
 
 
 Clw = BaseClw
+
+
+O3 = BaseO3
 
 
 Omon = BaseOmon

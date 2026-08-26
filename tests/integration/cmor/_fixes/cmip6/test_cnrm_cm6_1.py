@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (
+    O3,
     Cl,
     Clcalipso,
     Cli,
@@ -154,3 +155,25 @@ def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes("CMIP6", "CNRM-CM6-1", "Omon", "thetao")
     assert fix == [Omon(None), GenericFix(None)]
+
+
+def test_o3_fix_metadata(test_data_path):
+    """Test fix for ``o3`` from mip: AERmon."""
+    nc_path = test_data_path / "cnrm_cm6_1_cl.nc"
+    cubes = iris.load(str(nc_path))
+    # change cl cube from test data to an o3 cube
+    # (reusing vertical hybrid coordinates for testing)
+    o3_cube = cubes.extract_cube("cloud_area_fraction_in_atmosphere_layer")
+    o3_cube.long_name = "Mole Fraction of O3"
+    o3_cube.standard_name = "mole_fraction_of_ozone_in_air"
+    o3_cube.units = "mol mol-1"
+    o3_cube.attributes["table_id"] = "AERmon"
+    o3_cube.var_name = "o3"
+    # test o3 fix_metadata
+    vardef = get_var_info("CMIP6", "AERmon", "o3")
+    fix = O3(vardef)
+    fixed_cubes = fix.fix_metadata(cubes)
+    # make sure the fixed cube has a coordinate "air_pressure"
+    cube = fixed_cubes.extract_cube("mole_fraction_of_ozone_in_air")
+    air_pressure_coord = cube.coord("air_pressure")
+    assert air_pressure_coord.points is not None
