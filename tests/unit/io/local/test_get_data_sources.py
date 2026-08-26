@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -10,9 +9,6 @@ import esmvalcore.cmor.table
 from esmvalcore.config import CFG
 from esmvalcore.io.local import LocalDataSource
 from esmvalcore.local import _get_data_sources
-
-if TYPE_CHECKING:
-    import pytest_mock
 
 
 @pytest.mark.parametrize(

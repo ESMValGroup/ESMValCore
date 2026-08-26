@@ -33,7 +33,6 @@ import logging
 import os
 import re
 import sys
-import warnings
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
