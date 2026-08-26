@@ -356,48 +356,6 @@ class Config:
         shutil.copy2(in_file, out_file)
         logger.info("Copy finished.")
 
-    @classmethod
-    def get_config_developer(
-        cls,
-        overwrite: bool = False,
-        path: str | Path | None = None,
-    ) -> None:
-        """Copy default config-developer.yml file to a given path.
-
-        Copy default config-developer.yml file to a given path or, if a path is
-        not provided, install it in the default `~/.esmvaltool` folder.
-
-        Parameters
-        ----------
-        overwrite: boolean
-            Overwrite an existing file.
-        path: str
-            If not provided, the file will be copied to `~/.esmvaltool`.
-
-        """
-        from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
-        deprecation_msg = (
-            "The config-developer.yml file and the associated "
-            "'esmvaltool config get_config_developer' command are deprecated "
-            "and support for them will be removed in ESMValCore version 2.16.0. "
-            "Please configure data sources, cmor tables, and preprocessor "
-            "filename templates under `projects` instead."
-        )
-        warnings.warn(
-            deprecation_msg,
-            category=ESMValCoreDeprecationWarning,
-            stacklevel=1,
-        )
-        in_file = Path(__file__).parent / "config-developer.yml"
-        if path is None:
-            out_file = Path.home() / ".esmvaltool" / "config-developer.yml"
-        else:
-            out_file = Path(path)
-        if not out_file.suffix:  # out_file looks like a directory
-            out_file = out_file / "config-developer.yml"
-        cls._copy_config_file(in_file, out_file, overwrite)
-
 
 class Recipes:
     """List, show and retrieve installed recipes.
