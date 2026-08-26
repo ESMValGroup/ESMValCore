@@ -625,7 +625,16 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
 
         # Read datetimes from file contents if necessary
         if (start_date is None or end_date is None) and file.exists():
-            logger.debug("Must load file %s for daterange ", file)
+            reason = (
+                f"data source '{self.name}' is set up with ignore_datetimes_in_filename=True"
+                if self.ignore_datetimes_in_filename
+                else "it cannot be read from file name"
+            )
+            logger.debug(
+                "Opening file %s to determine time range because %s",
+                file,
+                reason,
+            )
             with Dataset(file) as dataset:
                 for variable in dataset.variables.values():
                     var_name = _get_var_name(variable)
