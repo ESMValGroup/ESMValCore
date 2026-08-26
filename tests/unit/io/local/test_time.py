@@ -122,6 +122,30 @@ def test_read_datetime_from_cube(local_data_source, tmp_path):
     assert end == "19910102"
 
 
+def test_ignore_datetimes_in_filename(tmp_path):
+    data_source = LocalDataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath="",
+        dirname_template="",
+        filename_template="",
+        ignore_datetimes_in_filename=True,
+    )
+    temp_file = LocalFile(tmp_path / "test_1850-1900.nc")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
+    time = iris.coords.DimCoord(
+        [0, 100, 200, 366],
+        standard_name="time",
+        units="days since 1990-01-01",
+    )
+    cube.add_dim_coord(time, 0)
+    iris.save(cube, temp_file)
+    start, end = data_source._get_start_end_date(temp_file)
+    assert int(start[:4]) == 1990
+    assert int(end[:4]) == 1991
+
+
 def test_raises_if_unable_to_deduce_no_time(local_data_source, tmp_path):
     """Try to get time from cube if no date in filename."""
     temp_file = tmp_path / "test.nc"
