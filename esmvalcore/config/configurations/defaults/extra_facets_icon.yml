@@ -4,7 +4,7 @@
 # - All facets can also be specified in the recipes. The values given here are
 #   only defaults.
 # - The facet ``stream`` has to be specified in the recipe if it is not given
-#   here and default DRS is used.
+#   here and default file and directory naming conventions are used.
 
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
