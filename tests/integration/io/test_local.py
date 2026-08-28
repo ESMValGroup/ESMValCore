@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import pprint
 import re
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,7 +17,7 @@ import esmvalcore.cmor.table
 import esmvalcore.config._config
 import esmvalcore.local
 from esmvalcore.config import CFG
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -272,6 +273,82 @@ def test_find_data(root, cfg):
     assert [Path(f) for f in input_filelist] == sorted(ref_files)
     for pattern in ref_globs:
         assert str(pattern) in data_source.debug_info
+
+
+# TODO: Remove in v2.18.0
+@pytest.mark.parametrize(
+    (
+        "dirname_template",
+        "filename_template",
+        "var_type",
+        "stream",
+        "warning_raised",
+        "found_file",
+    ),
+    [
+        ("", "icon.nc", None, None, False, "icon.nc"),
+        ("{var_type}", "icon.nc", "atm", None, False, "atm/icon.nc"),
+        ("", "{var_type}.nc", "atm", None, False, "atm.nc"),
+        ("{var_type}", "{var_type}.nc", "atm", None, False, "atm/atm.nc"),
+        ("{var_type}", "icon.nc", None, "atm", True, "atm/icon.nc"),
+        ("", "{var_type}.nc", None, "atm", True, "atm.nc"),
+        ("{var_type}", "{var_type}.nc", None, "atm", True, "atm/atm.nc"),
+        ("{stream}", "icon.nc", "lnd", "atm", False, "atm/icon.nc"),
+        ("", "{stream}.nc", "lnd", "atm", False, "atm.nc"),
+        ("{stream}", "{stream}.nc", "lnd", "atm", False, "atm/atm.nc"),
+        ("{stream}", "icon.nc", None, "atm", False, "atm/icon.nc"),
+        ("", "{stream}.nc", None, "atm", False, "atm.nc"),
+        ("{stream}", "{stream}.nc", None, "atm", False, "atm/atm.nc"),
+    ],
+)
+def test_find_data_icon_legacy_facets(
+    root,
+    dirname_template,
+    filename_template,
+    var_type,
+    stream,
+    warning_raised,
+    found_file,
+):
+    data_source = LocalDataSource(
+        name="test-icon-data-source",
+        project="ICON",
+        rootpath=root,
+        priority=1,
+        dirname_template=dirname_template,
+        filename_template=filename_template,
+    )
+    variable = {
+        "project": "ICON",
+        "dataset": "ICON-XPP",
+        "exp": "amip",
+    }
+    if var_type is not None:
+        variable["var_type"] = var_type
+    if stream is not None:
+        variable["stream"] = stream
+
+    create_tree(
+        root,
+        filenames=[
+            "atm.nc",
+            "icon.nc",
+            "atm/atm.nc",
+            "atm/icon.nc",
+        ],
+        symlinks=None,
+    )
+
+    if warning_raised:
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            input_filelist = data_source.find_data(**variable)
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            input_filelist = data_source.find_data(**variable)
+
+    assert len(input_filelist) == 1
+    assert Path(input_filelist[0]) == Path(root, found_file)
 
 
 def test_find_data_facet_missing() -> None:
