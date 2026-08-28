@@ -598,7 +598,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             facets["short_name"] = facets["original_short_name"]
 
         # TODO: Remove in v2.18.0
-        if facets["project"] == "ICON":
+        if facets.get("project") == "ICON":
             facets = self._update_legacy_icon_facets(facets)
 
         try:
@@ -666,7 +666,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             warnings.warn(
                 deprecation_msg,
                 ESMValCoreDeprecationWarning,
-                stacklevel=4,
+                stacklevel=3,
             )
             facets["var_type"] = facets["stream"]
         return facets
