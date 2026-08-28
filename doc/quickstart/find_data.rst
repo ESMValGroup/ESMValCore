@@ -96,7 +96,8 @@ To use these datasets, put the files containing the data in the directory that
 you have :ref:`configured <config-data-sources>` for the ``rootpath`` of the
 ``native6`` project, in a subdirectory called
 ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``, assuming you are
-using the default DRS for ``native6`` as defined in the file:
+using the default file and directory naming conventions for ``native6`` as
+defined in the file:
 
 .. literalinclude:: ../configurations/data-local-esmvaltool.yml
     :language: yaml
@@ -116,8 +117,9 @@ ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
 the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
 For example for monthly data, place the files in the
 ``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the default DRS
-for ``native6`` described :ref:`above <read_native_obs>`).
+configured for the ``native6`` project (assuming you are using the default file
+and directory naming conventions for ``native6`` described :ref:`above
+<read_native_obs>`).
 
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
   ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
@@ -221,8 +223,9 @@ MSWEP
 
 For example for monthly data, place the files in the
 ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
-configured for the ``native6`` project (assuming you are using the default DRS
-for ``native6`` described :ref:`above <read_native_obs>`).
+configured for the ``native6`` project (assuming you are using the default file
+and directory naming conventions for ``native6`` described :ref:`above
+<read_native_obs>`).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -343,7 +346,8 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``gcomp``            Generic component-model name           No default (needs to be specified
                                                             as extra facets or in recipe if
-                                                            default DRS is used)
+                                                            default file and directory naming
+                                                            conventions are used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
 ``raw_units``        Units of the variable in the raw       If specified, the value given by
@@ -352,7 +356,8 @@ Key                  Description                            Default value if not
                                                             ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
                                                             as extra facets or in recipe if
-                                                            default DRS is used)
+                                                            default file and directory naming
+                                                            conventions are used)
 ``string``           Short string which is used to further  ``''`` (empty string)
                      identify the history file type
                      (corresponds to ``$string`` or
@@ -420,7 +425,8 @@ Key                   Description                            Default value if no
 ===================== ====================================== =================================
 ``channel``           Channel in which the desired variable  No default (needs to be specified
                       is stored                              as extra facets or in recipe if
-                                                             default DRS is used)
+                                                             default file and directory naming
+                                                             conventions are used)
 ``postproc_flag``     Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``          Variable name of the variable in the   CMOR variable name of the
                       raw input file                         corresponding variable
@@ -461,7 +467,7 @@ output.
 The default naming conventions for input directories and files for ICON are
 
 * input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
-* input files: ``{exp}_{var_type}*.nc``
+* input files: ``{exp}_{stream}*.nc``
 
 as configured in:
 
@@ -490,7 +496,7 @@ Thus, example dataset entries could look like this:
     - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
        short_name: ta, timerange: 20010101/20020101}
 
-A variable-specific default for the facet ``var_type`` is given in the extra
+A variable-specific default for the facet ``stream`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
 recipe, for example:
 
@@ -498,11 +504,11 @@ recipe, for example:
 
   datasets:
     - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
-       short_name: ta, var_type: atm_dyn_3d_ml, timerange: 20010101/20020101}
+       short_name: ta, stream: atm_dyn_3d_ml, timerange: 20010101/20020101}
 
 This is necessary if your ICON output is structured in one variable per file.
 For example, if your output is stored in files called
-``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
+``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``stream:
 <variable_name>_atm_2d_ml`` in the recipe for this variable.
 
 Usually, ICON reports aggregated values at the end of the corresponding time
@@ -547,8 +553,9 @@ work correctly and specifically by Iris to interpret the grid as a
 :ref:`mesh <iris:ugrid>`.
 An example is the horizontal regridding of native ICON data to a regular grid.
 While the :ref:`built-in regridding schemes <default regridding schemes>`
-`linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
-the `area_weighted` scheme requires the input data in UGRID format.
+`linear` and `nearest`  can handle unstructured grids (i.e., not
+UGRID-compliant) and meshes (i.e., UGRID-compliant), the `area_weighted` scheme
+requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or as extra facet (see below).
 This is useful for diagnostics that act on the native ICON grid and do not
@@ -623,11 +630,13 @@ Key                 Description                      Default value if not specif
 ``shift_time``      Shift time points back by 1/2 of ``True``
                     the corresponding output time
                     interval
+``stream``          Output stream where the          No default (needs to be specified
+                    corresponding variable is        as extra facets or in recipe if
+                    stored (as defined in the output default file and directory naming
+                    namelist ``output_nml``; e.g.,   conventions are used)
+                    ``atm_2d``)
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
-``var_type``        Variable type of the             No default (needs to be specified
-                    variable in the raw input        as extra facets or in recipe if
-                    file                             default DRS is used)
 ``zg_file``         Absolute or relative (to         If possible, use geometric height
                     ``auxiliary_data_dir``) path to  at full levels provided by the raw
                     the the input file that contains input file
@@ -656,13 +665,13 @@ Key                 Description                      Default value if not specif
    cell area variables are required.
    Make sure that this file is not found when other variables are loaded.
 
-   For example, you could use a new ``var_type``, e.g., ``horizontalgrid`` for
+   For example, you could use a new ``stream``, e.g., ``horizontalgrid`` for
    this file.
    Thus, an ICON grid file located in
    ``2.6.1_atm_amip_R2B5_r1i1p1f1/2.6.1_atm_amip_R2B5_r1i1p1f1_horizontalgrid.nc``
-   can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
+   can be found using ``stream: horizontalgrid`` in the recipe (assuming the
    default naming conventions listed above).
-   Make sure that no other variable uses this ``var_type``.
+   Make sure that no other variable uses this ``stream``.
 
    If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
    preprocessor on *regridded* ICON data, make sure to **not** use the cell area
@@ -758,9 +767,10 @@ Key                  Description                                Default value if
 ==================== ========================================== ====================================
 ``raw_name``         Variable name of the variable in the       CMOR variable name of the
                      raw input file                             corresponding variable
-``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be
-                     and `oce`                                  specified as extra facets or in
-                                                                recipe if default DRS is used)
+``modeling_realm``   Realm attribute includes `atm`, `ice`,     No default (needs to be specified
+                     and `oce`                                  as extra facets or in recipe if
+                                                                default file and directory naming
+                                                                conventions are used)
 ``freq_attribute``   A special attribute in the filename        No default
                      `ACCESS-ESM` raw data, related to the
                      frequency of raw data
