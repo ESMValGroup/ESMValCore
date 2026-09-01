@@ -1,0 +1,868 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "LImon"
+  },
+  "variable_entry": {
+    "acabfIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Specific mass balance means the net rate at which ice is added per unit area at the land ice surface. Computed as the total surface mass balance on the land ice portion of the grid cell divided by land ice area in the grid cell. A negative value means loss of ice",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Mass Balance Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "acabfIs",
+      "positive": "",
+      "standard_name": "land_ice_surface_specific_mass_balance_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "agesno": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean (with samples weighted by snow mass)",
+      "comment": "Age of Snow (when computing the time-mean here, the time samples, weighted by the mass of snow on the land portion of the grid cell, are accumulated and then divided by the sum of the weights.  Reported as missing data in regions free of snow on land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mean Age of Snow",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "agesno",
+      "positive": "",
+      "standard_name": "age_of_surface_snow",
+      "type": "real",
+      "units": "day",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfdsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "the net downward heat flux from the atmosphere into the snow that lies on land divided by the land area in the grid cell; reported as 0.0 for snow-free land regions or where the land fraction is 0.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Downward Heat Flux into Snow Where Land over Land",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfdsn",
+      "positive": "down",
+      "standard_name": "surface_downward_heat_flux_in_snow",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hflsIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Upward latent heat flux from the ice sheet surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Upward Latent Heat Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hflsIs",
+      "positive": "up",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfssIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Upward sensible heat flux from the ice sheet surface. The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Upward Sensible Heat Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfssIs",
+      "positive": "up",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "icemIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Loss of ice mass resulting from surface melting. Computed as the total surface melt water on the land ice portion of the grid cell divided by land ice area in the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Ice Melt Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "icemIs",
+      "positive": "",
+      "standard_name": "land_ice_surface_melt_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "litemptopIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Upper boundary temperature that is used to force ice sheet models. It is the temperature at the base of the snowpack models, and does not vary with seasons. Report surface temperature of ice sheet where snow thickness is zero",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Temperature at Top of Ice Sheet Model",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "litemptopIs",
+      "positive": "",
+      "standard_name": "temperature_at_top_of_ice_sheet_model",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lwsnl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The total mass of liquid water contained interstitially within the whole depth of the snow layer of the land portion of a grid cell divided by the area of the land portion of the cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Liquid Water Content of Snow Layer",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lwsnl",
+      "positive": "",
+      "standard_name": "liquid_water_content_of_surface_snow",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mrroIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The total run-off (including drainage through the base of the soil model) per unit area leaving the land portion of the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Total Runoff",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mrroIs",
+      "positive": "",
+      "standard_name": "runoff_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "orogIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. Altitude is the (geometric) height above the geoid, which is the reference geopotential surface. The geoid is similar to mean sea level.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Altitude",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "orogIs",
+      "positive": "",
+      "standard_name": "surface_altitude",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pflw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "*where land over land*, i.e., this is the total mass of liquid water contained within the permafrost layer within the land portion of a grid cell divided by the area of the land portion of the cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Liquid Water Content of Permafrost Layer",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pflw",
+      "positive": "",
+      "standard_name": "liquid_water_content_of_permafrost_layer",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prraIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Rainfall rate over the ice sheet",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Rainfall Rate",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prraIs",
+      "positive": "",
+      "standard_name": "rainfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "prsnIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "at surface; includes precipitation of all forms of water in the solid phase",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Snowfall Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "prsnIs",
+      "positive": "",
+      "standard_name": "snowfall_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rldsIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Downwelling radiation is radiation from above. It does not mean 'net downward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Downwelling Longwave Radiation",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rldsIs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rlusIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'longwave' means longwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Upwelling Longwave Radiation",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rlusIs",
+      "positive": "up",
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdsIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Surface solar irradiance for UV calculations",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Downwelling Shortwave Radiation",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdsIs",
+      "positive": "down",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsusIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'shortwave' means shortwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Upwelling Shortwave Radiation",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsusIs",
+      "positive": "up",
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sbl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The snow and ice sublimation flux is the loss of snow and ice mass per unit area from the surface resulting from their direct conversion to water vapor that enters the atmosphere.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Surface Snow and Ice Sublimation Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sbl",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sblIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The snow and ice sublimation flux is the loss of snow and ice mass per unit area from the surface resulting from their direct conversion to water vapor that enters the atmosphere.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Snow and Ice Sublimation Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sblIs",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mass_content_of_water_vapor_due_to_sublimation_of_surface_snow_and_ice",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sftflf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage of grid cell covered by floating ice shelf, the component of the ice sheet that is flowing over sea water",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Floating Ice Shelf Area Percentage",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sftflf",
+      "positive": "",
+      "standard_name": "floating_ice_shelf_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sftgrf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage of grid cell covered by grounded ice sheet",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Grounded Ice Sheet Area Percentage",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sftgrf",
+      "positive": "",
+      "standard_name": "grounded_ice_sheet_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage of each grid cell that is occupied by snow that rests on land portion of cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Snow Area Percentage",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snc",
+      "positive": "",
+      "standard_name": "surface_snow_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sncIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Percentage of each grid cell that is occupied by snow that rests on land portion of cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Snow Cover Percentage",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sncIs",
+      "positive": "",
+      "standard_name": "surface_snow_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "where land over land, this is computed as the mean thickness of snow in the land portion of the grid cell (averaging over the entire land portion, including the snow-free fraction).  Reported as 0.0 where the land fraction is 0.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Snow Depth",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snd",
+      "positive": "",
+      "standard_name": "surface_snow_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snicefreezIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Mass flux of surface meltwater which refreezes within the snowpack. Computed as the total refreezing on the land ice portion of the grid cell divided by land ice area in the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Snow and Ice Refreeze Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snicefreezIs",
+      "positive": "",
+      "standard_name": "surface_snow_and_ice_refreezing_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snicemIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Loss of snow and ice mass resulting from surface melting. Computed as the total surface melt on the land ice portion of the grid cell divided by land ice area in the grid cell.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Snow and Ice Melt Flux",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snicemIs",
+      "positive": "",
+      "standard_name": "surface_snow_and_ice_melt_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snm": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The total surface snow melt rate on the land portion of the grid cell divided by the land area in the grid cell; report as zero for snow-free land regions and missing where there is no land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Surface Snow Melt",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snm",
+      "positive": "",
+      "standard_name": "surface_snow_melt_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snmIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "The total surface snow melt rate on the land portion of the grid cell divided by the land area in the grid cell; report as zero for snow-free land regions and missing where there is no land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Snow Melt",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snmIs",
+      "positive": "",
+      "standard_name": "surface_snow_melt_flux",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "snw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The mass of surface snow on the land portion of the grid cell divided by the land area in the grid cell; reported as missing where the land fraction is 0; excludes snow on vegetation canopy or on sea ice.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Surface Snow Amount",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snw",
+      "positive": "",
+      "standard_name": "surface_snow_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sootsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "the entire land portion of the grid cell is considered, with snow soot content set to 0.0 in regions free of snow.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Snow Soot Content",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sootsn",
+      "positive": "",
+      "standard_name": "soot_content_of_surface_snow",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tasIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "near-surface (usually, 2 meter) air temperature",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Near-Surface Air Temperature",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tasIs",
+      "positive": "",
+      "standard_name": "air_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tpf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean",
+      "comment": "The mean thickness of the permafrost layer in the land portion of the grid cell.  Reported as zero in permafrost-free regions.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Permafrost Layer Thickness",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tpf",
+      "positive": "",
+      "standard_name": "permafrost_layer_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "Temperature of the lower boundary of the atmosphere",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Surface Temperature",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsIs",
+      "positive": "",
+      "standard_name": "surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsn": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: mean (with samples weighted by snow mass)",
+      "comment": "This temperature is averaged over all the snow in the grid cell that rests on land or land ice.  When computing the time-mean here, the time samples, weighted by the mass of snow on the land portion of the grid cell, are accumulated and then divided by the sum of the weights.   Reported as missing in regions free of snow on land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Snow Internal Temperature",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsn",
+      "positive": "",
+      "standard_name": "temperature_in_surface_snow",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tsnIs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean where ice_sheet",
+      "comment": "This temperature is averaged over all the snow in the grid cell that rests on land or land ice.  When computing the time-mean here, the time samples, weighted by the mass of snow on the land portion of the grid cell, are accumulated and then divided by the sum of the weights.   Reported as missing in regions free of snow on land.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ice Sheet Snow Internal Temperature",
+      "modeling_realm": [
+        "landIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tsnIs",
+      "positive": "",
+      "standard_name": "temperature_in_surface_snow",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
