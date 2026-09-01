@@ -295,10 +295,24 @@ def test_find_data(root, cfg):
         ("{var_type}", "{var_type}.nc", None, "atm", True, "atm/atm.nc"),
         ("{output_stream}", "icon.nc", "lnd", "atm", False, "atm/icon.nc"),
         ("", "{output_stream}.nc", "lnd", "atm", False, "atm.nc"),
-        ("{output_stream}", "{output_stream}.nc", "lnd", "atm", False, "atm/atm.nc"),
+        (
+            "{output_stream}",
+            "{output_stream}.nc",
+            "lnd",
+            "atm",
+            False,
+            "atm/atm.nc",
+        ),
         ("{output_stream}", "icon.nc", None, "atm", False, "atm/icon.nc"),
         ("", "{output_stream}.nc", None, "atm", False, "atm.nc"),
-        ("{output_stream}", "{output_stream}.nc", None, "atm", False, "atm/atm.nc"),
+        (
+            "{output_stream}",
+            "{output_stream}.nc",
+            None,
+            "atm",
+            False,
+            "atm/atm.nc",
+        ),
     ],
 )
 def test_find_data_icon_legacy_facets(
