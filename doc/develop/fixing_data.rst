@@ -449,7 +449,7 @@ To allow ESMValCore to locate the data files, use the following steps:
   the model.
   Note that it is possible to predefine facets via :ref:`extra facets
   <add_new_fix_native_datasets_extra_facets>`.
-  In this ICON example, the facet ``stream`` is :download:`predefined
+  In this ICON example, the facet ``output_stream`` is :download:`predefined
   </../esmvalcore/config/configurations/defaults/extra_facets_icon.yml>`
   for many variables.
 

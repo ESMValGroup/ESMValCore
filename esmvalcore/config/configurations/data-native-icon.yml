@@ -6,7 +6,7 @@ projects:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: ~/climate_data
         dirname_template: "{exp}"
-        filename_template: "{exp}_{stream}*.nc"
+        filename_template: "{exp}_{output_stream}*.nc"
         ignore_warnings:
           - message: "Failed to create 'height' dimension coordinate: The 'height' DimCoord bounds array must be strictly monotonic."
             module: iris

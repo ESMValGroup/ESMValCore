@@ -585,7 +585,7 @@ def test_get_areacella_fix():
 def test_areacella_fix(cubes_grid, session):
     """Test fix."""
     fix = get_allvars_fix("fx", "areacella", session=session)
-    fix.extra_facets["stream"] = "fx"
+    fix.extra_facets["output_stream"] = "fx"
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1
@@ -609,7 +609,7 @@ def test_get_areacello_fix():
 def test_areacello_fix(cubes_grid, session):
     """Test fix."""
     fix = get_allvars_fix("Ofx", "areacello", session=session)
-    fix.extra_facets["stream"] = "fx"
+    fix.extra_facets["output_stream"] = "fx"
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1

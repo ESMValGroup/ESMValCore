@@ -32,6 +32,6 @@ projects:
   EMAC:
     preprocessor_filename_template: "{project}_{dataset}_{exp}_{channel}_{mip}_{short_name}"
   ICON:
-    preprocessor_filename_template: "{project}_{dataset}_{exp}_{stream}_{mip}_{short_name}"
+    preprocessor_filename_template: "{project}_{dataset}_{exp}_{output_stream}_{mip}_{short_name}"
   IPSLCM:
     preprocessor_filename_template: "{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}"

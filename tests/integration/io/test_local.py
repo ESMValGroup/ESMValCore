@@ -281,7 +281,7 @@ def test_find_data(root, cfg):
         "dirname_template",
         "filename_template",
         "var_type",
-        "stream",
+        "output_stream",
         "warning_raised",
         "found_file",
     ),
@@ -293,12 +293,12 @@ def test_find_data(root, cfg):
         ("{var_type}", "icon.nc", None, "atm", True, "atm/icon.nc"),
         ("", "{var_type}.nc", None, "atm", True, "atm.nc"),
         ("{var_type}", "{var_type}.nc", None, "atm", True, "atm/atm.nc"),
-        ("{stream}", "icon.nc", "lnd", "atm", False, "atm/icon.nc"),
-        ("", "{stream}.nc", "lnd", "atm", False, "atm.nc"),
-        ("{stream}", "{stream}.nc", "lnd", "atm", False, "atm/atm.nc"),
-        ("{stream}", "icon.nc", None, "atm", False, "atm/icon.nc"),
-        ("", "{stream}.nc", None, "atm", False, "atm.nc"),
-        ("{stream}", "{stream}.nc", None, "atm", False, "atm/atm.nc"),
+        ("{output_stream}", "icon.nc", "lnd", "atm", False, "atm/icon.nc"),
+        ("", "{output_stream}.nc", "lnd", "atm", False, "atm.nc"),
+        ("{output_stream}", "{output_stream}.nc", "lnd", "atm", False, "atm/atm.nc"),
+        ("{output_stream}", "icon.nc", None, "atm", False, "atm/icon.nc"),
+        ("", "{output_stream}.nc", None, "atm", False, "atm.nc"),
+        ("{output_stream}", "{output_stream}.nc", None, "atm", False, "atm/atm.nc"),
     ],
 )
 def test_find_data_icon_legacy_facets(
@@ -306,7 +306,7 @@ def test_find_data_icon_legacy_facets(
     dirname_template,
     filename_template,
     var_type,
-    stream,
+    output_stream,
     warning_raised,
     found_file,
 ):
@@ -325,8 +325,8 @@ def test_find_data_icon_legacy_facets(
     }
     if var_type is not None:
         variable["var_type"] = var_type
-    if stream is not None:
-        variable["stream"] = stream
+    if output_stream is not None:
+        variable["output_stream"] = output_stream
 
     create_tree(
         root,

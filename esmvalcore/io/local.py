@@ -646,29 +646,29 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
 
     # TODO: Remove in v2.18.0
     def _update_legacy_icon_facets(self, facets: Facets) -> Facets:
-        """Add legacy `var_type` from new `stream` to ICON data if required."""
+        """Add legacy `var_type` from new `output_stream` to ICON data if required."""
         var_type_in_templates = (
             "{var_type}" in self.dirname_template
             or "{var_type}" in self.filename_template
         )
         if (
             "var_type" not in facets
-            and "stream" in facets
+            and "output_stream" in facets
             and var_type_in_templates
         ):
             deprecation_msg = (
-                f"Automatically converting ICON facet 'stream' to 'var_type' "
-                f"which is required by data source '{self.name}'. Please use "
-                f"the facet 'stream' in your data source configuration "
-                f"instead. This automatic conversion will be removed in "
-                f"ESMValCore v2.18.0."
+                f"Automatically converting ICON facet 'output_stream' to "
+                f"'var_type' which is required by data source '{self.name}'. "
+                f"Please use the facet 'output_stream' in your data source "
+                f"configuration instead. This automatic conversion will be "
+                f"removed in ESMValCore v2.18.0."
             )
             warnings.warn(
                 deprecation_msg,
                 ESMValCoreDeprecationWarning,
                 stacklevel=3,
             )
-            facets["var_type"] = facets["stream"]
+            facets["var_type"] = facets["output_stream"]
         return facets
 
     def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:

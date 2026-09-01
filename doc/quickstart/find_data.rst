@@ -467,7 +467,7 @@ output.
 The default naming conventions for input directories and files for ICON are
 
 * input directories: ``{exp}``, ``{exp}/outdata``, or ``{exp}/output``
-* input files: ``{exp}_{stream}*.nc``
+* input files: ``{exp}_{output_stream}*.nc``
 
 as configured in:
 
@@ -496,19 +496,19 @@ Thus, example dataset entries could look like this:
     - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
        short_name: ta, timerange: 20010101/20020101}
 
-A variable-specific default for the facet ``stream`` is given in the extra
-facets (see below) for many variables, but this can be overwritten in the
+A variable-specific default for the facet ``output_stream`` is given in the
+extra facets (see below) for many variables, but this can be overwritten in the
 recipe, for example:
 
 .. code-block:: yaml
 
   datasets:
     - {project: ICON, dataset: ICON-XPP, exp: historical, mip: Amon,
-       short_name: ta, stream: atm_dyn_3d_ml, timerange: 20010101/20020101}
+       short_name: ta, output_stream: atm_dyn_3d_ml, timerange: 20010101/20020101}
 
 This is necessary if your ICON output is structured in one variable per file.
 For example, if your output is stored in files called
-``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``stream:
+``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``output_stream:
 <variable_name>_atm_2d_ml`` in the recipe for this variable.
 
 Usually, ICON reports aggregated values at the end of the corresponding time
@@ -630,7 +630,7 @@ Key                 Description                      Default value if not specif
 ``shift_time``      Shift time points back by 1/2 of ``True``
                     the corresponding output time
                     interval
-``stream``          Output stream where the          No default (needs to be specified
+``output_stream``   Output stream where the          No default (needs to be specified
                     corresponding variable is        as extra facets or in recipe if
                     stored (as defined in the output default file and directory naming
                     namelist ``output_nml``; e.g.,   conventions are used)
@@ -665,13 +665,13 @@ Key                 Description                      Default value if not specif
    cell area variables are required.
    Make sure that this file is not found when other variables are loaded.
 
-   For example, you could use a new ``stream``, e.g., ``horizontalgrid`` for
-   this file.
+   For example, you could use a new ``output_stream``, e.g., ``horizontalgrid``
+   for this file.
    Thus, an ICON grid file located in
    ``2.6.1_atm_amip_R2B5_r1i1p1f1/2.6.1_atm_amip_R2B5_r1i1p1f1_horizontalgrid.nc``
-   can be found using ``stream: horizontalgrid`` in the recipe (assuming the
-   default naming conventions listed above).
-   Make sure that no other variable uses this ``stream``.
+   can be found using ``output_stream: horizontalgrid`` in the recipe (assuming
+   the default naming conventions listed above).
+   Make sure that no other variable uses this ``output_stream``.
 
    If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
    preprocessor on *regridded* ICON data, make sure to **not** use the cell area

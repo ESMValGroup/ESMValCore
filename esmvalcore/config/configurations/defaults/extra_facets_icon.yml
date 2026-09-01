@@ -3,8 +3,8 @@
 # Notes:
 # - All facets can also be specified in the recipes. The values given here are
 #   only defaults.
-# - The facet ``stream`` has to be specified in the recipe if it is not given
-#   here and default file and directory naming conventions are used.
+# - The facet ``output_stream`` has to be specified in the recipe if it is not
+#   given here and default file and directory naming conventions are used.
 
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
@@ -20,142 +20,142 @@ projects:
           areacello: {raw_name: cell_area}
 
           # 2D atmosphere variables
-          asr: {stream: atm_2d_ml}
-          clivi: {stream: atm_2d_ml}
-          clt: {stream: atm_2d_ml}
-          clwvi: {stream: atm_2d_ml}
-          evspsbl: {stream: atm_2d_ml}
-          hfls: {stream: atm_2d_ml}
-          hfns: {stream: atm_2d_ml}
-          hfss: {stream: atm_2d_ml}
-          lwcre: {stream: atm_2d_ml}
-          lwp: {raw_name: cllvi, stream: atm_2d_ml}
-          netcre: {stream: atm_2d_ml}
-          pr: {stream: atm_2d_ml}
-          prw: {stream: atm_2d_ml}
-          ps: {stream: atm_2d_ml}
-          psl: {stream: atm_2d_ml}
-          qep: {stream: atm_2d_ml}
-          rlds: {stream: atm_2d_ml}
-          rldscs: {stream: atm_2d_ml}
-          rlns: {stream: atm_2d_ml}
-          rlus: {stream: atm_2d_ml}
-          rlut: {stream: atm_2d_ml}
-          rlutcs: {stream: atm_2d_ml}
-          rsds: {stream: atm_2d_ml}
-          rsdscs: {stream: atm_2d_ml}
-          rsdt: {stream: atm_2d_ml}
-          rsns: {stream: atm_2d_ml}
-          rsnt: {stream: atm_2d_ml}
-          rsus: {stream: atm_2d_ml}
-          rsuscs: {stream: atm_2d_ml}
-          rsut: {stream: atm_2d_ml}
-          rsutcs: {stream: atm_2d_ml}
-          rtmt: {stream: atm_2d_ml}
-          rtnt: {stream: atm_2d_ml}
-          swcre: {stream: atm_2d_ml}
-          tas: {stream: atm_2d_ml}
-          tasmax: {stream: atm_2d_ml}
-          tasmin: {stream: atm_2d_ml}
-          tauu: {stream: atm_2d_ml}
-          tauv: {stream: atm_2d_ml}
-          ts: {stream: atm_2d_ml}
-          uas: {stream: atm_2d_ml}
-          vas: {stream: atm_2d_ml}
+          asr: {output_stream: atm_2d_ml}
+          clivi: {output_stream: atm_2d_ml}
+          clt: {output_stream: atm_2d_ml}
+          clwvi: {output_stream: atm_2d_ml}
+          evspsbl: {output_stream: atm_2d_ml}
+          hfls: {output_stream: atm_2d_ml}
+          hfns: {output_stream: atm_2d_ml}
+          hfss: {output_stream: atm_2d_ml}
+          lwcre: {output_stream: atm_2d_ml}
+          lwp: {raw_name: cllvi, output_stream: atm_2d_ml}
+          netcre: {output_stream: atm_2d_ml}
+          pr: {output_stream: atm_2d_ml}
+          prw: {output_stream: atm_2d_ml}
+          ps: {output_stream: atm_2d_ml}
+          psl: {output_stream: atm_2d_ml}
+          qep: {output_stream: atm_2d_ml}
+          rlds: {output_stream: atm_2d_ml}
+          rldscs: {output_stream: atm_2d_ml}
+          rlns: {output_stream: atm_2d_ml}
+          rlus: {output_stream: atm_2d_ml}
+          rlut: {output_stream: atm_2d_ml}
+          rlutcs: {output_stream: atm_2d_ml}
+          rsds: {output_stream: atm_2d_ml}
+          rsdscs: {output_stream: atm_2d_ml}
+          rsdt: {output_stream: atm_2d_ml}
+          rsns: {output_stream: atm_2d_ml}
+          rsnt: {output_stream: atm_2d_ml}
+          rsus: {output_stream: atm_2d_ml}
+          rsuscs: {output_stream: atm_2d_ml}
+          rsut: {output_stream: atm_2d_ml}
+          rsutcs: {output_stream: atm_2d_ml}
+          rtmt: {output_stream: atm_2d_ml}
+          rtnt: {output_stream: atm_2d_ml}
+          swcre: {output_stream: atm_2d_ml}
+          tas: {output_stream: atm_2d_ml}
+          tasmax: {output_stream: atm_2d_ml}
+          tasmin: {output_stream: atm_2d_ml}
+          tauu: {output_stream: atm_2d_ml}
+          tauv: {output_stream: atm_2d_ml}
+          ts: {output_stream: atm_2d_ml}
+          uas: {output_stream: atm_2d_ml}
+          vas: {output_stream: atm_2d_ml}
 
           # 3D atmosphere variables
-          cl: {stream: atm_3d_ml}
-          cli: {stream: atm_3d_ml}
-          clw: {stream: atm_3d_ml}
-          hur: {raw_units: '1', stream: atm_3d_ml}
-          hus: {stream: atm_3d_ml}
-          ta: {stream: atm_3d_ml}
-          ua: {stream: atm_3d_ml}
-          va: {stream: atm_3d_ml}
-          wap: {stream: atm_3d_ml}
-          zg: {stream: atm_3d_ml}
+          cl: {output_stream: atm_3d_ml}
+          cli: {output_stream: atm_3d_ml}
+          clw: {output_stream: atm_3d_ml}
+          hur: {raw_units: '1', output_stream: atm_3d_ml}
+          hus: {output_stream: atm_3d_ml}
+          ta: {output_stream: atm_3d_ml}
+          ua: {output_stream: atm_3d_ml}
+          va: {output_stream: atm_3d_ml}
+          wap: {output_stream: atm_3d_ml}
+          zg: {output_stream: atm_3d_ml}
 
           # 2D ocean variables
-          siconc: {raw_name: sic, raw_units: '1', stream: atm_2d_ml}
-          siconca: {raw_name: sic, raw_units: '1', stream: atm_2d_ml}
+          siconc: {raw_name: sic, raw_units: '1', output_stream: atm_2d_ml}
+          siconca: {raw_name: sic, raw_units: '1', output_stream: atm_2d_ml}
 
       ICON-XPP:
         '*':
           # 2D atmosphere variables
-          asr: {stream: atm_2d_ml}
-          clivi: {raw_name: tqi_dia, stream: atm_2d_ml}
-          clt: {raw_name: clct, stream: atm_2d_ml}
-          clwvi: {stream: atm_2d_ml}
-          evspsbl: {raw_name: qhfl_s, raw_units: kg m-2 s-1, stream: atm_2d_ml}
-          hfls: {raw_name: lhfl_s, stream: atm_2d_ml}
-          hfns: {stream: atm_2d_ml}
-          hfss: {raw_name: shfl_s, stream: atm_2d_ml}
-          lwcre: {stream: atm_2d_ml}
-          lwp: {raw_name: tqc_dia, stream: atm_2d_ml}
-          netcre: {stream: atm_2d_ml}
-          pr: {raw_name: tot_prec_rate, stream: atm_2d_ml}
-          prw: {raw_name: tqv_dia, stream: atm_2d_ml}
-          ps: {raw_name: pres_sfc, stream: atm_2d_ml}
-          psl: {raw_name: pres_msl, stream: atm_2d_ml}
-          qep: {stream: atm_2d_ml}
-          rlns: {raw_name: thb_s, stream: atm_2d_ml}
-          rlut: {raw_name: thb_t, stream: atm_2d_ml}
-          rlutcs: {raw_name: lwflx_up_clr, stream: atm_2d_ml}
-          rsdt: {raw_name: sod_t, stream: atm_2d_ml}
-          rsns: {raw_name: sob_s, stream: atm_2d_ml}
-          rsnt: {raw_name: sob_t, stream: atm_2d_ml}
-          rsus: {raw_name: sou_s, stream: atm_2d_ml}
-          rsut: {raw_name: sou_t, stream: atm_2d_ml}
-          rsutcs: {raw_name: swflx_up_clr, stream: atm_2d_ml}
-          rtmt: {stream: atm_2d_ml}
-          rtnt: {stream: atm_2d_ml}
-          sfcWind: {raw_name: sp_10m, stream: atm_2d_ml}
-          sftlf: {raw_name: fr_land, raw_units: '1', stream: atm_2d_ml}
-          swcre: {stream: atm_2d_ml}
-          tas: {raw_name: t_2m, stream: atm_2d_ml}
-          tauu: {raw_name: umfl_s, stream: atm_2d_ml}
-          tauv: {raw_name: vmfl_s, stream: atm_2d_ml}
-          ts: {raw_name: t_s, stream: atm_2d_ml}
+          asr: {output_stream: atm_2d_ml}
+          clivi: {raw_name: tqi_dia, output_stream: atm_2d_ml}
+          clt: {raw_name: clct, output_stream: atm_2d_ml}
+          clwvi: {output_stream: atm_2d_ml}
+          evspsbl: {raw_name: qhfl_s, raw_units: kg m-2 s-1, output_stream: atm_2d_ml}
+          hfls: {raw_name: lhfl_s, output_stream: atm_2d_ml}
+          hfns: {output_stream: atm_2d_ml}
+          hfss: {raw_name: shfl_s, output_stream: atm_2d_ml}
+          lwcre: {output_stream: atm_2d_ml}
+          lwp: {raw_name: tqc_dia, output_stream: atm_2d_ml}
+          netcre: {output_stream: atm_2d_ml}
+          pr: {raw_name: tot_prec_rate, output_stream: atm_2d_ml}
+          prw: {raw_name: tqv_dia, output_stream: atm_2d_ml}
+          ps: {raw_name: pres_sfc, output_stream: atm_2d_ml}
+          psl: {raw_name: pres_msl, output_stream: atm_2d_ml}
+          qep: {output_stream: atm_2d_ml}
+          rlns: {raw_name: thb_s, output_stream: atm_2d_ml}
+          rlut: {raw_name: thb_t, output_stream: atm_2d_ml}
+          rlutcs: {raw_name: lwflx_up_clr, output_stream: atm_2d_ml}
+          rsdt: {raw_name: sod_t, output_stream: atm_2d_ml}
+          rsns: {raw_name: sob_s, output_stream: atm_2d_ml}
+          rsnt: {raw_name: sob_t, output_stream: atm_2d_ml}
+          rsus: {raw_name: sou_s, output_stream: atm_2d_ml}
+          rsut: {raw_name: sou_t, output_stream: atm_2d_ml}
+          rsutcs: {raw_name: swflx_up_clr, output_stream: atm_2d_ml}
+          rtmt: {output_stream: atm_2d_ml}
+          rtnt: {output_stream: atm_2d_ml}
+          sfcWind: {raw_name: sp_10m, output_stream: atm_2d_ml}
+          sftlf: {raw_name: fr_land, raw_units: '1', output_stream: atm_2d_ml}
+          swcre: {output_stream: atm_2d_ml}
+          tas: {raw_name: t_2m, output_stream: atm_2d_ml}
+          tauu: {raw_name: umfl_s, output_stream: atm_2d_ml}
+          tauv: {raw_name: vmfl_s, output_stream: atm_2d_ml}
+          ts: {raw_name: t_s, output_stream: atm_2d_ml}
 
           # 3D atmosphere variables
-          cl: {raw_name: clc, stream: atm_3d_ml}
-          cli: {raw_name: tot_qi_dia, stream: atm_3d_ml}
-          clw: {raw_name: tot_qc_dia, stream: atm_3d_ml}
-          hur: {raw_name: rh, stream: atm_3d_ml}
-          hus: {raw_name: qv, stream: atm_3d_ml}
-          ta: {raw_name: temp, stream: atm_3d_ml}
-          ua: {raw_name: u, stream: atm_3d_ml}
-          va: {raw_name: v, stream: atm_3d_ml}
-          wap: {raw_name: omega, stream: atm_3d_ml}
-          zg: {raw_name: geopot, stream: atm_3d_ml}
+          cl: {raw_name: clc, output_stream: atm_3d_ml}
+          cli: {raw_name: tot_qi_dia, output_stream: atm_3d_ml}
+          clw: {raw_name: tot_qc_dia, output_stream: atm_3d_ml}
+          hur: {raw_name: rh, output_stream: atm_3d_ml}
+          hus: {raw_name: qv, output_stream: atm_3d_ml}
+          ta: {raw_name: temp, output_stream: atm_3d_ml}
+          ua: {raw_name: u, output_stream: atm_3d_ml}
+          va: {raw_name: v, output_stream: atm_3d_ml}
+          wap: {raw_name: omega, output_stream: atm_3d_ml}
+          zg: {raw_name: geopot, output_stream: atm_3d_ml}
 
           # 2D land variables
-          gpp: {raw_name: assimi_gross_assimilation_box, stream: jsb_2d}
-          lai: {raw_name: pheno_lai_box, stream: jsb_2d, raw_units: '1'}
-          baresoilFrac: {raw_name: pplcc_baresoil_fract_box, stream: jsb_2d, raw_units: '1'}
-          grassFrac: {raw_name: pplcc_grass_fract_box, stream: jsb_2d, raw_units: '1'}
-          treeFrac: {raw_name: pplcc_tree_fract_box, stream: jsb_2d, raw_units: '1'}
-          shrubFrac: {raw_name: pplcc_shrub_fract_box, stream: jsb_2d, raw_units: '1'}
-          cropFrac: {raw_name: pplcc_crop_fract_box, stream: jsb_2d, raw_units: '1'}
+          gpp: {raw_name: assimi_gross_assimilation_box, output_stream: jsb_2d}
+          lai: {raw_name: pheno_lai_box, output_stream: jsb_2d, raw_units: '1'}
+          baresoilFrac: {raw_name: pplcc_baresoil_fract_box, output_stream: jsb_2d, raw_units: '1'}
+          grassFrac: {raw_name: pplcc_grass_fract_box, output_stream: jsb_2d, raw_units: '1'}
+          treeFrac: {raw_name: pplcc_tree_fract_box, output_stream: jsb_2d, raw_units: '1'}
+          shrubFrac: {raw_name: pplcc_shrub_fract_box, output_stream: jsb_2d, raw_units: '1'}
+          cropFrac: {raw_name: pplcc_crop_fract_box, output_stream: jsb_2d, raw_units: '1'}
 
           # 1D ocean variables
-          amoc: {stream: oce_moc}
+          amoc: {output_stream: oce_moc}
 
           # 2D ocean variables
-          hfbasin: {stream: oce_moc, lat_var: lat}
-          hfds: {raw_name: HeatFlux_Total, stream: oce_dbg}
-          mlotst: {raw_name: mld, stream: oce_dbg}
-          siconc: {raw_name: conc, stream: oce_ice, raw_units: '1'}
-          siconca: {raw_name: fr_seaice, stream: atm_2d_ml}
-          sithick: {raw_name: hi, stream: oce_ice}
-          sos: {stream: oce_def, raw_units: "0.001"}
-          tos: {raw_name: t_seasfc, stream: atm_2d_ml}
-          zos: {raw_name: zos, stream: oce_dbg}
+          hfbasin: {output_stream: oce_moc, lat_var: lat}
+          hfds: {raw_name: HeatFlux_Total, output_stream: oce_dbg}
+          mlotst: {raw_name: mld, output_stream: oce_dbg}
+          siconc: {raw_name: conc, output_stream: oce_ice, raw_units: '1'}
+          siconca: {raw_name: fr_seaice, output_stream: atm_2d_ml}
+          sithick: {raw_name: hi, output_stream: oce_ice}
+          sos: {output_stream: oce_def, raw_units: "0.001"}
+          tos: {raw_name: t_seasfc, output_stream: atm_2d_ml}
+          zos: {raw_name: zos, output_stream: oce_dbg}
 
           # 3D ocean variables
-          msftmz: {stream: oce_moc, lat_var: lat}
-          phcint: {stream: oce_def}
-          so: {stream: oce_def, raw_units: "0.001"}
-          thetao: {raw_name: to, stream: oce_def, raw_units: degC}
-          uo: {raw_name: u, stream: oce_def}
-          vo: {raw_name: v, stream: oce_def}
+          msftmz: {output_stream: oce_moc, lat_var: lat}
+          phcint: {output_stream: oce_def}
+          so: {output_stream: oce_def, raw_units: "0.001"}
+          thetao: {raw_name: to, output_stream: oce_def, raw_units: degC}
+          uo: {raw_name: u, output_stream: oce_def}
+          vo: {raw_name: v, output_stream: oce_def}
