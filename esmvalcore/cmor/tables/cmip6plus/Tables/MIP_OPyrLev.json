@@ -1,0 +1,770 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 365.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "olevel",
+      "olevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OPyrLev"
+  },
+  "variable_entry": {
+    "cfc11": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Mole concentration means number of moles per unit volume, also called 'molarity', and is used in the construction 'mole_concentration_of_X_in_Y', where X is a material constituent of Y. A chemical or biological species denoted by X may be described by a single term such as 'nitrogen' or a phrase such as 'nox_expressed_as_nitrogen'. The chemical formula of CFC11 is CFCl3. The IUPAC name for CFC11 is trichloro-fluoro-methane.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Mole Concentration of CFC11 in Sea Water",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cfc11",
+      "positive": "",
+      "standard_name": "mole_concentration_of_cfc11_in_sea_water",
+      "type": "real",
+      "units": "mol m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cfc12": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Mole concentration means number of moles per unit volume, also called 'molarity', and is used in the construction 'mole_concentration_of_X_in_Y', where X is a material constituent of Y. A chemical or biological species denoted by X may be described by a single term such as 'nitrogen' or a phrase such as 'nox_expressed_as_nitrogen'. The chemical formula for CFC12 is CF2Cl2. The IUPAC name for CFC12 is dichloro-difluoro-methane.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Mole Concentration of CFC12 in Sea Water",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cfc12",
+      "positive": "",
+      "standard_name": "mole_concentration_of_cfc12_in_sea_water",
+      "type": "real",
+      "units": "mol m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "difmxybo": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Lateral biharmonic viscosity applied to the momentum equations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Momentum XY Biharmonic Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difmxybo",
+      "positive": "",
+      "standard_name": "ocean_momentum_xy_biharmonic_diffusivity",
+      "type": "real",
+      "units": "m4 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "difmxylo": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Lateral Laplacian viscosity applied to the momentum equations.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Momentum XY Laplacian Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difmxylo",
+      "positive": "",
+      "standard_name": "ocean_momentum_xy_laplacian_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrblo": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Ocean tracer diffusivity associated with parameterized eddy-induced advective transport. Sometimes this diffusivity is called the 'thickness' diffusivity. For CMIP5, this diagnostic was called 'ocean tracer bolus laplacian diffusivity'.  The CMIP6 name is physically more relevant.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Tracer Diffusivity Due to Parameterized Mesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrblo",
+      "positive": "",
+      "standard_name": "ocean_tracer_laplacian_diffusivity_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "diftrelo": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Ocean tracer diffusivity associated with parameterized eddy-induced diffusive transport oriented along neutral or isopycnal directions. Sometimes this diffusivity is called the neutral diffusivity or isopycnal diffusivity or Redi diffusivity.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Tracer Epineutral Laplacian Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "diftrelo",
+      "positive": "",
+      "standard_name": "ocean_tracer_epineutral_laplacian_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "difvho": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Vertical/dianeutral diffusivity applied to prognostic temperature field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Vertical Heat Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difvho",
+      "positive": "",
+      "standard_name": "ocean_vertical_heat_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "difvso": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Vertical/dianeutral diffusivity applied to prognostic salinity field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Vertical Salt Diffusivity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "difvso",
+      "positive": "",
+      "standard_name": "ocean_vertical_salt_diffusivity",
+      "type": "real",
+      "units": "m2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontempdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized dianeutral mixing. Reported only for models that use conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Dianeutral Mixing",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontempdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontemppadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized eddy advection (any form of eddy advection). Reported only for models that use conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontemppadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontemppmdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized mesoscale eddy diffusion. Reported only for models that use conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Mesoscale Diffusion",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontemppmdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_mesoscale_eddy_diffusion",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontemppsmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized submesoscale eddy advection. Reported only for models that use conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontemppsmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontemprmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Conservative Temperature is defined as part of the Thermodynamic Equation of Seawater 2010 (TEOS-10) which was adopted in 2010 by the International Oceanographic Commission (IOC). The phrase 'residual mean advection' refers to the sum of the model's resolved advective transport plus any parameterized advective transport. Parameterized advective transport includes processes such as parameterized mesoscale and submesoscale transport, as well as any other advectively parameterized transport. When the parameterized advective transport is represented in the model as a skew-diffusion rather than an advection, then the parameterized skew diffusion should be included in this diagnostic, since the convergence of skew-fluxes are identical (in the continuous formulation) to the convergence of advective fluxes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content Due to Residual Mean Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontemprmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_residual_mean_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontemptend": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from all processes. Reported only for models that use conservative temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Conservative Temperature Expressed as Heat Content",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontemptend",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottempdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized dianeutral mixing. Reported only for models that use potential temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Dianeutral Mixing",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottempdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottemppadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized eddy advection (any form of eddy advection). Reported only for models that use potential temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottemppadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottemppmdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized mesoscale eddy diffusion. Reported only for models that use potential temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Mesoscale Diffusion",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottemppmdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_mesoscale_eddy_diffusion",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottemppsmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from parameterized submesoscale eddy advection. Reported only for models that use potential temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottemppsmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottemprmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "The phrase 'residual mean advection' refers to the sum of the model's resolved advective transport plus any parameterized advective transport. Parameterized advective transport includes processes such as parameterized mesoscale and submesoscale transport, as well as any other advectively parameterized transport. When the parameterized advective transport is represented in the model as a skew-diffusion rather than an advection, then the parameterized skew diffusion should be included in this diagnostic, since the convergence of skew-fluxes are identical (in the continuous formulation) to the convergence of advective fluxes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content Due to Residual Mean Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottemprmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_residual_mean_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottemptend": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of heat content for a grid cell from all processes. Reported only for models that use potential temperature as prognostic field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Potential Temperature Expressed as Heat Content",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottemptend",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osaltdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of salt content for a grid cell from parameterized dianeutral mixing.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Dianeutral Mixing",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osaltdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_dianeutral_mixing",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osaltpadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of salt content for a grid cell from parameterized eddy advection (any form of eddy advection).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osaltpadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osaltpmdiff": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of salt content for a grid cell from parameterized mesoscale eddy diffusion.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Mesoscale Diffusion",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osaltpmdiff",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_mesoscale_eddy_diffusion",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osaltpsmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of salt content for a grid cell from parameterized submesoscale eddy advection.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osaltpsmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osaltrmadvect": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "The phrase 'residual mean advection' refers to the sum of the model's resolved advective transport plus any parameterized advective transport. Parameterized advective transport includes processes such as parameterized mesoscale and submesoscale transport, as well as any other advectively parameterized transport. When the parameterized advective transport is represented in the model as a skew-diffusion rather than an advection, then the parameterized skew diffusion should be included in this diagnostic, since the convergence of skew-fluxes are identical (in the continuous formulation) to the convergence of advective fluxes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content Due to Residual Mean Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osaltrmadvect",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_residual_mean_advection",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "osalttend": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Tendency of salt content for a grid cell from all processes.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Sea Water Salinity Expressed as Salt Content",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "osalttend",
+      "positive": "",
+      "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdoabsorb": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "'shortwave' means shortwave radiation. 'Layer' means any layer with upper and lower boundaries that have constant values in some vertical coordinate. There must be a vertical coordinate variable indicating the extent of the layer(s). If the layers are model layers, the vertical coordinate can be model_level_number, but it is recommended to specify a physical coordinate (in a scalar or auxiliary coordinate variable) as well. Net absorbed radiation is the difference between absorbed and emitted radiation.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Net Rate of Absorption of Shortwave Energy in Ocean Layer",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdoabsorb",
+      "positive": "",
+      "standard_name": "net_rate_of_absorption_of_shortwave_energy_in_ocean_layer",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sf6": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Mole concentration means number of moles per unit volume, also called 'molarity', and is used in the construction 'mole_concentration_of_X_in_Y', where X is a material constituent of Y. A chemical or biological species denoted by X may be described by a single term such as 'nitrogen' or a phrase such as 'nox_expressed_as_nitrogen'. The chemical formula of sulfur hexafluoride is SF6.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Mole Concentration of SF6 in Sea Water",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sf6",
+      "positive": "",
+      "standard_name": "mole_concentration_of_sulfur_hexafluoride_in_sea_water",
+      "type": "real",
+      "units": "mol m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "volcello": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: sum where sea time: mean",
+      "comment": "grid-cell volume ca. 2000.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Grid-Cell Volume",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "volcello",
+      "positive": "",
+      "standard_name": "ocean_volume",
+      "type": "real",
+      "units": "m3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "zfullo": {
+      "cell_measures": "area: areacello volume: volcello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Depth below geoid",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "olevel",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Depth Below Geoid of Ocean Layer",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "zfullo",
+      "positive": "",
+      "standard_name": "depth_below_geoid",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
