@@ -1,0 +1,407 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "OPmonZ"
+  },
+  "variable_entry": {
+    "hfbasin": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Contains contributions from all physical processes affecting the northward heat transport, including resolved advection, parameterized advection, lateral diffusion, etc. Diagnosed here as a function of latitude and basin.   Use Celsius for temperature scale.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfbasin",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfbasinpadv": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Contributions to heat transport from parameterized eddy-induced advective transport due to any subgrid advective process. Diagnosed here as a function of latitude and basin.  Use Celsius for temperature scale.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfbasinpadv",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfbasinpmadv": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Contributions to heat transport from parameterized mesoscale eddy-induced advective transport. Diagnosed here as a function of latitude and basin.  Use Celsius for temperature scale.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Parameterized Mesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfbasinpmadv",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfbasinpmdiff": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Contributions to heat transport from parameterized mesoscale eddy-induced diffusive transport (i.e., neutral diffusion). Diagnosed here as a function of latitude and basin.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Parameterized Mesoscale Diffusion",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfbasinpmdiff",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_parameterized_mesoscale_eddy_diffusion",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hfbasinpsmadv": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Contributions to heat transport from parameterized mesoscale eddy-induced advective transport. Diagnosed here as a function of latitude and basin.  Use Celsius for temperature scale.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hfbasinpsmadv",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "htovgyre": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "From all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Gyre",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "htovgyre",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_gyre",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "htovovrt": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "From all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Heat Transport Due to Overturning",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "htovovrt",
+      "positive": "",
+      "standard_name": "northward_ocean_heat_transport_due_to_overturning",
+      "type": "real",
+      "units": "W",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftmrho": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Overturning mass streamfunction arising from all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "rho",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftmrho",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftmrhompa": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "CMIP5 called this 'due to Bolus Advection'.  Name change respects the more general physics of the mesoscale parameterizations.",
+      "dimensions": [
+        "latitude",
+        "rho",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftmrhompa",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftmz": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Overturning mass streamfunction arising from all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "olevel",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftmz",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftmzmpa": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "CMIP5 called this 'due to Bolus Advection'.  Name change respects the more general physics of the mesoscale parameterizations.",
+      "dimensions": [
+        "latitude",
+        "olevel",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Mesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftmzmpa",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_mesoscale_eddy_advection",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftmzsmpa": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Report only if there is a submesoscale eddy parameterization.",
+      "dimensions": [
+        "latitude",
+        "olevel",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Meridional Overturning Mass Streamfunction Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftmzsmpa",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "msftyzsmpa": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "Report only if there is a submesoscale eddy parameterization.",
+      "dimensions": [
+        "latitude",
+        "olevel",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Ocean Y Overturning Mass Streamfunction Due to Parameterized Submesoscale Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "msftyzsmpa",
+      "positive": "",
+      "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_parameterized_submesoscale_eddy_advection",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sltbasin": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "function of latitude, basin",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Salt Transport",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sltbasin",
+      "positive": "",
+      "standard_name": "northward_ocean_salt_transport",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sltovgyre": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "From all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Salt Transport Due to Gyre",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sltovgyre",
+      "positive": "",
+      "standard_name": "northward_ocean_salt_transport_due_to_gyre",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sltovovrt": {
+      "cell_measures": "",
+      "cell_methods": "longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean",
+      "comment": "From all advective mass transport processes, resolved and parameterized.",
+      "dimensions": [
+        "latitude",
+        "basin",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Ocean Salt Transport Due to Overturning",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sltovovrt",
+      "positive": "",
+      "standard_name": "northward_ocean_salt_transport_due_to_overturning",
+      "type": "real",
+      "units": "kg s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

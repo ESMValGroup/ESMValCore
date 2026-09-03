@@ -21,7 +21,7 @@ from esmvalcore.config._config import (
     get_project_config,
     load_config_developer,
 )
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -212,7 +212,7 @@ def find_files(
         "The function 'esmvalcore.local.find_files' is deprecated and will be removed "
         "in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource.find_data'"
     )
-    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
     facets = dict(facets)
     if "original_short_name" in facets:
