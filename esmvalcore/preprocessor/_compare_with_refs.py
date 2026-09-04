@@ -376,7 +376,7 @@ def distance_metric(
         product.attributes["short_name"] = cube.var_name
         product.attributes["units"] = str(cube.units)
         if product != reference_product:
-            product.wasderivedfrom(reference_product)
+            product.wasderivedfrom(reference_product)  # type: ignore[arg-type]
 
         product.cubes = CubeList([cube])
         output_products.add(product)
