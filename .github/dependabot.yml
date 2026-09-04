@@ -33,6 +33,4 @@ updates:
         patterns:
           - "*"
     labels:
-      - dependencies
-      - github_actions
       - automatedPR
