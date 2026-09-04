@@ -376,7 +376,7 @@ def distance_metric(
         product.attributes["short_name"] = cube.var_name
         product.attributes["units"] = str(cube.units)
         if product != reference_product:
-            product.wasderivedfrom(reference_product)
+            product.wasderivedfrom(reference_product)  # type: ignore[arg-type]
 
         product.cubes = CubeList([cube])
         output_products.add(product)
@@ -592,7 +592,7 @@ def _get_emd(
     arr: np.ndarray,
     ref_arr: np.ndarray,
     bin_centers: np.ndarray,
-) -> np.ndarray:
+) -> float | np.ma.core.MaskedConstant:
     """Calculate Earth mover's distance (non-lazy)."""
     if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
         return np.ma.masked  # this is safe because PMFs will be masked arrays

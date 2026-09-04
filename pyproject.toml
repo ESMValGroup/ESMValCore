@@ -136,9 +136,14 @@ exclude_lines = [
 
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
+packages = "esmvalcore"
 ignore_missing_imports = true
 enable_error_code = [
     "truthy-bool",
+]
+exclude = [
+  "^doc/conf.py$",
+  "esmvalcore/cmor/tables/",
 ]
 
 # Configure linters
@@ -296,8 +301,16 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 # Other development tools.
 [tool.pixi.feature.dev.dependencies]
 "jupyterlab" = "*"
+"mypy" = "*"
 "pre-commit" = "*"
 "py-spy" = "*"
+"ruff" = "*"
+# Mypy type stubs
+"pandas-stubs" = "*"
+"scipy-stubs" = "*"
+"types-PyYAML" = "*"
+"types-psutil" = "*"
+"types-shapely" = "*"
 
 # Feature for running tests with Python 3.12.
 [tool.pixi.feature.py312.dependencies]

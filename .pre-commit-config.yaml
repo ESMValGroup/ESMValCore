@@ -25,26 +25,38 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.22"
+  - repo: local
     hooks:
       - id: ruff-check
-        args: [--fix]
+        name: ruff check
+        entry: "pixi run --locked ruff check --force-exclude --fix"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v2.3.0"
-    hooks:
+        name: ruff format
+        entry: "pixi run --locked ruff format --force-exclude"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
       - id: mypy
-        additional_dependencies:
-          - "types-PyYAML"
-          - "types-requests"
-          - "numpy"
+        name: mypy
+        entry: "pixi run --locked mypy"
+        language: system
+        types:
+          - python
+        pass_filenames: false
+        require_serial: true
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:
       - id: yamllint
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.3"
+    rev: "v2.4.2"
     hooks:
       - id: codespell
   - repo: https://github.com/python-jsonschema/check-jsonschema
@@ -53,8 +65,3 @@ repos:
       - id: check-citation-file-format
       - id: check-github-workflows
       - id: check-circle-ci
-  - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.27.0
-    hooks:
-      - id: zizmor
-        args: [--fix=safe]

@@ -714,7 +714,7 @@ class PreprocessorFile(TrackedFile):
             self._cubes = [ds.load() for ds in self.datasets]  # type: ignore
             # Initialize provenance after loading the data, so that we can reuse
             # the global attributes that have been read from the input files.
-            self.initialize_provenance(self.activity)
+            self.initialize_provenance(self.activity)  # type: ignore[arg-type]
 
         return self._cubes
 
@@ -775,7 +775,7 @@ class PreprocessorFile(TrackedFile):
         settings = {
             "preprocessor:" + k: str(v) for k, v in self.settings.items()
         }
-        self.entity.add_attributes(settings)  # type: ignore[attr-defined]
+        self.entity.add_attributes(settings)  # type: ignore[arg-type,union-attr]
 
     def group(self, keys: list) -> str:
         """Generate group keyword.

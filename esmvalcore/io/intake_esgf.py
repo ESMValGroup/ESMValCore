@@ -186,7 +186,7 @@ class IntakeESGFDataSource(DataSource):
             if not any(_isglob(v) for v in values)
         }
         # Translate "our" facets to ESGF facets and "our" values to ESGF values.
-        query = {
+        query: dict[str, Any] = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
                 for v in non_glob_facets[our_facet]

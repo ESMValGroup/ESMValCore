@@ -39,8 +39,8 @@ whenever you read it.
 
 It is recommended that you open a `draft pull
 request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
-early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
-:ref:`pre-commit.ci to analyse your code <code_quality>`, and
+early, as this will cause CircleCI to :ref:`run the tests <tests>` and
+:ref:`analyse the code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
 It's also easier to get help from other developers if your code is visible in a
 pull request.
@@ -249,7 +249,7 @@ should be correct.
 Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
-is checked by `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
+is checked by running the pre-commit hooks on CircleCI.
 
 YAML
 ~~~~
