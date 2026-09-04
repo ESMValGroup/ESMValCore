@@ -43,7 +43,6 @@ dependencies = [
     "geopy",
     "humanfriendly",
     "intake-esgf>=2026.4.28",
-    "intake-esm",
     "iris-grib>=0.20.0",  # github.com/ESMValGroup/ESMValCore/issues/2535
     "isodate>=0.7.0",
     "jinja2",
@@ -63,7 +62,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris",
+    "scitools-iris<3.16",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",
@@ -215,15 +214,13 @@ dask = ">=2025"
 dask-jobqueue = "*"
 distributed = "*"
 esgf-pyclient = ">=0.3.1"
-esmvaltool-sample-data = "*"
 filelock = "*"
 fiona = "*"
 fire = "*"
 geopy = "*"
 humanfriendly = "*"
 intake-esgf = ">=2026.4.28"
-intake-esm = "*"
-iris = "*"
+iris = "<3.16"
 iris-esmf-regrid = ">=0.11.0"
 iris-grib = ">=0.20.0"
 isodate = ">=0.7.0"
@@ -272,6 +269,7 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 
 # Tools for running the tests.
 [tool.pixi.feature.test.dependencies]
+"esmvaltool-sample-data" = "*"
 "pytest" = ">6.0.0"
 "pytest-cov" = ">=2.10.1"
 "pytest-env" = "*"
