@@ -10,9 +10,9 @@ projects:
       fs38:
         <<: *cmip6
         rootpath: /g/data/fs38/publications
-      xp65:
+      av17:
         <<: *cmip6
-        rootpath: /g/data/xp65/public/apps/esmvaltool/replicas
+        rootpath: /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data
   CMIP5:
     data:
       r87: &cmip5
@@ -27,35 +27,80 @@ projects:
         <<: *cmip5
         rootpath: /g/data/rr3/publications
         dirname_template: "{project}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
-      xp65:
-        <<: *cmip5-default
-        rootpath: /g/data/xp65/public/apps/esmvaltool/replicas
+      av17_replica:
+        <<: *cmip5
+        rootpath: /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data/cmip5
   CMIP3:
     data:
-      local:
+      local: &cmip3
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/r87/DRSv3/CMIP3
         dirname_template: "{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}"
         filename_template: "{short_name}_*.nc"
+      av17:
+        <<: *cmip3
+        rootpath: /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data/cmip3
+      av17_bssr:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/av17/access-nri/esmvaltool/esmvaltool_climate_data/cmip3
+        dirname_template: "{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}"
+        filename_template: "{short_name}_*.nc"
   obs4MIPs:
     data:
-      local:
+      ct11tier1:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{short_name}_*.nc"
-  native6:
+      ct11_obs4mipsversion:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2/
+        dirname_template: "Tier1/{dataset}/{version}"
+        filename_template: "{short_name}_*.nc"
+      ct11_downloaded: # ecmwf, cnes
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2/Tier1/
+        dirname_template: "{institute}/{dataset}/{frequency}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_*.nc"
+      local:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/qv56/replicas/obs4MIPs
+        dirname_template: "{institute}/{dataset}/{frequency}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_*.nc"
+  ana4MIPs:
     data:
       local:
         type: esmvalcore.io.local.LocalDataSource
-        rootpath: /g/data/xp65/public/apps/esmvaltool/native6
-        dirname_template: "Tier{tier}/{dataset}/{version}/{frequency}/{short_name}"
+        rootpath: /g/data/qv56/replicas/ana4MIPs
+        dirname_template: "{institute}/{dataset}/{realm}/{frequency}/{version}"
+        filename_template: "{short_name}_*.nc"
+  native6:
+    data:
+      rt52era5: # NCI native6 ERA5 data
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/rt52/era5
+        dirname_template: "{level}/{nci_type}/{era5_shortname}/*"
+        filename_template: "*.nc"
+      mswep_era5: #&MSWEP
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/av17/access-nri/esmvaltool/native6/Tier3
+        dirname_template: "{dataset}/{version}/{frequency}/{short_name}"
         filename_template: "*.nc"
   OBS6:
     data:
-      local:
+      ct11:
         type: esmvalcore.io.local.LocalDataSource
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+      era5-derived:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/ct11/access-nri/era5-derived
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+      av17:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/av17/access-nri/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
   OBS:
@@ -65,3 +110,29 @@ projects:
         rootpath: /g/data/ct11/access-nri/replicas/esmvaltool/obsdata-v2
         dirname_template: "Tier{tier}/{dataset}"
         filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+      av17:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/av17/access-nri/esmvaltool/obsdata-v2
+        dirname_template: "Tier{tier}/{dataset}"
+        filename_template: "{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc"
+  CORDEX-CMIP6:
+    data:
+      CCAM: &cordex-cmip6
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/hq89/CCAM/output/
+        dirname_template: "CMIP6/DD/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}_{dataset}_{rcm_version}_{mip}*.nc"
+      BARPA:
+        <<: *cordex-cmip6
+        rootpath: /g/data/py18/BARPA/output/
+      NARClim2:
+        <<: *cordex-cmip6
+        rootpath: /g/data/zz63/NARCliM2-0/output/
+      QldFCP:
+        <<: *cordex-cmip6
+        rootpath: /g/data/ig45/QldFCP-2/output/
+      barra2:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: /g/data/ob53/BARRA2/output/reanalysis
+        dirname_template: "{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}_{dataset}_{rcm_version}_{mip}*.nc"
