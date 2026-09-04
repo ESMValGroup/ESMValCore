@@ -70,7 +70,7 @@ get_output_file:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: atm_2d_ml
+      output_stream: atm_2d_ml
       timerange: "1960/1980"
       diagnostic: test_diag
       preprocessor: test_preproc
@@ -86,12 +86,12 @@ get_output_file:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: custom_var_type
+      output_stream: custom_output_stream
       timerange: "20000101/20000102"
       diagnostic: test_diag
       preprocessor: test_preproc
     preproc_dir: this/is/a/path
-    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_custom_var_type_Amon_tas_20000101-20000102.nc
+    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_custom_output_stream_Amon_tas_20000101-20000102.nc
 
   # CESM2
 
@@ -1263,7 +1263,7 @@ get_input_filelist:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: atm_2d_ml
+      output_stream: atm_2d_ml
       timerange: "200002/200003"
       diagnostic: test_diag
       preprocessor: test_preproc
@@ -1285,7 +1285,7 @@ get_input_filelist:
       - amip/amip_atm_2d_ml_20000301T000000Z.nc
 
   - dirname_template: "{exp}"
-    filename_template: "{exp}_{var_type}*.nc"
+    filename_template: "{exp}_{output_stream}*.nc"
     variable:
       variable_group: test
       short_name: tas
@@ -1295,7 +1295,7 @@ get_input_filelist:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: atm_2d_ml
+      output_stream: atm_2d_ml
       timerange: "200002/200003"
       diagnostic: test_diag
       preprocessor: test_preproc
@@ -1321,7 +1321,7 @@ get_input_filelist:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: var
+      output_stream: var
       timerange: "200003/200005"
       diagnostic: test_diag
       preprocessor: test_preproc
@@ -1344,7 +1344,7 @@ get_input_filelist:
       - amip/outdata/amip_var_20000501T000000Z.nc
 
   - dirname_template: "{exp}"
-    filename_template: "{exp}_{var_type}*.nc"
+    filename_template: "{exp}_{output_stream}*.nc"
     variable:
       variable_group: test
       short_name: tas
@@ -1354,7 +1354,7 @@ get_input_filelist:
       frequency: mon
       mip: Amon
       exp: amip
-      var_type: var
+      output_stream: var
       timerange: "200003/200005"
       diagnostic: test_diag
       preprocessor: test_preproc

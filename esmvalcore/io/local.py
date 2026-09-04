@@ -46,6 +46,7 @@ import logging
 import os
 import os.path
 import re
+import warnings
 from dataclasses import dataclass, field
 from glob import glob
 from pathlib import Path
@@ -58,6 +59,7 @@ from cf_units import Unit
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import ignore_warnings_context
 
 if TYPE_CHECKING:
@@ -547,6 +549,10 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
         if "original_short_name" in facets:
             facets["short_name"] = facets["original_short_name"]
 
+        # TODO: Remove in v2.18.0
+        if facets.get("project") == "ICON":
+            facets = self._update_legacy_icon_facets(facets)
+
         try:
             globs = self._get_glob_patterns(**facets)
         except _MissingFacetError as exc:
@@ -589,6 +595,33 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             self.debug_info = f"F{self.debug_info[len('No f') :]}"
 
         return files
+
+    # TODO: Remove in v2.18.0
+    def _update_legacy_icon_facets(self, facets: Facets) -> Facets:
+        """Add legacy `var_type` from new `output_stream` to ICON data if required."""
+        var_type_in_templates = (
+            "{var_type}" in self.dirname_template
+            or "{var_type}" in self.filename_template
+        )
+        if (
+            "var_type" not in facets
+            and "output_stream" in facets
+            and var_type_in_templates
+        ):
+            deprecation_msg = (
+                f"Automatically converting ICON facet 'output_stream' to "
+                f"'var_type' which is required by data source '{self.name}'. "
+                f"Please use the facet 'output_stream' in your data source "
+                f"configuration instead. This automatic conversion will be "
+                f"removed in ESMValCore v2.18.0."
+            )
+            warnings.warn(
+                deprecation_msg,
+                ESMValCoreDeprecationWarning,
+                stacklevel=3,
+            )
+            facets["var_type"] = facets["output_stream"]
+        return facets
 
     def _get_start_end_date(self, file: Path) -> tuple[str, str]:
         """Get the start and end datetimes as a string.
