@@ -35,7 +35,7 @@ def test_wrf381p_height_fix():
         var_name="tas",
         dim_coords_and_dims=[(time_coord, 0)],
     )
-    vardef = get_var_info("CMIP6", "Amon", "tas")
+    vardef = get_var_info("CORDEX", "day", "tas")
     fix = wrf381p.Tas(vardef)
     out_cubes = fix.fix_metadata([cube])
     assert out_cubes[0].coord("height").points == 2.0

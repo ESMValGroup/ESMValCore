@@ -1,0 +1,238 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 365.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "LPyrPt"
+  },
+  "variable_entry": {
+    "cLitter": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: point",
+      "comment": "'Litter' is dead plant material in or above the soil. It is distinct from coarse wood debris. The precise distinction between 'fine' and 'coarse' is model dependent. 'Content' indicates a quantity per unit area. The sum of the quantities with standard names surface_litter_mass_content_of_carbon and subsurface_litter_mass_content_of_carbon has the standard name litter_mass_content_of_carbon.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon Mass in Litter Pool",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cLitter",
+      "positive": "",
+      "standard_name": "litter_mass_content_of_carbon",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cLitterLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where sector time: point",
+      "comment": "end of year values (not annual mean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon  in Above and Below-Ground Litter Pools on Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cLitterLut",
+      "positive": "",
+      "standard_name": "litter_mass_content_of_carbon",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cProduct": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: point",
+      "comment": "Carbon mass per unit area in that has been removed from the environment through  land use change.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon Mass in Products of Land-Use Change",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cProduct",
+      "positive": "",
+      "standard_name": "carbon_mass_content_of_forestry_and_agricultural_products",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cProductLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where sector time: point",
+      "comment": "Anthropogenic pools associated with land use tiles into which harvests and cleared carbon are deposited before release into atmosphere PLUS any remaining anthropogenic pools that may be associated with lands which were converted into land use tiles during reported period. Examples of products include paper, cardboard, timber for construction, and crop harvest for food or fuel. Does NOT include residue which is deposited into soil or litter; end of year values (not annual mean).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Wood and Agricultural Product Pool Carbon Associated with Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cProductLut",
+      "positive": "",
+      "standard_name": "carbon_mass_content_of_forestry_and_agricultural_products",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cSoil": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: point",
+      "comment": "Carbon mass in the full depth of the soil model.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon Mass in Model Soil Pool",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cSoil",
+      "positive": "",
+      "standard_name": "soil_mass_content_of_carbon",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cSoilLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where sector time: point",
+      "comment": "end of year values (not annual mean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon in Soil Pool on Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cSoilLut",
+      "positive": "",
+      "standard_name": "soil_mass_content_of_carbon",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cVeg": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: point",
+      "comment": "Carbon mass per unit area in vegetation.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon Mass in Vegetation",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cVeg",
+      "positive": "",
+      "standard_name": "vegetation_carbon_content",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cVegLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where sector time: point",
+      "comment": "end of year values (not annual mean)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Carbon in Vegetation on Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cVegLut",
+      "positive": "",
+      "standard_name": "vegetation_carbon_content",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fracLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: point",
+      "comment": "End of year values (not annual mean); note that percentage should be reported as percentage of land grid cell (example: frac_lnd = 0.5, frac_ocn = 0.5, frac_crop_lnd = 0.2 (of land portion of grid cell), then frac_lut(crop) = 0.5*0.2 = 0.1)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time1"
+      ],
+      "frequency": "yrPt",
+      "long_name": "Percentage of Grid Cell for Each Land-Use Tile",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fracLut",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

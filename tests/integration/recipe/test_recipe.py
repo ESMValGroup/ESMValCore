@@ -1730,10 +1730,10 @@ def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901,
                   - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1, institute: CAS}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1, institute: fake}
-                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: CMP, exp: a, dataset: GF3, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: CMP, exp: a, dataset: GF2, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, exp: b, dataset: EC, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, exp: b, dataset: HA, ensemble: r1, institute: fake}
                   - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
                   - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
@@ -1758,13 +1758,13 @@ def test_alias_generation(tmp_path, patched_datafinder, session):  # noqa: C901,
                 assert dataset["alias"] == "my_alias"
         elif dataset["project"] == "CMIP6":
             if dataset["dataset"] == "GF3":
-                assert dataset["alias"] == "CMIP6_CMP_GF3"
+                assert dataset["alias"] == "CMIP6_a_GF3"
             elif dataset["dataset"] == "GF2":
-                assert dataset["alias"] == "CMIP6_CMP_GF2"
+                assert dataset["alias"] == "CMIP6_a_GF2"
             elif dataset["dataset"] == "EC":
-                assert dataset["alias"] == "CMIP6_HRMP_EC"
+                assert dataset["alias"] == "CMIP6_b_EC"
             else:
-                assert dataset["alias"] == "CMIP6_HRMP_HA"
+                assert dataset["alias"] == "CMIP6_b_HA"
         elif dataset["project"] == "CORDEX":
             if dataset["driver"] == "ICHEC-EC-EARTH":
                 assert dataset["alias"] == "CORDEX_ICHEC-EC-EARTH"
@@ -2618,7 +2618,7 @@ def test_representative_dataset_regular_var(
         "project": "ICON",
         "short_name": "tas",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2649,7 +2649,7 @@ def test_representative_dataset_derived_var(
         "project": "ICON",
         "short_name": "alb",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2669,7 +2669,7 @@ def test_representative_dataset_derived_var(
         "modeling_realm": ["atmos"],
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     if force_derivation:
         expected_datasets = [
@@ -2738,7 +2738,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsdscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsdscs = Dataset(**rsdscs_facets)
     rsdscs.session = session
@@ -2762,7 +2762,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsuscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session

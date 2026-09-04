@@ -85,6 +85,36 @@ class TestConvertUnits(tests.Test):
             [[0.0, 1e-2], [2e-2, 3e-2]],
         )
 
+    def test_convert_precipitation_amount(self):
+        """Test special conversion of precipitation_amount."""
+        self.arr.standard_name = "precipitation_amount"
+        self.arr.units = "kg m-2"
+        result = convert_units(self.arr, "mm")
+        self.assertEqual(
+            result.standard_name,
+            "lwe_thickness_of_precipitation_amount",
+        )
+        self.assertEqual(result.units, "mm")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0], [2.0, 3.0]],
+        )
+
+    def surface_snow_amount(self):
+        """Test special conversion of surface_snow_amount."""
+        self.arr.standard_name = "surface_snow_amount"
+        self.arr.units = "kg m-2"
+        result = convert_units(self.arr, "mm")
+        self.assertEqual(
+            result.standard_name,
+            "lwe_thickness_of_snowfall_amount",
+        )
+        self.assertEqual(result.units, "mm")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0], [2.0, 3.0]],
+        )
+
     def test_convert_water_evaporation_flux(self):
         """Test special conversion of water_evaporation_flux."""
         self.arr.standard_name = "water_evaporation_flux"
@@ -112,6 +142,18 @@ class TestConvertUnits(tests.Test):
     def test_convert_water_potential_evaporation_flux(self):
         """Test special conversion of water_potential_evaporation_flux."""
         self.arr.standard_name = "water_potential_evaporation_flux"
+        self.arr.units = "kg m-2 s-1"
+        result = convert_units(self.arr, "mm day-1")
+        self.assertEqual(result.standard_name, None)
+        self.assertEqual(result.units, "mm day-1")
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 86400.0], [172800.0, 259200.0]],
+        )
+
+    def test_convert_water_evapotranspiration_flux(self):
+        """Test special conversion of water_evapotranspiration_flux."""
+        self.arr.standard_name = "water_evapotranspiration_flux"
         self.arr.units = "kg m-2 s-1"
         result = convert_units(self.arr, "mm day-1")
         self.assertEqual(result.standard_name, None)

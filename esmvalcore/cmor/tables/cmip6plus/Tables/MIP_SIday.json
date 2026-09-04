@@ -1,0 +1,236 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2024-02-28",
+    "table_id": "SIday"
+  },
+  "variable_entry": {
+    "siconc": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Percentage of grid cell covered by sea ice",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typesi"
+      ],
+      "frequency": "day",
+      "long_name": "Sea-Ice Area Percentage (Ocean Grid)",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "siconc",
+      "positive": "",
+      "standard_name": "sea_ice_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "siconca": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Percentage of grid cell covered by sea ice",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typesi"
+      ],
+      "frequency": "day",
+      "long_name": "Sea-Ice Area Percentage (Atmospheric Grid)",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "siconca",
+      "positive": "",
+      "standard_name": "sea_ice_area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sisnthick": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where snow over sea_ice area: time: mean where sea_ice",
+      "comment": "Actual thickness of snow (snow volume divided by snow-covered area)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Snow Thickness",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sisnthick",
+      "positive": "",
+      "standard_name": "surface_snow_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sispeed": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: time: mean where sea_ice (comment: mask=siconc)",
+      "comment": "Speed of ice (i.e. mean absolute velocity) to account for back-and-forth movement of the ice",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Sea-Ice Speed",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sispeed",
+      "positive": "",
+      "standard_name": "sea_ice_speed",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sitemptop": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: time: mean where sea_ice (comment: mask=siconc)",
+      "comment": "Report surface temperature of snow where snow covers the sea ice.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Temperature of Sea Ice",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sitemptop",
+      "positive": "",
+      "standard_name": "sea_ice_surface_temperature",
+      "type": "real",
+      "units": "K",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sithick": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: time: mean where sea_ice (comment: mask=siconc)",
+      "comment": "Actual (floe) thickness of sea ice (NOT volume divided by grid area as was done in CMIP5)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Sea Ice Thickness",
+      "modeling_realm": [
+        "seaIce",
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sithick",
+      "positive": "",
+      "standard_name": "sea_ice_thickness",
+      "type": "real",
+      "units": "m",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "sitimefrac": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Fraction of time steps of the averaging period during which sea ice is present (siconc >0 ) in a grid cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Fraction of Time Steps with Sea Ice",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "sitimefrac",
+      "positive": "",
+      "standard_name": "fraction_of_time_with_sea_ice_area_fraction_above_threshold",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "siu": {
+      "cell_measures": "--MODEL",
+      "cell_methods": "area: time: mean where sea_ice (comment: mask=siconc)",
+      "comment": "The x-velocity of ice on native model grid",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "X-Component of Sea-Ice Velocity",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "siu",
+      "positive": "",
+      "standard_name": "sea_ice_x_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "siv": {
+      "cell_measures": "--MODEL",
+      "cell_methods": "area: time: mean where sea_ice (comment: mask=siconc)",
+      "comment": "The y-velocity of ice on native model grid",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Y-Component of Sea-Ice Velocity",
+      "modeling_realm": [
+        "seaIce"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "siv",
+      "positive": "",
+      "standard_name": "sea_ice_y_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

@@ -2,7 +2,19 @@
 
 import dask.array as da
 
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
+
+Cl = ClFixHybridPressureCoord
+
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
+
+
+Ps = ClFixHybridPressureCoord
 
 
 class Co2(Fix):
