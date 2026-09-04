@@ -2,11 +2,16 @@
 
 import logging
 
-from iris.coords import AuxCoord
 from iris.cube import CubeList
 from scipy import constants
 
-from ._base_fixes import AllVarsBase, IconFix, NegateData
+from ._base_fixes import (
+    AllVarsBase,
+    BasinToVariableMapping,
+    IconFix,
+    NegateData,
+    OceanBasinVariable,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,16 +44,28 @@ class Gpp(IconFix):
     def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Fix metadata.
 
-        Convert photosynthesis flux from mol(co2) m-2 s-1 to kg m-2 s-1.
-        Molar mass of CO2(kg) is 44.0095 g/mol
+        Convert photosynthesis flux from `mol(CO2) m-2 s-1` to `kgC m-2 s-1`.
+        Since mol(CO2) == mol(C), we can simply use molar mass of C for this
+        conversion (M(C) = 12.011 g/mol).
 
         """
         cube = self.get_cube(cubes)
-        cube.data = cube.core_data() * 44.0095 / 1000
-        cube.units = "kg m-2 s-1"
+        conversion_factor = 12.011 / 1000.0  # = M(C) / 1000 g/kg  [kgC/mol]
+        cube.data = cube.core_data() * conversion_factor
+        cube.units = "kg m-2 s-1"  # kgC m-2 s-1
         cube.attributes.pop("invalid_units", None)
 
         return cubes
+
+
+class Hfbasin(OceanBasinVariable):
+    """Fixes for ``hfbasin``."""
+
+    basin_to_var = BasinToVariableMapping(
+        atlantic_arctic_ocean="atlantic_hfbasin",
+        indian_pacific_ocean="pacific_hfbasin",
+        global_ocean="global_hfbasin",
+    )
 
 
 Hfls = NegateData
@@ -57,49 +74,14 @@ Hfls = NegateData
 Hfss = NegateData
 
 
-class Msftmz(IconFix):
+class Msftmz(OceanBasinVariable):
     """Fixes for ``msftmz``."""
 
-    def fix_metadata(self, cubes: CubeList) -> CubeList:
-        """Fix metadata."""
-        preprocessed_cubes = CubeList([])
-        basin_coord = AuxCoord(
-            "placeholder",
-            standard_name="region",
-            long_name="ocean basin",
-            var_name="basin",
-        )
-        var_names = {
-            "atlantic_moc": "atlantic_arctic_ocean",
-            "pacific_moc": "indian_pacific_ocean",
-            "global_moc": "global_ocean",
-        }
-        for var_name, basin in var_names.items():
-            cube = self.get_cube(cubes, var_name=var_name)
-            cube.var_name = "msftmz"
-            cube.long_name = None
-            cube.attributes.locals = {}
-
-            # Remove longitude coordinate (with length 1)
-            cube = cube[..., 0]
-            cube.remove_coord("longitude")
-
-            # Add scalar basin coordinate
-            cube.add_aux_coord(basin_coord.copy(basin), ())
-            preprocessed_cubes.append(cube)
-
-        msftmz_cube = preprocessed_cubes.merge_cube()
-
-        # Swap time and basin coordinates
-        msftmz_cube.transpose([1, 0, 2, 3])
-
-        # By default, merge_cube() sorts the coordinate alphabetically (i.e.,
-        # atlantic_arctic_ocean -> global_ocean -> indian_pacific_ocean). Thus,
-        # we need to restore the desired order (atlantic_arctic_ocean ->
-        # indian_pacific_ocean -> global_ocean).
-        msftmz_cube = msftmz_cube[:, [0, 2, 1], ...]
-
-        return CubeList([msftmz_cube])
+    basin_to_var = BasinToVariableMapping(
+        atlantic_arctic_ocean="atlantic_moc",
+        indian_pacific_ocean="pacific_moc",
+        global_ocean="global_moc",
+    )
 
 
 Rlut = NegateData

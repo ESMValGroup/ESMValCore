@@ -3,33 +3,28 @@
 from pathlib import Path
 
 import iris
-import pyesgf
 import pytest
 from cf_units import Unit
 
-from esmvalcore.io.esgf import ESGFFile
 from esmvalcore.io.local import (
+    LocalDataSource,
     LocalFile,
     _dates_to_timerange,
-    _get_start_end_date,
     _replace_years_with_timerange,
     _truncate_dates,
 )
 
 
-def _get_esgf_file(path):
-    """Get ESGFFile object."""
-    result = pyesgf.search.results.FileResult(
-        json={
-            "dataset_id": "CMIP6.ABC.v1|something.org",
-            "dataset_id_template_": ["%(mip_era)s.%(source_id)s"],
-            "project": ["CMIP6"],
-            "size": 10,
-            "title": path,
-        },
-        context=None,
+@pytest.fixture
+def local_data_source():
+    return LocalDataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath="",
+        dirname_template="",
+        filename_template="",
     )
-    return ESGFFile([result])
 
 
 @pytest.mark.parametrize(
@@ -72,7 +67,7 @@ def _get_esgf_file(path):
         ["E5sf00_1H_2000-01-01_2001-12-31_167.grb", "20000101", "20011231"],
     ],
 )
-def test_get_start_end_date(case):
+def test_get_start_end_date(case, local_data_source):
     """Tests for _get_start_end_date function."""
     filename, case_start, case_end = case
 
@@ -80,30 +75,20 @@ def test_get_start_end_date(case):
     # file, which fails here because the file is not there.
     if case_start is None and case_end is None:
         with pytest.raises(ValueError):
-            _get_start_end_date(filename)
+            local_data_source._get_start_end_date(Path(filename))
         with pytest.raises(ValueError):
-            _get_start_end_date(Path(filename))
-        with pytest.raises(ValueError):
-            _get_start_end_date(LocalFile(filename))
-        with pytest.raises(ValueError):
-            _get_start_end_date(_get_esgf_file(filename).name)
+            local_data_source._get_start_end_date(LocalFile(filename))
 
     else:
-        start, end = _get_start_end_date(filename)
+        start, end = local_data_source._get_start_end_date(Path(filename))
         assert case_start == start
         assert case_end == end
-        start, end = _get_start_end_date(Path(filename))
-        assert case_start == start
-        assert case_end == end
-        start, end = _get_start_end_date(LocalFile(filename))
-        assert case_start == start
-        assert case_end == end
-        start, end = _get_start_end_date(_get_esgf_file(filename).name)
+        start, end = local_data_source._get_start_end_date(LocalFile(filename))
         assert case_start == start
         assert case_end == end
 
 
-def test_read_years_from_cube(tmp_path):
+def test_read_years_from_cube(local_data_source, tmp_path):
     """Try to get years from cube if no date in filename."""
     temp_file = LocalFile(tmp_path / "test.nc")
     cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
@@ -114,12 +99,12 @@ def test_read_years_from_cube(tmp_path):
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = _get_start_end_date(temp_file)
+    start, end = local_data_source._get_start_end_date(temp_file)
     assert int(start[:4]) == 1990
     assert int(end[:4]) == 1991
 
 
-def test_read_datetime_from_cube(tmp_path):
+def test_read_datetime_from_cube(local_data_source, tmp_path):
     """Try to get datetime from cube if no date in filename."""
     temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
@@ -132,12 +117,36 @@ def test_read_datetime_from_cube(tmp_path):
     )
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = _get_start_end_date(temp_file)
+    start, end = local_data_source._get_start_end_date(temp_file)
     assert start == "19900101"
     assert end == "19910102"
 
 
-def test_raises_if_unable_to_deduce_no_time(tmp_path):
+def test_ignore_datetimes_in_filename(tmp_path):
+    data_source = LocalDataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath="",
+        dirname_template="",
+        filename_template="",
+        ignore_datetimes_in_filename=True,
+    )
+    temp_file = LocalFile(tmp_path / "test_1850-1900.nc")
+    cube = iris.cube.Cube([0, 0, 0, 0], var_name="var")
+    time = iris.coords.DimCoord(
+        [0, 100, 200, 366],
+        standard_name="time",
+        units="days since 1990-01-01",
+    )
+    cube.add_dim_coord(time, 0)
+    iris.save(cube, temp_file)
+    start, end = data_source._get_start_end_date(temp_file)
+    assert int(start[:4]) == 1990
+    assert int(end[:4]) == 1991
+
+
+def test_raises_if_unable_to_deduce_no_time(local_data_source, tmp_path):
     """Try to get time from cube if no date in filename."""
     temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0], var_name="var")
@@ -150,10 +159,10 @@ def test_raises_if_unable_to_deduce_no_time(tmp_path):
     cube.add_dim_coord(not_time, 0)
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
-        _get_start_end_date(temp_file)
+        local_data_source._get_start_end_date(temp_file)
 
 
-def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
+def test_raises_if_unable_to_deduce_no_time_units(local_data_source, tmp_path):
     """Try to get time from cube if no date in filename."""
     temp_file = tmp_path / "test.nc"
     cube = iris.cube.Cube([0, 0], var_name="var")
@@ -161,13 +170,13 @@ def test_raises_if_unable_to_deduce_no_time_units(tmp_path):
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
-        _get_start_end_date(temp_file)
+        local_data_source._get_start_end_date(temp_file)
 
 
-def test_fails_if_no_date_present():
+def test_fails_if_no_date_present(local_data_source):
     """Test raises if no date is present."""
     with pytest.raises(ValueError):
-        _get_start_end_date("var_whatever")
+        local_data_source._get_start_end_date(Path("var_whatever"))
 
 
 def test_get_timerange_from_years():

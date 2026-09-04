@@ -1,0 +1,161 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 365.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OPyr"
+  },
+  "variable_entry": {
+    "dispkexyfo": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Depth integrated impacts on kinetic energy arising from lateral frictional dissipation associated with Laplacian and/or biharmonic viscosity. For CMIP5, this diagnostic was 3d, whereas the CMIP6 depth integrated diagnostic is sufficient for many purposes and reduces archive requirements.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Ocean Kinetic Energy Dissipation per Unit Area Due to XY Friction",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dispkexyfo",
+      "positive": "",
+      "standard_name": "ocean_kinetic_energy_dissipation_per_unit_area_due_to_xy_friction",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ocontempmint": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Full column sum of density*cell thickness*conservative temperature. If the model is Boussinesq, then use Boussinesq reference density for the density factor.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Depth Integral of Product of Sea Water Density and Conservative Temperature",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ocontempmint",
+      "positive": "",
+      "standard_name": "integral_wrt_depth_of_product_of_conservative_temperature_and_sea_water_density",
+      "type": "real",
+      "units": "degC kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "opottempmint": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Integral over the full ocean depth of the product of sea water density and potential temperature.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Integral with Respect to Depth of Product of Sea Water Density and Potential Temperature",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "opottempmint",
+      "positive": "",
+      "standard_name": "integral_wrt_depth_of_product_of_potential_temperature_and_sea_water_density",
+      "type": "real",
+      "units": "degC kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "somint": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Full column sum of density*cell thickness*prognostic salinity. If the model is Boussinesq, then use Boussinesq reference density for the density factor.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Depth Integral of Product of Sea Water Density and Prognostic Salinity",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "somint",
+      "positive": "",
+      "standard_name": "integral_wrt_depth_of_product_of_salinity_and_sea_water_density",
+      "type": "real",
+      "units": "g m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tnkebto": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Depth integrated impacts on kinetic energy arising from parameterized eddy-induced advection. For CMIP5, this diagnostic was 3d, whereas the CMIP6 depth integrated diagnostic is sufficient for many purposes and reduces archive requirements.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Ocean Eddy Kinetic Energy Content Due to Parameterized Eddy Advection",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tnkebto",
+      "positive": "",
+      "standard_name": "tendency_of_ocean_eddy_kinetic_energy_content_due_to_parameterized_eddy_advection",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tnpeo": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Rate that work is done against vertical stratification, as measured by the vertical heat and salt diffusivity. Report here as depth integrated two-dimensional field.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Tendency of Ocean Potential Energy Content",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tnpeo",
+      "positive": "",
+      "standard_name": "tendency_of_ocean_potential_energy_content",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

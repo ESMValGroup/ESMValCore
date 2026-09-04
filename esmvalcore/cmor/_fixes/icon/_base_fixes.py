@@ -7,11 +7,12 @@ import logging
 import os
 import shutil
 import warnings
+from dataclasses import dataclass, fields
 from datetime import datetime, timedelta
 from pathlib import Path
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlparse
 
 import iris
@@ -1128,3 +1129,56 @@ class NegateData(IconFix):
         """Fix data."""
         cube.data = -cube.core_data()
         return cube
+
+
+@dataclass(frozen=True, kw_only=True)
+class BasinToVariableMapping:
+    atlantic_arctic_ocean: str
+    indian_pacific_ocean: str
+    global_ocean: str
+
+
+class OceanBasinVariable(IconFix):
+    """Fixes for variables that use an ocean basin coordinate."""
+
+    basin_to_var: ClassVar[BasinToVariableMapping]
+
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
+        """Fix metadata."""
+        preprocessed_cubes = CubeList([])
+        basin_coord = AuxCoord(
+            "placeholder",
+            standard_name="region",
+            long_name="ocean basin",
+            var_name="basin",
+        )
+        for basin_field in fields(self.basin_to_var):
+            basin = basin_field.name
+            basin_var_name = getattr(self.basin_to_var, basin)
+            cube = self.get_cube(cubes, var_name=basin_var_name)
+            cube.var_name = self.vardef.short_name
+            cube.standard_name = None
+            cube.long_name = None
+            cube.attributes.locals = {}
+
+            # Remove longitude coordinate (with length 1)
+            cube = cube[..., 0]
+            cube.remove_coord("longitude")
+
+            # Add scalar basin coordinate
+            cube.add_aux_coord(basin_coord.copy(basin), ())
+            preprocessed_cubes.append(cube)
+
+        final_cube = preprocessed_cubes.merge_cube()
+
+        # Dimension order should be (time, basin, ...)
+        new_order = [1, 0, *range(2, final_cube.ndim)]
+        final_cube.transpose(new_order)
+
+        # By default, merge_cube() sorts the coordinate alphabetically (i.e.,
+        # atlantic_arctic_ocean -> global_ocean -> indian_pacific_ocean). Thus,
+        # we need to restore the desired order (atlantic_arctic_ocean ->
+        # indian_pacific_ocean -> global_ocean).
+        final_cube = final_cube[:, [0, 2, 1], ...]
+
+        return CubeList([final_cube])

@@ -231,6 +231,18 @@
             "type": "real",
             "units": "1"
         },
+        "alt": {
+            "cell_measures": "area: areacella",
+            "cell_methods": "time: mean",
+            "dimensions": "longitude latitude time",
+            "frequency": "yr",
+            "long_name": "Active Layer Thickness",
+            "modeling_realm": "land",
+            "out_name": "alt",
+            "standard_name": "",
+            "type": "real",
+            "units": "m"
+        },
         "amoc": {
             "cell_measures": "area: areacello",
             "cell_methods": "time: mean area: where sea",
@@ -524,6 +536,18 @@
             "units": "kg m-2 s-1",
             "valid_min": "0"
         },
+        "gtd": {
+            "cell_measures": "area: areacella",
+            "cell_methods": "time: mean",
+            "dimensions": "longitude latitude sdepth time",
+            "frequency": "yr",
+            "long_name": "Permafrost Ground Temperature",
+            "modeling_realm": "land",
+            "out_name": "gtd",
+            "standard_name": "",
+            "type": "real",
+            "units": "K"
+        },
         "hfns": {
             "cell_measures": "area: areacella",
             "cell_methods": "time: mean",
@@ -728,6 +752,22 @@
             "standard_name": "",
             "type": "real",
             "units": "J"
+        },
+        "pfr": {
+            "cell_measures": "area: areacella",
+            "cell_methods": "time: mean",
+            "dimensions": "longitude latitude time",
+            "frequency": "yr",
+            "long_name": "Permafrost Extent",
+            "modeling_realm": "land",
+            "ok_max_mean_abs": "100.0",
+            "ok_min_mean_abs": "0.0",
+            "out_name": "pfr",
+            "standard_name": "",
+            "type": "real",
+            "units": "%",
+            "valid_max": "100.0",
+            "valid_min": "0.0"
         },
         "prStderr": {
             "cell_measures": "area: areacella",

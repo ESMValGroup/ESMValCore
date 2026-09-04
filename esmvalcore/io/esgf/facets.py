@@ -37,6 +37,16 @@ FACETS = {
         "mip": "table_id",
         "short_name": "variable",
     },
+    "CMIP6Plus": {
+        "activity": "activity_drs",
+        "dataset": "source_id",
+        "ensemble": "member_id",
+        "exp": "experiment_id",
+        "institute": "institution_id",
+        "grid": "grid_label",
+        "mip": "table_id",
+        "short_name": "variable",
+    },
     "CMIP7": {
         "activity": "activity_id",
         "branding_suffix": "branding_suffix",
@@ -89,6 +99,7 @@ DATASET_MAP = {
         "MRI-AGCM3-2S": "MRI-AGCM3.2S",
     },
     "CMIP6": {},
+    "CMIP6Plus": {},
     "CORDEX": {},
     "obs4MIPs": {},
 }
@@ -110,6 +121,7 @@ def create_dataset_map():
         "CMIP3": 2,
         "CMIP5": 3,
         "CMIP6": 3,
+        "CMIP6Plus": 3,
         "CORDEX": 7,
         "obs4MIPs": 2,
     }

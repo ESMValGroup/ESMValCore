@@ -1,0 +1,122 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.125,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "alevel",
+      "alevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AE3hrPtLev"
+  },
+  "variable_entry": {
+    "rsdcsaf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated in the absence of aerosols and clouds (following Ghan). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Downwelling Clear-Sky, Aerosol-Free Shortwave Radiation",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdcsaf",
+      "positive": "down",
+      "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsdcsafbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated in the absence of aerosols and clouds (following Ghan). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Downwelling Clear-Sky, Aerosol-Free, Shortwave Radiation in Bands",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsdcsafbnd",
+      "positive": "down",
+      "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsucsaf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated in the absence of aerosols and clouds (following Ghan). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Upwelling Clear-Sky, Aerosol-Free Shortwave Radiation",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsucsaf",
+      "positive": "up",
+      "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "rsucsafbnd": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Calculated in the absence of aerosols and clouds (following Ghan). This requires a double-call in the radiation code with precisely the same meteorology.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "spectband",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Upwelling Clear-Sky, Aerosol-Free Shortwave Radiation in Bands",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "rsucsafbnd",
+      "positive": "up",
+      "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
+      "type": "real",
+      "units": "W m-2",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}
