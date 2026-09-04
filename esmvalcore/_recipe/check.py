@@ -627,6 +627,13 @@ reference_for_distance_metric_preproc = partial(
 )
 
 
+reference_for_t_test_preproc = partial(
+    _check_ref_attributes,
+    step="t_test",
+    attr_name="reference_for_t_test",
+)
+
+
 def statistics_preprocessors(settings: dict) -> None:
     """Check options of statistics preprocessors."""
     mm_stats = (
