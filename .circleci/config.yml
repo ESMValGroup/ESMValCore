@@ -28,7 +28,19 @@ jobs:
             pixi run --as-is esmvaltool -- --help
             pixi run --as-is esmvaltool config list
             pixi run --as-is esmvaltool config show
+      - run:
+          name: Set the branch name for upload to Codecov
+          command: |
+            # Specify an "unprotected" branch name when the pull request comes
+            # from a fork: https://docs.codecov.com/docs/codecov-tokens#when-do-i-need-a-token
+            branch="$(git branch --show-current)"
+            prefix="${CIRCLE_PR_USERNAME}/${CIRCLE_PR_REPONAME}"
+            if [ -z "$CODECOV_TOKEN" ] && [ "${prefix}" != "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" ]; then
+              branch="${prefix}:${branch}"
+            fi
+            echo "export CODECOV_BRANCH=${branch}" >> $BASH_ENV
       - codecov/upload:
+          branch: "${CODECOV_BRANCH}"
           files: "test-reports/coverage.xml"
           disable_search: true
       - store_test_results:
