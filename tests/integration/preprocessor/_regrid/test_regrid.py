@@ -1,6 +1,11 @@
 """Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
+import dask.array as da
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
+import iris.fileformats.pp
 import numpy as np
 import pytest
 from numpy import ma
@@ -363,6 +368,62 @@ class Test:
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
         assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_with_ancillary(self) -> None:
+        """Test that ancillary coordinates are also regridded."""
+        cube = self.cube.copy()
+        cube.data = cube.lazy_data()
+        cube.add_ancillary_variable(
+            iris.coords.AncillaryVariable(
+                da.arange(2, 6).astype(np.float32).reshape(2, 2),
+                var_name="ancillary",
+            ),
+            (1, 2),
+        )
+        result = regrid(cube, self.grid_for_linear, "linear")
+        ancillary_result = result.ancillary_variable("ancillary")
+        assert isinstance(ancillary_result, iris.coords.AncillaryVariable)
+        assert ancillary_result.has_lazy_data()
+        assert_array_equal(
+            ancillary_result.data,
+            np.array([3.5], dtype=np.float32).reshape(1, 1),
+        )
+
+    @pytest.mark.parametrize("source_has_cell_measure", [True, False])
+    def test_regrid__linear_with_cell_measure(
+        self,
+        source_has_cell_measure: bool,
+    ) -> None:
+        """Test that cell measures are preserved when present on the target grid."""
+        cube = self.cube.copy()
+        if source_has_cell_measure:
+            cube.add_cell_measure(
+                iris.coords.CellMeasure(
+                    np.arange(2, 6).astype(np.float32).reshape(2, 2),
+                    standard_name="cell_area",
+                    units="m2",
+                ),
+                (1, 2),
+            )
+        target_grid = self.grid_for_linear.copy()
+        target_grid.add_cell_measure(
+            iris.coords.CellMeasure(
+                np.ones((1, 1), dtype=np.float32),
+                standard_name="cell_area",
+                units="m2",
+            ),
+            (0, 1),
+        )
+        result = regrid(cube, target_grid, "linear")
+        if source_has_cell_measure:
+            cell_measure_result = result.cell_measure("cell_area")
+            assert isinstance(cell_measure_result, iris.coords.CellMeasure)
+            assert_array_equal(
+                cell_measure_result.data,
+                np.array([1.0], dtype=np.float32).reshape(1, 1),
+            )
+        else:
+            assert not result.cell_measures("cell_area")
 
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__nearest(self, cache_weights):
