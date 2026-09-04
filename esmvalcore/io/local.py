@@ -190,73 +190,6 @@ def _get_start_end_date_from_filename(
     return start_date, end_date
 
 
-def _get_start_end_date(file: str | Path) -> tuple[str, str]:
-    """Get the start and end dates as a string from a file.
-
-    This function first tries to read the dates from the filename and only
-    if that fails, it will try to read them from the content of the file.
-
-    Parameters
-    ----------
-    file:
-        The file to read the start and end data from.
-
-    Returns
-    -------
-    tuple[str, str]
-        The start and end date.
-
-    Raises
-    ------
-    ValueError
-        Start or end date cannot be determined.
-    """
-    start_date, end_date = _get_start_end_date_from_filename(file)
-
-    # As final resort, try to get the dates from the file contents
-    if (
-        (start_date is None or end_date is None)
-        and isinstance(file, (str, Path))
-        and Path(file).exists()
-    ):
-        logger.debug("Must load file %s for daterange ", file)
-        with Dataset(file) as dataset:
-            for variable in dataset.variables.values():
-                var_name = _get_var_name(variable)
-                attrs = variable.ncattrs()
-                if (
-                    var_name == "time"
-                    and "units" in attrs
-                    and "calendar" in attrs
-                ):
-                    time_units = Unit(
-                        variable.getncattr("units"),
-                        calendar=variable.getncattr("calendar"),
-                    )
-                    start_date = isodate.date_isoformat(
-                        time_units.num2date(variable[0]),
-                        format=isodate.isostrf.DATE_BAS_COMPLETE,
-                    )
-                    end_date = isodate.date_isoformat(
-                        time_units.num2date(variable[-1]),
-                        format=isodate.isostrf.DATE_BAS_COMPLETE,
-                    )
-                    break
-
-    if start_date is None or end_date is None:
-        msg = (
-            f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file"
-        )
-        raise ValueError(msg)
-
-    # Remove potential '-' characters from datetimes
-    start_date = start_date.replace("-", "")
-    end_date = end_date.replace("-", "")
-
-    return start_date, end_date
-
-
 def _dates_to_timerange(start_date: int | str, end_date: int | str) -> str:
     """Convert ``start_date`` and ``end_date`` to ``timerange``.
 
@@ -564,6 +497,25 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
     calling :meth:`LocalFile.to_iris`.
     """
 
+    ignore_datetimes_in_filename: bool = False
+    """Ignore date times specified in file names.
+
+    By default, if possible, the time range spanned by a file is determined by
+    datetimes given in its file name. For example, the file
+    ``my-model_20000101-20051231.nc`` will be assigned a start date of
+    2000-01-01 and an end date of 2005-12-31. Only if reading datetimes from
+    the file name fails, the actual file will be opened to determine the time
+    range from the file contents.
+
+    If this option is set to ``True``, date times in file names are ignored,
+    and the time range is always determined from the contents of the file.
+
+    Note that in the vast majority of cases, reading datetimes from file names
+    works very well. In addition, opening files to determine time range is much
+    slower than just reading file names. Thus, this option should only be set
+    to ``True`` if absolutely necessary.
+    """
+
     def __post_init__(self) -> None:
         """Set further attributes."""
         self.rootpath = Path(os.path.expandvars(self.rootpath)).expanduser()
@@ -671,7 +623,93 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
             facets["var_type"] = facets["output_stream"]
         return facets
 
-    def _path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
+    def _get_start_end_date(self, file: Path) -> tuple[str, str]:
+        """Get the start and end datetimes as a string.
+
+        This function first tries to read the datetimes from the filename and
+        only if that fails, it will try to read them from the contents of the
+        file.
+
+        If
+        :attr:`~esmvalcore.io.local.LocalDataSource.ignore_datetimes_in_filename`
+        is set to ``True``, datetimes are always read from the contents of the
+        file.
+
+        Parameters
+        ----------
+        file:
+            The file to read the start and end data from.
+
+        Returns
+        -------
+        :
+            The start and end date.
+
+        Raises
+        ------
+        ValueError
+            Start or end date cannot be determined.
+
+        """
+        start_date = end_date = None
+
+        if not self.ignore_datetimes_in_filename:
+            start_date, end_date = _get_start_end_date_from_filename(file)
+
+        # Read datetimes from file contents if necessary
+        if (start_date is None or end_date is None) and file.exists():
+            reason = (
+                f"data source '{self.name}' is set up with ignore_datetimes_in_filename=True"
+                if self.ignore_datetimes_in_filename
+                else "it cannot be read from file name"
+            )
+            logger.debug(
+                "Opening file %s to determine time range because %s",
+                file,
+                reason,
+            )
+            with Dataset(file) as dataset:
+                for variable in dataset.variables.values():
+                    var_name = _get_var_name(variable)
+                    attrs = variable.ncattrs()
+                    if (
+                        var_name == "time"
+                        and "units" in attrs
+                        and "calendar" in attrs
+                    ):
+                        time_units = Unit(
+                            variable.getncattr("units"),
+                            calendar=variable.getncattr("calendar"),
+                        )
+                        start_date = isodate.date_isoformat(
+                            time_units.num2date(variable[0]),
+                            format=isodate.isostrf.DATE_BAS_COMPLETE,
+                        )
+                        end_date = isodate.date_isoformat(
+                            time_units.num2date(variable[-1]),
+                            format=isodate.isostrf.DATE_BAS_COMPLETE,
+                        )
+                        break
+
+        if start_date is None or end_date is None:
+            msg = (
+                f"File {file} datetimes do not match a recognized pattern and "
+                f"time coordinate can not be read from the file"
+            )
+            raise ValueError(msg)
+
+        # Remove potential '-' characters from datetimes
+        start_date = start_date.replace("-", "")
+        end_date = end_date.replace("-", "")
+
+        return start_date, end_date
+
+    def _path2facets(
+        self,
+        path: Path,
+        *,
+        add_timerange: bool,
+    ) -> dict[str, str]:
         """Extract facets from path."""
         facets: dict[str, str] = {}
 
@@ -682,7 +720,7 @@ class LocalDataSource(esmvalcore.io.protocol.DataSource):
 
         if add_timerange:
             try:
-                start_date, end_date = _get_start_end_date(path)
+                start_date, end_date = self._get_start_end_date(path)
             except ValueError:
                 pass
             else:

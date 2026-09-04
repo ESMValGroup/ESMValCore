@@ -478,6 +478,29 @@ as configured in:
 To use this configuration, run ``esmvaltool config copy data-native-icon.yml`` and
 adapt the ``rootpath`` to your system.
 
+.. hint::
+
+   If your ICON output consists of files that span multiple years (e.g., the
+   file ``exp_19000101T000000Z.nc`` actually contains 5 years, not 1), you need
+   to configure your data source with ``ignore_datetimes_in_filename=True``.
+
+   Example:
+
+   .. code-block:: yaml
+
+      projects:
+        ICON:
+          data:
+            icon: &icon
+              type: esmvalcore.io.local.LocalDataSource
+              rootpath: /path/to/my/icon/exps
+              dirname_template: "{exp}"
+              filename_template: "{exp}_{var_type}*.nc"
+              ignore_warnings:
+                - message: "Failed to create 'height' dimension coordinate: The 'height' DimCoord bounds array must be strictly monotonic."
+                  module: iris
+              ignore_datetimes_in_filename: true
+
 Currently, two different versions of ICON are supported:
 
 1. ICON-A, which is based on ECHAM physics (deprecated): select via ``dataset:
