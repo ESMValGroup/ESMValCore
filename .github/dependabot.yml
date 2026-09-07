@@ -15,7 +15,7 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      gha:
+      github-actions:
         patterns:
           - "*"
     labels:
