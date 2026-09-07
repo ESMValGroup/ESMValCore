@@ -45,7 +45,7 @@ repos:
           - jupyter
       - id: mypy
         name: mypy
-        entry: "pixi run --locked mypy"
+        entry: "pixi run --locked dmypy run"
         language: system
         types:
           - python

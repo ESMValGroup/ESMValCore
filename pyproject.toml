@@ -136,6 +136,8 @@ exclude_lines = [
 
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
+# Run mypy in daemon mode for faster reruns to avoid very slow (e.g. 20 seconds)
+# commits on HPC file systems.
 packages = ["esmvalcore", "tests"]
 ignore_missing_imports = true
 enable_error_code = [
