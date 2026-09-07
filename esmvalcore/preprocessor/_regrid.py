@@ -986,6 +986,24 @@ def regrid(
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
     result = regridder(cube)
+    for ancillary_var in cube.ancillary_variables():
+        ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+        ancillary_slice = tuple(
+            slice(None) if i in ancillary_dims else 0 for i in range(cube.ndim)
+        )
+        ancillary_cube = cube[ancillary_slice].copy(ancillary_var.core_data())
+        ancillary_cube = _rechunk(ancillary_cube, target_grid_cube)
+        ancillary_result = regridder(ancillary_cube)
+        if result.has_lazy_data() and ancillary_result.has_lazy_data():
+            # Keep the chunks of the ancillary variable aligned with the
+            # regridded data variable.
+            ancillary_result.data = ancillary_result.lazy_data().rechunk(
+                result[ancillary_slice].lazy_data().chunks,
+            )
+        result.add_ancillary_variable(
+            ancillary_var.copy(ancillary_result.core_data()),
+            ancillary_dims,
+        )
     # Iris only supports regridding of 1D coordinates and iris-esmf-regrid
     # uses only the DimCoords if both grid_latitude/grid_longitude or
     # projection_x_coordinate/projection_y_coordinate DimCoords and latitude
