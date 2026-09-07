@@ -136,7 +136,7 @@ exclude_lines = [
 
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
-packages = "esmvalcore"
+packages = ["esmvalcore", "tests"]
 ignore_missing_imports = true
 enable_error_code = [
     "truthy-bool",

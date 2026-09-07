@@ -120,7 +120,7 @@ def test_initialize_provenance_grb(
     assert isinstance(tracked_input_file_grb.provenance, ProvDocument)
     assert tracked_input_file_grb.activity == activity
     assert (
-        str(tracked_input_file_grb.entity.identifier)  # type: ignore[attr-defined]
+        str(tracked_input_file_grb.entity.identifier)  # type: ignore[union-attr]
         == "file:/path/to/file.grb"
     )
     assert tracked_input_file_grb.attributes == {"a": "A"}
