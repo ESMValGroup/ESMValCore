@@ -48,6 +48,16 @@ generic_fix_logger = logging.getLogger(f"{__name__}.genericfix")
 class Fix:
     """Base class for dataset fixes."""
 
+    GROUP_CUBES_BY_DATE = False
+    """Flag for grouping cubes for fix_metadata.
+
+    Fixes are applied to each group element individually.
+
+    If ``False`` (default), group cubes by file. If ``True``, group cubes by
+    date.
+
+    """
+
     def __init__(
         self,
         vardef: VariableInfo,
