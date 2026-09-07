@@ -59,7 +59,7 @@ def test_get_distributed_client_external(
 
     with _dask.get_distributed_client(session) as client:
         assert client is mock_client
-    _dask.Client.assert_called_once_with()
+    _dask.Client.assert_called_once_with()  # type: ignore[attr-defined]
     mock_client.close.assert_called_once_with()  # type: ignore[union-attr]
     assert (
         mocker.call({"scheduler_address": "tcp://127.0.0.1:42021"})
@@ -114,7 +114,7 @@ def test_get_distributed_client_slurm(
     with _dask.get_distributed_client(session) as client:
         assert client is mock_client
     mock_client.close.assert_called_once_with()  # type: ignore[union-attr]
-    _dask.Client.assert_called_once_with()
+    _dask.Client.assert_called_once_with()  # type: ignore[attr-defined]
     args = {k: v for k, v in slurm_cluster.items() if k != "type"}
     mock_cluster_cls.assert_called_once_with(**args)
     mock_cluster.close.assert_called()

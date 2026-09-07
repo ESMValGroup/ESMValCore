@@ -11,7 +11,7 @@ import yaml
 from esmvalcore._recipe.writer import to_yaml
 
 if TYPE_CHECKING:
-    from pytest_regressions import FileRegressionFixture
+    from pytest_regressions.file_regression import FileRegressionFixture
 
 
 @pytest.mark.parametrize(
