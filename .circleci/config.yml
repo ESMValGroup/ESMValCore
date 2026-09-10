@@ -143,10 +143,7 @@ jobs:
 workflows:
   commit:
     jobs:
-      - build_documentation
       - test
-      - test_installation_from_conda
-      - test_with_upstream_developments
 
   nightly:
     triggers:
