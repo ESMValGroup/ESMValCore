@@ -205,6 +205,9 @@ class IntakeESGFDataSource(DataSource):
                 isodate.parse_date(end.split("T")[0]),
             )
         # Search ESGF.
+        if "project" in query and not isinstance(query["project"], str):
+            # TODO: Why do CMIP7 STAC searches return no results if the project is a list with a single element?
+            query["project"] = query["project"][0]  # type: ignore[assignment]
         try:
             self.catalog.search(**query, quiet=True)
         except intake_esgf.exceptions.NoSearchResults:
@@ -252,7 +255,10 @@ class IntakeESGFDataSource(DataSource):
                     for v in normalized_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = {"version": [f"v{row['version']}"]}
+            # TODO: Why are CMIP7 STAC searches missing the "version" facet?
+            dataset_facets = (
+                {"version": [f"v{row['version']}"]} if "version" in row else {}
+            )
             for our_facet, esgf_facet in self.facets.items():
                 if esgf_facet in row:
                     esgf_values = row[esgf_facet]
