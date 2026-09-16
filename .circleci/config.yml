@@ -3,7 +3,37 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@6.0.0
-  pixi: prefix-dev/pixi@0.1.0
+
+commands:
+  pixi_setup:
+    # Based on https://circleci.com/developer/orbs/orb/prefix-dev/pixi, but without
+    # the issues described in https://github.com/ESMValGroup/ESMValTool/issues/4582.
+    description: "Set up a pixi environment."
+    parameters:
+      env:
+        type: string
+        default: "default"
+    steps:
+      - restore_cache:
+          keys:
+            - pixi-linux-v1-{{ arch }}-{{ checksum "pixi.lock" }}-<<parameters.env>>
+      - run:
+          name: Install pixi
+          command: |
+            set -euo pipefail
+            curl -fsSL https://pixi.sh/install.sh | sh
+            echo 'export PATH="$HOME/.pixi/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            pixi --version
+      - run:
+          name: Install pixi environment
+          command: |
+            set -euo pipefail
+            pixi install --environment "<<parameters.env>>"
+      - save_cache:
+          key: pixi-linux-v1-{{ arch }}-{{ checksum "pixi.lock" }}-<<parameters.env>>
+          paths:
+            - ~/.cache/rattler
 
 jobs:
   test:
@@ -13,7 +43,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - pixi/pixi_setup
+      - pixi_setup
       - run:
           name: Check dependencies are compatible
           command: pixi run --as-is pip check
@@ -33,16 +63,13 @@ jobs:
           disable_search: true
       - store_test_results:
           path: test-reports/report.xml
+      - store_artifacts:
+          path: test-reports/
       - run:
           name: Compress pytest artifacts
           command: tar -cvzf pytest.tar.gz -C /tmp/pytest-of-$(whoami)/ .
       - store_artifacts:
           path: pytest.tar.gz
-      - run:
-          name: Compress test-report artifacts
-          command: tar -cvzf test-reports.tar.gz test-reports/
-      - store_artifacts:
-          path: test-reports.tar.gz
 
   test_with_upstream_developments:
     # Test with development versions of upstream packages.
@@ -51,7 +78,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - pixi/pixi_setup
+      - pixi_setup
       - run:
           name: Install development versions of upstream packages
           command: |
@@ -77,16 +104,13 @@ jobs:
             pixi run --as-is esmvaltool -- --help
       - store_test_results:
           path: test-reports/report.xml
+      - store_artifacts:
+          path: test-reports/
       - run:
           name: Compress pytest artifacts
           command: tar -cvzf pytest.tar.gz -C /tmp/pytest-of-$(whoami)/ .
       - store_artifacts:
           path: pytest.tar.gz
-      - run:
-          name: Compress test-report artifacts
-          command: tar -cvzf test-reports.tar.gz test-reports/
-      - store_artifacts:
-          path: test-reports.tar.gz
 
   test_installation_from_conda:
     # Test installation from conda-forge.
@@ -109,10 +133,12 @@ jobs:
     resource_class: small
     steps:
       - checkout
-      - pixi/pixi_setup
+      - pixi_setup
       - run:
           name: Build documentation
           command: pixi run --as-is doc --fail-on-warning --show-traceback
+      - store_artifacts:
+          path: html
 
 workflows:
   commit:
