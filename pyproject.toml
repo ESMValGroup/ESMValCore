@@ -136,9 +136,16 @@ exclude_lines = [
 
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
+# Run mypy in daemon mode for faster reruns to avoid very slow (e.g. 20 seconds)
+# commits on HPC file systems.
+packages = ["esmvalcore", "tests"]
 ignore_missing_imports = true
 enable_error_code = [
     "truthy-bool",
+]
+exclude = [
+  "^doc/conf.py$",
+  "esmvalcore/cmor/tables/",
 ]
 
 # Configure linters
@@ -296,8 +303,17 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 # Other development tools.
 [tool.pixi.feature.dev.dependencies]
 "jupyterlab" = "*"
+"mypy" = "*"
 "pre-commit" = "*"
 "py-spy" = "*"
+"ruff" = "*"
+# Mypy type stubs
+"pandas-stubs" = "*"
+"scipy-stubs" = "*"
+"types-PyYAML" = "*"
+"types-psutil" = "*"
+"types-shapely" = "*"
+"pyrefly" = "*"
 
 # Feature for running tests with Python 3.12.
 [tool.pixi.feature.py312.dependencies]
@@ -315,3 +331,13 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 [tool.pixi.tasks]
 test = {cmd = "pytest", description = "Run the tests"}
 doc = {cmd = "sphinx-build doc html", description = "Build the documentation"}
+
+[tool.pyrefly]
+preset = "legacy"
+project-includes = [
+    "esmvalcore",
+    "tests",
+]
+
+[tool.pyrefly.errors]
+redundant-condition = "error"

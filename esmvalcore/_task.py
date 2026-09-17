@@ -1006,7 +1006,7 @@ def _run_task(
 ) -> tuple[list[str], set[TrackedFile]]:
     """Run task and return the result."""
     if scheduler_address is None:
-        client = contextlib.nullcontext()
+        client: contextlib.AbstractContextManager = contextlib.nullcontext()
     else:
         client = Client(scheduler_address)
 
