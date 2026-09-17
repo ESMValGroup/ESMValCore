@@ -313,6 +313,7 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 "types-PyYAML" = "*"
 "types-psutil" = "*"
 "types-shapely" = "*"
+"pyrefly" = "*"
 
 # Feature for running tests with Python 3.12.
 [tool.pixi.feature.py312.dependencies]
@@ -330,3 +331,13 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 [tool.pixi.tasks]
 test = {cmd = "pytest", description = "Run the tests"}
 doc = {cmd = "sphinx-build doc html", description = "Build the documentation"}
+
+[tool.pyrefly]
+preset = "legacy"
+project-includes = [
+    "esmvalcore",
+    "tests",
+]
+
+[tool.pyrefly.errors]
+redundant-condition = "error"
