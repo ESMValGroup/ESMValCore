@@ -21,7 +21,7 @@ projects:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
-          # Note: change to "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
+          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
           activity: "activity_drs"
           dataset: "source_id"
           ensemble: "member_id"
@@ -36,7 +36,7 @@ projects:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
-          # Note: change to "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
+          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
           activity: "activity_drs"
           dataset: "source_id"
           ensemble: "member_id"
