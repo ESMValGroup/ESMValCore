@@ -206,7 +206,7 @@ class IntakeESGFDataSource(DataSource):
             )
         # Search ESGF.
         if "project" in query and not isinstance(query["project"], str):
-            # TODO: Why do CMIP7 STAC searches return no results if the project is a list with a single element?
+            # Needed because of https://github.com/esgf2-us/intake-esgf/pull/188
             query["project"] = query["project"][0]  # type: ignore[assignment]
         try:
             self.catalog.search(**query, quiet=True)
@@ -255,7 +255,6 @@ class IntakeESGFDataSource(DataSource):
                     for v in normalized_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
-            # TODO: Why are CMIP7 STAC searches missing the "version" facet?
             dataset_facets = (
                 {"version": [f"v{row['version']}"]} if "version" in row else {}
             )
