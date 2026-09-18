@@ -9,6 +9,8 @@ projects:
         # Use a lower priority than for esmvalcore.io.local.LocalDataSource
         # to avoid searching ESGF with the setting `search_esgf: when_missing`.
         priority: 10
+  CMIP6Plus:
+    <<: *esgf-pyclient-data
   CMIP5:
     <<: *esgf-pyclient-data
   CMIP3:

@@ -1,0 +1,85 @@
+documentation:
+  title: Recipe that runs an example diagnostic written in Python.
+  description: Example recipe that plots a map and timeseries of temperature.
+  authors:
+    - andela_bouwe
+    - righi_mattia
+  maintainer:
+    - schlund_manuel
+  projects:
+    - esmval
+    - c3s-magic
+  references:
+    - acknow_project
+
+preprocessors:
+  annual_mean_amsterdam:
+    extract_location:
+      location: Amsterdam
+      scheme: linear
+    annual_statistics:
+      operator: mean
+    multi_model_statistics:
+      span: overlap
+      statistics:
+        - mean
+    convert_units:
+      units: degrees_C
+  annual_mean_global:
+    area_statistics:
+      operator: mean
+    annual_statistics:
+      operator: mean
+    convert_units:
+      units: degrees_C
+  to_degrees_c:
+    convert_units:
+      units: degrees_C
+
+datasets:
+  - {dataset: bcc-csm1-1, ensemble: r1i1p1, exp: historical, project: CMIP5, version: v1}
+  - {dataset: BCC-ESM1, ensemble: r1i1p1f1, exp: historical, grid: gn, project: CMIP6}
+
+diagnostics:
+  map:
+    description: Global map of temperature in January 2000.
+    realms:
+      - atmos
+    themes:
+      - phys
+    variables:
+      tas:
+        caption: Global map of {long_name} in January 2000 according to {dataset}.
+        mip: Amon
+        preprocessor: to_degrees_c
+        timerange: 2000/P1M
+    scripts:
+      script1:
+        script: examples/diagnostic.py
+        quickplot:
+          cmap: Reds
+          plot_type: pcolormesh
+  timeseries:
+    description: Annual mean temperature in Amsterdam and global mean since 1850.
+    realms:
+      - atmos
+    themes:
+      - phys
+    variables:
+      tas_amsterdam:
+        caption: Annual mean {long_name} in Amsterdam according to {dataset}.
+        mip: Amon
+        preprocessor: annual_mean_amsterdam
+        short_name: tas
+        timerange: 1850/2000
+      tas_global:
+        caption: Annual global mean {long_name} according to {dataset}.
+        mip: Amon
+        preprocessor: annual_mean_global
+        short_name: tas
+        timerange: 1850/2000
+    scripts:
+      script1:
+        script: examples/diagnostic.py
+        quickplot:
+          plot_type: plot

@@ -15,6 +15,13 @@ projects:
         rootpath: ~/climate_data
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
+  CMIP6Plus:
+    data:
+      local:
+        type: esmvalcore.io.local.LocalDataSource
+        rootpath: ~/climate_data
+        dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
   CMIP5:
     data:
       local:

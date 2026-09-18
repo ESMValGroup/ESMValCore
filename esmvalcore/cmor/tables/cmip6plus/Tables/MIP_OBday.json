@@ -1,0 +1,65 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 1.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OBday"
+  },
+  "variable_entry": {
+    "chlos": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "Sum of chlorophyll from all phytoplankton group concentrations at the sea surface.  In most models this is equal to chldiat+chlmisc, that is the sum of 'Diatom Chlorophyll Mass Concentration' plus 'Other Phytoplankton Chlorophyll Mass Concentration'",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Surface Mass Concentration of Total Phytoplankton Expressed as Chlorophyll in Sea Water",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "chlos",
+      "positive": "",
+      "standard_name": "mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+      "type": "real",
+      "units": "kg m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "phycos": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: mean",
+      "comment": "sum of phytoplankton organic carbon component concentrations at the sea surface",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time"
+      ],
+      "frequency": "day",
+      "long_name": "Sea Surface Phytoplankton Carbon Concentration",
+      "modeling_realm": [
+        "ocnBgchem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "phycos",
+      "positive": "",
+      "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
+      "type": "real",
+      "units": "mol m-3",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

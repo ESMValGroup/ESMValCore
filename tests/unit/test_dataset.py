@@ -2171,7 +2171,7 @@ def test_get_extra_facets_icon():
     assert extra_facets == {
         "raw_name": "sic",
         "raw_units": "1",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
 
 
@@ -2188,7 +2188,7 @@ def test_get_extra_facets_icon_xpp():
     assert extra_facets == {
         "raw_name": "to",
         "raw_units": "degC",
-        "var_type": "oce_def",
+        "output_stream": "oce_def",
     }
 
 

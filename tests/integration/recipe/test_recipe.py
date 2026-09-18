@@ -2618,7 +2618,7 @@ def test_representative_dataset_regular_var(
         "project": "ICON",
         "short_name": "tas",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2649,7 +2649,7 @@ def test_representative_dataset_derived_var(
         "project": "ICON",
         "short_name": "alb",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2669,7 +2669,7 @@ def test_representative_dataset_derived_var(
         "modeling_realm": ["atmos"],
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     if force_derivation:
         expected_datasets = [
@@ -2738,7 +2738,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsdscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsdscs = Dataset(**rsdscs_facets)
     rsdscs.session = session
@@ -2762,7 +2762,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsuscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session
