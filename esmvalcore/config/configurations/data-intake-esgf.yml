@@ -1,16 +1,33 @@
 # Read CMIP and obs4MIPs data from ESGF using intake-esgf.
 projects:
+  CMIP7:
+    data:
+      intake-esgf:
+        type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        facets:
+          activity: "activity_id"
+          branding_suffix: "variable_branding_suffix"
+          dataset: "source_id"
+          ensemble: "variant_label"
+          exp: "experiment_id"
+          frequency: "frequency"
+          grid: "grid_label"
+          institute: "institution_id"
+          project: "project"
+          region: "region"
+          short_name: "variable_id"
   CMIP6:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
+          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
           activity: "activity_drs"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
-          institute: "institution_id"
           grid: "grid_label"
+          institute: "institution_id"
           mip: "table_id"
           project: "project"
           short_name: "variable_id"
@@ -19,12 +36,13 @@ projects:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
+          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
           activity: "activity_drs"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
-          institute: "institution_id"
           grid: "grid_label"
+          institute: "institution_id"
           mip: "table_id"
           project: "project"
           short_name: "variable_id"

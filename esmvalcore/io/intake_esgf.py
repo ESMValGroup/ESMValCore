@@ -205,6 +205,9 @@ class IntakeESGFDataSource(DataSource):
                 isodate.parse_date(end.split("T")[0]),
             )
         # Search ESGF.
+        if "project" in query and not isinstance(query["project"], str):
+            # Needed because of https://github.com/esgf2-us/intake-esgf/pull/188
+            query["project"] = query["project"][0]  # type: ignore[assignment]
         try:
             self.catalog.search(**query, quiet=True)
         except intake_esgf.exceptions.NoSearchResults:
@@ -252,7 +255,9 @@ class IntakeESGFDataSource(DataSource):
                     for v in normalized_facets["short_name"]
                 ]
             # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = {"version": [f"v{row['version']}"]}
+            dataset_facets = (
+                {"version": [f"v{row['version']}"]} if "version" in row else {}
+            )
             for our_facet, esgf_facet in self.facets.items():
                 if esgf_facet in row:
                     esgf_values = row[esgf_facet]
