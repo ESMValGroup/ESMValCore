@@ -52,7 +52,7 @@ jobs:
           cd intake-esgf
           pip install -e .
       - name: Inspect environment
-        run: conda list
+        run: pixi list
       - name: Run tests
         run: pytest -n 2 --durations=10
       - name: Upload artifacts
