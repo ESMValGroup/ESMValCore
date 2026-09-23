@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - update-pixi
+      - run_with_intake-esgf_source 
   schedule:
     - cron: "0 0 * * *" # nightly
 
@@ -45,6 +46,13 @@ jobs:
         run: pip check
       - name: Check code quality
         run: pre-commit run -a
+      - name: Install intake-esgf from source
+        run: |
+          git clone https://github.com/esgf2-us/intake-esgf.git
+          cd intake-esgf
+          pip install -e .
+      - name: Inspect environment
+        run: conda list
       - name: Run tests
         run: pytest -n 2 --durations=10
       - name: Upload artifacts
