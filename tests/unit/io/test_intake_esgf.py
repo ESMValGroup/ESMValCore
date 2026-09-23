@@ -99,7 +99,48 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
 
 @pytest.mark.online
-def test_to_iris_online():
+def test_to_iris_online_no_stac_indices():
+    """`to_iris` should load data from a real ESGF catalog."""
+    data_source = IntakeESGFDataSource(
+        name="src",
+        project="CMIP6",
+        priority=1,
+        facets={
+            "activity": "activity_drs",
+            "dataset": "source_id",
+            "ensemble": "member_id",
+            "exp": "experiment_id",
+            "grid": "grid_label",
+            "institute": "institution_id",
+            "mip": "table_id",
+            "project": "project",
+            "short_name": "variable_id",
+        },
+        values={},
+    )
+    results = data_source.find_data(
+        dataset="UKESM1-0-LL",
+        ensemble="r1i1p1f2",
+        exp="piControl",
+        grid="gn",
+        mip="fx",
+        project="CMIP6",
+        short_name="areacella",
+    )
+    assert len(results) == 1
+    dataset = results[0]
+    assert isinstance(dataset, IntakeESGFDataset)
+    cubes = dataset.to_iris()
+    assert len(cubes) == 1
+    assert isinstance(cubes[0], iris.cube.Cube)
+    # Check that the "source_file" attributes is present for debugging.
+    assert "source_file" in dataset.attributes
+    assert dataset.attributes["source_file"].endswith(".nc")
+
+
+@pytest.mark.online
+@pytest.mark.xfail
+def test_to_iris_online_with_stac_indices():
     """`to_iris` should load data from a real ESGF catalog."""
     data_source = IntakeESGFDataSource(
         name="src",
@@ -302,41 +343,45 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
             },
             id="CMIP7",
         ),
-        pytest.param(
-            {
-                "dataset": "CanESM5",
-                "ensemble": "r1i1p1f1",
-                "exp": ["historical", "ssp585"],
-                "grid": "gn",
-                "mip": "Amon",
-                "project": "CMIP6",
-                "short_name": "tas",
-                "timerange": "1850/2100",
-            },
-            {
-                "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
-                "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn",
-            },
-            id="CMIP6",
-        ),
-        pytest.param(
-            {
-                "dataset": "CanESM5",
-                "ensemble": "r[1-3]i1p1f1",
-                "exp": "historical",
-                "grid": "gn",
-                "mip": "Amon",
-                "project": "CMIP6",
-                "short_name": "tas",
-                "timerange": "1850/2100",
-            },
-            {
-                "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
-                "CMIP6.CMIP.CCCma.CanESM5.historical.r2i1p1f1.Amon.tas.gn",
-                "CMIP6.CMIP.CCCma.CanESM5.historical.r3i1p1f1.Amon.tas.gn",
-            },
-            id="CMIP6-with-glob-pattern",
-        ),
+        # STAC indices are not yet working with intake-esgf
+        # CanESM5 returns STAC indcies since September 20 2026
+        # see https://github.com/ESMValGroup/ESMValCore/issues/3222
+        # TODO uncomment and use when https://github.com/esgf2-us/intake-esgf/issues/185 closed
+        # pytest.param(
+        #     {
+        #         "dataset": "CanESM5",
+        #         "ensemble": "r1i1p1f1",
+        #         "exp": ["historical", "ssp585"],
+        #         "grid": "gn",
+        #         "mip": "Amon",
+        #         "project": "CMIP6",
+        #         "short_name": "tas",
+        #         "timerange": "1850/2100",
+        #     },
+        #     {
+        #         "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
+        #         "CMIP6.ScenarioMIP.CCCma.CanESM5.ssp585.r1i1p1f1.Amon.tas.gn",
+        #     },
+        #     id="CMIP6",
+        # ),
+        # pytest.param(
+        #     {
+        #         "dataset": "CanESM5",
+        #         "ensemble": "r[1-3]i1p1f1",
+        #         "exp": "historical",
+        #         "grid": "gn",
+        #         "mip": "Amon",
+        #         "project": "CMIP6",
+        #         "short_name": "tas",
+        #         "timerange": "1850/2100",
+        #     },
+        #     {
+        #         "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn",
+        #         "CMIP6.CMIP.CCCma.CanESM5.historical.r2i1p1f1.Amon.tas.gn",
+        #         "CMIP6.CMIP.CCCma.CanESM5.historical.r3i1p1f1.Amon.tas.gn",
+        #     },
+        #     id="CMIP6-with-glob-pattern",
+        # ),
         pytest.param(
             {
                 "dataset": "ACCESS1-0",
