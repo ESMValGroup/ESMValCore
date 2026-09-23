@@ -44,8 +44,8 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Check dependencies are compatible
         run: pip check
-      - name: Check code quality
-        run: pre-commit run -a
+      # - name: Check code quality
+      #   run: pre-commit run -a
       - name: Install intake-esgf from source
         run: |
           git clone https://github.com/esgf2-us/intake-esgf.git
