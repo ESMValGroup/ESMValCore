@@ -219,7 +219,7 @@ fiona = "*"
 fire = "*"
 geopy = "*"
 humanfriendly = "*"
-intake-esgf = ">=2026.4.28"
+# intake-esgf = ">=2026.9.4"
 iris = "<3.16"
 iris-esmf-regrid = ">=0.11.0"
 iris-grib = ">=0.20.0"
@@ -257,6 +257,7 @@ platforms = ["linux-64", "osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
 ESMValCore = { path = ".", editable = true }
+intake-esgf = { git = "git+https://github.com/esgf2-us/intake-esgf.git" }
 
 [tool.pixi.environments]
 default = { features = ["dev", "doc", "test"], solve-group = "default" }
