@@ -1,0 +1,25 @@
+documentation:
+  title: Test recipe with without scripts and ancestors.
+  description: Test recipe
+  authors:
+    - andela_bouwe
+  maintainer:
+    - andela_bouwe
+  references:
+    - acknow_project
+
+datasets:
+  - {dataset: BCC-ESM1, ensemble: r1i1p1f1, exp: historical, grid: gn, mip: Amon, project: CMIP6, timerange: 2000/2010}
+
+diagnostics:
+  diagnostic1:
+    variables:
+      pr: null
+      tas: null
+    scripts: null
+  diagnostic2:
+    scripts:
+      script2:
+        ancestors:
+          - diagnostic1/tas
+        script: diagnostic.py

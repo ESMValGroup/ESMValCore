@@ -19,7 +19,7 @@ def get_mock_distributed_client(monkeypatch):
     """Mock `get_distributed_client` to avoid starting a Dask cluster."""
 
     @contextlib.contextmanager
-    def get_distributed_client():
+    def get_distributed_client(session):
         yield None
 
     monkeypatch.setattr(
@@ -133,7 +133,6 @@ def interpreter_not_installed(script):
             script_file,
             script,
             marks=[
-                pytest.mark.installation,
                 pytest.mark.xfail(
                     interpreter_not_installed(script_file),
                     run=False,

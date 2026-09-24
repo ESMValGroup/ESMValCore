@@ -33,12 +33,13 @@ logger = logging.getLogger(__name__)
 
 _ALIAS_INFO_KEYS: tuple[str, ...] = (
     "project",
-    "activity",
-    "driver",
-    "dataset",
     "exp",
-    "sub_experiment",
+    "dataset",
+    "rcm_version",
+    "driver",
     "ensemble",
+    "sub_experiment",
+    "grid",
     "version",
 )
 """List of keys to be used to compose the alias, ordered by priority."""
@@ -252,7 +253,10 @@ def _append_missing_supplementaries(
 
             supplementary_facets: Facets = {
                 facet: "*"
-                for facet in FACETS.get(project, ["mip"])
+                for facet in (
+                    *tuple(FACETS.get(project, [])),
+                    "mip",
+                )
                 if facet not in _CMOR_KEYS + tuple(INHERITED_FACETS)
             }
             for key in ("frequency", "version"):

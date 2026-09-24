@@ -96,6 +96,44 @@ def test_run_command_line_config(mocker, cfg, argument, value, tmp_path):
     assert session[argument] == value
 
 
+def test_run_session_name(mocker, cfg, tmp_path):
+    """Check that `session_name` overrides the auto-generated name."""
+    mocker.patch.object(esmvalcore.config, "CFG", cfg)
+    session = cfg.start_session.return_value
+
+    program = ESMValTool()
+    recipe_file = "/path/to/recipe_test.yml"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch.object(program, "_get_recipe", return_value=Path(recipe_file))
+    mocker.patch.object(program, "_run")
+
+    program.run(recipe_file, session_name="result", config_dir=config_dir)
+
+    assert session.session_name == "result"
+    # Check that the session name is not passed to the cfg
+    for call in cfg.nested_update.call_args_list:
+        assert "session_name" not in call.args[0]
+
+
+def test_run_no_session_name(mocker, cfg, tmp_path):
+    """Check that the session name is left untouched by default."""
+    mocker.patch.object(esmvalcore.config, "CFG", cfg)
+
+    program = ESMValTool()
+    recipe_file = "/path/to/recipe_test.yml"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch.object(program, "_get_recipe", return_value=Path(recipe_file))
+    mocker.patch.object(program, "_run")
+
+    program.run(recipe_file, config_dir=config_dir)
+
+    assert "session_name" not in cfg.start_session.return_value.__dict__
+
+
 @pytest.mark.parametrize("search_data", ["quick", "complete"])
 def test_run(mocker, session, search_data):
     session["search_data"] = search_data

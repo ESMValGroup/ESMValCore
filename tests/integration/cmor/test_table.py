@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -222,8 +223,8 @@ class TestCMIP6Info:
         )
 
 
-class Testobs4mipsInfo:
-    """Tests for the obs4mips info class."""
+class Testobs4MIPsInfo:
+    """Tests for the Obs4MIPs info class."""
 
     @pytest.fixture
     def variables_info(self) -> Obs4MIPsInfo:
@@ -237,7 +238,7 @@ class Testobs4mipsInfo:
 
     def test_get_table_frequency(self, variables_info):
         """Test get table frequency."""
-        assert variables_info.get_table("monStderr").frequency == "mon"
+        assert variables_info.get_table("Amon").frequency == "mon"
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -246,16 +247,12 @@ class Testobs4mipsInfo:
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
-    def test_get_variable_ndvistderr(self, variables_info):
-        """Get ndviStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "obs4MIPs_monStderr",
-            "ndviStderr",
-        )
-        assert var.short_name == "ndviStderr"
+    def test_get_variable_ccb(self, variables_info):
+        """Get ccb variable."""
+        var = variables_info.get_variable("Amon", "ccb")
+        assert var.short_name == "ccb"
+        assert var.standard_name == "air_pressure_at_convective_cloud_base"
+        assert var.long_name == "Air Pressure at Convective Cloud Base"
         assert var.frequency == "mon"
 
     def test_get_variable_hus(self, variables_info):
@@ -271,14 +268,8 @@ class Testobs4mipsInfo:
         assert var.frequency == "mon"
 
     def test_get_variable_from_custom(self, variables_info):
-        """Get prStderr variable.
-
-        Note table name obs4MIPs_[mip]
-        """
-        var = variables_info.get_variable(
-            "monStderr",
-            "prStderr",
-        )
+        """Get prStderr variable."""
+        var = variables_info.get_variable("Amon", "prStderr")
         assert var.short_name == "prStderr"
         assert var.frequency == "mon"
 
@@ -303,6 +294,30 @@ class Testobs4mipsInfo:
     def test_get_bad_variable(self, variables_info):
         """Get none if a variable is not in the given table."""
         assert variables_info.get_variable("Omon", "tras") is None
+
+    def test_no_cv_file_availble(self, tmp_path: Path) -> None:
+        tmp_tables_path = tmp_path / "Tables"
+        tmp_tables_path.mkdir(parents=True, exist_ok=True)
+
+        original_coordinate_table = (
+            Path(esmvalcore.cmor.table.__file__).parent
+            / "tables"
+            / "obs4mips"
+            / "Tables"
+            / "obs4MIPs_coordinate.json"
+        )
+        shutil.copy2(original_coordinate_table, tmp_tables_path)
+
+        # Use coordinates table also as source_id table to simulate missing
+        # source_id information
+        shutil.copy2(
+            original_coordinate_table,
+            tmp_path / "obs4MIPs_source_id.json",
+        )
+
+        Obs4MIPsInfo(
+            paths=[tmp_tables_path],
+        )  # should not fail without CV file
 
 
 class TestCMIP5Info:
@@ -706,7 +721,7 @@ def test_get_mips_cmip5() -> None:
 def test_get_mips_cmip7() -> None:
     """Test ``_get_mips``."""
     mips = _get_mips(project="CMIP7", short_name="tas")
-    expected = {"atmos", "land", "landIce"}
+    expected = {"atmos", "landIce"}
     assert set(mips) == expected
 
 

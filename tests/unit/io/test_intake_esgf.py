@@ -285,6 +285,25 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
     [
         pytest.param(
             {
+                "branding_suffix": "tavg-h2m-hxy-u",
+                "dataset": "CanESM6-0-MR",
+                "ensemble": "r1i1p1f1",
+                "exp": "historical",
+                "frequency": "mon",
+                "grid": "g150",
+                "mip": "atmos",
+                "project": "CMIP7",
+                "region": "glb",
+                "short_name": "tas",
+                "timerange": "1850/2100",
+            },
+            {
+                "MIP-DRS7.CMIP7.CMIP.CCCma.CanESM6-0-MR.historical.r1i1p1f1.glb.tas.tavg-h2m-hxy-u.g150",
+            },
+            id="CMIP7",
+        ),
+        pytest.param(
+            {
                 "dataset": "CanESM5",
                 "ensemble": "r1i1p1f1",
                 "exp": ["historical", "ssp585"],

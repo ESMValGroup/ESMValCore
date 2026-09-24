@@ -17,6 +17,7 @@ from iris.coords import (
 )
 from iris.cube import Cube
 
+import esmvalcore.cmor.table
 from esmvalcore.config import CFG, Config
 
 if TYPE_CHECKING:
@@ -53,6 +54,17 @@ def ignore_existing_user_config(
 ) -> None:
     """Ignore user's configuration when running tests."""
     monkeypatch.setattr(CFG, "_mapping", cfg_default._mapping)
+    monkeypatch.setattr(
+        esmvalcore.cmor.table,
+        "CMOR_TABLES",
+        {
+            project: esmvalcore.cmor.table.get_tables(
+                session=cfg_default,
+                project=project,
+            )
+            for project in cfg_default["projects"]
+        },
+    )
 
 
 @pytest.fixture

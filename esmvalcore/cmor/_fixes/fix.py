@@ -254,7 +254,7 @@ class Fix:
         if extra_facets is None:
             extra_facets = {}
 
-        vardef = get_var_info(
+        vardef: VariableInfo = get_var_info(  # type: ignore[assignment]  # TODO: add check and raise error if vardef is None
             project,
             mip,
             short_name,
@@ -270,7 +270,6 @@ class Fix:
         fixes_modules = []
         if project == "cordex":
             driver = extra_facets["driver"].replace("-", "_").lower()
-            extra_facets["dataset"] = dataset
             with contextlib.suppress(ImportError):
                 fixes_modules.append(
                     importlib.import_module(
@@ -297,6 +296,7 @@ class Fix:
                     fixes_module,
                     inspect.isclass,
                 )
+                if issubclass(value, Fix)
             }
             for fix_name in (short_name, mip.lower(), "allvars"):
                 if fix_name in classes:

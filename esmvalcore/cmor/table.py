@@ -78,21 +78,27 @@ def _update_cmor_facets(facets: Facets) -> None:
     project: str = facets["project"]  # type: ignore[assignment]
     mip: str = facets["mip"]  # type: ignore[assignment]
     short_name: str = facets["short_name"]  # type: ignore[assignment]
+    branding_suffix: str | None = facets.get("branding_suffix")  # type: ignore[assignment]
     derive: bool = facets.get("derive", False)  # type: ignore[assignment]
     table = CMOR_TABLES.get(project)
     if table:
         table_entry = table.get_variable(
             mip,
             short_name,
-            branding_suffix=facets.get("branding_suffix"),  # type: ignore[arg-type]
+            branding_suffix=branding_suffix,
             derived=derive,
         )
     else:
         table_entry = None
     if table_entry is None:
         msg = (
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'"
+            f"Variable '{short_name}' "
+            + (
+                f"with branding suffix '{branding_suffix}' "
+                if branding_suffix
+                else ""
+            )
+            + f"not available in table '{mip}' of project '{project}'"
         )
         raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
@@ -519,7 +525,7 @@ class InfoBase:
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
@@ -772,7 +778,10 @@ class CMIP6Info(InfoBase):
                 self.tables[table_name] = table
             table = self.tables[table_name]
 
-            generic_levels = header["generic_levels"].split()
+            generic_levels = header.get("generic_levels", "")
+            if isinstance(generic_levels, str):
+                generic_levels = generic_levels.split()
+
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
@@ -789,7 +798,11 @@ class CMIP6Info(InfoBase):
 
     def _assign_dimensions(self, var, generic_levels):
         for dimension in var.dimensions:
-            if dimension in generic_levels:
+            is_generic = dimension in generic_levels or any(
+                self.coords[name].generic_lev_name == dimension
+                for name in self.coords
+            )
+            if is_generic:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
                 for name in self.coords:
@@ -909,6 +922,21 @@ class Obs4MIPsInfo(CMIP6Info):
             if name.startswith(table_id_prefix):
                 table = self.tables.pop(name)
                 self.tables[name[len(table_id_prefix) :]] = table
+
+    def _load_controlled_vocabulary(self, path: Path) -> None:
+        """Load controlled vocabulary."""
+        # Get institute
+        source_id_file = path.parent / "obs4MIPs_source_id.json"
+        if source_id_file.is_file():
+            with open(source_id_file, encoding="utf-8") as file:
+                table_data = json.loads(file.read())
+                try:
+                    sources = table_data["source_id"]
+                    for source_id in sources:
+                        institution = sources[source_id]["institution_id"]
+                        self.institutes[source_id] = institution
+                except (KeyError, AttributeError):
+                    pass
 
 
 @total_ordering
@@ -1088,9 +1116,7 @@ class VariableInfo(JsonInfo):
         self.valid_min = self._read_json_variable("valid_min")
         self.valid_max = self._read_json_variable("valid_max")
         self.positive = self._read_json_variable("positive")
-        self.modeling_realm = self._read_json_variable(
-            "modeling_realm",
-        ).split()
+        self.modeling_realm = self._read_json_list_variable("modeling_realm")
         self.frequency = self._read_json_variable("frequency", default_freq)
 
         # "dimensions" is a list of str in CMIP7 and a space separated str in CMIP6 CMOR tables.
@@ -1577,7 +1603,7 @@ class CustomInfo(CMIP5Info):
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.
@@ -1649,7 +1675,7 @@ class NoInfo(InfoBase):
         branding_suffix:
             A suffix that will be appended to ``short_name`` when looking up the
             variable in the CMOR table, e.g. a
-            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/CMIP7/branded_variables/>`__,
+            `CMIP7 branding suffix <https://wcrp-cmip.github.io/cmip7-guidance/docs/CMIP7/Branded_Variables/>`__,
             could be ``"tavg-u-hxy-sea"``, which defines the temporal average
             at an undefined vertical level on a horizontal grid where non-sea
             points are masked.

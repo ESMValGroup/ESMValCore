@@ -25,25 +25,6 @@ sys.path.insert(0, str(root))
 
 from esmvalcore import __version__
 
-# -- RTD configuration ------------------------------------------------
-
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from
-# docs.readthedocs.org
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-
-if on_rtd:
-    # On Readthedocs, the conda environment used for building the documentation
-    # is not `activated`. As a consequence, a few critical environment variables
-    # are not set. Here, we hardcode them instead.
-    # In a normal environment, i.e. a local build of the documentation, the
-    # normal environment activation takes care of this.
-    rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-    rtd_project = os.environ.get("READTHEDOCS_PROJECT")
-    rtd_conda_prefix = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}"
-    os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
-    os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
-    os.environ["PROJ_NETWORK"] = "OFF"
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -53,61 +34,61 @@ if on_rtd:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'autodocsumm',
-    'myst_nb',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
+    "autodocsumm",
+    "myst_nb",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
 ]
 
 autodoc_default_options = {
-    'members': True,
-    'undoc-members': True,
-    'inherited-members': True,
-    'show-inheritance': True,
-    'autosummary': True,
+    "members": True,
+    "undoc-members": True,
+    "inherited-members": True,
+    "show-inheritance": True,
+    "autosummary": True,
 }
 
 # Don't execute notebooks
 nb_execution_mode = "off"
 
 # Show type hints in function signature AND docstring
-autodoc_typehints = 'both'
+autodoc_typehints = "both"
 
 # See https://github.com/sphinx-doc/sphinx/issues/12589
 suppress_warnings = [
-    'autosummary.import_cycle',
+    "autosummary.import_cycle",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = {'.rst': 'restructuredtext'}
+source_suffix = {".rst": "restructuredtext"}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'ESMValCore'
-copyright = u'{0}, ESMValTool Development Team'.format(datetime.now().year)
+project = "ESMValCore"
+copyright = "{0}, ESMValTool Development Team".format(datetime.now().year)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(__version__.split('.')[0:1])
+version = ".".join(__version__.split(".")[0:1])
 # The full version, including alpha/beta/rc tags.
 release = __version__
 
@@ -117,7 +98,8 @@ release = __version__
 # a lot of issues with importing esmvalcore modules due to
 # "incorrect" locale settings' this looks like a fix
 import locale
-locale.setlocale(locale.LC_ALL, 'C')
+
+locale.setlocale(locale.LC_ALL, "C")
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -145,7 +127,7 @@ exclude_patterns: list = []
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -157,7 +139,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -196,7 +178,7 @@ html_short_title = "ESMValTool {0}".format(release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo-2.png'
+html_logo = "figures/ESMValTool-logo-2.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -222,9 +204,7 @@ html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    "**": ["sidebar_nav_lv1", "sidebar-ethical-ads"]
-}
+html_sidebars = {"**": ["sidebar_nav_lv1", "sidebar-ethical-ads"]}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -257,20 +237,17 @@ html_sidebars = {
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ESMValTooldoc'
+htmlhelp_basename = "ESMValTooldoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
-    'preamble':
-    r'''
+    "preamble": r"""
    \makeatletter
    \renewcommand{\maketitle}{
      \newcommand{\MONTH}{%
@@ -304,7 +281,7 @@ latex_elements = {
      \end{titlepage}
      \clearpage
    }
-   \makeatother'''
+   \makeatother"""
 }
 
 # latex_additional_files = []
@@ -313,9 +290,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'ESMValTool_Users_Guide.tex',
-     u'ESMValTool User\'s and Developer\'s Guide',
-     u'ESMValTool Development Team', 'manual'),
+    (
+        "index",
+        "ESMValTool_Users_Guide.tex",
+        "ESMValTool User's and Developer's Guide",
+        "ESMValTool Development Team",
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -382,10 +363,10 @@ latex_toplevel_sectioning = "part"
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'ESMValTool'
-epub_author = u'ESMValTool Development Team'
-epub_publisher = u'ESMValTool Development Team'
-epub_copyright = u'ESMValTool Development Team'
+epub_title = "ESMValTool"
+epub_author = "ESMValTool Development Team"
+epub_publisher = "ESMValTool Development Team"
+epub_copyright = "ESMValTool Development Team"
 
 # The basename for the epub file. It defaults to the project name.
 # epub_basename = u'ESMValTool'
@@ -425,7 +406,7 @@ epub_copyright = u'ESMValTool Development Team'
 # epub_post_files = []
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ["search.html"]
 
 # The depth of the table of contents in toc.ncx.
 # epub_tocdepth = 3
@@ -452,23 +433,28 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
-    'cftime': ('https://unidata.github.io/cftime/', None),
-    'esmvaltool': (f'https://docs.esmvaltool.org/en/latest/', None),
-    'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
-              None),
-    'dask': ('https://docs.dask.org/en/stable/', None),
-    'distributed': ('https://distributed.dask.org/en/stable/', None),
-    'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
-    'intake_esgf': ('https://intake-esgf.readthedocs.io/en/stable/', None),
-    'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
-    'matplotlib': ('https://matplotlib.org/stable/', None),
-    'ncdata': ('https://ncdata.readthedocs.io/en/stable/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
-    'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
-    'xarray': ('https://docs.xarray.dev/en/stable/', None),
+    "cf_units": ("https://cf-units.readthedocs.io/en/stable/", None),
+    "cftime": ("https://unidata.github.io/cftime/", None),
+    "esmvaltool": (f"https://docs.esmvaltool.org/en/latest/", None),
+    "esmpy": (
+        "https://earthsystemmodeling.org/esmpy_doc/release/latest/html/",
+        None,
+    ),
+    "dask": ("https://docs.dask.org/en/stable/", None),
+    "distributed": ("https://distributed.dask.org/en/stable/", None),
+    "iris": ("https://scitools-iris.readthedocs.io/en/stable/", None),
+    "intake_esgf": ("https://intake-esgf.readthedocs.io/en/stable/", None),
+    "esmf_regrid": (
+        "https://iris-esmf-regrid.readthedocs.io/en/stable/",
+        None,
+    ),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "ncdata": ("https://ncdata.readthedocs.io/en/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pyesgf": ("https://esgf-pyclient.readthedocs.io/en/stable/", None),
+    "python": ("https://docs.python.org/3/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "xarray": ("https://docs.xarray.dev/en/stable/", None),
 }
 
 # -- Extlinks extension -------------------------------------------------------

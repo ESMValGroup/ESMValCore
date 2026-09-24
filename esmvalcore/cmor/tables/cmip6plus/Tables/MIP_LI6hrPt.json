@@ -1,0 +1,42 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.25,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "LI6hrPt"
+  },
+  "variable_entry": {
+    "snw": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land time: point",
+      "comment": "The mass of surface snow on the land portion of the grid cell divided by the land area in the grid cell; reported as missing where the land fraction is 0; excludes snow on vegetation canopy or on sea ice.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "6hrPt",
+      "long_name": "Surface Snow Amount",
+      "modeling_realm": [
+        "landIce",
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "snw",
+      "positive": "",
+      "standard_name": "surface_snow_amount",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

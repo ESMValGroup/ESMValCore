@@ -21,7 +21,7 @@ from esmvalcore.config._config import (
     get_project_config,
     load_config_developer,
 )
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -35,7 +35,6 @@ if TYPE_CHECKING:
     from esmvalcore.typing import FacetValue
 
 __all__ = [
-    "DataSource",
     "LocalDataSource",
     "LocalFile",
     "find_files",
@@ -141,43 +140,6 @@ def _get_data_sources(project: str) -> list[LocalDataSource]:
     raise KeyError(msg)
 
 
-class DataSource(LocalDataSource):
-    """Data source for finding files on a local filesystem.
-
-    .. deprecated:: 2.14.0
-         This class is deprecated and will be removed in version 2.16.0.
-         Please use :class:`esmvalcore.local.LocalDataSource` instead.
-    """
-
-    def __init__(self, *args, **kwargs):
-        msg = (
-            "The 'esmvalcore.local.LocalDataSource' class is deprecated and will be "
-            "removed in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource'"
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        super().__init__(*args, **kwargs)
-
-    @property
-    def regex_pattern(self) -> str:
-        """Get regex pattern that can be used to extract facets from paths."""
-        return self._regex_pattern
-
-    def get_glob_patterns(self, **facets: FacetValue) -> list[Path]:
-        """Compose the globs that will be used to look for files."""
-        try:
-            return self._get_glob_patterns(**facets)
-        except _MissingFacetError as exc:
-            raise RecipeError(exc.args[0]) from exc
-
-    def path2facets(self, path: Path, add_timerange: bool) -> dict[str, str]:
-        """Extract facets from path."""
-        return self._path2facets(path, add_timerange)
-
-    def find_files(self, **facets: FacetValue) -> list[LocalFile]:
-        """Find files."""
-        return self.find_data(**facets)
-
-
 def find_files(
     *,
     debug: bool = False,
@@ -250,7 +212,7 @@ def find_files(
         "The function 'esmvalcore.local.find_files' is deprecated and will be removed "
         "in version 2.16.0. Please use 'esmvalcore.local.LocalDataSource.find_data'"
     )
-    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
 
     facets = dict(facets)
     if "original_short_name" in facets:

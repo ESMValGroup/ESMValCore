@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import iris.coords
 
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PREPROCESSOR_SUPPLEMENTARIES = {}
+
+class RequiredSupplementaries(TypedDict):
+    variables: list[str]
+    required: Literal["require_at_least_one", "prefer_at_least_one"]
+
+
+PREPROCESSOR_SUPPLEMENTARIES: dict[str, RequiredSupplementaries] = {}
 
 
 def register_supplementaries(

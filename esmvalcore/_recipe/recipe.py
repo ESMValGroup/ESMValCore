@@ -17,6 +17,14 @@ import yaml
 import esmvalcore.io.esgf
 from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
+from esmvalcore._recipe import check
+from esmvalcore._recipe.from_datasets import datasets_to_recipe
+from esmvalcore._recipe.to_datasets import (
+    _derive_needed,
+    _get_input_datasets,
+    _representative_datasets,
+)
+from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
@@ -45,17 +53,10 @@ from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
+    is_cordex_domain,
     parse_cell_spec,
 )
 from esmvalcore.preprocessor._shared import _group_products
-
-from . import check
-from .from_datasets import datasets_to_recipe
-from .to_datasets import (
-    _derive_needed,
-    _get_input_datasets,
-    _representative_datasets,
-)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -76,10 +77,10 @@ PreprocessorSettings = dict[str, Any]
 PreprocessorProfile = dict[str, dict[str, Any]]
 
 
-DOWNLOAD_FILES = set()
+DOWNLOAD_FILES: set[DataElement] = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
-USED_DATASETS = []
+USED_DATASETS: list[Dataset] = []
 """Use a global variable to keep track of datasets that are actually used."""
 
 
@@ -180,14 +181,14 @@ def _update_target_grid(
         )[0]
         check.data_availability(representative_ds)
         settings["regrid"]["target_grid"] = representative_ds
-    else:
+    elif is_cordex_domain(grid):
+        pass
+    elif isinstance(grid, str):
         # Check that MxN grid spec is correct
-        target_grid = settings["regrid"]["target_grid"]
-        if isinstance(target_grid, str):
-            parse_cell_spec(target_grid)
+        parse_cell_spec(grid)
+    elif isinstance(grid, dict):
         # Check that cdo spec is correct
-        elif isinstance(target_grid, dict):
-            _spec_to_latlonvals(**target_grid)
+        _spec_to_latlonvals(**grid)
 
 
 def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
@@ -1329,11 +1330,17 @@ class Recipe:
 
         # Download required data
         # Add a special case for ESGF files to enable parallel downloads
+        logger.info(
+            "Downloading missing data (this may take a while...). Details can be "
+            "found in the debug log at %s",
+            self.session.main_log_debug,
+        )
         esmvalcore.io.esgf.download(self._download_files)
         for file in self._download_files:
             file.prepare()
+        logger.info("Successfully downloaded missing data")
 
-        self.tasks.run(max_parallel_tasks=self.session["max_parallel_tasks"])
+        self.tasks.run(self.session)
         logger.info(
             "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filled_recipe,
@@ -1370,8 +1377,7 @@ class Recipe:
         """Write copy of recipe with filled wildcards."""
         recipe = datasets_to_recipe(USED_DATASETS, self._raw_recipe)
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
-        with filename.open("w", encoding="utf-8") as file:
-            yaml.safe_dump(recipe, file, sort_keys=False)
+        to_yaml(recipe, filename)
         logger.info(
             "Wrote recipe with version numbers and wildcards to:\nfile://%s",
             filename,

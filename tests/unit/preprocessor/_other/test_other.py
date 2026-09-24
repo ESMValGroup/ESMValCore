@@ -80,7 +80,7 @@ def test_align_metadata_invalid_project():
 
 def test_align_metadata_invalid_short_name_strict():
     cube = Cube(0.0, units="1")
-    msg = "Variable 'zzz' not available for table 'Amon' of project 'CMIP6'"
+    msg = "Variable 'zzz' not available in table 'Amon' of project 'CMIP6'"
     with pytest.raises(ValueError, match=msg):
         align_metadata(cube, "CMIP6", "Amon", "zzz")
 

@@ -1,13 +1,12 @@
 {
     "Header":{
-        "#dataRequest_specs_version":"01.00.29",
-        "Conventions":"CF-1.7 ODS-2.1",
-        "cmor_version":"3.4",
-        "data_specs_version":"2.1.0",
+        "Conventions":"CF-1.7 CMIP-6.2",
+        "cmor_version":"3.5",
+        "data_specs_version":"01.00.33",
         "missing_value":"1e20",
-        "product":"observations",
-        "table_date":"11 April 2019",
-        "table_id":"Table obs4MIPs_grids"
+        "product":"output",
+        "table_date":"18 November 2020",
+        "table_id":"Table grids"
     },
     "axis_entry":{
         "grid_latitude":{
@@ -28,7 +27,7 @@
         },
         "i_index":{
             "axis":"",
-            "long_name":"cell index along first dimension",
+            "long_name":"first spatial index for variables stored on an unstructured grid",
             "out_name":"i",
             "standard_name":"",
             "type":"integer",
@@ -36,7 +35,7 @@
         },
         "j_index":{
             "axis":"",
-            "long_name":"cell index along second dimension",
+            "long_name":"second spatial index for variables stored on an unstructured grid",
             "out_name":"j",
             "standard_name":"",
             "type":"integer",
@@ -44,7 +43,7 @@
         },
         "k_index":{
             "axis":"",
-            "long_name":"cell index along third dimension",
+            "long_name":"third spatial index for variables stored on an unstructured grid",
             "out_name":"k",
             "standard_name":"",
             "type":"integer",
@@ -52,7 +51,7 @@
         },
         "l_index":{
             "axis":"",
-            "long_name":"cell index along fourth dimension",
+            "long_name":"fourth spatial index for variables stored on an unstructured grid",
             "out_name":"l",
             "standard_name":"",
             "type":"integer",
@@ -60,7 +59,7 @@
         },
         "m_index":{
             "axis":"",
-            "long_name":"cell index along fifth dimension",
+            "long_name":"fifth spatial index for variables stored on an unstructured grid",
             "out_name":"m",
             "standard_name":"",
             "type":"integer",

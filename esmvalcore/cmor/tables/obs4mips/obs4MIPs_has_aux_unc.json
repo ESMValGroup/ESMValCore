@@ -1,0 +1,6 @@
+{
+    "has_aux_unc":{
+        "TRUE":"when additional files containing uncertainty information are provided",
+        "FALSE":"when no uncertainty information is provided"
+    }
+}

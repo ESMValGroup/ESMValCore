@@ -408,6 +408,8 @@ def evspsbl_era5_hourly():
             (_era5_longitude(), 2),
         ],
     )
+    # Test time units of newly downloaded ERA5 data (2026-05-20)
+    cube.coord("time").convert_units("seconds since 1970-01-01")
     return CubeList([cube])
 
 

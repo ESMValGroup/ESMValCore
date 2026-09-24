@@ -1,0 +1,72 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.25,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "alevel",
+      "alevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AE6hrPtLev"
+  },
+  "variable_entry": {
+    "bs550aer": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Aerosol  Backscatter at 550nm and 180 degrees, computed from extinction and lidar ratio",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1",
+        "lambda550nm"
+      ],
+      "frequency": "6hrPt",
+      "long_name": "Aerosol Backscatter Coefficient",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "bs550aer",
+      "positive": "",
+      "standard_name": "volume_scattering_function_of_radiative_flux_in_air_due_to_ambient_aerosol_particles",
+      "type": "real",
+      "units": "m-1 sr-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ec550aer": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean time: point",
+      "comment": "Aerosol volume extinction coefficient at 550nm wavelength.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time1",
+        "lambda550nm"
+      ],
+      "frequency": "6hrPt",
+      "long_name": "Aerosol Extinction Coefficient",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ec550aer",
+      "positive": "",
+      "standard_name": "volume_extinction_coefficient_in_air_due_to_ambient_aerosol_particles",
+      "type": "real",
+      "units": "m-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

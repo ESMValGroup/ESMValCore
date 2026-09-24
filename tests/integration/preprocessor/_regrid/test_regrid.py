@@ -1,6 +1,11 @@
 """Integration tests for :func:`esmvalcore.preprocessor.regrid`."""
 
+import dask.array as da
 import iris
+import iris.coord_systems
+import iris.coords
+import iris.cube
+import iris.fileformats.pp
 import numpy as np
 import pytest
 from numpy import ma
@@ -42,10 +47,15 @@ class Test:
         )
 
         # Setup cube with multiple horizontal dimensions
-        self.multidim_cube = _make_cube(data, grid="rotated", aux_coord=False)
+        self.multidim_cube = _make_cube(
+            data,
+            grid="rotated",
+            dtype=np.float64,
+            aux_coord=False,
+        )
         lats, lons = np.meshgrid(
-            np.arange(1, data.shape[-2] + 1),
-            np.arange(1, data.shape[-1] + 1),
+            np.arange(1, data.shape[-2] + 1).astype(np.float64),
+            np.arange(1, data.shape[-1] + 1).astype(np.float64),
         )
         self.multidim_cube.add_aux_coord(
             iris.coords.AuxCoord(
@@ -165,6 +175,45 @@ class Test:
         expected = np.ma.masked_array([[[1.5]], [[5.5]], [[9.5]]], mask=False)
         result.data = np.round(result.data, 1)
         assert_array_equal(result.data, expected)
+
+    @pytest.mark.parametrize(
+        "use_src_coords",
+        [
+            ["latitude", "longitude"],
+            ["grid_latitude", "grid_longitude"],
+        ],
+    )
+    @pytest.mark.parametrize("close", [True, False])
+    def test_regrid__nearest_cordex_result_has_all_coords(
+        self,
+        use_src_coords: list[str],
+        close: bool,
+    ) -> None:
+        """Test that the result of regridding has both 1D and 2D lat and lon."""
+        target_grid = self.multidim_cube.copy()
+        offset = 1e-9 if close else 0.1
+        target_grid.coord("grid_longitude").points = (
+            target_grid.coord("grid_longitude").points + offset
+        )
+        target_grid.coord("grid_longitude").bounds = (
+            target_grid.coord("grid_longitude").bounds + offset
+        )
+        target_grid.coord("longitude").points = (
+            target_grid.coord("longitude").points + offset
+        )
+        result = regrid(
+            self.multidim_cube,
+            target_grid,
+            "nearest",
+            use_src_coords=use_src_coords,
+        )
+        for coord in (
+            "latitude",
+            "longitude",
+            "grid_latitude",
+            "grid_longitude",
+        ):
+            assert result.coord(coord) == target_grid.coord(coord)
 
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__linear_file(self, tmp_path, cache_weights):
@@ -319,6 +368,26 @@ class Test:
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
         assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_with_ancillary(self) -> None:
+        """Test that ancillary coordinates are also regridded."""
+        cube = self.cube.copy()
+        cube.data = cube.lazy_data()
+        cube.add_ancillary_variable(
+            iris.coords.AncillaryVariable(
+                da.arange(2, 6).astype(np.float32).reshape(2, 2),
+                var_name="ancillary",
+            ),
+            (1, 2),
+        )
+        result = regrid(cube, self.grid_for_linear, "linear")
+        ancillary_result = result.ancillary_variable("ancillary")
+        assert isinstance(ancillary_result, iris.coords.AncillaryVariable)
+        assert ancillary_result.has_lazy_data()
+        assert_array_equal(
+            ancillary_result.data,
+            np.array([3.5], dtype=np.float32).reshape(1, 1),
+        )
 
     @pytest.mark.parametrize("cache_weights", [True, False])
     def test_regrid__nearest(self, cache_weights):

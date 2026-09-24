@@ -1,0 +1,30 @@
+documentation:
+  title: Test recipe with additional datasets.
+  description: Test recipe
+  authors:
+    - andela_bouwe
+  maintainer:
+    - andela_bouwe
+  references:
+    - acknow_project
+
+diagnostics:
+  diagnostic:
+    additional_datasets:
+      - {dataset: BCC-ESM1, ensemble: r1i1p1f1, exp: historical, grid: gn, project: CMIP6}
+    variables:
+      tas:
+        mip: Amon
+        project: CMIP6
+        timerange: 2000/2010
+        additional_datasets:
+          - {dataset: bcc-csm1-1, ensemble: r1i1p1, exp: historical, project: CMIP5, supplementary_variables: [{mip: fx, short_name: sflft}]}
+      tos:
+        mip: Omon
+        project: CMIP6
+        timerange: 2000/2010
+    scripts:
+      script1:
+        script: diagnostic1.py
+      script2:
+        script: diagnostic2.py

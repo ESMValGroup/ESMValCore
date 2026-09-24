@@ -33,7 +33,9 @@ def fix_hourly_time_coordinate(cube, frequency):
     # variables from ERA5 may lead to some differences.
     if frequency.startswith("1hr"):
         time = cube.coord(axis="T")
-        if str(time.units).startswith("hours since"):
+        if str(time.units).startswith("seconds since"):
+            shift = 1800.0
+        elif str(time.units).startswith("hours since"):
             shift = 0.5
         elif str(time.units).startswith("days since"):
             shift = 1.0 / 48.0

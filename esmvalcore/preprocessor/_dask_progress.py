@@ -8,12 +8,14 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any
 
+import dask
 import dask.diagnostics
+import dask.utils
 import distributed
 import distributed.diagnostics.progressbar
 import rich.progress
 
-from esmvalcore.config import CFG
+from esmvalcore.config._logging import configure_logging
 
 if TYPE_CHECKING:
     import contextlib
@@ -21,14 +23,13 @@ if TYPE_CHECKING:
 
     from dask.delayed import Delayed
 
+    from esmvalcore.config import Session
+
 logger = logging.getLogger(__name__)
 
 
 class RichProgressBar(dask.diagnostics.Callback):
     """Progress bar using `rich` for the Dask threaded scheduler."""
-
-    # Disable warnings about design choices that have been made in the base class.
-    # pylint: disable=method-hidden,super-init-not-called,too-few-public-methods,unused-argument,useless-suppression
 
     # Adapted from https://github.com/dask/dask/blob/0f3e5ff6e642e7661b3f855bfd192a6f6fb83b49/dask/diagnostics/progress.py#L32-L153
     def __init__(self):
@@ -87,9 +88,6 @@ class RichDistributedProgressBar(
 ):
     """Progress bar using `rich` for the Dask distributed scheduler."""
 
-    # Disable warnings about design choices that have been made in the base class.
-    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
-
     def __init__(self, keys) -> None:  # noqa: ANN001
         self.progress = rich.progress.Progress(
             rich.progress.TaskProgressColumn(),
@@ -121,14 +119,17 @@ class RichDistributedProgressBar(
 class ProgressLogger(dask.diagnostics.ProgressBar):
     """Progress logger for the Dask threaded scheduler."""
 
-    # Disable warnings about design choices that have been made in the base class.
-    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
-
     def __init__(
         self,
         log_interval: str | float = "1s",
+        log_level: str = "INFO",
+        log_dir: str | None = None,
         description: str = "",
     ) -> None:
+        configure_logging(
+            output_dir=log_dir,
+            console_log_level=log_level,
+        )
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
@@ -159,15 +160,18 @@ class DistributedProgressLogger(
 ):
     """Progress logger for the Dask distributed scheduler."""
 
-    # Disable warnings about design choices that have been made in the base class.
-    # pylint: disable=too-few-public-methods,unused-argument,useless-suppression
-
     def __init__(
         self,
         keys,  # noqa: ANN001
         log_interval: str | float = "1s",
+        log_level: str = "INFO",
+        log_dir: str | None = None,
         description: str = "",
     ) -> None:
+        configure_logging(
+            output_dir=log_dir,
+            console_log_level=log_level,
+        )
         self._desc = f"{description} " if description else description
         self._log_interval = dask.utils.parse_timedelta(
             log_interval,
@@ -204,6 +208,7 @@ class DistributedProgressLogger(
 
 def _compute_with_progress(
     delayeds: Iterable[Delayed],
+    session: Session,
     description: str,
 ) -> None:
     """Compute delayeds while displaying a progress bar."""
@@ -213,13 +218,12 @@ def _compute_with_progress(
     except ValueError:
         use_distributed = False
 
-    log_progress_interval = CFG["logging"]["log_progress_interval"]
+    log_progress_interval = session["logging"]["log_progress_interval"]
     if isinstance(log_progress_interval, (str, datetime.timedelta)):
         log_progress_interval = dask.utils.parse_timedelta(
             log_progress_interval,
         )
-
-    if CFG["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
+    if session["max_parallel_tasks"] != 1 and log_progress_interval == 0.0:
         # Enable progress logging if `max_parallel_tasks` > 1 to avoid clutter.
         log_progress_interval = 10.0
 
@@ -238,8 +242,10 @@ def _compute_with_progress(
         else:
             DistributedProgressLogger(
                 futures,
-                log_interval=log_progress_interval,
                 description=description,
+                log_interval=log_progress_interval,
+                log_level=session["log_level"],
+                log_dir=session.run_dir,
             )
         dask.compute(futures)
     else:
@@ -249,6 +255,8 @@ def _compute_with_progress(
             ctx = ProgressLogger(
                 description=description,
                 log_interval=log_progress_interval,
+                log_level=session["log_level"],
+                log_dir=session.run_dir,
             )
         with ctx:
             dask.compute(delayeds)

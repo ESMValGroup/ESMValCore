@@ -19,7 +19,10 @@ from scipy.interpolate import interp1d
 from esmvalcore.iris_helpers import date2num
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from iris.coords import Coord
+    from numpy.typing import ArrayLike
 
 logger = logging.getLogger(__name__)
 
@@ -237,54 +240,28 @@ def add_scalar_lambda550nm_coord(cube):
     return cube
 
 
-def add_scalar_typeland_coord(cube, value="default"):
-    """Add scalar coordinate 'typeland' with value of `value`."""
-    logger.debug("Adding typeland coordinate (%s)", value)
-    typeland_coord = iris.coords.AuxCoord(
+def add_scalar_areatype_coord(
+    cube,
+    var_name="type",
+    long_name="area type",
+    value="default",
+):
+    """Add scalar coordinate for area type.
+
+    Information given with var_name `var_name', long_name `long_name`, and value of `value`.
+    """
+    logger.debug("Adding areatype coordinate (%s)", value)
+    areatype_coord = iris.coords.AuxCoord(
         value,
-        var_name="type",
+        var_name=var_name,
         standard_name="area_type",
-        long_name="Land area type",
+        long_name=long_name,
         units=Unit("no unit"),
     )
     try:
         cube.coord("area_type")
     except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typeland_coord, ())
-    return cube
-
-
-def add_scalar_typesea_coord(cube, value="default"):
-    """Add scalar coordinate 'typesea' with value of `value`."""
-    logger.debug("Adding typesea coordinate (%s)", value)
-    typesea_coord = iris.coords.AuxCoord(
-        value,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Ocean area type",
-        units=Unit("no unit"),
-    )
-    try:
-        cube.coord("area_type")
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typesea_coord, ())
-    return cube
-
-
-def add_scalar_typesi_coord(cube, value="sea_ice"):
-    """Add scalar coordinate 'typesi' with value of `value`."""
-    logger.debug("Adding typesi coordinate (%s)", value)
-    typesi_coord = iris.coords.AuxCoord(
-        value,
-        var_name="type",
-        standard_name="area_type",
-        long_name="Sea Ice area type",
-        units=Unit("no unit"),
-    )
-    try:
-        cube.coord("area_type")
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(typesi_coord, ())
+        cube.add_aux_coord(areatype_coord, ())
     return cube
 
 
@@ -299,8 +276,19 @@ def cube_to_aux_coord(cube):
     )
 
 
+def ensure_c_contiguous_input[T](
+    func: Callable[[np.ndarray], T],
+) -> Callable[[ArrayLike], T]:
+    """Ensure that input to a function is C-contiguous (e.g., as expected by interp1d)."""
+
+    def wrapped_func(x: ArrayLike) -> T:
+        return func(np.ascontiguousarray(x))
+
+    return wrapped_func
+
+
 @cache
-def get_altitude_to_pressure_func():
+def get_altitude_to_pressure_func() -> Callable[[ArrayLike], np.ndarray]:
     """Get function converting altitude [m] to air pressure [Pa].
 
     Returns
@@ -311,12 +299,13 @@ def get_altitude_to_pressure_func():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    return interp1d(
+    interpolator = interp1d(
         data_frame["Altitude [m]"],
         data_frame["Pressure [Pa]"],
         kind="cubic",
         fill_value="extrapolate",
     )
+    return ensure_c_contiguous_input(interpolator)
 
 
 def get_bounds_cube(cubes, coord_var_name):
@@ -358,7 +347,7 @@ def get_bounds_cube(cubes, coord_var_name):
 
 
 @cache
-def get_pressure_to_altitude_func():
+def get_pressure_to_altitude_func() -> Callable[[ArrayLike], np.ndarray]:
     """Get function converting air pressure [Pa] to altitude [m].
 
     Returns
@@ -369,12 +358,13 @@ def get_pressure_to_altitude_func():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, "us_standard_atmosphere.csv")
     data_frame = pd.read_csv(source_file, comment="#")
-    return interp1d(
+    interpolator = interp1d(
         data_frame["Pressure [Pa]"],
         data_frame["Altitude [m]"],
         kind="cubic",
         fill_value="extrapolate",
     )
+    return ensure_c_contiguous_input(interpolator)
 
 
 def fix_bounds(cube, cubes, coord_var_names):
