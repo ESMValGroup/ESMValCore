@@ -19,11 +19,11 @@ class Areacello(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cubes: iris.cube.CubeList
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -90,11 +90,11 @@ class Tos(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cubes: iris.cube.CubeList
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
