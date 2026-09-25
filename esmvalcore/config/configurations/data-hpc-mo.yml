@@ -7,10 +7,6 @@ projects:
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
-      mo-old-vdi:
-        <<: *cmip6
-        priority: 2
-        rootpath: /project/champ/data
   CMIP5:
     data:
       mo: &cmip5
@@ -18,10 +14,6 @@ projects:
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}"
         filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
-      mo-old-vdi:
-        <<: *cmip5
-        priority: 2
-        rootpath: /project/champ/data
   CORDEX:
     data:
       mo: &cordex
@@ -29,10 +21,6 @@ projects:
         rootpath: /data/users/managecmip/champ
         dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}"
         filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
-      mo-old-vdi:
-        <<: *cordex
-        priority: 2
-        rootpath: /project/champ/data
   obs4MIPs:
     data:
       mo:
