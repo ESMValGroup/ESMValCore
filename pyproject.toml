@@ -47,7 +47,7 @@ dependencies = [
     "isodate>=0.7.0",
     "jinja2",
     "nc-time-axis",  # needed by iris.plot
-    "ncdata",
+    "ncdata>=0.4",
     "nested-lookup",
     "netCDF4",
     "numpy!=1.24.3",
@@ -62,7 +62,7 @@ dependencies = [
     "requests",
     "rich",
     "scipy>=1.6",
-    "scitools-iris<3.16",
+    "scitools-iris>=3.12.2",
     "shapely>=2.0.0",
     "stratify>=0.3",
     "xarray",
@@ -220,7 +220,7 @@ fire = "*"
 geopy = "*"
 humanfriendly = "*"
 intake-esgf = ">=2026.4.28"
-iris = "<3.16"
+iris = ">=3.12.2"
 iris-esmf-regrid = ">=0.11.0"
 iris-grib = ">=0.20.0"
 isodate = ">=0.7.0"
@@ -228,7 +228,7 @@ jinja2 = "*"
 libnetcdf = "!=4.9.1"
 lxml = "*"  # Used by the `prov` library to serialize provenance to XML.
 nc-time-axis = "*"
-ncdata = "*"
+ncdata = ">=0.4"
 nested-lookup = "*"
 netcdf4 = "*"
 numpy = "!=1.24.3"
