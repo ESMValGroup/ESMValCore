@@ -369,6 +369,22 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
         ),
         pytest.param(
             {
+                "dataset": "CRCM5-SN",
+                "driver": "CNRM-ESM2-1",
+                "domain": "NAM-12",
+                "ensemble": "r1i1p1f2",
+                "exp": "historical",
+                "frequency": "mon",
+                "project": "CORDEX-CMIP6",
+                "short_name": "tas",
+            },
+            {
+                "CORDEX-CMIP6.DD.NAM-12.OURANOS.CNRM-ESM2-1.historical.r1i1p1f2.CRCM5-SN.v2-r1.mon.tas",
+            },
+            id="CORDEX-CMIP6",
+        ),
+        pytest.param(
+            {
                 "dataset": "ERA-5",
                 "project": "obs4MIPs",
                 "short_name": "tas",
