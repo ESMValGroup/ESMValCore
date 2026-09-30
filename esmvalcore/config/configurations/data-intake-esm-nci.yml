@@ -1,10 +1,10 @@
-# Documentation example: intake-esm catalog (DKRZ - on-disk access)
-# Use `esmvaltool config copy data-intake-esm-dkrz-disk.yml` to copy this example
-# to your configuration directory, then update the `catalog` URL if needed.
+# Template: intake-esm catalog (NCI - on-disk access).
+# Use `esmvaltool config copy data-intake-esm-nci.yml` to copy this example,
+# then update the `catalog` path to an NCI catalog available on your system.
 projects:
   CMIP6:
     data:
-      dkrz-disk-catalog:
+      nci-disk-catalog:
         type: esmvalcore.io.intake_esm.IntakeEsmDataSource
         facets:
           activity: "activity_id"

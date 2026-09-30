@@ -1,6 +1,7 @@
-# Documentation example: intake-esm catalog (GCS)
-# Use `esmvaltool config copy data-intake-esm-gcs.yml` to copy this example
-# to your configuration directory, then update the `catalog` URL.
+# Public Pangeo CMIP6 catalog on Google Cloud Storage.
+# Use `esmvaltool config copy data-intake-esm-gcs.yml` to copy this example.
+# The catalog has no time_range column; ESMValCore clips the requested period
+# after loading the data.
 projects:
   CMIP6:
     data:
@@ -16,57 +17,13 @@ projects:
           mip: "table_id"
           short_name: "variable_id"
           version: "version"
-          timerange: "time_range"
         catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip6.json"
+        squeeze_dimensions:
+          - member_id
+          - dcpp_init_year
         to_dask_kwargs:
-          xarray_open_kwargs:
-            decode_cf: false
-            decode_times: false
-            decode_coords: false
-          xarray_combine_by_coords_kwargs:
-            compat: "override"
-            coords: "minimal"
-  CMIP5:
-    data:
-      gcs-catalog:
-        type: esmvalcore.io.intake_esm.IntakeEsmDataSource
-        facets:
-          activity: "activity_id"
-          dataset: "source_id"
-          ensemble: "member_id"
-          exp: "experiment_id"
-          institute: "institution_id"
-          grid: "grid_label"
-          mip: "table_id"
-          short_name: "variable_id"
-          version: "version"
-          timerange: "time_range"
-        catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip5.json"
-        to_dask_kwargs:
-          xarray_open_kwargs:
-            decode_cf: false
-            decode_times: false
-            decode_coords: false
-          xarray_combine_by_coords_kwargs:
-            compat: "override"
-            coords: "minimal"
-  CMIP3:
-    data:
-      gcs-catalog:
-        type: esmvalcore.io.intake_esm.IntakeEsmDataSource
-        facets:
-          activity: "activity_id"
-          dataset: "source_id"
-          ensemble: "member_id"
-          exp: "experiment_id"
-          institute: "institution_id"
-          grid: "grid_label"
-          mip: "table_id"
-          short_name: "variable_id"
-          version: "version"
-          timerange: "time_range"
-        catalog: "https://storage.googleapis.com/cmip6/pangeo-cmip3.json"
-        to_dask_kwargs:
+          storage_options:
+            token: anon
           xarray_open_kwargs:
             decode_cf: false
             decode_times: false

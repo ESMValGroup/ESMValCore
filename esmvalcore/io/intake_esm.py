@@ -1,40 +1,26 @@
-"""Access data using `intake-esm <https://intake-esgf.readthedocs.io>`_.
+"""Find and load data from `intake-esm <https://intake-esm.readthedocs.io/>`_ catalogs.
 
-@CT: Needs updating, this is copied verbatim from intake-esgf module.
-
-.. note::
-
-    It is highly recommended that you take a moment to
-    :doc:`configure intake-esm <intake_esm:configure>` before using it
-    with ESMValCore. Make sure to set ``local_cache`` to a path where
-    it can store downloaded files and if (some) Esm data is already
-    available on your system, point ``esg_dataroot`` to it. If you are
-    missing certain search results, you may want to choose a different
-    index node for searching the Esm.
-
-Run the command ``esmvaltool config copy data-intake-esm.yml`` to update
-your :ref:`configuration <config-data-sources>` to use this module. This will
-create a file with the following content in your configuration directory:
-
-.. literalinclude:: ../configurations/data-intake-esm.yml
-   :language: yaml
-   :caption: Contents of ``data-intake-esm.yml``
-
+Configure a catalog URL or local path as a data source using, for example,
+``esmvaltool config copy data-intake-esm-gcs.yml``. The catalog is opened when
+the data source is first searched.
 """
 
 from __future__ import annotations
 
 import copy
+import fnmatch
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+import intake
+import numpy as np
 
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import iris.cube
     from intake_esm.core import esm_datastore
     from intake_esm.source import ESMDataSource
@@ -72,10 +58,7 @@ def _to_path_dict(
 
 @dataclass
 class IntakeEsmDataset(DataElement):
-    """A dataset that can be used to load data found using intake-esm_.
-
-    Roughly maps, conceptually, to `intake_esm.esm_datastore`
-    """
+    """A catalog selection that can be loaded as Iris cubes."""
 
     name: str
     """A unique name identifying the data."""
@@ -86,8 +69,17 @@ class IntakeEsmDataset(DataElement):
     catalog: esm_datastore = field(repr=False)
     """The intake-esm catalog describing this data."""
 
+    catalog_key: str | None = field(default=None, repr=False)
+    """The intake-esm key, which can differ from the data element name."""
+
     to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
     """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
+
+    squeeze_dimensions: tuple[str, ...] = field(
+        default_factory=tuple,
+        repr=False,
+    )
+    """Catalog aggregation dimensions to drop when they have length one."""
 
     _attributes: dict[str, Any] | None = field(
         init=False,
@@ -132,22 +124,40 @@ class IntakeEsmDataset(DataElement):
         -------
         : The loaded data.
         """
-        files = _to_path_dict(self.catalog, quiet=quiet)[self.name]
+        files = _to_path_dict(self.catalog, quiet=quiet)[
+            self.catalog_key or self.name
+        ]
 
         dataset = self.catalog.to_dask(**self.to_dask_kwargs)
-        # Store the local paths in the attributes for easier debugging.
-        dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
+        for dimension in self.squeeze_dimensions:
+            if dimension in dataset.sizes:
+                if dataset.sizes[dimension] != 1:
+                    msg = (
+                        f"Cannot squeeze dimension '{dimension}' with "
+                        f"length {dataset.sizes[dimension]} in '{self.name}'."
+                    )
+                    raise ValueError(msg)
+                dataset = dataset.squeeze(dim=dimension, drop=True)
+        # Preserve the asset URLs or paths for debugging and CMOR fixes.
+        source_files = ", ".join(str(file) for file in files)
+        dataset.attrs["source_file"] = source_files
         # Cache the attributes.
         self.attributes = copy.deepcopy(dataset.attrs)
-        return dataset_to_iris(dataset)
+        cubes = dataset_to_iris(dataset, filepath=source_files)
+        # ncdata can turn scalar Zarr attributes into zero-dimensional arrays.
+        # CMOR metadata fixes expect scalar values for attributes such as
+        # branch_time_in_child and branch_time_in_parent.
+        for cube in cubes:
+            for name in ("branch_time_in_child", "branch_time_in_parent"):
+                value = cube.attributes.get(name)
+                if isinstance(value, np.ndarray) and value.ndim == 0:
+                    cube.attributes[name] = value.item()
+        return cubes
 
 
 @dataclass
 class IntakeEsmDataSource(DataSource):
-    """Data source that can be used to find data using intake-esm.
-
-    Maps to an `intake_esm.esm_datasource`.
-    """
+    """Data source that finds data in an intake-esm datastore."""
 
     name: str
     """A name identifying the data source."""
@@ -161,23 +171,34 @@ class IntakeEsmDataSource(DataSource):
     facets: dict[str, str]
     """Mapping between the ESMValCore and intake-esm facet names."""
 
-    catalog: esm_datastore = field(
+    catalog: str | Path | esm_datastore = field(
         repr=False,
     )
-    """The intake-esm catalog used to find data."""
+    """An intake-esm catalog, or a URL/path to one."""
 
     to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
     """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
 
+    squeeze_dimensions: tuple[str, ...] = field(
+        default_factory=tuple,
+        repr=False,
+    )
+    """Catalog aggregation dimensions to drop when they have length one."""
+
     time_separator: str = field(repr=False, default="/")
-    """ The separator used in time facets. Needed for datasets which have time range
-    formats as eg. `185002-185501`, not `185002/185501`. """
+    """Separator used in catalog time ranges, e.g. ``185002-185501``."""
 
     values: dict[str, dict[str, str]] = field(default_factory=dict)
     """Mapping between the ESMValCore and intake-esm facet values."""
 
     debug_info: str = field(init=False, repr=False, default="")
     """A string containing debug information when no data is found."""
+
+    def _get_catalog(self) -> esm_datastore:
+        """Open a configured catalog once, when it is first needed."""
+        if isinstance(self.catalog, str | Path):
+            self.catalog = intake.open_esm_datastore(str(self.catalog))
+        return self.catalog
 
     def find_data(self, **facets: FacetValue) -> list[IntakeEsmDataset]:
         """Find data.
@@ -196,12 +217,19 @@ class IntakeEsmDataSource(DataSource):
         normalized_facets = {
             facet: [str(values)]
             if isinstance(values, str | int | float)
-            else values
+            else [str(value) for value in values]
             for facet, values in facets.items()
-            if facet in self.facets
+            if facet in self.facets and values is not None
         }
 
-        # Translate "our" facets to Esm facets and "our" values to Esm values.
+        # A lone '*' does not constrain the search.
+        normalized_facets = {
+            facet: values
+            for facet, values in normalized_facets.items()
+            if "*" not in values
+        }
+
+        # Translate ESMValCore facet names and values to catalog values.
         query = {
             their_facet: [
                 self.values.get(our_facet, {}).get(v, v)
@@ -212,20 +240,35 @@ class IntakeEsmDataSource(DataSource):
         }
 
         if self.time_separator != "/" and self.facets.get("timerange"):
-            query[self.facets["timerange"]] = [
-                v.replace("/", self.time_separator)
-                for v in query[self.facets["timerange"]]
-            ]
-
-        # Transform time facet values to use the correct separator.
-        for our_facet, their_facet in self.facets.items():
-            if "time" in our_facet.lower() and their_facet in query:
-                query[their_facet] = [
-                    v.replace(self.time_separator, self.time_separator)
-                    for v in query[their_facet]
+            time_facet = self.facets["timerange"]
+            if time_facet in query:
+                query[time_facet] = [
+                    value.replace("/", self.time_separator)
+                    for value in query[time_facet]
                 ]
 
-        res = self.catalog.search(**query)
+        catalog = self._get_catalog()
+
+        # Match globs against catalog metadata before searching. Passing a glob
+        # directly to intake-esm makes it interpret '*' as a regular expression.
+        query = {
+            facet: [
+                match
+                for value in values
+                for match in (
+                    [
+                        candidate
+                        for candidate in catalog.df[facet].dropna().unique()
+                        if fnmatch.fnmatchcase(str(candidate), value)
+                    ]
+                    if any(char in value for char in "*?[")
+                    else [value]
+                )
+            ]
+            for facet, values in query.items()
+        }
+
+        res = catalog.search(**query) if query else catalog
 
         if not len(res):
             self.debug_info = (
@@ -240,7 +283,8 @@ class IntakeEsmDataSource(DataSource):
             )
             return []
 
-        # Return a list of datasets, with one IntakeEsmDataset per dataset_id.
+        # Return one data element per set of mapped facets. Intake-esm keys can
+        # combine multiple versions or ensemble members into one dataset.
         result: list[IntakeEsmDataset] = []
 
         inverse_values = {
@@ -254,31 +298,48 @@ class IntakeEsmDataSource(DataSource):
         for key in sorted(res):
             esm_datasource = res[key]
             path_col = esm_datasource.path_column_name
-
-            valid_paths = esm_datasource.df[path_col].to_list()
-            path_query = {path_col: valid_paths}
-            cat = self.catalog.search(**path_query)
-
-            # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = {}
-            df = cat.df
-            for our_facet, esm_facet in self.facets.items():
-                if esm_facet in df:
-                    esm_values = df[esm_facet].unique().tolist()
-                    our_values = [
-                        inverse_values.get(our_facet, {}).get(v, v)
-                        for v in esm_values
-                    ]
-                    dataset_facets[our_facet] = our_values
-
-            dataset = IntakeEsmDataset(
-                name=key,
-                facets={
-                    k: v[0] if len(v) == 1 else v
-                    for k, v in dataset_facets.items()
-                },  # type: ignore[arg-type]
-                catalog=cat,
-                to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
+            df = esm_datasource.df
+            varying_columns = [
+                column
+                for column in self.facets.values()
+                if column in df and df[column].nunique(dropna=False) > 1
+            ]
+            groups = (
+                df.groupby(varying_columns, dropna=False, sort=True)
+                if varying_columns
+                else [((), df)]
             )
-            result.append(dataset)
+            for _, rows in groups:
+                selection = {
+                    column: [rows[column].iloc[0]]
+                    for column in varying_columns
+                }
+                selection[path_col] = rows[path_col].unique().tolist()
+                cat = res.search(**selection)
+
+                dataset_facets = {}
+                for our_facet, esm_facet in self.facets.items():
+                    if esm_facet in cat.df:
+                        esm_values = cat.df[esm_facet].unique().tolist()
+                        our_values = [
+                            inverse_values.get(our_facet, {}).get(value, value)
+                            for value in esm_values
+                        ]
+                        dataset_facets[our_facet] = our_values[0]
+
+                identity = ",".join(
+                    f"{facet}={value}"
+                    for facet, value in sorted(dataset_facets.items())
+                    if facet != "version"
+                )
+                result.append(
+                    IntakeEsmDataset(
+                        name=f"{key}:{identity}",
+                        facets=dataset_facets,
+                        catalog=cat,
+                        catalog_key=key,
+                        to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
+                        squeeze_dimensions=tuple(self.squeeze_dimensions),
+                    ),
+                )
         return result
