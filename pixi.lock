@@ -6100,7 +6100,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/greenlet?source=hash-mapping
+  - pkg:pypi/greenlet?source=compressed-mapping
   run_exports: {}
   size: 278368
   timestamp: 1786384047792
@@ -6296,7 +6296,7 @@ packages:
   - python_abi 3.14.* *_cp314
   license: BSD-3-Clause
   purls:
-  - pkg:pypi/kiwisolver?source=hash-mapping
+  - pkg:pypi/kiwisolver?source=compressed-mapping
   run_exports: {}
   size: 75620
   timestamp: 1788505651547
@@ -9770,7 +9770,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/sqlalchemy?source=hash-mapping
+  - pkg:pypi/sqlalchemy?source=compressed-mapping
   run_exports: {}
   size: 4047549
   timestamp: 1786535232010
@@ -10662,7 +10662,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/bokeh?source=hash-mapping
+  - pkg:pypi/bokeh?source=compressed-mapping
   run_exports: {}
   size: 4454345
   timestamp: 1787144786949
@@ -11959,7 +11959,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/jupyter-server?source=compressed-mapping
+  - pkg:pypi/jupyter-server?source=hash-mapping
   run_exports: {}
   size: 365818
   timestamp: 1787864637286
@@ -13399,7 +13399,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/python-discovery?source=hash-mapping
+  - pkg:pypi/python-discovery?source=compressed-mapping
   run_exports: {}
   size: 38928
   timestamp: 1787953569064
@@ -14183,7 +14183,7 @@ packages:
   - python
   license: Apache-2.0
   purls:
-  - pkg:pypi/websocket-client?source=compressed-mapping
+  - pkg:pypi/websocket-client?source=hash-mapping
   run_exports: {}
   size: 78254
   timestamp: 1788531123810
@@ -14247,7 +14247,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/xyzservices?source=compressed-mapping
+  - pkg:pypi/xyzservices?source=hash-mapping
   run_exports: {}
   size: 53963
   timestamp: 1788530754725
@@ -15116,7 +15116,7 @@ packages:
   - python_abi 3.12.* *_cp312
   license: MIT
   purls:
-  - pkg:pypi/cffi?source=compressed-mapping
+  - pkg:pypi/cffi?source=hash-mapping
   run_exports: {}
   size: 289165
   timestamp: 1788485306633
@@ -18008,7 +18008,7 @@ packages:
   - python_abi 3.12.* *_cp312
   license: Apache-2.0
   purls:
-  - pkg:pypi/msgpack?source=hash-mapping
+  - pkg:pypi/msgpack?source=compressed-mapping
   run_exports: {}
   size: 100932
   timestamp: 1788525119108
@@ -19279,7 +19279,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/pyzmq?source=hash-mapping
+  - pkg:pypi/pyzmq?source=compressed-mapping
   run_exports: {}
   size: 195379
   timestamp: 1787301084171
@@ -19578,7 +19578,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/sqlalchemy?source=hash-mapping
+  - pkg:pypi/sqlalchemy?source=compressed-mapping
   run_exports: {}
   size: 4044830
   timestamp: 1786535242452
