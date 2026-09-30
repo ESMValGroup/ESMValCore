@@ -106,7 +106,7 @@ def test_to_iris_online():
         project="CMIP6",
         priority=1,
         facets={
-            "activity": "activity_drs",
+            "activity": "activity_id",
             "dataset": "source_id",
             "ensemble": "member_id",
             "exp": "experiment_id",
@@ -171,7 +171,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         {
             "project": ["CMIP6", "CMIP6"],
             "mip_era": ["CMIP6", "CMIP6"],
-            "activity_drs": ["CMIP", "ScenarioMIP"],
+            "activity_id": ["CMIP", "ScenarioMIP"],
             "institution_id": ["CCCma", "CCCma"],
             "source_id": ["CanESM5", "CanESM5"],
             "experiment_id": ["historical", "ssp585"],
@@ -208,7 +208,7 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         project="CMIP6",
         priority=1,
         facets={
-            "activity": "activity_drs",
+            "activity": "activity_id",
             "dataset": "source_id",
             "ensemble": "member_id",
             "exp": "experiment_id",
@@ -298,7 +298,7 @@ def data_sources(session: Session) -> list[esmvalcore.io.protocol.DataSource]:
                 "timerange": "1850/2100",
             },
             {
-                "MIP-DRS7.CMIP7.CMIP.CCCma.CanESM6-0-MR.historical.r1i1p1f1.glb.tas.tavg-h2m-hxy-u.g150",
+                "MIP-DRS7.CMIP7.CMIP.CCCma.CanESM6-0-MR.historical.r1i1p1f1.glb.mon.tas.tavg-h2m-hxy-u.g150",
             },
             id="CMIP7",
         ),
