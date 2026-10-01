@@ -1,13 +1,13 @@
-# Template: intake-esm catalog (NCI - on-disk access).
+# Example: NCI fs38 intake-esm catalog (on-disk access on Gadi).
 # Use `esmvaltool config copy data-intake-esm-nci.yml` to copy this example,
-# then update the `catalog` path to an NCI catalog available on your system.
+# then adjust the catalog path and facets if using another NCI collection.
 projects:
   CMIP6:
     data:
       nci-disk-catalog:
         type: esmvalcore.io.intake_esm.IntakeEsmDataSource
         facets:
-          activity: "activity_id"
+          activity: "project_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
@@ -17,6 +17,9 @@ projects:
           short_name: "variable_id"
           version: "version"
           timerange: "time_range"
-        # Adjust if time_range values in your catalog use another separator.
+        # Select versioned links, excluding physical-file and latest aliases.
+        catalog_filters:
+          file_type: "l"
+          version: "v*"
         time_separator: "-"
-        catalog: "/path/to/nci/intake-catalog.yml"
+        catalog: "/g/data/fs38/catalog/v2/esm/catalog.json"

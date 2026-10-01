@@ -143,6 +143,11 @@ class IntakeEsmDataSource(DataSource):
     )
     """An intake-esm catalog, or a URL/path to one."""
 
+    catalog_filters: dict[str, str | int | float | list[str | int | float]] = (
+        field(default_factory=dict)
+    )
+    """Fixed catalog selections applied before recipe facets."""
+
     to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
     """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
 
@@ -209,23 +214,7 @@ class IntakeEsmDataSource(DataSource):
         debug_query = copy.deepcopy(query)
 
         catalog = self._get_catalog()
-        missing = set(self.facets.values()) - set(catalog.df.columns)
-        if missing:
-            msg = (
-                f"intake-esm catalog '{catalog.esmcat.id}' is missing "
-                f"configured facet columns: {', '.join(sorted(missing))}"
-            )
-            raise ValueError(msg)
-        iterable_columns = (
-            set(self.facets.values()) & catalog.esmcat.columns_with_iterables
-        )
-        if iterable_columns:
-            msg = (
-                f"intake-esm catalog '{catalog.esmcat.id}' has list-valued "
-                f"mapped facet columns: {', '.join(sorted(iterable_columns))}. "
-                "The adapter requires one value per row for mapped facets."
-            )
-            raise ValueError(msg)
+        _validate_catalog_columns(catalog, self.facets, self.catalog_filters)
 
         # A catalog time_range describes asset coverage, not an exact recipe
         # value. Select overlapping assets after the other catalog filters.
@@ -235,21 +224,16 @@ class IntakeEsmDataSource(DataSource):
         # Resolve both exact values and globs against catalog metadata. This
         # preserves native catalog types (for example, numeric versions), and
         # avoids intake-esm interpreting a glob as a regular expression.
-        query = {
-            facet: [
-                match
-                for value in values
-                for match in catalog.df[facet].dropna().unique()
-                if (
-                    fnmatch.fnmatchcase(str(match), value)
-                    if any(char in value for char in "*?[")
-                    else str(match) == value
-                )
-            ]
-            for facet, values in query.items()
+        fixed_query = {
+            column: [str(value) for value in values]
+            if isinstance(values, list | tuple)
+            else [str(values)]
+            for column, values in self.catalog_filters.items()
         }
-
-        res = catalog.search(**query) if query else catalog
+        fixed_query = _resolve_catalog_query(catalog, fixed_query)
+        res = catalog.search(**fixed_query) if fixed_query else catalog
+        query = _resolve_catalog_query(res, query)
+        res = res.search(**query) if query else res
         if requested_times and res.df.shape[0]:
             if any(
                 any(char in value for char in "*?[")
@@ -351,6 +335,60 @@ class IntakeEsmDataSource(DataSource):
                 ),
             )
         return result
+
+
+def _validate_catalog_columns(
+    catalog: esm_datastore,
+    facets: dict[str, str],
+    filters: dict[str, Any],
+) -> None:
+    """Check that configured catalog columns can be searched safely."""
+    missing_facets = set(facets.values()) - set(catalog.df.columns)
+    if missing_facets:
+        msg = (
+            f"intake-esm catalog '{catalog.esmcat.id}' is missing "
+            "configured facet columns: "
+            f"{', '.join(sorted(missing_facets))}"
+        )
+        raise ValueError(msg)
+    missing_filters = set(filters) - set(catalog.df.columns)
+    if missing_filters:
+        msg = (
+            f"intake-esm catalog '{catalog.esmcat.id}' is missing "
+            "configured filter columns: "
+            f"{', '.join(sorted(missing_filters))}"
+        )
+        raise ValueError(msg)
+    iterable_columns = (
+        set(facets.values()) & catalog.esmcat.columns_with_iterables
+    )
+    if iterable_columns:
+        msg = (
+            f"intake-esm catalog '{catalog.esmcat.id}' has list-valued "
+            f"mapped facet columns: {', '.join(sorted(iterable_columns))}. "
+            "The adapter requires one value per row for mapped facets."
+        )
+        raise ValueError(msg)
+
+
+def _resolve_catalog_query(
+    catalog: esm_datastore,
+    query: dict[str, list[str]],
+) -> dict[str, list[Any]]:
+    """Resolve string selections to native catalog values, including globs."""
+    return {
+        facet: [
+            match
+            for value in values
+            for match in catalog.df[facet].dropna().unique()
+            if (
+                fnmatch.fnmatchcase(str(match), value)
+                if any(char in value for char in "*?[")
+                else str(match) == value
+            )
+        ]
+        for facet, values in query.items()
+    }
 
 
 def _ranges_overlap(requested: str, asset: str, separator: str) -> bool:

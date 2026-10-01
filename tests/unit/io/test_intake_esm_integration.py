@@ -453,6 +453,68 @@ def test_invalid_catalog_mapping_reports_missing_column(
         source.find_data(dataset="TEST-MODEL")
 
 
+def test_catalog_filters_select_versioned_links(small_catalog: Path) -> None:
+    """Fixed catalog filters select versioned links without recipe facets."""
+    csv_path = small_catalog.parent / "catalog.csv"
+    with csv_path.open(newline="") as file:
+        reader = csv.DictReader(file)
+        columns = [*reader.fieldnames, "file_type"]
+        rows = list(reader)
+    for row in rows:
+        row["file_type"] = "f"
+        row["version"] = row["version"].replace("v", "d", 1)
+    links = [
+        {
+            **row,
+            "file_type": "l",
+            "version": row["version"].replace("d", "v", 1),
+        }
+        for row in rows
+    ]
+    latest = {**links[0], "version": "latest"}
+    with csv_path.open("w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=columns)
+        writer.writeheader()
+        writer.writerows([*rows, *links, latest])
+    descriptor = json.loads(small_catalog.read_text())
+    descriptor["attributes"].append({"column_name": "file_type"})
+    small_catalog.write_text(json.dumps(descriptor))
+
+    source = IntakeEsmDataSource(
+        name="filtered",
+        project="CMIP6",
+        priority=1,
+        catalog=small_catalog,
+        facets={"dataset": "source_id", "version": "version"},
+        catalog_filters={"file_type": "l", "version": "v*"},
+    )
+    datasets = source.find_data(dataset="TEST-MODEL")
+    assert {dataset.facets["version"] for dataset in datasets} == {
+        "v1",
+        "v2",
+    }
+    assert source.find_data(dataset="TEST-MODEL", version="latest") == []
+
+
+def test_invalid_catalog_filter_reports_missing_column(
+    small_catalog: Path,
+) -> None:
+    """A fixed filter must refer to a column present in the catalog."""
+    source = IntakeEsmDataSource(
+        name="filtered",
+        project="CMIP6",
+        priority=1,
+        catalog=small_catalog,
+        facets={"dataset": "source_id"},
+        catalog_filters={"file_type": "f"},
+    )
+    with pytest.raises(
+        ValueError,
+        match="missing configured filter columns: file_type",
+    ):
+        source.find_data(dataset="TEST-MODEL")
+
+
 def test_numeric_catalog_facet_matches_recipe_string(
     chunked_catalog: Path,
 ) -> None:
