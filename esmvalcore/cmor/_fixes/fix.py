@@ -860,23 +860,25 @@ class GenericFix(Fix):
                 else:
                     attrs[parent_time] = "days since 1850-1-1 00:00:00"
 
-                    branch_parent = "branch_time_in_parent"
-                    if branch_parent in attrs:
-                        # Overflow happens when the time is very large.
-                        with contextlib.suppress(OverflowError):
-                            attrs[branch_parent] = parent_units.convert(
-                                attrs[branch_parent],
-                                cube_coord.units,
-                            )
-
-                    branch_child = "branch_time_in_child"
-                    if branch_child in attrs:
-                        # Overflow happens when the time is very large.
-                        with contextlib.suppress(OverflowError):
-                            attrs[branch_child] = old_units.convert(
-                                attrs[branch_child],
-                                cube_coord.units,
-                            )
+                    for name, units in (
+                        ("branch_time_in_parent", parent_units),
+                        ("branch_time_in_child", old_units),
+                    ):
+                        if name in attrs:
+                            value = attrs[name]
+                            # Iris conversion can represent scalar attributes
+                            # as zero-dimensional arrays; cf_units needs scalars.
+                            if (
+                                isinstance(value, np.ndarray)
+                                and value.ndim == 0
+                            ):
+                                value = value.item()
+                            # Overflow happens when the time is very large.
+                            with contextlib.suppress(OverflowError):
+                                attrs[name] = units.convert(
+                                    value,
+                                    cube_coord.units,
+                                )
 
     def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
         """Fix time bounds."""

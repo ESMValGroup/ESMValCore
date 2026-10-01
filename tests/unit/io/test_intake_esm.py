@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import intake
-import numpy as np
 import pytest
 import xarray as xr
 from intake_esm.source import ESMDataSourceError
@@ -16,7 +15,6 @@ import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import (
     IntakeEsmDataset,
     IntakeEsmDataSource,
-    _to_path_dict,
 )
 
 if TYPE_CHECKING:
@@ -66,21 +64,16 @@ def test_attributes_raises_before_to_iris() -> None:
 
 def test_to_iris(mocker: MockerFixture) -> None:
     """`to_iris` should load the data and cache attributes."""
-    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-    key = "my.dataset.1"
-    mocker.patch(
-        "esmvalcore.io.intake_esm._to_path_dict",
-        return_value={key: ["/path/to/file.nc"]},
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
+        source_id="BCC-CSM2-MR",
+        experiment_id="abrupt-4xCO2",
+        variable_id="tasmax",
+        member_id="r1i1p1f1",
     )
     ds = xr.Dataset(attrs={"attr": "value"})
     mocker.patch.object(cat, "to_dask", return_value=ds)
 
     cube = mocker.Mock()
-    cube.attributes = {
-        "branch_time_in_child": np.array(0.0),
-        "branch_time_in_parent": np.array(36500.0),
-        "other_attribute": np.array(1.0),
-    }
     cubes = [cube]
     mocker.patch.object(
         esmvalcore.io.intake_esm,
@@ -90,7 +83,7 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
     to_dask_kwargs = {"xarray_open_kwargs": {"decode_times": False}}
     dataset = IntakeEsmDataset(
-        name=key,
+        name="test",
         facets={},
         catalog=cat,
         to_dask_kwargs=to_dask_kwargs,
@@ -101,22 +94,17 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
     assert dataset.attributes == {
         "attr": "value",
-        "source_file": "/path/to/file.nc",
+        "source_file": cat.df[cat.esmcat.assets.column_name].iloc[0],
     }
-    assert cube.attributes["branch_time_in_child"] == 0.0
-    assert isinstance(cube.attributes["branch_time_in_child"], float)
-    assert cube.attributes["branch_time_in_parent"] == 36500.0
-    assert isinstance(cube.attributes["branch_time_in_parent"], float)
-    assert isinstance(cube.attributes["other_attribute"], np.ndarray)
 
 
 def test_to_iris_rejects_multiple_members(mocker: MockerFixture) -> None:
     """Squeezing a dimension must not silently discard ensemble members."""
-    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-    key = "my.dataset.1"
-    mocker.patch(
-        "esmvalcore.io.intake_esm._to_path_dict",
-        return_value={key: ["/path/to/file.nc"]},
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
+        source_id="BCC-CSM2-MR",
+        experiment_id="abrupt-4xCO2",
+        variable_id="tasmax",
+        member_id="r1i1p1f1",
     )
     mocker.patch.object(
         cat,
@@ -124,7 +112,7 @@ def test_to_iris_rejects_multiple_members(mocker: MockerFixture) -> None:
         return_value=xr.Dataset(coords={"member_id": ["r1", "r2"]}),
     )
     dataset = IntakeEsmDataset(
-        name=key,
+        name="test",
         facets={},
         catalog=cat,
         squeeze_dimensions=("member_id",),
@@ -186,12 +174,18 @@ def test_find_data() -> None:
     assert len(results) == 10
     assert len({dataset.name for dataset in results}) == 10
 
-    dataset = results[0]
+    dataset = next(
+        dataset
+        for dataset in results
+        if dataset.facets["dataset"] == "BCC-CSM2-MR"
+    )
     assert isinstance(dataset, IntakeEsmDataset)
     assert dataset.to_dask_kwargs == {
         "xarray_open_kwargs": {"decode_times": False},
     }
-    assert dataset.catalog_key == "CMIP.BCC.BCC-CSM2-MR.abrupt-4xCO2.Amon.gn"
+    assert dataset.name.startswith("CMIP6:")
+    assert "BCC-CSM2-MR" in dataset.name
+    assert len(dataset.catalog) == 1
 
     assert dataset.facets == {
         "activity": "CMIP",
@@ -240,29 +234,8 @@ def test_to_iris_nomock():
         dataset.to_iris()
 
 
-def test_to_path_dict_nofiles() -> None:
-    """Test for quiet flag.
-
-    If we disable the `quiet` flag and pass a search query that returns no results, `to_path_dict`
-    should warn.
-
-    TODO: Can this code path ever be triggered in practice?
-    """
-    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-
-    empty_cat = cat.search(variable_id="non_existent_variable")
-
-    with pytest.warns(UserWarning, match="There are no datasets to load!"):
-        ret = _to_path_dict(empty_cat, quiet=False)
-
-    assert ret == {}
-
-
-def test_search_time_facet_transformation() -> None:
-    """Test for `time_separator` handling in `find_data`.
-
-    Ensure that `find_data` correctly transforms time facet values to use the correct separator when searching the catalog.
-    """
+def test_search_time_overlap() -> None:
+    """A short recipe period should match a long catalog asset period."""
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
 
     data_source = IntakeEsmDataSource(
@@ -286,9 +259,23 @@ def test_search_time_facet_transformation() -> None:
         catalog=cat,
     )
 
-    results = data_source.find_data(timerange="185001/230012")
+    results = data_source.find_data(
+        dataset="BCC-ESM1",
+        short_name="tasmax",
+        timerange="200001/200002",
+    )
+    assert len(results) == 1
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
+    assert len(dataset.catalog.df) == 1
+    assert (
+        data_source.find_data(
+            dataset="BCC-ESM1",
+            short_name="tasmax",
+            timerange="240001/240002",
+        )
+        == []
+    )
 
     with pytest.raises(ESMDataSourceError):
         dataset.to_iris()

@@ -9,21 +9,19 @@ from __future__ import annotations
 
 import copy
 import fnmatch
-import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import intake
-import numpy as np
 
+from esmvalcore.io.local import _parse_period, _truncate_dates
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
     import iris.cube
     from intake_esm.core import esm_datastore
-    from intake_esm.source import ESMDataSource
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -32,28 +30,6 @@ __all__ = [
     "IntakeEsmDataSource",
     "IntakeEsmDataset",
 ]
-
-
-def _to_path_dict(
-    esm_datastore: esm_datastore,
-    quiet: bool = False,
-) -> dict[str, list[str | Path]]:
-    """Return the current search as a dictionary of paths to files.
-
-    This method does not exist on intake-ESM's esm_datastore, so we implement it here.
-    """
-    if not esm_datastore.keys() and not quiet:
-        warnings.warn(
-            "There are no datasets to load! Returning an empty dictionary.",
-            UserWarning,
-            stacklevel=2,
-        )
-        return {}
-
-    def _to_pathlist(source: ESMDataSource) -> list[str | Path]:
-        return source.df[source.path_column_name].to_list()
-
-    return {key: _to_pathlist(val) for key, val in esm_datastore.items()}
 
 
 @dataclass
@@ -68,9 +44,6 @@ class IntakeEsmDataset(DataElement):
 
     catalog: esm_datastore = field(repr=False)
     """The intake-esm catalog describing this data."""
-
-    catalog_key: str | None = field(default=None, repr=False)
-    """The intake-esm key, which can differ from the data element name."""
 
     to_dask_kwargs: dict[str, Any] = field(default_factory=dict, repr=False)
     """Keyword arguments passed to ``intake_esm.esm_datastore.to_dask``."""
@@ -112,23 +85,26 @@ class IntakeEsmDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
-    def to_iris(self, quiet: bool = True) -> iris.cube.CubeList:
+    def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
-
-        Arguments
-        ---------
-        quiet : bool, optional
-            If True, suppress warnings when no datasets are found. Default is True.
 
         Returns
         -------
         : The loaded data.
         """
-        files = _to_path_dict(self.catalog, quiet=quiet)[
-            self.catalog_key or self.name
-        ]
+        if len(self.catalog) != 1:
+            msg = (
+                f"Expected one intake-esm dataset for '{self.name}', "
+                f"found {len(self.catalog)}. Map the missing identity facets "
+                "or correct the catalog aggregation rules."
+            )
+            raise ValueError(msg)
+        path_column = self.catalog.esmcat.assets.column_name
+        files = self.catalog.df[path_column].dropna().unique().tolist()
 
         dataset = self.catalog.to_dask(**self.to_dask_kwargs)
+        # A catalog can add dimensions that are not part of the CMOR variable.
+        # Only discard dimensions explicitly named by its configuration.
         for dimension in self.squeeze_dimensions:
             if dimension in dataset.sizes:
                 if dataset.sizes[dimension] != 1:
@@ -143,16 +119,7 @@ class IntakeEsmDataset(DataElement):
         dataset.attrs["source_file"] = source_files
         # Cache the attributes.
         self.attributes = copy.deepcopy(dataset.attrs)
-        cubes = dataset_to_iris(dataset, filepath=source_files)
-        # ncdata can turn scalar Zarr attributes into zero-dimensional arrays.
-        # CMOR metadata fixes expect scalar values for attributes such as
-        # branch_time_in_child and branch_time_in_parent.
-        for cube in cubes:
-            for name in ("branch_time_in_child", "branch_time_in_parent"):
-                value = cube.attributes.get(name)
-                if isinstance(value, np.ndarray) and value.ndim == 0:
-                    cube.attributes[name] = value.item()
-        return cubes
+        return dataset_to_iris(dataset, filepath=source_files)
 
 
 @dataclass
@@ -185,8 +152,8 @@ class IntakeEsmDataSource(DataSource):
     )
     """Catalog aggregation dimensions to drop when they have length one."""
 
-    time_separator: str = field(repr=False, default="/")
-    """Separator used in catalog time ranges, e.g. ``185002-185501``."""
+    time_separator: str = field(repr=False, default="-")
+    """Separator used in catalog asset time ranges, e.g. ``185002-185501``."""
 
     values: dict[str, dict[str, str]] = field(default_factory=dict)
     """Mapping between the ESMValCore and intake-esm facet values."""
@@ -213,6 +180,7 @@ class IntakeEsmDataSource(DataSource):
         :
             A list of data elements that have been found.
         """
+        self.debug_info = ""
         # Select searchable facets and normalize so all values are `list[str]`.
         normalized_facets = {
             facet: [str(values)]
@@ -238,37 +206,71 @@ class IntakeEsmDataSource(DataSource):
             for our_facet, their_facet in self.facets.items()
             if our_facet in normalized_facets
         }
-
-        if self.time_separator != "/" and self.facets.get("timerange"):
-            time_facet = self.facets["timerange"]
-            if time_facet in query:
-                query[time_facet] = [
-                    value.replace("/", self.time_separator)
-                    for value in query[time_facet]
-                ]
+        debug_query = copy.deepcopy(query)
 
         catalog = self._get_catalog()
+        missing = set(self.facets.values()) - set(catalog.df.columns)
+        if missing:
+            msg = (
+                f"intake-esm catalog '{catalog.esmcat.id}' is missing "
+                f"configured facet columns: {', '.join(sorted(missing))}"
+            )
+            raise ValueError(msg)
+        iterable_columns = (
+            set(self.facets.values()) & catalog.esmcat.columns_with_iterables
+        )
+        if iterable_columns:
+            msg = (
+                f"intake-esm catalog '{catalog.esmcat.id}' has list-valued "
+                f"mapped facet columns: {', '.join(sorted(iterable_columns))}. "
+                "The adapter requires one value per row for mapped facets."
+            )
+            raise ValueError(msg)
 
-        # Match globs against catalog metadata before searching. Passing a glob
-        # directly to intake-esm makes it interpret '*' as a regular expression.
+        # A catalog time_range describes asset coverage, not an exact recipe
+        # value. Select overlapping assets after the other catalog filters.
+        time_column = self.facets.get("timerange")
+        requested_times = query.pop(time_column, None) if time_column else None
+
+        # Resolve both exact values and globs against catalog metadata. This
+        # preserves native catalog types (for example, numeric versions), and
+        # avoids intake-esm interpreting a glob as a regular expression.
         query = {
             facet: [
                 match
                 for value in values
-                for match in (
-                    [
-                        candidate
-                        for candidate in catalog.df[facet].dropna().unique()
-                        if fnmatch.fnmatchcase(str(candidate), value)
-                    ]
+                for match in catalog.df[facet].dropna().unique()
+                if (
+                    fnmatch.fnmatchcase(str(match), value)
                     if any(char in value for char in "*?[")
-                    else [value]
+                    else str(match) == value
                 )
             ]
             for facet, values in query.items()
         }
 
         res = catalog.search(**query) if query else catalog
+        if requested_times and res.df.shape[0]:
+            if any(
+                any(char in value for char in "*?[")
+                for value in requested_times
+            ):
+                selected_ranges = None
+            else:
+                selected_ranges = [
+                    value
+                    for value in res.df[time_column].dropna().unique()
+                    if any(
+                        _ranges_overlap(
+                            requested,
+                            str(value),
+                            self.time_separator,
+                        )
+                        for requested in requested_times
+                    )
+                ]
+            if selected_ranges is not None:
+                res = res.search(**{time_column: selected_ranges})
 
         if not len(res):
             self.debug_info = (
@@ -276,15 +278,15 @@ class IntakeEsmDataSource(DataSource):
                 + ", ".join(
                     [
                         f"{k}={v}" if isinstance(v, list) else f"{k}='{v}'"
-                        for k, v in query.items()
+                        for k, v in debug_query.items()
                     ],
                 )
                 + ")` did not return any results."
             )
             return []
 
-        # Return one data element per set of mapped facets. Intake-esm keys can
-        # combine multiple versions or ensemble members into one dataset.
+        # Return one element per logical dataset, regardless of how the
+        # publisher chose the intake-esm aggregation keys.
         result: list[IntakeEsmDataset] = []
 
         inverse_values = {
@@ -295,51 +297,82 @@ class IntakeEsmDataSource(DataSource):
             for our_facet in self.values
         }
 
-        for key in sorted(res):
-            esm_datasource = res[key]
-            path_col = esm_datasource.path_column_name
-            df = esm_datasource.df
-            varying_columns = [
+        identity_columns = list(
+            dict.fromkeys(
                 column
-                for column in self.facets.values()
-                if column in df and df[column].nunique(dropna=False) > 1
-            ]
-            groups = (
-                df.groupby(varying_columns, dropna=False, sort=True)
-                if varying_columns
-                else [((), df)]
+                for facet, column in self.facets.items()
+                if facet != "timerange"
+            ),
+        )
+        groups = (
+            res.df.groupby(identity_columns, dropna=False, sort=False)
+            if identity_columns
+            else [((), res.df)]
+        )
+        for _, rows in groups:
+            selection = {
+                column: [rows[column].iloc[0]] for column in identity_columns
+            }
+            cat = res.search(**selection) if selection else res
+            if len(cat.df) != len(rows):
+                msg = (
+                    f"Catalog '{catalog.esmcat.id}' returned ambiguous rows for "
+                    f"{selection}. Check the facet mapping and catalog values."
+                )
+                raise ValueError(msg)
+            if len(cat) != 1:
+                msg = (
+                    f"Catalog '{catalog.esmcat.id}' groups one logical dataset "
+                    f"into {len(cat)} intake-esm keys. Map the distinguishing "
+                    "facet or correct its aggregation rules."
+                )
+                raise ValueError(msg)
+
+            dataset_facets = {
+                our_facet: inverse_values.get(our_facet, {}).get(
+                    rows[column].iloc[0],
+                    rows[column].iloc[0],
+                )
+                for our_facet, column in self.facets.items()
+                if our_facet != "timerange"
+            }
+            identity = ",".join(
+                f"{facet}={value}"
+                for facet, value in sorted(dataset_facets.items())
+                if facet != "version"
             )
-            for _, rows in groups:
-                selection = {
-                    column: [rows[column].iloc[0]]
-                    for column in varying_columns
-                }
-                selection[path_col] = rows[path_col].unique().tolist()
-                cat = res.search(**selection)
-
-                dataset_facets = {}
-                for our_facet, esm_facet in self.facets.items():
-                    if esm_facet in cat.df:
-                        esm_values = cat.df[esm_facet].unique().tolist()
-                        our_values = [
-                            inverse_values.get(our_facet, {}).get(value, value)
-                            for value in esm_values
-                        ]
-                        dataset_facets[our_facet] = our_values[0]
-
-                identity = ",".join(
-                    f"{facet}={value}"
-                    for facet, value in sorted(dataset_facets.items())
-                    if facet != "version"
-                )
-                result.append(
-                    IntakeEsmDataset(
-                        name=f"{key}:{identity}",
-                        facets=dataset_facets,
-                        catalog=cat,
-                        catalog_key=key,
-                        to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
-                        squeeze_dimensions=tuple(self.squeeze_dimensions),
-                    ),
-                )
+            result.append(
+                IntakeEsmDataset(
+                    name=f"{self.project}:{identity}",
+                    facets=dataset_facets,
+                    catalog=cat,
+                    to_dask_kwargs=copy.deepcopy(self.to_dask_kwargs),
+                    squeeze_dimensions=tuple(self.squeeze_dimensions),
+                ),
+            )
         return result
+
+
+def _ranges_overlap(requested: str, asset: str, separator: str) -> bool:
+    """Check overlap using the same mixed-resolution rules as local files."""
+    request_start, request_end = _parse_period(requested)
+    asset_dates = asset.split(separator)
+    if len(asset_dates) != 2:
+        msg = (
+            f"Catalog time range {asset!r} must contain two dates "
+            f"separated by {separator!r}."
+        )
+        raise ValueError(msg)
+    asset_start, asset_end = asset_dates
+    request_start_int, asset_end_int = _truncate_dates(
+        request_start,
+        asset_end,
+    )
+    request_end_int, asset_start_int = _truncate_dates(
+        request_end,
+        asset_start,
+    )
+    return (
+        asset_start_int <= request_end_int
+        and asset_end_int >= request_start_int
+    )
