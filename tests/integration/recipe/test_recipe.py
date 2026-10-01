@@ -3071,9 +3071,9 @@ def test_check_preprocessor_settings_last_resort(
         bind=mock_bind,
     )
     mocker.patch(
-        "inspect.signature",
+        "esmvalcore.preprocessor._get_signature",
         autospec=True,
-        return_value=mock_signature,
+        return_value=(mock_signature, [], False, None),
     )
     content = dedent("""
         diagnostics:

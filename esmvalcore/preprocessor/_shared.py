@@ -10,7 +10,7 @@ import inspect
 import logging
 import warnings
 from collections import defaultdict
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import TYPE_CHECKING, Any, Literal
 
 import dask.array as da
@@ -93,6 +93,26 @@ def get_iris_aggregator(
         )
         raise ValueError(msg)
 
+    try:
+        exc = _cached_try_collapsed(operator, aggregator, **aggregator_kwargs)
+    except TypeError:
+        # This can happen if some of the kwargs are not hashable, e.g., if they
+        # are numpy arrays. In this case, we cannot use the cached version of
+        # the function and have to call the non-cached version instead.
+        exc = _try_collapsed(operator, aggregator, **aggregator_kwargs)
+    if exc is not None:
+        msg = f"Invalid kwargs for operator '{operator}': {exc!s}"
+        raise ValueError(msg) from exc
+
+    return (aggregator, aggregator_kwargs)
+
+
+@lru_cache
+def _cached_try_collapsed(operator, aggregator, **aggregator_kwargs):
+    return _try_collapsed(operator, aggregator, **aggregator_kwargs)
+
+
+def _try_collapsed(operator, aggregator, **aggregator_kwargs):
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
@@ -106,10 +126,8 @@ def get_iris_aggregator(
         with ignore_iris_vague_metadata_warnings():
             cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
-        msg = f"Invalid kwargs for operator '{operator}': {exc!s}"
-        raise ValueError(msg) from exc
-
-    return (aggregator, aggregator_kwargs)
+        return exc
+    return None
 
 
 def aggregator_accept_weights(aggregator: iris.analysis.Aggregator) -> bool:
