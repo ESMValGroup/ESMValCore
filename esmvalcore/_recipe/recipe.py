@@ -704,6 +704,7 @@ def _get_preprocessor_products(
 
     check.reference_for_bias_preproc(products)
     check.reference_for_distance_metric_preproc(products)
+    check.reference_for_t_test_preproc(products)
 
     _configure_multi_product_preprocessor(
         products=products,

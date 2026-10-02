@@ -2650,8 +2650,11 @@ This module contains the following preprocessor functions:
 
 * ``bias``: Calculate absolute or relative biases with respect to a reference
   dataset.
-* ``distance_metric``: Calculate absolute or relative biases with respect to a
-  reference dataset.
+* ``distance_metric``: Calculate distance metrics with respect to a reference
+  dataset.
+* ``t_test``: Calculate t-test (null hypothesis: 2 independent samples have
+  identical mean) with respect to a reference dataset and attach the
+  corresponding p-value as ancillary variable to the data.
 
 ``bias``
 --------
@@ -2949,8 +2952,117 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
 .. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
-.. _Other:
+.. _t_test:
 
+``t_test``
+----------
+
+This function performs a :func:`t-test <scipy.stats.ttest_ind>` (null
+hypothesis: 2 independent samples have identical mean) with respect to a
+reference dataset and attaches the corresponding p-value as ancillary variable
+to the data.
+
+With `Iris <https://scitools-iris.readthedocs.io/>`__, the p-value can be accessed with the following code:
+
+.. code-block:: python
+
+   import iris
+   cube = iris.load_cube("esmvaltool_output/recipe_t_test_20260721_095242/preproc/t-test/tas/CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_gn_2000-2005.nc")
+   p_value = cube.ancillary_variable("p-value")
+   print(p_value)
+
+The returned p-value looks like this:
+
+.. code-block::
+
+  AncillaryVariable :  p-value / (1)
+      data: [
+          [0.21600565   , 0.18489039   , ..., 0.3673955    , 0.27788544   ],
+          [0.3407415    , 0.3905643    , ..., --           , 0.58700126   ],
+          ...,
+          [--           , --           , ..., --           , --           ],
+          [--           , --           , ..., --           , --           ]]
+      shape: (18, 36)
+      dtype: float32
+      long_name: 'p-value'
+      var_name: 'pvalue'
+
+For this preprocessor, exactly one input dataset needs to be declared as
+``reference_for_t_test: true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_t_test: true}
+
+In the example above, ERA-Interim is used as reference dataset for the t-test
+calculation.
+
+It is also possible to use the output from the :ref:`multi-model statistics` or
+:ref:`ensemble statistics` preprocessor as reference dataset.
+In this case, make sure to use ``reference_for_t_test: true`` for each dataset
+that will be used to create the reference dataset and use the option
+``keep_input_datasets: false`` for the multi-dataset preprocessor.
+For example:
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, group: ref, reference_for_t_test: true}
+    - {dataset: CESM2,   group: ref, reference_for_t_test: true}
+    - {dataset: MIROC6,  group: notref}
+
+  preprocessors:
+    calculate_t_test:
+      custom_order: true
+      multi_model_statistics:
+        statistics: [mean]
+        span: overlap
+        groupby: [group]
+        keep_input_datasets: false
+      t_test:
+
+Here, the t-test for MIROC6 is calculated relative to the the multi-model mean
+from the models CanESM5 and CESM2.
+
+All datasets need to have the same shape.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` might
+be helpful.
+
+The ``t_test`` preprocessor supports the following arguments in the recipe:
+
+* ``coords`` (:obj:`list` of :obj:`str`, default: ``None``): Coordinates over
+  which the t-test is calculated.
+  If ``None``, calculate the metric over all coordinates, which results in a
+  scalar cube.
+* Other parameters are passed to :func:`scipy.stats.ttest_ind`.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      welchs_t_test:
+        t_test:
+          coords: [time]
+          equal_var: false
+          nan_policy: omit
+
+This will perform a `Welch's t-test
+<https://en.wikipedia.org/wiki/Welch%27s_t-test>`__, which does not assume
+equal variances between the samples.
+In addition, all masked values will be omitted in the t-test calculation (the
+default behavior is to return masked values if at least one input value is
+masked).
+
+See also :func:`esmvalcore.preprocessor.t_test`.
+
+
+.. _Other:
 
 Other
 =====
