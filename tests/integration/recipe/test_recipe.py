@@ -4,6 +4,7 @@ import importlib.resources
 import inspect
 import os
 import re
+import uuid
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -1471,11 +1472,12 @@ def get_diagnostic_filename(basename, cfg, extension="nc"):
 def simulate_preprocessor_run(task):
     """Simulate preprocessor run."""
     for product in task.products:
-        # Populate the LocalFile.attributes attribute and initialize
-        # provenance as done in `PreprocessingTask.cubes`.
+        # Populate the LocalFile.attributes attribute (normally done by
+        # `LocalFile.to_iris`) and initialize provenance as done in
+        # `PreprocessingTask.cubes`.
         for dataset in product.datasets:
             for file in dataset.files:
-                file.to_iris()
+                file.attributes = {"tracking_id": str(uuid.uuid4())}
         product.initialize_provenance(task.activity)
 
         create_test_file(product.filename)
