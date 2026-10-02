@@ -883,7 +883,7 @@ compared separately.
 For the data source interface, see :mod:`esmvalcore.io.intake_esm`.
 
 Authentication and access
-------------------------
+-------------------------
 
 Cloud-hosted catalogs may require provider-specific authentication or
 configuration (for example, AWS credentials, GCP service accounts, or VPN
