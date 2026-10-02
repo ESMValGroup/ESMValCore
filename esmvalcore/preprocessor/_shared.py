@@ -108,11 +108,19 @@ def get_iris_aggregator(
 
 
 @lru_cache
-def _cached_try_collapsed(operator, aggregator, **aggregator_kwargs):
+def _cached_try_collapsed(
+    operator: str,
+    aggregator: iris.analysis.Aggregator,
+    **aggregator_kwargs: Any,
+) -> ValueError | TypeError | None:
     return _try_collapsed(operator, aggregator, **aggregator_kwargs)
 
 
-def _try_collapsed(operator, aggregator, **aggregator_kwargs):
+def _try_collapsed(
+    operator: str,
+    aggregator: iris.analysis.Aggregator,
+    **aggregator_kwargs: Any,
+) -> ValueError | TypeError | None:
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
