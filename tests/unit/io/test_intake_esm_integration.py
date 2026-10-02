@@ -17,12 +17,13 @@ import yaml
 import esmvalcore.io
 from esmvalcore._recipe import recipe as recipe_module
 from esmvalcore.dataset import Dataset
-from esmvalcore.io.intake_esm import IntakeEsmDataSource
+from esmvalcore.io.intake_esm import IntakeEsmDataset, IntakeEsmDataSource
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from esmvalcore.config import Session
+    from esmvalcore.io.protocol import DataElement
 
 
 @pytest.fixture
@@ -328,7 +329,7 @@ def test_configured_catalog_finds_and_loads_data(
     recipe_dataset.find_files()
     assert len(recipe_dataset.files) == 1
     assert recipe_dataset.files[0].facets["version"] == "v2"
-    scheduled_files = set()
+    scheduled_files: set[DataElement] = set()
     monkeypatch.setattr(recipe_module, "DOWNLOAD_FILES", scheduled_files)
     recipe_module._schedule_for_download([recipe_dataset])
     assert scheduled_files == set(recipe_dataset.files)
@@ -458,6 +459,7 @@ def test_catalog_filters_select_versioned_links(small_catalog: Path) -> None:
     csv_path = small_catalog.parent / "catalog.csv"
     with csv_path.open(newline="") as file:
         reader = csv.DictReader(file)
+        assert reader.fieldnames is not None
         columns = [*reader.fieldnames, "file_type"]
         rows = list(reader)
     for row in rows:
@@ -669,14 +671,18 @@ def test_catalogs_deduplicate_by_logical_identity(
     selected.session = session
     selected.find_files()
     assert len(selected.files) == 1
-    assert selected.files[0].catalog.esmcat.id == "chunked-local-catalog"
+    selected_file = selected.files[0]
+    assert isinstance(selected_file, IntakeEsmDataset)
+    assert selected_file.catalog.esmcat.id == "chunked-local-catalog"
 
     latest = Dataset(**common)
     latest.session = session
     latest.find_files()
     assert len(latest.files) == 1
     assert latest.files[0].facets["version"] == "v2"
-    assert latest.files[0].catalog.esmcat.id == "small-local-catalog"
+    latest_file = latest.files[0]
+    assert isinstance(latest_file, IntakeEsmDataset)
+    assert latest_file.catalog.esmcat.id == "small-local-catalog"
 
 
 @pytest.mark.online

@@ -234,7 +234,7 @@ class IntakeEsmDataSource(DataSource):
         res = catalog.search(**fixed_query) if fixed_query else catalog
         query = _resolve_catalog_query(res, query)
         res = res.search(**query) if query else res
-        if requested_times and res.df.shape[0]:
+        if requested_times and time_column is not None and res.df.shape[0]:
             if any(
                 any(char in value for char in "*?[")
                 for value in requested_times
