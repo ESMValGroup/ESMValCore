@@ -12,6 +12,17 @@ from esmvalcore.io.local import LocalFile
 from esmvalcore.preprocessor import PreprocessingTask, PreprocessorFile
 
 
+def _with_runtime_path_reprs(reference: str) -> str:
+    """Use the path representations provided by the active Python runtime."""
+    return reference.replace(
+        "LocalFile('/path/to/input_file.nc')",
+        repr(LocalFile("/path/to/input_file.nc")),
+    ).replace(
+        "PosixPath('/output/preproc/file.nc')",
+        repr(Path("/output/preproc/file.nc")),
+    )
+
+
 @pytest.fixture
 def preproc_file():
     dataset = Dataset(short_name="tas")
@@ -61,7 +72,7 @@ def test_repr_preproc_task(preproc_task):
     None
     """)
 
-    assert result.strip() == reference.strip()
+    assert result.strip() == _with_runtime_path_reprs(reference).strip()
 
 
 def test_repr_diagnostic_task(diagnostic_task):
@@ -106,7 +117,7 @@ def test_repr_simple_tree(preproc_task, diagnostic_task):
       None
     """)
 
-    assert result.strip() == reference.strip()
+    assert result.strip() == _with_runtime_path_reprs(reference).strip()
 
 
 def test_repr_full_tree(preproc_task, diagnostic_task):
@@ -166,4 +177,4 @@ def test_repr_full_tree(preproc_task, diagnostic_task):
           None
     """)
 
-    assert result.strip() == reference.strip()
+    assert result.strip() == _with_runtime_path_reprs(reference).strip()
