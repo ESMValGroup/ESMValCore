@@ -1,13 +1,13 @@
-# Documentation example: intake-esm catalog (DKRZ - on-disk access)
-# Use `esmvaltool config copy data-intake-esm-dkrz-disk.yml` to copy this example
-# to your configuration directory, then update the `catalog` URL if needed.
+# Example: NCI fs38 intake-esm catalog (on-disk access on Gadi).
+# Use `esmvaltool config copy data-intake-esm-nci.yml` to copy this example,
+# then adjust the catalog path and facets if using another NCI collection.
 projects:
   CMIP6:
     data:
-      dkrz-disk-catalog:
+      nci-disk-catalog:
         type: esmvalcore.io.intake_esm.IntakeEsmDataSource
         facets:
-          activity: "activity_id"
+          activity: "project_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
@@ -17,5 +17,9 @@ projects:
           short_name: "variable_id"
           version: "version"
           timerange: "time_range"
-        time_separator: "/"
-        catalog: "/path/to/nci/intake-catalog.yml"
+        # Select versioned links, excluding physical-file and latest aliases.
+        catalog_filters:
+          file_type: "l"
+          version: "v*"
+        time_separator: "-"
+        catalog: "/g/data/fs38/catalog/v2/esm/catalog.json"

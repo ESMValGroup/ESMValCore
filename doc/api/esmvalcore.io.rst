@@ -19,5 +19,6 @@ Submodules
 
    esmvalcore.io.esgf
    esmvalcore.io.intake_esgf
+   esmvalcore.io.intake_esm
    esmvalcore.io.local
    esmvalcore.io.protocol

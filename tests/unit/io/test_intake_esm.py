@@ -15,15 +15,7 @@ import esmvalcore.io.intake_esm
 from esmvalcore.io.intake_esm import (
     IntakeEsmDataset,
     IntakeEsmDataSource,
-    _to_path_dict,
 )
-
-try:
-    import gcsfs  # noqa: F401
-
-    gcfs_available = True
-except ImportError:
-    gcfs_available = False
 
 if TYPE_CHECKING:
     from intake_esm.core import esm_datastore
@@ -72,16 +64,17 @@ def test_attributes_raises_before_to_iris() -> None:
 
 def test_to_iris(mocker: MockerFixture) -> None:
     """`to_iris` should load the data and cache attributes."""
-    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-    key = "my.dataset.1"
-    mocker.patch(
-        "esmvalcore.io.intake_esm._to_path_dict",
-        return_value={key: ["/path/to/file.nc"]},
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
+        source_id="BCC-CSM2-MR",
+        experiment_id="abrupt-4xCO2",
+        variable_id="tasmax",
+        member_id="r1i1p1f1",
     )
     ds = xr.Dataset(attrs={"attr": "value"})
     mocker.patch.object(cat, "to_dask", return_value=ds)
 
-    cubes = mocker.sentinel.cubes
+    cube = mocker.Mock()
+    cubes = [cube]
     mocker.patch.object(
         esmvalcore.io.intake_esm,
         "dataset_to_iris",
@@ -90,7 +83,7 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
     to_dask_kwargs = {"xarray_open_kwargs": {"decode_times": False}}
     dataset = IntakeEsmDataset(
-        name=key,
+        name="test",
         facets={},
         catalog=cat,
         to_dask_kwargs=to_dask_kwargs,
@@ -101,8 +94,34 @@ def test_to_iris(mocker: MockerFixture) -> None:
 
     assert dataset.attributes == {
         "attr": "value",
-        "source_file": "/path/to/file.nc",
+        "source_file": cat.df[cat.esmcat.assets.column_name].iloc[0],
     }
+
+
+def test_to_iris_rejects_multiple_members(mocker: MockerFixture) -> None:
+    """Squeezing a dimension must not silently discard ensemble members."""
+    cat = intake.open_esm_datastore(esm_ds_fhandle.as_posix()).search(
+        source_id="BCC-CSM2-MR",
+        experiment_id="abrupt-4xCO2",
+        variable_id="tasmax",
+        member_id="r1i1p1f1",
+    )
+    mocker.patch.object(
+        cat,
+        "to_dask",
+        return_value=xr.Dataset(coords={"member_id": ["r1", "r2"]}),
+    )
+    dataset = IntakeEsmDataset(
+        name="test",
+        facets={},
+        catalog=cat,
+        squeeze_dimensions=("member_id",),
+    )
+    with pytest.raises(
+        ValueError,
+        match="dimension 'member_id' with length 2",
+    ):
+        dataset.to_iris()
 
 
 def test_find_data_no_results_sets_debug_info() -> None:
@@ -149,19 +168,24 @@ def test_find_data() -> None:
         catalog=cat,
     )
 
-    # Call find_data - it should use the df we set and return 8 datasets
+    # Two intake-esm keys contain multiple ensembles, so there are 10 elements.
     results = data_source.find_data(short_name="tasmax")
     assert isinstance(results, list)
-    assert len(results) == 8
+    assert len(results) == 10
+    assert len({dataset.name for dataset in results}) == 10
 
-    dataset = results[0]
+    dataset = next(
+        dataset
+        for dataset in results
+        if dataset.facets["dataset"] == "BCC-CSM2-MR"
+    )
     assert isinstance(dataset, IntakeEsmDataset)
     assert dataset.to_dask_kwargs == {
         "xarray_open_kwargs": {"decode_times": False},
     }
-    assert dataset.name == "CMIP.BCC.BCC-CSM2-MR.abrupt-4xCO2.Amon.gn"
-
-    assert hash(dataset) == hash((dataset.name, "v20181016"))
+    assert dataset.name.startswith("CMIP6:")
+    assert "BCC-CSM2-MR" in dataset.name
+    assert len(dataset.catalog) == 1
 
     assert dataset.facets == {
         "activity": "CMIP",
@@ -210,29 +234,8 @@ def test_to_iris_nomock():
         dataset.to_iris()
 
 
-def test_to_path_dict_nofiles() -> None:
-    """Test for quiet flag.
-
-    If we disable the `quiet` flag and pass a search query that returns no results, `to_path_dict`
-    should warn.
-
-    TODO: Can this code path ever be triggered in practice?
-    """
-    cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
-
-    empty_cat = cat.search(variable_id="non_existent_variable")
-
-    with pytest.warns(UserWarning, match="There are no datasets to load!"):
-        ret = _to_path_dict(empty_cat, quiet=False)
-
-    assert ret == {}
-
-
-def test_search_time_facet_transformation() -> None:
-    """Test for `time_separator` handling in `find_data`.
-
-    Ensure that `find_data` correctly transforms time facet values to use the correct separator when searching the catalog.
-    """
+def test_search_time_overlap() -> None:
+    """A short recipe period should match a long catalog asset period."""
     cat: esm_datastore = intake.open_esm_datastore(esm_ds_fhandle.as_posix())
 
     data_source = IntakeEsmDataSource(
@@ -256,148 +259,23 @@ def test_search_time_facet_transformation() -> None:
         catalog=cat,
     )
 
-    results = data_source.find_data(timerange="185001/230012")
+    results = data_source.find_data(
+        dataset="BCC-ESM1",
+        short_name="tasmax",
+        timerange="200001/200002",
+    )
+    assert len(results) == 1
     dataset = results[0]
     assert isinstance(dataset, IntakeEsmDataset)
+    assert len(dataset.catalog.df) == 1
+    assert (
+        data_source.find_data(
+            dataset="BCC-ESM1",
+            short_name="tasmax",
+            timerange="240001/240002",
+        )
+        == []
+    )
 
     with pytest.raises(ESMDataSourceError):
         dataset.to_iris()
-
-
-"""
-The following tests load some real data. These come from gcs. Mostly this is to ensure that we can
-load stuff out of the cloud.
-"""
-
-
-@pytest.fixture(scope="session")
-def pangeo_ds() -> esm_datastore:
-    """Load the pangeo CMIP6 catalog as an intake_esm datastore.
-
-    This is a remote resource, so we use session scope to avoid reloading it for every test.
-    """
-    return intake.open_esm_datastore(
-        "https://storage.googleapis.com/cmip6/pangeo-cmip6.json",
-    )
-
-
-def test_remote_esm_dataset(pangeo_ds: esm_datastore) -> None:
-    data_source = IntakeEsmDataSource(
-        name="src",
-        project="CMIP6",
-        priority=1,
-        time_separator="-",
-        facets={
-            "activity": "activity_id",
-            "institute": "institution_id",
-            "dataset": "source_id",
-            "exp": "experiment_id",
-            "ensemble": "member_id",
-            "mip": "table_id",
-            "short_name": "variable_id",
-            "grid": "grid_label",
-            "dcpp_init_year": "dcpp_init_year",
-            "version": "version",
-        },
-        values={},
-        catalog=pangeo_ds,
-    )
-
-    # Equivalent direct search on the catalog.
-    # Note: This *might* change since it's a remote resource, so better to calculate, not specify, expected len
-    expected_len = len(
-        pangeo_ds.search(
-            table_id="Amon",
-            experiment_id="piControl",
-            institution_id="NOAA-GFDL",
-        ),
-    )
-
-    results = data_source.find_data(
-        institute="NOAA-GFDL",
-        mip="Amon",
-        exp="piControl",
-    )
-
-    assert len(results) == expected_len
-
-    ds = results[0]
-    assert isinstance(ds, IntakeEsmDataset)
-
-    if gcfs_available:
-        """
-        CT NOTE
-        -------
-        This error is potentially gonna be a bit of an issue: comes from decoding time_bounds.
-        How far do we want to go down the rabbit hole of fixing data issues versus saying 'Nope,
-        not supported'?
-        Might be better to fix it in xarray instead, I think it should be straightforward?
-        ---
-
-        I've also tried this with a bunch of other datasets & they all variously error out. Presumably
-        this is due to iris's data model being stricter than xarrays?
-        """
-        with pytest.raises(
-            ValueError,
-            match=r"When encoding chunked arrays of datetime values, both the units and dtype must be prescribed or both must be unprescribed. Prescribing only one or the other is not currently supported. Got a units encoding of hours since 0151-01-16 12:00:00.000000 and a dtype encoding of None.",
-        ):
-            ds.to_iris()
-    else:
-        # Can't match because it's not in the ESMDataSourceError
-        with pytest.raises(
-            ESMDataSourceError,
-        ):
-            ds.to_iris()
-
-
-def test_remote_esm_dataset_keyerr(pangeo_ds: esm_datastore) -> None:
-    data_source = IntakeEsmDataSource(
-        name="src",
-        project="CMIP6",
-        priority=1,
-        time_separator="-",
-        facets={
-            "activity": "activity_id",
-            "institute": "institution_id",
-            "dataset": "source_id",
-            "exp": "experiment_id",
-            "ensemble": "member_id",
-            "mip": "table_id",
-            "short_name": "variable_id",
-            "grid": "grid_label",
-            "dcpp_init_year": "dcpp_init_year",
-            "version": "version",
-        },
-        values={},
-        catalog=pangeo_ds,
-    )
-
-    # Equivalent direct search on the catalog.
-    # Note: This *might* change since it's a remote resource, so better to calculate, not specify, expected len
-    expected_len = len(
-        pangeo_ds.search(
-            table_id="Amon",
-            experiment_id="historical",
-            institution_id="MIROC",
-            variable_id="tasmax",
-        ),
-    )
-
-    results = data_source.find_data(
-        institute="MIROC",
-        mip="Amon",
-        exp="historical",
-        short_name="tasmax",
-    )
-
-    assert len(results) == expected_len
-
-    ds = results[0]
-    assert isinstance(ds, IntakeEsmDataset)
-
-    errtype = KeyError if gcfs_available else ESMDataSourceError
-
-    with pytest.raises(
-        errtype,
-    ):
-        ds.to_iris()

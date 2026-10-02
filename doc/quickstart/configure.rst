@@ -850,27 +850,40 @@ and tailor it for your system.
 Cloud
 `````
 
-Cloud platforms commonly host public intake-esm catalogs (for example, AWS
-and GCS public datasets) or institution-hosted catalogs. We
-provide example configuration files that you can copy to your configuration
-directory and adapt to your environment:
+The public Pangeo CMIP6 catalog on Google Cloud Storage can be used as an
+intake-esm data source. Install the Google Cloud Storage client and copy the
+example configuration:
 
 .. code-block:: bash
 
-  esmvaltool config copy data-intake-esm-aws.yml
+  pip install gcsfs
   esmvaltool config copy data-intake-esm-gcs.yml
-  esmvaltool config copy data-intake-esm-dkrz-disk.yml
 
-These files follow the naming convention ``data-intake-esm-<backend>.yml``.
-After copying, edit the ``catalog`` entry in the file to point to the
-appropriate intake-esm catalog URL or local catalog path for your provider.
+The ``catalog`` entry points to the public catalog. The catalog has no
+``time_range`` search facet, so ESMValCore selects the requested period after
+loading. The NCI example targets the fs38 catalog on Gadi. The AWS and DKRZ
+configuration files need site-specific verification.
 
-For details about the ESMValCore integration with intake-esm, see the API
-documentation: :doc:`api/esmvalcore.io.intake_esm` and the example files in
-:file:`doc/configurations/`.
+An intake-esm configuration maps ESMValCore facets to columns in that catalog.
+The configured columns must exist and each mapped facet must have one value per
+catalog row. If a catalog has a ``time_range`` column,
+map ``timerange`` to it and set ``time_separator`` to the delimiter in its
+values. The data source selects assets whose time ranges overlap the recipe
+period. Use ``catalog_filters`` to limit catalog rows before applying recipe
+facets. For example, fs38 lists physical files, versioned links, and ``latest``
+links; its example selects versioned links with ``file_type: l``
+and ``version: v*``. Intake-esm's aggregation rules then assemble those assets
+into a dataset. Use ``squeeze_dimensions`` only for named singleton dimensions
+that are not part of the CMOR variable. If an asset selection still spans several
+intake-esm dataset keys, the adapter reports the ambiguity so the mapping or
+catalog aggregation can be corrected. To deduplicate data across catalogs,
+configure the same ESMValCore identity facets in each source; versions are
+compared separately.
+
+For the data source interface, see :mod:`esmvalcore.io.intake_esm`.
 
 Authentication and access
-------------------------
+-------------------------
 
 Cloud-hosted catalogs may require provider-specific authentication or
 configuration (for example, AWS credentials, GCP service accounts, or VPN
