@@ -37,6 +37,7 @@ from esmvalcore.iris_helpers import (
     rechunk_cube,
 )
 from esmvalcore.preprocessor._shared import (
+    get_array_module,
     get_coord_weights,
     get_iris_aggregator,
     preserve_float_dtype,
@@ -1060,51 +1061,38 @@ def anomalies(
             cube,
             operator="std_dev",
             period=period,
+            seasons=seasons,
         )
-        cube = _apply_scaling(cube, cube_stddev, period)
+        cube = _apply_scaling(cube, cube_stddev, period, seasons)
     elif relative:
-        cube = _apply_scaling(cube, reference, period)
+        cube = _apply_scaling(cube, reference, period, seasons)
         cube.convert_units("%")
 
     return cube
 
 
-def _apply_scaling(
-    cube: Cube,
-    reference: Cube,
-    period: str,
-) -> Cube:
-    """Apply scaling."""
-    tdim = cube.coord_dims("time")[0]
-    reps = cube.shape[tdim] / reference.shape[tdim]
-    if reps % 1 != 0:
-        msg = (
-            f"Cannot safely apply preprocessor to this dataset since the "
-            f"full time period of this dataset is not a multiple of the "
-            f"period '{period}'"
-        )
-        raise ValueError(msg)
-
-    cube.data = cube.core_data() / da.concatenate(
-        [reference.core_data() for _ in range(int(reps))],
-        axis=tdim,
-    )
-    cube.units = "1"
-
-    return cube
-
-
-def _compute_anomalies(
+def _broadcast_reference(
     cube: Cube,
     reference: Cube,
     period: str,
     seasons: Iterable[str],
-) -> Cube:
+) -> np.ndarray | da.Array:
+    """Broadcast the reference data along the time dimension of the cube.
+
+    Each point in time of the cube is matched with the point of the
+    reference that belongs to the same period (e.g. the same month).
+    """
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
-    indices = np.empty_like(cube_coord.points, dtype=np.int32)
-    for idx, point in enumerate(ref_coord.points):
-        indices = np.where(cube_coord.points == point, idx, indices)
+    ref_index = {point: idx for idx, point in enumerate(ref_coord.points)}
+    missing = sorted(set(cube_coord.points) - set(ref_index))
+    if missing:
+        msg = (
+            f"Unable to compute anomalies: the reference does not contain "
+            f"data for {cube_coord.name()} {', '.join(map(str, missing))}"
+        )
+        raise ValueError(msg)
+    indices = np.array([ref_index[point] for point in cube_coord.points])
     ref_data = reference.core_data()
     (axis,) = cube.coord_dims(cube_coord)
     if cube.has_lazy_data() and reference.has_lazy_data():
@@ -1116,11 +1104,35 @@ def _compute_anomalies(
             for i, chunk in enumerate(cube.lazy_data().chunks)
         )
         ref_data = ref_data.rechunk(ref_chunks)
+    npx = get_array_module(ref_data)
     with dask.config.set({"array.slicing.split_large_chunks": True}):
-        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
-    data = cube.core_data() - ref_data_broadcast
-    cube = cube.copy(data)
-    cube.remove_coord(cube_coord)
+        return npx.take(ref_data, indices=indices, axis=axis)
+
+
+def _apply_scaling(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    seasons: Iterable[str],
+) -> Cube:
+    """Divide the cube by the reference for the matching period."""
+    ref_data = _broadcast_reference(cube, reference, period, seasons)
+    cube.data = cube.core_data() / ref_data
+    cube.remove_coord(_get_period_coord(cube, period, seasons))
+    cube.units = "1"
+    return cube
+
+
+def _compute_anomalies(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    seasons: Iterable[str],
+) -> Cube:
+    """Subtract the reference for the matching period from the cube."""
+    ref_data = _broadcast_reference(cube, reference, period, seasons)
+    cube = cube.copy(cube.core_data() - ref_data)
+    cube.remove_coord(_get_period_coord(cube, period, seasons))
     return cube
 
 
