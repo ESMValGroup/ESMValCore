@@ -16,7 +16,6 @@ library. This section documents the public API of ESMValCore.
    esmvalcore.exceptions
    esmvalcore.io
    esmvalcore.iris_helpers
-   esmvalcore.local
    esmvalcore.preprocessor
    esmvalcore.regridding_schemes
    esmvalcore.typing

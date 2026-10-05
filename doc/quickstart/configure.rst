@@ -76,8 +76,7 @@ Within a directory, files are sorted lexicographically, and later files (e.g.,
 
   ESMValCore will read **all** YAML files in these configuration directories.
   Thus, other YAML files in this directory which are not valid configuration
-  files (like the old ``config-developer.yml`` files) will lead to errors.
-  Make sure to move these files to a different directory.
+  files will lead to errors.
 
 The minimal required configuration for the tool is that you configure where
 it can find :ref:`input data <config-data-sources>`. In addition to that, you
@@ -172,10 +171,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - Use netCDF compression.
      - :obj:`bool`
      - ``False``
-   * - ``config_developer_file``
-     - Path to custom :ref:`config-developer`.
-     - :obj:`str`
-     - ``None`` (default file)
    * - ``dask``
      - :ref:`config-dask`.
      - :obj:`dict`
@@ -188,10 +183,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - [deprecated] Directory where downloaded data will be stored. [#f2]_
      - :obj:`str`
      - ``~/climate_data``
-   * - ``drs``
-     - [deprecated] Directory structure for input data. [#f2]_
-     - :obj:`dict`
-     - ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6: ESGF, CORDEX: ESGF, obs4MIPs: ESGF}``
    * - ``exit_on_warning``
      - Exit on warning (only used in NCL diagnostic scripts).
      - :obj:`bool`
@@ -240,10 +231,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - Resume previous run(s) by using preprocessor output files from these output directories, see :ref:`running`.
      - :obj:`list` of :obj:`str`
      - ``[]``
-   * - ``rootpath``
-     - [deprecated] Rootpaths to the data from different projects. [#f2]_
-     - :obj:`dict`
-     - ``{default: ~/climate_data}``
    * - ``run_diagnostic``
      - Run diagnostic scripts, see :ref:`running`.
      - :obj:`bool`
@@ -1148,162 +1135,14 @@ resort.
 Developer configuration file
 ============================
 
-.. deprecated:: 2.14.0
+.. versionremoved:: 2.16.0
 
-  The developer configuration file is deprecated and will no longer be supported
-  in v2.16.0. Please use the :ref:`project-specific configuration <config-projects>`
-  instead.
-
-  See the `v2.13.0 <https://docs.esmvaltool.org/projects/ESMValCore/en/v2.13.0/quickstart/configure.html#developer-configuration-file>`__
-  documentation for previous usage of the developer configuration file.
-
-.. warning::
-
-    Make sure that **no** ``config-developer.yml`` file is saved
-    in the ESMValCore configuration directories (see
-    :ref:`config_overview` for details), as it does not contain configuration
-    options that are valid in the new configuration system.
-
-Upgrade instructions for finding files
---------------------------------------
-
-The ``input_dir``, ``input_file``, and ``ignore_warnings`` settings have
-been replaced by :class:`esmvalcore.io.local.LocalDataSource`, which can be
-configured via :ref:`data sources <config-data-sources>`.
-
-Example 1: A config-developer.yml file specifying a directory structure for
-CMIP6 data:
-
-.. code:: yaml
-
-    CMIP6:
-      input_dir:
-        ESGF: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
-      input_file: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
-
-and associated ``rootpath`` and ``drs`` settings:
-
-.. code:: yaml
-
-    rootpath:
-      CMIP6: ~/climate_data
-    drs:
-      CMIP6: ESGF
-
-would translate to the following new configuration:
-
-.. code:: yaml
-
-    projects:
-      CMIP6:
-        data:
-          local:
-            type: esmvalcore.io.local.LocalDataSource
-            rootpath: ~/climate_data
-            dirname_template: "{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}"
-            filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc"
-
-Upgrade instructions for naming preprocessor output files
----------------------------------------------------------
-
-The ``output_file`` setting has been replaced by the
-``preprocessor_filename_template`` settings described in
-:ref:`config-preprocessor-filename-template`.
-
-Example 1: A config-developer.yml file specifying preprocessor output filenames
-for CMIP6 data:
-
-.. code:: yaml
-
-    CMIP6:
-      output_file: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}"
-
-
-would translate to the following new configuration:
-
-.. code:: yaml
-
-    projects:
-      CMIP6:
-        preprocessor_filename_template: "{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}"
-
-Upgrade instructions for using custom CMOR tables
--------------------------------------------------
-
-The CMOR tables can now be configured via :ref:`cmor_table_configuration`. The
-following mapping applies:
-
-- ``cmor_type`` has been replaced by ``type``
-- ``cmor_strict`` has been replaced by ``strict``
-- ``cmor_path`` has been replaced by ``paths``
-- ``cmor_default_table_prefix`` is no longer needed.
-
-Because it is now possible to configure multiple paths to directories containing
-CMOR tables per project, the ``custom`` project for specifying additional custom
-CMOR tables is no longer needed nor supported.
-
-Example 1: A config-developer.yml file specifying different CMIP6 CMOR tables
-than the default ones, augmented by the default custom CMOR tables:
-
-.. code-block:: yaml
-
-  CMIP6:
-    cmor_path: /path/to/cmip6-cmor-tables
-    cmor_strict: true
-    cmor_type: CMIP6
-
-would translate to the following new configuration:
-
-.. code-block:: yaml
-
-  projects:
-    CMIP6:
-      cmor_table:
-        type: esmvalcore.cmor.table.CMIP6Info
-        strict: true
-        paths:
-          - /path/to/cmip6-cmor-tables
-          - cmip6-custom
-
-where the ``cmip6-custom`` relative path refers to
-`esmvalcore/cmor/tables/cmip6-custom <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6-custom>`__
-and ``type`` refers to :class:`esmvalcore.cmor.table.CMIP6Info`.
-
-Example 2: A config-developer.yml file specifying additional custom CMOR tables:
-
-.. code:: yaml
-
-  CMIP6:
-    cmor_path: cmip6
-    cmor_strict: true
-    cmor_type: CMIP6
-  custom:
-    cmor_path: /path/to/custom-cmip5-style-tables
-
-would translate to the following new configuration:
-
-.. code:: yaml
-
-  projects:
-    CMIP6:
-      cmor_table:
-        type: esmvalcore.cmor.table.CMIP6Info
-        strict: true
-        paths:
-          - cmip6
-          - cmip6-custom
-          - /path/to/custom-cmip6-style-tables
-
-where the relative paths ``cmip6`` and ``cmip6-custom`` refer to
-`esmvalcore/cmor/tables/cmip6 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6>`__
-and
-`esmvalcore/cmor/tables/cmip6-custom <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/cmip6-custom>`__
-respectively and the directory ``/path/to/custom-cmip6-style-tables`` contains
-the additional custom CMOR tables in CMIP6 format. A script to translate custom
-CMIP5 format tables to CMIP6 format tables is available
-`here <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/tables/cmip6-custom/convert-cmip5-to-cmip6.py>`__.
-Note that it is no longer possible to mix CMIP6-style tables with custom
-CMIP5-style tables for the same project.
+  The developer configuration file was deprecated in v2.14.0 and support for it
+  has been removed in v2.16.0, along with the ``config_developer_file``,
+  ``rootpath``, and ``drs`` configuration options. Please use the
+  :ref:`project-specific configuration <config-projects>` instead.
+  See the `v2.15.0 <https://docs.esmvaltool.org/projects/ESMValCore/en/v2.15.0/quickstart/configure.html#developer-configuration-file>`__
+  documentation for upgrade instructions.
 
 .. _config-ref:
 

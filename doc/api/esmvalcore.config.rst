@@ -17,8 +17,6 @@ object:
     >>> CFG
     Config({'auxiliary_data_dir': PosixPath('/home/user/auxiliary_data'),
             'compress_netcdf': False,
-            'config_developer_file': None,
-            'drs': {'CMIP5': 'default', 'CMIP6': 'default'},
             'exit_on_warning': False,
             'log_level': 'info',
             'max_parallel_tasks': None,
@@ -26,9 +24,6 @@ object:
             'output_file_type': 'png',
             'profile_diagnostic': False,
             'remove_preproc_dir': True,
-            'rootpath': {'CMIP5': '~/default_inputpath',
-                         'CMIP6': '~/default_inputpath',
-                         'default': '~/default_inputpath'},
             'save_intermediary_cubes': False)
 
 All configuration parameters are listed :ref:`here <config_options>`.

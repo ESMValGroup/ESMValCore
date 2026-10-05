@@ -15,7 +15,7 @@ from packaging import version
 import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config._config import TASKSEP, load_config_developer
+from esmvalcore.config._config import TASKSEP
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
@@ -231,68 +231,6 @@ validate_int_positive_or_none = _make_type_validator(
 )
 
 
-def validate_rootpath(value):
-    """Validate `rootpath` mapping."""
-    mapping = validate_dict(value)
-    new_mapping = {}
-    for key, paths in mapping.items():
-        if key in ("obs4mips", "ana4mips"):
-            lower_case_key = key
-            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
-            logger.warning(
-                "Correcting capitalization, project '%s' should be "
-                "written as '%s' in configured 'rootpath'",
-                lower_case_key,
-                key,
-            )
-        if isinstance(paths, Path):
-            paths = str(paths)  # noqa: PLW2901
-        if isinstance(paths, (str, list)):
-            new_mapping[key] = validate_pathlist(paths)
-        else:
-            validate_dict(paths)
-
-            # dask.config.merge cannot handle pathlib.Path objects as dict keys
-            # -> we convert the validated Path back to a string and handle this
-            # downstream in local.py (see also
-            # https://github.com/ESMValGroup/ESMValCore/issues/2577)
-            new_mapping[key] = {
-                str(validate_path(path)): validate_string(drs)
-                for path, drs in paths.items()
-            }
-
-    return new_mapping
-
-
-def validate_drs(value):
-    """Validate `drs` mapping."""
-    mapping = validate_dict(value)
-    new_mapping = {}
-    for key, drs in mapping.items():
-        if key in ("obs4mips", "ana4mips"):
-            lower_case_key = key
-            key = f"{lower_case_key[:3]}4MIPs"  # noqa: PLW2901
-            logger.warning(
-                "Correcting capitalization, project '%s' should be "
-                "written as '%s' in configured 'drs'",
-                lower_case_key,
-                key,
-            )
-        new_mapping[key] = validate_string(drs)
-    return new_mapping
-
-
-def validate_config_developer(value):
-    """Validate and load config developer path."""
-    path = validate_path_or_none(value)
-    if path is not None:
-        # This has the side-effect of updating `esmvalcore.config._config.CFG`
-        # and `esmvalcore.cmor.tables.CMOR_TABLES`.
-        load_config_developer(path)
-
-    return path
-
-
 def validate_check_level(value):
     """Validate CMOR level check."""
     msg = f"`{value}` is not a valid strictness level"
@@ -415,11 +353,9 @@ _validators = {
     "auxiliary_data_dir": validate_path,
     "check_level": validate_check_level,
     "compress_netcdf": validate_bool,
-    "config_developer_file": validate_config_developer,
     "dask": validate_dict,
     "diagnostics": validate_diagnostics,
     "download_dir": validate_path,
-    "drs": validate_drs,
     "exit_on_warning": validate_bool,
     "log_level": validate_string,
     "logging": validate_dict,
@@ -432,7 +368,6 @@ _validators = {
     "projects": validate_projects,
     "remove_preproc_dir": validate_bool,
     "resume_from": validate_pathlist,
-    "rootpath": validate_rootpath,
     "run_diagnostic": validate_bool,
     "save_intermediary_cubes": validate_bool,
     "search_data": validate_search_data,
@@ -469,54 +404,6 @@ def _handle_deprecation(
     # This function is called by the deprecation functions, which are called by
     # ValidatedConfig.__setitem__, so the calling site is 4 levels away.
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning, stacklevel=4)
-
-
-def deprecate_rootpath(
-    validated_config: ValidatedConfig,
-    value: dict,
-    validated_value: dict,
-) -> None:
-    """Deprecate ``rootpath`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``config_file`` option.
-    validated_value:
-        Validated value for ``config_file`` option.
-
-    """
-    validated_config  # noqa: B018
-    value  # noqa: B018
-    validated_value  # noqa: B018
-    option = "rootpath"
-    deprecated_version = "2.14.0"
-    remove_version = "2.16.0"
-    more_info = " Please configure data sources under `projects` instead."
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
-
-
-def deprecate_drs(
-    validated_config: ValidatedConfig,  # noqa: ARG001
-    value: dict,  # noqa: ARG001
-    validated_value: dict,  # noqa: ARG001
-) -> None:
-    """Deprecate ``drs`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``config_file`` option.
-    validated_value:
-        Validated value for ``config_file`` option.
-
-    """
-    more_info = " Please configure data sources under `projects` instead."
-    _handle_deprecation("drs", "2.14.0", "2.16.0", more_info)
 
 
 def deprecate_download_dir(
@@ -588,38 +475,11 @@ def deprecate_search_esgf(
     )
 
 
-def deprecate_config_developer_file(
-    validated_config: ValidatedConfig,  # noqa: ARG001
-    value: str | Path,  # noqa: ARG001
-    validated_value: str | Path,  # noqa: ARG001
-) -> None:
-    """Deprecate ``config_developer_file`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``config_file`` option.
-    validated_value:
-        Validated value for ``config_file`` option.
-
-    """
-    more_info = (
-        " Please configure data sources, cmor tables, and preprocessor "
-        "filename templates under `projects` instead."
-    )
-    _handle_deprecation("config_developer_file", "2.14.0", "2.16.0", more_info)
-
-
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
-    "drs": deprecate_drs,  # TODO: remove in v2.16.0
-    "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
     "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
     "search_esgf": deprecate_search_esgf,  # TODO: remove in v2.16.0
-    "config_developer_file": deprecate_config_developer_file,  # TODO: remove in v2.16.0
 }
 
 

@@ -44,8 +44,8 @@ def _get_alternative_generic_lev_coord(
         Name of the generic level coordinate.
     cmor_table_type:
         CMOR table type, e.g., CMIP3, CMIP5, CMIP6. Note: This is NOT the
-        project of the dataset, but rather the entry `cmor_type` in
-        `config-developer.yml`.
+        project of the dataset, but rather the type of CMOR table used by
+        the project.
 
     Returns
     -------
