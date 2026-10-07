@@ -1,13 +1,26 @@
 {
     "CV":{
-        "activity_id":"obs4MIPs",
+        "activity_id":[
+            "obs4MIPs"
+        ],
+        "aux_uncertainty_id":{
+            "lbnd":"lower bound of asymmetrical uncertainty information",
+            "nobs":"number of observations",
+            "sd":"standard deviation",
+            "stderr":"standard error",
+            "ubnd":"upper bound of asymmetrical uncertainty information",
+            "ucom":"uncertainty due to common effects",
+            "uind":"uncertainty due to independent effects",
+            "ustd":"standard uncertainty",
+            "ustr":"uncertainty due to structured effects"
+        },
         "frequency":{
             "1hr":"sampled hourly",
             "1hrCM":"monthly-mean diurnal cycle resolving each day into 1-hour means",
             "1hrPt":"sampled hourly, at specified time point within an hour",
-            "3hr":"sampled every 3 hours",
+            "3hr":"3 hourly mean samples",
             "3hrPt":"sampled 3 hourly, at specified time point within the time period",
-            "6hr":"sampled every 6 hours",
+            "6hr":"6 hourly mean samples",
             "6hrPt":"sampled 6 hourly, at specified time point within the time period",
             "day":"daily mean samples",
             "dec":"decadal mean samples",
@@ -20,76 +33,117 @@
             "yrPt":"sampled yearly, at specified time point within the time period"
         },
         "grid_label":{
-            "grid_label":{
-                "gm":"global mean data",
-                "gn":"data reported on a model's native grid",
-                "gnNH":"data reported on a native grid in the Northern Hemisphere",
-                "gnSH":"data reported on a native grid in the Southern Hemisphere",
-                "gna":"data reported on a native grid in the region of Antarctica",
-                "gng":"data reported on a native grid in the region of Greenland",
-                "gnz":"zonal mean data reported on a model's native latitude grid",
-                "gr":"regridded data reported on the data provider's preferred target grid",
-                "gr1":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr1a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr1g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr1z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr2":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr2a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr2g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr2z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr3":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr3a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr3g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr3z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr4":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr4a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr4g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr4z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr5":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr5a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr5g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr5z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr6":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr6a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr6g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr6z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr7":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr7a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr7g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr7z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr8":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr8a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr8g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr8z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gr9":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
-                "gr9a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
-                "gr9g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
-                "gr9z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
-                "gra":"regridded data in the region of Antarctica reported on the data provider's preferred target grid",
-                "grg":"regridded data in the region of Greenland reported on the data provider's preferred target grid",
-                "grz":"regridded zonal mean data reported on the data provider's preferred latitude target grid"
-            },
-            "version_metadata":{
-                "CV_collection_modified":"Mon Mar 25 14:32:35 2019 -0700",
-                "CV_collection_version":"6.2.20.1",
-                "author":"Paul J. Durack <durack1@llnl.gov>",
-                "grid_label_CV_modified":"Fri Sep 8 18:12:00 2017 -0700",
-                "grid_label_CV_note":"Issue395 durack1 augment grid_label with description (#401)",
-                "institution_id":"PCMDI",
-                "previous_commit":"690451863bfd7a92a6fa13d879a9df6af32e0379",
-                "specs_doc":"v6.2.7 (10th September 2018; https://goo.gl/v1drZl)"
-            }
+            "gm":"global mean data",
+            "gn":"data reported on a model's native grid",
+            "gna":"data reported on a native grid in the region of Antarctica",
+            "gng":"data reported on a native grid in the region of Greenland",
+            "gnz":"zonal mean data reported on a model's native latitude grid",
+            "gr":"regridded data reported on the data provider's preferred target grid",
+            "gr1":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr1a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr1g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr1z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr2":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr2a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr2g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr2z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr3":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr3a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr3g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr3z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr4":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr4a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr4g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr4z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr5":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr5a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr5g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr5z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr6":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr6a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr6g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr6z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr7":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr7a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr7g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr7z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr8":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr8a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr8g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr8z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gr9":"regridded data reported on a grid other than the native grid and other than the preferred target grid",
+            "gr9a":"regridded data reported in the region of Antarctica on a grid other than the native grid and other than the preferred target grid",
+            "gr9g":"regridded data reported in the region of Greenland on a grid other than the native grid and other than the preferred target grid",
+            "gr9z":"regridded zonal mean data reported on a grid other than the native latitude grid and other than the preferred latitude target grid",
+            "gra":"regridded data in the region of Antarctica reported on the data provider's preferred target grid",
+            "grg":"regridded data in the region of Greenland reported on the data provider's preferred target grid",
+            "grz":"regridded zonal mean data reported on the data provider's preferred latitude target grid",
+            "site":"where the data reported is from in-situ observations",
+            "site-US-ARM-SGP":"Testing manual entry"
+        },
+        "has_aux_unc":{
+            "FALSE":"when no uncertainty information is provided",
+            "TRUE":"when additional files containing uncertainty information are provided"
         },
         "institution_id":{
+            "ARCCSS":"ARC Centre of Excellence for Climate System Science, NSW, Australia,",
+            "BCCR":"Bolin Centre for Climate Research - Stockholm University, SE",
+            "CAS":"Chinese Academy of Sciences, Beijing, China",
+            "CEDA":"Centre for Environmental Data Analysis, RAL Space, STFC Rutherford Appleton Laboratory, Chilton, Didcot; National Centre for Earth Observation, UK",
+            "CMIP-IPO":"CMIP International Project Office, UK",
             "CNES":"Centre national d'etudes spatiales",
+            "CRU-UEA":"Climatic Research Unit, University of East Anglia, Norwich, UK",
+            "ColumbiaU":"Columbia University, NY, USA",
+            "DLR-BIRA":"Deutsches Zentrum fur Luft- und Raumfahrt, Royal Belgian Institute for Space Aeronomy",
+            "DOE-ARM":"U.S. Department of Energy, Atmospheric Radiation Measurment Program",
             "DWD":"Deutscher Wetterdienst, Offenbach 63067, Germany",
-            "NASA-GSFC":"National Aeronautics and Space Administration, Goddard Space Flight Center",
-            "NASA-JPL":"NASA's Jet Propulsion Laboratory, Pasadena, CA 91109, USA",
-            "NOAA-NCEI":"NOAA's National Centers for Environmental Information, Asheville, NC 28801, USA",
+            "DoESS-UCI":"Department of Earth System Science, University of California Irvine",
+            "ECMWF":"The European Centre for Medium-Range Weather Forecasts, Shinfield Park, Reading RG2 9AX, UK",
+            "ENVEO":"Environmental Earth Observation Information Technology GmbH, Innsbruck, Austria",
+            "ESPRI-IPSL":"Ensemble de Services Pour la Recherche, Institut Pierre Simon Laplace (France)",
+            "ESSO":"Indian National Centre for Ocean Information Services",
+            "EmoryU":"Emory University, GA, USA",
+            "FMI":"Finnish Meteorological Institute, Helsinki, Finland",
+            "GloH2O":"gloh2o.org",
+            "INCOIS-NIO-IPSL":"Joint research colloboration between INCOIS(India), NIO(India) and IPSL(France)",
+            "IUP-UB":"Institute of Environmental Physics, University of Bremen, Germany",
+            "ImperialCollege":"Imperial College, London, UK",
+            "JAXA":"The Japan Aerospace Exploration Agency",
+            "JMA":"Japanese Meterorological Agency",
+            "KNMI":"Royal Netherlands Meteorological Institute",
+            "KNMI-WUR":"Multi-institute/agency collaboration,KNMI-WUR",
+            "MET-Norway":"Norwegian Meteorological Institute",
+            "MOHC":"Met Office Hadley Centre",
+            "MOHC-CRU-NCAS":"Joint research collaboration between MOHC(UK), CRU-UEA (UK) and NCAS (UK)",
+            "MRI":"Meteorological Research Institute, Tsukuba, Ibaraki 305-0052, Japan",
+            "NASA-GMAO":"NASA-GMAO (NASA Global Modeling and Assimilation Office),Greenbelt MD, USA",
+            "NASA-GSFC":"NASA Goddard Space Flight Center, Greenbelt MD, USA",
+            "NASA-JPL":"NASA Jet Propulsion Laboratory, Pasadena, CA 91109, USA",
+            "NASA-LaRC":"NASA-LaRC (Langley Research Center) Hampton, Va",
+            "NCAR":"National Center for Atmospheric Research, Boulder, CO, USA",
+            "NCAS":"National Centre for Atmospheric Science",
+            "NERC-NSF-NOAA":"Multi-institute/agency collaboration",
+            "NOAA-ESRL-PSD":"NOAA Earth System Research Laboratory, Physical Sciences Division, Boulder, CO 80305, USA",
+            "NOAA-NCEI":"NOAA National Centers for Environmental Information, Asheville, NC 28801, USA",
+            "NR":"Norwegian Computing Center, Oslo, NO",
+            "ORNL":"Oakridge National Laboratory, TN, USA",
+            "OSU":"Oregon State University, OR, USA",
             "PCMDI":"Program for Climate Model Diagnosis and Intercomparison, Lawrence Livermore National Laboratory, Livermore, CA 94550, USA",
-            "RSS":"Remote Sensing Systems, Santa Rosa, CA 95401, USA"
+            "PKU":"Peking University, Beijing, China",
+            "RSS":"Remote Sensing Systems, Santa Rosa, CA USA",
+            "UAH":"University of Alcala, Spain",
+            "UCI-CHRS":"Center for Hydrometeorology and Remote Sensing",
+            "UCSB-CHC":"University of California, Santa Barbara, Climate Hazards Center",
+            "UCSD-SIO":"University of California, San Diego, Scripps Institution of Oceanography",
+            "ULeicester":"University of Leicester, Leicester, UK",
+            "UReading":"University of Reading, Reading, UK",
+            "UW":"University of Washington, USA",
+            "WEGC":"Wegener Center for Climate and Global Change, University of Graz, Austria",
+            "WUR":"Wageningen Universit, Netherlands"
         },
-        "license":"Data in this file produced by <Your Centre Name> is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (https://creativecommons.org/licenses/). Use of the data must be acknowledged following guidelines found at <a URL maintained by you>. Further information about this data, including some limitations, can be found via <some URL maintained by you>.)",
+        "license":[
+            "Data in this file produced by <Your Centre Name> is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (https://creativecommons.org/licenses/). Use of the data must be acknowledged following guidelines found at <a URL maintained by you>. Further information about this data, including some limitations, can be found via <some URL maintained by you>."
+        ],
         "nominal_resolution":[
             "0.5 km",
             "1 km",
@@ -97,7 +151,6 @@
             "100 km",
             "1000 km",
             "10000 km",
-            "1x1 degree",
             "2.5 km",
             "25 km",
             "250 km",
@@ -105,9 +158,12 @@
             "5 km",
             "50 km",
             "500 km",
-            "5000 km"
+            "5000 km",
+            "site"
         ],
         "product":[
+            "derived",
+            "site-observations",
             "observations",
             "reanalysis"
         ],
@@ -200,245 +256,3188 @@
             "frequency",
             "grid",
             "grid_label",
+            "has_aux_unc",
             "institution",
             "institution_id",
             "license",
             "nominal_resolution",
+            "processing_code_location",
             "product",
             "realm",
+            "references",
+            "region",
+            "source",
+            "source_data_url",
             "source_id",
+            "source_type",
+            "source_version_number",
             "table_id",
             "tracking_id",
             "variable_id",
             "variant_label"
         ],
+        "site_id":{
+            "AR-SLu":{
+                "latitude":"-33.4648",
+                "location":"San Luis",
+                "longitude":"-66.4598"
+            },
+            "AR-Vir":{
+                "latitude":"-28.2395",
+                "location":"Virasoro",
+                "longitude":"-56.1886"
+            },
+            "AT-Neu":{
+                "latitude":"47.1167",
+                "location":"Neustift",
+                "longitude":"11.3175"
+            },
+            "AT-WegenerNet-001":{
+                "latitude":"46.9941",
+                "location":"Kirchberg (WegenerNet Station 001)",
+                "longitude":"15.7611"
+            },
+            "AT-WegenerNet-002":{
+                "latitude":"46.9939",
+                "location":"Kirchberg (WegenerNet Station 002)",
+                "longitude":"15.7790"
+            },
+            "AT-WegenerNet-003":{
+                "latitude":"46.9977",
+                "location":"Kirchberg (WegenerNet Station 003)",
+                "longitude":"15.7923"
+            },
+            "AT-WegenerNet-004":{
+                "latitude":"46.9945",
+                "location":"Edelsbach (WegenerNet Station 004)",
+                "longitude":"15.8135"
+            },
+            "AT-WegenerNet-005":{
+                "latitude":"46.9949",
+                "location":"Edelsbach (WegenerNet Station 005)",
+                "longitude":"15.8361"
+            },
+            "AT-WegenerNet-006":{
+                "latitude":"46.9973",
+                "location":"Feldbach (WegenerNet Station 006)",
+                "longitude":"15.8551"
+            },
+            "AT-WegenerNet-007":{
+                "latitude":"46.9940",
+                "location":"Feldbach (WegenerNet Station 007)",
+                "longitude":"15.8714"
+            },
+            "AT-WegenerNet-008":{
+                "latitude":"46.9961",
+                "location":"Riegersburg (WegenerNet Station 008)",
+                "longitude":"15.8863"
+            },
+            "AT-WegenerNet-009":{
+                "latitude":"46.9845",
+                "location":"Kirchberg (WegenerNet Station 009)",
+                "longitude":"15.7589"
+            },
+            "AT-WegenerNet-010":{
+                "latitude":"46.9801",
+                "location":"Kirchberg (WegenerNet Station 010)",
+                "longitude":"15.7758"
+            },
+            "AT-WegenerNet-011":{
+                "latitude":"46.9814",
+                "location":"Kirchberg (WegenerNet Station 011)",
+                "longitude":"15.7980"
+            },
+            "AT-WegenerNet-012":{
+                "latitude":"46.9827",
+                "location":"Edelsbach (WegenerNet Station 012)",
+                "longitude":"15.8137"
+            },
+            "AT-WegenerNet-013":{
+                "latitude":"46.9838",
+                "location":"Edelsbach (WegenerNet Station 013)",
+                "longitude":"15.8349"
+            },
+            "AT-WegenerNet-014":{
+                "latitude":"46.9830",
+                "location":"Feldbach (WegenerNet Station 014)",
+                "longitude":"15.8554"
+            },
+            "AT-WegenerNet-015":{
+                "latitude":"46.9826",
+                "location":"Feldbach (WegenerNet Station 015)",
+                "longitude":"15.8705"
+            },
+            "AT-WegenerNet-016":{
+                "latitude":"46.9843",
+                "location":"Riegersburg (WegenerNet Station 016)",
+                "longitude":"15.8913"
+            },
+            "AT-WegenerNet-017":{
+                "latitude":"46.9795",
+                "location":"Riegersburg (WegenerNet Station 017)",
+                "longitude":"15.9073"
+            },
+            "AT-WegenerNet-018":{
+                "latitude":"46.9862",
+                "location":"Riegersburg (WegenerNet Station 018)",
+                "longitude":"15.9293"
+            },
+            "AT-WegenerNet-019":{
+                "latitude":"46.9797",
+                "location":"Riegersburg (WegenerNet Station 019)",
+                "longitude":"15.9412"
+            },
+            "AT-WegenerNet-020":{
+                "latitude":"46.9823",
+                "location":"Riegersburg (WegenerNet Station 020)",
+                "longitude":"15.9664"
+            },
+            "AT-WegenerNet-021":{
+                "latitude":"46.9823",
+                "location":"Fehring (WegenerNet Station 021)",
+                "longitude":"15.9834"
+            },
+            "AT-WegenerNet-022":{
+                "latitude":"46.9865",
+                "location":"Fehring (WegenerNet Station 022)",
+                "longitude":"15.9989"
+            },
+            "AT-WegenerNet-023":{
+                "latitude":"46.9825",
+                "location":"Fehring (WegenerNet Station 023)",
+                "longitude":"16.0196"
+            },
+            "AT-WegenerNet-024":{
+                "latitude":"46.9675",
+                "location":"Kirchberg (WegenerNet Station 024)",
+                "longitude":"15.7612"
+            },
+            "AT-WegenerNet-025":{
+                "latitude":"46.9676",
+                "location":"Kirchberg (WegenerNet Station 025)",
+                "longitude":"15.7768"
+            },
+            "AT-WegenerNet-026":{
+                "latitude":"46.9704",
+                "location":"Kirchberg (WegenerNet Station 026)",
+                "longitude":"15.7950"
+            },
+            "AT-WegenerNet-027":{
+                "latitude":"46.9723",
+                "location":"Kirchberg (WegenerNet Station 027)",
+                "longitude":"15.8150"
+            },
+            "AT-WegenerNet-028":{
+                "latitude":"46.9682",
+                "location":"Feldbach (028 new location)",
+                "longitude":"15.8354"
+            },
+            "AT-WegenerNet-029":{
+                "latitude":"46.9715",
+                "location":"Feldbach (WegenerNet Station 029)",
+                "longitude":"15.8562"
+            },
+            "AT-WegenerNet-030":{
+                "latitude":"46.9648",
+                "location":"Feldbach (WegenerNet Station 030)",
+                "longitude":"15.8697"
+            },
+            "AT-WegenerNet-031":{
+                "latitude":"46.9689",
+                "location":"Riegersburg (WegenerNet Station 031)",
+                "longitude":"15.8886"
+            },
+            "AT-WegenerNet-032":{
+                "latitude":"46.9682",
+                "location":"Riegersburg (WegenerNet Station 032)",
+                "longitude":"15.9037"
+            },
+            "AT-WegenerNet-033":{
+                "latitude":"46.9697",
+                "location":"Riegersburg (WegenerNet Station 033)",
+                "longitude":"15.9254"
+            },
+            "AT-WegenerNet-034":{
+                "latitude":"46.9712",
+                "location":"Riegersburg (WegenerNet Station 034)",
+                "longitude":"15.9436"
+            },
+            "AT-WegenerNet-035":{
+                "latitude":"46.9702",
+                "location":"Riegersburg (WegenerNet Station 035)",
+                "longitude":"15.9666"
+            },
+            "AT-WegenerNet-036":{
+                "latitude":"46.9720",
+                "location":"Riegersburg (WegenerNet Station 036)",
+                "longitude":"15.9817"
+            },
+            "AT-WegenerNet-037":{
+                "latitude":"46.9667",
+                "location":"Fehring (WegenerNet Station 037)",
+                "longitude":"16.0050"
+            },
+            "AT-WegenerNet-038":{
+                "latitude":"46.9693",
+                "location":"Fehring (WegenerNet Station 038)",
+                "longitude":"16.0210"
+            },
+            "AT-WegenerNet-039":{
+                "latitude":"46.9564",
+                "location":"Paldau (WegenerNet Station 039)",
+                "longitude":"15.7615"
+            },
+            "AT-WegenerNet-040":{
+                "latitude":"46.9567",
+                "location":"Paldau (WegenerNet Station 040)",
+                "longitude":"15.7751"
+            },
+            "AT-WegenerNet-041":{
+                "latitude":"46.9589",
+                "location":"Paldau (WegenerNet Station 041)",
+                "longitude":"15.7948"
+            },
+            "AT-WegenerNet-042":{
+                "latitude":"46.9555",
+                "location":"Paldau (WegenerNet Station 042)",
+                "longitude":"15.8164"
+            },
+            "AT-WegenerNet-043":{
+                "latitude":"46.9581",
+                "location":"Paldau (WegenerNet Station 043)",
+                "longitude":"15.8376"
+            },
+            "AT-WegenerNet-044":{
+                "latitude":"46.9598",
+                "location":"Paldau (WegenerNet Station 044)",
+                "longitude":"15.8504"
+            },
+            "AT-WegenerNet-045":{
+                "latitude":"46.9542",
+                "location":"Feldbach (WegenerNet Station 045)",
+                "longitude":"15.8762"
+            },
+            "AT-WegenerNet-046":{
+                "latitude":"46.9547",
+                "location":"Feldbach (WegenerNet Station 046)",
+                "longitude":"15.8857"
+            },
+            "AT-WegenerNet-047":{
+                "latitude":"46.9588",
+                "location":"Feldbach (WegenerNet Station 047)",
+                "longitude":"15.9072"
+            },
+            "AT-WegenerNet-048":{
+                "latitude":"46.9566",
+                "location":"Feldbach (WegenerNet Station 048)",
+                "longitude":"15.9227"
+            },
+            "AT-WegenerNet-049":{
+                "latitude":"46.9588",
+                "location":"Riegersburg (WegenerNet Station 049)",
+                "longitude":"15.9482"
+            },
+            "AT-WegenerNet-050":{
+                "latitude":"46.9595",
+                "location":"Riegersburg (WegenerNet Station 050)",
+                "longitude":"15.9658"
+            },
+            "AT-WegenerNet-051":{
+                "latitude":"46.9591",
+                "location":"Fehring (WegenerNet Station 051)",
+                "longitude":"15.9833"
+            },
+            "AT-WegenerNet-052":{
+                "latitude":"46.9577",
+                "location":"Fehring (WegenerNet Station 052)",
+                "longitude":"15.9974"
+            },
+            "AT-WegenerNet-053":{
+                "latitude":"46.9548",
+                "location":"Fehring (WegenerNet Station 053)",
+                "longitude":"16.0172"
+            },
+            "AT-WegenerNet-054":{
+                "latitude":"46.9433",
+                "location":"Paldau (WegenerNet Station 054)",
+                "longitude":"15.7596"
+            },
+            "AT-WegenerNet-055":{
+                "latitude":"46.9434",
+                "location":"Paldau (WegenerNet Station 055)",
+                "longitude":"15.7804"
+            },
+            "AT-WegenerNet-056":{
+                "latitude":"46.9417",
+                "location":"Paldau (WegenerNet Station 056)",
+                "longitude":"15.7977"
+            },
+            "AT-WegenerNet-057":{
+                "latitude":"46.9435",
+                "location":"Paldau (WegenerNet Station 057)",
+                "longitude":"15.8112"
+            },
+            "AT-WegenerNet-058":{
+                "latitude":"46.9465",
+                "location":"Paldau (WegenerNet Station 058)",
+                "longitude":"15.8386"
+            },
+            "AT-WegenerNet-059":{
+                "latitude":"46.9434",
+                "location":"Feldbach (WegenerNet Station 059)",
+                "longitude":"15.8505"
+            },
+            "AT-WegenerNet-060":{
+                "latitude":"46.9434",
+                "location":"Feldbach (WegenerNet Station 060)",
+                "longitude":"15.8763"
+            },
+            "AT-WegenerNet-061":{
+                "latitude":"46.9442",
+                "location":"Feldbach (WegenerNet Station 061)",
+                "longitude":"15.8892"
+            },
+            "AT-WegenerNet-062":{
+                "latitude":"46.9454",
+                "location":"Feldbach (WegenerNet Station 062)",
+                "longitude":"15.9068"
+            },
+            "AT-WegenerNet-063":{
+                "latitude":"46.9409",
+                "location":"Feldbach (WegenerNet Station 063)",
+                "longitude":"15.9263"
+            },
+            "AT-WegenerNet-064":{
+                "latitude":"46.9445",
+                "location":"Feldbach (WegenerNet Station 064)",
+                "longitude":"15.9445"
+            },
+            "AT-WegenerNet-065":{
+                "latitude":"46.9426",
+                "location":"Fehring (WegenerNet Station 065)",
+                "longitude":"15.9617"
+            },
+            "AT-WegenerNet-066":{
+                "latitude":"46.9452",
+                "location":"Fehring (WegenerNet Station 066)",
+                "longitude":"15.9806"
+            },
+            "AT-WegenerNet-067":{
+                "latitude":"46.9435",
+                "location":"Fehring (WegenerNet Station 067)",
+                "longitude":"15.9970"
+            },
+            "AT-WegenerNet-068":{
+                "latitude":"46.9463",
+                "location":"Fehring (WegenerNet Station 068)",
+                "longitude":"16.0233"
+            },
+            "AT-WegenerNet-069":{
+                "latitude":"46.9415",
+                "location":"Fehring (WegenerNet Station 069)",
+                "longitude":"16.0395"
+            },
+            "AT-WegenerNet-070":{
+                "latitude":"46.9305",
+                "location":"Paldau (WegenerNet Station 070)",
+                "longitude":"15.7774"
+            },
+            "AT-WegenerNet-071":{
+                "latitude":"46.9309",
+                "location":"Paldau (WegenerNet Station 071)",
+                "longitude":"15.7965"
+            },
+            "AT-WegenerNet-072":{
+                "latitude":"46.9318",
+                "location":"Paldau (WegenerNet Station 072)",
+                "longitude":"15.8154"
+            },
+            "AT-WegenerNet-073":{
+                "latitude":"46.9313",
+                "location":"Paldau (WegenerNet Station 073)",
+                "longitude":"15.8361"
+            },
+            "AT-WegenerNet-074":{
+                "latitude":"46.9304",
+                "location":"Feldbach (WegenerNet Station 074)",
+                "longitude":"15.8524"
+            },
+            "AT-WegenerNet-075":{
+                "latitude":"46.9350",
+                "location":"Feldbach (WegenerNet Station 075)",
+                "longitude":"15.8674"
+            },
+            "AT-WegenerNet-076":{
+                "latitude":"46.9335",
+                "location":"Feldbach (WegenerNet Station 076)",
+                "longitude":"15.8900"
+            },
+            "AT-WegenerNet-077":{
+                "latitude":"46.9329",
+                "location":"Feldbach (Wegener Center Station)",
+                "longitude":"15.9071"
+            },
+            "AT-WegenerNet-078":{
+                "latitude":"46.9329",
+                "location":"Feldbach (WegenerNet Station 078)",
+                "longitude":"15.9246"
+            },
+            "AT-WegenerNet-079":{
+                "latitude":"46.9307",
+                "location":"Feldbach (079 new location)",
+                "longitude":"15.9428"
+            },
+            "AT-WegenerNet-080":{
+                "latitude":"46.9334",
+                "location":"Fehring (WegenerNet Station 080)",
+                "longitude":"15.9608"
+            },
+            "AT-WegenerNet-081":{
+                "latitude":"46.9289",
+                "location":"Fehring (WegenerNet Station 081)",
+                "longitude":"15.9851"
+            },
+            "AT-WegenerNet-082":{
+                "latitude":"46.9326",
+                "location":"Fehring (Wasserversorgung Vulkanland Station)",
+                "longitude":"16.0034"
+            },
+            "AT-WegenerNet-083":{
+                "latitude":"46.9347",
+                "location":"Fehring (WegenerNet Station 083)",
+                "longitude":"16.0228"
+            },
+            "AT-WegenerNet-084":{
+                "latitude":"46.9343",
+                "location":"Fehring (WegenerNet Station 084)",
+                "longitude":"16.0406"
+            },
+            "AT-WegenerNet-085":{
+                "latitude":"46.9169",
+                "location":"Paldau (WegenerNet Station 085)",
+                "longitude":"15.7811"
+            },
+            "AT-WegenerNet-086":{
+                "latitude":"46.9174",
+                "location":"Gnas (WegenerNet Station 086)",
+                "longitude":"15.7985"
+            },
+            "AT-WegenerNet-087":{
+                "latitude":"46.9188",
+                "location":"Paldau (087 new location #2)",
+                "longitude":"15.8153"
+            },
+            "AT-WegenerNet-088":{
+                "latitude":"46.9163",
+                "location":"Gnas (WegenerNet Station 088)",
+                "longitude":"15.8337"
+            },
+            "AT-WegenerNet-089":{
+                "latitude":"46.9184",
+                "location":"Gnas (WegenerNet Station 089)",
+                "longitude":"15.8554"
+            },
+            "AT-WegenerNet-090":{
+                "latitude":"46.9192",
+                "location":"Feldbach (WegenerNet Station 090)",
+                "longitude":"15.8707"
+            },
+            "AT-WegenerNet-091":{
+                "latitude":"46.9198",
+                "location":"Feldbach (WegenerNet Station 091)",
+                "longitude":"15.8904"
+            },
+            "AT-WegenerNet-092":{
+                "latitude":"46.9220",
+                "location":"Feldbach (WegenerNet Station 092)",
+                "longitude":"15.9075"
+            },
+            "AT-WegenerNet-093":{
+                "latitude":"46.9192",
+                "location":"Feldbach (WegenerNet Station 093)",
+                "longitude":"15.9308"
+            },
+            "AT-WegenerNet-094":{
+                "latitude":"46.9201",
+                "location":"Fehring (WegenerNet Station 094)",
+                "longitude":"15.9529"
+            },
+            "AT-WegenerNet-095":{
+                "latitude":"46.9190",
+                "location":"Fehring (WegenerNet Station 095)",
+                "longitude":"15.9676"
+            },
+            "AT-WegenerNet-096":{
+                "latitude":"46.9180",
+                "location":"Fehring (WegenerNet Station 096)",
+                "longitude":"15.9775"
+            },
+            "AT-WegenerNet-097":{
+                "latitude":"46.9165",
+                "location":"Fehring (WegenerNet Station 097)",
+                "longitude":"15.9998"
+            },
+            "AT-WegenerNet-098":{
+                "latitude":"46.9202",
+                "location":"Fehring (WegenerNet Station 098)",
+                "longitude":"16.0205"
+            },
+            "AT-WegenerNet-099":{
+                "latitude":"46.9213",
+                "location":"Fehring (WegenerNet Station 099)",
+                "longitude":"16.0334"
+            },
+            "AT-WegenerNet-100":{
+                "latitude":"46.9031",
+                "location":"Gnas (WegenerNet Station 100)",
+                "longitude":"15.7814"
+            },
+            "AT-WegenerNet-101":{
+                "latitude":"46.9047",
+                "location":"Gnas (WegenerNet Station 101)",
+                "longitude":"15.7968"
+            },
+            "AT-WegenerNet-102":{
+                "latitude":"46.9061",
+                "location":"Paldau (WegenerNet Station 102)",
+                "longitude":"15.8201"
+            },
+            "AT-WegenerNet-103":{
+                "latitude":"46.9081",
+                "location":"Gnas (WegenerNet Station 103)",
+                "longitude":"15.8348"
+            },
+            "AT-WegenerNet-104":{
+                "latitude":"46.9058",
+                "location":"Gnas (WegenerNet Station 104)",
+                "longitude":"15.8536"
+            },
+            "AT-WegenerNet-105":{
+                "latitude":"46.9100",
+                "location":"Feldbach (WegenerNet Station 105)",
+                "longitude":"15.8749"
+            },
+            "AT-WegenerNet-106":{
+                "latitude":"46.9096",
+                "location":"Gleichenberg (WegenerNet Station 106)",
+                "longitude":"15.8914"
+            },
+            "AT-WegenerNet-107":{
+                "latitude":"46.9052",
+                "location":"Gleichenberg (WegenerNet Station 107)",
+                "longitude":"15.9078"
+            },
+            "AT-WegenerNet-108":{
+                "latitude":"46.9048",
+                "location":"Feldbach (WegenerNet Station 108)",
+                "longitude":"15.9277"
+            },
+            "AT-WegenerNet-109":{
+                "latitude":"46.9061",
+                "location":"Feldbach (WegenerNet Station 109)",
+                "longitude":"15.9461"
+            },
+            "AT-WegenerNet-110":{
+                "latitude":"46.9077",
+                "location":"Kapfenstein (WegenerNet Station 110)",
+                "longitude":"15.9607"
+            },
+            "AT-WegenerNet-111":{
+                "latitude":"46.9080",
+                "location":"Fehring (WegenerNet Station 111)",
+                "longitude":"15.9833"
+            },
+            "AT-WegenerNet-112":{
+                "latitude":"46.9052",
+                "location":"Fehring (WegenerNet Station 112)",
+                "longitude":"16.0012"
+            },
+            "AT-WegenerNet-113":{
+                "latitude":"46.9048",
+                "location":"Kapfenstein (WegenerNet Station 113)",
+                "longitude":"16.0168"
+            },
+            "AT-WegenerNet-114":{
+                "latitude":"46.9060",
+                "location":"Fehring (WegenerNet Station 114)",
+                "longitude":"16.0409"
+            },
+            "AT-WegenerNet-115":{
+                "latitude":"46.8944",
+                "location":"Gnas (WegenerNet Station 115)",
+                "longitude":"15.7809"
+            },
+            "AT-WegenerNet-116":{
+                "latitude":"46.8922",
+                "location":"Gnas (WegenerNet Station 116)",
+                "longitude":"15.7979"
+            },
+            "AT-WegenerNet-117":{
+                "latitude":"46.8915",
+                "location":"Gnas (WegenerNet Station 117)",
+                "longitude":"15.8176"
+            },
+            "AT-WegenerNet-118":{
+                "latitude":"46.8972",
+                "location":"Gnas (WegenerNet Station 118)",
+                "longitude":"15.8334"
+            },
+            "AT-WegenerNet-119":{
+                "latitude":"46.8944",
+                "location":"Gnas (WegenerNet Station 119)",
+                "longitude":"15.8559"
+            },
+            "AT-WegenerNet-120":{
+                "latitude":"46.8945",
+                "location":"Gleichenberg (WegenerNet Station 120)",
+                "longitude":"15.8705"
+            },
+            "AT-WegenerNet-121":{
+                "latitude":"46.8905",
+                "location":"Gleichenberg (WegenerNet Station 121)",
+                "longitude":"15.8881"
+            },
+            "AT-WegenerNet-122":{
+                "latitude":"46.8902",
+                "location":"Gleichenberg (WegenerNet Station 122)",
+                "longitude":"15.9125"
+            },
+            "AT-WegenerNet-123":{
+                "latitude":"46.8939",
+                "location":"Gleichenberg (WegenerNet Station 123)",
+                "longitude":"15.9307"
+            },
+            "AT-WegenerNet-124":{
+                "latitude":"46.8963",
+                "location":"Kapfenstein (WegenerNet Station 124)",
+                "longitude":"15.9419"
+            },
+            "AT-WegenerNet-125":{
+                "latitude":"46.8933",
+                "location":"Kapfenstein (WegenerNet Station 125)",
+                "longitude":"15.9704"
+            },
+            "AT-WegenerNet-126":{
+                "latitude":"46.8926",
+                "location":"Kapfenstein (WegenerNet Station 126)",
+                "longitude":"15.9877"
+            },
+            "AT-WegenerNet-127":{
+                "latitude":"46.8920",
+                "location":"Kapfenstein (WegenerNet Station 127)",
+                "longitude":"16.0029"
+            },
+            "AT-WegenerNet-128":{
+                "latitude":"46.8914",
+                "location":"Kapfenstein (WegenerNet Station 128)",
+                "longitude":"16.0172"
+            },
+            "AT-WegenerNet-129":{
+                "latitude":"46.8788",
+                "location":"Gnas (WegenerNet Station 129)",
+                "longitude":"15.7957"
+            },
+            "AT-WegenerNet-130":{
+                "latitude":"46.8798",
+                "location":"Gnas (WegenerNet Station 130)",
+                "longitude":"15.8196"
+            },
+            "AT-WegenerNet-131":{
+                "latitude":"46.8809",
+                "location":"Gnas (WegenerNet Station 131)",
+                "longitude":"15.8320"
+            },
+            "AT-WegenerNet-132":{
+                "latitude":"46.8790",
+                "location":"Gnas (WegenerNet Station 132)",
+                "longitude":"15.8521"
+            },
+            "AT-WegenerNet-133":{
+                "latitude":"46.8822",
+                "location":"Gleichenberg (WegenerNet Station 133)",
+                "longitude":"15.8723"
+            },
+            "AT-WegenerNet-134":{
+                "latitude":"46.8787",
+                "location":"Gleichenberg (WegenerNet Station 134)",
+                "longitude":"15.8878"
+            },
+            "AT-WegenerNet-135":{
+                "latitude":"46.8807",
+                "location":"Gleichenberg (WegenerNet Station 135)",
+                "longitude":"15.9090"
+            },
+            "AT-WegenerNet-136":{
+                "latitude":"46.8797",
+                "location":"Gleichenberg (WegenerNet Station 136)",
+                "longitude":"15.9298"
+            },
+            "AT-WegenerNet-137":{
+                "latitude":"46.8800",
+                "location":"Gleichenberg (WegenerNet Station 137)",
+                "longitude":"15.9455"
+            },
+            "AT-WegenerNet-138":{
+                "latitude":"46.8798",
+                "location":"Kapfenstein (WegenerNet Station 138)",
+                "longitude":"15.9638"
+            },
+            "AT-WegenerNet-139":{
+                "latitude":"46.8823",
+                "location":"Kapfenstein (WegenerNet Station 139)",
+                "longitude":"15.9839"
+            },
+            "AT-WegenerNet-140":{
+                "latitude":"46.8829",
+                "location":"Kapfenstein (WegenerNet Station 140)",
+                "longitude":"15.9995"
+            },
+            "AT-WegenerNet-141":{
+                "latitude":"46.8693",
+                "location":"Gnas (WegenerNet Station 141)",
+                "longitude":"15.8343"
+            },
+            "AT-WegenerNet-142":{
+                "latitude":"46.8705",
+                "location":"Gnas (WegenerNet Station 142)",
+                "longitude":"15.8558"
+            },
+            "AT-WegenerNet-143":{
+                "latitude":"46.8686",
+                "location":"Gleichenberg (WegenerNet Station 143)",
+                "longitude":"15.8720"
+            },
+            "AT-WegenerNet-144":{
+                "latitude":"46.8667",
+                "location":"Gleichenberg (WegenerNet Station 144)",
+                "longitude":"15.8903"
+            },
+            "AT-WegenerNet-145":{
+                "latitude":"46.8682",
+                "location":"Gleichenberg (WegenerNet Station 145)",
+                "longitude":"15.9066"
+            },
+            "AT-WegenerNet-146":{
+                "latitude":"46.8661",
+                "location":"Gleichenberg (WegenerNet Station 146)",
+                "longitude":"15.9330"
+            },
+            "AT-WegenerNet-147":{
+                "latitude":"46.8671",
+                "location":"Gleichenberg (WegenerNet Station 147)",
+                "longitude":"15.9471"
+            },
+            "AT-WegenerNet-148":{
+                "latitude":"46.8707",
+                "location":"St. Anna (WegenerNet Station 148)",
+                "longitude":"15.9681"
+            },
+            "AT-WegenerNet-149":{
+                "latitude":"46.8690",
+                "location":"Kapfenstein (WegenerNet Station 149)",
+                "longitude":"15.9888"
+            },
+            "AT-WegenerNet-150":{
+                "latitude":"46.8685",
+                "location":"Kapfenstein (WegenerNet Station 150)",
+                "longitude":"16.0059"
+            },
+            "AT-WegenerNet-151":{
+                "latitude":"46.9611",
+                "location":"Feldbach (WegenerNet Station 151)",
+                "longitude":"15.8510"
+            },
+            "AT-WegenerNet-154":{
+                "latitude":"46.8918",
+                "location":"Kapfenstein (WegenerNet Station 154)",
+                "longitude":"15.9755"
+            },
+            "AT-WegenerNet-155":{
+                "latitude":"46.9564",
+                "location":"Feldbach (WegenerNet Station 155)",
+                "longitude":"15.9150"
+            },
+            "AT-WegenerNet-156":{
+                "latitude":"46.9582",
+                "location":"Paldau (Central Station Raabtal)",
+                "longitude":"15.8486"
+            },
+            "AT-WegenerNet-501":{
+                "latitude":"47.5363",
+                "location":"Admont (Oberkainz)",
+                "longitude":"14.5980"
+            },
+            "AT-WegenerNet-502":{
+                "latitude":"47.5313",
+                "location":"Admont (K\u00f6lblwiese)",
+                "longitude":"14.6113"
+            },
+            "AT-WegenerNet-503":{
+                "latitude":"47.5317",
+                "location":"Admont (Schr\u00f6ckalm)",
+                "longitude":"14.6679"
+            },
+            "AT-WegenerNet-504":{
+                "latitude":"47.4994",
+                "location":"Gaishorn (Blaseneck)",
+                "longitude":"14.6189"
+            },
+            "AT-WegenerNet-505":{
+                "latitude":"47.5654",
+                "location":"Admont (Zin\u00f6dl)",
+                "longitude":"14.6660"
+            },
+            "AT-WegenerNet-515":{
+                "latitude":"47.5914",
+                "location":"Admont (Gstatterboden)",
+                "longitude":"14.6367"
+            },
+            "AU-ASM":{
+                "latitude":"-22.2830",
+                "location":"Alice Springs",
+                "longitude":"133.2490"
+            },
+            "AU-Ade":{
+                "latitude":"-13.0769",
+                "location":"Adelaide River",
+                "longitude":"131.1178"
+            },
+            "AU-Cpr":{
+                "latitude":"-34.0021",
+                "location":"Calperum",
+                "longitude":"140.5891"
+            },
+            "AU-Cum":{
+                "latitude":"-33.6152",
+                "location":"Cumberland Plain",
+                "longitude":"150.7236"
+            },
+            "AU-DaP":{
+                "latitude":"-14.0633",
+                "location":"Daly River Pasture",
+                "longitude":"131.3181"
+            },
+            "AU-DaS":{
+                "latitude":"-14.1593",
+                "location":"Daly River Savanna",
+                "longitude":"131.3881"
+            },
+            "AU-Dry":{
+                "latitude":"-15.2588",
+                "location":"Dry River",
+                "longitude":"132.3706"
+            },
+            "AU-Emr":{
+                "latitude":"-23.8587",
+                "location":"Emerald",
+                "longitude":"148.4746"
+            },
+            "AU-Fog":{
+                "latitude":"-12.5452",
+                "location":"Fogg Dam",
+                "longitude":"131.3072"
+            },
+            "AU-GWW":{
+                "latitude":"-30.1913",
+                "location":"Great Western Woodlands, Western Australia, Australia",
+                "longitude":"120.6541"
+            },
+            "AU-Gin":{
+                "latitude":"-31.3764",
+                "location":"Gingin",
+                "longitude":"115.7138"
+            },
+            "AU-How":{
+                "latitude":"-12.4943",
+                "location":"Howard Springs",
+                "longitude":"131.1523"
+            },
+            "AU-Lox":{
+                "latitude":"-34.4704",
+                "location":"Loxton",
+                "longitude":"140.6551"
+            },
+            "AU-RDF":{
+                "latitude":"-14.5636",
+                "location":"Red Dirt Melon Farm, Northern Territory",
+                "longitude":"132.4776"
+            },
+            "AU-Rig":{
+                "latitude":"-36.6499",
+                "location":"Riggs Creek",
+                "longitude":"145.5759"
+            },
+            "AU-Rob":{
+                "latitude":"-17.1175",
+                "location":"Robson Creek, Queensland, Australia",
+                "longitude":"145.6301"
+            },
+            "AU-Stp":{
+                "latitude":"-17.1507",
+                "location":"Sturt Plains",
+                "longitude":"133.3502"
+            },
+            "AU-TTE":{
+                "latitude":"-22.2870",
+                "location":"Ti Tree East",
+                "longitude":"133.6400"
+            },
+            "AU-Tum":{
+                "latitude":"-35.6566",
+                "location":"Tumbarumba",
+                "longitude":"148.1517"
+            },
+            "AU-Wac":{
+                "latitude":"-37.4259",
+                "location":"Wallaby Creek",
+                "longitude":"145.1878"
+            },
+            "AU-Whr":{
+                "latitude":"-36.6732",
+                "location":"Whroo",
+                "longitude":"145.0294"
+            },
+            "AU-Wom":{
+                "latitude":"-37.4222",
+                "location":"Wombat",
+                "longitude":"144.0944"
+            },
+            "AU-Ync":{
+                "latitude":"-34.9893",
+                "location":"Jaxa",
+                "longitude":"146.2907"
+            },
+            "BE-Bra":{
+                "latitude":"51.3076",
+                "location":"Brasschaat",
+                "longitude":"4.5198"
+            },
+            "BE-Lon":{
+                "latitude":"50.5516",
+                "location":"Lonzee",
+                "longitude":"4.7462"
+            },
+            "BE-Vie":{
+                "latitude":"50.3049",
+                "location":"Vielsalm",
+                "longitude":"5.9981"
+            },
+            "BR-Npw":{
+                "latitude":"-16.4980",
+                "location":"Northern Pantanal Wetland",
+                "longitude":"-56.4120"
+            },
+            "BR-Sa1":{
+                "latitude":"-2.8567",
+                "location":"Santarem-Km67-Primary Forest",
+                "longitude":"-54.9589"
+            },
+            "BR-Sa3":{
+                "latitude":"-3.0180",
+                "location":"Santarem-Km83-Logged Forest",
+                "longitude":"-54.9714"
+            },
+            "BW-Gum":{
+                "latitude":"-18.9647",
+                "location":"Guma",
+                "longitude":"22.3711"
+            },
+            "BW-Nxr":{
+                "latitude":"-19.5481",
+                "location":"Nxaraga",
+                "longitude":"23.1792"
+            },
+            "CA-Gro":{
+                "latitude":"48.2167",
+                "location":"Ontario - Groundhog River, Boreal Mixedwood Forest",
+                "longitude":"-82.1556"
+            },
+            "CA-Man":{
+                "latitude":"55.8796",
+                "location":"Manitoba - Northern Old Black Spruce (former BOREAS Northern Study Area)",
+                "longitude":"-98.4808"
+            },
+            "CA-NS1":{
+                "latitude":"55.8792",
+                "location":"UCI-1850 burn site",
+                "longitude":"-98.4839"
+            },
+            "CA-NS2":{
+                "latitude":"55.9058",
+                "location":"UCI-1930 burn site",
+                "longitude":"-98.5247"
+            },
+            "CA-NS3":{
+                "latitude":"55.9117",
+                "location":"UCI-1964 burn site",
+                "longitude":"-98.3822"
+            },
+            "CA-NS4":{
+                "latitude":"55.9144",
+                "location":"UCI-1964 burn site wet",
+                "longitude":"-98.3806"
+            },
+            "CA-NS5":{
+                "latitude":"55.8631",
+                "location":"UCI-1981 burn site",
+                "longitude":"-98.4850"
+            },
+            "CA-NS6":{
+                "latitude":"55.9167",
+                "location":"UCI-1989 burn site",
+                "longitude":"-98.9644"
+            },
+            "CA-NS7":{
+                "latitude":"56.6358",
+                "location":"UCI-1998 burn site",
+                "longitude":"-99.9483"
+            },
+            "CA-Oas":{
+                "latitude":"53.6289",
+                "location":"Saskatchewan - Western Boreal, Mature Aspen",
+                "longitude":"-106.1978"
+            },
+            "CA-Obs":{
+                "latitude":"53.9872",
+                "location":"Saskatchewan - Western Boreal, Mature Black Spruce",
+                "longitude":"-105.1178"
+            },
+            "CA-Qfo":{
+                "latitude":"49.6925",
+                "location":"Quebec - Eastern Boreal, Mature Black Spruce",
+                "longitude":"-74.3421"
+            },
+            "CA-SCB":{
+                "latitude":"61.3089",
+                "location":"Scotty Creek Bog",
+                "longitude":"-121.2984"
+            },
+            "CA-SCC":{
+                "latitude":"61.3079",
+                "location":"Scotty Creek Landscape",
+                "longitude":"-121.2992"
+            },
+            "CA-SF1":{
+                "latitude":"54.4850",
+                "location":"Saskatchewan - Western Boreal, forest burned in 1977",
+                "longitude":"-105.8176"
+            },
+            "CA-SF2":{
+                "latitude":"54.2539",
+                "location":"Saskatchewan - Western Boreal, forest burned in 1989",
+                "longitude":"-105.8775"
+            },
+            "CA-SF3":{
+                "latitude":"54.0916",
+                "location":"Saskatchewan - Western Boreal, forest burned in 1998",
+                "longitude":"-106.0053"
+            },
+            "CA-TP1":{
+                "latitude":"42.6609",
+                "location":"Ontario - Turkey Point 2002 Plantation White Pine",
+                "longitude":"-80.5595"
+            },
+            "CA-TP2":{
+                "latitude":"42.7744",
+                "location":"Ontario - Turkey Point 1989 Plantation White Pine",
+                "longitude":"-80.4588"
+            },
+            "CA-TP3":{
+                "latitude":"42.7068",
+                "location":"Ontario - Turkey Point 1974 Plantation White Pine",
+                "longitude":"-80.3483"
+            },
+            "CA-TP4":{
+                "latitude":"42.7102",
+                "location":"Ontario - Turkey Point 1939 Plantation White Pine",
+                "longitude":"-80.3574"
+            },
+            "CA-TPD":{
+                "latitude":"42.6353",
+                "location":"Ontario - Turkey Point Mature Deciduous",
+                "longitude":"-80.5577"
+            },
+            "CG-Tch":{
+                "latitude":"-4.2892",
+                "location":"Tchizalamou",
+                "longitude":"11.6564"
+            },
+            "CH-Cha":{
+                "latitude":"47.2102",
+                "location":"Chamau",
+                "longitude":"8.4104"
+            },
+            "CH-Dav":{
+                "latitude":"46.8153",
+                "location":"Davos",
+                "longitude":"9.8559"
+            },
+            "CH-Fru":{
+                "latitude":"47.1158",
+                "location":"Fr\u00fceb\u00fcel ",
+                "longitude":"8.5378"
+            },
+            "CH-Lae":{
+                "latitude":"47.4783",
+                "location":"Laegern",
+                "longitude":"8.3644"
+            },
+            "CH-Oe1":{
+                "latitude":"47.2858",
+                "location":"Oensingen grassland",
+                "longitude":"7.7319"
+            },
+            "CH-Oe2":{
+                "latitude":"47.2864",
+                "location":"Oensingen crop",
+                "longitude":"7.7337"
+            },
+            "CN-Cha":{
+                "latitude":"42.4025",
+                "location":"Changbaishan",
+                "longitude":"128.0958"
+            },
+            "CN-Cng":{
+                "latitude":"44.5934",
+                "location":"Changling",
+                "longitude":"123.5092"
+            },
+            "CN-Dan":{
+                "latitude":"30.4978",
+                "location":"Dangxiong",
+                "longitude":"91.0664"
+            },
+            "CN-Din":{
+                "latitude":"23.1733",
+                "location":"Dinghushan",
+                "longitude":"112.5361"
+            },
+            "CN-Du2":{
+                "latitude":"42.0467",
+                "location":"Duolun_grassland (D01)",
+                "longitude":"116.2836"
+            },
+            "CN-Du3":{
+                "latitude":"42.0551",
+                "location":"Duolun Degraded Meadow",
+                "longitude":"116.2809"
+            },
+            "CN-Ha2":{
+                "latitude":"37.6086",
+                "location":"Haibei Shrubland",
+                "longitude":"101.3269"
+            },
+            "CN-HaM":{
+                "latitude":"37.3700",
+                "location":"Haibei Alpine Tibet site",
+                "longitude":"101.1800"
+            },
+            "CN-Hgu":{
+                "latitude":"32.8453",
+                "location":"Hongyuan",
+                "longitude":"102.5900"
+            },
+            "CN-Qia":{
+                "latitude":"26.7414",
+                "location":"Qianyanzhou",
+                "longitude":"115.0581"
+            },
+            "CN-Sw2":{
+                "latitude":"41.7902",
+                "location":"Siziwang Grazed (SZWG)",
+                "longitude":"111.8971"
+            },
+            "CZ-BK1":{
+                "latitude":"49.5021",
+                "location":"Bily Kriz forest",
+                "longitude":"18.5369"
+            },
+            "CZ-BK2":{
+                "latitude":"49.4944",
+                "location":"Bily Kriz grassland",
+                "longitude":"18.5429"
+            },
+            "CZ-wet":{
+                "latitude":"49.0247",
+                "location":"Trebon (CZECHWET)",
+                "longitude":"14.7704"
+            },
+            "DE-Akm":{
+                "latitude":"53.8662",
+                "location":"Anklam",
+                "longitude":"13.6834"
+            },
+            "DE-Dgw":{
+                "latitude":"53.1514",
+                "location":"Dagowsee",
+                "longitude":"13.0543"
+            },
+            "DE-Geb":{
+                "latitude":"51.0997",
+                "location":"Gebesee",
+                "longitude":"10.9146"
+            },
+            "DE-Gri":{
+                "latitude":"50.9500",
+                "location":"Grillenburg",
+                "longitude":"13.5126"
+            },
+            "DE-Hai":{
+                "latitude":"51.0792",
+                "location":"Hainich",
+                "longitude":"10.4522"
+            },
+            "DE-Hte":{
+                "latitude":"54.2103",
+                "location":"Huetelmoor",
+                "longitude":"12.1761"
+            },
+            "DE-Kli":{
+                "latitude":"50.8931",
+                "location":"Klingenberg",
+                "longitude":"13.5224"
+            },
+            "DE-Lkb":{
+                "latitude":"49.0996",
+                "location":"Lackenberg",
+                "longitude":"13.3047"
+            },
+            "DE-Lnf":{
+                "latitude":"51.3282",
+                "location":"Leinefelde",
+                "longitude":"10.3678"
+            },
+            "DE-Obe":{
+                "latitude":"50.7867",
+                "location":"Oberb\u00e4renburg",
+                "longitude":"13.7213"
+            },
+            "DE-RuR":{
+                "latitude":"50.6219",
+                "location":"Rollesbroich",
+                "longitude":"6.3041"
+            },
+            "DE-RuS":{
+                "latitude":"50.8659",
+                "location":"Selhausen Juelich",
+                "longitude":"6.4471"
+            },
+            "DE-Seh":{
+                "latitude":"50.8706",
+                "location":"Selhausen",
+                "longitude":"6.4497"
+            },
+            "DE-SfN":{
+                "latitude":"47.8064",
+                "location":"Schechenfilz Nord",
+                "longitude":"11.3275"
+            },
+            "DE-Spw":{
+                "latitude":"51.8922",
+                "location":"Spreewald",
+                "longitude":"14.0337"
+            },
+            "DE-Tha":{
+                "latitude":"50.9626",
+                "location":"Tharandt",
+                "longitude":"13.5651"
+            },
+            "DE-Zrk":{
+                "latitude":"53.8759",
+                "location":"Zarnekow",
+                "longitude":"12.8890"
+            },
+            "DK-Eng":{
+                "latitude":"55.6905",
+                "location":"Enghave",
+                "longitude":"12.1918"
+            },
+            "DK-Fou":{
+                "latitude":"56.4842",
+                "location":"Foulum",
+                "longitude":"9.5872"
+            },
+            "DK-Sor":{
+                "latitude":"55.4859",
+                "location":"Soroe",
+                "longitude":"11.6446"
+            },
+            "ES-Amo":{
+                "latitude":"36.8336",
+                "location":"Amoladeras",
+                "longitude":"-2.2523"
+            },
+            "ES-LJu":{
+                "latitude":"36.9266",
+                "location":"Llano de los Juanes",
+                "longitude":"-2.7521"
+            },
+            "ES-LgS":{
+                "latitude":"37.0979",
+                "location":"Laguna Seca",
+                "longitude":"-2.9658"
+            },
+            "ES-Ln2":{
+                "latitude":"36.9695",
+                "location":"Lanjaron-Salvage logging",
+                "longitude":"-3.4758"
+            },
+            "FI-Hyy":{
+                "latitude":"61.8474",
+                "location":"Hyytiala",
+                "longitude":"24.2948"
+            },
+            "FI-Jok":{
+                "latitude":"60.8986",
+                "location":"Jokioinen",
+                "longitude":"23.5134"
+            },
+            "FI-Let":{
+                "latitude":"60.6418",
+                "location":"Lettosuo",
+                "longitude":"23.9595"
+            },
+            "FI-Lom":{
+                "latitude":"67.9972",
+                "location":"Lompolojankka",
+                "longitude":"24.2092"
+            },
+            "FI-Si2":{
+                "latitude":"61.8372",
+                "location":"Siikaneva-2 Bog",
+                "longitude":"24.1967"
+            },
+            "FI-Sii":{
+                "latitude":"61.8327",
+                "location":"Siikaneva",
+                "longitude":"24.1928"
+            },
+            "FI-Sod":{
+                "latitude":"67.3624",
+                "location":"Sodankyla",
+                "longitude":"26.6386"
+            },
+            "FR-Fon":{
+                "latitude":"48.4764",
+                "location":"Fontainebleau-Barbeau",
+                "longitude":"2.7801"
+            },
+            "FR-Gri":{
+                "latitude":"48.8442",
+                "location":"Grignon",
+                "longitude":"1.9519"
+            },
+            "FR-LBr":{
+                "latitude":"44.7171",
+                "location":"Le Bray",
+                "longitude":"-0.7693"
+            },
+            "FR-LGt":{
+                "latitude":"47.3229",
+                "location":"La Guette",
+                "longitude":"2.2841"
+            },
+            "FR-Pue":{
+                "latitude":"43.7413",
+                "location":"Puechabon",
+                "longitude":"3.5957"
+            },
+            "GF-Guy":{
+                "latitude":"5.2788",
+                "location":"Guyaflux (French Guiana)",
+                "longitude":"-52.9249"
+            },
+            "GH-Ank":{
+                "latitude":"5.2685",
+                "location":"Ankasa",
+                "longitude":"-2.6942"
+            },
+            "GL-NuF":{
+                "latitude":"64.1308",
+                "location":"Nuuk Fen",
+                "longitude":"-51.3861"
+            },
+            "GL-ZaF":{
+                "latitude":"74.4814",
+                "location":"Zackenberg Fen",
+                "longitude":"-20.5545"
+            },
+            "GL-ZaH":{
+                "latitude":"74.4733",
+                "location":"Zackenberg Heath",
+                "longitude":"-20.5503"
+            },
+            "HK-MPM":{
+                "latitude":"22.4982",
+                "location":"Mai Po Mangrove",
+                "longitude":"114.0292"
+            },
+            "ID-Pag":{
+                "latitude":"-2.3200",
+                "location":"Palangkaraya undrained forest",
+                "longitude":"113.9000"
+            },
+            "IT-BCi":{
+                "latitude":"40.5237",
+                "location":"Borgo Cioffi",
+                "longitude":"14.9574"
+            },
+            "IT-CA1":{
+                "latitude":"42.3804",
+                "location":"Castel d'Asso1",
+                "longitude":"12.0266"
+            },
+            "IT-CA2":{
+                "latitude":"42.3772",
+                "location":"Castel d'Asso2",
+                "longitude":"12.0260"
+            },
+            "IT-CA3":{
+                "latitude":"42.3800",
+                "location":"Castel d'Asso3",
+                "longitude":"12.0222"
+            },
+            "IT-Cas":{
+                "latitude":"45.0700",
+                "location":"Castellaro",
+                "longitude":"8.7175"
+            },
+            "IT-Col":{
+                "latitude":"41.8494",
+                "location":"Collelongo",
+                "longitude":"13.5881"
+            },
+            "IT-Cp2":{
+                "latitude":"41.7043",
+                "location":"Castelporziano2",
+                "longitude":"12.3573"
+            },
+            "IT-Cpz":{
+                "latitude":"41.7052",
+                "location":"Castelporziano",
+                "longitude":"12.3761"
+            },
+            "IT-Isp":{
+                "latitude":"45.8126",
+                "location":"Ispra ABC-IS",
+                "longitude":"8.6336"
+            },
+            "IT-La2":{
+                "latitude":"45.9542",
+                "location":"Lavarone2",
+                "longitude":"11.2853"
+            },
+            "IT-Lav":{
+                "latitude":"45.9562",
+                "location":"Lavarone",
+                "longitude":"11.2813"
+            },
+            "IT-MBo":{
+                "latitude":"46.0147",
+                "location":"Monte Bondone",
+                "longitude":"11.0458"
+            },
+            "IT-Noe":{
+                "latitude":"40.6062",
+                "location":"Arca di Noe - Le Prigionette",
+                "longitude":"8.1517"
+            },
+            "IT-PT1":{
+                "latitude":"45.2009",
+                "location":"Parco Ticino forest",
+                "longitude":"9.0610"
+            },
+            "IT-Ren":{
+                "latitude":"46.5869",
+                "location":"Renon",
+                "longitude":"11.4337"
+            },
+            "IT-Ro1":{
+                "latitude":"42.4081",
+                "location":"Roccarespampani 1",
+                "longitude":"11.9300"
+            },
+            "IT-Ro2":{
+                "latitude":"42.3903",
+                "location":"Roccarespampani 2",
+                "longitude":"11.9209"
+            },
+            "IT-SR2":{
+                "latitude":"43.7320",
+                "location":"San Rossore 2",
+                "longitude":"10.2909"
+            },
+            "IT-SRo":{
+                "latitude":"43.7279",
+                "location":"San Rossore",
+                "longitude":"10.2844"
+            },
+            "IT-Tor":{
+                "latitude":"45.8444",
+                "location":"Torgnon",
+                "longitude":"7.5781"
+            },
+            "JP-BBY":{
+                "latitude":"43.3230",
+                "location":"Bibai bog",
+                "longitude":"141.8107"
+            },
+            "JP-MBF":{
+                "latitude":"44.3869",
+                "location":"Moshiri Birch Forest Site",
+                "longitude":"142.3186"
+            },
+            "JP-Mse":{
+                "latitude":"36.0539",
+                "location":"Mase rice paddy field",
+                "longitude":"140.0269"
+            },
+            "JP-SMF":{
+                "latitude":"35.2617",
+                "location":"Seto Mixed Forest Site",
+                "longitude":"137.0788"
+            },
+            "JP-SwL":{
+                "latitude":"36.0466",
+                "location":"Suwa Lake",
+                "longitude":"138.1084"
+            },
+            "KR-CRK":{
+                "latitude":"38.2013",
+                "location":"Cheorwon Rice paddy",
+                "longitude":"127.2506"
+            },
+            "MY-MLM":{
+                "latitude":"1.4536",
+                "location":"Maludam National Park",
+                "longitude":"111.1495"
+            },
+            "MY-PSO":{
+                "latitude":"2.9730",
+                "location":"Pasoh Forest Reserve (PSO)",
+                "longitude":"102.3062"
+            },
+            "NL-Hor":{
+                "latitude":"52.2403",
+                "location":"Horstermeer",
+                "longitude":"5.0713"
+            },
+            "NL-Loo":{
+                "latitude":"52.1666",
+                "location":"Loobos",
+                "longitude":"5.7436"
+            },
+            "NZ-Kop":{
+                "latitude":"-37.3879",
+                "location":"Kopuatai",
+                "longitude":"175.5539"
+            },
+            "PA-SPn":{
+                "latitude":"9.3181",
+                "location":"Sardinilla Plantation",
+                "longitude":"-79.6346"
+            },
+            "PA-SPs":{
+                "latitude":"9.3138",
+                "location":"Sardinilla-Pasture",
+                "longitude":"-79.6314"
+            },
+            "PH-RiF":{
+                "latitude":"14.1412",
+                "location":"Philippines Rice Institute flooded",
+                "longitude":"121.2653"
+            },
+            "RU-Ch2":{
+                "latitude":"68.6169",
+                "location":"Chersky reference",
+                "longitude":"161.3509"
+            },
+            "RU-Che":{
+                "latitude":"68.6130",
+                "location":"Cherski",
+                "longitude":"161.3414"
+            },
+            "RU-Cok":{
+                "latitude":"70.8291",
+                "location":"Chokurdakh",
+                "longitude":"147.4943"
+            },
+            "RU-Fy2":{
+                "latitude":"56.4476",
+                "location":"Fyodorovskoye dry spruce",
+                "longitude":"32.9019"
+            },
+            "RU-Fyo":{
+                "latitude":"56.4615",
+                "location":"Fyodorovskoye",
+                "longitude":"32.9221"
+            },
+            "RU-Ha1":{
+                "latitude":"54.7252",
+                "location":"Hakasia steppe",
+                "longitude":"90.0022"
+            },
+            "RU-Sam":{
+                "latitude":"72.3738",
+                "location":"Samoylov",
+                "longitude":"126.4958"
+            },
+            "RU-SkP":{
+                "latitude":"62.2550",
+                "location":"Yakutsk Spasskaya Pad larch",
+                "longitude":"129.1680"
+            },
+            "RU-Tks":{
+                "latitude":"71.5943",
+                "location":"Tiksi",
+                "longitude":"128.8878"
+            },
+            "RU-Vrk":{
+                "latitude":"67.0547",
+                "location":"Seida/Vorkuta",
+                "longitude":"62.9405"
+            },
+            "SD-Dem":{
+                "latitude":"13.2829",
+                "location":"Demokeya",
+                "longitude":"30.4783"
+            },
+            "SE-Deg":{
+                "latitude":"64.1820",
+                "location":"Degero",
+                "longitude":"19.5565"
+            },
+            "SE-St1":{
+                "latitude":"68.3541",
+                "location":"Stordalen grassland",
+                "longitude":"19.0503"
+            },
+            "SJ-Adv":{
+                "latitude":"78.1860",
+                "location":"Adventdalen",
+                "longitude":"15.9230"
+            },
+            "SJ-Blv":{
+                "latitude":"78.9216",
+                "location":"Bayelva, Spitsbergen",
+                "longitude":"11.8311"
+            },
+            "SN-Dhr":{
+                "latitude":"15.4028",
+                "location":"Dahra",
+                "longitude":"-15.4322"
+            },
+            "UK-LBT":{
+                "latitude":"51.5215",
+                "location":"London_BT",
+                "longitude":"-0.1389"
+            },
+            "US-A03":{
+                "latitude":"70.4953",
+                "location":"ARM-AMF3-Oliktok",
+                "longitude":"-149.8823"
+            },
+            "US-A10":{
+                "latitude":"71.3242",
+                "location":"ARM-NSA-Barrow",
+                "longitude":"-156.6149"
+            },
+            "US-AR1":{
+                "latitude":"36.4267",
+                "location":"ARM USDA UNL OSU Woodward Switchgrass 1",
+                "longitude":"-99.4200"
+            },
+            "US-AR2":{
+                "latitude":"36.6358",
+                "location":"ARM USDA UNL OSU Woodward Switchgrass 2",
+                "longitude":"-99.5975"
+            },
+            "US-ARM-SGP":{
+                "latitude":"36.6058",
+                "location":"ARM Southern Great Plains site- Lamont",
+                "longitude":"-97.4888"
+            },
+            "US-ARb":{
+                "latitude":"35.5497",
+                "location":"ARM Southern Great Plains burn site- Lamont",
+                "longitude":"-98.0402"
+            },
+            "US-ARc":{
+                "latitude":"35.5465",
+                "location":"ARM Southern Great Plains control site- Lamont",
+                "longitude":"-98.0400"
+            },
+            "US-Atq":{
+                "latitude":"70.4696",
+                "location":"Atqasuk",
+                "longitude":"-157.4089"
+            },
+            "US-BZB":{
+                "latitude":"64.6955",
+                "location":"Bonanza Creek Thermokarst Bog",
+                "longitude":"-148.3208"
+            },
+            "US-BZF":{
+                "latitude":"64.7013",
+                "location":"Bonanza Creek Rich Fen",
+                "longitude":"-148.3121"
+            },
+            "US-BZS":{
+                "latitude":"64.6963",
+                "location":"Bonanza Creek Black Spruce",
+                "longitude":"-148.3235"
+            },
+            "US-Beo":{
+                "latitude":"71.2810",
+                "location":"Barrow Environmental Observatory (BEO) tower",
+                "longitude":"-156.6123"
+            },
+            "US-Bes":{
+                "latitude":"71.2809",
+                "location":"Barrow-Bes (Biocomplexity Experiment South tower)",
+                "longitude":"-156.5965"
+            },
+            "US-Bi1":{
+                "latitude":"38.0992",
+                "location":"Bouldin Island Alfalfa",
+                "longitude":"-121.4993"
+            },
+            "US-Bi2":{
+                "latitude":"38.1091",
+                "location":"Bouldin Island corn",
+                "longitude":"-121.5351"
+            },
+            "US-Blo":{
+                "latitude":"38.8953",
+                "location":"Blodgett Forest",
+                "longitude":"-120.6328"
+            },
+            "US-CRT":{
+                "latitude":"41.6285",
+                "location":"Curtice Walter-Berger cropland",
+                "longitude":"-83.3471"
+            },
+            "US-Cop":{
+                "latitude":"38.0900",
+                "location":"Corral Pocket",
+                "longitude":"-109.3900"
+            },
+            "US-DPW":{
+                "latitude":"28.0521",
+                "location":"Disney Wilderness Preserve Wetland",
+                "longitude":"-81.4361"
+            },
+            "US-EDN":{
+                "latitude":"37.6156",
+                "location":"Eden Landing Ecological Reserve",
+                "longitude":"-122.1140"
+            },
+            "US-EML":{
+                "latitude":"63.8784",
+                "location":"Eight Mile Lake Permafrost thaw gradient, Healy Alaska.",
+                "longitude":"-149.2536"
+            },
+            "US-GBT":{
+                "latitude":"41.3658",
+                "location":"GLEES Brooklyn Tower",
+                "longitude":"-106.2397"
+            },
+            "US-GLE":{
+                "latitude":"41.3665",
+                "location":"GLEES",
+                "longitude":"-106.2399"
+            },
+            "US-Goo":{
+                "latitude":"34.2547",
+                "location":"Goodwin Creek",
+                "longitude":"-89.8735"
+            },
+            "US-HRA":{
+                "latitude":"34.5852",
+                "location":"Humnoke Farm Rice Field \u2013 Field A",
+                "longitude":"-91.7517"
+            },
+            "US-HRC":{
+                "latitude":"34.5888",
+                "location":"Humnoke Farm Rice Field \u2013 Field C",
+                "longitude":"-91.7517"
+            },
+            "US-Ha1":{
+                "latitude":"42.5378",
+                "location":"Harvard Forest EMS Tower (HFR1)",
+                "longitude":"-72.1715"
+            },
+            "US-Ho1":{
+                "latitude":"45.2041",
+                "location":"Howland Forest (main tower)",
+                "longitude":"-68.7402"
+            },
+            "US-IB2":{
+                "latitude":"41.8406",
+                "location":"Fermi National Accelerator Laboratory- Batavia (Prairie site)",
+                "longitude":"-88.2410"
+            },
+            "US-ICs":{
+                "latitude":"68.6058",
+                "location":"Imnavait Creek Watershed Wet Sedge Tundra",
+                "longitude":"-149.3110"
+            },
+            "US-Ivo":{
+                "latitude":"68.4865",
+                "location":"Ivotuk",
+                "longitude":"-155.7503"
+            },
+            "US-KS1":{
+                "latitude":"28.4583",
+                "location":"Kennedy Space Center (slash pine)",
+                "longitude":"-80.6709"
+            },
+            "US-KS2":{
+                "latitude":"28.6086",
+                "location":"Kennedy Space Center (scrub oak)",
+                "longitude":"-80.6715"
+            },
+            "US-LA1":{
+                "latitude":"29.5013",
+                "location":"Pointe-aux-Chenes Brackish Marsh",
+                "longitude":"-90.4449"
+            },
+            "US-LA2":{
+                "latitude":"29.8587",
+                "location":"Salvador WMA Freshwater Marsh",
+                "longitude":"-90.2869"
+            },
+            "US-LWW":{
+                "latitude":"34.9604",
+                "location":"Little Washita Watershed",
+                "longitude":"-97.9789"
+            },
+            "US-Lin":{
+                "latitude":"36.3566",
+                "location":"Lindcove Orange Orchard",
+                "longitude":"-119.0922"
+            },
+            "US-Los":{
+                "latitude":"46.0827",
+                "location":"Lost Creek",
+                "longitude":"-89.9792"
+            },
+            "US-MAC":{
+                "latitude":"27.1632",
+                "location":"MacArthur Agro-Ecology",
+                "longitude":"-81.1873"
+            },
+            "US-MMS":{
+                "latitude":"39.3232",
+                "location":"Morgan Monroe State Forest",
+                "longitude":"-86.4131"
+            },
+            "US-MRM":{
+                "latitude":"40.8164",
+                "location":"Marsh Resource Meadowlands Mitigation Bank",
+                "longitude":"-74.0435"
+            },
+            "US-Me1":{
+                "latitude":"44.5794",
+                "location":"Metolius - Eyerly burn",
+                "longitude":"-121.5000"
+            },
+            "US-Me2":{
+                "latitude":"44.4526",
+                "location":"Metolius mature ponderosa pine",
+                "longitude":"-121.5589"
+            },
+            "US-Me3":{
+                "latitude":"44.3154",
+                "location":"Metolius-second young aged pine",
+                "longitude":"-121.6078"
+            },
+            "US-Me4":{
+                "latitude":"44.4992",
+                "location":"Metolius-old aged ponderosa pine",
+                "longitude":"-121.6224"
+            },
+            "US-Me5":{
+                "latitude":"44.4372",
+                "location":"Metolius-first young aged pine",
+                "longitude":"-121.5668"
+            },
+            "US-Me6":{
+                "latitude":"44.3233",
+                "location":"Metolius Young Pine Burn",
+                "longitude":"-121.6078"
+            },
+            "US-Myb":{
+                "latitude":"38.0499",
+                "location":"Mayberry Wetland",
+                "longitude":"-121.7650"
+            },
+            "US-NC4":{
+                "latitude":"35.7879",
+                "location":"NC_AlligatorRiver",
+                "longitude":"-75.9038"
+            },
+            "US-NGB":{
+                "latitude":"71.2800",
+                "location":"NGEE Arctic Barrow",
+                "longitude":"-156.6092"
+            },
+            "US-NGC":{
+                "latitude":"64.8618",
+                "location":"NGEE Arctic Council",
+                "longitude":"-163.7002"
+            },
+            "US-NR1":{
+                "latitude":"40.0329",
+                "location":"Niwot Ridge Forest (LTER NWT1)",
+                "longitude":"-105.5464"
+            },
+            "US-Ne1":{
+                "latitude":"41.1651",
+                "location":"Mead - irrigated continuous maize site",
+                "longitude":"-96.4766"
+            },
+            "US-Ne2":{
+                "latitude":"41.1649",
+                "location":"Mead - irrigated maize-soybean rotation site",
+                "longitude":"-96.4701"
+            },
+            "US-Ne3":{
+                "latitude":"41.1797",
+                "location":"Mead - rainfed maize-soybean rotation site",
+                "longitude":"-96.4397"
+            },
+            "US-ORv":{
+                "latitude":"40.0201",
+                "location":"Olentangy River Wetland Research Park",
+                "longitude":"-83.0183"
+            },
+            "US-OWC":{
+                "latitude":"41.3795",
+                "location":"Old Woman Creek",
+                "longitude":"-82.5125"
+            },
+            "US-Oho":{
+                "latitude":"41.5545",
+                "location":"Oak Openings",
+                "longitude":"-83.8438"
+            },
+            "US-PFa":{
+                "latitude":"45.9459",
+                "location":"Park Falls/WLEF",
+                "longitude":"-90.2723"
+            },
+            "US-Prr":{
+                "latitude":"65.1237",
+                "location":"Poker Flat Research Range Black Spruce Forest",
+                "longitude":"-147.4876"
+            },
+            "US-SRC":{
+                "latitude":"31.9083",
+                "location":"Santa Rita Creosote",
+                "longitude":"-110.8395"
+            },
+            "US-SRG":{
+                "latitude":"31.7894",
+                "location":"Santa Rita Grassland",
+                "longitude":"-110.8277"
+            },
+            "US-SRM":{
+                "latitude":"31.8214",
+                "location":"Santa Rita Mesquite",
+                "longitude":"-110.8661"
+            },
+            "US-Snd":{
+                "latitude":"38.0366",
+                "location":"Sherman Island",
+                "longitude":"-121.7540"
+            },
+            "US-Sne":{
+                "latitude":"38.0369",
+                "location":"Sherman Island Restored Wetland",
+                "longitude":"-121.7547"
+            },
+            "US-Srr":{
+                "latitude":"38.2006",
+                "location":"Suisun marsh - Rush Ranch",
+                "longitude":"-122.0264"
+            },
+            "US-StJ":{
+                "latitude":"39.0882",
+                "location":"St Jones Reserve",
+                "longitude":"-75.4372"
+            },
+            "US-Sta":{
+                "latitude":"41.3966",
+                "location":"Saratoga",
+                "longitude":"-106.8024"
+            },
+            "US-Syv":{
+                "latitude":"46.2420",
+                "location":"Sylvania Wilderness Area",
+                "longitude":"-89.3477"
+            },
+            "US-Ton":{
+                "latitude":"38.4309",
+                "location":"Tonzi Ranch",
+                "longitude":"-120.9660"
+            },
+            "US-Tw1":{
+                "latitude":"38.1074",
+                "location":"Twitchell Wetland West Pond",
+                "longitude":"-121.6469"
+            },
+            "US-Tw2":{
+                "latitude":"38.0969",
+                "location":"Twitchell Corn",
+                "longitude":"-121.6365"
+            },
+            "US-Tw3":{
+                "latitude":"38.1152",
+                "location":"Twitchell Alfalfa",
+                "longitude":"-121.6469"
+            },
+            "US-Tw4":{
+                "latitude":"38.1027",
+                "location":"Twitchell East End Wetland",
+                "longitude":"-121.6413"
+            },
+            "US-Tw5":{
+                "latitude":"38.1072",
+                "location":"East Pond Wetland",
+                "longitude":"-121.6426"
+            },
+            "US-Twt":{
+                "latitude":"38.1087",
+                "location":"Twitchell Island",
+                "longitude":"-121.6531"
+            },
+            "US-UMB":{
+                "latitude":"45.5598",
+                "location":"Univ. of Mich. Biological Station",
+                "longitude":"-84.7138"
+            },
+            "US-UMd":{
+                "latitude":"45.5625",
+                "location":"UMBS Disturbance",
+                "longitude":"-84.6975"
+            },
+            "US-Uaf":{
+                "latitude":"64.8663",
+                "location":"University of Alaska, Fairbanks",
+                "longitude":"-147.8555"
+            },
+            "US-Var":{
+                "latitude":"38.4133",
+                "location":"Vaira Ranch- Ione",
+                "longitude":"-120.9508"
+            },
+            "US-WCr":{
+                "latitude":"45.8059",
+                "location":"Willow Creek",
+                "longitude":"-90.0799"
+            },
+            "US-WPT":{
+                "latitude":"41.4646",
+                "location":"Winous Point North Marsh",
+                "longitude":"-82.9962"
+            },
+            "US-Whs":{
+                "latitude":"31.7438",
+                "location":"Walnut Gulch Lucky Hills Shrub",
+                "longitude":"-110.0522"
+            },
+            "US-Wi0":{
+                "latitude":"46.6188",
+                "location":"Young red pine (YRP)",
+                "longitude":"-91.0814"
+            },
+            "US-Wi1":{
+                "latitude":"46.7305",
+                "location":"Intermediate hardwood (IHW)",
+                "longitude":"-91.2329"
+            },
+            "US-Wi2":{
+                "latitude":"46.6869",
+                "location":"Intermediate red pine (IRP)",
+                "longitude":"-91.1528"
+            },
+            "US-Wi3":{
+                "latitude":"46.6347",
+                "location":"Mature hardwood (MHW)",
+                "longitude":"-91.0987"
+            },
+            "US-Wi4":{
+                "latitude":"46.7393",
+                "location":"Mature red pine (MRP)",
+                "longitude":"-91.1663"
+            },
+            "US-Wi5":{
+                "latitude":"46.6531",
+                "location":"Mixed young jack pine (MYJP)",
+                "longitude":"-91.0858"
+            },
+            "US-Wi6":{
+                "latitude":"46.6249",
+                "location":"Pine barrens #1 (PB1)",
+                "longitude":"-91.2982"
+            },
+            "US-Wi7":{
+                "latitude":"46.6491",
+                "location":"Red pine clearcut (RPCC)",
+                "longitude":"-91.0693"
+            },
+            "US-Wi8":{
+                "latitude":"46.7223",
+                "location":"Young hardwood clearcut (YHW)",
+                "longitude":"-91.2524"
+            },
+            "US-Wi9":{
+                "latitude":"46.7385",
+                "location":"Young Jack pine (YJP)",
+                "longitude":"-91.0746"
+            },
+            "US-Wkg":{
+                "latitude":"31.7365",
+                "location":"Walnut Gulch Kendall Grasslands",
+                "longitude":"-109.9419"
+            },
+            "ZA-Kru":{
+                "latitude":"-25.0197",
+                "location":"Skukuza",
+                "longitude":"31.4969"
+            },
+            "ZM-Mon":{
+                "latitude":"-15.4391",
+                "location":"Mongu",
+                "longitude":"23.2525"
+            }
+        },
         "source_id":{
+            "20CR-V2":{
+                "region":"global",
+                "source":"20CR V2 (2006): Monthly NOAA-CIRES 20th Century Reanalysis V2",
+                "source_type":"reanalysis",
+                "source_version_number":"V2"
+            },
+            "20CR-V3":{
+                "region":"global",
+                "source":"20CR V3 (2019): Monthly NOAA/CIRES/DOE 20th Century Reanalysis V3",
+                "source_type":"reanalysis",
+                "source_version_number":"V3"
+            },
+            "AI-upscaling-cSoil-1-0":{
+                "region":"contiguous_united_states",
+                "source":"AI-upscaling-cSoil 1 (2024): Upscaling soil organic carbon measurements at the continental scale using multivariate clustering analysis and machine learning",
+                "source_type":"AI_upscaling",
+                "source_version_number":"1"
+            },
             "AIRS-1-0":{
                 "region":"global",
                 "source":"AIRS 1.0 (2011): Atmospheric Infrared Sounder",
-                "source_label":"AIRS",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.0"
             },
             "AIRS-2-0":{
                 "region":"global",
                 "source":"AIRS 2.0 (2011): Atmospheric Infrared Sounder",
-                "source_label":"AIRS",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
             },
             "AMSRE-v7":{
                 "region":"global_ocean",
                 "source":"AMRSE v7 v7 (2011): Sea Surface Temperature from AMSR-E onboard AQUA",
-                "source_label":"AMRSE v7",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"v7"
+            },
+            "ARMBE-atm-c1-1-8":{
+                "region":"north_america",
+                "source":"ARMBE atm-c1-1-8 (2023): DOE ARM Best Estimate Data Products for Atmosphere and Cloud properties",
+                "source_type":"insitu",
+                "source_version_number":"atm-c1-1-8"
+            },
+            "ARMBE-cldrad-c1-1-8":{
+                "region":"north_america",
+                "source":"ARMBE cldrad-c1-1-8 (2023): DOE ARM Best Estimate Data Products for Atmosphere and Cloud properties",
+                "source_type":"insitu",
+                "source_version_number":"cldrad-c1-1-8"
             },
             "AVISO-1-0":{
                 "region":"global",
                 "source":"AVISO 1 0 1.0 (2011): Sea Surface Height Above Geoid",
-                "source_label":"AVISO 1 0",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.0"
             },
             "Aura-MLS-v04-2":{
                 "region":"global",
                 "source":"Aura-MLS v04.2 (2018): EOS Aura Microwave Limb Sounder",
-                "source_label":"Aura-MLS",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"v04.2"
             },
-            "CMSAF-CLARA-A-2-0":{
+            "BSVertOzone-v1-0":{
                 "region":"global",
-                "source":"CMSAF-CLARA-A 2.0 (2017): CM SAF cLoud, Albedo and surface RAdiation dataset from AVHRR data",
-                "source_label":"CMSAF-CLARA-A",
+                "source":"BSVertOzone v1-0 (2018): Mole concentration of ozone in air",
                 "source_type":"satellite_retrieval",
-                "source_version_number":"2.0"
+                "source_version_number":"v1-0"
+            },
+            "C3S-GTO-ECV-9-0":{
+                "region":"global",
+                "source":"C3S-GTO-ECV 9.0 (2023): GOME-type Total Ozone Essential Climate Variable (GTO-ECV), generated by combining measurements from several nadir-viewing satellite sensors (GOME/ERS-2, SCIAMACHY/Envisat, OMI/Aura, GOME-2/MetOp-A, GOME-2/MetOp-B, GOME-2/MetOp-C, and TROPOMI/Sentinel-5p",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"9.0"
+            },
+            "C3S-XCH4-v4-6":{
+                "region":"global",
+                "source":"C3S-XCH4 4.6 (2024): Copernicus Climate Change Service merged satellite-derived column-average dry-air mole fraction of atmospheric methane",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.6"
+            },
+            "C3S-XCO2-v4-6":{
+                "region":"global",
+                "source":"C3S-XCO2 4.6 (2024): Copernicus Climate Change Service merged satellite-derived column-average dry-air mole fraction of atmospheric carbon dioxide",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.6"
+            },
+            "CALIPSO-ICECLOUD-1-0":{
+                "region":"global",
+                "source":"CALIPSO-ICECLOUD 1.00 (2018): Cloud-Aerosol Lidar and Infrared Pathfinder Satellite Observation (CALIPSO) Ice cloud",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"1.00"
+            },
+            "CCI-CryoClim-FSC-1":{
+                "region":"global_land",
+                "source":"CCI/CryoClim FSC 1 (2023): Fractional Snow Cover CDR v1 from ESA CCI / CryoClim",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"1"
+            },
+            "CCI-SWE-v4-0":{
+                "region":"global_land",
+                "source":"CCI SWE v4.0 (2025): Snow Water Equivalent (SWE) from the ESA SNOW CCI Climate Data Record version 4.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"v4.0"
+            },
+            "CCMP-3-1":{
+                "region":"global",
+                "source":"CCMP-3-1 3.1 (2023): Cross-Calibrated Multiplatform v3.1 (2023): 10m Surface Wind",
+                "source_type":"satellite_blended",
+                "source_version_number":"3.1"
+            },
+            "CERES-EBAF-4-0":{
+                "region":"global",
+                "source":"CERES-EBAF-4-0 4.0 (2018): CERES EBAF (Energy Balanced and Filled) TOA Fluxes. Monthly Averages",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.0"
+            },
+            "CERES-EBAF-4-1":{
+                "region":"global",
+                "source":"CERES-EBAF-4-1 4.1 (2019): CERES EBAF (Energy Balanced and Filled) TOA Fluxes. Monthly Averages",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.1"
+            },
+            "CERES-EBAF-4-2":{
+                "region":"global",
+                "source":"CERES-EBAF-4-2 4.2 (2022): CERES EBAF (Energy Balanced and Filled) TOA Fluxes. Monthly Averages",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.2"
+            },
+            "CERES-EBAF-4-2-1":{
+                "region":"global",
+                "source":"CERES-EBAF4-2 4.2.1 (2025): CERES EBAF (Energy Balanced and Filled) TOA Fluxes. Monthly Averages",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.2.1"
+            },
+            "CHIRPS-V3":{
+                "region":"global_land",
+                "source":"CHIRPS V3 (2025): CHIRPS Version 3.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"V3"
+            },
+            "CMAP-V1902":{
+                "region":"global",
+                "source":"CMAP V1902 (N/A): CMAP Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"V1902"
+            },
+            "CMORPH-1-0":{
+                "region":"global",
+                "source":"CMORPH 1.0 (N/A): CMORPH",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.0"
+            },
+            "CMORPH-1-0-CRT":{
+                "region":"global",
+                "source":"CMORPH 1.0-CRT (N/A): NOAA CMORPH prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.0-CRT"
+            },
+            "CMSAF-CLARA-A-2-1":{
+                "region":"global",
+                "source":"CMSAF-CLARA-A 2.1 (2020): CM SAF cLoud, Albedo and surface RAdiation dataset from AVHRR data",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"2.1"
             },
             "CMSAF-HOAPS-4-0":{
                 "region":"global_ocean",
                 "source":"CMSAF-HOAPS 4.0 (2017): Hamburg Ocean Atmosphere Parameters and fluxes from Satellite data, based on SSM/I and SSMIS aboard DMSP",
-                "source_label":"CMSAF-HOAPS",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"4.0"
             },
             "CMSAF-SARAH-2-0":{
                 "region":"africa, atlantic_ocean, europe",
                 "source":"CMSAF-SARAH 2.0 (2017): Surface solAr RAdiation data set - Heliosat, based on MVIRI/SEVIRI aboard METEOSAT",
-                "source_label":"CMSAF-SARAH",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
+            },
+            "CRUTS-4-0-9":{
+                "region":"global",
+                "source":"CRU TS 4.09 (2024): Climate Research Unit temperature, volume of hydrological precipitation, vapour pressure, wet days, cloud cover-In-situ (gridded)",
+                "source_type":"gridded_insitu",
+                "source_version_number":"4.09"
+            },
+            "DAI-1-0":{
+                "region":"global",
+                "source":"DAI 1.0 (2017): Dai and Trenberth Global River Flow and Continental Discharge Dataset",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "ERA-20C":{
+                "region":"global",
+                "source":"ECMWF-ERA-20C 1.0 (2014): ECMWF - ERA-20C (European ReAnalysis 1900-2010)",
+                "source_type":"reanalysis",
+                "source_version_number":"1.0"
+            },
+            "ERA-40":{
+                "region":"global",
+                "source":"ECMWF-ERA-40 1.0 (2005): ECMWF - ERA-40 (European ReAnalysis 1957-2002)",
+                "source_type":"reanalysis",
+                "source_version_number":"1.0"
+            },
+            "ERA-5":{
+                "region":"global",
+                "source":"ECMWF-ERA-5 1.0 (2019): ECMWF - ERA5 (European ReAnalysis)",
+                "source_type":"reanalysis",
+                "source_version_number":"1.0"
+            },
+            "ERA-INT":{
+                "region":"global",
+                "source":"ECMWF-ERAINT N/A (2010): ECMWF-ERAINT 1.0 (2010): ECMWF - ERAINT (European ReAnalysis 1989-2010)",
+                "source_type":"reanalysis",
+                "source_version_number":"N/A"
+            },
+            "ESA-CCI-SST-v2-1":{
+                "region":"global_ocean",
+                "source":"ESA CCI SST v2.1 (2019): Sea Surface Temperature (SST) from the European Space Agency Climate Change Initiative (ESA CCI)",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"v2.1"
+            },
+            "ESA-CCI-SST-v3-0-1":{
+                "region":"global_ocean",
+                "source":"ESA CCI SST 3.0.1 (2024): Sea Surface Temperature (SST) from the ESA SST CCI Climate Data Record version 3.0",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.0.1"
+            },
+            "ESACCI-CLOUD-ATSR2-AATSR":{
+                "region":"global",
+                "source":"ESACCI-CLOUD-ATSR2-AATSR 3.0 (2020): Cloud properties derived from ATSR2 and AATSR (aboard ERS2 and ENVISAT) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets.",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.0"
             },
             "ESACCI-CLOUD-ATSR2-AATSR-2-0":{
                 "region":"global",
                 "source":"ESACCI-CLOUD-ATSR2-AATSR 2.0 (2017): Cloud properties derived from ATSR2 and AATSR (aboard ERS2 and ENVISAT) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets.",
-                "source_label":"ESACCI-CLOUD-ATSR2-AATSR",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
+            },
+            "ESACCI-CLOUD-AVHRR-AM":{
+                "region":"global",
+                "source":"ESACCI-CLOUD-AVHRR-AM 3.0 (2020): Cloud properties derived from AVHRR (aboard NOAA and MetOp AM) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets.",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.0"
             },
             "ESACCI-CLOUD-AVHRR-AM-2-0":{
                 "region":"global",
                 "source":"ESACCI-CLOUD-AVHRR-AM 2.0 (2017): Cloud properties derived from AVHRR (aboard NOAA and MetOp AM) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets",
-                "source_label":"ESACCI-CLOUD-AVHRR-AM",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
+            },
+            "ESACCI-CLOUD-AVHRR-AMPM-3-0":{
+                "region":"global",
+                "source":"ESACCI-CLOUD-AVHRR-AMPM 3.0 (2019): Cloud properties derived from AVHRR (aboard NOAA and MetOp AM+PM) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.0"
+            },
+            "ESACCI-CLOUD-AVHRR-PM":{
+                "region":"global",
+                "source":"ESACCI-CLOUD-AVHRR-PM 3.0 (2020): Cloud properties derived from AVHRR (aboard NOAA and MetOp PM) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets.",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.0"
             },
             "ESACCI-CLOUD-AVHRR-PM-2-0":{
                 "region":"global",
                 "source":"ESACCI-CLOUD-AVHRR-PM 2.0 (2017): Cloud properties derived from AVHRR (aboard NOAA and MetOp PM) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets",
-                "source_label":"ESACCI-CLOUD-AVHRR-PM",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
             },
             "ESACCI-CLOUD-MERIS-AATSR-2-0":{
                 "region":"global",
                 "source":"ESACCI-CLOUD-MERIS-AATSR 2.0 (2017): Cloud properties derived from MERIS and AATSR (aboard ENVISAT) measurements. This dataset belongs to the ESA Cloud_cci suite of long-term coherent cloud property datasets.",
-                "source_label":"ESACCI-CLOUD-MERIS-AATSR",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
+            },
+            "ESACCI-L3-NO2-TROPOMI-2-0":{
+                "region":"global",
+                "source":"ESACCI-L3-NO2-TROPOMI 2.0 (2025): Monthly tropospheric nitrogen dioxide (NO2) column number density in the context of ESA CCI+ precursors for aerosols and ozone project",
+                "source_type":"satellite_blended",
+                "source_version_number":"2.0"
+            },
+            "ESACCI-LST-IRMGP-3-0-0":{
+                "region":"global_land",
+                "source":"ESACCI-LST-IRMGP 3.00 (2026): ESA Land Surface Temperature Climate Change Initiative Multisensor Infra-Red Low Earth Orbit and Geostationary Earth Orbit land surface temperature",
+                "source_type":"satellite_blended",
+                "source_version_number":"3.00"
+            },
+            "ESACCI-PREC-L3C-NO2":{
+                "region":"global",
+                "source":"ESACCI-PREC-L3C-NO2 1.0 (2021): Total and tropospheric nitrogen dioxide (NO2) column number density in the context of ESA CCI+ precursors for aerosols and ozone project",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.0"
+            },
+            "ESACCI-SCFG-MODIS-v4-0":{
+                "region":"global_land",
+                "source":"ESACCI-SCFG-MODIS v4-0 (2025): Snow Cover Fraction on Ground (SCFG) derived from Terra MODIS data from the ESA SNOW CCI Climate Data Record version 4.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"v4-0"
+            },
+            "FLUXNET2015-1-0":{
+                "region":"global_land",
+                "source":"FLUXNET2015 1.0 (2020): FLUXNET Community Product",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "FireCCI-v5-1":{
+                "region":"global_land",
+                "source":"FireCCI 5.1 (2024): MODIS FireCCI Burned Area product",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.1"
+            },
+            "GERB-HR-ED01-1-0":{
+                "region":"global",
+                "source":"GERB HR_ED01_1.0 (2018): Geostationary Earth Radiation Budget",
+                "source_type":"satellite_blended",
+                "source_version_number":"HR_ED01_1.0"
+            },
+            "GERB-HR-ED01-1-1":{
+                "region":"global",
+                "source":"GERB HR_ED01_1.1 (2018): Geostationary Earth Radiation Budget",
+                "source_type":"satellite_blended",
+                "source_version_number":"HR_ED01_1.1"
+            },
+            "GLODAP-2-2016b":{
+                "region":"global_ocean",
+                "source":"GLODAP 2.2016b (2016): Global Ocean Data Analysis Project Version 2",
+                "source_type":"gridded_insitu",
+                "source_version_number":"2.2016b"
             },
             "GNSS-RO-1-3":{
                 "region":"global",
                 "source":"GNSS-RO 1.3 (2016): Global Navigation Satellite Systems Radio Occultation",
-                "source_label":"GNSS-RO",
                 "source_type":"satellite_retrieval",
+                "source_version_number":"1.3"
+            },
+            "GPCP-1-3":{
+                "region":"global",
+                "source":"GPCP 1.3 (N/A): Merged Precipitation",
+                "source_type":"satellite_blended",
                 "source_version_number":"1.3"
             },
             "GPCP-1DD":{
                 "region":"global",
                 "source":"GPCP 1DD 1.3 (2013): Global Precipitation Climatology Project One Degree Daily",
-                "source_label":"GPCP 1DD",
                 "source_type":"satellite_blended",
                 "source_version_number":"1.3"
+            },
+            "GPCP-1DD-1-3":{
+                "region":"global",
+                "source":"GPCP 1DD 1.3 (2013): Global Precipitation Climatology Project One Degree Daily",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.3"
+            },
+            "GPCP-1DD-CDR-v1-3":{
+                "region":"global",
+                "source":"GPCP 1.3 (2017): Daily GPCP CDR prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.3"
+            },
+            "GPCP-2-3":{
+                "region":"global",
+                "source":"GPCP 2.3 (N/A): Merged Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"2.3"
+            },
+            "GPCP-3-3":{
+                "region":"global",
+                "source":"GPCP-3-3 3.3 (2025): Global Precipitation Climatology Project (GPCP) Merged Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"3.3"
+            },
+            "GPCP-Daily-3-2":{
+                "region":"global",
+                "source":"GPCP 3.2 (2022): Merged Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"3.2"
+            },
+            "GPCP-IP":{
+                "region":"global",
+                "source":"GPCP 1.3 (N/A): NASA GPCP prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.3"
+            },
+            "GPCP-Monthly-3-2":{
+                "region":"global",
+                "source":"GPCP 3.2 (2022): Merged Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"3.2"
             },
             "GPCP-SG":{
                 "region":"global",
                 "source":"GPCP SG 2.3 (2016): Global Precipitation Climatology Project Satellite-Gauge",
-                "source_label":"GPCP SG",
                 "source_type":"satellite_blended",
                 "source_version_number":"2.3"
+            },
+            "GPCP-SG-2-3":{
+                "region":"global",
+                "source":"GPCP SG 2.3 (2016): Global Precipitation Climatology Project Satellite-Gauge",
+                "source_type":"satellite_blended",
+                "source_version_number":"2.3"
+            },
+            "GSMAP-gauges-NRT-v6-0":{
+                "region":"global",
+                "source":"GSMAP 6.0 (2017): JAXA GSMAP prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"6.0"
+            },
+            "GSMaP-v4":{
+                "region":"global",
+                "source":"GSMAP v4 (2017): JAXA GSMAP",
+                "source_type":"satellite_blended",
+                "source_version_number":"v4"
+            },
+            "GSMaP-v5":{
+                "region":"global",
+                "source":"GSMAP v5 (2017): JAXA GSMAP",
+                "source_type":"satellite_blended",
+                "source_version_number":"v5"
+            },
+            "HOFFMAN-1-0":{
+                "region":"global",
+                "source":"HOFFMAN 1.0 (2014): Carbon Mass Flux Out Of Atmosphere Due To Net Biospheric Production On Land, Surface Downward Mass Flux of Carbon As CO2",
+                "source_type":"reanalysis",
+                "source_version_number":"1.0"
+            },
+            "HWSD-2-0":{
+                "region":"global_land",
+                "source":"HWSD 2.0 (2023): Harmonized World Soil Database version 2",
+                "source_type":"gridded_insitu",
+                "source_version_number":"2.0"
+            },
+            "HadCRUT5-0-2-0":{
+                "region":"global",
+                "source":"HadCRUT5 5.0.2.0 (2025): HadCRUT5 blended air temperature and sea surface temperature anomalies",
+                "source_type":"gridded_insitu",
+                "source_version_number":"5.0.2.0"
+            },
+            "HadISDH-land-4-6-1-2024f":{
+                "region":"global_land",
+                "source":"HadISDH 4.6.1.2024f (2024): HadISDH land near-surface humidity anomalies",
+                "source_type":"gridded_insitu",
+                "source_version_number":"4.6.1.2024f"
+            },
+            "HadISST-1-1":{
+                "region":"global_ocean",
+                "source":"HadISST-1-1 1-1 (2016): HadISST 1.1 monthly average sea surface temperature",
+                "source_type":"satellite_blended",
+                "source_version_number":"1-1"
+            },
+            "IAP-1-2":{
+                "region":"global_ocean",
+                "source":"IAP 4.2 (2024): Sea Water Potential Temperature-In-situ (gridded) Chinese Academy of Sciences",
+                "source_type":"gridded_insitu",
+                "source_version_number":"4.2"
+            },
+            "IMERG-V06-EU":{
+                "region":"global",
+                "source":"IMERG-V06-EU V06-EU (2017): NASA IMERG prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06-EU"
+            },
+            "IMERG-V06-FC":{
+                "region":"global",
+                "source":"IMERG-V06-EU V06-FC (2017): NASA IMERG prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06-FC"
+            },
+            "IMERG-V06-FU":{
+                "region":"global",
+                "source":"IMERG-V06-FU V06-FU (2017): NASA IMERG prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06-FU"
+            },
+            "IMERG-V06-LU":{
+                "region":"global",
+                "source":"IMERG-V06-LU V06-LU (2017): NASA IMERG prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06-LU"
+            },
+            "IMERG-V06B-FINAL":{
+                "region":"global",
+                "source":"IMERG-V06B-FINAL V06B (2017): IMERG blended rain rate product",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06B"
+            },
+            "IMERG-V06B-Final-3hr":{
+                "region":"global",
+                "source":"IMERG-V06-Final-3hr V06B (2019): NASA IMERG averaged to 3-hourly maps",
+                "source_type":"satellite_blended",
+                "source_version_number":"V06B"
+            },
+            "IMERG-V07-Final":{
+                "region":"global",
+                "source":"IMERG-V07-Final V07 (2023): NASA IMERG 30-min, 0.1x0.1 degrees",
+                "source_type":"satellite_blended",
+                "source_version_number":"V07"
+            },
+            "IMERG-V07-Final-3hr":{
+                "region":"global",
+                "source":"IMERG-V07-Final-3hr V07 (2023): NASA IMERG averaged to 3-hourly maps",
+                "source_type":"satellite_blended",
+                "source_version_number":"V07"
+            },
+            "IMERG-V07-Final-Daily":{
+                "region":"global",
+                "source":"IMERG-V07-Final-Daily V07 (2023): NASA IMERG Daily Averages",
+                "source_type":"satellite_blended",
+                "source_version_number":"V07"
+            },
+            "IMERG-V07-Final-Monthly":{
+                "region":"global",
+                "source":"IMERG-V07-Final-Monthly V07 (2023): NASA IMERG Monthly Maps",
+                "source_type":"satellite_blended",
+                "source_version_number":"V07"
+            },
+            "IMERG-v06B-FINAL":{
+                "region":"global",
+                "source":"IMERG-v06B-FINAL v06B (2019): IMERG blended rain rate product",
+                "source_type":"satellite_blended",
+                "source_version_number":"v06B"
+            },
+            "IMERG-v06B-Final":{
+                "region":"global",
+                "source":"IMERG v06B Final v06B_Final (2019): Integrated Multi-satellitE Retrievals for Global Precipitation Measurement (IMERG)",
+                "source_type":"satellite_blended",
+                "source_version_number":"v06B_Final"
+            },
+            "JASMES-SNOWCOVER-1-0":{
+                "region":"global",
+                "source":"JASMES Snow Cover 1-0 (2024): Global daily surface snow area fraction derived from merged satellite observations using a consistent objective snow cover mapping algorithm applied to multiple generations of optical sensors since 1978.",
+                "source_type":"satellite_blended",
+                "source_version_number":"1-0"
+            },
+            "JRA-3Q":{
+                "region":"global",
+                "source":"JRA 3Q (2025): Japanese Reanalysis for Three Quarters of a Century",
+                "source_type":"reanalysis",
+                "source_version_number":"3Q"
+            },
+            "JRA25":{
+                "region":"global",
+                "source":"MRI-JRA25 N/A (2002): JRA25 1.0 (2002): JRA25 (Japanese ReAnalysis 1957-2002)",
+                "source_type":"reanalysis",
+                "source_version_number":"N/A"
+            },
+            "LAI4g-1-2":{
+                "region":"global_land",
+                "source":"LAI4g 1.2 (2023): The Fourth Generation Global Inventory Modeling and Mapping Studies Leaf Area Index",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"1.2"
+            },
+            "LIVNEH-1-0":{
+                "region":"north_america",
+                "source":"LIVNEH 1.0 (2021): Livneh daily CONUS near-surface gridded meteorological and derived hydrometeorological data data provided by the NOAA PSL",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "LIVNEH-unsplit-1-0":{
+                "region":"north_america",
+                "source":"LIVNEH_unsplit 1.0 (2021): Livneh daily CONUS unsplit",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "LORA-1-0":{
+                "region":"global_land",
+                "source":"LORA 1.0 (2018): Linear Optimal Runoff Aggregate",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "LORA-1-1":{
+                "region":"global_land",
+                "source":"LORA 1.1 (2018): Linear Optimal Runoff Aggregate",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.1"
+            },
+            "MERRA-2":{
+                "region":"global",
+                "source":"MERRA 2 (2025): Modern-Era Retrospective analysis for Research and Applications",
+                "source_type":"reanalysis",
+                "source_version_number":"2"
+            },
+            "MGOHCTA-WOA09":{
+                "region":"global_ocean",
+                "source":"MGOHCTA WOA09 (2024): Monthly Global Ocean Heat Content and Temperature Anomalies in-situ (basin averages)",
+                "source_type":"gridded_insitu",
+                "source_version_number":"WOA09"
             },
             "MODIS-1-0":{
                 "region":"global",
                 "source":"MODIS 1.0 (2011): Atmospheric Infrared Sounder",
-                "source_label":"MODIS",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.0"
+            },
+            "MSWEP-1-0":{
+                "region":"global",
+                "source":"MSWEP 1.0 (2021): Multi-Source Weighted-Ensemble Precipitation",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "MSWEP-V280":{
+                "region":"global",
+                "source":"MSWEP V280 (2021): Multi-Source Weighted-Ensemble Precipitation",
+                "source_type":"gridded_insitu",
+                "source_version_number":"V280"
+            },
+            "MSWEP-V280-NRT":{
+                "region":"global",
+                "source":"MSWEP V280-Past-NRT (2021): Multi-Source Weighted-Ensemble Precipitation",
+                "source_type":"gridded_insitu",
+                "source_version_number":"V280-Past-NRT"
+            },
+            "MSWEP-V280-Past":{
+                "region":"global",
+                "source":"MSWEP V280-Past (2021): Multi-Source Weighted-Ensemble Precipitation",
+                "source_type":"gridded_insitu",
+                "source_version_number":"V280-Past"
+            },
+            "MSWEP-V280-Past-nogauge":{
+                "region":"global",
+                "source":"MSWEP V280-Past-nogauge (2021): Multi-Source Weighted-Ensemble Precipitation",
+                "source_type":"gridded_insitu",
+                "source_version_number":"V280-Past-nogauge"
+            },
+            "MUR25-4-2":{
+                "region":"global",
+                "source":"MUR25 v4.2 (2019): Multiscale Ultrahigh Resolution L4 Sea-Surface Temperature",
+                "source_type":"satellite_blended",
+                "source_version_number":"v4.2"
+            },
+            "NCSCD-2-2":{
+                "region":"north_polar",
+                "source":"NCSCD 2.2 (2013): Northern Circumpolar Soil Carbon Database",
+                "source_type":"gridded_insitu",
+                "source_version_number":"2.2"
             },
             "NOAA-NCEI-AVHRR-NDVI-4-0":{
                 "region":"global_land",
                 "source":"NOAA-NCEI-AVHRR-NDVI 4.0 (2013): Normalized Difference Vegetation Index",
-                "source_label":"NOAA-NCEI-AVHRR-NDVI",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"4.0"
+            },
+            "NOAA-NCEI-CDR-OLR-v02r00":{
+                "region":"global",
+                "source":"NOAA-NCEI CDR OLR v02r00 (2014): NOAA-NCEI CDR Outgoing Longwave Radiation",
+                "source_type":"satellite_blended",
+                "source_version_number":"v02r00"
             },
             "NOAA-NCEI-ERSST-4-0":{
                 "region":"global_ocean",
                 "source":"NOAA-NCEI-ERSST 4.0 (2015): Extended Reconstructed Sea Surface Temperatures",
-                "source_label":"NOAA-NCEI-ERSST",
                 "source_type":"gridded_insitu",
                 "source_version_number":"4.0"
+            },
+            "NOAA-NCEI-ERSST-5-0":{
+                "region":"global_ocean",
+                "source":"NOAA NCEI ERSST 5.0 (2017): Extended Reconstructed Sea Surface Temperatures",
+                "source_type":"gridded_insitu",
+                "source_version_number":"5.0"
+            },
+            "NOAA-NCEI-ERSSTv6":{
+                "region":"global_ocean",
+                "source":"NOAA-NCEI ERSSTv6 v6 (2025): NOAA-NCEI Extended Reconstructed Sea Surface Temperature (ERSST)",
+                "source_type":"satellite_blended",
+                "source_version_number":"v6"
             },
             "NOAA-NCEI-FAPAR-4-0":{
                 "region":"global_land",
                 "source":"NOAA-NCEI-FAPAR 4.0 (2014): AVHRR Fraction of Absorbed Photosynthetically Active Radiation",
-                "source_label":"NOAA-NCEI-FAPAR",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"4.0"
+            },
+            "NOAA-NCEI-FAPAR-5-0":{
+                "region":"global_land",
+                "source":"NOAA NCEI FAPAR 5.0 (2019): AVHRR Fraction of Absorbed Photosynthetically Active Radiation",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
             },
             "NOAA-NCEI-GridSat-4-0":{
                 "region":"global",
                 "source":"NOAA-NCEI-GridSat 4.0 (2015): Gridded Satellite ISCCP B1 11 Micron Brightness Temperature",
-                "source_label":"NOAA-NCEI-GridSat",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"4.0"
             },
             "NOAA-NCEI-HIRS-OLR-1-2":{
                 "region":"global",
                 "source":"NOAA NCEI HIRS OLR 1.2 (2014): HIRS Outgoing Longwave Radiation",
-                "source_label":"NOAA NCEI HIRS OLR",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.2"
             },
             "NOAA-NCEI-LAI-4-0":{
                 "region":"global_land",
                 "source":"NOAA-NCEI-LAI 4.0 (2014): AVHRR Leaf Area Index",
-                "source_label":"NOAA-NCEI-LAI",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"4.0"
+            },
+            "NOAA-NCEI-LAI-5-0":{
+                "region":"global_land",
+                "source":"NOAA NCEI LAI 5.0 (2019): AVHRR Leaf Area Index",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
+            },
+            "NOAA-NCEI-LAI-AVHRR-5-0":{
+                "region":"global_land",
+                "source":"NOAA-NCEI-LAI-AVHRR 5.0 (2019): Monthly Average of Daily Leaf Area Index from AVHRR",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
+            },
+            "NOAA-NCEI-LAI-VIIRS-1-0":{
+                "region":"global_land",
+                "source":"NOAA NCEI LAI 1.0 (2023): Monthly Average of Daily Leaf Area Index from VIIRS",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"1.0"
+            },
+            "NOAA-NCEI-NDVI":{
+                "region":"global_land",
+                "source":"NOAA NCEI NDVI 5.0 (2019): Normalized Difference Vegetation Index",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
+            },
+            "NOAA-NCEI-NDVI-5-0":{
+                "region":"global_land",
+                "source":"NOAA NCEI NDVI 5.0 (2019): Normalized Difference Vegetation Index",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
             },
             "NOAA-NCEI-OISST-2-0":{
                 "region":"global_ocean",
                 "source":"NOAA NCEI OISST 2.0 (2008): Optimal Interpolation Sea Surface Temperature",
-                "source_label":"NOAA NCEI OISST",
                 "source_type":"satellite_blended",
                 "source_version_number":"2.0"
+            },
+            "NOAA-NCEI-OISST-v2-1":{
+                "region":"global_ocean",
+                "source":"NOAA-NCEI OISST v2.1 v2.1 (2020): NOAA-NCEI Optimum Interpolation Sea Surface Temperature (OISST)",
+                "source_type":"satellite_blended",
+                "source_version_number":"v2.1"
             },
             "NOAA-NCEI-PERSIANN-1-1":{
                 "region":"global",
                 "source":"NOAA-NCEI-PERSIANN 1.1 (2014): Precipitation Estimation from Remotely Sensed Information using Artificial Neural Network",
-                "source_label":"NOAA-NCEI-PERSIANN",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.1"
             },
             "NOAA-NCEI-SSMI-SeaIce-2-0":{
                 "region":"arctic_ocean, southern_ocean",
                 "source":"NOAA-NCEI-SSMI-SeaIce 2.0 (2013): SSMI Passive Microwave Sea Ice Area Fraction",
-                "source_label":"NOAA-NCEI-SSMI-SeaIce",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"2.0"
+            },
+            "NOAA-NCEI-SeaIce-3-1":{
+                "region":"global_ocean",
+                "source":"NOAA NCEI SeaIce 3.1 (2017): SSMI Passive Microwave Sea Ice Area Fraction",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3.1"
             },
             "NOAA-NCEI-SeaWinds-1-2":{
                 "region":"global_ocean",
                 "source":"NOAA-NCEI-SeaWinds 1.2 (2008): Blended Sea Surface Winds",
-                "source_label":"NOAA-NCEI-SeaWinds",
                 "source_type":"satellite_blended",
                 "source_version_number":"1.2"
+            },
+            "OISST-L4-AVHRR-only-v2":{
+                "region":"global_ocean",
+                "source":"OISST_L4_AVHRR-only-v2 v2 (2016): SST-AVHRR_only.v2 2008 NOAA 1/4 Degree Daily Optimum Interpolation Sea Surface Temperature Analysis using AVHRR, Version 2",
+                "source_type":"satellite_blended",
+                "source_version_number":"v2"
+            },
+            "OLC-ORS-V0":{
+                "region":"global",
+                "source":"OLC-ORS V0 (2021): Optimal Linear Combination of Offline land surface models, Reanalysis, and Satellite soil moisture data constrained by in situ observations",
+                "source_type":"reanalysis",
+                "source_version_number":"V0"
+            },
+            "OSISAF-V3":{
+                "region":"global_ocean",
+                "source":"OSISAF/CCI SIC 3 (2022): Sea Ice Concentration (SIC) CDR v3 from EUMETSAT OSI SAF / ESA CCI",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"3"
+            },
+            "PERSIANN-CDRv1r1":{
+                "region":"global",
+                "source":"PERSIANN CDRv1r1 (2019): PERSIANN-CDRv1r1 (2019): Precipitation",
+                "source_type":"satellite_blended",
+                "source_version_number":"CDRv1r1"
+            },
+            "PRISM-M3":{
+                "region":"north_america",
+                "source":"PRISM M3 (2022): PRISM Spatial Climate Datasets for CONUS",
+                "source_type":"gridded_insitu",
+                "source_version_number":"M3"
             },
             "QuikSCAT-v20110531":{
                 "region":"global",
                 "source":"QuikSCAT v20110531 (2011): QuikSCAT winds monthly climatology derived from QuikSCAT L2B using the 2006 model function and processing algorithms.",
-                "source_label":"QuikSCAT",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"v20110531"
             },
-            "REMSS-PRW-6-6-0":{
+            "RAPID-v2023-1":{
+                "region":"atlantic_ocean",
+                "source":"RAPID v2023.1 (2024): Atlantic Meridional Overturning Transport -In-situ",
+                "source_type":"gridded_insitu",
+                "source_version_number":"v2023.1"
+            },
+            "RSS-MSU-TLS-4":{
                 "region":"global",
-                "source":"REMSS-PRW 6.6.0 (2017): Water Vapor Path",
-                "source_label":"REMSS-PRW",
+                "source":"RSS-MSU-TLS 4.0 (2016): RSS MSU Temperature Lower Stratosphere v4.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.0"
+            },
+            "RSS-MSU-TLT-4":{
+                "region":"global",
+                "source":"RSS-MSU-TLT 4.0 (2016): RSS MSU Temperature Lower Troposphere v4.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.0"
+            },
+            "RSS-MSU-TMT-4":{
+                "region":"global",
+                "source":"RSS-MSU-TMT 4.0 (2016): RSS MSU Temperature Middle Troposphere v4.0",
+                "source_type":"satellite_blended",
+                "source_version_number":"4.0"
+            },
+            "RSS-MWIR-SST-5-1":{
+                "region":"global",
+                "source":"RSS-MWIR-SST 5.1 (2022): RSS MWIR v5.1 Foundation OISST",
+                "source_type":"satellite_blended",
+                "source_version_number":"5.1"
+            },
+            "RSS-PRW-6-6-0":{
+                "region":"global",
+                "source":"RSS-PRW 6.6.0 (2017): RSS-PRW 6.6.0 (2017): Water Vapor Path",
                 "source_type":"satellite_blended",
                 "source_version_number":"6.6.0"
+            },
+            "RSS-PRW-v07r00":{
+                "region":"global",
+                "source":"RSS-PRW 7.0 (2017): RSS-PRW 7.0 (2018): Water Vapor Path",
+                "source_type":"satellite_blended",
+                "source_version_number":"7.0"
+            },
+            "RSS-PRW-v07r01":{
+                "region":"global",
+                "source":"RSS-PRW 7.1 (2017): RSS-PRW 7.0 (2019): Water Vapor Path",
+                "source_type":"satellite_blended",
+                "source_version_number":"7.1"
+            },
+            "RSS-PRW-v07r02":{
+                "region":"global",
+                "source":"RSS-PRW 7.2 (2022): RSS-PRW 7.2 (2022): Water Vapor Path",
+                "source_type":"satellite_blended",
+                "source_version_number":"7.2"
+            },
+            "RSS-SMAP-SSS-Monthly-5-3":{
+                "region":"global ocean",
+                "source":"RSS-SMAP-SSS-Monthly-5-3 5.3 (2023): Satellite derived SSS produced by RSS",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.3"
+            },
+            "RSS-SMAP-SSS-Monthly-v05r03":{
+                "region":"global ocean",
+                "source":"RSS-SMAP-SSS-5-3 5.3 (2023): Satellite derived SSS produced by RSS",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.3"
+            },
+            "RSS-SMAP-SSS-v05r01":{
+                "region":"global ocean",
+                "source":"RSS-SMAP-SSS 5.0 (2021): Satellite derived SSS produced by RSS",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.0"
+            },
+            "RSS-SMAP-SSS-v05r03":{
+                "region":"global ocean",
+                "source":"RSS-SMAP-SSS 5.3 (2023): Satellite derived SSS produced by RSS",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"5.3"
+            },
+            "RSS-sfcWind-v07r01":{
+                "region":"global",
+                "source":"RSS-sfcWind 7.1 (2021): RSS-sfcWind 7.0 (2021): 10m Surface Wind",
+                "source_type":"satellite_blended",
+                "source_version_number":"7.1"
             },
             "RSS-v7":{
                 "region":"global_ocean",
                 "source":"RSS-v7 v7 (2011): Satellite derived fields produced by RSS",
-                "source_label":"RSS-v7",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"v7"
+            },
+            "SAGE-CCI-OMPS-v0008":{
+                "region":"global",
+                "source":"SAGE CCI OMPS v0008 (2023): Mole concentration of ozone in air",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"v0008"
+            },
+            "SGP--ARMBE-atm-c1-1-8":{
+                "region":"site_data",
+                "source":"ARMBE atm-c1-1-8 (2022): DOE ARM Best Estimate Data Products for Atmosphere and Cloud properties",
+                "source_type":"insitu",
+                "source_version_number":"atm-c1-1-8"
+            },
+            "SITE-ARMBE-atm-c1-1-8":{
+                "region":"site_data",
+                "source":"ARMBE atm-c1-1-8 (2022): DOE ARM Best Estimate Data Products for Atmosphere and Cloud properties",
+                "source_type":"insitu",
+                "source_version_number":"atm-c1-1-8"
             },
             "TES-1-0":{
                 "region":"global",
                 "source":"TES 1 0 1.0 (2011): Mole Fraction of O3",
-                "source_label":"TES 1 0",
                 "source_type":"satellite_retrieval",
                 "source_version_number":"1.0"
+            },
+            "TRMM-3B42-IR-v7-0":{
+                "region":"global",
+                "source":"TRMM 3B42.IR.v7.0 (2017): NASA-TRMM prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"3B42.IR.v7.0"
+            },
+            "TRMM-3B42-MW-v7-0":{
+                "region":"global",
+                "source":"TRMM 3B42.MW.v7.0 (2017): NASA-TRMM prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"3B42.MW.v7.0"
+            },
+            "TRMM-3B42v-7":{
+                "region":"global",
+                "source":"TRMM 3B42v.7 (2017): NASA-TRMM prepared for FROGS",
+                "source_type":"satellite_blended",
+                "source_version_number":"3B42v.7"
+            },
+            "TRMM-3B43v-7":{
+                "region":"global",
+                "source":"TRMM 3B43v.7 (N/A): NASA-TRMM (observation 2000-2009)",
+                "source_type":"satellite_blended",
+                "source_version_number":"3B43v.7"
+            },
+            "TRMM-TMPA-3B42-v7-7A":{
+                "region":"global",
+                "source":"TRMM TMPA 3B42 v7-7A (2013): Tropical Rainfall Measuring Mission Multi-satellite Precipitation Analysis 3B42",
+                "source_type":"satellite_blended",
+                "source_version_number":"v7-7A"
+            },
+            "TRMM-TMPA-3B43-v7-7A":{
+                "region":"global",
+                "source":"TRMM TMPA 3B43 v7-7A (2013): Tropical Rainfall Measuring Mission Multi-satellite Precipitation Analysis 3B43",
+                "source_type":"satellite_blended",
+                "source_version_number":"v7-7A"
+            },
+            "TropFlux-1-0":{
+                "region":"global_ocean",
+                "source":"TropFlux-1-0 1.0 (2018): TropFlux - Air-Sea Fluxes for the Global Tropical Oceans",
+                "source_type":"satellite_blended",
+                "source_version_number":"1.0"
+            },
+            "WECANN-1-0":{
+                "region":"global_land",
+                "source":"WECANN 1.0 (2018): Water, Energy, and Carbon with Artificial Neural Networks",
+                "source_type":"satellite_retrieval",
+                "source_version_number":"1.0"
+            },
+            "WNCSN-L2-HD-v8":{
+                "region":"europe",
+                "source":"WNCSN 8.0 (2025): WegenerNet Climate Station Network level 2 data (hourly aggregates)",
+                "source_type":"insitu",
+                "source_version_number":"8.0"
+            },
+            "WOA-23":{
+                "region":"global_ocean",
+                "source":"WOA 1.0 (2024): World Ocean Atlas",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "WOA2023":{
+                "region":"global_ocean",
+                "source":"WOA 2023 (2024): World Ocean Atlas",
+                "source_type":"gridded_insitu",
+                "source_version_number":"2023"
+            },
+            "livneh-1-0":{
+                "region":"north_america",
+                "source":"livneh 1.0 (2021): Livneh daily CONUS near-surface gridded meteorological and derived hydrometeorological data data provided by the NOAA PSL",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "livneh-unsplit-1-0":{
+                "region":"north_america",
+                "source":"livneh_unsplit 1.0 (2021): Livneh daily CONUS unsplit",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "nClimGrid-Daily-1-0":{
+                "region":"north_america",
+                "source":"nClimGrid-Daily-1-0 1.0 (2014): NOAA nClimGrid-Daily",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "nClimGrid-Monthly-1-0":{
+                "region":"north_america",
+                "source":"nClimGrid-Monthly-1-0 1.0 (2014): NOAA nClimGrid-Monthly",
+                "source_type":"gridded_insitu",
+                "source_version_number":"1.0"
+            },
+            "wang2024-cSoil-v2":{
+                "region":"contiguous_united_states",
+                "source":"wang2024-cSoil 2 (2024): Upscaling soil organic carbon measurements at the continental scale using multivariate clustering analysis and machine learning",
+                "source_type":"AI_upscaling",
+                "source_version_number":"2"
             }
         },
         "source_type":{
+            "AI_upscaling":"gridded product exploiting multiple_sources via machine learning",
             "gridded_insitu":"gridded product based on measurements collected from in-situ instruments",
+            "insitu":"site data",
             "reanalysis":"gridded product generated from a model reanalysis based on in-situ instruments and possibly satellite measurements",
             "satellite_blended":"gridded product based on both in-situ instruments and satellite measurements",
             "satellite_retrieval":"gridded product based on satellite measurements"
         },
         "table_id":[
-            "obs4MIPs_Aday",
             "obs4MIPs_Amon",
+            "obs4MIPs_Aday",
+            "obs4MIPs_A3hr",
             "obs4MIPs_Lmon",
             "obs4MIPs_Omon",
+            "obs4MIPs_Oday",
             "obs4MIPs_SImon",
+            "obs4MIPs_CFsubhr",
+            "obs4MIPs_A1hr",
+            "obs4MIPs_A1hrPt",
             "obs4MIPs_fx",
-            "obs4MIPs_monNobs",
-            "obs4MIPs_monStderr"
+            "obs4MIPs_Ofx"
         ]
     }
 }

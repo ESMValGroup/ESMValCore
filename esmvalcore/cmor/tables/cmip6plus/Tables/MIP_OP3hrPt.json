@@ -1,0 +1,41 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 0.125,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "OP3hrPt"
+  },
+  "variable_entry": {
+    "tos": {
+      "cell_measures": "area: areacello",
+      "cell_methods": "area: mean where sea time: point",
+      "comment": "Temperature of upper boundary of the liquid ocean, including temperatures below sea-ice and floating ice shelves.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time1"
+      ],
+      "frequency": "3hrPt",
+      "long_name": "Sea Surface Temperature",
+      "modeling_realm": [
+        "ocean"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tos",
+      "positive": "",
+      "standard_name": "sea_surface_temperature",
+      "type": "real",
+      "units": "degC",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

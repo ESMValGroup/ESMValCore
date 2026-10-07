@@ -1,0 +1,242 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 365.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "LPyr"
+  },
+  "variable_entry": {
+    "baresoilFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell  that is covered by bare soil.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typebare"
+      ],
+      "frequency": "yr",
+      "long_name": "Bare Soil Percentage Area Coverage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "baresoilFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cropFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell  that is covered by crop.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typecrop"
+      ],
+      "frequency": "yr",
+      "long_name": "Percentage Crop Cover",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cropFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fracInLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: sum",
+      "comment": "Cumulative percentage transitions over the year; note that percentage should be reported as a percentage of atmospheric grid cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Annual Gross Percentage That Was Transferred into This Tile from Other Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fracInLut",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "fracOutLut": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: sum",
+      "comment": "Cumulative percentage transitions over the year; note that percentage should be reported as percentage of atmospheric grid cell",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "landUse",
+        "time"
+      ],
+      "frequency": "yr",
+      "long_name": "Annual Gross Percentage of Land-Use Tile That Was Transferred into Other Land-Use Tiles",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "fracOutLut",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "grassFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell that is covered by natural grass.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typenatgr"
+      ],
+      "frequency": "yr",
+      "long_name": "Natural Grass Area Percentage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "grassFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "residualFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell  that is land and is covered by  neither vegetation nor bare-soil (e.g., urban, ice, lakes, etc.)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typeresidual"
+      ],
+      "frequency": "yr",
+      "long_name": "Percentage of Grid Cell That Is Land but neither Vegetation Covered nor Bare Soil",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "residualFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "shrubFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell  that is covered by shrub.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typeshrub"
+      ],
+      "frequency": "yr",
+      "long_name": "Percentage Cover by Shrub",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "shrubFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "treeFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of entire grid cell  that is covered by trees.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typetree"
+      ],
+      "frequency": "yr",
+      "long_name": "Tree Cover Percentage",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "treeFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vegFrac": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: mean where land over all_area_types time: mean",
+      "comment": "Percentage of grid cell that is covered by vegetation.This SHOULD be the sum of tree, grass (natural and pasture), crop and shrub fractions.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "time",
+        "typeveg"
+      ],
+      "frequency": "yr",
+      "long_name": "Total Vegetated Percentage Cover",
+      "modeling_realm": [
+        "land"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vegFrac",
+      "positive": "",
+      "standard_name": "area_fraction",
+      "type": "real",
+      "units": "%",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

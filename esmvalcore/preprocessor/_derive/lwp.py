@@ -9,6 +9,46 @@ from ._baseclass import DerivedVariableBase
 logger = logging.getLogger(__name__)
 
 
+LWP_ONLY_DATASETS = [
+    # CMIP5 models
+    {"project_id": "CMIP5", "model_id": "CCSM4"},
+    {"project_id": "CMIP5", "model_id": "CESM1-CAM5-1-FV2"},
+    {"project_id": "CMIP5", "model_id": "CESM1-CAM5"},
+    {"project_id": "CMIP5", "model_id": "CMCC-CESM"},
+    {"project_id": "CMIP5", "model_id": "CMCC-CM"},
+    {"project_id": "CMIP5", "model_id": "CMCC-CMS"},
+    {"project_id": "CMIP5", "model_id": "CSIRO-Mk3-6-0"},
+    {"project_id": "CMIP5", "model_id": "GISS-E2-1-G"},
+    {"project_id": "CMIP5", "model_id": "GISS-E2-1-H"},
+    {"project_id": "CMIP5", "model_id": "IPSL-CM5A-MR"},
+    {"project_id": "CMIP5", "model_id": "IPSL-CM5A-LR"},
+    {"project_id": "CMIP5", "model_id": "IPSL-CM5B-LR"},
+    {"project_id": "CMIP5", "model_id": "IPSL-CM5A-MR"},
+    {"project_id": "CMIP5", "model_id": "MIROC-ESM"},
+    {"project_id": "CMIP5", "model_id": "MIROC-ESM-CHEM"},
+    {"project_id": "CMIP5", "model_id": "MIROC-ESM"},
+    {"project_id": "CMIP5", "model_id": "MPI-ESM-LR"},
+    {"project_id": "CMIP5", "model_id": "MPI-ESM-MR"},
+    {"project_id": "CMIP5", "model_id": "MPI-ESM-P"},
+    # CMIP6 models
+    {"mip_era": "CMIP6", "source_id": "AWI-ESM-1-1-LR"},
+    {"mip_era": "CMIP6", "source_id": "CAMS-CSM1-0"},
+    {"mip_era": "CMIP6", "source_id": "FGOALS-f3-L"},
+    {"mip_era": "CMIP6", "source_id": "IPSL-CM6A-LR"},
+    {"mip_era": "CMIP6", "source_id": "MPI-ESM-1-2-HAM"},
+    {"mip_era": "CMIP6", "source_id": "MPI-ESM1-2-HR"},
+    {"mip_era": "CMIP6", "source_id": "MPI-ESM1-2-LR"},
+    {"mip_era": "CMIP6", "source_id": "SAM0-UNICON"},
+    # CORDEX-CMIP5 models
+    {"project_id": "CORDEX", "model_id": "SMHI-RCA4"},
+    {
+        "project_id": "CORDEX",
+        "model_id": "CLMcom-CCLM4-8-17",
+        "driving_model_id": "MOHC-HadGEM2-ES",
+    },
+]
+
+
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lwp`."""
 
@@ -35,62 +75,19 @@ class DerivedVariable(DerivedVariableBase):
         clwvi_cube = cubes.extract_cube(NameConstraint(var_name="clwvi"))
         clivi_cube = cubes.extract_cube(NameConstraint(var_name="clivi"))
 
-        # CMIP5 and CMIP6 have different global attributes that we use
-        # to determine model name and project name:
-        #   - CMIP5: model_id and project_id
-        #   - CMIP6: source_id and mip_era
-        project = clwvi_cube.attributes.get("project_id")
-        if project:
-            dataset = clwvi_cube.attributes.get("model_id")
-            # some CMIP6 models define both, project_id and source_id but
-            # no model_id --> also try source_id to find model name
-            if not dataset:
-                dataset = clwvi_cube.attributes.get("source_id")
-        else:
-            project = clwvi_cube.attributes.get("mip_era")
-            dataset = clwvi_cube.attributes.get("source_id")
-
         # Should we check that the model_id/project_id are the same on both
         # cubes?
 
-        bad_datasets = [
-            "CCSM4",  # CMIP5 models
-            "CESM1-CAM5-1-FV2",
-            "CESM1-CAM5",
-            "CMCC-CESM",
-            "CMCC-CM",
-            "CMCC-CMS",
-            "CSIRO-Mk3-6-0",
-            "GISS-E2-1-G",
-            "GISS-E2-1-H",
-            "IPSL-CM5A-MR",
-            "IPSL-CM5A-LR",
-            "IPSL-CM5B-LR",
-            "IPSL-CM5A-MR",
-            "MIROC-ESM",
-            "MIROC-ESM-CHEM",
-            "MIROC-ESM",
-            "MPI-ESM-LR",
-            "MPI-ESM-MR",
-            "MPI-ESM-P",
-            "AWI-ESM-1-1-LR",  # CMIP6 models
-            "CAMS-CSM1-0",
-            "FGOALS-f3-L",
-            "IPSL-CM6A-LR",
-            "MPI-ESM-1-2-HAM",
-            "MPI-ESM1-2-HR",
-            "MPI-ESM1-2-LR",
-            "SAM0-UNICON",
-        ]
-        affected_projects = ["CMIP5", "CMIP5_ETHZ", "CMIP6"]
-        if project in affected_projects and dataset in bad_datasets:
-            logger.info(
-                "Assuming that variable clwvi from %s dataset %s "
-                "contains only liquid water",
-                project,
-                dataset,
-            )
-            lwp_cube = clwvi_cube
+        for dataset in LWP_ONLY_DATASETS:
+            if all(
+                clwvi_cube.attributes.get(k) == v for k, v in dataset.items()
+            ):
+                logger.info(
+                    "Assuming that variable clwvi from %s contains only liquid water",
+                    ", ".join(f"{k}={v}" for k, v in dataset.items()),
+                )
+                lwp_cube = clwvi_cube
+                break
         else:
             lwp_cube = clwvi_cube - clivi_cube
 

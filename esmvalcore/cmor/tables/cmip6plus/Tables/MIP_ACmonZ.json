@@ -1,0 +1,89 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": "",
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "ACmonZ"
+  },
+  "variable_entry": {
+    "oxloss": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "total chemical loss rate for o+o1d+o3",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Odd Oxygen (Ox) Loss Rate",
+      "modeling_realm": [
+        "atmosChem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "oxloss",
+      "positive": "",
+      "standard_name": "tendency_of_mole_concentration_of_ox_in_air_due_to_chemical_destruction",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "oxprod": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "total production rate of o+o1d+o3 including o2 photolysis and all o3 producing reactions",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Odd Oxygen (Ox) Production Rate",
+      "modeling_realm": [
+        "atmosChem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "oxprod",
+      "positive": "",
+      "standard_name": "tendency_of_mole_concentration_of_ox_in_air_due_to_chemical_and_photolytic_production",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "vmrox": {
+      "cell_measures": "",
+      "cell_methods": "longitude: mean time: mean",
+      "comment": "Mole Fraction of Ox",
+      "dimensions": [
+        "latitude",
+        "plev39",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of Odd Oxygen (O, O3 and O1D)",
+      "modeling_realm": [
+        "atmosChem"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "vmrox",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ox_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

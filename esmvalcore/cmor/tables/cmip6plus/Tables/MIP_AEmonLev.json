@@ -1,0 +1,1421 @@
+{
+  "Header": {
+    "Conventions": "CF-1.7 CMIP-6.5",
+    "approx_interval": 30.0,
+    "checksum": "",
+    "cmor_version": "3.8.0",
+    "data_specs_version": "6.5.0.0",
+    "generic_levels": [
+      "alevel",
+      "alevhalf"
+    ],
+    "int_missing_value": "-999",
+    "missing_value": "1e20",
+    "product": "model-output",
+    "table_date": "2023-11-16",
+    "table_id": "AEmonLev"
+  },
+  "variable_entry": {
+    "airmass": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "The mass of air in an atmospheric layer.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Vertically Integrated Mass Content of Air in Layer",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "airmass",
+      "positive": "",
+      "standard_name": "atmosphere_mass_of_air_per_unit_area",
+      "type": "real",
+      "units": "kg m-2",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "aoanh": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Fixed surface layer mixing ratio over 30o-50oN (0 ppbv), uniform fixed source (at all levels) everywhere else (source is unspecified but must be constant in space and time and documented). Note that the source could be 1yr/yr, so the tracer concentration provides mean age in years. For method using linearly increasing tracer include a method attribute: 'linearly increasing tracer'For method using uniform source (1yr/yr) include a method attribute: 'uniform source'",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northern Hemisphere Tracer Lifetime",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "aoanh",
+      "positive": "",
+      "standard_name": "tracer_lifetime",
+      "type": "real",
+      "units": "yr",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "c2h2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "C2H2 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "c2h2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ethyne_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "c2h6": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "C2H6 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "c2h6",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ethane_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "c3h6": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "C3H6 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "c3h6",
+      "positive": "",
+      "standard_name": "mole_fraction_of_propene_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "c3h8": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "C3H8 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "c3h8",
+      "positive": "",
+      "standard_name": "mole_fraction_of_propane_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cdnc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Cloud Droplet Number Concentration in liquid water clouds.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Cloud Liquid Droplet Number Concentration",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cdnc",
+      "positive": "",
+      "standard_name": "number_concentration_of_cloud_liquid_water_particles_in_air",
+      "type": "real",
+      "units": "m-3",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ch3coch3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction 'mole_fraction_of_X_in_Y', where X is a material constituent of Y. A chemical species denoted by X may be described by a single term such as 'nitrogen' or a phrase such as 'nox_expressed_as_nitrogen'. Acetone is an organic molecule with the chemical formula CH3CH3CO. The IUPAC name for acetone is propan-2-one. Acetone is a member of the group of organic compounds known as ketones. There are standard names for the ketone group as well as for some of the individual species.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "CH3COCH3 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ch3coch3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_acetone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ch4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of CH4",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ch4",
+      "positive": "",
+      "standard_name": "mole_fraction_of_methane_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "cheaqpso4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "proposed name: tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_aqueous_phase_net_chemical_production",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Aqueous-Phase Production Rate of SO4",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "cheaqpso4",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_particles_due_to_aqueous_phase_net_chemical_production",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "chegpso4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "proposed name: tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_gas_phase_net_chemical_production",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Gas-Phase Production Rate of SO4",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "chegpso4",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_particles_due_to_gaseous_phase_net_chemical_production",
+      "type": "real",
+      "units": "kg m-2 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "co": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "CO Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "co",
+      "positive": "",
+      "standard_name": "mole_fraction_of_carbon_monoxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "co2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of CO2",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "co2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_carbon_dioxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "dms": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Dimethyl Sulphide (DMS) Mole Fraction",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "dms",
+      "positive": "",
+      "standard_name": "mole_fraction_of_dimethyl_sulfide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ec550aer": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Aerosol volume extinction coefficient at 550nm wavelength.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time",
+        "lambda550nm"
+      ],
+      "frequency": "mon",
+      "long_name": "Aerosol Extinction Coefficient",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ec550aer",
+      "positive": "",
+      "standard_name": "volume_extinction_coefficient_in_air_due_to_ambient_aerosol_particles",
+      "type": "real",
+      "units": "m-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "emilnox": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Integrate the NOx production for lightning over model layer. proposed name: tendency_of_atmosphere_mass_content_of_nox_from_lightning",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Layer-Integrated Lightning Production of NOx",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "emilnox",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_moles_of_nox_expressed_as_nitrogen",
+      "type": "real",
+      "units": "mol s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "h2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "includes all phases of water",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mass Fraction of Water",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "h2o",
+      "positive": "",
+      "standard_name": "mass_fraction_of_water_in_air",
+      "type": "real",
+      "units": "1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hcho": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Formaldehyde Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hcho",
+      "positive": "",
+      "standard_name": "mole_fraction_of_formaldehyde_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hcl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.  The chemical formula of hydrogen chloride is HCl.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "HCl Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hcl",
+      "positive": "",
+      "standard_name": "mole_fraction_of_hydrogen_chloride_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "hno3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "HNO3 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "hno3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitric_acid_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "isop": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction of isoprene in air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Isoprene Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "isop",
+      "positive": "",
+      "standard_name": "mole_fraction_of_isoprene_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "jno2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Photolysis rate of nitrogen dioxide (NO2)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Photolysis Rate of NO2",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "jno2",
+      "positive": "",
+      "standard_name": "photolysis_rate_of_nitrogen_dioxide",
+      "type": "real",
+      "units": "s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lossch4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "monthly averaged atmospheric loss",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Monthly Loss of Atmospheric Methane",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lossch4",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mole_concentration_of_methane_due_to_chemical_destruction",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lossco": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "monthly averaged atmospheric loss",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Monthly Loss of Atmospheric Carbon Monoxide",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lossco",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mole_concentration_of_carbon_monoxide_due_to_chemical_destruction",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "lossn2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "monthly averaged atmospheric loss",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Monthly Loss of Atmospheric Nitrous Oxide",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "lossn2o",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mole_concentration_of_nitrous_oxide_due_to_chemical_destruction",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmraerh2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction is used in the construction mass_fraction_of_X_in_Y, where X is a material constituent of Y. It means the ratio of the mass of X to the mass of Y (including X). 'Aerosol' means the system of suspended liquid or solid particles in air (except cloud droplets) and their carrier gas, the air itself. 'Ambient_aerosol' means that the aerosol is measured or modelled at the ambient state of pressure, temperature and relative humidity that exists in its immediate environment. 'Ambient aerosol particles' are aerosol particles that have taken up ambient water through hygroscopic growth. The extent of hygroscopic growth depends on the relative humidity and the composition of the particles.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Aerosol Water Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmraerh2o",
+      "positive": "",
+      "standard_name": "mass_fraction_of_water_in_ambient_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrbc": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dry mass fraction of black carbon aerosol particles in air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Elemental Carbon Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrbc",
+      "positive": "",
+      "standard_name": "mass_fraction_of_elemental_carbon_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrdust": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dry mass fraction of dust aerosol particles in air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Dust Aerosol Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrdust",
+      "positive": "",
+      "standard_name": "mass_fraction_of_dust_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrnh4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dry mass fraction of ammonium aerosol particles in air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "NH4 Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrnh4",
+      "positive": "",
+      "standard_name": "mass_fraction_of_ammonium_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrno3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dry mass fraction of nitrate aerosol particles in air.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "NO3 Aerosol Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrno3",
+      "positive": "",
+      "standard_name": "mass_fraction_of_nitrate_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmroa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "We recommend a scale factor of POM=1.4*OC, unless your model has more detailed info available.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Total Organic Aerosol Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmroa",
+      "positive": "",
+      "standard_name": "mass_fraction_of_particulate_organic_matter_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrpm1": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction atmospheric particulate compounds with an aerodynamic diameter of less than or equal to 1 micrometers",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "PM1.0 Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrpm1",
+      "positive": "",
+      "standard_name": "mass_fraction_of_pm1_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrpm10": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction atmospheric particulate compounds with an aerodynamic diameter of less than or equal to 10 micrometers",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "PM10 Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrpm10",
+      "positive": "",
+      "standard_name": "mass_fraction_of_pm10_ambient_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrpm2p5": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction atmospheric particulate compounds with an aerodynamic diameter of less than or equal to 2.5 micrometers",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "PM2.5 Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrpm2p5",
+      "positive": "",
+      "standard_name": "mass_fraction_of_pm2p5_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrso4": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Dry mass of sulfate (SO4) in aerosol particles as a fraction of air mass.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Aerosol Sulfate Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrso4",
+      "positive": "",
+      "standard_name": "mass_fraction_of_sulfate_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrsoa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction in the atmosphere of secondary organic aerosols (particulate organic matter formed within the atmosphere from gaseous precursors; dry mass).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Secondary Organic Aerosol Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrsoa",
+      "positive": "",
+      "standard_name": "mass_fraction_of_secondary_particulate_organic_matter_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "mmrss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mass fraction in the atmosphere of sea salt aerosol (dry mass).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Sea-Salt Aerosol Mass Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "mmrss",
+      "positive": "",
+      "standard_name": "mass_fraction_of_sea_salt_dry_aerosol_particles_in_air",
+      "type": "real",
+      "units": "kg kg-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "n2o": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.   The chemical formula of  nitrous oxide is N2O.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of N2O",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "n2o",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "nh50": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Fixed surface layer mixing ratio over 30o-50oN (100ppbv), uniform fixed 50-day exponential decay.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Artificial Tracer with 50 Day Lifetime",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "nh50",
+      "positive": "",
+      "standard_name": "mole_fraction_of_artificial_tracer_with_fixed_lifetime_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "no": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "NO Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "no",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrogen_monoxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "no2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "NO2 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "no2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_nitrogen_dioxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Mole Fraction of O3",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3loss": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "ONLY provide the sum of the following reactions: (i) O(1D)+H2O; (ii) O3+HO2; (iii) O3+OH; (iv) O3+alkenes (isoprene, ethene,...)",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "O3 Destruction Rate",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3loss",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mole_concentration_of_ozone_due_to_chemical_destruction",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3prod": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "ONLY provide the sum of all the HO2/RO2 + NO reactions (as k*[HO2]*[NO])",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "O3 Production Rate",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3prod",
+      "positive": "",
+      "standard_name": "tendency_of_atmosphere_mole_concentration_of_ozone_due_to_chemical_production",
+      "type": "real",
+      "units": "mol m-3 s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "o3ste": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Ozone tracer intended to map out strat-trop exchange (STE) of ozone. Set to ozone in the stratosphere, then destroyed in the troposphere using the ozone chemical loss rate. Please specify the tropopause definition used",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Stratospheric Ozone Tracer Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "o3ste",
+      "positive": "",
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "oh": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "OH Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "oh",
+      "positive": "",
+      "standard_name": "mole_fraction_of_hydroxyl_radical_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pan": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "PAN Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pan",
+      "positive": "",
+      "standard_name": "mole_fraction_of_peroxyacetyl_nitrate_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "pfull": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air pressure on model levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Pressure at Model Full-Levels",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "pfull",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "phalf": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Air pressure on model half-levels",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevhalf",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Pressure on Model Half-Levels",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "phalf",
+      "positive": "",
+      "standard_name": "air_pressure",
+      "type": "real",
+      "units": "Pa",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "photo1d": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "proposed name: photolysis_rate_of_ozone_to_O1D",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Photolysis Rate of Ozone (O3) to Excited Atomic Oxygen (the Singlet D State, O1D)",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "photo1d",
+      "positive": "",
+      "standard_name": "photolysis_rate_of_ozone_to_1D_oxygen_atom",
+      "type": "real",
+      "units": "s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "so2": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Mole fraction is used in the construction mole_fraction_of_X_in_Y, where X is a material constituent of Y.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "SO2 Volume Mixing Ratio",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "so2",
+      "positive": "",
+      "standard_name": "mole_fraction_of_sulfur_dioxide_in_air",
+      "type": "real",
+      "units": "mol mol-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tntrl": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Tendency of air temperature due to longwave radiative heating",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Tendency of Air Temperature Due to Longwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrl",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_longwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "tntrs": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Tendency of air temperature due to shortwave radiative heating",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Tendency of Air Temperature Due to Shortwave Radiative Heating",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "tntrs",
+      "positive": "",
+      "standard_name": "tendency_of_air_temperature_due_to_shortwave_heating",
+      "type": "real",
+      "units": "K s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "ua": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Zonal wind (positive in a eastward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Eastward Wind",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "ua",
+      "positive": "",
+      "standard_name": "eastward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "va": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "Meridional wind (positive in a northward direction).",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Northward Wind",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "va",
+      "positive": "",
+      "standard_name": "northward_wind",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    },
+    "wa": {
+      "cell_measures": "area: areacella",
+      "cell_methods": "area: time: mean",
+      "comment": "A velocity is a vector quantity. 'Upward' indicates a vector component which is positive when directed upward (negative downward). Upward air velocity is the vertical component of the 3D air velocity vector. The standard name downward_air_velocity may be used for a vector component with the opposite sign convention.",
+      "dimensions": [
+        "longitude",
+        "latitude",
+        "alevel",
+        "time"
+      ],
+      "frequency": "mon",
+      "long_name": "Upward Air Velocity",
+      "modeling_realm": [
+        "aerosol"
+      ],
+      "ok_max_mean_abs": "",
+      "ok_min_mean_abs": "",
+      "out_name": "wa",
+      "positive": "",
+      "standard_name": "upward_air_velocity",
+      "type": "real",
+      "units": "m s-1",
+      "valid_max": "",
+      "valid_min": ""
+    }
+  }
+}

@@ -105,13 +105,12 @@ def ncl_version() -> None:
         raise RecipeError(msg)
 
 
-def recipe_with_schema(filename: Path) -> None:
+def recipe_with_schema(recipe: dict, path: Path) -> None:
     """Check if the recipe content matches schema."""
     schema_file = os.path.join(os.path.dirname(__file__), "recipe_schema.yml")
     logger.debug("Checking recipe against schema %s", schema_file)
-    recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, recipe, strict=False)
+    yamale.validate(schema, [(recipe, path)], strict=False)
 
 
 def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:

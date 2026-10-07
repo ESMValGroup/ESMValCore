@@ -778,7 +778,10 @@ class CMIP6Info(InfoBase):
                 self.tables[table_name] = table
             table = self.tables[table_name]
 
-            generic_levels = header.get("generic_levels", "").split()
+            generic_levels = header.get("generic_levels", "")
+            if isinstance(generic_levels, str):
+                generic_levels = generic_levels.split()
+
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
@@ -795,7 +798,11 @@ class CMIP6Info(InfoBase):
 
     def _assign_dimensions(self, var, generic_levels):
         for dimension in var.dimensions:
-            if dimension in generic_levels:
+            is_generic = dimension in generic_levels or any(
+                self.coords[name].generic_lev_name == dimension
+                for name in self.coords
+            )
+            if is_generic:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
                 for name in self.coords:
@@ -915,6 +922,21 @@ class Obs4MIPsInfo(CMIP6Info):
             if name.startswith(table_id_prefix):
                 table = self.tables.pop(name)
                 self.tables[name[len(table_id_prefix) :]] = table
+
+    def _load_controlled_vocabulary(self, path: Path) -> None:
+        """Load controlled vocabulary."""
+        # Get institute
+        source_id_file = path.parent / "obs4MIPs_source_id.json"
+        if source_id_file.is_file():
+            with open(source_id_file, encoding="utf-8") as file:
+                table_data = json.loads(file.read())
+                try:
+                    sources = table_data["source_id"]
+                    for source_id in sources:
+                        institution = sources[source_id]["institution_id"]
+                        self.institutes[source_id] = institution
+                except (KeyError, AttributeError):
+                    pass
 
 
 @total_ordering
@@ -1094,9 +1116,7 @@ class VariableInfo(JsonInfo):
         self.valid_min = self._read_json_variable("valid_min")
         self.valid_max = self._read_json_variable("valid_max")
         self.positive = self._read_json_variable("positive")
-        self.modeling_realm = self._read_json_variable(
-            "modeling_realm",
-        ).split()
+        self.modeling_realm = self._read_json_list_variable("modeling_realm")
         self.frequency = self._read_json_variable("frequency", default_freq)
 
         # "dimensions" is a list of str in CMIP7 and a space separated str in CMIP6 CMOR tables.

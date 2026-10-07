@@ -1,16 +1,46 @@
 # Read CMIP and obs4MIPs data from ESGF using intake-esgf.
 projects:
+  CMIP7:
+    data:
+      intake-esgf:
+        type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        facets:
+          activity: "activity_id"
+          branding_suffix: "variable_branding_suffix"
+          dataset: "source_id"
+          ensemble: "variant_label"
+          exp: "experiment_id"
+          frequency: "frequency"
+          grid: "grid_label"
+          institute: "institution_id"
+          project: "project"
+          region: "region"
+          short_name: "variable_id"
   CMIP6:
     data:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
-          activity: "activity_drs"
+          activity: "activity_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
-          institute: "institution_id"
           grid: "grid_label"
+          institute: "institution_id"
+          mip: "table_id"
+          project: "project"
+          short_name: "variable_id"
+  CMIP6Plus:
+    data:
+      intake-esgf:
+        type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        facets:
+          activity: "activity_id"
+          dataset: "source_id"
+          ensemble: "member_id"
+          exp: "experiment_id"
+          grid: "grid_label"
+          institute: "institution_id"
           mip: "table_id"
           project: "project"
           short_name: "variable_id"
@@ -56,6 +86,22 @@ projects:
           frequency: "time_frequency"
           project: "project"
           short_name: "variable"
+  CORDEX-CMIP6:
+    data:
+      intake-esgf:
+        type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        facets:
+          activity: "activity_id"
+          dataset: "source_id"
+          domain: "domain_id"
+          driver: "driving_source_id"
+          ensemble: "driving_variant_label"
+          exp: "driving_experiment_id"
+          frequency: "frequency"
+          institute: "institution_id"
+          project: "project"
+          rcm_version: "version_realization"
+          short_name: "variable_id"
   obs4MIPs:
     data:
       intake-esgf-v2:
@@ -63,6 +109,7 @@ projects:
         facets:
           dataset: "source_id"
           frequency: "frequency"
+          grid: "grid_label"
           institute: "institution_id"
           project: "project"
           short_name: "variable_id"

@@ -1,10 +1,12 @@
 """Tests for the fixes for driver ICHEC-EC-Earth."""
 
 import iris
+import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cordex.ichec_ec_earth import (
     cosmo_crclim_v1_1,
+    hadrem3_ga7_05,
     wrf381p,
 )
 from esmvalcore.cmor.fix import Fix
@@ -43,6 +45,28 @@ def test_get_hadrem3ga705_fix(short_name):
         extra_facets={"driver": "ICHEC-EC-Earth"},
     )
     assert isinstance(fix[0], Fix)
+
+
+def test_hadrem3_ga7_05_sic() -> None:
+    fixes = Fix.get_fixes(
+        "CORDEX",
+        "HadREM3-GA7-05",
+        "day",
+        "sic",
+        extra_facets={"driver": "CNRM-CERFACS-CNRM-CM5"},
+    )
+    assert any(isinstance(fix, hadrem3_ga7_05.Sic) for fix in fixes)
+
+    cube = iris.cube.Cube(
+        np.array([0.5], dtype=np.float32),
+        var_name="sic",
+        standard_name="sea_ice_area_fraction",
+        units="%",
+    )
+    fix = next(fix for fix in fixes if isinstance(fix, hadrem3_ga7_05.Sic))
+    result = fix.fix_metadata([cube])
+    assert result[0].units == "%"
+    np.testing.assert_allclose(result[0].data, [50.0])
 
 
 @pytest.mark.parametrize("short_name", ["pr", "tas"])

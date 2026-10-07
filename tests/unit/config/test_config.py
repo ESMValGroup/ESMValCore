@@ -183,6 +183,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "CMIP3",
         "CMIP5",
         "CMIP6",
+        "CMIP6Plus",
         "CMIP7",
         "CORDEX",
         "CORDEX-CMIP6",
