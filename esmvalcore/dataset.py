@@ -14,6 +14,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import esmvalcore.io.wdcc
 from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
@@ -774,6 +775,7 @@ class Dataset:
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
         esgf.download(input_files)
+        esmvalcore.io.wdcc.download(input_files)
         for file in input_files:
             file.prepare()
 

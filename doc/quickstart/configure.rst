@@ -781,7 +781,7 @@ where ``data-intake-esgf.yml`` needs to be replaced by the name of the example
 configuration you would like to use. The format of the configuration file
 is described in :mod:`esmvalcore.io`.
 
-There are three modules available as part of ESMValCore that provide data sources:
+There are four modules available as part of ESMValCore that provide data sources:
 
 - :mod:`esmvalcore.io.intake_esgf`: Use the
   `intake-esgf <https://intake-esgf.readthedocs.io>`_ library to load data that
@@ -790,6 +790,8 @@ There are three modules available as part of ESMValCore that provide data source
 - :mod:`esmvalcore.io.esgf`: Use the legacy `esgf-pyclient
   <https://esgf-pyclient.readthedocs.io>`_ library to find and download data
   from ESGF.
+- :mod:`esmvalcore.io.wdcc`: Find and download CMIP5 and CORDEX data from the
+  `World Data Center for Climate (WDCC) <https://www.wdc-climate.de>`_.
 
 Adding a custom data source is relatively easy and is explained in
 :mod:`esmvalcore.io.protocol`.

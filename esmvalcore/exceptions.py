@@ -45,6 +45,10 @@ class InputFilesNotFound(RecipeError):
     """Files that are required to run the recipe have not been found."""
 
 
+class DownloadError(Error):
+    """An error occurred while downloading data."""
+
+
 class ESMValCoreUserWarning(UserWarning):
     """Base class from which other warnings are derived."""
 

@@ -24,6 +24,7 @@ import yaml
 from humanfriendly import format_size, format_timespan
 
 from esmvalcore.config import CFG
+from esmvalcore.exceptions import DownloadError
 from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
@@ -50,10 +51,6 @@ HOSTS_FILE = Path.home() / ".esmvaltool" / "cache" / "esgf-hosts.yml"
 SIZE = "size (bytes)"
 DURATION = "duration (s)"
 SPEED = "speed (MB/s)"
-
-
-class DownloadError(Exception):
-    """An error occurred while downloading."""
 
 
 def compute_speed(size, duration):
@@ -560,7 +557,7 @@ class ESGFFile(DataElement):
             local_file,
             format_size(self.size),
             format_timespan(duration.total_seconds()),
-            format_size(self.size / duration.total_seconds()),
+            format_size(round(self.size / duration.total_seconds())),
             urlparse(url).hostname,
         )
 
@@ -641,7 +638,7 @@ def download(files, dest_folder=None, n_jobs=4):
         "Downloaded %s in %s (%s/s)",
         format_size(total_size),
         format_timespan(duration.total_seconds()),
-        format_size(total_size / duration.total_seconds()),
+        format_size(round(total_size / duration.total_seconds())),
     )
 
     if errors:

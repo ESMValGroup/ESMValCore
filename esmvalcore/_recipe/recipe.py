@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 
 import esmvalcore.io.esgf
+import esmvalcore.io.wdcc
 from esmvalcore import __version__
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._recipe import check
@@ -1334,13 +1335,15 @@ class Recipe:
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
-        # Add a special case for ESGF files to enable parallel downloads
+        # Add a special case for ESGF and WDCC files to enable parallel
+        # downloads
         logger.info(
             "Downloading missing data (this may take a while...). Details can be "
             "found in the debug log at %s",
             self.session.main_log_debug,
         )
         esmvalcore.io.esgf.download(self._download_files)
+        esmvalcore.io.wdcc.download(self._download_files)
         for file in self._download_files:
             file.prepare()
         logger.info("Successfully downloaded missing data")

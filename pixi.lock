@@ -19801,12 +19801,14 @@ packages:
   - packaging
   - pandas
   - pillow
+  - platformdirs
   - prov
   - psutil
   - py-cordex
   - pybtex
   - pyyaml
   - requests
+  - requests-cache
   - rich
   - scipy>=1.6
   - scitools-iris>=3.12.2

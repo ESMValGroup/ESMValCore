@@ -1,0 +1,49 @@
+# Download CMIP5 and CORDEX data from the World Data Center for Climate (WDCC) at DKRZ
+# using the `esmvalcore.io.wdcc` module.
+# Searching works without an account. Downloading needs a WDCC or DKRZ account
+# (https://www.wdc-climate.de/ui/register) stored in ~/.netrc:
+#   machine www.wdc-climate.de login <username> password <password>
+# Data that is stored on tape may take a while before the download starts.
+projects:
+  CMIP5:
+    data:
+      wdcc: &wdcc
+        type: esmvalcore.io.wdcc.WDCCDataSource
+        download_dir: ~/climate_data
+        # Store downloaded files in the official CMIP5 directory structure.
+        dirname_template: "{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}"
+        filename_template: "{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc"
+        # How WDCC names CMIP5 datasets, used for searching.
+        entry_name_template: "cmip5 {product} {institute} {dataset} {exp} {frequency} {modeling_realm} {mip} {ensemble} {version} {short_name}"
+        filter_queries:
+          - 'project_acronym_ss:"IPCC-AR5_CMIP5"'
+          - 'entry_type_s:"Dataset"'
+          - "is_downloadable:true"
+        # Uncomment to log in with a DKRZ account instead of a WDCC account.
+        # auth_type: DKRZ
+        # Download several files at once, this helps a lot when data needs to
+        # be retrieved from tape.
+        max_parallel_downloads: 4
+        # Time in seconds to keep search results in the cache (wdcc.sqlite in
+        # the user cache directory, e.g. ~/.cache/esmvalcore on Linux).
+        cache_expire_after: 86400
+        # Use a lower priority than for esmvalcore.io.local.LocalDataSource
+        # (e.g. from data-local.yml) to avoid searching WDCC when the data has
+        # already been downloaded.
+        priority: 10
+  CORDEX:
+    data:
+      wdcc:
+        <<: *wdcc
+        # Store downloaded files in the same directory structure as used on
+        # ESGF and in data-local.yml.
+        dirname_template: "{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}"
+        filename_template: "{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc"
+        # How WDCC names CORDEX datasets, used for searching.
+        entry_name_template: "cordex output {domain} {institute} {driver} {exp} {ensemble} {dataset} {rcm_version} {frequency} {version} {short_name}"
+        filter_queries:
+          # Data on the native model grid and on regular latitude-longitude
+          # grids (domains with an "i" suffix, e.g. EUR-44i).
+          - 'project_acronym_ss:("CORDEX_DDS-CMIP5_native-grid" OR "CORDEX_DDS-CMIP5_lat-lon-grid")'
+          - 'entry_type_s:"Dataset"'
+          - "is_downloadable:true"

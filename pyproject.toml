@@ -55,12 +55,14 @@ dependencies = [
     "packaging",
     "pandas",
     "pillow",
+    "platformdirs",
     "prov",
     "psutil",
     "py-cordex",
     "pybtex",
     "pyyaml",
     "requests",
+    "requests-cache",
     "rich",
     "scipy>=1.6",
     "scitools-iris>=3.12.2",
@@ -237,6 +239,7 @@ packaging = "*"
 pandas = "*"
 pillow = "*"
 pip = "!=21.3"
+platformdirs = "*"
 prov-core = "*"
 psutil = "*"
 py-cordex = "*"
@@ -245,6 +248,7 @@ python = ">=3.12"
 python-stratify = ">=0.3"
 pyyaml = "*"
 requests = "*"
+requests-cache = "*"
 rich = "*"
 scipy = ">=1.6"
 shapely = ">=2.0.0"
