@@ -215,6 +215,25 @@ def is_cordex_domain(spec: object) -> TypeGuard[str]:
     """
     if not isinstance(spec, str):
         return False
+    # Use a cached version of the function to avoid many slow repeated lookups
+    # of the cordex domain info.
+    return _is_cordex_domain(spec)
+
+
+@functools.lru_cache
+def _is_cordex_domain(spec: str) -> bool:
+    """Return ``True`` if ``spec`` is a known CORDEX domain name.
+
+    Parameters
+    ----------
+    spec:
+        Candidate CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    bool
+        Whether ``spec`` is recognised by :mod:`cordex`.
+    """
     try:
         cx.domain_info(spec)
     except KeyError:
