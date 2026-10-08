@@ -2145,6 +2145,15 @@ def test_anomalies_incomplete_period():
     assert_array_equal(result.data, [-50.0, 0.0, 50.0])
 
 
+def test_anomalies_input_unchanged():
+    """Test that ``anomalies`` does not modify the input cube."""
+    cube = make_map_data(number_years=2)
+    iris.coord_categorisation.add_month_number(cube, "time")
+    original = cube.copy()
+    anomalies(cube, "month", standardize=True)
+    assert cube == original
+
+
 @pytest.mark.parametrize(("period", "reference"), PARAMETERS)
 def test_anomalies_preserve_metadata(period, reference):
     """Test that ``anomalies`` preserves metadata."""
