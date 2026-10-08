@@ -4,6 +4,7 @@ import importlib.resources
 import inspect
 import os
 import re
+import uuid
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -1471,11 +1472,12 @@ def get_diagnostic_filename(basename, cfg, extension="nc"):
 def simulate_preprocessor_run(task):
     """Simulate preprocessor run."""
     for product in task.products:
-        # Populate the LocalFile.attributes attribute and initialize
-        # provenance as done in `PreprocessingTask.cubes`.
+        # Populate the LocalFile.attributes attribute (normally done by
+        # `LocalFile.to_iris`) and initialize provenance as done in
+        # `PreprocessingTask.cubes`.
         for dataset in product.datasets:
             for file in dataset.files:
-                file.to_iris()
+                file.attributes = {"tracking_id": str(uuid.uuid4())}
         product.initialize_provenance(task.activity)
 
         create_test_file(product.filename)
@@ -2618,7 +2620,7 @@ def test_representative_dataset_regular_var(
         "project": "ICON",
         "short_name": "tas",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2649,7 +2651,7 @@ def test_representative_dataset_derived_var(
         "project": "ICON",
         "short_name": "alb",
         "timerange": "1990/2000",
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     dataset = Dataset(**variable)
     dataset.session = session
@@ -2669,7 +2671,7 @@ def test_representative_dataset_derived_var(
         "modeling_realm": ["atmos"],
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     if force_derivation:
         expected_datasets = [
@@ -2738,7 +2740,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsdscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsdscs = Dataset(**rsdscs_facets)
     rsdscs.session = session
@@ -2762,7 +2764,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
         "original_short_name": "rsuscs",
         "units": "W m-2",
         # Added by _add_extra_facets
-        "var_type": "atm_2d_ml",
+        "output_stream": "atm_2d_ml",
     }
     rsuscs = Dataset(**rsuscs_facets)
     rsuscs.session = session
@@ -3071,9 +3073,9 @@ def test_check_preprocessor_settings_last_resort(
         bind=mock_bind,
     )
     mocker.patch(
-        "inspect.signature",
+        "esmvalcore.preprocessor._get_signature",
         autospec=True,
-        return_value=mock_signature,
+        return_value=(mock_signature, [], False, None),
     )
     content = dedent("""
         diagnostics:

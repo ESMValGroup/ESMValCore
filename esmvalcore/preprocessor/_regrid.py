@@ -215,6 +215,25 @@ def is_cordex_domain(spec: object) -> TypeGuard[str]:
     """
     if not isinstance(spec, str):
         return False
+    # Use a cached version of the function to avoid many slow repeated lookups
+    # of the cordex domain info.
+    return _is_cordex_domain(spec)
+
+
+@functools.lru_cache
+def _is_cordex_domain(spec: str) -> bool:
+    """Return ``True`` if ``spec`` is a known CORDEX domain name.
+
+    Parameters
+    ----------
+    spec:
+        Candidate CORDEX domain identifier (e.g. ``EUR-11``).
+
+    Returns
+    -------
+    bool
+        Whether ``spec`` is recognised by :mod:`cordex`.
+    """
     try:
         cx.domain_info(spec)
     except KeyError:
@@ -986,6 +1005,24 @@ def regrid(
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
     result = regridder(cube)
+    for ancillary_var in cube.ancillary_variables():
+        ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+        ancillary_slice = tuple(
+            slice(None) if i in ancillary_dims else 0 for i in range(cube.ndim)
+        )
+        ancillary_cube = cube[ancillary_slice].copy(ancillary_var.core_data())
+        ancillary_cube = _rechunk(ancillary_cube, target_grid_cube)
+        ancillary_result = regridder(ancillary_cube)
+        if result.has_lazy_data() and ancillary_result.has_lazy_data():
+            # Keep the chunks of the ancillary variable aligned with the
+            # regridded data variable.
+            ancillary_result.data = ancillary_result.lazy_data().rechunk(
+                result[ancillary_slice].lazy_data().chunks,
+            )
+        result.add_ancillary_variable(
+            ancillary_var.copy(ancillary_result.core_data()),
+            ancillary_dims,
+        )
     # Iris only supports regridding of 1D coordinates and iris-esmf-regrid
     # uses only the DimCoords if both grid_latitude/grid_longitude or
     # projection_x_coordinate/projection_y_coordinate DimCoords and latitude
@@ -1000,6 +1037,8 @@ def regrid(
     # same coordinates when using the regridded cubes as input to the
     # multi-model statistics or similar preprocessor functions later on.
     _update_horizontal_coords(target_grid_cube, result, overwrite=False)
+    _copy_cell_measures(target_grid_cube, result)
+
     return result
 
 
@@ -1154,6 +1193,24 @@ def _update_horizontal_coords(src: Cube, tgt: Cube, overwrite: bool) -> None:
                 tgt.remove_coord(coord.name())
             if not tgt.coords(coord.name()):
                 tgt.add_aux_coord(coord.copy(), tgt_horizontal_dims)
+
+
+def _copy_cell_measures(
+    target_grid_cube: Cube,
+    result: Cube,
+) -> None:
+    """Copy cell measures from the target grid to the result cube."""
+    for cell_measure in target_grid_cube.cell_measures():
+        cm_dims = target_grid_cube.cell_measure_dims(cell_measure)
+        cm_slice = tuple(
+            slice(None) if dim in cm_dims else 0
+            for dim in range(target_grid_cube.ndim)
+        )
+        cm_dims_on_result = tuple(
+            result.coord_dims(dim_coord)[0]
+            for dim_coord in target_grid_cube[cm_slice].dim_coords
+        )
+        result.add_cell_measure(cell_measure.copy(), cm_dims_on_result)
 
 
 def _create_cube(

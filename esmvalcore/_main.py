@@ -33,7 +33,6 @@ import logging
 import os
 import re
 import sys
-import warnings
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -355,98 +354,6 @@ class Config:
 
         shutil.copy2(in_file, out_file)
         logger.info("Copy finished.")
-
-    @classmethod
-    def get_config_user(
-        cls,
-        overwrite: bool = False,
-        path: str | Path | None = None,
-    ) -> None:
-        """Copy default configuration to a given path.
-
-        Copy default configuration to a given path or, if a `path` is not
-        provided, install it in the default `~/.config/esmvaltool/` directory.
-
-        Parameters
-        ----------
-        overwrite:
-            Overwrite an existing file.
-        path:
-            If not provided, the file will be copied to
-            `~/.config/esmvaltool/`.
-
-        .. deprecated:: 2.13.0::
-
-            This function is deprecated and will be removed in ESMValCore
-            version 2.16.0. Use the ``copy`` method instead.
-
-        """
-        from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
-        deprecation_msg = (
-            "The 'esmvaltool config get_config_user' command is deprecated and "
-            "will be removed in ESMValCore version 2.16.0. Use the command "
-            "`esmvaltool config copy defaults/config-user.yml` instead."
-        )
-        warnings.warn(
-            deprecation_msg,
-            category=ESMValCoreDeprecationWarning,
-            stacklevel=1,
-        )
-        from .config._config_object import DEFAULT_CONFIG_DIR
-
-        in_file = DEFAULT_CONFIG_DIR / "config-user.yml"
-        if path is None:
-            out_file = (
-                Path.home() / ".config" / "esmvaltool" / "config-user.yml"
-            )
-        else:
-            out_file = Path(path)
-        if not out_file.suffix:  # out_file looks like a directory
-            out_file = out_file / "config-user.yml"
-        cls._copy_config_file(in_file, out_file, overwrite)
-
-    @classmethod
-    def get_config_developer(
-        cls,
-        overwrite: bool = False,
-        path: str | Path | None = None,
-    ) -> None:
-        """Copy default config-developer.yml file to a given path.
-
-        Copy default config-developer.yml file to a given path or, if a path is
-        not provided, install it in the default `~/.esmvaltool` folder.
-
-        Parameters
-        ----------
-        overwrite: boolean
-            Overwrite an existing file.
-        path: str
-            If not provided, the file will be copied to `~/.esmvaltool`.
-
-        """
-        from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
-        deprecation_msg = (
-            "The config-developer.yml file and the associated "
-            "'esmvaltool config get_config_developer' command are deprecated "
-            "and support for them will be removed in ESMValCore version 2.16.0. "
-            "Please configure data sources, cmor tables, and preprocessor "
-            "filename templates under `projects` instead."
-        )
-        warnings.warn(
-            deprecation_msg,
-            category=ESMValCoreDeprecationWarning,
-            stacklevel=1,
-        )
-        in_file = Path(__file__).parent / "config-developer.yml"
-        if path is None:
-            out_file = Path.home() / ".esmvaltool" / "config-developer.yml"
-        else:
-            out_file = Path(path)
-        if not out_file.suffix:  # out_file looks like a directory
-            out_file = out_file / "config-developer.yml"
-        cls._copy_config_file(in_file, out_file, overwrite)
 
 
 class Recipes:
