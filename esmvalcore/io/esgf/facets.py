@@ -70,6 +70,18 @@ FACETS = {
         "institute": "institute",
         "short_name": "variable",
     },
+    "CORDEX-CMIP6": {
+        "activity": "activity_id",
+        "dataset": "source_id",
+        "driver": "driving_source_id",
+        "domain": "domain",
+        "ensemble": "driving_variant_label",
+        "exp": "driving_experiment_id",
+        "frequency": "frequency",
+        "institute": "institution_id",
+        "rcm_version": "version_realization",
+        "short_name": "variable_id",
+    },
     "obs4MIPs": {
         "dataset": "source_id",
         "frequency": "time_frequency",
@@ -101,6 +113,7 @@ DATASET_MAP = {
     "CMIP6": {},
     "CMIP6Plus": {},
     "CORDEX": {},
+    "CORDEX-CMIP6": {},
     "obs4MIPs": {},
 }
 """Cache for the mapping between recipe/filesystem and ESGF dataset names."""
