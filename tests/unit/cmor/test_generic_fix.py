@@ -2,6 +2,7 @@
 
 from unittest.mock import sentinel
 
+import numpy as np
 import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
@@ -225,3 +226,63 @@ def test_fix_data_no_extra_facets():
 
     assert isinstance(fixed_cube, Cube)
     assert fixed_cube == Cube(0)
+
+
+def _get_multidim_lat_lon_cube(lat_var_name, lon_var_name):
+    """Create a cube with two-dimensional latitude and longitude."""
+    lat = AuxCoord(
+        [[0.0, 0.0], [1.0, 1.0]],
+        var_name=lat_var_name,
+        standard_name="latitude",
+        units="degrees_north",
+    )
+    lon = AuxCoord(
+        [[0.0, 1.0], [0.0, 1.0]],
+        var_name=lon_var_name,
+        standard_name="longitude",
+        units="degrees_east",
+    )
+    return Cube(
+        np.zeros((2, 2)),
+        aux_coords_and_dims=[(lat, (0, 1)), (lon, (0, 1))],
+    )
+
+
+@pytest.mark.parametrize(
+    ("project", "mip"),
+    [("CMIP5", "Amon"), ("CMIP6", "Amon"), ("CORDEX", "mon")],
+)
+def test_fix_multidim_lat_lon_coord(project, mip):
+    """Test that multidimensional lat/lon coords are renamed."""
+    vardef = get_var_info(project, mip, "tas")
+    fix = GenericFix(vardef, extra_facets={"project": project})
+    cube = _get_multidim_lat_lon_cube("latitude", "longitude")
+
+    fix._fix_regular_coord_names(cube)
+
+    assert cube.coord("latitude").var_name == "lat"
+    assert cube.coord("longitude").var_name == "lon"
+
+
+def test_fix_multidim_lat_lon_coord_no_fix_needed():
+    """Test that correctly named multidimensional lat/lon are kept."""
+    vardef = get_var_info("CMIP5", "Amon", "tas")
+    fix = GenericFix(vardef, extra_facets={"project": "CMIP5"})
+    cube = _get_multidim_lat_lon_cube("lat", "lon")
+
+    fix._fix_regular_coord_names(cube)
+
+    assert cube.coord("latitude").var_name == "lat"
+    assert cube.coord("longitude").var_name == "lon"
+
+
+def test_fix_onedim_lat_lon_coord_not_renamed():
+    """Test that one-dimensional lat/lon are not renamed by this fix."""
+    vardef = get_var_info("CMIP5", "Amon", "tas")
+    fix = GenericFix(vardef, extra_facets={"project": "CMIP5"})
+    lat = AuxCoord([0.0, 1.0], var_name="latitude", standard_name="latitude")
+    cube = Cube(np.zeros(2), aux_coords_and_dims=[(lat, 0)])
+
+    fix._fix_regular_coord_names(cube)
+
+    assert cube.coord("latitude").var_name == "latitude"
