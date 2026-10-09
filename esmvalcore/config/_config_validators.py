@@ -15,7 +15,7 @@ from packaging import version
 import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,

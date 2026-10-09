@@ -26,9 +26,9 @@ from esmvalcore._recipe.to_datasets import (
 )
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
-from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import (

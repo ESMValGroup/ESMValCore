@@ -295,6 +295,13 @@ class InfoBase:
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -305,21 +312,14 @@ class InfoBase:
         If :obj:`False`, the function :meth:`~esmvalcore.cmor.table.InfoBase.get_variable`
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or :class:`~esmvalcore.dataset.Dataset`.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
         self,
         *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         # Configure the paths to the CMOR tables.
         builtin_tables_path = Path(__file__).parent / "tables"
@@ -497,6 +497,15 @@ class CMIP6Info(InfoBase):
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Only files
+        with the extension ``.json`` in the specified paths will be read as a
+        CMOR tables, any other files will be ignored.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -508,23 +517,14 @@ class CMIP6Info(InfoBase):
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
 
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Only files
-        with the extension ``.json`` in the specified paths will be read as a
-        CMOR tables, any other files will be ignored.
-
     """
 
     def __init__(
         self,
         *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         super().__init__(alt_names=alt_names, strict=strict, paths=paths)
 
@@ -672,6 +672,13 @@ class Obs4MIPsInfo(CMIP6Info):
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -682,21 +689,14 @@ class Obs4MIPsInfo(CMIP6Info):
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory.
     """
 
     def __init__(
         self,
         *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         super().__init__(
             alt_names=alt_names,
@@ -815,7 +815,6 @@ class VariableInfo(JsonInfo):
     def __init__(
         self,
         table_type: str = "",
-        short_name: str = "",
     ) -> None:
         """Class to read and store variable information.
 
@@ -828,19 +827,12 @@ class VariableInfo(JsonInfo):
 
                 The ``table_type`` parameter is deprecated and will be removed
                 in ESMValCore v2.16.0.
-        short_name:
-            Variable's short name.
-
-            .. deprecated:: 2.14.0
-
-                The ``short_name`` parameter is deprecated and will be removed
-                in ESMValCore v2.16.0.
         """
         super().__init__()
         self.table_type = table_type
         self.modeling_realm: list[str] = []
         """Modeling realm"""
-        self.short_name = short_name
+        self.short_name = ""
         """Short name"""
         self.standard_name = ""
         """Standard name"""
@@ -1024,6 +1016,14 @@ class CMIP5Info(InfoBase):
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -1035,22 +1035,14 @@ class CMIP5Info(InfoBase):
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
 
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Any file
-        in the specified paths will be read as a CMOR table.
-
     """
 
     def __init__(
         self,
         *,
+        paths: Iterable[Path] = (),
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
-        paths: Iterable[Path] = (),
     ) -> None:
         super().__init__(alt_names=alt_names, strict=strict, paths=paths)
 
@@ -1188,6 +1180,14 @@ class CMIP3Info(CMIP5Info):
 
     Parameters
     ----------
+    paths:
+        A list of paths to CMOR tables. The path can be relative to the built-in
+        tables in the
+        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
+        directory, or any other path. The built-in tables will be used if the
+        path is relative and exists in the built-in tables directory. Any file
+        in the specified paths will be read as a CMOR table.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -1198,14 +1198,6 @@ class CMIP3Info(CMIP5Info):
         will look for a variable in other tables if it can not be found in the
         table specified by ``mip`` in the :ref:`recipe <recipe>` or
         :class:`~esmvalcore.dataset.Dataset`.
-
-    paths:
-        A list of paths to CMOR tables. The path can be relative to the built-in
-        tables in the
-        `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
-        directory, or any other path. The built-in tables will be used if the
-        path is relative and exists in the built-in tables directory. Any file
-        in the specified paths will be read as a CMOR table.
 
     """
 
