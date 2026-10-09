@@ -2,10 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import yaml
 
-import esmvalcore
-import esmvalcore.cmor.table
 from esmvalcore import __version__ as current_version
 from esmvalcore.config._config_validators import (
     ValidationError,
@@ -14,7 +11,6 @@ from esmvalcore.config._config_validators import (
     validate_bool,
     validate_bool_or_none,
     validate_check_level,
-    validate_config_developer,
     validate_diagnostics,
     validate_float,
     validate_int,
@@ -24,7 +20,6 @@ from esmvalcore.config._config_validators import (
     validate_path_or_none,
     validate_positive,
     validate_projects,
-    validate_rootpath,
     validate_search_data,
     validate_search_esgf,
     validate_string,
@@ -140,36 +135,6 @@ def generate_validator_testcases(valid):
                 (None, None),
             ),
             "fail": (123, False, []),
-        },
-        {
-            "validator": validate_rootpath,
-            "success": (
-                # Test a single path
-                ({"default": "/a"}, {"default": [Path("/a")]}),
-                ({"default": Path("/a")}, {"default": [Path("/a")]}),
-                # Test a list of paths
-                ({"CMIP6": ["/a", "/b"]}, {"CMIP6": [Path("/a"), Path("/b")]}),
-                (
-                    {"CMIP6": [Path("/a"), Path("/b")]},
-                    {"CMIP6": [Path("/a"), Path("/b")]},
-                ),
-                # Test a dict of paths
-                (
-                    {
-                        "CMIP6": {
-                            "/a": "DKRZ",
-                            "/b": "ESGF",
-                        },
-                    },
-                    {
-                        "CMIP6": {
-                            "/a": "DKRZ",
-                            "/b": "ESGF",
-                        },
-                    },
-                ),
-            ),
-            "fail": (),
         },
         {
             "validator": validate_positive,
@@ -321,42 +286,3 @@ def test_handle_deprecation(remove_version):
                 remove_version,
                 more_info,
             )
-
-
-def test_validate_config_developer_none():
-    """Test ``validate_config_developer``."""
-    path = validate_config_developer(None)
-    assert path is None
-
-
-def test_validate_config_developer(tmp_path, monkeypatch):
-    """Test ``validate_config_developer``."""
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    custom_table_path = (
-        Path(esmvalcore.__file__).parent / "cmor" / "tables" / "cmip5-custom"
-    )
-    cfg_dev = {
-        "custom": {"cmor_path": custom_table_path},
-        "CMIP3": {"input_dir": {"default": "/"}},
-        "CMIP5": {"input_dir": {"default": "/"}},
-        "CMIP6": {"input_dir": {"default": "/"}},
-        "CORDEX": {"input_dir": {"default": "/"}},
-        "OBS": {"input_dir": {"default": "/"}},
-        "OBS6": {"input_dir": {"default": "/"}},
-        "obs4MIPs": {"input_dir": {"default": "/"}},
-        "ana4mips": {"input_dir": {"default": "/"}},
-        "native6": {"input_dir": {"default": "/"}},
-        "EMAC": {"input_dir": {"default": "/"}},
-        "IPSLCM": {"input_dir": {"default": "/"}},
-        "ICON": {"input_dir": {"default": "/"}},
-        "CESM": {"input_dir": {"default": "/"}},
-    }
-    cfg_dev_file = tmp_path / "cfg-developer.yml"
-    with open(cfg_dev_file, mode="w", encoding="utf-8") as file:
-        yaml.safe_dump(cfg_dev, file)
-
-    path = validate_config_developer(cfg_dev_file)
-    assert path == cfg_dev_file
-
-    # Restore original config-developer file
-    validate_config_developer(None)

@@ -4,29 +4,17 @@ from __future__ import annotations
 
 import os
 import pprint
-import re
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 import yaml
 
-import esmvalcore
-import esmvalcore.cmor.table
-import esmvalcore.config._config
-import esmvalcore.local
-from esmvalcore.config import CFG
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.io.local import (
     LocalDataSource,
-    LocalFile,
     _parse_period,
 )
-from esmvalcore.local import _get_output_file, _select_drs, find_files
-
-if TYPE_CHECKING:
-    import pytest_mock
 
 # Load test configuration
 with open(
@@ -76,60 +64,6 @@ def create_tree(path, filenames=None, symlinks=None):
         os.symlink(symlink["target"], link_name)
 
 
-@pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
-def test_get_output_file(monkeypatch, cfg):
-    """Test getting output name for preprocessed files."""
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
-    expected = Path(cfg["output_file"])
-    assert output_file == expected
-
-
-def test_get_output_file_missing_facets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Test that a RecipeError is raised if a required facet is missing."""
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    facets = {
-        "project": "CMIP6",
-        "mip": "Amon",
-        "short_name": "tas",
-    }
-    expected_message = (
-        "Unable to complete path 'CMIP6_{dataset}_Amon_{exp}_{ensemble}_tas"
-        "_{grid}' because the facets 'dataset', 'ensemble', 'exp', and 'grid' "
-        "have not been specified."
-    )
-    with pytest.raises(RecipeError, match=expected_message):
-        _get_output_file(facets, Path("/preproc/dir"))
-
-
-@pytest.mark.parametrize("cfg", CONFIG["get_output_file"])
-def test_get_output_file_no_config_developer(monkeypatch, cfg):
-    """Test getting output name for preprocessed files."""
-    monkeypatch.setattr(esmvalcore.local, "CFG", {})
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setattr(esmvalcore.config._config, "CFG", {})
-    monkeypatch.setattr(esmvalcore.local, "CONFIG_DEVELOPER", {})
-    output_file = _get_output_file(cfg["variable"], cfg["preproc_dir"])
-    expected = Path(cfg["output_file"])
-    assert output_file == expected
-    # This test ensures that only the directory structure bits of
-    # config-developer.yml have been loaded.
-    assert esmvalcore.config._config.CFG
-    assert not esmvalcore.cmor.table.CMOR_TABLES
-
-
 @pytest.fixture
 def root(tmp_path):
     """Root function for tests."""
@@ -140,111 +74,8 @@ def root(tmp_path):
 
 
 @pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
-def test_find_files(monkeypatch, root, cfg, mocker):
-    """Test retrieving input filelist."""
-    if "drs" not in cfg:
-        pytest.skip(
-            "Skipping test that depends on multiple patterns, this is intentionally not "
-            "supported for `LocalDataSource`. Create multiple data sources if you need this.",
-        )
-    print(
-        f"Testing DRS {cfg['drs']} with variable:\n",
-        pprint.pformat(cfg["variable"]),
-    )
-    project = cfg["variable"]["project"]
-    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
-    monkeypatch.setitem(CFG, "rootpath", {project: root})
-    create_tree(
-        root,
-        cfg.get("available_files"),
-        cfg.get("available_symlinks"),
-    )
-
-    # Find files
-    input_filelist, globs = find_files(debug=True, **cfg["variable"])
-    # Test result
-    ref_files = [Path(root, file) for file in cfg["found_files"]]
-    ref_globs = [
-        Path(root, d, f) for d in cfg["dirs"] for f in cfg["file_patterns"]
-    ]
-    assert [Path(f) for f in input_filelist] == sorted(ref_files)
-    assert [Path(g) for g in globs] == sorted(ref_globs)
-    esmvalcore.local._ensure_config_developer_drs.assert_called_once()
-
-
-def test_find_files_missing_facets(
-    monkeypatch: pytest.MonkeyPatch,
-    mocker: pytest_mock.MockerFixture,
-) -> None:
-    """Test that a RecipeError is raised if a required facet is missing."""
-    mocker.patch.object(esmvalcore.local, "_ensure_config_developer_drs")
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    monkeypatch.setitem(CFG, "drs", {"CMIP6": "default"})
-    monkeypatch.setitem(CFG, "rootpath", {"CMIP6": "/data/cmip6"})
-    facets = {
-        "project": "CMIP6",
-        "mip": "Amon",
-        "short_name": "tas",
-    }
-    expected_message = (
-        "Unable to complete path 'tas_Amon_{dataset}_{exp}_{ensemble}_{grid}*."
-        "nc' because the facets 'dataset', 'ensemble', 'exp', and 'grid' have "
-        "not been specified."
-    )
-    with pytest.raises(RecipeError, match=re.escape(expected_message)):
-        find_files(debug=True, **facets)
-
-
-def test_find_files_with_facets(monkeypatch, root):
-    """Test that a LocalFile with populated `facets` is returned."""
-    for cfg in CONFIG["get_input_filelist"]:
-        if cfg["drs"] != "default":
-            break
-
-    project = cfg["variable"]["project"]
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    monkeypatch.setitem(CFG, "drs", {project: cfg["drs"]})
-    monkeypatch.setitem(CFG, "rootpath", {project: root})
-
-    create_tree(
-        root,
-        cfg.get("available_files"),
-        cfg.get("available_symlinks"),
-    )
-
-    # Find files
-    input_filelist = find_files(**cfg["variable"])
-    ref_files = [Path(root, file) for file in cfg["found_files"]]
-    assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
-    assert isinstance(input_filelist[0], LocalFile)
-    assert input_filelist[0].facets
-
-
-@pytest.mark.parametrize("cfg", CONFIG["get_input_filelist"])
 def test_find_data(root, cfg):
     """Test retrieving input filelist."""
-    if "dirname_template" not in cfg:
-        pytest.skip(
-            "Skipping test that depends on multiple patterns, this is intentionally not "
-            "supported for `LocalDataSource`. Create multiple data sources if you need this.",
-        )
     data_source = LocalDataSource(
         name="test-data-source",
         project=cfg["variable"]["project"],
@@ -388,21 +219,6 @@ def test_find_data_facet_missing() -> None:
     files = data_source.find_data(**facets)
     assert not files
     assert data_source.debug_info == expected_message
-
-
-def test_select_invalid_drs_structure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(esmvalcore.cmor.table, "CMOR_TABLES", {})
-    monkeypatch.setitem(
-        CFG,
-        "config_developer_file",
-        Path(esmvalcore.__path__[0], "config-developer.yml"),
-    )
-    msg = (
-        r"drs _INVALID_STRUCTURE_ for CMIP6 project not specified in "
-        r"config-developer file"
-    )
-    with pytest.raises(KeyError, match=msg):
-        _select_drs("input_dir", "CMIP6", "_INVALID_STRUCTURE_")
 
 
 def test_parse_period_invalid_timerange_type():

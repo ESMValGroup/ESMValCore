@@ -23,7 +23,6 @@ from esmvalcore.cmor.fix import fix_data, fix_file, fix_metadata
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement
-from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor._area import (
     area_statistics,
     extract_named_regions,
@@ -298,15 +297,6 @@ def _get_preprocessor_filename(dataset: Dataset) -> Path:
         .get(dataset.facets["project"], {})
         .get("preprocessor_filename_template", default_template)
     )
-    if template is default_template:
-        try:
-            # Use config-developer.yml for backward compatibility, remove in v2.16.
-            return _get_output_file(
-                dataset.facets,
-                dataset.session.preproc_dir,
-            )
-        except RecipeError:
-            pass
 
     def normalize(value: FacetValue) -> str:
         """Normalize a facet value to a string that can be used in a filename."""
