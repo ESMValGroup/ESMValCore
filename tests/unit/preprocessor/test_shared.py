@@ -180,6 +180,20 @@ def test_get_iris_aggregator_no_weights_allowed():
         get_iris_aggregator(operator, **kwargs)
 
 
+def test_get_iris_aggregator_unhashable_kwarg() -> None:
+    """Test ``get_iris_aggregator`` with unhashable keyword arguments."""
+    kwargs = {"percent": np.array([10.0, 90.0])}
+    (agg, agg_kwargs) = get_iris_aggregator("percentile", **kwargs)
+    assert agg == iris.analysis.PERCENTILE
+    assert agg_kwargs == kwargs
+
+
+def test_get_iris_aggregator_unhashable_invalid_kwarg() -> None:
+    """Test ``get_iris_aggregator`` with unhashable invalid kwargs."""
+    with pytest.raises(ValueError, match="Invalid kwargs for operator"):
+        get_iris_aggregator("max", invalid_kwarg=np.array([1.0]))
+
+
 @pytest.mark.parametrize(
     ("aggregator", "result"),
     [

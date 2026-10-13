@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import iris
 import numpy as np
 import pyesgf.search.results
 import pytest
+import yaml
 
 import esmvalcore
 import esmvalcore._recipe.recipe as _recipe
@@ -14,6 +18,9 @@ from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.io.esgf._download import ESGFFile
 from tests import PreprocessorFile
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 class MockRecipe(_recipe.Recipe):
@@ -1014,3 +1021,49 @@ def test_special_name_to_dataset_invalid_special_name_type():
     )
     with pytest.raises(RecipeError, match=msg):
         _recipe._special_name_to_dataset(facets, "reference_dataset")
+
+
+@pytest.mark.parametrize("has_csafeloader", [True, False])
+def test_read_recipe_file(
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    has_csafeloader: bool,
+) -> None:
+    """Test that a recipe is read with and without ``yaml.CSafeLoader``."""
+    if not has_csafeloader:
+        monkeypatch.delattr(yaml, "CSafeLoader", raising=False)
+    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
+    session = mocker.sentinel.session
+    recipe_file = tmp_path / "recipe_test.yml"
+    recipe_file.write_text("diagnostics:\n  diag: {}\n", encoding="utf-8")
+
+    result = _recipe.read_recipe_file(recipe_file, session)
+
+    raw_recipe: dict[str, dict[str, dict]] = {"diagnostics": {"diag": {}}}
+    mock_check.assert_called_once_with(raw_recipe, path=recipe_file)
+    mock_recipe.assert_called_once_with(
+        raw_recipe,
+        session,
+        recipe_file=recipe_file,
+    )
+    assert result == mock_recipe.return_value
+
+
+def test_read_recipe_file_invalid_yaml(
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    """Test that invalid YAML is re-parsed with ``yaml.safe_load``."""
+    safe_load = mocker.spy(_recipe.yaml, "safe_load")
+    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    recipe_file = tmp_path / "recipe_test.yml"
+    recipe_text = "diagnostics: [\n"
+    recipe_file.write_text(recipe_text, encoding="utf-8")
+
+    with pytest.raises(yaml.YAMLError):
+        _recipe.read_recipe_file(recipe_file, mocker.sentinel.session)
+
+    safe_load.assert_called_once_with(recipe_text)
+    mock_check.assert_not_called()

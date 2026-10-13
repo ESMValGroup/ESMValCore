@@ -21,8 +21,7 @@ projects:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
-          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
-          activity: "activity_drs"
+          activity: "activity_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
@@ -36,8 +35,7 @@ projects:
       intake-esgf:
         type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
         facets:
-          # Note: change "activity_drs" to "activity_id" for versions of intake-esgf newer than 2026.9.4
-          activity: "activity_drs"
+          activity: "activity_id"
           dataset: "source_id"
           ensemble: "member_id"
           exp: "experiment_id"
@@ -88,6 +86,22 @@ projects:
           frequency: "time_frequency"
           project: "project"
           short_name: "variable"
+  CORDEX-CMIP6:
+    data:
+      intake-esgf:
+        type: esmvalcore.io.intake_esgf.IntakeESGFDataSource
+        facets:
+          activity: "activity_id"
+          dataset: "source_id"
+          domain: "domain_id"
+          driver: "driving_source_id"
+          ensemble: "driving_variant_label"
+          exp: "driving_experiment_id"
+          frequency: "frequency"
+          institute: "institution_id"
+          project: "project"
+          rcm_version: "version_realization"
+          short_name: "variable_id"
   obs4MIPs:
     data:
       intake-esgf-v2:
