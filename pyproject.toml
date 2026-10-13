@@ -154,7 +154,6 @@ line-length = 79
 select = ["ALL"]
 ignore = [
     # Ignore until someone has time to fix this:
-    "CPY001",   # Disable copyright notice in every file check.
     "DTZ",      # add tzinfo to datetimes
     "FBT",      # avoid boolean positional arguments
     "N818",     # Exception name should be named with an Error suffix
