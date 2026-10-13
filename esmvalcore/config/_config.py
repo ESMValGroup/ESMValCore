@@ -68,7 +68,7 @@ def get_project_config(project):
     raise RecipeError(msg)
 
 
-def get_ignored_warnings(project: FacetValue, step: str) -> None | list:
+def get_ignored_warnings(project: FacetValue, step: str) -> list | None:
     """Get ignored warnings for a given preprocessing step."""
     if project not in CFG:
         return None

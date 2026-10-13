@@ -367,9 +367,7 @@ class ESGFFile(DataElement):
             keys = keys[1:]
         # Read values from dataset_id
         # Pick the first dataset_id if there are differences in case
-        dataset_id = min(
-            r.json["dataset_id"].split("|")[0] for r in results
-        )
+        dataset_id = min(r.json["dataset_id"].split("|")[0] for r in results)
         values = dataset_id.split(".")[1:]
         facets = {}
         if len(keys) == len(values):
@@ -394,9 +392,7 @@ class ESGFFile(DataElement):
     def _get_dataset_id(results):
         """Simplify dataset_id so it is always composed of the same facets."""
         # Pick the first dataset_id if there are differences in case
-        dataset_id = min(
-            r.json["dataset_id"].split("|")[0] for r in results
-        )
+        dataset_id = min(r.json["dataset_id"].split("|")[0] for r in results)
 
         project = results[0].json["project"][0]
         if project != "obs4MIPs":
