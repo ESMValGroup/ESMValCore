@@ -1730,7 +1730,7 @@ Examples:
         .. code-block:: yaml
 
             anomalies:
-              standardized: true
+              standardize: true
 
 
      * Standardized Anomalies from the 1979-2000 monthly climatology:
