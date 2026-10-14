@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+import xarray as xr
 
 from esmvalcore.config import _dask
 from esmvalcore.exceptions import (
@@ -34,6 +35,16 @@ def test_get_no_distributed_client(session: Session) -> None:
         assert client is None
 
 
+def test_xarray_options_plugin(mocker: pytest_mock.MockerFixture) -> None:
+    original = xr.get_options()
+    plugin = _dask._XarrayOptionsPlugin({"file_cache_maxsize": 2})
+    try:
+        plugin.setup(mocker.sentinel.worker)
+        assert xr.get_options()["file_cache_maxsize"] == 2
+    finally:
+        xr.set_options(file_cache_maxsize=original["file_cache_maxsize"])
+
+
 def test_get_distributed_client_external(
     mocker: pytest_mock.MockerFixture,
     mock_dask_config_set: Mock,
@@ -57,14 +68,61 @@ def test_get_distributed_client_external(
         return_value=mock_client,
     )
 
+    mock_register_plugin = mock_client.register_plugin
+    session["xarray_options"] = {"file_cache_maxsize": 2}
+
     with _dask.get_distributed_client(session) as client:
         assert client is mock_client
     _dask.Client.assert_called_once_with()
     mock_client.close.assert_called_once_with()  # type: ignore[union-attr]
+    mock_register_plugin.assert_called_once()
+    (plugin,) = mock_register_plugin.call_args.args
+    assert isinstance(plugin, _dask._XarrayOptionsPlugin)
+    assert plugin.options == {"file_cache_maxsize": 2}
     assert (
         mocker.call({"scheduler_address": "tcp://127.0.0.1:42021"})
         in mock_dask_config_set.mock_calls
     )
+
+
+@pytest.mark.usefixtures("mock_dask_config_set")
+def test_get_distributed_client_register_plugin_fails(
+    mocker: pytest_mock.MockerFixture,
+    session: Session,
+) -> None:
+    session["dask"] = {
+        "use": "local_distributed",
+        "profiles": {
+            "local_distributed": {
+                "cluster": {"type": "distributed.LocalCluster"},
+            },
+        },
+    }
+    mock_client = mocker.Mock()
+    mock_client.register_plugin.side_effect = OSError
+    mock_close = mock_client.close
+    mocker.patch.object(
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
+    )
+    mock_cluster_cls = mocker.Mock()
+    mocker.patch.object(
+        _dask.importlib,
+        "import_module",
+        create_autospec=True,
+        return_value=mocker.Mock(LocalCluster=mock_cluster_cls),
+    )
+
+    with (
+        pytest.raises(OSError),
+        _dask.get_distributed_client(session),
+    ):
+        pass
+
+    mock_close.assert_called_once_with()
+    mock_cluster_cls.return_value.close.assert_called_once_with()
 
 
 @pytest.mark.parametrize("shutdown_timeout", [False, True])

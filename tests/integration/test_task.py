@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import sentinel
 
 import pytest
+import xarray as xr
 import yaml
 
 import esmvalcore
@@ -194,6 +195,15 @@ def test_run_task(mocker, session, address):
 
     task = mocker.create_autospec(DiagnosticTask, instance=True)
     task.products = mocker.Mock()
+    xarray_options = {}
+
+    def run(_):
+        xarray_options.update(xr.get_options())
+        return mocker.DEFAULT
+
+    task.run.side_effect = run
+    session["xarray_options"] = {"file_cache_maxsize": 2}
+    original = xr.get_options()
     output_files, products = _run_task(
         task,
         scheduler_address=address,
@@ -201,6 +211,9 @@ def test_run_task(mocker, session, address):
         session=session,
     )
     assert output_files == task.run.return_value
+    # Check that the xarray options were set while running the task
+    assert xarray_options["file_cache_maxsize"] == 2
+    assert xr.get_options() == original
     assert products == task.products
     assert task.scheduler_lock == scheduler_lock
     if address is None:

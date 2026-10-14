@@ -258,6 +258,10 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - Skip non-existent datasets, see :ref:`running`.
      - :obj:`bool`
      - ``False``
+   * - ``xarray_options``
+     - :ref:`config-xarray`.
+     - :obj:`dict`
+     - ``{file_cache_maxsize: 4}``
 
 .. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
     additional auxiliary data files.
@@ -655,6 +659,38 @@ Available options:
 |                               | reporting. A progress bar is only      |                             |                                        |
 |                               | shown if ``max_parallel_tasks: 1``.    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+
+
+.. _config-xarray:
+
+Xarray configuration
+====================
+
+Configure `xarray <https://docs.xarray.dev>`__ in the ``xarray_options``
+section.
+The options in this section are passed to :func:`xarray.set_options` while
+running a recipe with ``esmvaltool run``, including on each Dask worker when
+using the Dask distributed scheduler (see :ref:`config-dask`).
+Note that the options remain set on the workers of a Dask cluster that was not
+started by ESMValCore, e.g. when connecting to an existing cluster using
+``scheduler_address``.
+
+The default value of ``file_cache_maxsize: 4`` limits the number of files that
+xarray keeps open at the same time, which reduces the amount of memory used:
+by default, the netCDF library uses a `chunk cache
+<https://docs.unidata.ucar.edu/nug/current/netcdf_perf_chunking.html>`__ of up
+to 64 MB for each variable in an open netCDF-4 file.
+
+Configuration file example:
+
+.. code:: yaml
+
+   xarray_options:
+     file_cache_maxsize: 16
+
+will allow xarray to keep up to 16 files open at the same time.
+
+See :func:`xarray.set_options` for all available options.
 
 
 .. _config-projects:

@@ -1,0 +1,9 @@
+# Default xarray configuration.
+
+# These options are passed to xarray.set_options while running a recipe and on
+# each Dask distributed worker. See
+# https://docs.xarray.dev/en/stable/generated/xarray.set_options.html
+# for all available options.
+
+xarray_options:
+  file_cache_maxsize: 4

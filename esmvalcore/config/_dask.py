@@ -7,16 +7,18 @@ import importlib
 import logging
 from collections.abc import Mapping
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dask.config
-from distributed import Client
+import xarray as xr
+from distributed import Client, WorkerPlugin
 
 from esmvalcore.exceptions import InvalidConfigParameter
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from distributed import Worker
     from distributed.deploy import Cluster
 
     from esmvalcore.config import Session
@@ -74,6 +76,19 @@ def validate_dask_config(dask_config: Mapping) -> None:
         raise InvalidConfigParameter(msg)
 
 
+class _XarrayOptionsPlugin(WorkerPlugin):
+    """Set :func:`xarray.set_options` on each Dask worker."""
+
+    name = "esmvalcore-xarray-options"
+
+    def __init__(self, options: Mapping[str, Any]) -> None:
+        self.options = dict(options)
+
+    def setup(self, worker: Worker) -> None:  # noqa: ARG002
+        """Set the xarray options when the worker starts."""
+        xr.set_options(**self.options)
+
+
 @contextlib.contextmanager
 def get_distributed_client(session: Session) -> Generator[None | Client]:
     """Get a Dask distributed client."""
@@ -126,6 +141,10 @@ def get_distributed_client(session: Session) -> Generator[None | Client]:
         )
 
     try:
+        if client is not None:
+            client.register_plugin(
+                _XarrayOptionsPlugin(session["xarray_options"]),
+            )
         yield client
     finally:
         if client is not None:

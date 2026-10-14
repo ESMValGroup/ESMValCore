@@ -158,6 +158,7 @@ def test_load_default_config(cfg_default, monkeypatch):
         "search_data": "quick",
         "skip_nonexistent": False,
         "save_intermediary_cubes": False,
+        "xarray_options": {"file_cache_maxsize": 4},
     }
 
     directory_attrs = {

@@ -617,10 +617,15 @@ class ESMValTool:
         self._log_header(log_files, cli_config_dir)
 
         # configure resource logger and run program
+        import xarray as xr
+
         from ._task import resource_usage_logger
 
         resource_log = session.run_dir / "resource_usage.txt"
-        with resource_usage_logger(pid=os.getpid(), filename=resource_log):
+        with (
+            resource_usage_logger(pid=os.getpid(), filename=resource_log),
+            xr.set_options(**session["xarray_options"]),
+        ):
             process_recipe(recipe_file=recipe, session=session)
 
         self._clean_preproc(session)
