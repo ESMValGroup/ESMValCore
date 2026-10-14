@@ -948,7 +948,7 @@ def _get_cmor_checker(
     short_name: str,
     *,
     branding_suffix: str | None = None,
-    frequency: None | str = None,
+    frequency: str | None = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Callable[[Cube], CMORCheck]:

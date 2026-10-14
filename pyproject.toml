@@ -154,11 +154,15 @@ line-length = 79
 select = ["ALL"]
 ignore = [
     # Ignore until someone has time to fix this:
+    "CPY001",   # Disable copyright notice in every file check.
     "DTZ",      # add tzinfo to datetimes
     "FBT",      # avoid boolean positional arguments
+    "ICN001",   # we should not be forced to import datetime as dt
+    "ISC004",   # Unparenthesized implicit string concatenation in collection - not a functional rule
     "N818",     # Exception name should be named with an Error suffix
     "PERF",     # Use comprehensions
     "PGH003",   # Use specific rule codes when ignoring type issues
+    "PLR0917",  # max number of func args 7; really not useful rule
     "PLR2004",  # Don't use magic values
     "PT009",    # Use a regular `assert` instead of unittest-style `assertListEqual`
     "PT011",    # pytest.raises without match argument
