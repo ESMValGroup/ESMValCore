@@ -179,10 +179,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - Only run the selected diagnostics from the recipe, see :ref:`running`.
      - :obj:`list` or :obj:`str`
      - ``None`` (all diagnostics)
-   * - ``download_dir``
-     - [deprecated] Directory where downloaded data will be stored. [#f2]_
-     - :obj:`str`
-     - ``~/climate_data``
    * - ``exit_on_warning``
      - Exit on warning (only used in NCL diagnostic scripts).
      - :obj:`bool`
@@ -245,10 +241,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
        with a lower value for ``priority`` will be searched first. (``quick``, ``complete``)
      - :obj:`str`
      - ``quick``
-   * - ``search_esgf``
-     - [deprecated] Automatic data download from ESGF (``never``, ``when_missing``, ``always``). [#f2]_
-     - :obj:`str`
-     - ``never``
    * - ``skip_nonexistent``
      - Skip non-existent datasets, see :ref:`running`.
      - :obj:`bool`
@@ -275,8 +267,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
        This setting is not for model or observational datasets, rather it is
        for extra data files such as shapefiles or other data sources needed by
        the diagnostics.
-.. [#f2] This option is scheduled for removal in v2.14.0. Please use
-    :ref:`data sources <config-data-sources>` to configure data finding instead.
 .. [#f3] The ``profile_diagnostic`` setting triggers profiling of Python
     diagnostics, this will tell you which functions in the diagnostic took most
     time to run.
