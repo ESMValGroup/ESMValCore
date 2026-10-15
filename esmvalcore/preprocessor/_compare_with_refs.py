@@ -313,7 +313,7 @@ def distance_metric(
     coords:
         Coordinates over which the distance metric is calculated. If ``None``,
         calculate the metric over all coordinates, which results in a scalar
-        cube.
+        cube as the p-value.
     keep_reference_dataset:
         If ``True``, also calculate the distance of the reference dataset with
         itself. If ``False``, drop the reference dataset.
