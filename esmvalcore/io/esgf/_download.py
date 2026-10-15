@@ -23,7 +23,6 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
-from esmvalcore.config import CFG
 from esmvalcore.io.local import (
     LocalFile,
     _dates_to_timerange,
@@ -217,7 +216,9 @@ class ESGFFile(DataElement):
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
         self.dest_folder = (
-            CFG.get("download_dir") if dest_folder is None else dest_folder
+            Path("~/climate_data").expanduser()
+            if dest_folder is None
+            else dest_folder
         )
         self._attributes: dict[str, Any] | None = None
 
