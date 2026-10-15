@@ -20,6 +20,7 @@ from esmvalcore.cmor.check import (
     CMORCheckError,
     _get_cmor_checker,
 )
+from esmvalcore.config import CFG
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class VariableInfoMock:
     """Mock for the variables definition."""
 
     def __init__(self):
-        self.table_type = "CMIP5"
+        self.project = "CMIP5"
         self.short_name = "short_name"
         self.standard_name = "age_of_sea_ice"  # Iris don't accept fakes ...
         self.long_name = "Long Name"
@@ -252,7 +253,6 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_with_no_positive_cmip6(self):
         """Check CMIP6 variable with no positive attribute report warning."""
         self.var_info.positive = "up"
-        self.var_info.table_type = "CMIP6"
         self._check_warnings_on_metadata()
 
     def test_invalid_rank(self):
@@ -308,7 +308,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_generic_level_alternative_cmip3(self):
         """Test valid alternative for generic level coords (CMIP3)."""
-        self.var_info.table_type = "CMIP3"
+        self.var_info.project = "CMIP3"
         self._setup_generic_level_var()
         self.var_info.coordinates["zlevel"] = self.var_info.coordinates.pop(
             "alevel",
@@ -318,28 +318,45 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_generic_level_alternative_cmip5(self):
         """Test valid alternative for generic level coords (CMIP5)."""
-        self.var_info.table_type = "CMIP5"
+        self.var_info.project = "CMIP5"
         self._setup_generic_level_var()
         self._add_plev_to_cube()
         self._check_warnings_on_metadata()
 
     def test_generic_level_alternative_cmip6(self):
         """Test valid alternative for generic level coords (CMIP6)."""
-        self.var_info.table_type = "CMIP6"
+        self.var_info.project = "CMIP6"
         self._setup_generic_level_var()
         self._add_plev_to_cube()
         self._check_warnings_on_metadata()
 
     def test_generic_level_alternative_obs4mips(self):
         """Test valid alternative for generic level coords (obs4MIPs)."""
-        self.var_info.table_type = "obs4MIPs"
+        self.var_info.project = "obs4MIPs"
         self._setup_generic_level_var()
         self._add_plev_to_cube()
         self._check_warnings_on_metadata()
 
+    def test_generic_level_alternative_session(self):
+        """Test valid alternative for generic level coords with session."""
+        self.var_info.project = "CMIP6"
+        self._setup_generic_level_var()
+        self._add_plev_to_cube()
+        session = CFG.start_session("test_generic_level_alternative_session")
+        checker = CMORCheck(self.cube, self.var_info, session=session)
+        checker.check_metadata()
+        self.assertTrue(checker.has_warnings())
+
+    def test_generic_level_alternative_no_project(self):
+        """Test that no alternative is found for unknown project."""
+        self.var_info.project = ""
+        self._setup_generic_level_var()
+        self._add_plev_to_cube()
+        self._check_fails_in_metadata()
+
     def test_generic_level_invalid_alternative(self):
         """Test invalid alternative for generic level coords."""
-        self.var_info.table_type = "CMIP6"
+        self.var_info.project = "CMIP6"
         self._setup_generic_level_var()
         self._add_plev_to_cube()
         self.cube.coord("air_pressure").standard_name = "altitude"
@@ -392,25 +409,21 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check strict.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.coord("longitude").var_name = "bad_name"
         self._check_fails_in_metadata()
 
     def test_check_missing_lon_strict_flag(self):
         """Test check fails for missing longitude with --cmor-check strict."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("longitude")
         self._check_fails_in_metadata()
 
     def test_check_missing_lat_strict_flag(self):
         """Test check fails for missing latitude with --cmor-check strict."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("latitude")
         self._check_fails_in_metadata()
 
     def test_check_missing_time_strict_flag(self):
         """Test check fails for missing time with --cmor-check strict."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("time")
         self._check_fails_in_metadata()
 
@@ -474,25 +487,21 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check relaxed.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.coord("longitude").var_name = "bad_name"
         self._check_warnings_on_metadata(check_level=CheckLevels.RELAXED)
 
     def test_check_missing_lon_relaxed_flag(self):
         """Test check fails for missing longitude with --cmor-check relaxed."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("longitude")
         self._check_fails_in_metadata(check_level=CheckLevels.RELAXED)
 
     def test_check_missing_lat_relaxed_flag(self):
         """Test check fails for missing latitude with --cmor-check relaxed."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("latitude")
         self._check_fails_in_metadata(check_level=CheckLevels.RELAXED)
 
     def test_check_missing_time_relaxed_flag(self):
         """Test check fails for missing latitude with --cmor-check relaxed."""
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("time")
         self._check_fails_in_metadata(check_level=CheckLevels.RELAXED)
 
@@ -556,7 +565,6 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check ignore.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.coord("longitude").var_name = "bad_name"
         self._check_warnings_on_metadata(check_level=CheckLevels.IGNORE)
 
@@ -565,7 +573,6 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check ignore.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("longitude")
         self._check_warnings_on_metadata(check_level=CheckLevels.IGNORE)
 
@@ -574,7 +581,6 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check ignore.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("latitude")
         self._check_warnings_on_metadata(check_level=CheckLevels.IGNORE)
 
@@ -583,7 +589,6 @@ class TestCMORCheck(unittest.TestCase):
 
         With --cmor-check ignore.
         """
-        self.var_info.table_type = "CMIP5"
         self.cube.remove_coord("time")
         self._check_warnings_on_metadata(check_level=CheckLevels.IGNORE)
 
@@ -857,19 +862,16 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata."""
-        self.var_info.table_type = "CMIP6"
         self.cube.coord("latitude").var_name = "bad_name"
         self._check_fails_in_metadata()
 
     def test_bad_out_name_onedim_longitude(self):
         """Warning if onedimensional lon has bad var_name at metadata."""
-        self.var_info.table_type = "CMIP6"
         self.cube.coord("longitude").var_name = "bad_name"
         self._check_fails_in_metadata()
 
     def test_bad_out_name_other(self):
         """Warning if general coordinate has bad var_name at metadata."""
-        self.var_info.table_type = "CMIP6"
         self.cube.coord("time").var_name = "bad_name"
         self._check_fails_in_metadata()
 

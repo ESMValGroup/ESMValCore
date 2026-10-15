@@ -18,6 +18,7 @@ from iris.cube import CubeList
 from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
+import esmvalcore.config
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
     _get_generic_lev_coord_names,
@@ -544,7 +545,7 @@ class GenericFix(Fix):
                 continue  # Coordinate found -> fine here
             if cube.coords(cmor_coord.standard_name):
                 cube_coord = cube.coord(cmor_coord.standard_name)
-                self._fix_cmip6_multidim_lat_lon_coord(
+                self._fix_multidim_lat_lon_coord(
                     cube,
                     cmor_coord,
                     cube_coord,
@@ -593,13 +594,17 @@ class GenericFix(Fix):
                 continue
 
             # Search for alternative coordinates (i.e., regular level
-            # coordinates); if none found, do nothing
+            # coordinates) in the CMOR tables of the project; if none found,
+            # do nothing
+            if not self.vardef.project:
+                continue
             try:
                 (alternative_coord, cube_coord) = (
                     _get_alternative_generic_lev_coord(
                         cube,
                         coord_name,
-                        self.vardef.table_type,
+                        self.vardef.project,
+                        self.session or esmvalcore.config.CFG,
                     )
                 )
             except ValueError:  # no alternatives found
@@ -614,26 +619,28 @@ class GenericFix(Fix):
 
         return cube
 
-    def _fix_cmip6_multidim_lat_lon_coord(
+    def _fix_multidim_lat_lon_coord(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> None:
-        """Fix CMIP6 multidimensional latitude and longitude coordinates."""
-        is_cmip6_multidim_lat_lon = all(
-            [
-                "CMIP6" in self.vardef.table_type,
-                cube_coord.ndim > 1,
-                cube_coord.standard_name in ("latitude", "longitude"),
-            ],
+        """Fix multidimensional latitude and longitude coordinates.
+
+        Some CMOR tables (e.g., CMIP6) use different names for
+        multidimensional latitude and longitude coordinates than for
+        one-dimensional ones. Use the one-dimensional names for both.
+        """
+        is_multidim_lat_lon = cube_coord.ndim > 1 and (
+            cube_coord.standard_name in ("latitude", "longitude")
         )
-        if is_cmip6_multidim_lat_lon:
+        if is_multidim_lat_lon:
             self._debug_msg(
                 cube,
-                "Multidimensional %s coordinate is not set in CMOR standard, "
-                "ESMValTool will change the original value of '%s' to '%s' to "
-                "match the one-dimensional case",
+                "Multidimensional %s coordinate name differs from the "
+                "one-dimensional case in the CMOR standard, ESMValTool will "
+                "change the original value of '%s' to '%s' to match the "
+                "one-dimensional case",
                 cube_coord.standard_name,
                 cube_coord.var_name,
                 cmor_coord.out_name,
