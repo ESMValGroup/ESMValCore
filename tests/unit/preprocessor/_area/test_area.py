@@ -6,6 +6,7 @@ from pathlib import Path
 
 import fiona
 import iris
+import iris.mesh
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -28,6 +29,7 @@ from esmvalcore.preprocessor._area import (
     meridional_statistics,
     zonal_statistics,
 )
+from esmvalcore.preprocessor._regrid import _cordex_stock_cube
 from esmvalcore.preprocessor._shared import guess_bounds
 
 
@@ -1425,6 +1427,264 @@ def test_update_shapefile_path_rel(
             assert shapefile_out == tmp_path / shapefile
         else:
             assert shapefile_out == ar6_shapefile
+
+
+def _global_cube(start_longitude):
+    """Create a global cube on a 1 degree grid."""
+    lons = iris.coords.DimCoord(
+        np.arange(start_longitude + 0.5, start_longitude + 360.0, 1.0),
+        standard_name="longitude",
+        units="degrees_east",
+    )
+    lats = iris.coords.DimCoord(
+        np.arange(-89.5, 90.0, 1.0),
+        standard_name="latitude",
+        units="degrees_north",
+    )
+    lons.guess_bounds()
+    lats.guess_bounds()
+    return Cube(
+        np.ones((180, 360), dtype=np.float32),
+        dim_coords_and_dims=[(lats, 0), (lons, 1)],
+    )
+
+
+def _is_selected(cube, lon, lat):
+    """Check if the grid cell closest to `lon`, `lat` is selected."""
+    lons, lats = np.meshgrid(
+        cube.coord("longitude").points,
+        cube.coord("latitude").points,
+    )
+    lon_diff = (lons - lon + 180.0) % 360.0 - 180.0
+    idx = np.unravel_index(
+        np.argmin(lon_diff**2 + (lats - lat) ** 2),
+        lons.shape,
+    )
+    if abs(lon_diff[idx]) > 0.5 or abs(lats[idx] - lat) > 0.5:
+        # The point is not in the (cropped) cube.
+        return False
+    return not np.ma.getmaskarray(cube.data)[idx]
+
+
+CITIES = {
+    "Amsterdam": (4.9, 52.4),
+    "Mexico City": (-99.1, 19.4),
+    "Nairobi": (36.8, -1.3),
+    "Sydney": (151.2, -33.9),
+    "Fiji": (178.0, -18.0),
+    "North Pole": (0.0, 89.5),
+    "South Pole": (0.0, -89.5),
+}
+
+
+@pytest.mark.parametrize(
+    ("domain", "selected"),
+    [
+        ("EUR-11", {"Amsterdam"}),
+        ("EUR-12", {"Amsterdam"}),
+        ("CAM-25", {"Mexico City"}),
+        ("AFR-22", {"Nairobi"}),
+        ("AUS-22", {"Sydney", "Fiji"}),
+        ("AUS-44i", {"Sydney", "Fiji"}),
+        ("ARC-44", {"North Pole"}),
+        ("ANT-44i", {"South Pole"}),
+    ],
+)
+@pytest.mark.parametrize("start_longitude", [0.0, -180.0])
+@pytest.mark.parametrize("crop", [True, False])
+def test_extract_shape_cordex(domain, selected, start_longitude, crop):
+    """Test ``extract_shape`` with CORDEX domains."""
+    cube = _global_cube(start_longitude)
+
+    result = extract_shape(cube, "cordex", ids=[domain], crop=crop)
+
+    for city, (lon, lat) in CITIES.items():
+        assert _is_selected(result, lon, lat) == (city in selected), city
+    if crop:
+        assert result.shape[0] < cube.shape[0]
+    else:
+        assert result.shape == cube.shape
+    assert not result.coords("shape_id")
+
+
+def test_extract_shape_cordex_upper_case():
+    """Test ``extract_shape`` with CORDEX domains."""
+    cube = _global_cube(0.0)
+    result = extract_shape(cube, "CORDEX", ids=["EUR-12"])
+    assert _is_selected(result, *CITIES["Amsterdam"])
+
+
+@pytest.mark.parametrize("crop", [True, False])
+def test_extract_shape_cordex_native_grid(crop):
+    """Test that all grid cells of the native grid of the domain are selected."""
+    cube = _cordex_stock_cube("EUR-11")
+    result = extract_shape(cube, "cordex", ids=["EUR-12"], crop=crop)
+    assert result.shape == cube.shape
+    assert not np.ma.is_masked(result.data)
+
+    result = extract_shape(cube, "cordex", ids=["MED-11"], crop=crop)
+    assert result.shape == cube.shape
+    mask = np.ma.getmaskarray(result.data)
+    assert mask.any()
+    assert not mask.all()
+
+
+@pytest.mark.parametrize("decomposed", [True, False])
+def test_extract_shape_cordex_two_domains(decomposed):
+    """Test ``extract_shape`` with two CORDEX domains."""
+    cube = _global_cube(0.0)
+
+    result = extract_shape(
+        cube,
+        "cordex",
+        ids=["EUR-12", "CAM-25"],
+        decomposed=decomposed,
+    )
+
+    if decomposed:
+        assert result.coord("shape_id").points.tolist() == ["CAM-25", "EUR-12"]
+        assert result.coord_dims("shape_id") == (0,)
+        assert not _is_selected(result[0], *CITIES["Amsterdam"])
+        assert _is_selected(result[0], *CITIES["Mexico City"])
+        assert _is_selected(result[1], *CITIES["Amsterdam"])
+        assert not _is_selected(result[1], *CITIES["Mexico City"])
+    else:
+        assert not result.coords("shape_id")
+        assert _is_selected(result, *CITIES["Amsterdam"])
+        assert _is_selected(result, *CITIES["Mexico City"])
+        assert not _is_selected(result, *CITIES["Nairobi"])
+
+
+LONS = np.array([4.9, -99.1, 36.8, 151.2])
+LATS = np.array([52.4, 19.4, -1.3, -33.9])
+
+
+def _unstructured_cube():
+    """Create a cube with an unstructured grid."""
+    lat = iris.coords.AuxCoord(LATS, standard_name="latitude", units="degrees")
+    lon = iris.coords.AuxCoord(
+        LONS,
+        standard_name="longitude",
+        units="degrees",
+    )
+    time = iris.coords.DimCoord(
+        [0.0, 1.0],
+        standard_name="time",
+        units="days since 2000-01-01",
+    )
+    return Cube(
+        np.ones((2, 4), dtype=np.float32),
+        dim_coords_and_dims=[(time, 0)],
+        aux_coords_and_dims=[(lat, 1), (lon, 1)],
+    )
+
+
+def _mesh_cube():
+    """Create a cube with a mesh."""
+
+    def coord(points, name):
+        return iris.coords.AuxCoord(
+            points,
+            standard_name=name,
+            units="degrees",
+        )
+
+    mesh = iris.mesh.MeshXY(
+        topology_dimension=2,
+        node_coords_and_axes=[
+            (coord(LONS, "longitude"), "x"),
+            (coord(LATS, "latitude"), "y"),
+        ],
+        connectivities=iris.mesh.Connectivity(
+            np.array([[0, 1, 2], [1, 2, 3], [2, 3, 0], [3, 0, 1]]),
+            cf_role="face_node_connectivity",
+        ),
+        face_coords_and_axes=[
+            (coord(LONS, "longitude"), "x"),
+            (coord(LATS, "latitude"), "y"),
+        ],
+    )
+    cube = _unstructured_cube()
+    cube.remove_coord("latitude")
+    cube.remove_coord("longitude")
+    for mesh_coord in mesh.to_MeshCoords("face"):
+        cube.add_aux_coord(mesh_coord, 1)
+    return cube
+
+
+@pytest.mark.parametrize("make_cube", [_unstructured_cube, _mesh_cube])
+@pytest.mark.parametrize("crop", [True, False])
+@pytest.mark.parametrize("decomposed", [True, False])
+def test_extract_shape_cordex_unstructured(make_cube, crop, decomposed):
+    """Test ``extract_shape`` with CORDEX domains on unstructured grids."""
+    cube = make_cube()
+
+    result = extract_shape(
+        cube,
+        "cordex",
+        ids=["EUR-12", "AUS-22"],
+        crop=crop,
+        decomposed=decomposed,
+    )
+
+    expected_eur = [False, True, True, True]
+    expected_aus = [True, True, True, False]
+    if decomposed:
+        assert result.shape == (2, 2, 4)
+        assert result.coord("shape_id").points.tolist() == ["AUS-22", "EUR-12"]
+        mask = np.ma.getmaskarray(result.data)
+        np.testing.assert_array_equal(mask[:, 0], [expected_aus] * 2)
+        np.testing.assert_array_equal(mask[:, 1], [expected_eur] * 2)
+    else:
+        assert result.shape == (2, 4)
+        np.testing.assert_array_equal(
+            np.ma.getmaskarray(result.data),
+            [np.logical_and(expected_eur, expected_aus)] * 2,
+        )
+    assert result.mesh == cube.mesh
+
+
+@pytest.mark.parametrize("make_cube", [_unstructured_cube, _mesh_cube])
+@pytest.mark.parametrize("crop", [True, False])
+def test_extract_shape_unstructured(make_cube, crop, tmp_path):
+    """Test ``extract_shape`` with a shapefile on unstructured grids."""
+    cube = make_cube()
+    shapefile = tmp_path / "europe.shp"
+    write_shapefile(Polygon([(0, 40), (20, 40), (20, 60), (0, 60)]), shapefile)
+
+    result = extract_shape(cube, shapefile, crop=crop)
+
+    np.testing.assert_array_equal(
+        np.ma.getmaskarray(result.data),
+        [[False, True, True, True]] * 2,
+    )
+    assert result.mesh == cube.mesh
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "msg"),
+    [
+        ({}, "`ids` should be a list of CORDEX domain names"),
+        ({"ids": []}, "`ids` should be a list of CORDEX domain names"),
+        (
+            {"ids": {"name": ["EUR-12"]}},
+            "`ids` should be a list of CORDEX domain names",
+        ),
+        (
+            {"ids": ["EUR-12", "XYZ-11"]},
+            r"Unknown CORDEX domain\(s\) \['XYZ-11'\]",
+        ),
+        (
+            {"ids": ["EUR-12"], "method": "representative"},
+            "`method` should be 'contains'",
+        ),
+    ],
+)
+def test_extract_shape_cordex_invalid(kwargs, msg):
+    """Test ``extract_shape`` with invalid arguments for CORDEX domains."""
+    cube = _global_cube(0.0)
+    with pytest.raises(ValueError, match=msg):
+        extract_shape(cube, "cordex", **kwargs)
 
 
 def test_zonal_statistics(make_testcube):

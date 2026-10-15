@@ -1999,7 +1999,20 @@ Parameters:
     ar6             IPCC WG1 reference    https://doi.org/10.5281/zenodo.5176260
                     regions (v4) used in
                     Assessment Report 6
+    cordex          CORDEX domains        https://cordex.org/domains/
     =============== ===================== ==========================================
+
+    The CORDEX domains are not read from a shapefile, but from the domain
+    definitions in the :mod:`cordex` package.
+    A domain consists of all grid cells of the official domain grid, i.e. its
+    boundary lies at the outer edges of the outer grid cells, also for
+    domains that cross the antimeridian or contain a pole.
+    Since the domains are a minimum extent for the regional models, this can
+    be used to select the same area from all models in a domain.
+    The names of the domains need to be given with ``ids``, as a :obj:`list`.
+    Any name known to the :mod:`cordex` package can be used, e.g., ``EUR-11``
+    for CORDEX-CMIP5 data or ``EUR-12`` for CORDEX-CMIP6 data.
+    Only ``method: contains`` is supported.
 
   * ``method``: the method to select the region, selecting either all points
     contained by the shape or a single representative point.
@@ -2009,7 +2022,7 @@ Parameters:
   * ``crop``: by default extract_region_ will be used to crop the data to a
     minimal rectangular region containing the shape.
     Set to ``false`` to only mask data outside the shape.
-    Data on irregular grids will not be cropped.
+    Data on irregular or unstructured grids will not be cropped.
   * ``decomposed``: by default ``false``; in this case the union of all the
     regions in the shapefile is masked out.
     If set to ``true``, the regions in the shapefiles are masked out separately
@@ -2039,6 +2052,9 @@ Parameters:
       Only dictionaries with length 1 are supported.
       Example: ``ids={'Acronym': ['GIC', 'WNA']}``.
     * `None`: select all available regions from the shapefile.
+
+    For ``shapefile: cordex``, a :obj:`list` of CORDEX domain names is
+    required.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -2076,6 +2092,15 @@ Examples:
                   - NEU
                   - WCE
                   - MED
+
+    * Extract the European CORDEX domain:
+
+        .. code-block:: yaml
+
+            extract_shape:
+              shapefile: cordex
+              ids:
+                - EUR-12
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
