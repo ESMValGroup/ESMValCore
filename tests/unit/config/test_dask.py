@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
+import dask.config
 import pytest
 import xarray as xr
 
@@ -22,17 +24,80 @@ if TYPE_CHECKING:
 def mock_dask_config_set(
     mocker: pytest_mock.MockerFixture,
 ) -> Mock:
-    dask_config_dict: dict = {}
-    mock_dask_set = mocker.patch("dask.config.set", autospec=True)
-    mock_dask_set.side_effect = dask_config_dict.update
-    mock_dask_get = mocker.patch("dask.config.get", autospec=True)
-    mock_dask_get.side_effect = dask_config_dict.get
-    return mock_dask_set
+    return mocker.spy(dask.config, "set")
 
 
 def test_get_no_distributed_client(session: Session) -> None:
     with _dask.get_distributed_client(session) as client:
         assert client is None
+
+
+def test_get_distributed_client_restores_dask_config(
+    mocker: pytest_mock.MockerFixture,
+    session: Session,
+) -> None:
+    session["dask"] = {
+        "use": "local_distributed",
+        "profiles": {
+            "local_distributed": {
+                "cluster": {"type": "distributed.LocalCluster"},
+                "num_workers": 42,
+            },
+        },
+    }
+    mocker.patch.object(_dask, "Client", create_autospec=True)
+    mock_cluster_cls = mocker.Mock()
+    mock_cluster_cls.return_value.scheduler_address = "tcp://127.0.0.1:4242"
+    mocker.patch.object(
+        _dask.importlib,
+        "import_module",
+        create_autospec=True,
+        return_value=mocker.Mock(LocalCluster=mock_cluster_cls),
+    )
+    original = deepcopy(dask.config.config)
+
+    with _dask.get_distributed_client(session):
+        assert dask.config.get("scheduler_address") == "tcp://127.0.0.1:4242"
+        assert dask.config.get("num_workers") == 42
+
+    assert dask.config.config == original
+
+
+@pytest.mark.usefixtures("mock_dask_config_set")
+def test_get_distributed_client_client_fails(
+    mocker: pytest_mock.MockerFixture,
+    session: Session,
+) -> None:
+    session["dask"] = {
+        "use": "local_distributed",
+        "profiles": {
+            "local_distributed": {
+                "cluster": {"type": "distributed.LocalCluster"},
+            },
+        },
+    }
+    mocker.patch.object(
+        _dask,
+        "Client",
+        create_autospec=True,
+        side_effect=OSError,
+    )
+    mock_cluster_cls = mocker.Mock()
+    mocker.patch.object(
+        _dask.importlib,
+        "import_module",
+        create_autospec=True,
+        return_value=mocker.Mock(LocalCluster=mock_cluster_cls),
+    )
+
+    with (
+        pytest.raises(OSError),
+        _dask.get_distributed_client(session),
+    ):
+        pass
+
+    mock_cluster_cls.return_value.close.assert_called_once_with()
+    assert dask.config.get("scheduler_address", None) is None
 
 
 def test_xarray_options_plugin(mocker: pytest_mock.MockerFixture) -> None:

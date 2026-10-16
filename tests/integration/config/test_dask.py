@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import dask.config
 import xarray as xr
 
 from esmvalcore.config._dask import get_distributed_client
@@ -35,11 +34,7 @@ def test_worker_xarray_options(session: Session) -> None:
     }
     original = xr.get_options()
     try:
-        # Avoid leaking the scheduler address to other tests.
-        with (
-            dask.config.set({"scheduler_address": None}),
-            get_distributed_client(session) as client,
-        ):
+        with get_distributed_client(session) as client:
             assert client is not None
             result = client.run(_get_file_cache_maxsize)
     finally:
