@@ -417,7 +417,6 @@ _validators = {
     "save_intermediary_cubes": validate_bool,
     "search_data": validate_search_data,
     "skip_nonexistent": validate_bool,
-    "xarray_options": validate_dict,
     # From recipe
     "write_ncl_interface": validate_bool,
 }

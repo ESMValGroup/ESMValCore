@@ -74,6 +74,25 @@ def validate_dask_config(dask_config: Mapping) -> None:
             f"got '{use}', expected one of {list(profiles.keys())}"
         )
         raise InvalidConfigParameter(msg)
+    _validate_worker_xarray_options(
+        dask_config.get("worker_xarray_options", {}),
+    )
+
+
+def _validate_worker_xarray_options(xarray_options: object) -> None:
+    """Validate the xarray options for the Dask workers."""
+    if not isinstance(xarray_options, Mapping):
+        msg = (
+            f"Key 'dask.worker_xarray_options' needs to be a mapping, got "
+            f"{type(xarray_options)}"
+        )
+        raise InvalidConfigParameter(msg)
+    try:
+        with xr.set_options(**xarray_options):
+            pass
+    except (TypeError, ValueError) as exc:
+        msg = f"Key 'dask.worker_xarray_options' is invalid: {exc}"
+        raise InvalidConfigParameter(msg) from exc
 
 
 class _XarrayOptionsPlugin(WorkerPlugin):
@@ -94,6 +113,7 @@ def get_distributed_client(session: Session) -> Generator[None | Client]:
     """Get a Dask distributed client."""
     dask_config = deepcopy(session["dask"])
     validate_dask_config(dask_config)
+    xarray_options = dask_config.pop("worker_xarray_options", {})
 
     # Set up cluster and client according to the selected profile
     # Note: we already ensured earlier that the selected profile (via `use`)
@@ -141,10 +161,8 @@ def get_distributed_client(session: Session) -> Generator[None | Client]:
         )
 
     try:
-        if client is not None:
-            client.register_plugin(
-                _XarrayOptionsPlugin(session["xarray_options"]),
-            )
+        if client is not None and xarray_options:
+            client.register_plugin(_XarrayOptionsPlugin(xarray_options))
         yield client
     finally:
         if client is not None:

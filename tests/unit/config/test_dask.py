@@ -57,6 +57,7 @@ def test_get_distributed_client_external(
                 "scheduler_address": "tcp://127.0.0.1:42021",
             },
         },
+        "worker_xarray_options": {"file_cache_maxsize": 2},
     }
 
     # Create mock distributed.Client
@@ -69,7 +70,6 @@ def test_get_distributed_client_external(
     )
 
     mock_register_plugin = mock_client.register_plugin
-    session["xarray_options"] = {"file_cache_maxsize": 2}
 
     with _dask.get_distributed_client(session) as client:
         assert client is mock_client
@@ -86,6 +86,34 @@ def test_get_distributed_client_external(
 
 
 @pytest.mark.usefixtures("mock_dask_config_set")
+def test_get_distributed_client_no_xarray_options(
+    mocker: pytest_mock.MockerFixture,
+    session: Session,
+) -> None:
+    session["dask"] = {
+        "use": "external",
+        "profiles": {
+            "external": {
+                "scheduler_address": "tcp://127.0.0.1:42021",
+            },
+        },
+        "worker_xarray_options": {},
+    }
+    mock_client = mocker.Mock()
+    mock_register_plugin = mock_client.register_plugin
+    mocker.patch.object(
+        _dask,
+        "Client",
+        create_autospec=True,
+        return_value=mock_client,
+    )
+
+    with _dask.get_distributed_client(session) as client:
+        assert client is mock_client
+    mock_register_plugin.assert_not_called()
+
+
+@pytest.mark.usefixtures("mock_dask_config_set")
 def test_get_distributed_client_register_plugin_fails(
     mocker: pytest_mock.MockerFixture,
     session: Session,
@@ -97,6 +125,7 @@ def test_get_distributed_client_register_plugin_fails(
                 "cluster": {"type": "distributed.LocalCluster"},
             },
         },
+        "worker_xarray_options": {"file_cache_maxsize": 2},
     }
     mock_client = mocker.Mock()
     mock_client.register_plugin.side_effect = OSError
@@ -191,6 +220,7 @@ def test_custom_default_scheduler(
     session["dask"] = {
         "use": "process_scheduler",
         "profiles": {"process_scheduler": default_scheduler},
+        "worker_xarray_options": {"file_cache_maxsize": 2},
     }
 
     with _dask.get_distributed_client(session) as client:
@@ -289,6 +319,38 @@ def test_invalid_dask_config_invalid_use(session: Session) -> None:
     }
 
     msg = "Key 'dask.use' needs to point to an element of 'dask.profiles'"
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        with _dask.get_distributed_client(session):
+            pass
+
+
+@pytest.mark.parametrize(
+    ("worker_xarray_options", "msg"),
+    [
+        (1, "Key 'dask.worker_xarray_options' needs to be a mapping, got"),
+        (
+            {"not_an_option": 1},
+            "Key 'dask.worker_xarray_options' is invalid:",
+        ),
+        (
+            {"file_cache_maxsize": -1},
+            "Key 'dask.worker_xarray_options' is invalid:",
+        ),
+    ],
+)
+def test_invalid_dask_config_worker_xarray_options(
+    session: Session,
+    worker_xarray_options: object,
+    msg: str,
+) -> None:
+    session["dask"] = {
+        "use": "test",
+        "profiles": {
+            "test": {},
+        },
+        "worker_xarray_options": worker_xarray_options,
+    }
+
     with pytest.raises(InvalidConfigParameter, match=msg):
         with _dask.get_distributed_client(session):
             pass

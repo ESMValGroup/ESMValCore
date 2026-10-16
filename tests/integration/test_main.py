@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-import xarray as xr
 import yaml
 from fire.core import FireExit
 
@@ -108,32 +107,6 @@ def test_empty_run(tmp_path):
 
     assert log_file.exists()
     assert not filled_recipe.exists()
-
-
-def test_run_sets_xarray_options(mocker, tmp_path):
-    """Test that the xarray options are set while running a recipe."""
-    out_dir = tmp_path / "esmvaltool_output"
-    config_dir = tmp_path / "config"
-    config_dir.mkdir()
-    config_file = config_dir / "config.yml"
-    config_file.write_text(
-        f"output_dir: {out_dir}\nxarray_options:\n  file_cache_maxsize: 2\n",
-    )
-    recipe_file = tmp_path / "recipe.yml"
-    recipe_file.touch()
-
-    options = {}
-
-    def process_recipe(recipe_file, session):
-        options.update(xr.get_options())
-
-    mocker.patch.object(esmvalcore._main, "process_recipe", process_recipe)
-    original = xr.get_options()
-
-    ESMValTool().run(recipe_file, config_dir=config_dir)
-
-    assert options["file_cache_maxsize"] == 2
-    assert xr.get_options() == original
 
 
 def test_recipes_get(tmp_path, monkeypatch):

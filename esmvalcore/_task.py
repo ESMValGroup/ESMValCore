@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING
 import dask
 import dask.config
 import psutil
-import xarray as xr
 import yaml
 from distributed import Client
 
@@ -1011,7 +1010,7 @@ def _run_task(
     else:
         client = Client(scheduler_address)
 
-    with client, xr.set_options(**session["xarray_options"]):
+    with client:
         task.scheduler_lock = scheduler_lock
         output_files = task.run(session)
 

@@ -8,7 +8,6 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import xarray as xr
 import yaml
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
@@ -158,10 +157,7 @@ class Recipe:
         if task:
             session["diagnostics"] = task
 
-        with (
-            log_to_dir(session.run_dir),
-            xr.set_options(**session["xarray_options"]),
-        ):
+        with log_to_dir(session.run_dir):
             self._engine = self._load(session=session)
             self._engine.run()
 
