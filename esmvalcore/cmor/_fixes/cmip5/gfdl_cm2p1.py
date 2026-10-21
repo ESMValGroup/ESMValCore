@@ -28,11 +28,11 @@ class Areacello(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cubes: iris.cube.CubeList
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
         cube.units = "m2"
@@ -71,11 +71,11 @@ class Sit(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cubes: iris.cube.CubeList
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
         time = cube.coord("time")
@@ -125,11 +125,11 @@ class Tos(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cubes: iris.cube.CubeList
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
         cube.standard_name = "sea_surface_temperature"
