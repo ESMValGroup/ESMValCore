@@ -14,7 +14,6 @@ from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from esmvalcore import esgf
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import (
@@ -27,6 +26,7 @@ from esmvalcore.cmor.table import (
 from esmvalcore.config import CFG
 from esmvalcore.config._data_sources import _get_data_sources
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.io import esgf
 from esmvalcore.io.local import _dates_to_timerange
 from esmvalcore.preprocessor import _get_preprocessor_filename, preprocess
 

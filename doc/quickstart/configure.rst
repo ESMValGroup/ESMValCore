@@ -184,10 +184,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
      - Only run the selected diagnostics from the recipe, see :ref:`running`.
      - :obj:`list` or :obj:`str`
      - ``None`` (all diagnostics)
-   * - ``download_dir``
-     - [deprecated] Directory where downloaded data will be stored. [#f2]_
-     - :obj:`str`
-     - ``~/climate_data``
    * - ``drs``
      - [deprecated] Directory structure for input data. [#f2]_
      - :obj:`dict`
@@ -258,10 +254,6 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
        with a lower value for ``priority`` will be searched first. (``quick``, ``complete``)
      - :obj:`str`
      - ``quick``
-   * - ``search_esgf``
-     - [deprecated] Automatic data download from ESGF (``never``, ``when_missing``, ``always``). [#f2]_
-     - :obj:`str`
-     - ``never``
    * - ``skip_nonexistent``
      - Skip non-existent datasets, see :ref:`running`.
      - :obj:`bool`

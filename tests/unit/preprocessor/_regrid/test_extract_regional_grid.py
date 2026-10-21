@@ -2,11 +2,14 @@
 
 from decimal import Decimal
 
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 
 from esmvalcore.preprocessor._regrid import (
     _global_stock_cube,
+    _regional_stock_cube,
     _spec_to_latlonvals,
     regrid,
 )
@@ -113,3 +116,102 @@ def test_spec_to_latlonvals(spec):
     assert Decimal(lon_diff) % Decimal(str(lon_step)) == 0
     np.testing.assert_allclose(np.diff(lonvals), lon_step)
     assert spec["end_longitude"] >= lonvals[-1]
+
+
+@pytest.mark.parametrize(
+    ("longitudes", "circular"),
+    [
+        ((-52, 73, 0.25), False),
+        ((350, 370, 1), False),
+        ((0, 359, 1), True),
+        ((0, 360, 5), True),
+    ],
+)
+def test_regional_stock_cube_circular(longitudes, circular):
+    """Test that only a grid covering the full great circle is circular."""
+    start_longitude, end_longitude, step_longitude = longitudes
+    spec = {
+        "start_longitude": start_longitude,
+        "end_longitude": end_longitude,
+        "step_longitude": step_longitude,
+        "start_latitude": -10,
+        "end_latitude": 10,
+        "step_latitude": 1,
+    }
+
+    cube = _regional_stock_cube(spec)
+
+    assert cube.coord("longitude").circular is circular
+    assert cube.coord("latitude").circular is False
+
+
+def test_regrid_curvilinear_to_regional_grid():
+    """Test that a regional target grid does not wrap around.
+
+    Target grid cells outside the source grid should be masked.
+    """
+    # A curvilinear source grid with 1 degree cells covering 0-10E, 0-10N
+    lon_bounds = np.arange(0, 11)
+    lat_bounds = np.arange(0, 11)
+    lon_points, lat_points = np.meshgrid(
+        lon_bounds[:-1] + 0.5,
+        lat_bounds[:-1] + 0.5,
+    )
+    corners_lon, corners_lat = np.meshgrid(lon_bounds, lat_bounds)
+
+    def vertices(corners):
+        return np.stack(
+            [
+                corners[:-1, :-1],
+                corners[:-1, 1:],
+                corners[1:, 1:],
+                corners[1:, :-1],
+            ],
+            axis=-1,
+        )
+
+    source = iris.cube.Cube(
+        np.ones((10, 10), dtype=np.float32),
+        var_name="tas",
+        units="K",
+        dim_coords_and_dims=[
+            (iris.coords.DimCoord(np.arange(10), var_name="y"), 0),
+            (iris.coords.DimCoord(np.arange(10), var_name="x"), 1),
+        ],
+        aux_coords_and_dims=[
+            (
+                iris.coords.AuxCoord(
+                    lat_points,
+                    bounds=vertices(corners_lat),
+                    standard_name="latitude",
+                    units="degrees_north",
+                ),
+                (0, 1),
+            ),
+            (
+                iris.coords.AuxCoord(
+                    lon_points,
+                    bounds=vertices(corners_lon),
+                    standard_name="longitude",
+                    units="degrees_east",
+                ),
+                (0, 1),
+            ),
+        ],
+    )
+    # A regional target grid extending 10 degrees east of the source grid
+    spec = {
+        "start_longitude": 0.5,
+        "end_longitude": 19.5,
+        "step_longitude": 1,
+        "start_latitude": 0.5,
+        "end_latitude": 9.5,
+        "step_latitude": 1,
+    }
+
+    result = regrid(source, target_grid=spec, scheme="area_weighted")
+
+    mask = np.ma.getmaskarray(result.data)
+    lons = result.coord("longitude").points
+    assert not mask[:, lons < 10].any()
+    assert mask[:, lons > 10].all()

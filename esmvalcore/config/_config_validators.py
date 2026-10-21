@@ -8,7 +8,7 @@ import warnings
 from collections.abc import Iterable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from packaging import version
 
@@ -28,12 +28,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-
-SEARCH_ESGF_OPTIONS = (
-    "never",  # Never search ESGF for files
-    "when_missing",  # Only search ESGF if no local files are available
-    "always",  # Always search ESGF for files
-)
 
 SEARCH_DATA_OPTIONS = (
     "quick",  # Stop searching as soon as a result is found
@@ -312,19 +306,6 @@ def validate_check_level(value):
     return value
 
 
-def validate_search_esgf(value):
-    """Validate options for ESGF search."""
-    value = validate_string(value)
-    value = value.lower()
-    if value not in SEARCH_ESGF_OPTIONS:
-        msg = (
-            f"`{value}` is not a valid option ESGF search option, possible "
-            f"values are {SEARCH_ESGF_OPTIONS}"
-        )
-        raise ValidationError(msg) from None
-    return value
-
-
 def validate_search_data(value):
     """Validate options for data search."""
     value = validate_string(value)
@@ -418,7 +399,6 @@ _validators = {
     "config_developer_file": validate_config_developer,
     "dask": validate_dict,
     "diagnostics": validate_diagnostics,
-    "download_dir": validate_path,
     "drs": validate_drs,
     "exit_on_warning": validate_bool,
     "log_level": validate_string,
@@ -436,7 +416,6 @@ _validators = {
     "run_diagnostic": validate_bool,
     "save_intermediary_cubes": validate_bool,
     "search_data": validate_search_data,
-    "search_esgf": validate_search_esgf,
     "skip_nonexistent": validate_bool,
     # From recipe
     "write_ncl_interface": validate_bool,
@@ -519,75 +498,6 @@ def deprecate_drs(
     _handle_deprecation("drs", "2.14.0", "2.16.0", more_info)
 
 
-def deprecate_download_dir(
-    validated_config: ValidatedConfig,  # noqa: ARG001
-    value: str | Path,  # noqa: ARG001
-    validated_value: str | Path,  # noqa: ARG001
-) -> None:
-    """Deprecate ``download_dir`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``config_file`` option.
-    validated_value:
-        Validated value for ``config_file`` option.
-
-    """
-    more_info = " Please configure data sources under `projects` instead."
-    _handle_deprecation("download_dir", "2.14.0", "2.16.0", more_info)
-
-
-def deprecate_search_esgf(
-    validated_config: ValidatedConfig,
-    value: Literal["never", "when_missing", "always"],  # noqa: ARG001
-    validated_value: Literal["never", "when_missing", "always"],
-) -> None:
-    """Deprecate ``search_esgf`` option.
-
-    Parameters
-    ----------
-    validated_config:
-        ``ValidatedConfig`` instance which will be modified in place.
-    value:
-        Raw input value for ``config_file`` option.
-    validated_value:
-        Validated value for ``config_file`` option.
-
-    """
-    translate = {
-        "when_missing": "quick",
-        "always": "complete",
-    }
-    messages = {
-        "never": " Please configure only offline data sources under `projects` instead.",
-    } | {
-        k: f" Please use `search_data: {v}` instead of `search_esgf: {k}`."
-        for k, v in translate.items()
-    }
-
-    if (
-        validated_value in translate
-        and validated_config["search_data"] != translate[validated_value]
-    ):
-        logger.warning(
-            "Changing `search_data` to `%s` due to use of deprecated `search_esgf: %s`."
-            " Please update your configuration to use `search_data` directly. Support for "
-            "the `search_esgf` option will no longer be available in ESMValCore version 2.16.0.",
-            translate[validated_value],
-            validated_value,
-        )
-
-    _handle_deprecation(
-        "search_esgf",
-        "2.14.0",
-        "2.16.0",
-        more_info=messages.get(validated_value, ""),
-    )
-
-
 def deprecate_config_developer_file(
     validated_config: ValidatedConfig,  # noqa: ARG001
     value: str | Path,  # noqa: ARG001
@@ -617,8 +527,6 @@ def deprecate_config_developer_file(
 _deprecators: dict[str, Callable] = {
     "drs": deprecate_drs,  # TODO: remove in v2.16.0
     "rootpath": deprecate_rootpath,  # TODO: remove in v2.16.0
-    "download_dir": deprecate_download_dir,  # TODO: remove in v2.16.0
-    "search_esgf": deprecate_search_esgf,  # TODO: remove in v2.16.0
     "config_developer_file": deprecate_config_developer_file,  # TODO: remove in v2.16.0
 }
 
@@ -626,6 +534,4 @@ _deprecators: dict[str, Callable] = {
 # Default values for deprecated options
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecated_options_defaults: dict[str, Any] = {
-    "download_dir": "~/climate_data",  # TODO: remove in v2.16.0
-}
+_deprecated_options_defaults: dict[str, Any] = {}
