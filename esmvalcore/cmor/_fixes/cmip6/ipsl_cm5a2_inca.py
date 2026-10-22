@@ -6,6 +6,8 @@ from .ipsl_cm6a_lr import AllVars as BaseAllVars
 from .ipsl_cm6a_lr import Clcalipso as BaseClcalipso
 from .ipsl_cm6a_lr import Omon as BaseOmon
 
+import iris.coords
+
 AllVars = BaseAllVars
 
 
@@ -14,6 +16,7 @@ Clcalipso = BaseClcalipso
 
 Omon = BaseOmon
 
+#class Snw(BaseAllVars):
 class Snw(Fix):
     """Fixes for ``snw``."""
 
@@ -30,12 +33,25 @@ class Snw(Fix):
         iris.cube.CubeList
 
         """
-        
+
+        cubes = super().fix_metadata(cubes)
+
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
             if "longitude" in coord_names:
                 lon_coord = cube.coord("longitude")
                 if (lon_coord.points[0] == 360.0):
                     lon_coord.points[0] = 0.0
+
+                dim = iris.coords.DimCoord(
+                    lon_coord.points,
+                    bounds=lon_coord.bounds,
+                    standard_name=lon_coord.standard_name,
+                    units=lon_coord.units,
+                )
+
+                dimension = cube.coord_dims(lon_coord)
+                cube.remove_coord(lon_coord)
+                cube.add_dim_coord(dim, dimension)
 
         return cubes
