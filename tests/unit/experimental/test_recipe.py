@@ -12,9 +12,9 @@ pytest.importorskip(
 )
 
 
-def test_recipe():
+def test_recipe(mocker):
     """Coverage test for Recipe."""
-    TAGS.set_tag_values(DIAGNOSTICS.load_tags())
+    mocker.patch.dict(TAGS, DIAGNOSTICS.load_tags())
 
     recipe = get_recipe("examples/recipe_python")
 

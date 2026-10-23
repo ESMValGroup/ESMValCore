@@ -23,15 +23,18 @@ if TYPE_CHECKING:
 DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
 
-def test_contributor():
+def test_contributor(mocker: MockerFixture) -> None:
     """Coverage test for Contributor."""
-    TAGS.set_tag_value(
-        section="authors",
-        tag="doe_john",
-        value={
-            "name": "Doe, John",
-            "institute": "Testing",
-            "orcid": "https://orcid.org/0000-0000-0000-0000",
+    mocker.patch.dict(
+        TAGS,
+        {
+            "authors": {
+                "doe_john": {
+                    "name": "Doe, John",
+                    "institute": "Testing",
+                    "orcid": "https://orcid.org/0000-0000-0000-0000",
+                },
+            },
         },
     )
 
@@ -73,9 +76,9 @@ def test_reference(monkeypatch):
     assert str(reference) == "J. Doe. Test free or fail hard. 2021. doi:0."
 
 
-def test_project():
+def test_project(mocker: MockerFixture) -> None:
     """Coverage test for Project."""
-    TAGS.set_tag_value("projects", "test_project", "Test Project")
+    mocker.patch.dict(TAGS, {"projects": {"test_project": "Test Project"}})
 
     project = Project.from_tag("test_project")
 
