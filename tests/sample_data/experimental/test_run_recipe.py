@@ -3,6 +3,7 @@
 Runs recipes using :meth:`esmvalcore.experimental.Recipe.run`.
 """
 
+import copy
 import logging
 import os
 from contextlib import contextmanager
@@ -51,11 +52,18 @@ def get_mock_distributed_client(monkeypatch):
 
 
 @pytest.fixture
+def author_tags(mocker):
+    """Make :data:`AUTHOR_TAGS` the only available tags."""
+    mocker.patch.dict(TAGS, copy.deepcopy(AUTHOR_TAGS), clear=True)
+
+
+@pytest.fixture
 def recipe():
     return get_recipe(Path(__file__).with_name("recipe_api_test.yml"))
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.usefixtures("author_tags")
 @pytest.mark.parametrize("ssh", [True, False])
 @pytest.mark.parametrize("task", [None, "example/ta"])
 def test_run_recipe(
@@ -77,8 +85,6 @@ def test_run_recipe(
         monkeypatch.setitem(os.environ, "SSH_CONNECTION", "0.0 0 1.1 1")
     else:
         monkeypatch.delitem(os.environ, "SSH_CONNECTION", raising=False)
-
-    TAGS.set_tag_values(AUTHOR_TAGS)
 
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
@@ -125,13 +131,12 @@ def test_run_recipe(
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.usefixtures("author_tags")
 def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
     """Test running a single diagnostic using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
-    TAGS.set_tag_values(AUTHOR_TAGS)
-
     monkeypatch.setitem(CFG, "output_dir", tmp_path)
 
     session = CFG.start_session(recipe.path.stem)
