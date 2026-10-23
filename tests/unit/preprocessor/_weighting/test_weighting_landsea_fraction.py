@@ -73,16 +73,20 @@ LAND_FRACTION = [
         CUBE_3,
         None,
         [
-            "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability.",
+            (
+                "Ancillary variables land/sea area fraction not found in cube. "
+                "Check ancillary data availability."
+            ),
         ],
     ),
     (
         CUBE_4,
         None,
         [
-            "Ancillary variables land/sea area fraction not found in cube. "
-            "Check ancillary data availability.",
+            (
+                "Ancillary variables land/sea area fraction not found in cube. "
+                "Check ancillary data availability."
+            ),
         ],
     ),
     (CUBE_ANCILLARY_3, FRAC_SFTLF, []),
