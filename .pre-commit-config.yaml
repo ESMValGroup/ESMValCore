@@ -43,9 +43,9 @@ repos:
         types_or:
           - python
           - jupyter
-      - id: mypy
-        name: mypy
-        entry: "pixi run --locked dmypy run"
+      - id: pyrefly
+        name: pyrefly
+        entry: "pixi run --locked pyrefly check"
         language: system
         types:
           - python

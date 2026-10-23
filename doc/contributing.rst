@@ -241,12 +241,12 @@ the repository is cloned, e.g. ``cd ESMValCore``, and run `pre-commit <https://p
 
 We use `ruff <https://docs.astral.sh/ruff/>`_ to automatically format the code
 and to check for certain bugs and
-`mypy <https://mypy.readthedocs.io>`_ for checking that
-`type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
-correct.
+`pyrefly <https://pyrefly.org>`_ for checking that
+`type hints <https://typing.python.org/en/latest/reference/best_practices.html>`_
+are correct.
 Note that `type hints`_ are optional, but if you do choose to add them, they
 should be correct.
-Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
+Both `ruff`_ and `pyrefly`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
 is checked by running the pre-commit hooks on CircleCI.

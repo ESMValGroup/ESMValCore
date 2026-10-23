@@ -135,10 +135,19 @@ exclude_lines = [
 
 # Configure type checks
 
+[tool.pyrefly]
+# See https://pyrefly.org/en/docs/configuration/
+preset = "legacy"
+project-includes = [
+    "esmvalcore",
+    "tests",
+]
+
+[tool.pyrefly.errors]
+redundant-condition = "error"
+
 [tool.mypy]
 # See https://mypy.readthedocs.io/en/stable/config_file.html
-# Run mypy in daemon mode for faster reruns to avoid very slow (e.g. 20 seconds)
-# commits on HPC file systems.
 packages = ["esmvalcore", "tests"]
 ignore_missing_imports = true
 enable_error_code = [
@@ -334,13 +343,3 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 [tool.pixi.tasks]
 test = {cmd = "pytest", description = "Run the tests"}
 doc = {cmd = "sphinx-build doc html", description = "Build the documentation"}
-
-[tool.pyrefly]
-preset = "legacy"
-project-includes = [
-    "esmvalcore",
-    "tests",
-]
-
-[tool.pyrefly.errors]
-redundant-condition = "error"
