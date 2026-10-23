@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import intake_esgf
 import intake_esgf.config
@@ -72,7 +72,10 @@ def test_scalar_coord_intake_esgf_same_as_local(
         return_value={
             key: xr.open_mfdataset(
                 [scalar_coord_file],
-                **intake_esgf.config.defaults["default_open_kwargs"],
+                **cast(
+                    "dict[str, Any]",
+                    intake_esgf.config.defaults["default_open_kwargs"],
+                ),
             ),
         },
     )
