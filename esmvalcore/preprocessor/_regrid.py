@@ -318,7 +318,7 @@ def _generate_cube_from_dimcoords(
         lons.guess_bounds()
 
     # Construct the resultant stock cube, with dummy data.
-    shape = (latdata.size, londata.size)
+    shape = (len(latdata), len(londata))
     dummy = np.empty(shape, dtype=np.int32)
     coords_spec = [(lats, 0), (lons, 1)]
     return Cube(dummy, dim_coords_and_dims=coords_spec)
@@ -672,7 +672,7 @@ def extract_point(
 
 def is_dataset(
     dataset: Any,  # noqa: ANN401
-) -> bool:
+) -> TypeGuard[Dataset]:
     """Test if something is an `esmvalcore.dataset.Dataset`."""
     # Use this function to avoid circular imports
     return hasattr(dataset, "facets")
@@ -1539,9 +1539,11 @@ def extract_levels(
 
     src_levels = cube.coord(coordinate)
 
+    # Note that `levels` may be a Dask array, which is supported by NumPy
+    # functions through `__array_function__`, but not by the NumPy type hints.
     if src_levels.shape == levels.shape and np.allclose(
         src_levels.core_points(),
-        levels,
+        levels,  # pyrefly: ignore[bad-argument-type]
         rtol=rtol,
         atol=1e-7 * np.mean(src_levels.core_points())
         if atol is None
@@ -1555,7 +1557,9 @@ def extract_levels(
     elif (
         len(src_levels.shape) == 1
         and len(levels.shape) == 1
-        and set(levels.flatten()).issubset(set(src_levels.points))
+        and set(levels).issubset(  # pyrefly: ignore[bad-argument-type]
+            set(src_levels.points),
+        )
     ):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()

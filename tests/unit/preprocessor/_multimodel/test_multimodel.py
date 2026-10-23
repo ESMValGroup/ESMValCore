@@ -1004,14 +1004,14 @@ def test_ignore_tas_scalar_height_coord():
     assert result["mean"].coord("height").points == 1.75
 
 
-PRODUCTS: list[CubeList | list[PreprocessorFile]] = [
-    CubeList(generate_cube_from_dates("monthly") for _ in range(3)),
-    [PreprocessorFile(generate_cube_from_dates("monthly")) for _ in range(3)],
-]
 SCALAR_COORD = AuxCoord(2.0, standard_name="height", units="m")
-PRODUCTS[0][0].add_aux_coord(SCALAR_COORD, ())
-PRODUCTS[1][0].cubes[0].add_aux_coord(SCALAR_COORD, ())
-PRODUCTS[1] = set(PRODUCTS[1])
+_CUBES = CubeList(generate_cube_from_dates("monthly") for _ in range(3))
+_CUBES[0].add_aux_coord(SCALAR_COORD, ())
+_FILES = [
+    PreprocessorFile(generate_cube_from_dates("monthly")) for _ in range(3)
+]
+_FILES[0].cubes[0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS: list[CubeList | set[PreprocessorFile]] = [_CUBES, set(_FILES)]
 
 
 @pytest.mark.parametrize("products", PRODUCTS)

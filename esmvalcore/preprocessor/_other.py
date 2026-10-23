@@ -474,8 +474,6 @@ def _calculate_histogram_lazy(
     # (1) If histogram is calculated over all axes, use the efficient
     # da.histogram function
     if n_axes == data.ndim:
-        data = data.ravel()
-        weights = weights.ravel()
         mask = da.ma.getmaskarray(data)
         data = data[~mask]
         weights = weights[~mask]

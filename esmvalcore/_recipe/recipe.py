@@ -635,7 +635,7 @@ def _allow_skipping(dataset: Dataset) -> bool:
 
 def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
     """Set the 'version' facet based on derivation input datasets."""
-    versions = set()
+    versions: set[Any] = set()
     for in_dataset in input_datasets:
         in_dataset.set_version()
         if version := in_dataset.facets.get("version"):

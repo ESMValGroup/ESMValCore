@@ -412,7 +412,7 @@ class ESGFFile(DataElement):
         if self.facets["project"] == "obs4MIPs":
             # Avoid errors due to a to a `.` in the dataset name
             facets = ["project", "dataset", "version"]
-            path = Path(*[self.facets[f] for f in facets])
+            path = Path(*[str(self.facets[f]) for f in facets])
         else:
             path = Path(*self.dataset.split("."))
         return path / self.name

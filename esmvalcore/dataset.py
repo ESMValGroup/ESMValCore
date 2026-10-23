@@ -309,7 +309,7 @@ class Dataset:
                     if _ismatch(mip, self.facets["mip"])
                 ]
             else:
-                mips = [self.facets["mip"]]
+                mips = [str(self.facets["mip"])]
 
             for mip in mips:
                 if _isglob(self.facets.get("branding_suffix", "")):

@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from iris.cube import Cube
 
@@ -674,7 +674,7 @@ class PreprocessorFile(TrackedFile):
         # dataset, which is slow for recipes with many datasets.
         # This drops the information in Dataset.files and avoids potential
         # issues with deepcopying and pickling those file objects.
-        self.settings = {
+        self.settings: dict[str, dict[str, Any]] = {
             fn: {
                 arg: (
                     value.copy() if is_dataset(value) else copy.deepcopy(value)
@@ -735,12 +735,13 @@ class PreprocessorFile(TrackedFile):
 
     def save(self) -> Delayed | None:
         """Save cubes to disk."""
-        return preprocess(
-            self._cubes,
+        result = preprocess(
+            self._cubes,  # type: ignore[arg-type]
             "save",
             input_files=self._input_files,
             **self.settings["save"],
         )[0]
+        return cast("Delayed | None", result)
 
     def close(self) -> Delayed | None:
         """Close the file."""
@@ -832,10 +833,13 @@ def _apply_multimodel(
         for output_product in output_product_group.values():
             output_product.initialize_provenance(activity)
 
-    result: list[PreprocessorFile] = preprocess(
-        products - exclude,  # type: ignore
-        step,
-        **settings,
+    result = cast(
+        "list[PreprocessorFile]",
+        preprocess(
+            products - exclude,  # type: ignore[arg-type]
+            step,
+            **settings,
+        ),
     )
     products = set(result) | exclude
 

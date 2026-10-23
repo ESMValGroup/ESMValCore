@@ -688,6 +688,10 @@ def mask_fillvalues(
                 combined_mask,
             )
 
+    if combined_mask is None:
+        # There are no cubes, so there is nothing to mask.
+        return products
+
     input_products = {p.copy_provenance() for p in products}
     for product in products:
         for cube in product.cubes:
