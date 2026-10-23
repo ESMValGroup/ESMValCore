@@ -11,6 +11,7 @@ import iris
 import iris.cube
 import iris.util
 import ncdata
+import ncdata.dataset_like
 import ncdata.iris
 import ncdata.iris_xarray
 import ncdata.threadlock_sharing
@@ -624,10 +625,10 @@ def dataset_to_iris(
 
     """
     if isinstance(dataset, xr.Dataset):
-        conversion_func = ncdata.iris_xarray.cubes_from_xarray
+        ds = ncdata.xarray.from_xarray(dataset)
         ds_coords = dataset.coords
     elif isinstance(dataset, ncdata.NcData):
-        conversion_func = ncdata.iris.to_iris
+        ds = dataset
         ds_coords = dataset.variables
     else:
         msg = (
@@ -635,9 +636,8 @@ def dataset_to_iris(
             f"type {type(dataset)}"
         )
         raise TypeError(msg)
-
     with ignore_warnings_context(ignore_warnings):
-        cubes = conversion_func(dataset)
+        cubes = iris.load_raw(ncdata.dataset_like.Nc4DatasetLike(ds))
 
     # Restore the lat/lon coordinate units that iris changes to degrees
     for coord_name in ["latitude", "longitude"]:

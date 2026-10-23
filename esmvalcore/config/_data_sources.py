@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-import esmvalcore.io.esgf
-import esmvalcore.io.esgf.facets
 import esmvalcore.local
 from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 from esmvalcore.io import load_data_sources
@@ -58,18 +56,6 @@ def _get_data_sources(
     except (RecipeError, KeyError):
         # The project is not configured in config-developer.yml
         legacy_local_data_sources = []
-    else:
-        if (
-            session.get("search_esgf", "") != "never"
-            and project in esmvalcore.io.esgf.facets.FACETS
-        ):
-            data_source = esmvalcore.io.esgf.ESGFDataSource(
-                name="legacy-esgf",
-                project=project,
-                priority=2,
-                download_dir=session["download_dir"],
-            )
-            data_sources.append(data_source)
     data_sources.extend(legacy_local_data_sources)
 
     if not data_sources:
