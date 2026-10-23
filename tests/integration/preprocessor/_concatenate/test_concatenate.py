@@ -1,5 +1,6 @@
 """Integration tests for :func:`esmvalcore.preprocessor.concatenate`."""
 
+import json
 import unittest
 
 import numpy as np
@@ -459,3 +460,28 @@ class TestConcatenate(unittest.TestCase):
         self.raw_cubes[1].units = "K"
         with self.assertRaises(ValueError):
             concatenate(self.raw_cubes)
+
+
+def test_concatenate_woodpecker_provenance():
+    """The provenance of files fixed by woodpecker stays valid JSON."""
+    cubes = CubeList()
+    records = []
+    for i in range(3):
+        record = {"source": f"{i}.nc", "applied_fix_ids": []}
+        records.append(record)
+        cube = Cube(
+            [1.0],
+            var_name="tas",
+            attributes={"woodpecker_provenance": json.dumps(record)},
+        )
+        time = DimCoord(
+            [float(i)],
+            standard_name="time",
+            units="days since 2000-01-01",
+        )
+        cube.add_dim_coord(time, 0)
+        cubes.append(cube)
+
+    result = concatenate(cubes)
+
+    assert json.loads(result.attributes["woodpecker_provenance"]) == records

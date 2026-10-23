@@ -41,6 +41,7 @@ Further information is available in :ref:`config-data-sources`.
 from __future__ import annotations
 
 import copy
+import functools
 import itertools
 import logging
 import os
@@ -50,22 +51,26 @@ import warnings
 from dataclasses import dataclass, field
 from glob import glob
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import iris.cube
 import iris.fileformats.cf
 import isodate
+import xarray as xr
 from cf_units import Unit
 from netCDF4 import Dataset
 
 import esmvalcore.io.protocol
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-from esmvalcore.iris_helpers import ignore_warnings_context
+from esmvalcore.io._netcdf_masking import mask_like_netcdf4
+from esmvalcore.io._woodpecker import apply_recipe, find_recipe, mask_invalid
+from esmvalcore.iris_helpers import dataset_to_iris, ignore_warnings_context
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from netCDF4 import Variable
+    from woodpecker.recipes.models import Recipe
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -897,6 +902,9 @@ def _select_latest_version(files: list[LocalFile]) -> list[LocalFile]:
 GRIB_FORMATS = (".grib2", ".grib", ".grb2", ".grb", ".gb2", ".gb")
 """GRIB file extensions."""
 
+NETCDF_FORMATS = (".nc", ".nc4")
+"""NetCDF file extensions."""
+
 
 def _get_attr_from_field_coord(
     ncfield: iris.fileformats.cf.CFVariable,
@@ -919,12 +927,46 @@ def _restore_lat_lon_units(
 ) -> None:  # pylint: disable=unused-argument
     """Use this callback to restore the original lat/lon units."""
     # Iris chooses to change longitude and latitude units to degrees
-    # regardless of value in file, so reinstating file value
-    for coord in cube.coords():
+    # regardless of value in file, so reinstating file value. The units of a
+    # MeshCoord are those of the mesh coordinate, which is not part of the
+    # CF group of the field.
+    for coord in cube.coords(mesh_coords=False):
         if coord.standard_name in ["longitude", "latitude"]:
             units = _get_attr_from_field_coord(field, coord.var_name, "units")
             if units is not None:
                 coord.units = units
+
+
+class _NetCDFHeader(NamedTuple):
+    """Parts of a netCDF header needed to apply woodpecker recipes."""
+
+    attributes: dict[str, Any]
+    """Global attributes."""
+    no_fill: frozenset[str]
+    """Names of the variables for which filling is turned off."""
+
+
+@functools.lru_cache(maxsize=4096)
+def _read_netcdf_header(path: str) -> _NetCDFHeader:
+    """Read the parts of a netCDF header needed to apply woodpecker recipes.
+
+    The result is cached by path, so the header is read only once, even if
+    several :class:`LocalFile` objects refer to the same file. Input files are
+    not expected to change while ESMValCore runs, so the cache does not check
+    for changes. This avoids a ``stat`` call per file, which is relatively
+    expensive on parallel filesystems such as Lustre.
+    """
+    with Dataset(path) as dataset:
+        return _NetCDFHeader(
+            attributes={
+                key: dataset.getncattr(key) for key in dataset.ncattrs()
+            },
+            no_fill=frozenset(
+                name
+                for name, variable in dataset.variables.items()
+                if variable.get_fill_value() is None
+            ),
+        )
 
 
 class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
@@ -975,8 +1017,33 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
     def ignore_warnings(self, value: list[dict[str, Any]] | None) -> None:
         self._ignore_warnings = value
 
+    def _header(self) -> _NetCDFHeader:
+        """Read the parts of the netCDF header needed for woodpecker."""
+        return _read_netcdf_header(str(self))
+
+    def _woodpecker_recipe(self) -> Recipe | None:
+        """Find the woodpecker recipe that matches this file, if any.
+
+        Recipes are only looked up for netCDF files. To find the recipe, only
+        the global attributes are read from the file.
+        """
+        if self.suffix not in NETCDF_FORMATS:
+            return None
+        return find_recipe(
+            xr.Dataset(attrs=self._header().attributes),
+            str(self),
+        )
+
+    def _no_fill_variables(self) -> frozenset[str]:
+        """Return the names of the variables for which filling is off."""
+        return self._header().no_fill
+
     def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
+
+        If a `woodpecker <https://github.com/roocs/woodpecker>`__ recipe
+        matches the file, the file is opened with :mod:`xarray`, fixed with
+        woodpecker, and then converted to Iris cubes.
 
         Returns
         -------
@@ -984,6 +1051,28 @@ class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: igno
             The loaded data.
         """
         file = Path(self)
+
+        recipe = self._woodpecker_recipe()
+        if recipe is not None:
+            with ignore_warnings_context(self.ignore_warnings):
+                dataset = xr.open_dataset(
+                    file,
+                    decode_times=False,
+                    chunks="auto",
+                )
+            mask_like_netcdf4(dataset, no_fill=self._no_fill_variables())
+            apply_recipe(dataset, recipe, str(file))
+            # Record the source file, as when loading with Iris below.
+            dataset.attrs["source_file"] = str(file)
+            cubes = dataset_to_iris(
+                dataset,
+                filepath=file,
+                ignore_warnings=self.ignore_warnings,
+            )
+            mask_invalid(cubes)
+            # Cache the attributes.
+            self.attributes = copy.deepcopy(dataset.attrs)
+            return cubes
 
         with ignore_warnings_context(self.ignore_warnings):
             # GRIB files need to be loaded with iris.load, otherwise we will

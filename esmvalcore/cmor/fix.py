@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING, Any
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._utils import _get_single_cube
+from esmvalcore.io._woodpecker import is_fixed_by_woodpecker
 from esmvalcore.io.local import LocalFile
 
 if TYPE_CHECKING:
@@ -42,6 +44,10 @@ def fix_file(  # noqa: PLR0913, PLR0917
     Iris (e.g., those related to ``missing_value`` or ``_FillValue``) or
     operations that are more efficient with other packages (e.g., loading files
     with lots of variables is much faster with Xarray than Iris).
+
+    If a `woodpecker <https://github.com/roocs/woodpecker>`__ recipe matches
+    the file, it is returned unchanged, because woodpecker fixes the file
+    when it is loaded.
 
     Parameters
     ----------
@@ -75,6 +81,15 @@ def fix_file(  # noqa: PLR0913, PLR0917
     if not isinstance(file, Path):
         # Skip this function for `esmvalcore.io.DataElement` that is not a path
         # to a file.
+        return file
+
+    local_file = file if isinstance(file, LocalFile) else LocalFile(file)
+    if local_file._woodpecker_recipe() is not None:  # noqa: SLF001
+        logger.debug(
+            "Not applying ESMValCore fixes to %s, because a woodpecker recipe "
+            "matches it",
+            file,
+        )
         return file
 
     # Update extra_facets with variable information given as regular arguments
@@ -144,6 +159,10 @@ def fix_metadata(
     This method collects all the relevant fixes (including generic ones) for a
     given variable and applies them.
 
+    Cubes from files that have already been fixed by
+    `woodpecker <https://github.com/roocs/woodpecker>`__, i.e. that have the
+    global attribute ``woodpecker_provenance``, are not fixed.
+
     Parameters
     ----------
     cubes:
@@ -198,14 +217,38 @@ def fix_metadata(
     for cube in cubes:
         by_file[cube.attributes.get("source_file", "")].append(cube)
 
-    for group in by_file.values():
-        cube_list = CubeList(group)
-        for fix in fixes:
-            cube_list = fix.fix_metadata(cube_list)
+    fixed_by_woodpecker = {
+        source_file: any(is_fixed_by_woodpecker(cube) for cube in group)
+        for source_file, group in by_file.items()
+    }
+    if 0 < sum(fixed_by_woodpecker.values()) < len(fixed_by_woodpecker):
+        logger.warning(
+            "Only some files of %s:%s %s %s have been fixed by woodpecker: "
+            "%s. After concatenation, the data of all files is treated as "
+            "fixed by woodpecker, so ESMValCore does not fix the data of the "
+            "other files.",
+            project,
+            dataset,
+            mip,
+            short_name,
+            ", ".join(f for f, fixed in fixed_by_woodpecker.items() if fixed),
+        )
 
-        # The final fix is always GenericFix, whose fix_metadata method always
-        # returns a single cube
-        cube = cube_list[0]
+    for source_file, group in by_file.items():
+        cube_list = CubeList(group)
+        if fixed_by_woodpecker[source_file]:
+            cube = _get_single_cube(
+                cube_list,
+                short_name,
+                dataset_str=f"{project}:{dataset}",
+            )
+        else:
+            for fix in fixes:
+                cube_list = fix.fix_metadata(cube_list)
+
+            # The final fix is always GenericFix, whose fix_metadata method
+            # always returns a single cube
+            cube = cube_list[0]
 
         cube.attributes.pop("source_file", None)
         fixed_cubes.append(cube)
@@ -229,6 +272,10 @@ def fix_data(
 
     This method collects all the relevant fixes (including generic ones) for a
     given variable and applies them.
+
+    A cube that has already been fixed by
+    `woodpecker <https://github.com/roocs/woodpecker>`__, i.e. that has the
+    global attribute ``woodpecker_provenance``, is returned unchanged.
 
     Parameters
     ----------
@@ -255,6 +302,9 @@ def fix_data(
         Fixed cube.
 
     """
+    if is_fixed_by_woodpecker(cube):
+        return cube
+
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update(

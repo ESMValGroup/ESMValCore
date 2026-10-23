@@ -61,6 +61,7 @@ dependencies = [
     "pybtex",
     "pyyaml",
     "requests",
+    "roocs-woodpecker>=0.7",
     "rich",
     "scipy>=1.6",
     "scitools-iris>=3.12.2",
@@ -246,6 +247,7 @@ python = ">=3.12"
 python-stratify = ">=0.3"
 pyyaml = "*"
 requests = "*"
+roocs-woodpecker = ">=0.7"
 rich = "*"
 scipy = ">=1.6"
 shapely = ">=2.0.0"

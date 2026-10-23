@@ -16,12 +16,17 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube
+from woodpecker.fixes.labels import Labels
+from woodpecker.fixes.registry import FixFunction, register_fix_function
 
 import esmvalcore.cmor.table
+import esmvalcore.io._woodpecker
 from esmvalcore.config import CFG, Config
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    import xarray as xr
 
     from esmvalcore.config import Session
 
@@ -143,3 +148,65 @@ def realistic_4d_cube():
         ancillary_variables_and_dims=[(type_var, (0, 3))],
         attributes={"test": 1},
     )
+
+
+@register_fix_function
+class SetFixedBy(FixFunction):
+    """Woodpecker fix used by the tests: set the global attribute ``fixed_by``."""
+
+    prefix = "esmvaltest"
+    suffix = "set_fixed_by"
+    name = "Set fixed_by"
+    description = "Sets the global attribute fixed_by."
+    categories = ["metadata"]  # noqa: RUF012
+    priority = 10
+    labels = [Labels.RISK_REVIEW_BEFORE_APPLYING]  # noqa: RUF012
+
+    def matches(self, dataset: xr.Dataset) -> bool:
+        return dataset.attrs.get("fixed_by") != "woodpecker"
+
+    def apply(self, dataset: xr.Dataset, dry_run: bool = True) -> bool:
+        changed = self.matches(dataset)
+        if changed and not dry_run:
+            dataset.attrs["fixed_by"] = "woodpecker"
+        return changed
+
+
+WOODPECKER_RECIPES = """\
+recipes:
+  - id: esmvaltest.fix_test_data
+    description: Fix the test data, matched on the path
+    match:
+      path_patterns:
+        - "*TEST-DATA*"
+    steps:
+      - id: esmvaltest.set_fixed_by
+  - id: esmvaltest.fix_test_model
+    description: Fix the test data, matched on the attributes
+    match:
+      attrs:
+        source_id: TEST-MODEL
+    steps:
+      - id: esmvaltest.set_fixed_by
+"""
+"""Woodpecker recipes used by the tests.
+
+The recipe ``esmvaltest.fix_test_data`` matches data whose name contains
+``TEST-DATA``, the recipe ``esmvaltest.fix_test_model`` matches data with the
+global attribute ``source_id: TEST-MODEL``.
+"""
+
+
+@pytest.fixture
+def woodpecker_recipe_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Path:
+    """Make woodpecker use the recipes in :data:`WOODPECKER_RECIPES`."""
+    path = tmp_path / "woodpecker_recipes"
+    path.mkdir()
+    (path / "esmvaltest.yaml").write_text(WOODPECKER_RECIPES, encoding="utf-8")
+    monkeypatch.setenv("WOODPECKER_RECIPE_PATH", str(path))
+    # The recipe catalog is cached per value of WOODPECKER_RECIPE_PATH.
+    monkeypatch.setattr(esmvalcore.io._woodpecker, "_RECIPE_CATALOGS", {})
+    return path
