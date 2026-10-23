@@ -118,11 +118,13 @@ def create_esgf_search_results():
                     "source_id": ["EC-Earth3"],
                     "title": "tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185001-185012.nc",
                     "url": [
-                        "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
-                        "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
-                        "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
-                        "_historical_r1i1p1f1_gr_185001-185012.nc"
-                        "|application/netcdf|HTTPServer",
+                        (
+                            "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
+                            "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
+                            "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
+                            "_historical_r1i1p1f1_gr_185001-185012.nc"
+                            "|application/netcdf|HTTPServer"
+                        ),
                     ],
                 },
                 context=None,
@@ -140,11 +142,13 @@ def create_esgf_search_results():
                     "source_id": ["EC-Earth3"],
                     "title": "tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185101-185112.nc",
                     "url": [
-                        "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
-                        "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
-                        "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
-                        "_historical_r1i1p1f1_gr_185101-185112.nc"
-                        "|application/netcdf|HTTPServer",
+                        (
+                            "http://esgf-data1.llnl.gov/thredds/fileServer/css03_data"
+                            "/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical"
+                            "/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3"
+                            "_historical_r1i1p1f1_gr_185101-185112.nc"
+                            "|application/netcdf|HTTPServer"
+                        ),
                     ],
                 },
                 context=None,
