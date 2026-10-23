@@ -20,7 +20,15 @@ import xarray as xr
 from cf_units import Unit, suppress_errors
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.mesh import MeshCoord
 from iris.warnings import IrisVagueMetadataWarning
+
+from esmvalcore.io._woodpecker import (
+    PROVENANCE_ATTRIBUTE as WOODPECKER_PROVENANCE_ATTRIBUTE,
+)
+from esmvalcore.io._woodpecker import (
+    merge_provenance as merge_woodpecker_provenance,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Sequence
@@ -145,6 +153,21 @@ def date2num(date, unit, dtype=np.float64):
         return dtype(num)
 
 
+def _merge_attribute_values(
+    attr: str,
+    vals: list[NetCDFAttr],
+    delimiter: str,
+) -> NetCDFAttr:
+    """Merge the values of an attribute, see :func:`merge_cube_attributes`."""
+    set_of_str = sorted({str(v) for v in vals})
+    if len(set_of_str) == 1:
+        return vals[0]
+    # The woodpecker provenance is JSON, so it is merged into valid JSON.
+    if attr == WOODPECKER_PROVENANCE_ATTRIBUTE:
+        return merge_woodpecker_provenance(set_of_str)
+    return delimiter.join(set_of_str)
+
+
 def merge_cube_attributes(  # noqa: C901
     cubes: Sequence[Cube],
     delimiter: str = " ",
@@ -162,7 +185,9 @@ def merge_cube_attributes(  # noqa: C901
     respect that it does not delete attributes that are not identical but
     rather concatenates them (sorted) using the given ``delimiter``. E.g., the
     attributes ``exp: historical`` and ``exp: ssp585`` end up as ``exp:
-    historical ssp585`` using the default ``delimiter = ' '``.
+    historical ssp585`` using the default ``delimiter = ' '``. Different
+    values of the ``woodpecker_provenance`` attribute, which contains JSON,
+    are merged into a JSON list.
 
     Parameters
     ----------
@@ -197,11 +222,7 @@ def merge_cube_attributes(  # noqa: C901
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string.
     for attr, vals in attributes.items():
-        set_of_str = sorted({str(v) for v in vals})
-        if len(set_of_str) == 1:
-            final_attributes[attr] = vals[0]
-        else:
-            final_attributes[attr] = delimiter.join(set_of_str)
+        final_attributes[attr] = _merge_attribute_values(attr, vals, delimiter)
 
     # Step 4: modify the cubes in-place
     for cube in cubes:
@@ -647,7 +668,11 @@ def dataset_to_iris(
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
-                if coord.var_name in ds_coords:
+                # The units of a MeshCoord are those of the mesh coordinate.
+                if coord.var_name in ds_coords and not isinstance(
+                    coord,
+                    MeshCoord,
+                ):
                     ds_coord = ds_coords[coord.var_name]
                     coord.units = _get_attribute(ds_coord, "units")
 

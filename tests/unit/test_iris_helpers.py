@@ -1,6 +1,7 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 
 import datetime as dt
+import json
 import warnings
 from copy import deepcopy
 from itertools import permutations
@@ -23,6 +24,7 @@ from iris.coords import (
 )
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, UnitConversionError
+from iris.mesh import Connectivity, MeshXY
 from iris.warnings import IrisLoadWarning, IrisUnknownCellMethodWarning
 
 from esmvalcore.iris_helpers import (
@@ -225,6 +227,19 @@ def test_merge_cube_attributes(cubes):
     assert len(cubes) == 3
     for cube in cubes:
         assert_attributes_equal(cube.attributes, expected_attributes)
+
+
+@pytest.mark.parametrize("order", [1, -1])
+def test_merge_cube_attributes_woodpecker_provenance(order):
+    """Different woodpecker provenance is merged into valid JSON."""
+    records = [{"source": f"{i}.nc", "applied_fix_ids": []} for i in range(2)]
+    cubes = [
+        Cube(0, attributes={"woodpecker_provenance": json.dumps(r)})
+        for r in records
+    ]
+    merge_cube_attributes(cubes[::order])
+    for cube in cubes:
+        assert json.loads(cube.attributes["woodpecker_provenance"]) == records
 
 
 def test_merge_cube_attributes_0_cubes():
@@ -765,6 +780,33 @@ def test_dataset_to_iris_no_ignore_warnings(conversion_func, dummy_cubes):
     msg = r"NetCDF variable 'ta' contains unknown cell method 'invalid_method'"
     with pytest.warns(IrisUnknownCellMethodWarning, match=msg):
         dataset_to_iris(dataset)
+
+
+@pytest.mark.parametrize(
+    "conversion_func",
+    [ncdata.iris.from_iris, ncdata.iris_xarray.cubes_to_xarray],
+)
+def test_dataset_to_iris_mesh(conversion_func):
+    node_x = AuxCoord([0.0, 1.0, 1.0, 0.0], "longitude", units="degrees_east")
+    node_y = AuxCoord([0.0, 0.0, 1.0, 1.0], "latitude", units="degrees_north")
+    face_x = AuxCoord([0.5], "longitude", units="degrees_east")
+    face_y = AuxCoord([0.5], "latitude", units="degrees_north")
+    mesh = MeshXY(
+        2,
+        ((node_x, "x"), (node_y, "y")),
+        Connectivity([[0, 1, 2, 3]], cf_role="face_node_connectivity"),
+        face_coords_and_axes=((face_x, "x"), (face_y, "y")),
+    )
+    cube = Cube([280.0], var_name="tas", units="K")
+    for coord in mesh.to_MeshCoords("face"):
+        cube.add_aux_coord(coord, 0)
+    dataset = conversion_func(CubeList([cube]))
+
+    (result,) = dataset_to_iris(dataset)
+
+    assert result.mesh is not None
+    assert result.coord("latitude").units == "degrees"
+    assert result.coord("longitude").units == "degrees"
 
 
 def test_dataset_to_iris_invalid_type_fail():

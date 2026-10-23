@@ -27,7 +27,21 @@ This is implemented for a set of :ref:`read_native_datasets`.
 A detailed description of how to include new native datasets is given
 :ref:`below <add_new_fix_native_datasets>`.
 
-The following sections provide details on how to design such fixes.
+Fixes can be written in two ways:
+
+- **With woodpecker (recommended).**
+  `Woodpecker <https://github.com/roocs/woodpecker>`__ fixes data in
+  :class:`xarray.Dataset` form before ESMValCore converts it to Iris cubes.
+  Fixes are combined into recipes, which can be distributed in plugins and
+  shared with other tools, or kept in a user's own recipe directory without
+  changing ESMValCore.
+  New fixes should be written for woodpecker, see :ref:`woodpecker_fixes`.
+- **With the fixes included in ESMValCore (legacy).**
+  These are Python classes in the ESMValCore source code, described from
+  :ref:`fix_structure` onwards.
+  They are still applied to all data that no woodpecker recipe matches, but
+  they are considered legacy: they will be ported to woodpecker over time,
+  and new fixes should not be added to ESMValCore.
 
 .. note::
 
@@ -36,10 +50,221 @@ The following sections provide details on how to design such fixes.
   :ref:`CMORizer scripts in the ESMValTool <esmvaltool:new-dataset>`,
   which are rather relevant for datasets of small volume
 
+.. _woodpecker_fixes:
+
+Fixing data with woodpecker
+===========================
+
+How ESMValCore applies woodpecker recipes
+-----------------------------------------
+
+ESMValCore looks for a woodpecker recipe that matches the data when it loads
+
+- local netCDF files (``.nc`` and ``.nc4``), including files downloaded from
+  ESGF, and
+- data found with :mod:`esmvalcore.io.intake_esgf`.
+
+Recipes match on the global attributes of the data and on its name.
+For local files the name is the full path of the file, for
+:mod:`esmvalcore.io.intake_esgf` it is the ESGF dataset id including the
+version, e.g.
+``CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn.v20190429``.
+To match all versions of a dataset, end the pattern with ``*``.
+At most one recipe may match: if more than one matches, ESMValCore stops with
+an error.
+
+If a recipe matches, the data is fixed by woodpecker only:
+
+1. ESMValCore opens the data with :mod:`xarray`. Local files are opened with
+   ``decode_times=False``.
+2. The data is masked as Iris would mask it when loading the file: values
+   equal to ``_FillValue``, ``missing_value`` or the netCDF default fill value,
+   and values outside ``valid_range``, ``valid_min`` and ``valid_max``, become
+   NaN. The range attributes that have been applied are removed.
+3. Woodpecker applies the recipe.
+4. The data is converted to Iris cubes. NaN values are masked.
+5. ESMValCore does not apply any of its own fixes to the data, not even the
+   generic ones. It recognizes the data by the global attribute
+   ``woodpecker_provenance``, which records the recipe and the fixes that
+   changed the data. Files fixed earlier with the woodpecker command line
+   tool and saved with this attribute are recognized in the same way.
+6. The data is checked against the CMOR tables as usual, if the project has
+   CMOR tables.
+
+If no recipe matches, the data is loaded and fixed by ESMValCore as before.
+
+All files of a dataset should be fixed in the same way.
+If only some files of a dataset match a recipe, ESMValCore logs a warning:
+after the files have been concatenated, the data of the whole dataset is
+treated as fixed by woodpecker, so the data fixes of ESMValCore are not
+applied to the other files.
+
+To see which recipe is applied to which file, and which fixes changed the
+data, run ESMValCore with ``log_level: debug``.
+
+Adding recipes
+--------------
+
+Woodpecker looks for recipes in
+
+1. the files and directories listed in the environment variable
+   ``WOODPECKER_RECIPE_PATH``, separated by ``:``,
+2. the user directories ``~/.config/woodpecker/recipes`` and
+   ``~/.woodpecker/recipes``,
+3. the system directories ``/etc/woodpecker/recipes`` and
+   ``/etc/woodpecker``,
+4. woodpecker itself, and
+5. the installed woodpecker plugins.
+
+In a directory, all ``.yaml``, ``.yml`` and ``.json`` files are read;
+subdirectories are not searched.
+If several recipes have the same ``id``, the first one found is used, so a
+user can replace a recipe from a plugin by writing a recipe with the same id.
+A recipe with a different id that matches the same data does not replace it:
+both recipes match and ESMValCore stops with an error.
+
+A recipe consists of a ``match`` section that says which data it applies to,
+and the ``steps``, the fixes to apply in order, each with its ``options``.
+For example, the ocean files of a model may store the latitude and longitude
+of its curvilinear grid as ordinary data variables ``nav_lat`` and
+``nav_lon``, without listing them in the ``coordinates`` attribute of the
+data variable.
+Iris then loads them as separate cubes, so the data has no latitude and
+longitude.
+This recipe marks them as coordinates, so they become auxiliary coordinates
+of the data:
+
+.. code-block:: yaml
+
+    recipes:
+      - id: my_project.my_model_ocean
+        description: Fix the ocean grid of MY-MODEL
+        match:
+          path_patterns:
+            - "*/MY-MODEL/Omon/*.nc"
+        steps:
+          - id: woodpecker.set_coordinate_variables
+            options:
+              coordinates:
+                - nav_lat
+                - nav_lon
+
+Instead of ``path_patterns``, which are matched against the name of the data
+with :func:`fnmatch.fnmatch`, a recipe can match on global attributes with
+``attrs`` (e.g. ``source_id: MY-MODEL``) or on the ``dataset_id`` or
+``ds_id`` global attribute with ``dataset_id_patterns``.
+If several of these are given, all of them must match.
+
+Recipes can use the fixes included in woodpecker and the fixes of the
+installed plugins.
+The available fixes are listed in the
+`woodpecker fix reference <https://roocs.github.io/woodpecker/FIXES/>`__.
+
+Writing new fixes
+-----------------
+
+A fix that cannot be built from existing fixes is written in Python and
+distributed in a woodpecker plugin, a Python package that registers its fixes
+when it is imported.
+Woodpecker finds plugins through the ``woodpecker.plugins`` entry point, so
+the package needs to be installed, e.g. with ``pip install --editable .``
+for a plugin that is still being developed.
+Recipes in the ``recipes`` directory of the package named in the entry point
+are found automatically.
+
+A fix is a class registered with
+``woodpecker.fixes.registry.register_fix_function``.
+Its id is ``<prefix>.<suffix>``.
+The ``apply`` method changes the dataset in place and returns whether it
+changed anything; with ``dry_run=True`` it must not change the dataset.
+The options from the recipe are available as ``self.config``.
+For example, a fix that flips the sign of the variables given in the
+options:
+
+.. code-block:: python
+
+    """Woodpecker fixes for MY-MODEL."""
+
+    import xarray as xr
+    from woodpecker.fixes.labels import Labels
+    from woodpecker.fixes.registry import FixFunction, register_fix_function
+
+
+    @register_fix_function
+    class FlipSign(FixFunction):
+        """Flip the sign of the variables given in the recipe options."""
+
+        prefix = "my_model"
+        suffix = "flip_sign"
+        name = "Flip sign"
+        description = "Multiplies the configured variables by -1."
+        categories = ["data"]
+        priority = 50
+        labels = [Labels.RISK_VALUE_TRANSFORMATION]
+
+        def _variables(self, dataset: xr.Dataset) -> list[str]:
+            config = getattr(self, "config", {}) or {}
+            return [v for v in config.get("variables", []) if v in dataset]
+
+        def matches(self, dataset: xr.Dataset) -> bool:
+            return bool(self._variables(dataset))
+
+        def apply(self, dataset: xr.Dataset, dry_run: bool = True) -> bool:
+            variables = self._variables(dataset)
+            if variables and not dry_run:
+                for name in variables:
+                    attrs = dataset[name].attrs
+                    encoding = dataset[name].encoding
+                    dataset[name] = -dataset[name]
+                    dataset[name].attrs = attrs
+                    dataset[name].encoding = encoding
+            return bool(variables)
+
+and the entry point in the ``pyproject.toml`` file of the plugin:
+
+.. code-block:: toml
+
+    [project.entry-points."woodpecker.plugins"]
+    my_model = "my_woodpecker_plugin"
+
+A recipe then uses the fix with ``id: my_model.flip_sign`` and
+``options: {variables: [hfls]}``.
+
+Guidelines for recipes used with ESMValCore
+-------------------------------------------
+
+- **Produce CMOR-compliant data.**
+  ESMValCore applies none of its own fixes to data fixed by woodpecker, not
+  even the generic ones that, e.g., fix units, coordinate names and bounds,
+  or the direction of coordinates. The recipe needs to take care of
+  everything that the CMOR checks would otherwise complain about.
+- **Support encoded times.**
+  Local files are opened with ``decode_times=False``, because Iris needs the
+  encoded times, while data from :mod:`esmvalcore.io.intake_esgf` has decoded
+  times. Fixes that work on the time coordinate should support both.
+- **Use NaN for missing values and keep the encoding.**
+  Missing values arrive as NaN, and any NaN left after the fixes is masked.
+  Fixes should keep the ``encoding`` of the variables they change where
+  possible, in particular that of integer variables such as the
+  connectivities of UGRID meshes: without its ``_FillValue``, a connectivity
+  with missing indices is converted to floating point numbers and Iris no
+  longer recognizes the mesh.
+- **Match all files of a dataset.**
+  A recipe should match all files of a dataset or none, see above.
+- **Match each dataset with one recipe only.**
+  Give recipes specific ``match`` sections, so that they do not match data
+  that another recipe also matches.
+
 .. _fix_structure:
 
 Fix structure
 =============
+
+.. note::
+
+    This section and the following ones describe the fixes included in
+    ESMValCore. These are considered legacy: new fixes should be written for
+    woodpecker, see :ref:`woodpecker_fixes`.
 
 Fixes are Python classes stored in
 ``esmvalcore/cmor/_fixes/[PROJECT]/[DATASET].py`` that derive from
