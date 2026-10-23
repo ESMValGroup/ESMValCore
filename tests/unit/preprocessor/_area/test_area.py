@@ -313,7 +313,7 @@ class Test(tests.Test):
             extract_named_regions(Cube(0), 123)  # type: ignore[arg-type]
         msg = r'Regions ".*" is not an acceptable format.'
         with pytest.raises(TypeError, match=msg):
-            extract_named_regions(Cube(0), {"region1": "region2"})  # type: ignore[arg-type]
+            extract_named_regions(Cube(0), {"region1": "region2"})
 
 
 def create_irregular_grid_cube(data, lons, lats):

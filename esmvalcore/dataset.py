@@ -309,7 +309,7 @@ class Dataset:
                     if _ismatch(mip, self.facets["mip"])
                 ]
             else:
-                mips = [self.facets["mip"]]  # type: ignore
+                mips = [self.facets["mip"]]
 
             for mip in mips:
                 if _isglob(self.facets.get("branding_suffix", "")):
@@ -885,7 +885,7 @@ class Dataset:
         list[Dataset]
             The datasets.
         """
-        datasets = [self]
+        datasets: list[Dataset] = [self]
         for key in "ensemble", "sub_experiment":
             if key in self.facets:
                 datasets = [

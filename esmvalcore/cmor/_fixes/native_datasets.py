@@ -306,9 +306,9 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("time")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "time"  # type: ignore
-        coord.standard_name = "time"  # type: ignore
-        coord.long_name = "time"  # type: ignore
+        coord.var_name = "time"
+        coord.standard_name = "time"
+        coord.long_name = "time"
         return coord
 
     @staticmethod
@@ -337,11 +337,11 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("altitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "alt16"  # type: ignore
-        coord.standard_name = "altitude"  # type: ignore
-        coord.long_name = "altitude"  # type: ignore
-        coord.convert_units("m")  # type: ignore
-        coord.attributes["positive"] = "up"  # type: ignore
+        coord.var_name = "alt16"
+        coord.standard_name = "altitude"
+        coord.long_name = "altitude"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "up"
         return coord
 
     @staticmethod
@@ -370,11 +370,11 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("height")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "height"  # type: ignore
-        coord.standard_name = "height"  # type: ignore
-        coord.long_name = "height"  # type: ignore
-        coord.convert_units("m")  # type: ignore
-        coord.attributes["positive"] = "up"  # type: ignore
+        coord.var_name = "height"
+        coord.standard_name = "height"
+        coord.long_name = "height"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "up"
         return coord
 
     @staticmethod
@@ -403,11 +403,11 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("depth")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "lev"  # type: ignore
-        coord.standard_name = "depth"  # type: ignore
-        coord.long_name = "ocean depth coordinate"  # type: ignore
-        coord.convert_units("m")  # type: ignore
-        coord.attributes["positive"] = "down"  # type: ignore
+        coord.var_name = "lev"
+        coord.standard_name = "depth"
+        coord.long_name = "ocean depth coordinate"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "down"
         return coord
 
     @staticmethod
@@ -436,11 +436,11 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("air_pressure")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "plev"  # type: ignore
-        coord.standard_name = "air_pressure"  # type: ignore
-        coord.long_name = "pressure"  # type: ignore
-        coord.convert_units("Pa")  # type: ignore
-        coord.attributes["positive"] = "down"  # type: ignore
+        coord.var_name = "plev"
+        coord.standard_name = "air_pressure"
+        coord.long_name = "pressure"
+        coord.convert_units("Pa")
+        coord.attributes["positive"] = "down"
         return coord
 
     @staticmethod
@@ -469,10 +469,10 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("latitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "lat"  # type: ignore
-        coord.standard_name = "latitude"  # type: ignore
-        coord.long_name = "latitude"  # type: ignore
-        coord.convert_units("degrees_north")  # type: ignore
+        coord.var_name = "lat"
+        coord.standard_name = "latitude"
+        coord.long_name = "latitude"
+        coord.convert_units("degrees_north")
         return coord
 
     @staticmethod
@@ -501,8 +501,8 @@ class NativeDatasetFix(Fix):
             coord = cube.coord("longitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = "lon"  # type: ignore
-        coord.standard_name = "longitude"  # type: ignore
-        coord.long_name = "longitude"  # type: ignore
-        coord.convert_units("degrees_east")  # type: ignore
+        coord.var_name = "lon"
+        coord.standard_name = "longitude"
+        coord.long_name = "longitude"
+        coord.convert_units("degrees_east")
         return coord

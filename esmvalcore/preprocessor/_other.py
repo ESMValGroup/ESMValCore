@@ -366,9 +366,9 @@ def histogram(
     weights = _get_histogram_weights(cube, coords, weights, normalization)
     (bin_range, bin_edges) = _get_bins(cube, bins, bin_range)
     if cube.has_lazy_data():
-        func = _calculate_histogram_lazy  # type: ignore
+        func = _calculate_histogram_lazy
     else:
-        func = _calculate_histogram_eager  # type: ignore
+        func = _calculate_histogram_eager
     hist_data = func(
         cube.core_data(),
         weights,  # type: ignore
@@ -394,30 +394,33 @@ def _get_bins(
     bin_range: tuple[float, float] | None,
 ) -> tuple[tuple[float, float], np.ndarray]:
     """Calculate bin range and edges."""
-    if bin_range is None:
-        bin_range = dask.compute(
+    bin_range_ = (
+        dask.compute(
             cube.core_data().min(),
             cube.core_data().max(),
         )
+        if bin_range is None
+        else bin_range
+    )
     if isinstance(bins, int):
         bin_edges = np.linspace(
-            bin_range[0],
-            bin_range[1],
+            bin_range_[0],
+            bin_range_[1],
             bins + 1,
             dtype=np.float64,
         )
     else:
         bin_edges = np.array(bins, dtype=np.float64)
 
-    finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
+    finite_bin_range = [bool(np.isfinite(r)) for r in bin_range_]
     if not all(finite_bin_range):
         msg = (
-            f"Cannot calculate histogram for bin_range={bin_range} (or for "
+            f"Cannot calculate histogram for bin_range={bin_range_} (or for "
             f"fully masked data when `bin_range` is not given)"
         )
         raise ValueError(msg)
 
-    return (bin_range, bin_edges)
+    return (bin_range_, bin_edges)
 
 
 def _get_histogram_weights(

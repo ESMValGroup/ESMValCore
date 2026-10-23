@@ -194,9 +194,7 @@ class IntakeESGFDataSource(DataSource):
             for our_facet, their_facet in self.facets.items()
             if our_facet in non_glob_facets
         }
-        if (
-            "timerange" in facets and not _isglob(facets["timerange"])  # type: ignore[operator]
-        ):
+        if "timerange" in facets and not _isglob(facets["timerange"]):
             start, end = _parse_period(facets["timerange"])
             query["file_start"] = isodate.date_isoformat(
                 isodate.parse_date(start.split("T")[0]),
@@ -283,7 +281,7 @@ class IntakeESGFDataSource(DataSource):
                     facets={
                         k: v[0] if len(v) == 1 else v
                         for k, v in dataset_facets.items()
-                    },  # type: ignore[arg-type]
+                    },
                     catalog=cat,
                 )
                 result.append(dataset)

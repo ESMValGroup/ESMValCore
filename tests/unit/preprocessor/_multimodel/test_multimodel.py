@@ -1004,7 +1004,7 @@ def test_ignore_tas_scalar_height_coord():
     assert result["mean"].coord("height").points == 1.75
 
 
-PRODUCTS = [
+PRODUCTS: list[CubeList | list[PreprocessorFile]] = [
     CubeList(generate_cube_from_dates("monthly") for _ in range(3)),
     [PreprocessorFile(generate_cube_from_dates("monthly")) for _ in range(3)],
 ]

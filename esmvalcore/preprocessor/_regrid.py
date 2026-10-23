@@ -686,10 +686,10 @@ def _get_target_grid_cube(
 ) -> Cube:
     """Get target grid cube."""
     if is_dataset(target_grid):
-        target_grid = target_grid.copy()  # type: ignore
-        target_grid.supplementaries.clear()  # type: ignore
-        target_grid.files = [target_grid.files[0]]  # type: ignore
-        target_grid_cube = target_grid.load()  # type: ignore
+        target_grid = target_grid.copy()
+        target_grid.supplementaries.clear()
+        target_grid.files = [target_grid.files[0]]
+        target_grid_cube = target_grid.load()
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
     elif is_cordex_domain(target_grid):
@@ -1566,8 +1566,8 @@ def extract_levels(
         result = cube.extract(constraint)
         # Ensure the constraint did not fail.
         if not result:
-            emsg = "Failed to extract levels {!r} from cube {!r}."
-            raise ValueError(emsg.format(list(levels), name))
+            msg = f"Failed to extract levels {levels} from cube {name}."
+            raise ValueError(msg)
     else:
         # As a last resort, perform vertical interpolation.
         result = _vertical_interpolate(

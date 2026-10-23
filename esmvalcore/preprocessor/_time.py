@@ -1834,9 +1834,9 @@ def _transform_arr_to_lst(
     `_transform_to_lst_lazy` depending on the type of input data.
     """
     if isinstance(data, np.ndarray):
-        func = _transform_to_lst_eager  # type: ignore
+        func = _transform_to_lst_eager
     else:
-        func = _transform_to_lst_lazy  # type: ignore
+        func = _transform_to_lst_lazy
     return func(
         data,  # type: ignore
         time_index,

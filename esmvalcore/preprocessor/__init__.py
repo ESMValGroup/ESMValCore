@@ -736,7 +736,7 @@ class PreprocessorFile(TrackedFile):
     def save(self) -> Delayed | None:
         """Save cubes to disk."""
         return preprocess(
-            self._cubes,  # type: ignore
+            self._cubes,
             "save",
             input_files=self._input_files,
             **self.settings["save"],
@@ -832,7 +832,7 @@ def _apply_multimodel(
         for output_product in output_product_group.values():
             output_product.initialize_provenance(activity)
 
-    result: list[PreprocessorFile] = preprocess(  # type: ignore
+    result: list[PreprocessorFile] = preprocess(
         products - exclude,  # type: ignore
         step,
         **settings,
