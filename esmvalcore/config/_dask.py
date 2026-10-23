@@ -103,8 +103,11 @@ def get_distributed_client(session: Session) -> Generator[Client | None]:
         cluster_module_name, cluster_cls_name = cluster_type.rsplit(".", 1)
         cluster_module = importlib.import_module(cluster_module_name)
         cluster_cls = getattr(cluster_module, cluster_cls_name)
-        cluster = cluster_cls(**cluster_kwargs)
-        dask.config.set({"scheduler_address": cluster.scheduler_address})
+        distributed_cluster: Cluster = cluster_cls(**cluster_kwargs)
+        dask.config.set(
+            {"scheduler_address": distributed_cluster.scheduler_address},
+        )
+        cluster = distributed_cluster
         logger.debug("Using Dask cluster %s", cluster)
 
     if dask.config.get("scheduler_address", None) is None:

@@ -312,7 +312,7 @@ class Fix:
         # Always perform generic fixes for all datasets
         fixes.append(
             GenericFix(
-                vardef,  # type: ignore
+                vardef,
                 extra_facets=extra_facets,
                 session=session,
                 frequency=frequency,
@@ -886,6 +886,7 @@ class GenericFix(Fix):
                 cmor_coord.axis == "T"
                 and cmor_coord.must_have_bounds == "yes"
                 and not cube_coord.has_bounds()
+                and self.frequency is not None
             ):
                 cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
                 self._warning_msg(

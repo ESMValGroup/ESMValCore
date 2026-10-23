@@ -262,11 +262,13 @@ def _create_ensemble_ranges(
         prefix, suffix = ens[:i], ens[i + 1 :]
         return (prefix, suffix)
 
-    for i in range(len(ensembles[0])):
+    # The items change from tuples of ints to tuples of ranges while looping.
+    items: list[tuple[Any, ...]] = list(ensembles)
+    for i in range(len(items[0])):
         grouped_ensembles = []
-        ensembles = sorted(ensembles, key=partial(order, i))
+        items = sorted(items, key=partial(order, i))
         for (prefix, suffix), ibunch in itertools.groupby(
-            ensembles,
+            items,
             key=partial(grouper, i),
         ):
             bunch = list(ibunch)
@@ -286,9 +288,9 @@ def _create_ensemble_ranges(
                 result.append(item)
             grouped_ensembles.extend(result)
 
-        ensembles = grouped_ensembles
+        items = grouped_ensembles
 
-    return sorted(ensembles)  # type: ignore
+    return sorted(items)
 
 
 def _clean_recipe(recipe: Recipe, diagnostics: list[str]) -> Recipe:

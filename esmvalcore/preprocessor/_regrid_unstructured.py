@@ -267,23 +267,19 @@ class UnstructuredLinearRegridder:
         rechunk_cube(cube, ["latitude", "longitude"])
 
         # Make sure that masked arrays are filled with nan's so they are
-        # handled properly
-        npx = da if cube.has_lazy_data() else np
-        src_data = npx.ma.filled(cube.core_data(), np.nan)
-
-        # Perform actual regridding and assign correct mask
-        regridded_data: np.ndarray | da.Array
+        # handled properly, then perform actual regridding and assign correct
+        # mask
         if cube.has_lazy_data():
-            regridded_data = self._regrid_lazy(
-                src_data,
+            lazy_data = da.ma.filled(cube.lazy_data(), np.nan)
+            lazy_result = self._regrid_lazy(
+                lazy_data,
                 udim,
                 self._weights.dtype,
             )
-        else:
-            regridded_data = self._regrid_eager(src_data, udim)
-        regridded_data = npx.ma.masked_invalid(regridded_data)
-
-        return regridded_data
+            return da.ma.masked_invalid(lazy_result)
+        data = np.ma.filled(cube.data, np.nan)
+        result = self._regrid_eager(data, udim)
+        return np.ma.masked_invalid(result)
 
     def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""

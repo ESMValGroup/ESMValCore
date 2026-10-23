@@ -823,7 +823,7 @@ class AllVarsBase(IconFix):
         lat = cube.coord(var_name=lat_var)
         lat = self.fix_lat_metadata(cube, lat)
 
-        return cube.coord_dims(lat)  # type: ignore
+        return cube.coord_dims(lat)
 
     def _fix_lon(self, cube: Cube) -> tuple[int, ...]:
         """Fix longitude coordinate of cube."""
@@ -850,7 +850,7 @@ class AllVarsBase(IconFix):
         lon = self.fix_lon_metadata(cube, lon)
         self._set_range_in_0_360(lon)
 
-        return cube.coord_dims(lon)  # type: ignore
+        return cube.coord_dims(lon)
 
     def _fix_time(self, cube: Cube, cubes: CubeList) -> Cube:
         """Fix time coordinate of cube."""
@@ -1091,7 +1091,7 @@ class AllVarsBase(IconFix):
         # pd.Series object directly is broken
         # (https://github.com/pandas-dev/pandas/issues/57002).
         datetimes = year_month_day + day_float
-        rounded_datetimes = pd.Series(dt.round("s") for dt in datetimes)
+        rounded_datetimes = pd.Series([dt.round("s") for dt in datetimes])
         with warnings.catch_warnings():
             # We already fixed the deprecated code as recommended in the
             # warning, but it still shows up -> ignore it

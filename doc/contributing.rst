@@ -39,8 +39,8 @@ whenever you read it.
 
 It is recommended that you open a `draft pull
 request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
-early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
-:ref:`pre-commit.ci to analyse your code <code_quality>`, and
+early, as this will cause CircleCI to :ref:`run the tests <tests>` and
+:ref:`analyse the code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
 It's also easier to get help from other developers if your code is visible in a
 pull request.
@@ -241,15 +241,15 @@ the repository is cloned, e.g. ``cd ESMValCore``, and run `pre-commit <https://p
 
 We use `ruff <https://docs.astral.sh/ruff/>`_ to automatically format the code
 and to check for certain bugs and
-`mypy <https://mypy.readthedocs.io>`_ for checking that
-`type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
-correct.
+`pyrefly <https://pyrefly.org>`_ for checking that
+`type hints <https://typing.python.org/en/latest/reference/best_practices.html>`_
+are correct.
 Note that `type hints`_ are optional, but if you do choose to add them, they
 should be correct.
-Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
+Both `ruff`_ and `pyrefly`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
-is checked by `pre-commit.ci <https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main>`_.
+is checked by running the pre-commit hooks on CircleCI.
 
 YAML
 ~~~~

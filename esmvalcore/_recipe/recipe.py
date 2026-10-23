@@ -635,7 +635,7 @@ def _allow_skipping(dataset: Dataset) -> bool:
 
 def _set_version(dataset: Dataset, input_datasets: list[Dataset]) -> None:
     """Set the 'version' facet based on derivation input datasets."""
-    versions = set()
+    versions: set[Any] = set()
     for in_dataset in input_datasets:
         in_dataset.set_version()
         if version := in_dataset.facets.get("version"):
@@ -1075,12 +1075,12 @@ class Recipe:
         tasks: Iterable[BaseTask],
     ) -> None:
         """Resolve diagnostic ancestors."""
-        tasks = {t.name: t for t in tasks}
+        tasks_by_id = {t.name: t for t in tasks}
         for diagnostic_name, diagnostic in self.diagnostics.items():
             for script_name, script_cfg in diagnostic["scripts"].items():
                 task_id = diagnostic_name + TASKSEP + script_name
-                if task_id in tasks and isinstance(
-                    tasks[task_id],
+                if task_id in tasks_by_id and isinstance(
+                    tasks_by_id[task_id],
                     DiagnosticTask,
                 ):
                     logger.debug(
@@ -1090,7 +1090,7 @@ class Recipe:
                     )
                     ancestors: list[BaseTask] = []
                     for id_glob in script_cfg["ancestors"]:
-                        ancestor_ids = fnmatch.filter(tasks, id_glob)
+                        ancestor_ids = fnmatch.filter(tasks_by_id, id_glob)
                         if not ancestor_ids:
                             msg = (
                                 "Could not find any ancestors matching "
@@ -1102,8 +1102,8 @@ class Recipe:
                             id_glob,
                             ancestor_ids,
                         )
-                        ancestors.extend(tasks[a] for a in ancestor_ids)
-                    tasks[task_id].ancestors = ancestors
+                        ancestors.extend(tasks_by_id[a] for a in ancestor_ids)
+                    tasks_by_id[task_id].ancestors = ancestors
 
     def _get_tasks_to_run(self) -> set[str]:
         """Get tasks filtered and add ancestors if needed."""

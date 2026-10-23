@@ -127,7 +127,7 @@ WEIGHTING_LANDSEA_FRACTION = [
 def test_weighting_landsea_fraction_invalid_area_type_fail() -> None:
     msg = r"Expected 'land' or 'sea' for area_type"
     with pytest.raises(TypeError, match=re.escape(msg)):
-        weighting.weighting_landsea_fraction(CUBE_3, "invalid")  # type: ignore[arg-type]
+        weighting.weighting_landsea_fraction(CUBE_3, "invalid")
 
 
 @pytest.mark.parametrize(

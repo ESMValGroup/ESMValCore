@@ -213,7 +213,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
             cube = self._fix_time(cube, cubes)
 
         # Fix depth
-        self._fix_depth(cube)
+        self._fix_depth_coordinate(cube)
 
         # Fix latitude
         if self.vardef.has_coord_with_standard_name("latitude"):
@@ -431,7 +431,7 @@ class AllVars(Oras5Fix, AllVars_ICON):
             for mesh_coord in mesh.to_MeshCoords("face"):
                 cube.add_aux_coord(mesh_coord, mesh_idx)
 
-    def _fix_depth(self, cube):
+    def _fix_depth_coordinate(self, cube):
         """Fix depth coordinate."""
         for i in range(len(cube.coords())):
             if "levels" in cube.coords()[i].name():

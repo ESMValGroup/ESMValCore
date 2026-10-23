@@ -404,7 +404,7 @@ def _get_datasets_for_variable(
             for dataset in _dataset_from_files(template1):
                 dataset["variable_group"] = variable_group
                 dataset["diagnostic"] = diagnostic_name
-                dataset["recipe_dataset_index"] = idx  # type: ignore
+                dataset["recipe_dataset_index"] = idx
                 logger.debug("Found %s", dataset.summary(shorten=True))
                 datasets.append(dataset)
                 idx += 1

@@ -16,6 +16,7 @@ import iris
 import numpy as np
 import shapely
 import shapely.ops
+import shapely.vectorized
 from dask import array as da
 from iris.coords import AuxCoord
 from iris.cube import CubeList
@@ -46,6 +47,8 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
+
+type ExtractShapeMethod = Literal["contains", "representative"]
 
 SHAPE_ID_KEYS: tuple[str, ...] = ("name", "NAME", "Name", "id", "ID")
 
@@ -597,7 +600,7 @@ def _get_masks_from_geometries(
     geometries: dict[str, dict],
     lon: np.ndarray,
     lat: np.ndarray,
-    method: str = "contains",
+    method: ExtractShapeMethod = "contains",
     decomposed: bool = False,
 ) -> dict[str, np.ndarray]:
     """Get cube masks from requested regions."""
@@ -643,7 +646,7 @@ def _get_bounds(
 def _get_single_mask(
     lon: np.ndarray,
     lat: np.ndarray,
-    method: str,
+    method: ExtractShapeMethod,
     geometry: dict,
 ) -> np.ndarray:
     """Get single mask from one region."""
@@ -750,7 +753,7 @@ def _update_shapefile_path(
 def extract_shape(
     cube: Cube,
     shapefile: str | Path,
-    method: str = "contains",
+    method: ExtractShapeMethod = "contains",
     crop: bool = True,
     decomposed: bool = False,
     ids: list | dict | None = None,
