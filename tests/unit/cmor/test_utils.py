@@ -10,6 +10,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube
 
 from esmvalcore.cmor._utils import (
+    _count_requested_values,
     _get_alternative_generic_lev_coord,
     _get_single_cube,
 )
@@ -150,6 +151,17 @@ def test_get_alternative_generic_lev_coord_units(session: Session) -> None:
         session,
     )
     assert cmor_coord.name == "plev7h"
+
+
+def test_count_requested_values_incompatible_units(session: Session) -> None:
+    """Test that coordinates with incompatible units count as no match."""
+    cmor_coord = get_tables(session, "CMIP6").coords["plev19"]
+    cube = _get_level_cube(
+        [float(v) for v in cmor_coord.requested],
+        var_name="plev",
+        units="m",
+    )
+    assert _count_requested_values(cmor_coord, cube.coord("air_pressure")) == 0
 
 
 def test_get_alternative_generic_lev_coord_closest_length(

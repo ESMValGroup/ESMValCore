@@ -58,6 +58,25 @@ def test_generic_fix_no_generic_lev_coords(generic_fix, monkeypatch):
     assert cube == sentinel.cube
 
 
+def test_generic_fix_alternative_generic_level_no_project(
+    generic_fix,
+    monkeypatch,
+    mocker,
+):
+    """Test ``GenericFix``."""
+    monkeypatch.setattr(generic_fix.vardef, "project", "")
+    get_alternative = mocker.patch(
+        "esmvalcore.cmor._fixes.fix._get_alternative_generic_lev_coord",
+        autospec=True,
+    )
+    cube = Cube(0)
+
+    fixed_cube = generic_fix._fix_alternative_generic_level_coords(cube)
+
+    assert fixed_cube is cube
+    get_alternative.assert_not_called()
+
+
 def test_requested_levels_2d_coord(generic_fix, mocker):
     """Test ``GenericFix``."""
     cube_coord = AuxCoord([[0]], standard_name="latitude", units="rad")
