@@ -23,10 +23,14 @@ def test_create_dataset_map(monkeypatch, mocker):
         "model": {"ACCESS1.0": 10, "BNU-ESM": 20},
     }
     ids = [
-        "cmip5.output1.CSIRO-BOM.ACCESS1-0.1pctCO2.3hr.atmos.3hr.r1i1p1.v1"
-        "|aims3.llnl.gov",
-        "cmip5.output1.BNU.BNU-ESM.rcp45.mon.atmos.Amon.r1i1p1.v20120510"
-        "|aims3.llnl.gov",
+        (
+            "cmip5.output1.CSIRO-BOM.ACCESS1-0.1pctCO2.3hr.atmos.3hr.r1i1p1.v1"
+            "|aims3.llnl.gov"
+        ),
+        (
+            "cmip5.output1.BNU.BNU-ESM.rcp45.mon.atmos.Amon.r1i1p1.v20120510"
+            "|aims3.llnl.gov"
+        ),
     ]
     results = [
         pyesgf.search.results.DatasetResult(

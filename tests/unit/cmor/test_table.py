@@ -10,7 +10,8 @@ class TestVariableInfo(unittest.TestCase):
 
     def setUp(self):
         """Prepare for testing."""
-        self.info = VariableInfo("table_type", "var")
+        self.info = VariableInfo("table_type")
+        self.info.short_name = "var"
         self.value = "value"
         self.coords = {
             "dim0": CoordinateInfo("dim0"),

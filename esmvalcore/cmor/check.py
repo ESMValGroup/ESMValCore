@@ -238,8 +238,10 @@ class CMORCheck:
         if self.has_debug_messages():
             msg = "\n".join(
                 [
-                    f"There were metadata changes in variable "
-                    f"{self._cube.var_name}:",
+                    (
+                        f"There were metadata changes in variable "
+                        f"{self._cube.var_name}:"
+                    ),
                     " " + "\n ".join(self._debug_messages),
                     "loaded from file "
                     + self._cube.attributes.get("source_file", ""),
@@ -948,7 +950,7 @@ def _get_cmor_checker(
     short_name: str,
     *,
     branding_suffix: str | None = None,
-    frequency: None | str = None,
+    frequency: str | None = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Callable[[Cube], CMORCheck]:
