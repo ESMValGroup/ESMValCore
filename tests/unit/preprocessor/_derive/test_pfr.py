@@ -192,7 +192,7 @@ def test_pfr_calculation_major_lon_differences():
     x_coord.points = org_x_pts
 
 
-def test_pfr_required():
+def test_pfr_required_cmip6():
     """Test function ``required``."""
     derived_var = pfr.DerivedVariable()
     output = derived_var.required(None)
@@ -200,4 +200,28 @@ def test_pfr_required():
         {"short_name": "tsl", "mip": "Lmon"},
         {"short_name": "sftlf", "mip": "fx"},
         {"short_name": "mrsos", "mip": "Lmon"},
+    ]
+
+
+def test_pfr_required_cmip7():
+    """Test function ``required``."""
+    derived_var = pfr.DerivedVariable()
+    output = derived_var.required("CMIP7")
+    assert output == [
+        {
+            "short_name": "tsl",
+            "mip": "land",
+            "branding_suffix": "tavg-sl-hxy-lnd",
+        },
+        {
+            "short_name": "sftlf",
+            "mip": "atmos",
+            "branding_suffix": "ti-u-hxy-u",
+            "frequency": "fx",
+        },
+        {
+            "short_name": "mrsol",
+            "mip": "land",
+            "branding_suffix": "tavg-d10cm-hxy-lnd",
+        },
     ]

@@ -24,8 +24,27 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `pfr` (permafrost extent)."""
 
     @staticmethod
-    def required(project):  # noqa: ARG004
+    def required(project):
         """Declare the variables needed for derivation."""
+        if project == "CMIP7":
+            return [
+                {
+                    "short_name": "tsl",
+                    "branding_suffix": "tavg-sl-hxy-lnd",
+                    "mip": "land",
+                },
+                {
+                    "short_name": "sftlf",
+                    "branding_suffix": "ti-u-hxy-u",
+                    "frequency": "fx",
+                    "mip": "atmos",
+                },
+                {
+                    "short_name": "mrsol",
+                    "branding_suffix": "tavg-d10cm-hxy-lnd",
+                    "mip": "land",
+                },
+            ]
         return [
             {"short_name": "tsl", "mip": "Lmon"},
             {"short_name": "sftlf", "mip": "fx"},
@@ -53,7 +72,18 @@ class DerivedVariable(DerivedVariableBase):
         # use soil moisture as proxy for ice / ice-free grid cells
         #   1) annual mean of fraction of grid cell covered with ice (%)
         #      assumption: top soil moisture = 0 --> ice covered
-        mrsos = cubes.extract_cube(NameConstraint(var_name="mrsos"))
+        try:  # CMIP5, CMIP6
+            mrsos = cubes.extract_cube(NameConstraint(var_name="mrsos"))
+        except iris.exceptions.ConstraintMismatchError:
+            try:  # CMIP7
+                mrsos = cubes.extract_cube(NameConstraint(var_name="mrsol"))
+            except iris.exceptions.ConstraintMismatchError as exc:
+                msg = (
+                    "Derivation of permafrost extent failed due to missing variables "
+                    "mrsos (CMIP5, CMIP6) or mrsol (CMIP7)."
+                )
+                raise ValueError(msg) from exc
+
         iris.coord_categorisation.add_year(mrsos, "time")
         mrsos_yr = mrsos.aggregated_by(["year"], iris.analysis.MEAN)
         mrsos_yr.data = da.where(mrsos_yr.core_data() < 0.001, 0.0, 1.0)
