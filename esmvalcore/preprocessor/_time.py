@@ -6,7 +6,7 @@ constructing seasonal and area averages.
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import warnings
 from functools import partial
@@ -162,7 +162,7 @@ def _parse_start_date(date):
         start_date = isodate.parse_datetime(date)
     else:
         start_date = isodate.parse_date(date)
-        start_date = datetime.datetime.combine(start_date, datetime.time.min)
+        start_date = dt.datetime.combine(start_date, dt.time.min)
 
     return start_date
 
@@ -177,20 +177,20 @@ def _parse_end_date(date):
     if date.startswith("P"):
         end_date = isodate.parse_duration(date)
     elif len(date) == 4:
-        end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
+        end_date = dt.datetime(int(date) + 1, 1, 1, 0, 0, 0)
     elif len(date) == 6:
         month, year = get_next_month(int(date[4:]), int(date[0:4]))
-        end_date = datetime.datetime(year, month, 1, 0, 0, 0)
+        end_date = dt.datetime(year, month, 1, 0, 0, 0)
     else:
         if "T" in date:
             end_date = isodate.parse_datetime(date)
         else:
             end_date = isodate.parse_date(date)
-            end_date = datetime.datetime.combine(
+            end_date = dt.datetime.combine(
                 end_date,
-                datetime.time.min,
+                dt.time.min,
             )
-        end_date += datetime.timedelta(seconds=1)
+        end_date += dt.timedelta(seconds=1)
     return end_date
 
 
@@ -315,15 +315,15 @@ def clip_timerange(cube: Cube, timerange: str) -> Cube:
 
     if isinstance(start_date, isodate.duration.Duration):
         start_date = _duration_to_date(start_date, end_date, sign=-1)
-    elif isinstance(start_date, datetime.timedelta):
+    elif isinstance(start_date, dt.timedelta):
         start_date = _duration_to_date(start_date, end_date, sign=-1)
-        start_date -= datetime.timedelta(seconds=1)
+        start_date -= dt.timedelta(seconds=1)
 
     if isinstance(end_date, isodate.duration.Duration):
         end_date = _duration_to_date(end_date, start_date, sign=1)
-    elif isinstance(end_date, datetime.timedelta):
+    elif isinstance(end_date, dt.timedelta):
         end_date = _duration_to_date(end_date, start_date, sign=1)
-        end_date += datetime.timedelta(seconds=1)
+        end_date += dt.timedelta(seconds=1)
 
     t_1 = PartialDateTime(
         year=start_date.year,
@@ -1261,22 +1261,18 @@ def regrid_time(
     return cube
 
 
-def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
+def _get_new_dates(frequency: str, coord: Coord) -> list[dt.datetime]:
     """Get transformed dates."""
     dates = coord.units.num2date(coord.points)
 
     if "dec" in frequency:
-        dates = [datetime.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
+        dates = [dt.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
     elif "yr" in frequency:
-        dates = [datetime.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
+        dates = [dt.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
     elif "mon" in frequency:
-        dates = [
-            datetime.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates
-        ]
+        dates = [dt.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates]
     elif "day" in frequency:
-        dates = [
-            datetime.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates
-        ]
+        dates = [dt.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates]
     elif "hr" in frequency:
         (n_hours_str, _, _) = frequency.partition("hr")
         n_hours = 1 if not n_hours_str else int(n_hours_str)
@@ -1286,9 +1282,9 @@ def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
                 f"'{frequency}'"
             )
             raise NotImplementedError(msg)
-        half_interval = datetime.timedelta(hours=n_hours / 2.0)
+        half_interval = dt.timedelta(hours=n_hours / 2.0)
         dates = [
-            datetime.datetime(
+            dt.datetime(
                 d.year,
                 d.month,
                 d.day,
