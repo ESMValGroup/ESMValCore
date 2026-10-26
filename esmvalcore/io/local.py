@@ -383,7 +383,7 @@ def _replace_tags(
     paths: str | list[str],
     variable: Facets,
 ) -> list[Path]:
-    """Replace tags in the config-developer's file with actual values."""
+    """Replace tags in a path template with actual values."""
     pathset: Iterable[str]
     if isinstance(paths, str):
         pathset = {paths.strip("/")}
