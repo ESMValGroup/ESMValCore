@@ -528,7 +528,7 @@ def _check_literal(
     *,
     step: str,
     option: str,
-    allowed_values: tuple[None | str, ...],
+    allowed_values: tuple[str | None, ...],
 ) -> None:
     """Check that an option for a preprocessor has a valid value."""
     if step not in settings:
