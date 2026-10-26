@@ -169,6 +169,7 @@ ignore = [
     "TD003",    # Missing issue link on the line following this TODO
     "TRY400",   # Uses of `logging.error` instead of `logging.exception` when logging an exception
     # Really ignore:
+    "CPY001",   # Copyright notices are not required in every file.
     "D105",     # Disable missing docstring in magic method as these are well defined.
     "E501",     # Disable line-too-long as this is taken care of by the formatter.
     "FIX002",   # TODOs can be useful when something cannot be done immediately.
