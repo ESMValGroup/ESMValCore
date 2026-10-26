@@ -93,7 +93,6 @@ def read_recipe_file(filename: Path, session: Session) -> Recipe:
         raw_recipe = yaml.load(recipe_text, Loader=yaml.CSafeLoader)
     except (yaml.YAMLError, AttributeError):
         raw_recipe = yaml.safe_load(recipe_text)
-    check.recipe_with_schema(raw_recipe, path=filename)
 
     return Recipe(raw_recipe, session, recipe_file=filename)
 
@@ -525,7 +524,6 @@ def _update_multiproduct(
     settings = next(iter(multiproducts)).settings[step]
 
     if step == "ensemble_statistics":
-        check.ensemble_statistics_preproc(settings)
         grouping: tuple[str, ...] | None = (
             "project",
             "dataset",
@@ -533,7 +531,6 @@ def _update_multiproduct(
             "sub_experiment",
         )
     else:
-        check.multimodel_statistics_preproc(settings)
         grouping = settings.get("groupby", None)
 
     downstream_settings = _get_downstream_settings(step, order, multiproducts)
@@ -823,9 +820,6 @@ def _update_preproc_functions(
         check.check_for_temporal_preprocs(settings)
     check.statistics_preprocessors(settings)
     check.regridding_schemes(settings)
-    check.bias_type(settings)
-    check.metric_type(settings)
-    check.resample_hours(settings)
 
 
 def _get_preprocessor_task(
@@ -907,6 +901,7 @@ class Recipe:
         recipe_file: Path,
     ) -> None:
         """Parse a recipe file into an object."""
+        check.recipe_with_schema(raw_recipe, path=recipe_file)
         validate_dask_config(session["dask"])
 
         # Clear the global variable containing the set of files to download
@@ -982,7 +977,8 @@ class Recipe:
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
 
-        TAGS.replace_tags_in_dict(doc)
+        # Undefined tags have been reported when checking the recipe.
+        TAGS.replace_tags_in_dict(doc, warn=False)
 
         return get_recipe_provenance(doc, self._filename)
 

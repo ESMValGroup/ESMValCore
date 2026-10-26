@@ -470,6 +470,27 @@ class Recipes:
             ),
         )
 
+    @staticmethod
+    def schema(output: str = "recipe_schema.json") -> None:
+        """Write a JSON Schema for recipes to a file.
+
+        Use this command to get a JSON Schema that describes recipes and the
+        preprocessor functions available in your installation. Editors can
+        use it to validate recipes and to offer completion and documentation
+        while writing a recipe.
+
+        Parameters
+        ----------
+        output: str
+            Path to the file where the schema will be written.
+        """
+        from .config._logging import configure_logging
+        from .recipe import write_recipe_schema
+
+        configure_logging(console_log_level="info")
+        write_recipe_schema(output)
+        logger.info("Recipe schema written to %s", output)
+
 
 class ESMValTool:
     # This is the `esmvaltool` command. The line below shows the documentation

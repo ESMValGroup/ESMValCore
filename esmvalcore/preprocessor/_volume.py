@@ -350,8 +350,8 @@ def axis_statistics(
     coordinate bounds by default. For `sum`, the units of the resulting cube
     will be multiplied by corresponding coordinate units.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube.
     axis:
@@ -441,8 +441,8 @@ def depth_integration(cube: Cube) -> Cube:
     thickness. The units of the resulting cube are multiplied by the
     z-coordinate units.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     cube:
         Input cube.
 

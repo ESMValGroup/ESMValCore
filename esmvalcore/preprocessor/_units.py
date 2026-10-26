@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def convert_units(cube: Cube, units: str | Unit) -> Cube:
+def convert_units(cube: Cube, units: str | float | Unit) -> Cube:
     """Convert the units of a cube to new ones (in-place).
 
     Note

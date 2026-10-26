@@ -2739,7 +2739,7 @@ Example:
       preproc_bias:
         bias:
           bias_type: relative
-          denominator_mask_threshold: 1e-8
+          denominator_mask_threshold: 1.0e-8
           keep_reference_dataset: true
           exclude: [CanESM2]
 

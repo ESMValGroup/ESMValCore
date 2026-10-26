@@ -60,13 +60,18 @@ the following:
 
 .. note::
 
-   Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   Note that all authors, maintainers, and projects mentioned in the
+   documentation section of the recipe should be included in the (locally
+   installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_
+   and that each reference should have a bibtex file in the directory
+   `esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
-   Doe would be: ``doe_john``. This information can be omitted by new users
-   whose name is not yet included in ``config-references.yml``.
+   Doe would be: ``doe_john``.
+   New users can run a recipe before their name is included, ESMValCore then
+   logs a warning and the provenance information will be incomplete.
+   Other keys are not allowed in the documentation section.
 
 .. _Datasets:
 
@@ -523,7 +528,9 @@ section will include:
 
 - the :ref:`variable(s) <cmor_tables>` to preprocess, including the preprocessor to be applied to each variable;
 - the diagnostic script(s) to be run;
-- a description of the diagnostic and lists of themes and realms that it applies to;
+- a description of the diagnostic and lists of themes and realms that it applies to,
+  as defined in :ref:`config-ref`. These are passed on to the diagnostic
+  scripts, which can use them to record provenance;
 - an optional ``additional_datasets`` section.
 - an optional ``title`` and ``description``, used to generate the title and description
   in the ``index.html`` output file.
@@ -801,3 +808,64 @@ for use with other diagnostics. Here is an example:
 
 In this example the hook ``&cycle_settings`` can be used to pass the ``cycle:``
 parameters to ``grading:`` via the shortcut ``<<: *cycle_settings``.
+
+.. _recipe_editor_support:
+
+Editor support
+==============
+
+ESMValCore provides a `JSON Schema <https://json-schema.org>`__ that describes
+recipes, including all preprocessor functions and their arguments.
+ESMValCore uses it to check a recipe for mistakes before running it.
+Editors that support JSON Schema for YAML files can use it too, to check a
+recipe and to offer completion and documentation while you write it.
+
+The schema for each version of ESMValCore is published with its documentation,
+for example the schema for the latest version is available at
+https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json.
+To write the schema that matches the version of ESMValCore you have installed
+to the file ``recipe_schema.json`` in the current working directory, run
+
+.. code-block:: bash
+
+    esmvaltool recipes schema
+
+If ESMValTool is installed, this schema also checks that the authors,
+maintainers, projects, realms, and themes in the recipe are defined in
+ESMValTool's ``config-references.yml`` file and that there is a bibtex file
+for each reference.
+These problems are shown as warnings, because they only make the provenance
+information less complete.
+ESMValCore runs the same checks before running a recipe and logs a warning for
+each of them.
+
+In `Visual Studio Code <https://code.visualstudio.com>`__, install the
+`YAML extension <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`__
+and add the following to your ``settings.json`` to use the schema for all
+files whose name starts with ``recipe_``:
+
+.. code-block:: json
+
+    {
+        "yaml.schemas": {
+            "https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json": "recipe_*.yml"
+        }
+    }
+
+Replace the URL by the path to the file written by
+``esmvaltool recipes schema`` to use the schema that matches your installation.
+Alternatively, add a comment to the top of a recipe to use the schema for that
+recipe only:
+
+.. code-block:: yaml
+
+    # yaml-language-server: $schema=https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe_schema.json
+
+The same comment works in other editors that use the
+`YAML language server <https://github.com/redhat-developer/yaml-language-server>`__,
+for example Neovim and Emacs.
+
+The schema checks the structure of a recipe and the arguments of the
+preprocessor functions.
+It does not check facet values, for example whether a dataset or variable
+exists, or the settings of diagnostic scripts.

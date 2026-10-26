@@ -2,30 +2,27 @@
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import logging
 import os
 import subprocess
 from functools import partial
+from pathlib import Path
 from pprint import pformat
 from shutil import which
 from typing import TYPE_CHECKING, Any
 
 import isodate
-import yamale
 
 import esmvalcore.preprocessor
+from esmvalcore._recipe.json_schema import add_positions, validate_recipe
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
-from esmvalcore.preprocessor._regrid import (
-    HORIZONTAL_SCHEMES_IRREGULAR,
-    HORIZONTAL_SCHEMES_REGULAR,
-    HORIZONTAL_SCHEMES_UNSTRUCTURED,
-    _load_generic_scheme,
-)
+from esmvalcore.preprocessor._regrid import _load_generic_scheme
 from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
@@ -33,7 +30,6 @@ from esmvalcore.preprocessor._supplementary_vars import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-    from pathlib import Path
 
     from esmvalcore._task import TaskSet
     from esmvalcore.dataset import Dataset
@@ -107,10 +103,22 @@ def ncl_version() -> None:
 
 def recipe_with_schema(recipe: dict, path: Path) -> None:
     """Check if the recipe content matches schema."""
-    schema_file = os.path.join(os.path.dirname(__file__), "recipe_schema.yml")
-    logger.debug("Checking recipe against schema %s", schema_file)
-    schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, [(recipe, path)], strict=False)
+    logger.debug("Checking recipe %s against schema", path)
+    issues = validate_recipe(recipe)
+    if issues:
+        # The text is used to find the line numbers of the issues.
+        with contextlib.suppress(OSError):
+            text = Path(path).read_text(encoding="utf-8")
+            issues = add_positions(issues, text)
+        for issue in issues:
+            if issue.severity == "warning":
+                logger.warning("Recipe %s: %s", path, issue)
+        errors = [issue for issue in issues if issue.severity == "error"]
+        if errors:
+            msg = f"Recipe {path} is invalid:\n" + "\n".join(
+                f"- {issue}" for issue in errors
+            )
+            raise RecipeError(msg)
 
 
 def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:
@@ -119,9 +127,6 @@ def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:
         msg = "The given recipe does not have any diagnostic."
         raise RecipeError(msg)
     for name, diagnostic in diags.items():
-        if "scripts" not in diagnostic:
-            msg = f"Missing scripts section in diagnostic '{name}'."
-            raise RecipeError(msg)
         variable_names = tuple(diagnostic.get("variables", {}))
         scripts = diagnostic.get("scripts")
         if scripts is None:
@@ -342,91 +347,6 @@ def extract_shape(settings: dict[str, Any]) -> None:
         )
         raise RecipeError(msg)
 
-    valid: dict[str, set[Any]] = {
-        "method": {"contains", "representative"},
-        "crop": {True, False},
-        "decomposed": {True, False},
-    }
-    for key, valid_values in valid.items():
-        value = settings.get(key)
-        if not (value is None or value in valid_values):
-            msg = (
-                f"In preprocessor function `extract_shape`: Invalid value "
-                f"'{value}' for argument '{key}', choose from "
-                "{}".format(", ".join(f"'{k}'".lower() for k in valid_values))
-            )
-            raise RecipeError(msg)
-
-
-def _verify_span_value(span: str) -> None:
-    """Raise error if span argument cannot be verified."""
-    valid_names = ("overlap", "full")
-    if span not in valid_names:
-        msg = (
-            "Invalid value encountered for `span` in preprocessor "
-            f"`multi_model_statistics`. Valid values are {valid_names}."
-            f"Got {span}."
-        )
-        raise RecipeError(msg)
-
-
-def _verify_groupby(groupby: list[str]) -> None:
-    """Raise error if groupby arguments cannot be verified."""
-    if not isinstance(groupby, list):
-        msg = (
-            "Invalid value encountered for `groupby` in preprocessor "
-            "`multi_model_statistics`.`groupby` must be defined as a "
-            f"list. Got {groupby}."
-        )
-        raise RecipeError(msg)
-
-
-def _verify_keep_input_datasets(keep_input_datasets: bool) -> None:
-    if not isinstance(keep_input_datasets, bool):
-        msg = (
-            f"Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean (true or false). "
-            f"Got {keep_input_datasets}."
-        )
-        raise RecipeError(msg)
-
-
-def _verify_ignore_scalar_coords(ignore_scalar_coords: bool) -> None:
-    if not isinstance(ignore_scalar_coords, bool):
-        msg = (
-            f"Invalid value encountered for `ignore_scalar_coords`."
-            f"Must be defined as a boolean (true or false). Got "
-            f"{ignore_scalar_coords}."
-        )
-        raise RecipeError(msg)
-
-
-def multimodel_statistics_preproc(settings: dict[str, Any]) -> None:
-    """Check that the multi-model settings are valid."""
-    span = settings.get("span")  # optional, default: overlap
-    if span:
-        _verify_span_value(span)
-
-    groupby = settings.get("groupby")  # optional, default: None
-    if groupby:
-        _verify_groupby(groupby)
-
-    keep_input_datasets = settings.get("keep_input_datasets", True)
-    _verify_keep_input_datasets(keep_input_datasets)
-
-    ignore_scalar_coords = settings.get("ignore_scalar_coords", False)
-    _verify_ignore_scalar_coords(ignore_scalar_coords)
-
-
-def ensemble_statistics_preproc(settings: dict[str, Any]) -> None:
-    """Check that the ensemble settings are valid."""
-    span = settings.get("span", "overlap")  # optional, default: overlap
-    if span:
-        _verify_span_value(span)
-
-    ignore_scalar_coords = settings.get("ignore_scalar_coords", False)
-    _verify_ignore_scalar_coords(ignore_scalar_coords)
-
 
 def _check_delimiter(timerange: Sequence[str]) -> None:
     if len(timerange) != 2:
@@ -521,56 +441,6 @@ def differing_timeranges(
             "Set `timerange` to a common value."
         )
         raise ValueError(msg)
-
-
-def _check_literal(
-    settings: dict,
-    *,
-    step: str,
-    option: str,
-    allowed_values: tuple[str | None, ...],
-) -> None:
-    """Check that an option for a preprocessor has a valid value."""
-    if step not in settings:
-        return
-    user_value = settings[step].get(option, allowed_values[0])
-    if user_value not in allowed_values:
-        msg = (
-            f"Expected one of {allowed_values} for option `{option}` of "
-            f"preprocessor `{step}`, got '{user_value}'"
-        )
-        raise RecipeError(msg)
-
-
-bias_type = partial(
-    _check_literal,
-    step="bias",
-    option="bias_type",
-    allowed_values=("absolute", "relative"),
-)
-
-
-metric_type = partial(
-    _check_literal,
-    step="distance_metric",
-    option="metric",
-    allowed_values=(
-        "rmse",
-        "weighted_rmse",
-        "pearsonr",
-        "weighted_pearsonr",
-        "emd",
-        "weighted_emd",
-    ),
-)
-
-
-resample_hours = partial(
-    _check_literal,
-    step="resample_hours",
-    option="interpolate",
-    allowed_values=(None, "nearest", "linear"),
-)
 
 
 def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
@@ -694,33 +564,13 @@ def _check_mm_stat(step: str, step_settings: dict[str, Any]) -> None:
 
 
 def regridding_schemes(settings: dict[str, Any]) -> None:
-    """Check :obj:`str` regridding schemes."""
+    """Check generic regridding schemes."""
     if "regrid" not in settings:
         return
 
     # Note: If 'scheme' is missing, this will be detected in
     # PreprocessorFile.check() later
     scheme = settings["regrid"].get("scheme")
-
-    # Check built-in regridding schemes (given as str)
-    if isinstance(scheme, str):
-        scheme = settings["regrid"]["scheme"]
-
-        allowed_regridding_schemes = list(
-            set(
-                list(HORIZONTAL_SCHEMES_IRREGULAR)
-                + list(HORIZONTAL_SCHEMES_REGULAR)
-                + list(HORIZONTAL_SCHEMES_UNSTRUCTURED),
-            ),
-        )
-        if scheme not in allowed_regridding_schemes:
-            msg = (
-                f"Got invalid built-in regridding scheme '{scheme}', expected "
-                f"one of {allowed_regridding_schemes} or a generic scheme "
-                f"(see https://docs.esmvaltool.org/projects/ESMValCore/en/"
-                f"latest/recipe/preprocessor.html#generic-regridding-schemes)."
-            )
-            raise RecipeError(msg)
 
     # Check generic regridding schemes (given as dict)
     if isinstance(scheme, dict):

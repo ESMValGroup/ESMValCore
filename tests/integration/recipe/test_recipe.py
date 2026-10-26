@@ -228,10 +228,9 @@ def test_recipe_missing_scripts(tmp_path, session):
                 ensemble: r1i1p1
                 timerange: 1999/2002
         """)
-    exc_message = "Missing scripts section in diagnostic 'diagnostic_name'."
-    with pytest.raises(RecipeError) as exc:
+    msg = "diagnostics > diagnostic_name: missing required key 'scripts'."
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
 
 
 def test_recipe_duplicate_var_script_name(tmp_path, session):
@@ -282,13 +281,12 @@ def test_recipe_no_script(tmp_path, session):
               script_name:
                 argument: 1
         """)
-    exc_message = (
-        "No script defined for script 'script_name' in "
-        "diagnostic 'diagnostic_name'."
+    msg = (
+        "diagnostics > diagnostic_name > scripts > script_name: missing "
+        "required key 'script'."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == exc_message
 
 
 def test_recipe_no_datasets(tmp_path, session):
@@ -1877,15 +1875,10 @@ def test_extract_shape(tmp_path, patched_datafinder, session):
     assert product.settings["extract_shape"]["shapefile"] == shapefile
 
 
-@pytest.mark.parametrize(
-    "invalid_arg",
-    ["shapefile", "method", "crop", "decomposed"],
-)
 def test_extract_shape_raises(
     tmp_path,
     patched_datafinder,
     session,
-    invalid_arg,
 ):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -1920,7 +1913,7 @@ def test_extract_shape_raises(
 
     # Add invalid argument
     recipe = yaml.safe_load(content)
-    recipe["preprocessors"]["test"]["extract_shape"][invalid_arg] = "x"
+    recipe["preprocessors"]["test"]["extract_shape"]["shapefile"] = "x"
     content = yaml.safe_dump(recipe)
 
     with pytest.raises(RecipeError) as exc:
@@ -1928,7 +1921,38 @@ def test_extract_shape_raises(
 
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert "extract_shape" in exc.value.failed_tasks[0].message
-    assert invalid_arg in exc.value.failed_tasks[0].message
+    assert "shapefile" in exc.value.failed_tasks[0].message
+
+
+@pytest.mark.parametrize(
+    ("invalid_arg", "expected"),
+    [
+        ("crop", "expected true or false, got 'x'."),
+        ("decomposed", "expected true or false, got 'x'."),
+        (
+            "method",
+            "invalid value 'x', choose from 'contains', 'representative'.",
+        ),
+    ],
+)
+def test_extract_shape_invalid_value(tmp_path, session, invalid_arg, expected):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            extract_shape:
+              shapefile: test.shp
+              {invalid_arg}: x
+
+        diagnostics:
+          test:
+            variables:
+              ta:
+                preprocessor: test
+            scripts: null
+        """)
+    msg = f"preprocessors > test > extract_shape > {invalid_arg}: {expected}"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        get_recipe(tmp_path, content, session)
 
 
 def _test_output_product_consistency(products, preprocessor, statistics):
@@ -2883,7 +2907,8 @@ def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
                     ensemble: r1i1p1
             scripts: null
         """)
-    with pytest.raises(ValueError):
+    msg = f"preprocessors > test > {preproc} > invalid_argument: unknown argument."
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
 
 
@@ -2912,7 +2937,8 @@ def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
                     ensemble: r1i1p1
             scripts: null
         """)
-    with pytest.raises(ValueError):
+    msg = f"preprocessors > test > {preproc}: missing required argument"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
 
 
@@ -3048,8 +3074,8 @@ def test_statistics_missing_operator_no_default_fail(
                     ensemble: r1i1p1
             scripts: null
         """)
-    msg = "Missing required argument"
-    with pytest.raises(ValueError, match=msg):
+    msg = f"preprocessors > test > {preproc}: missing required argument"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
 
 
@@ -3150,7 +3176,7 @@ def test_statistics_missing_operator_with_default(
     [
         ("annual_statistics", {"invalid_value": 1}),
         ("area_statistics", {"percent": 10, "invalid_value": 1}),
-        ("axis_statistics", {"percent": 10, "weights": False}),
+        ("axis_statistics", {"axis": "x", "percent": 10, "weights": False}),
         ("climate_statistics", {"invalid_value": 1}),
         ("daily_statistics", {"percent": 10, "invalid_value": 1}),
         ("decadal_statistics", {"percent": 10, "weights": False}),
@@ -3160,7 +3186,15 @@ def test_statistics_missing_operator_with_default(
         ("seasonal_statistics", {"invalid_value": 1}),
         ("volume_statistics", {"percent": 10, "weights": False}),
         ("zonal_statistics", {"invalid_value": 1}),
-        ("rolling_window_statistics", {"percent": 10, "invalid_value": 1}),
+        (
+            "rolling_window_statistics",
+            {
+                "coordinate": "time",
+                "window_length": 2,
+                "percent": 10,
+                "invalid_value": 1,
+            },
+        ),
     ],
 )
 def test_statistics_invalid_kwargs(
@@ -3250,8 +3284,11 @@ def test_invalid_stat_preproc(tmp_path, patched_datafinder, session):
                     ensemble: r1i1p1
             scripts: null
         """)
-    msg = "Unknown preprocessor function"
-    with pytest.raises(ValueError, match=msg):
+    msg = (
+        "preprocessors > test > invalid_statistics: unknown preprocessor "
+        "function."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
 
 
@@ -3392,13 +3429,11 @@ def test_invalid_bias_type(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of ('absolute', 'relative') for option `bias_type` of "
-        "preprocessor `bias`, got 'INVALID'"
+        "preprocessors > test_bias > bias > bias_type: invalid value "
+        "'INVALID', choose from 'absolute', 'relative'."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
 
 
 def test_invalid_builtin_regridding_scheme(
@@ -3424,11 +3459,12 @@ def test_invalid_builtin_regridding_scheme(
                      ensemble: r1i1p1}
             scripts: null
         """)
-    msg = "Got invalid built-in regridding scheme 'INVALID', expected one of "
-    with pytest.raises(RecipeError) as rec_err_exp:
+    msg = (
+        "preprocessors > test > regrid > scheme: invalid value 'INVALID', "
+        "choose from 'area_weighted', 'linear', 'nearest', or a mapping."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
 
 
 def test_generic_regridding_scheme_no_ref(
@@ -3659,14 +3695,12 @@ def test_invalid_metric(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of ('rmse', 'weighted_rmse', 'pearsonr', "
-        "'weighted_pearsonr', 'emd', 'weighted_emd') for option `metric` of "
-        "preprocessor `distance_metric`, got 'INVALID'"
+        "preprocessors > test_distance_metric > distance_metric > metric: "
+        "invalid value 'INVALID', choose from 'rmse', 'weighted_rmse', "
+        "'pearsonr', 'weighted_pearsonr', 'emd', 'weighted_emd'."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
 
 
 def test_invalid_interpolate(tmp_path, patched_datafinder, session):
@@ -3695,13 +3729,12 @@ def test_invalid_interpolate(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of (None, 'nearest', 'linear') for option `interpolate` "
-        "of preprocessor `resample_hours`, got 'INVALID'"
+        "preprocessors > test_resample_hours > resample_hours > interpolate: "
+        "invalid value 'INVALID', choose from 'nearest', 'linear', or "
+        "nothing."
     )
-    with pytest.raises(RecipeError) as exc:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(exc.value) == INITIALIZATION_ERROR_MSG
-    assert exc.value.failed_tasks[0].message == msg
 
 
 def test_automatic_regrid_era5_nc(tmp_path, patched_datafinder, session):
@@ -3997,6 +4030,9 @@ def test_align_metadata_missing_arg(tmp_path, patched_datafinder, session):
 
             scripts: null
         """)
-    msg = "Missing required argument"
-    with pytest.raises(ValueError, match=msg):
+    msg = (
+        "preprocessors > test > align_metadata: missing required argument "
+        "'target_project'."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)

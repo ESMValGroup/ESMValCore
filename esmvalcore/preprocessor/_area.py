@@ -750,7 +750,7 @@ def _update_shapefile_path(
 def extract_shape(
     cube: Cube,
     shapefile: str | Path,
-    method: str = "contains",
+    method: Literal["contains", "representative"] = "contains",
     crop: bool = True,
     decomposed: bool = False,
     ids: list | dict | None = None,

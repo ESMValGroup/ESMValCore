@@ -14,7 +14,7 @@ import logging
 from datetime import datetime
 from functools import reduce
 from pprint import pformat
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import cf_units
 import iris
@@ -40,7 +40,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from esmvalcore.preprocessor import PreprocessorFile
 
@@ -691,10 +691,10 @@ def _get_stat_identifier(statistic: str | dict) -> str:
 
 def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
-    span: str,
+    span: Literal["overlap", "full"],
     statistics: list[str | dict],
     output_products: dict[str, PreprocessorFile] | None = None,
-    groupby: tuple | None = None,
+    groupby: Sequence[str] | None = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
@@ -842,7 +842,7 @@ def ensemble_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     statistics: list[str | dict],
     output_products: dict[str, PreprocessorFile] | None,
-    span: str = "overlap",
+    span: Literal["overlap", "full"] = "overlap",
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
     """Compute ensemble statistics.
