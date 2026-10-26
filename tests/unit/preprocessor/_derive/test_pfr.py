@@ -137,6 +137,20 @@ def test_pfr_calculation_1():
     np.testing.assert_array_equal(out_data, expected)
 
 
+def test_pfr_calculation_2():
+    """Test function ``calculate`` for permafrost case (CMIP7)."""
+    test_cubes = cubes()
+    mrsos_cube = test_cubes.extract_cube(NameConstraint(var_name="mrsos"))
+    # change var_name from "mrsos" (CMIP6) to "mrsol" (CMIP7)
+    mrsos_cube.var_name = "mrsol"
+    derived_var = pfr.DerivedVariable()
+    out_cube = derived_var.calculate(test_cubes)
+    assert out_cube.units == cf_units.Unit("%")
+    out_data = out_cube.data
+    expected = 100.0 * np.ones_like(out_cube.data)
+    np.testing.assert_array_equal(out_data, expected)
+
+
 def test_pfr_calculation_minor_latlon_differences():
     """Test function ``calculate``."""
     # small differences (i.e. < 1.0e-4) in lat/lon coordinates
