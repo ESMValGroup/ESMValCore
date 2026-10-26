@@ -142,6 +142,7 @@ def test_pfr_calculation_2():
     test_cubes = cubes()
     mrsos_cube = test_cubes.extract_cube(NameConstraint(var_name="mrsos"))
     # change var_name from "mrsos" (CMIP6) to "mrsol" (CMIP7)
+    org_var_name = mrsos_cube.var_name
     mrsos_cube.var_name = "mrsol"
     derived_var = pfr.DerivedVariable()
     out_cube = derived_var.calculate(test_cubes)
@@ -149,6 +150,20 @@ def test_pfr_calculation_2():
     out_data = out_cube.data
     expected = 100.0 * np.ones_like(out_cube.data)
     np.testing.assert_array_equal(out_data, expected)
+    mrsos_cube.var_name = org_var_name
+
+
+def test_pfr_calculation_3():
+    """Test function ``calculate`` for missing mrsos / mrsol variables."""
+    test_cubes = cubes()
+    derived_var = pfr.DerivedVariable()
+    # change var_name from "mrsos" to something not supported
+    mrsos_cube = test_cubes.extract_cube(NameConstraint(var_name="mrsos"))
+    org_var_name = mrsos_cube.var_name
+    mrsos_cube.var_name = "xxx"
+    with pytest.raises(ValueError):
+        derived_var.calculate(test_cubes)
+    mrsos_cube.var_name = org_var_name
 
 
 def test_pfr_calculation_minor_latlon_differences():
