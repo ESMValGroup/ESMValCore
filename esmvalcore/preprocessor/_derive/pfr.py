@@ -52,6 +52,88 @@ class DerivedVariable(DerivedVariableBase):
         ]
 
     @staticmethod
+    def _create_ice_free_land_mask(cubes):
+        """Create a mask of ice-free land fraction (%).
+
+        Use soil moisture as proxy for ice / ice-free grid cells.
+        """
+        # annual mean of fraction of grid cell covered with ice (%)
+        # assumption: top soil moisture = 0 --> ice covered
+
+        try:  # CMIP5, CMIP6
+            mrsos = cubes.extract_cube(
+                NameConstraint(var_name="mrsos"),
+            )
+        except iris.exceptions.ConstraintMismatchError:
+            try:  # CMIP7
+                mrsos = cubes.extract_cube(
+                    NameConstraint(var_name="mrsol"),
+                )
+            except iris.exceptions.ConstraintMismatchError as exc:
+                msg = (
+                    "Derivation of permafrost extent failed due to missing "
+                    "variable soil moisture (mrsos (CMIP5/CMIP6) or mrsol "
+                    "(CMIP7))."
+                )
+                raise ValueError(msg) from exc
+
+        iris.coord_categorisation.add_year(mrsos, "time")
+        mrsos = mrsos.aggregated_by(
+            ["year"],
+            iris.analysis.MEAN,
+        )
+        mrsos.data = da.where(
+            mrsos.core_data() < 0.001,
+            0.0,
+            1.0,
+        )
+
+        # get fraction of land cover of grid cell (%) (constant)
+
+        landfrac = cubes.extract_cube(NameConstraint(var_name="sftlf"))
+
+        # latitude/longitude coordinates of mrsos/mrsol and sftlf sometimes
+        # differ by a very small amount for some models (probably because
+        # of rounding errors) preventing Iris to do the math
+        # --> overwrite latitudes/longitudes in sftlf
+
+        # fix longitudes if maximum differences are smaller than 1.0e-4
+        x_coord1 = mrsos.coord(axis="X")
+        x_coord2 = landfrac.coord(axis="X")
+        if np.allclose(
+            x_coord1.core_points(),
+            x_coord2.core_points(),
+            atol=1.0e-4,
+        ):
+            x_coord2.points = x_coord1.points
+            x_coord2.bounds = x_coord1.bounds
+        else:
+            logger.error(
+                "Longitudes of mrsos/mrsol and stflf fields differ "
+                "more than 1e-4 degrees.",
+            )
+
+        # fix latitudes if maximum differences are smaller than 1.0e-4
+        y_coord1 = mrsos.coord(axis="Y")
+        y_coord2 = landfrac.coord(axis="Y")
+        if np.allclose(
+            y_coord1.core_points(),
+            y_coord2.core_points(),
+            atol=1.0e-4,
+        ):
+            y_coord2.points = y_coord1.points
+            y_coord2.bounds = y_coord1.bounds
+        else:
+            logger.error(
+                "Latitudes of mrsos/mrsol and stflf fields differ "
+                "more than 1e-4 degrees.",
+            )
+
+        # calculate mask with fraction of ice-free land (%)
+
+        return iris.analysis.maths.multiply(mrsos, landfrac)
+
+    @staticmethod
     def calculate(cubes):
         """Compute permafrost extent.
 
@@ -69,64 +151,7 @@ class DerivedVariable(DerivedVariableBase):
         3155-3174, doi: 10.5194/tc-14-3155-2020, 2020.
         """
         # create a mask of land fraction (%) over ice-free grid cells
-        # use soil moisture as proxy for ice / ice-free grid cells
-        #   1) annual mean of fraction of grid cell covered with ice (%)
-        #      assumption: top soil moisture = 0 --> ice covered
-        try:  # CMIP5, CMIP6
-            mrsos = cubes.extract_cube(NameConstraint(var_name="mrsos"))
-        except iris.exceptions.ConstraintMismatchError:
-            try:  # CMIP7
-                mrsos = cubes.extract_cube(NameConstraint(var_name="mrsol"))
-            except iris.exceptions.ConstraintMismatchError as exc:
-                msg = (
-                    "Derivation of permafrost extent failed due to missing variables "
-                    "mrsos (CMIP5, CMIP6) or mrsol (CMIP7)."
-                )
-                raise ValueError(msg) from exc
-
-        iris.coord_categorisation.add_year(mrsos, "time")
-        mrsos_yr = mrsos.aggregated_by(["year"], iris.analysis.MEAN)
-        mrsos_yr.data = da.where(mrsos_yr.core_data() < 0.001, 0.0, 1.0)
-        #   2) fraction of land cover of grid cell (%) (constant)
-        landfrac = cubes.extract_cube(NameConstraint(var_name="sftlf"))
-        #   3) create mask with fraction of ice-free land (%)
-
-        # latitude/longitude coordinates of mrsos and sftlf sometimes
-        # differ by a very small amount for some models (probably because
-        # of rounding errors) preventing iris to do the math
-        # --> overwrite latitudes/longitudes in sftlf
-
-        # fix longitudes if maximum differences are smaller than 1.0e-4
-        x_coord1 = mrsos.coord(axis="X")
-        x_coord2 = landfrac.coord(axis="X")
-        if np.allclose(
-            x_coord1.core_points(),
-            x_coord2.core_points(),
-            atol=1.0e-4,
-        ):
-            x_coord2.points = x_coord1.points
-            x_coord2.bounds = x_coord1.bounds
-        else:
-            logger.error(
-                "Longitudes of mrsos and stflf fields differ more than 1e-4 degrees.",
-            )
-
-        # fix latitudes if maximum differences are smaller than 1.0e-4
-        y_coord1 = mrsos.coord(axis="Y")
-        y_coord2 = landfrac.coord(axis="Y")
-        if np.allclose(
-            y_coord1.core_points(),
-            y_coord2.core_points(),
-            atol=1.0e-4,
-        ):
-            y_coord2.points = y_coord1.points
-            y_coord2.bounds = y_coord1.bounds
-        else:
-            logger.error(
-                "Latitudes of mrsos and stflf fields differ more than 1e-4 degrees.",
-            )
-
-        mask = iris.analysis.maths.multiply(mrsos_yr, landfrac)
+        mask = DerivedVariable._create_ice_free_land_mask(cubes)
 
         # extract soil temperature at depth=2m
         soiltemp = cubes.extract_cube(NameConstraint(var_name="tsl"))
