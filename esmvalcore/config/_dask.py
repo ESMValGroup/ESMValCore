@@ -109,7 +109,7 @@ class _XarrayOptionsPlugin(WorkerPlugin):
 
 
 @contextlib.contextmanager
-def get_distributed_client(session: Session) -> Generator[None | Client]:
+def get_distributed_client(session: Session) -> Generator[Client | None]:
     """Get a Dask distributed client."""
     dask_config = deepcopy(session["dask"])
     validate_dask_config(dask_config)
@@ -146,7 +146,7 @@ def get_distributed_client(session: Session) -> Generator[None | Client]:
             )
             logger.debug("Using Dask cluster %s", cluster)
 
-        client: None | Client
+        client: Client | None
         if dask.config.get("scheduler_address", None) is None:
             client = None
             logger.info(

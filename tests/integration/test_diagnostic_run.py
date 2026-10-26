@@ -34,12 +34,6 @@ def write_config_user_file(dirname):
     cfg = {
         "output_dir": str(dirname / "output_dir"),
         "auxiliary_data_dir": str(dirname / "extra_data"),
-        "rootpath": {
-            "default": str(dirname / "input_dir"),
-        },
-        "drs": {
-            "CMIP5": "BADC",
-        },
         "log_level": "debug",
         "profile_diagnostic": False,
     }
