@@ -267,7 +267,7 @@ esmvalcore = { solve-group = "default" }
 # Environments for running tests with specific Python versions.
 test-py312 = { features = ["py312", "test"], solve-group = "py312" }
 test-py313 = { features = ["py313", "test"], solve-group = "py313" }
-test-py314 = { features = ["py314", "test"], solve-group = "default" }
+test-py314 = { features = ["py314", "test"], solve-group = "py314" }
 test-py315 = { features = ["py315", "test"], solve-group = "default" }
 # Environment for testing R support
 test-r = { features = ["test-r"], solve-group = "test-r" }
