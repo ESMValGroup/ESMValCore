@@ -46,7 +46,7 @@ TEST_LOAD_EXTRA_FACETS = [
     ("test-nonexistent", (BASE_PATH / "simple",), {}),  # type: ignore
     (
         "test6",
-        (BASE_PATH / "simple",),  # type: ignore
+        (BASE_PATH / "simple",),
         {
             "PROJECT1": {
                 "Amon": {
@@ -64,7 +64,7 @@ TEST_LOAD_EXTRA_FACETS = [
     ),
     (
         "test6",
-        (BASE_PATH / "simple", BASE_PATH / "override"),  # type: ignore
+        (BASE_PATH / "simple", BASE_PATH / "override"),
         {
             "PROJECT1": {
                 "Amon": {

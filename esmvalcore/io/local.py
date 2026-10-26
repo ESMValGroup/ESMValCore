@@ -927,7 +927,7 @@ def _restore_lat_lon_units(
                 coord.units = units
 
 
-class LocalFile(type(Path()), esmvalcore.io.protocol.DataElement):  # type: ignore
+class LocalFile(Path, esmvalcore.io.protocol.DataElement):
     """File on the local filesystem."""
 
     def prepare(self) -> None:

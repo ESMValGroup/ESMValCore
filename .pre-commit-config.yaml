@@ -25,26 +25,38 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.17.1"
+  - repo: local
     hooks:
       - id: ruff-check
-        args: [--fix]
+        name: ruff check
+        entry: "pixi run --locked ruff check --force-exclude --fix"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v2.4.0"
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - "types-PyYAML"
-          - "types-requests"
-          - "numpy"
+        name: ruff format
+        entry: "pixi run --locked ruff format --force-exclude"
+        language: system
+        require_serial: true
+        types_or:
+          - python
+          - jupyter
+      - id: pyrefly
+        name: pyrefly
+        entry: "pixi run --locked pyrefly check"
+        language: system
+        types:
+          - python
+        pass_filenames: false
+        require_serial: true
   - repo: https://github.com/adrienverge/yamllint
     rev: "v1.38.0"
     hooks:
       - id: yamllint
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.3"
+    rev: "v2.4.2"
     hooks:
       - id: codespell
   - repo: https://github.com/python-jsonschema/check-jsonschema

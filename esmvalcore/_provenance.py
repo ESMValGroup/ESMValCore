@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     import prov.model
+    from prov.model import ProvActivity, ProvEntity
 
     from esmvalcore._task import BaseTask
 
@@ -66,7 +67,7 @@ def attribute_to_authors(
             author = {"name": author}  # noqa: PLW2901
         agent = entity.bundle.agent(
             namespace + ":" + author["name"],
-            {"attribute:" + k: author[k] for k in author if k != "name"},
+            {"attribute:" + k: author[k] for k in author if k != "name"},  # type: ignore[arg-type]
         )
         entity.wasAttributedTo(agent)
 
@@ -96,7 +97,7 @@ def get_recipe_provenance(
 
     entity = provenance.entity(
         f"recipe:{filename}",
-        {
+        {  # type: ignore[arg-type]
             "attribute:description": documentation.get("description", ""),
             "attribute:references": str(documentation.get("references", [])),
         },
@@ -168,9 +169,9 @@ class TrackedFile:
 
         self.attributes = copy.deepcopy(attributes)
 
-        self.provenance = None
-        self.entity = None
-        self.activity = None
+        self.provenance: ProvDocument | None = None
+        self.entity: ProvEntity | None = None
+        self.activity: ProvActivity | None = None
         self._ancestors = [] if ancestors is None else list(ancestors)
 
     @property
@@ -211,10 +212,14 @@ class TrackedFile:
         if self.provenance is None:
             msg = f"Provenance of {self} not initialized"
             raise ValueError(msg)
-        new = TrackedFile(Path(self.filename), self.attributes)
+        new = TrackedFile(self.filename, self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
-        new.entity = new.provenance.get_record(self.entity.identifier)[0]
-        new.activity = new.provenance.get_record(self.activity.identifier)[0]
+        new.entity = new.provenance.get_record(  # type: ignore[assignment,union-attr]
+            self.entity.identifier,  # type: ignore[arg-type,union-attr]
+        )[0]
+        new.activity = new.provenance.get_record(  # type: ignore[assignment,union-attr]
+            self.activity.identifier,  # type: ignore[arg-type,union-attr]
+        )[0]
         return new
 
     @property
@@ -249,12 +254,15 @@ class TrackedFile:
     def _initialize_namespaces(self) -> None:
         """Initialize the namespaces."""
         for namespace in ("file", "attribute", "preprocessor", "task"):
-            create_namespace(self.provenance, namespace)
+            create_namespace(
+                self.provenance,  # type: ignore[arg-type,union-attr]
+                namespace,
+            )
 
     def _initialize_activity(self, activity: prov.model.ProvActivity) -> None:
         """Copy the preprocessor task activity."""
         self.activity = activity
-        self.provenance.update(activity.bundle)  # type: ignore[attr-defined]
+        self.provenance.update(activity.bundle)  # type: ignore[union-attr]
 
     def _initialize_entity(self) -> None:
         """Initialize the entity representing the file."""
@@ -273,9 +281,9 @@ class TrackedFile:
             for k, v in self.attributes.items()
             if k not in ("authors", "projects")
         }
-        self.entity = self.provenance.entity(  # type: ignore[attr-defined]
+        self.entity = self.provenance.entity(  # type: ignore[union-attr]
             f"file:{self.prov_filename}",
-            attributes,
+            attributes,  # type: ignore[arg-type]
         )
 
         attribute_to_authors(self.entity, self.attributes.get("authors", []))
@@ -292,7 +300,7 @@ class TrackedFile:
                     ancestor.restore_provenance()
                 else:
                     ancestor.initialize_provenance(activity)
-            self.provenance.update(ancestor.provenance)  # type: ignore[attr-defined]
+            self.provenance.update(ancestor.provenance)  # type: ignore[arg-type,union-attr]
             self.wasderivedfrom(ancestor)
 
     def wasderivedfrom(
@@ -308,7 +316,10 @@ class TrackedFile:
             msg = f"Provenance of {self} not initialized"
             raise ValueError(msg)
         self.provenance.update(other_entity.bundle)  # type: ignore[attr-defined, union-attr]
-        self.entity.wasDerivedFrom(other_entity, self.activity)
+        self.entity.wasDerivedFrom(  # type: ignore[union-attr]
+            other_entity,  # type: ignore[arg-type]
+            self.activity,
+        )
 
     def _select_for_include(self) -> dict[str, str]:
         attributes = {
@@ -358,13 +369,13 @@ class TrackedFile:
     def save_provenance(self) -> None:
         """Export provenance information."""
         self.provenance = ProvDocument(
-            records=set(self.provenance.records),  # type: ignore[attr-defined]
-            namespaces=self.provenance.namespaces,  # type: ignore[attr-defined]
+            records=set(self.provenance.records),  # type: ignore[union-attr]
+            namespaces=self.provenance.namespaces,  # type: ignore[union-attr]
         )
         self._include_provenance()
         with open(self.provenance_file, "wb") as file:
             # Create file with correct permissions before saving.
-            self.provenance.serialize(file, format="xml")  # type: ignore[attr-defined]
+            self.provenance.serialize(file, format="xml")
         self.activity = None
         self.entity = None
         self.provenance = None
@@ -376,11 +387,11 @@ class TrackedFile:
             format="xml",
         )
         entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
-        self.entity = self.provenance.get_record(entity_uri)[0]  # type: ignore[attr-defined]
+        self.entity = self.provenance.get_record(entity_uri)[0]  # type: ignore[assignment]
         # Find the associated activity
-        for rec in self.provenance.records:  # type: ignore[attr-defined]
+        for rec in self.provenance.records:
             if isinstance(rec, ProvDerivation):
-                if rec.args[0] == self.entity.identifier:  # type: ignore[attr-defined]
+                if rec.args[0] == self.entity.identifier:  # type: ignore[union-attr]
                     activity_id = rec.args[2]
-                    self.activity = self.provenance.get_record(activity_id)[0]  # type: ignore[attr-defined]
+                    self.activity = self.provenance.get_record(activity_id)[0]  # type: ignore[assignment]
                     break

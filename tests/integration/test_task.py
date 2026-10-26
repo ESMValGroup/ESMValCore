@@ -402,7 +402,7 @@ def test_diagnostic_run_task_fail(
 
 
 def test_initialize_provenance_already_initialized_fail() -> None:
-    task = BaseTask()  # type: ignore[abstract]
+    task = BaseTask()
     task.activity = sentinel.activity
 
     msg = r"Provenance of BaseTask('') already initialized"
