@@ -32,6 +32,15 @@ import intake_esgf.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob, _ismatch
+from esmvalcore.io._netcdf_masking import (
+    mask_like_netcdf4,
+    set_default_calendar,
+)
+from esmvalcore.io._woodpecker import (
+    PROVENANCE_ATTRIBUTE,
+    apply_fixes,
+    mask_invalid,
+)
 from esmvalcore.io.local import _parse_period
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
@@ -100,6 +109,16 @@ class IntakeESGFDataset(DataElement):
     def attributes(self, value: dict[str, Any]) -> None:
         self._attributes = value
 
+    def _woodpecker_name(self) -> str:
+        """Return the name that woodpecker recipes match against.
+
+        This is the ESGF dataset id including the version, e.g.
+        ``CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn.v20190429``,
+        so recipes can fix specific versions of a dataset.
+        """
+        version = self.facets.get("version")
+        return f"{self.name}.{version}" if version else self.name
+
     def to_iris(self) -> iris.cube.CubeList:
         """Load the data as Iris cubes.
 
@@ -119,9 +138,17 @@ class IntakeESGFDataset(DataElement):
         )[self.name]
         # Store the local paths in the attributes for easier debugging.
         dataset.attrs["source_file"] = ", ".join(str(f) for f in files)
+        # Mask the data and set the calendar as when the files are loaded with
+        # Iris.
+        mask_like_netcdf4(dataset)
+        set_default_calendar(dataset)
+        apply_fixes(dataset, self._woodpecker_name())
         # Cache the attributes.
         self.attributes = copy.deepcopy(dataset.attrs)
-        return dataset_to_iris(dataset)
+        cubes = dataset_to_iris(dataset)
+        if PROVENANCE_ATTRIBUTE in dataset.attrs:
+            mask_invalid(cubes)
+        return cubes
 
 
 @dataclass

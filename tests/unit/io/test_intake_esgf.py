@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING
 import intake_esgf
 import intake_esgf.exceptions
 import iris.cube
+import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 import yaml
 
 import esmvalcore.io.intake_esgf
+from esmvalcore.io._woodpecker import PROVENANCE_ATTRIBUTE
 from esmvalcore.io.intake_esgf import IntakeESGFDataset, IntakeESGFDataSource
 
 if TYPE_CHECKING:
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from esmvalcore.config import Session
+    from esmvalcore.typing import Facets
 
 
 def test_intakeesgfdataset_repr() -> None:
@@ -409,3 +412,91 @@ def test_find_data_online(
     assert len(result) > 0
     result_names = {ds.name for ds in result}
     assert result_names == expected_names
+
+
+@pytest.mark.usefixtures("woodpecker_recipe_path")
+@pytest.mark.parametrize(
+    ("key", "fixed"),
+    [
+        ("my.TEST-DATA.dataset", True),
+        ("my.other.dataset", False),
+    ],
+)
+def test_to_iris_woodpecker(
+    mocker: MockerFixture,
+    key: str,
+    fixed: bool,
+) -> None:
+    """`to_iris` should apply a matching woodpecker recipe."""
+    cat = intake_esgf.ESGFCatalog()
+    mocker.patch.object(
+        cat,
+        "to_path_dict",
+        return_value={key: ["/path/to/file.nc"]},
+    )
+    ds = xr.Dataset(attrs={"attr": "value"})
+    mocker.patch.object(cat, "to_dataset_dict", return_value={key: ds})
+    to_iris = mocker.patch.object(esmvalcore.io.intake_esgf, "dataset_to_iris")
+
+    dataset = IntakeESGFDataset(name=key, facets={}, catalog=cat)
+    dataset.to_iris()
+
+    (converted,) = to_iris.call_args.args
+    assert (PROVENANCE_ATTRIBUTE in converted.attrs) is fixed
+    assert ("fixed_by" in dataset.attributes) is fixed
+
+
+@pytest.mark.parametrize(
+    ("facets", "expected"),
+    [
+        ({"version": "v20190429"}, "CMIP6.x.gn.v20190429"),
+        ({}, "CMIP6.x.gn"),
+    ],
+)
+def test_to_iris_woodpecker_name_includes_version(
+    mocker: MockerFixture,
+    facets: Facets,
+    expected: str,
+) -> None:
+    """Woodpecker recipes match against the dataset id with version."""
+    cat = intake_esgf.ESGFCatalog()
+    key = "CMIP6.x.gn"
+    mocker.patch.object(
+        cat,
+        "to_path_dict",
+        return_value={key: ["/path/to/file.nc"]},
+    )
+    mocker.patch.object(
+        cat,
+        "to_dataset_dict",
+        return_value={key: xr.Dataset()},
+    )
+    mocker.patch.object(esmvalcore.io.intake_esgf, "dataset_to_iris")
+    apply_fixes = mocker.patch.object(esmvalcore.io.intake_esgf, "apply_fixes")
+
+    IntakeESGFDataset(name=key, facets=facets, catalog=cat).to_iris()
+
+    assert apply_fixes.call_args.args[1] == expected
+
+
+def test_to_iris_masks_like_netcdf4(mocker: MockerFixture) -> None:
+    """`to_iris` should mask values outside the valid range."""
+    cat = intake_esgf.ESGFCatalog()
+    key = "my.dataset"
+    mocker.patch.object(
+        cat,
+        "to_path_dict",
+        return_value={key: ["/path/to/file.nc"]},
+    )
+    ds = xr.Dataset({"x": ("i", [5.0, 11.0], {"valid_max": 10.0})})
+    mocker.patch.object(cat, "to_dataset_dict", return_value={key: ds})
+    to_iris = mocker.patch.object(esmvalcore.io.intake_esgf, "dataset_to_iris")
+
+    IntakeESGFDataset(name=key, facets={}, catalog=cat).to_iris()
+
+    (converted,) = to_iris.call_args.args
+    np.testing.assert_array_equal(
+        np.isnan(converted["x"].values),
+        [False, True],
+    )
+    assert "valid_max" not in converted["x"].attrs

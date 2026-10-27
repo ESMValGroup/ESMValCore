@@ -292,7 +292,7 @@ class TestFixData:
     @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
-        self.cube = Mock()
+        self.cube = Mock(attributes={})
         self.fixed_cube = Mock()
         self.mock_fix = Mock()
         self.mock_fix.fix_data.return_value = self.fixed_cube
@@ -353,3 +353,96 @@ class TestFixData:
             mock_get_fixes.assert_called_once_with(
                 **self.expected_get_fixes_call,
             )
+
+
+def _cube(
+    var_name: str,
+    source_file: str,
+    *,
+    woodpecker: bool,
+) -> iris.cube.Cube:
+    cube = iris.cube.Cube([1.0], var_name=var_name)
+    cube.attributes.globals["source_file"] = source_file
+    if woodpecker:
+        cube.attributes.globals["woodpecker_provenance"] = "{}"
+    return cube
+
+
+def test_fix_metadata_skips_data_fixed_by_woodpecker(
+    mocker: MockerFixture,
+) -> None:
+    fix = mocker.Mock()
+    mocker.patch.object(Fix, "get_fixes", return_value=[fix])
+    cubes = [
+        _cube("tos", "a.zarr", woodpecker=True),
+        _cube("lat_bnds", "a.zarr", woodpecker=True),
+    ]
+
+    result = fix_metadata(cubes, "tos", "ESA-CCI", "SST", "Omon")
+
+    fix.fix_metadata.assert_not_called()
+    assert [c.var_name for c in result] == ["tos"]
+    assert "source_file" not in result[0].attributes
+
+
+def test_fix_metadata_only_fixes_files_not_fixed_by_woodpecker(
+    mocker: MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    fixed = _cube("tos", "b.nc", woodpecker=False)
+    fix = mocker.Mock()
+    fix.fix_metadata.return_value = iris.cube.CubeList([fixed])
+    mocker.patch.object(Fix, "get_fixes", return_value=[fix])
+    cubes = [
+        _cube("tos", "a.zarr", woodpecker=True),
+        _cube("tos", "b.nc", woodpecker=False),
+    ]
+
+    result = fix_metadata(cubes, "tos", "ESA-CCI", "SST", "Omon")
+
+    fix.fix_metadata.assert_called_once()
+    (fixed_file_cubes,) = fix.fix_metadata.call_args.args
+    assert [c.attributes["source_file"] for c in fixed_file_cubes] == ["b.nc"]
+    assert len(result) == 2
+    assert result[1] is fixed
+    assert "Only some files of ESA-CCI:SST Omon tos" in caplog.text
+    assert "fixed by woodpecker: a.zarr." in caplog.text
+
+
+def test_fix_data_skips_data_fixed_by_woodpecker(
+    mocker: MockerFixture,
+) -> None:
+    fix = mocker.Mock()
+    mocker.patch.object(Fix, "get_fixes", return_value=[fix])
+    cube = _cube("tos", "a.zarr", woodpecker=True)
+
+    result = fix_data(cube, "tos", "ESA-CCI", "SST", "Omon")
+
+    assert result is cube
+    fix.fix_data.assert_not_called()
+
+
+@pytest.mark.usefixtures("woodpecker_recipe_path")
+@pytest.mark.parametrize("file_type", [Path, LocalFile])
+def test_fix_file_skips_files_with_woodpecker_recipe(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    file_type: type[Path],
+) -> None:
+    path = tmp_path / "TEST-DATA" / "tas.nc"
+    path.parent.mkdir()
+    iris.save(iris.cube.Cube([1.0], var_name="tas"), path)
+    file = file_type(path)
+    get_fixes = mocker.patch.object(Fix, "get_fixes")
+
+    result = fix_file(
+        file,
+        "tas",
+        "CMIP6",
+        "MODEL",
+        "Amon",
+        tmp_path / "fixed",
+    )
+
+    assert result is file
+    get_fixes.assert_not_called()

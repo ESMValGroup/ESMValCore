@@ -6,9 +6,15 @@ from typing import TYPE_CHECKING
 import iris.cube
 import pytest
 
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor.check import CMORCheck
 from esmvalcore.dataset import Dataset
+from esmvalcore.io._woodpecker import is_fixed_by_woodpecker
+from tests.conftest import WOODPECKER_RECIPES
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from esmvalcore.config import Session
 
 
@@ -113,3 +119,44 @@ def test_load(example_data_source: dict[str, str], session: Session) -> None:
 
     assert isinstance(cube, iris.cube.Cube)
     assert cube.cell_measures()
+
+
+def test_load_woodpecker(
+    example_data_source: dict[str, str],
+    session: Session,
+    woodpecker_recipe_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    (woodpecker_recipe_path / "canesm2.yaml").write_text(
+        WOODPECKER_RECIPES.replace("*TEST-DATA*", "*/tas_Amon_CanESM2_*.nc")
+        .replace("esmvaltest.fix_test_data", "esmvaltest.fix_canesm2")
+        .replace("esmvaltest.fix_test_model", "esmvaltest.fix_other"),
+        encoding="utf-8",
+    )
+    fix = mocker.Mock()
+    mocker.patch.object(Fix, "get_fixes", return_value=[fix])
+    check_metadata = mocker.spy(CMORCheck, "check_metadata")
+    tas = Dataset(
+        short_name="tas",
+        mip="Amon",
+        project="CMIP5",
+        dataset="CanESM2",
+        ensemble="r1i1p1",
+        exp="historical",
+        timerange="1850/185002",
+    )
+    tas.session = session
+    tas.session["projects"]["CMIP5"]["data"] = {
+        "example-data-source": example_data_source,
+    }
+    tas.augment_facets()
+
+    cube = tas.load()
+
+    assert is_fixed_by_woodpecker(cube)
+    assert cube.attributes["fixed_by"] == "woodpecker"
+    assert cube.shape[0] == 2
+    fix.fix_file.assert_not_called()
+    fix.fix_metadata.assert_not_called()
+    fix.fix_data.assert_not_called()
+    check_metadata.assert_called()
