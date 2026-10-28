@@ -134,6 +134,7 @@ The icons indicate whether the item will be checked during the
 
 - 🧪 The new functionality is :ref:`relevant and scientifically sound<scientific_relevance>`
 - 🛠 :ref:`The pull request has a descriptive title and labels <descriptive_pr_title>`
+- 🛠 The :ref:`AI policy <ai_policy>` has been followed and any AI usage has been disclosed
 - 🛠 Code is written according to the :ref:`code quality guidelines <code_quality>`
 - 🧪 and 🛠 Documentation_ is available
 - 🛠 Unit tests_ have been added
