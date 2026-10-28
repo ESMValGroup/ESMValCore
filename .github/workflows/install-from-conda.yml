@@ -30,6 +30,7 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+          - "3.15"
     name: Install ESMValCore with Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
       - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39  # v3.2.1
