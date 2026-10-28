@@ -31,6 +31,8 @@ import yaml
 
 import esmvalcore.preprocessor
 from esmvalcore import __version__
+from esmvalcore.cmor.table import get_tables
+from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 from esmvalcore.preprocessor import (
     DEFAULT_ORDER,
@@ -45,6 +47,9 @@ SCHEMA_DIALECT = "http://json-schema.org/draft-07/schema#"
 
 # Schema keyword for the severity of a value that is not in an ``enum``.
 SEVERITY_KEYWORD = "x-severity"
+
+# Facet values can be glob patterns, see :func:`esmvalcore.dataset._isglob`.
+NOT_A_PATTERN = {"not": {"pattern": r"[*?]|\[.*\]"}}
 
 # Preprocessor steps that support excluding datasets with ``exclude``.
 EXCLUDE_STEPS = MULTI_MODEL_FUNCTIONS | {"weighting_landsea_fraction"}
@@ -652,23 +657,128 @@ def _facet_value(description: str) -> JSONSchema:
     }
 
 
-def _facets_schema() -> JSONSchema:
+class _Tables(typing.NamedTuple):
+    """The CMOR tables of a project."""
+
+    names: tuple[str, ...]
+    strict: bool
+    """Only a strict project fails for a MIP that is not one of its tables.
+
+    Other projects look for the variable in all their tables.
+    """
+
+
+def _known_tables() -> dict[str, _Tables | None]:
+    """Get the configured projects and their CMOR tables.
+
+    The tables are ``None`` for a project without CMOR tables, because then
+    any MIP can be used.
+    """
+    tables: dict[str, _Tables | None] = {}
+    for project in CFG["projects"]:
+        info = get_tables(CFG, project)
+        names = getattr(info, "tables", None)
+        tables[project] = (
+            _Tables(
+                tuple(sorted(name for name in names if name)),
+                getattr(info, "strict", True),
+            )
+            if names
+            else None
+        )
+    return tables
+
+
+def _mip_schema(
+    names: tuple[str, ...],
+    hint: str,
+    *,
+    strict: bool,
+) -> JSONSchema:
+    schema: JSONSchema = {"enum": list(names), "errorMessage": hint}
+    if not strict:
+        # ESMValCore looks for the variable in all tables of the project.
+        schema[SEVERITY_KEYWORD] = "warning"
+    return {"properties": {"mip": schema}}
+
+
+def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
+    """Create rules that check the MIP against the tables of the project.
+
+    The project is often defined at another level of the recipe than the MIP,
+    so a MIP without a project in the same mapping is checked against the
+    tables of all projects.
+    """
+    rules = []
+    for project, project_tables in tables.items():
+        if project_tables is None:
+            continue
+        hint = f"Not a CMOR table of project '{project}'."
+        if not project_tables.strict:
+            hint += (
+                " The variable will be looked up in all tables, because the "
+                "CMOR checks of this project are not strict."
+            )
+        rules.append(
+            {
+                "if": {
+                    "properties": {
+                        "project": {"const": project},
+                        "mip": NOT_A_PATTERN,
+                    },
+                    "required": ["project"],
+                },
+                "then": _mip_schema(
+                    project_tables.names,
+                    hint,
+                    strict=project_tables.strict,
+                ),
+            },
+        )
+    known = [t for t in tables.values() if t is not None]
+    if known and len(known) == len(tables):
+        rules.append(
+            {
+                "if": {
+                    "properties": {"mip": NOT_A_PATTERN},
+                    "not": {"required": ["project"]},
+                },
+                "then": _mip_schema(
+                    tuple(sorted({name for t in known for name in t.names})),
+                    "Not a CMOR table of any project.",
+                    strict=all(t.strict for t in known),
+                ),
+            },
+        )
+    return rules
+
+
+def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
     """Create a JSON Schema for the facets of a dataset or variable.
 
     See doc/reference/facets.rst for the facets that ESMValCore uses.
     """
     year = {"type": "integer", "minimum": 0, "maximum": 10000}
+    project: JSONSchema = {
+        "type": "string",
+        "description": "Project, for example CMIP6.",
+    }
+    if tables:
+        # Without a project in the configuration, ESMValCore cannot find the
+        # data.
+        project["enum"] = list(tables)
+        project["errorMessage"] = (
+            "Not defined in the `projects` section of the configuration."
+        )
     return {
         "type": "object",
+        "allOf": _project_rules(tables),
         "properties": {
             "dataset": {
                 "type": "string",
                 "description": "Name of the dataset.",
             },
-            "project": {
-                "type": "string",
-                "description": "Project, for example CMIP6.",
-            },
+            "project": project,
             "short_name": {
                 "type": "string",
                 "description": "Short name of the variable.",
@@ -885,20 +995,24 @@ def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
 def generate_recipe_schema() -> JSONSchema:
     """Generate a JSON Schema for recipes.
 
-    If ESMValTool is installed, the schema only allows the authors, projects,
-    realms, and themes defined in its ``config-references.yml`` file and the
-    references that have a bibtex file.
+    The schema only allows the projects in the configuration and the MIPs in
+    their CMOR tables. If ESMValTool is installed, it also lists the authors,
+    projects, realms, and themes defined in its ``config-references.yml`` file
+    and the references that have a bibtex file.
 
     Returns
     -------
     :
         A JSON Schema (draft-07) that describes a recipe.
     """
-    return _recipe_schema(_known_names())
+    return _recipe_schema(_known_names(), _known_tables())
 
 
-def _recipe_schema(names: dict[str, _Names]) -> JSONSchema:
-    """Generate a JSON Schema for recipes, given the known tags."""
+def _recipe_schema(
+    names: dict[str, _Names],
+    tables: dict[str, _Tables | None],
+) -> JSONSchema:
+    """Generate a JSON Schema for recipes, given the known names."""
     return {
         "$schema": SCHEMA_DIALECT,
         "title": "ESMValTool recipe",
@@ -929,7 +1043,7 @@ def _recipe_schema(names: dict[str, _Names]) -> JSONSchema:
         "required": ["documentation", "diagnostics"],
         "definitions": {
             "documentation": _documentation_schema(names),
-            "facets": _facets_schema(),
+            "facets": _facets_schema(tables),
             "dataset": _dataset_schema(),
             "variable": _variable_schema(),
             "script": _script_schema(),
@@ -970,15 +1084,21 @@ TYPE_DESCRIPTIONS = {
 
 def _get_validator() -> jsonschema.Draft7Validator:
     # The known names are part of the cache key, because they may change,
-    # for example when the tags are updated.
-    return _create_validator(tuple(_known_names().items()))
+    # for example when the tags or the configuration are updated.
+    return _create_validator(
+        tuple(_known_names().items()),
+        tuple(_known_tables().items()),
+    )
 
 
 @functools.cache
 def _create_validator(
     names: tuple[tuple[str, _Names], ...],
+    tables: tuple[tuple[str, _Tables | None], ...],
 ) -> jsonschema.Draft7Validator:
-    return jsonschema.Draft7Validator(_recipe_schema(dict(names)))
+    return jsonschema.Draft7Validator(
+        _recipe_schema(dict(names), dict(tables)),
+    )
 
 
 def _normalize(recipe: object) -> object:

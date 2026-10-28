@@ -2564,8 +2564,8 @@ def test_multimodel_mask(tmp_path, patched_datafinder, session):
         assert product.settings["mask_multimodel"] == {}
 
 
-def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
-    """Test that obs4mips is corrected to obs4MIPs."""
+def test_obs4mips_case_invalid(tmp_path, patched_datafinder, session):
+    """Test that obs4mips is not accepted instead of obs4MIPs."""
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -2582,9 +2582,9 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
                      version: 1, tier: 1, level: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, session)
-    dataset = recipe.datasets[0]
-    assert dataset["project"] == "obs4MIPs"
+    msg = "unknown value 'obs4mips'. Not defined in the `projects` section"
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        get_recipe(tmp_path, content, session)
 
 
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):

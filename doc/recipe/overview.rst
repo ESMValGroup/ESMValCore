@@ -830,6 +830,19 @@ to the file ``recipe_schema.json`` in the current working directory, run
 
     esmvaltool recipes schema
 
+The schema checks that each project is defined in the :ref:`projects section
+<config-projects>` of the configuration and that each ``mip`` is one of the
+:ref:`CMOR tables <cmor_table_configuration>` of its project.
+If the project is defined elsewhere in the recipe, for example for the dataset
+while the ``mip`` is defined for the variable, the ``mip`` is checked against
+the tables of all projects.
+An unknown ``mip`` is a warning instead of an error for projects where the
+CMOR checks are not strict, because ESMValCore then looks for the variable in
+all tables of the project.
+The published schema uses the default configuration, so if you have configured
+additional projects or CMOR tables, use the schema written by
+``esmvaltool recipes schema``.
+
 If ESMValTool is installed, this schema also checks that the authors,
 maintainers, projects, realms, and themes in the recipe are defined in
 ESMValTool's ``config-references.yml`` file and that there is a bibtex file
@@ -867,5 +880,6 @@ for example Neovim and Emacs.
 
 The schema checks the structure of a recipe and the arguments of the
 preprocessor functions.
-It does not check facet values, for example whether a dataset or variable
-exists, or the settings of diagnostic scripts.
+Apart from the project and ``mip``, it does not check facet values, for
+example whether a dataset or variable exists, or the settings of diagnostic
+scripts.
