@@ -162,9 +162,13 @@ them in sync, and run `pixi lock` to update `pixi.lock`. Tools that are only
 needed for development, building the documentation, or running the tests go in
 `[tool.pixi.feature.dev.dependencies]`, `[tool.pixi.feature.doc.dependencies]`,
 or `[tool.pixi.feature.test.dependencies]` instead. New dependencies must be
-actively maintained, be available on conda-forge, and have a license that is
-compatible with Apache 2.0, as must their own dependencies. Supported Python
-and dependency versions follow
+actively maintained and available on conda-forge. Their licenses, and those of
+their own dependencies, must be permissive (e.g. MIT, BSD, Apache 2.0) or weak
+copyleft (e.g. LGPL, MPL 2.0). Do not add dependencies licensed under the GPL
+or under licenses that are not open source, e.g. because they restrict
+commercial use or redistribution. Some existing dependencies do not meet these
+requirements, so do not take them as an example. Supported Python and
+dependency versions follow
 [SPEC-0](https://scientific-python.org/specs/spec-0000/).
 
 ## Pull requests
