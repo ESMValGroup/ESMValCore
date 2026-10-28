@@ -4,6 +4,11 @@ Guidance for AI coding agents working in the ESMValCore repository.
 The full contributor guide is in [doc/contributing.rst](doc/contributing.rst);
 this file summarizes what matters most when making changes.
 
+This file describes conventions that apply to the whole project. Do not add
+notes about individual features or changes to it; document those in the code
+or in `doc/` instead. If this file disagrees with the code or configuration,
+follow the code and tell the user rather than editing this file.
+
 ## Project overview
 
 ESMValCore is the core of [ESMValTool](https://github.com/ESMValGroup/ESMValTool):
