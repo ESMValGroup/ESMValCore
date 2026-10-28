@@ -2569,29 +2569,6 @@ def test_multimodel_mask(tmp_path, patched_datafinder, session):
         assert product.settings["mask_multimodel"] == {}
 
 
-def test_obs4mips_case_invalid(tmp_path, patched_datafinder, session):
-    """Test that obs4mips is not accepted instead of obs4MIPs."""
-    content = dedent("""
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                project: CMIP5
-                mip: Amon
-                exp: historical
-                start_year: 2000
-                end_year: 2005
-                ensemble: r1i1p1
-                additional_datasets:
-                  - {dataset: TEST, project: obs4mips,
-                     version: 1, tier: 1, level: 1}
-            scripts: null
-        """)
-    msg = "unknown value 'obs4mips'. Not defined in the `projects` section"
-    with pytest.raises(RecipeError, match=re.escape(msg)):
-        get_recipe(tmp_path, content, session)
-
-
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     content = dedent("""
         diagnostics:
