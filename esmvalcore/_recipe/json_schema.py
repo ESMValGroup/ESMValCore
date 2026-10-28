@@ -1192,17 +1192,86 @@ def _find_position(
     return position
 
 
-def add_positions(issues: list[RecipeIssue], text: str) -> list[RecipeIssue]:
-    """Add line and column numbers to issues and sort them by position."""
+def _compose(text: str) -> yaml.Node | None:
+    """Parse YAML text into a tree of nodes, or None if that fails."""
     try:
-        root = yaml.compose(text, Loader=yaml.SafeLoader)
+        return yaml.compose(text, Loader=yaml.SafeLoader)
     except yaml.YAMLError:
-        return issues
-    if root is None:
-        return issues
+        return None
+
+
+def _find_duplicate_keys(
+    node: yaml.Node,
+    path: tuple[str | int, ...] = (),
+    visited: set[int] | None = None,
+) -> list[RecipeIssue]:
+    """Find keys that occur more than once in a mapping.
+
+    PyYAML silently uses the last definition of such a key, so the earlier
+    definitions are reported. Merge keys (``<<``) may occur more than once,
+    because the mappings they refer to are all merged.
+    """
+    if visited is None:
+        visited = set()
+    if id(node) in visited:
+        # Report problems in an anchored node only once.
+        return []
+    visited.add(id(node))
+    if isinstance(node, yaml.MappingNode):
+        return _find_duplicate_keys_in_mapping(node, path, visited)
+    issues = []
+    if isinstance(node, yaml.SequenceNode):
+        for i, item in enumerate(node.value):
+            issues.extend(_find_duplicate_keys(item, (*path, i), visited))
+    return issues
+
+
+def _find_duplicate_keys_in_mapping(
+    node: yaml.MappingNode,
+    path: tuple[str | int, ...],
+    visited: set[int],
+) -> list[RecipeIssue]:
+    """Find duplicate keys in a mapping and in the values it contains."""
+    items = [
+        (key_node, value_node)
+        for key_node, value_node in node.value
+        if isinstance(key_node, yaml.ScalarNode)
+        and key_node.tag != "tag:yaml.org,2002:merge"
+    ]
+    last = {key_node.value: key_node for key_node, _ in items}
+    issues = []
+    for key_node, value_node in items:
+        key = key_node.value
+        used = last[key]
+        if used is key_node:
+            issues.extend(
+                _find_duplicate_keys(value_node, (*path, key), visited),
+            )
+        else:
+            # The ignored value is not checked any further.
+            issues.append(
+                RecipeIssue(
+                    (*path, key),
+                    f"duplicate key, this definition is ignored because "
+                    f"'{key}' is defined again on line "
+                    f"{used.start_mark.line + 1}.",
+                    line=key_node.start_mark.line + 1,
+                    column=key_node.start_mark.column + 1,
+                    severity="warning",
+                ),
+            )
+    return issues
+
+
+def _locate(issues: list[RecipeIssue], root: yaml.Node) -> list[RecipeIssue]:
+    """Add line and column numbers to issues and sort them by position."""
     located = []
     for issue in issues:
-        position = _find_position(root, issue.path)
+        position = (
+            None
+            if issue.line is not None
+            else _find_position(root, issue.path)
+        )
         located.append(
             issue
             if position is None
@@ -1235,7 +1304,8 @@ def validate_recipe(
         The recipe, as loaded from YAML.
     text:
         The YAML text of the recipe. If given, the issues include line and
-        column numbers and are sorted by their position in the text.
+        column numbers and are sorted by their position in the text, and
+        keys that are defined more than once are reported as warnings.
 
     Returns
     -------
@@ -1248,6 +1318,8 @@ def validate_recipe(
             for issue in _describe(relevant, alternatives):
                 if issue not in issues:
                     issues.append(issue)
-    if issues and text is not None:
-        issues = add_positions(issues, text)
+    root = None if text is None else _compose(text)
+    if root is not None:
+        issues.extend(_find_duplicate_keys(root))
+        issues = _locate(issues, root)
     return issues

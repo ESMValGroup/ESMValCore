@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import inspect
 import logging
 import os
@@ -16,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 import isodate
 
 import esmvalcore.preprocessor
-from esmvalcore._recipe.json_schema import add_positions, validate_recipe
+from esmvalcore._recipe.json_schema import validate_recipe
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
@@ -104,21 +103,21 @@ def ncl_version() -> None:
 def recipe_with_schema(recipe: dict, path: Path) -> None:
     """Check if the recipe content matches schema."""
     logger.debug("Checking recipe %s against schema", path)
-    issues = validate_recipe(recipe)
-    if issues:
-        # The text is used to find the line numbers of the issues.
-        with contextlib.suppress(OSError):
-            text = Path(path).read_text(encoding="utf-8")
-            issues = add_positions(issues, text)
-        for issue in issues:
-            if issue.severity == "warning":
-                logger.warning("Recipe %s: %s", path, issue)
-        errors = [issue for issue in issues if issue.severity == "error"]
-        if errors:
-            msg = f"Recipe {path} is invalid:\n" + "\n".join(
-                f"- {issue}" for issue in errors
-            )
-            raise RecipeError(msg)
+    # The text is used to find duplicate keys and the line numbers of issues.
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        text = None
+    issues = validate_recipe(recipe, text)
+    for issue in issues:
+        if issue.severity == "warning":
+            logger.warning("Recipe %s: %s", path, issue)
+    errors = [issue for issue in issues if issue.severity == "error"]
+    if errors:
+        msg = f"Recipe {path} is invalid:\n" + "\n".join(
+            f"- {issue}" for issue in errors
+        )
+        raise RecipeError(msg)
 
 
 def diagnostics(diags: dict[str, dict[str, Any]] | None) -> None:

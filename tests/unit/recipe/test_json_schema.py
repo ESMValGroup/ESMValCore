@@ -737,3 +737,72 @@ def test_validate_recipe_names_updated() -> None:
     assert validate_recipe(recipe)
     json_schema.TAGS.set_tag_value("authors", "new_author", {})
     assert not validate_recipe(recipe)
+
+
+DUPLICATE_RECIPE = """
+documentation: {title: Test, description: Test., authors: [andela_bouwe]}
+preprocessors:
+  base: &base
+    area_statistics:
+      operator: mean
+    area_statistics:
+      operator: max
+  pp:
+    <<: *base
+    convert_units:
+      units: K
+diagnostics:
+  example:
+    variables:
+      tas:
+        mip: Amon
+      tas:
+        mip: day
+    scripts: null
+"""
+
+
+def test_validate_recipe_duplicate_keys() -> None:
+    recipe = yaml.safe_load(DUPLICATE_RECIPE)
+    issues = validate_recipe(recipe, DUPLICATE_RECIPE)
+    assert issues == [
+        # Problems in an anchored mapping are only reported once.
+        RecipeIssue(
+            ("preprocessors", "base", "area_statistics"),
+            "duplicate key, this definition is ignored because "
+            "'area_statistics' is defined again on line 7.",
+            line=5,
+            column=5,
+            severity="warning",
+        ),
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "tas"),
+            "duplicate key, this definition is ignored because 'tas' is "
+            "defined again on line 18.",
+            line=16,
+            column=7,
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_repeated_merge_keys() -> None:
+    # MERGE_RECIPE uses the merge key (<<) more than once in a mapping.
+    issues = validate_recipe(yaml.safe_load(MERGE_RECIPE), MERGE_RECIPE)
+    assert not [i for i in issues if "duplicate key" in i.message]
+
+
+def test_recipe_with_schema_duplicate_keys(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    recipe = yaml.safe_load(DUPLICATE_RECIPE)
+    path = tmp_path / "recipe_test.yml"
+    path.write_text(DUPLICATE_RECIPE, encoding="utf-8")
+    check.recipe_with_schema(recipe, path)
+    assert [r.levelname for r in caplog.records] == ["WARNING", "WARNING"]
+    assert caplog.records[1].getMessage() == (
+        f"Recipe {path}: line 16: diagnostics > example > variables > tas: "
+        "duplicate key, this definition is ignored because 'tas' is defined "
+        "again on line 18."
+    )
