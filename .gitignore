@@ -111,7 +111,6 @@ html/
 
 # AI
 .github/instructions/codacy.instructions.md
-CLAUDE.md
 
 # pixi environments
 .pixi
