@@ -156,8 +156,12 @@ stay backward compatible where possible. To remove or change a public feature,
 first deprecate it with an `ESMValCoreDeprecationWarning` (from
 `esmvalcore.exceptions`), stating the version in which it will be removed (two
 minor versions after the upcoming release), and label the pull request
-`deprecated feature`. Flag any breaking change clearly to the user rather than
-making it silently.
+`deprecated feature`. Flag any breaking change, and any change that alters
+scientific results, clearly to the user rather than making it silently.
+Breaking changes also require updating the recipes in the ESMValTool
+repository, so check whether they are affected. Passing tests do not show that
+results are scientifically correct: if a change may affect results, tell the
+user which output to compare with the previous version.
 
 ## Dependencies
 
