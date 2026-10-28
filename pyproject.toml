@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Topic :: Scientific/Engineering :: GIS",
@@ -266,7 +267,8 @@ esmvalcore = { solve-group = "default" }
 # Environments for running tests with specific Python versions.
 test-py312 = { features = ["py312", "test"], solve-group = "py312" }
 test-py313 = { features = ["py313", "test"], solve-group = "py313" }
-test-py314 = { features = ["py314", "test"], solve-group = "default" }
+test-py314 = { features = ["py314", "test"], solve-group = "py314" }
+test-py315 = { features = ["py315", "test"], solve-group = "default" }
 # Environment for testing R support
 test-r = { features = ["test-r"], solve-group = "test-r" }
 
@@ -313,6 +315,10 @@ test-r = { features = ["test-r"], solve-group = "test-r" }
 # Feature for running tests with Python 3.14.
 [tool.pixi.feature.py314.dependencies]
 "python" = "3.14.*"
+
+# Feature for running tests with Python 3.15.
+[tool.pixi.feature.py315.dependencies]
+"python" = "3.15.*"
 
 # Tasks for use with `pixi run <task>`.
 [tool.pixi.tasks]

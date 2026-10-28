@@ -137,6 +137,35 @@ def test_pfr_calculation_1():
     np.testing.assert_array_equal(out_data, expected)
 
 
+def test_pfr_calculation_2():
+    """Test function ``calculate`` for permafrost case (CMIP7)."""
+    test_cubes = cubes()
+    mrsos_cube = test_cubes.extract_cube(NameConstraint(var_name="mrsos"))
+    # change var_name from "mrsos" (CMIP6) to "mrsol" (CMIP7)
+    org_var_name = mrsos_cube.var_name
+    mrsos_cube.var_name = "mrsol"
+    derived_var = pfr.DerivedVariable()
+    out_cube = derived_var.calculate(test_cubes)
+    assert out_cube.units == cf_units.Unit("%")
+    out_data = out_cube.data
+    expected = 100.0 * np.ones_like(out_cube.data)
+    np.testing.assert_array_equal(out_data, expected)
+    mrsos_cube.var_name = org_var_name
+
+
+def test_pfr_calculation_3():
+    """Test function ``calculate`` for missing mrsos / mrsol variables."""
+    test_cubes = cubes()
+    derived_var = pfr.DerivedVariable()
+    # change var_name from "mrsos" to something not supported
+    mrsos_cube = test_cubes.extract_cube(NameConstraint(var_name="mrsos"))
+    org_var_name = mrsos_cube.var_name
+    mrsos_cube.var_name = "xxx"
+    with pytest.raises(ValueError):
+        derived_var.calculate(test_cubes)
+    mrsos_cube.var_name = org_var_name
+
+
 def test_pfr_calculation_minor_latlon_differences():
     """Test function ``calculate``."""
     # small differences (i.e. < 1.0e-4) in lat/lon coordinates
@@ -192,7 +221,7 @@ def test_pfr_calculation_major_lon_differences():
     x_coord.points = org_x_pts
 
 
-def test_pfr_required():
+def test_pfr_required_cmip6():
     """Test function ``required``."""
     derived_var = pfr.DerivedVariable()
     output = derived_var.required(None)
@@ -200,4 +229,28 @@ def test_pfr_required():
         {"short_name": "tsl", "mip": "Lmon"},
         {"short_name": "sftlf", "mip": "fx"},
         {"short_name": "mrsos", "mip": "Lmon"},
+    ]
+
+
+def test_pfr_required_cmip7():
+    """Test function ``required``."""
+    derived_var = pfr.DerivedVariable()
+    output = derived_var.required("CMIP7")
+    assert output == [
+        {
+            "short_name": "tsl",
+            "mip": "land",
+            "branding_suffix": "tavg-sl-hxy-lnd",
+        },
+        {
+            "short_name": "sftlf",
+            "mip": "atmos",
+            "branding_suffix": "ti-u-hxy-u",
+            "frequency": "fx",
+        },
+        {
+            "short_name": "mrsol",
+            "mip": "land",
+            "branding_suffix": "tavg-d10cm-hxy-lnd",
+        },
     ]
