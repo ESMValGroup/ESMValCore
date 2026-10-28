@@ -70,7 +70,9 @@ Useful pytest options:
 - Write [numpy style docstrings](https://numpydoc.readthedocs.io/en/latest/format.html)
   for public functions, classes, and modules. Private helpers only need a short
   docstring when their purpose is not obvious.
-- Type hints are preferred and must be correct.
+- Add type hints to new code and, as much as possible, to existing code that
+  you edit, unless that would lead to many changes unrelated to the goal of the
+  change. Type hints must be correct.
 - Do not add `# noqa` or `# type: ignore` comments to silence a check unless
   there is no reasonable way to fix the underlying issue.
 - Match the style, naming, and comment density of the surrounding code.
