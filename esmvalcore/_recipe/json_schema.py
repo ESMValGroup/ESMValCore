@@ -73,6 +73,107 @@ INTERNAL_ARGUMENTS["ensemble_statistics"] = {"output_products"}
 INTERNAL_ARGUMENTS["multi_model_statistics"] = {"output_products"}
 INTERNAL_ARGUMENTS["save"].add("compute")
 
+_DATASET_NAME = (
+    "the name of a dataset in the diagnostic, or `reference_dataset` or "
+    "`alternative_dataset` for the dataset defined by that key in the variable"
+)
+
+# Arguments that ESMValCore converts when it reads the recipe. The type and
+# description of the preprocessor function do not apply to these, because
+# they describe the converted value.
+RECIPE_ARGUMENTS: dict[str, dict[str, JSONSchema]] = {
+    "extract_levels": {
+        "levels": {
+            "anyOf": [
+                {"type": "number"},
+                {"type": "array", "items": {"type": "number"}},
+                {"type": "string"},
+                {
+                    "type": "object",
+                    "properties": {"dataset": {"type": "string"}},
+                    "required": ["dataset"],
+                    "additionalProperties": False,
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "cmor_table": {"type": "string"},
+                        "coordinate": {"type": "string"},
+                    },
+                    "required": ["cmor_table", "coordinate"],
+                    "additionalProperties": False,
+                },
+            ],
+            "description": (
+                "Target levels for the vertical interpolation. Either one or "
+                "more levels, in the units of the vertical coordinate of the "
+                f"data, the levels of a dataset given by {_DATASET_NAME} "
+                "(also as `{dataset: <name>}`), or the levels of a coordinate "
+                "in a CMOR table, e.g. `{cmor_table: CMIP6, coordinate: "
+                "plev19}`. If the requested levels are sufficiently close to "
+                "the levels of the data, the data is sliced instead of "
+                "interpolated."
+            ),
+        },
+    },
+    "extract_shape": {
+        "shapefile": {
+            "type": "string",
+            "description": (
+                "Shapefile that defines the region(s) to extract. Either an "
+                "absolute path, a path relative to the `auxiliary_data_dir`, "
+                "or the name of a shapefile provided by ESMValCore: `ar6` for "
+                "the IPCC WG1 reference regions (v4) used in Assessment "
+                "Report 6 (https://doi.org/10.5281/zenodo.5176260). Use "
+                "`ar6` with e.g. `ids: {Acronym: [GIC, WNA]}`."
+            ),
+        },
+    },
+    "regrid": {
+        "target_grid": {
+            "anyOf": [
+                {"type": "string"},
+                {
+                    "type": "object",
+                    "properties": {
+                        key: {"type": "number"}
+                        for key in (
+                            "start_longitude",
+                            "end_longitude",
+                            "step_longitude",
+                            "start_latitude",
+                            "end_latitude",
+                            "step_latitude",
+                        )
+                    },
+                    "required": [
+                        "start_longitude",
+                        "end_longitude",
+                        "step_longitude",
+                        "start_latitude",
+                        "end_latitude",
+                        "step_latitude",
+                    ],
+                    "additionalProperties": False,
+                },
+            ],
+            "description": (
+                "Target grid. Either the grid of a dataset given by "
+                f"{_DATASET_NAME}, a CORDEX domain name, e.g. `EUR-11`, a "
+                "global regular grid given as `MxN`, the size of the grid "
+                "cells in degrees longitude by latitude, e.g. `2.5x2.5`, or a "
+                "regional regular grid given by `start_longitude`, "
+                "`end_longitude`, `step_longitude`, `start_latitude`, "
+                "`end_latitude`, and `step_latitude`."
+            ),
+        },
+    },
+}
+
+# Preprocessor steps without a section in the recipe documentation. The
+# section of each other step can be found at the anchor with its name.
+UNDOCUMENTED_STEPS = {"clip_timerange", "concatenate", "load", "save"}
+
 # Annotation types that map directly to a JSON Schema type.
 SIMPLE_TYPES: dict[Any, JSONSchema] = {
     type(None): {"type": "null"},
@@ -333,11 +434,14 @@ def _parse_docstring(docstring: str) -> tuple[str, dict[str, str]]:
 
 
 def _parameter_schema(
+    step: str,
     param: inspect.Parameter,
-    function: collections.abc.Callable[..., object],
     description: str | None,
 ) -> JSONSchema:
     """Create a JSON Schema for an argument of a preprocessor function."""
+    if param.name in RECIPE_ARGUMENTS.get(step, {}):
+        return dict(RECIPE_ARGUMENTS[step][param.name])
+    function = getattr(esmvalcore.preprocessor, step)
     annotation = _resolve_annotation(param.annotation, function)
     schema = _annotation_to_schema(annotation) or {}
     if description:
@@ -373,8 +477,8 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
         if no_default and param.name not in automatic:
             required.append(param.name)
         properties[param.name] = _parameter_schema(
+            step,
             param,
-            function,
             descriptions.get(param.name),
         )
 
@@ -411,7 +515,30 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
                 "description": "Enable this step with its default settings.",
             },
         )
-    return {"description": summary, "anyOf": options}
+    schema: JSONSchema = {"description": summary, "anyOf": options}
+    if step not in UNDOCUMENTED_STEPS:
+        # Editors show this instead of the description, with a link to the
+        # documentation of using the step in a recipe.
+        url = _recipe_documentation_url(step)
+        schema["markdownDescription"] = (
+            f"{summary}\n\nSee the [recipe documentation]({url})."
+        )
+    return schema
+
+
+def _recipe_documentation_url(step: str) -> str:
+    """Get the URL of the recipe documentation of a preprocessor step."""
+    # Only releases have their own documentation.
+    version = (
+        f"v{__version__}"
+        if re.fullmatch(r"\d+\.\d+\.\d+", __version__)
+        else "latest"
+    )
+    anchor = step.replace("_", "-")
+    return (
+        f"https://docs.esmvaltool.org/projects/ESMValCore/en/{version}/"
+        f"recipe/preprocessor.html#{anchor}"
+    )
 
 
 def _preprocessor_schema() -> JSONSchema:
@@ -934,6 +1061,14 @@ def _relevant_errors(
             for i, option in enumerate(error.validator_value)
             if _allows_type(option, error.instance)
         ]
+        if len(options) > 1:
+            # Several options accept values of this type, e.g. mappings with
+            # different keys. Use the option that the value matches best.
+            counts = collections.Counter(
+                e.relative_schema_path[0] for e in error.context
+            )
+            fewest = min(counts[i] for i in options)
+            options = [i for i in options if counts[i] == fewest]
         if len(options) == 1:
             others = [
                 description
@@ -941,6 +1076,7 @@ def _relevant_errors(
                 if i != options[0]
                 for description in _expected(option) or []
             ]
+            others = list(dict.fromkeys(others))
             return [
                 relevant
                 for e in error.context
@@ -1076,6 +1212,7 @@ def _describe_wrong_type(
     if None in descriptions:
         return _describe_other(error)
     expected = [e for d in descriptions if d is not None for e in d]
+    expected = list(dict.fromkeys(expected))
     message = f"expected {_join_or(expected)}, got {error.instance!r}."
     return [RecipeIssue(tuple(error.absolute_path), message)]
 

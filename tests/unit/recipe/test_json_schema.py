@@ -185,6 +185,150 @@ def test_step_schema(schema: dict[str, Any]) -> None:
     assert settings["properties"]["scheme"]["description"]
 
 
+def test_step_schema_recipe_arguments(schema: dict[str, Any]) -> None:
+    steps = schema["definitions"]["steps"]
+    target_grid = steps["regrid"]["anyOf"][0]["properties"]["target_grid"]
+    assert target_grid == json_schema.RECIPE_ARGUMENTS["regrid"]["target_grid"]
+    assert "Dataset" not in target_grid["description"]
+
+
+@pytest.mark.parametrize(
+    ("step", "settings"),
+    [
+        ("regrid", {"target_grid": "ERA5", "scheme": "linear"}),
+        ("regrid", {"target_grid": "reference_dataset", "scheme": "linear"}),
+        ("regrid", {"target_grid": "EUR-11", "scheme": "linear"}),
+        ("regrid", {"target_grid": "2.5x2.5", "scheme": "linear"}),
+        (
+            "regrid",
+            {
+                "target_grid": {
+                    "start_longitude": 0,
+                    "end_longitude": 10,
+                    "step_longitude": 1,
+                    "start_latitude": 40,
+                    "end_latitude": 50,
+                    "step_latitude": 1,
+                },
+                "scheme": "linear",
+            },
+        ),
+        ("extract_levels", {"levels": 85000, "scheme": "linear"}),
+        ("extract_levels", {"levels": [85000, 50000], "scheme": "linear"}),
+        ("extract_levels", {"levels": "ERA5", "scheme": "linear"}),
+        (
+            "extract_levels",
+            {"levels": {"dataset": "ERA5"}, "scheme": "linear"},
+        ),
+        (
+            "extract_levels",
+            {
+                "levels": {"cmor_table": "CMIP6", "coordinate": "plev19"},
+                "scheme": "linear",
+            },
+        ),
+        ("extract_shape", {"shapefile": "ar6", "ids": {"Acronym": ["WNA"]}}),
+    ],
+)
+def test_validate_recipe_arguments(step: str, settings: dict) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["test"] = {step: settings}
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    ("step", "settings", "message"),
+    [
+        (
+            "regrid",
+            {"target_grid": {"start_longitude": 0}, "scheme": "linear"},
+            (
+                "preprocessors > test > regrid > target_grid: missing "
+                "required keys 'end_longitude', 'step_longitude', "
+                "'start_latitude', 'end_latitude', 'step_latitude'."
+            ),
+        ),
+        (
+            "extract_levels",
+            {"levels": {"cmor_table": "CMIP6"}, "scheme": "linear"},
+            (
+                "preprocessors > test > extract_levels > levels: missing required "
+                "key 'coordinate'."
+            ),
+        ),
+        (
+            "extract_levels",
+            {"levels": True, "scheme": "linear"},
+            (
+                "preprocessors > test > extract_levels > levels: expected a "
+                "number, a list, a string, or a mapping, got True."
+            ),
+        ),
+    ],
+)
+def test_validate_recipe_arguments_invalid(
+    step: str,
+    settings: dict,
+    message: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["test"] = {step: settings}
+    assert message in [str(issue) for issue in validate_recipe(recipe)]
+
+
+def test_step_schema_documentation_link(schema: dict[str, Any]) -> None:
+    steps = schema["definitions"]["steps"]
+    assert steps["regrid"]["markdownDescription"].endswith(
+        "See the [recipe documentation](https://docs.esmvaltool.org/projects/"
+        "ESMValCore/en/latest/recipe/preprocessor.html#regrid).",
+    )
+    assert "markdownDescription" not in steps["save"]
+
+
+@pytest.mark.parametrize(
+    ("version", "expected"),
+    [
+        ("2.12.0", "v2.12.0"),
+        ("2.15.0rc5", "latest"),
+        ("2.15.0.dev12+g1234567", "latest"),
+    ],
+)
+def test_recipe_documentation_url(
+    monkeypatch: pytest.MonkeyPatch,
+    version: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(json_schema, "__version__", version)
+    assert json_schema._recipe_documentation_url("extract_levels") == (
+        f"https://docs.esmvaltool.org/projects/ESMValCore/en/{expected}/"
+        "recipe/preprocessor.html#extract-levels"
+    )
+
+
+PREPROCESSOR_DOCS = (
+    Path(__file__).parents[3] / "doc" / "recipe" / "preprocessor.rst"
+)
+
+
+@pytest.mark.skipif(
+    not PREPROCESSOR_DOCS.exists(),
+    reason="documentation not available",
+)
+def test_recipe_documentation_anchors() -> None:
+    """Check that the links to the recipe documentation of the steps work.
+
+    Sphinx creates the anchor ``extract-levels`` from the section title
+    ````extract_levels```` and from the label ``.. _extract_levels:``.
+    """
+    text = PREPROCESSOR_DOCS.read_text(encoding="utf-8")
+    titles = set(re.findall(r"^``(\w+)``\n[=\-~^*]{4,}$", text, re.MULTILINE))
+    labels = set(re.findall(r"^\.\. _(\w+):$", text, re.MULTILINE))
+    documented = set(esmvalcore.preprocessor.DEFAULT_ORDER) - (
+        json_schema.UNDOCUMENTED_STEPS
+    )
+    assert documented - titles - labels == set()
+
+
 def test_step_schema_literal_arguments(schema: dict[str, Any]) -> None:
     steps = schema["definitions"]["steps"]
     extract_shape = steps["extract_shape"]["anyOf"][0]["properties"]

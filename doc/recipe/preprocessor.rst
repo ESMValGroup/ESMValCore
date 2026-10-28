@@ -186,6 +186,7 @@ Calculate the global non-weighted root mean square:
   strongly recommend to **not** use it!
 
 
+.. _derive:
 .. _Variable derivation:
 
 Variable derivation
@@ -228,6 +229,9 @@ derivation scripts and how to implement new ones, please go to
 CMORization and dataset-specific fixes
 ======================================
 
+.. _cmor_check_metadata:
+.. _cmor_check_data:
+
 Data checking
 -------------
 
@@ -258,6 +262,10 @@ following:
     - Minute differences between the required and actual vertical coordinate values
 
 
+.. _fix_file:
+.. _fix_metadata:
+.. _fix_data:
+
 Dataset specific fixes
 ----------------------
 
@@ -286,6 +294,8 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
+.. _add_supplementary_variables:
+.. _remove_supplementary_variables:
 .. _preprocessors_using_supplementary_variables:
 
 Supplementary variables (ancillary variables and cell measures)
@@ -439,6 +449,7 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
           timerange: '1990/2000'
       scripts: null
 
+.. _extract_levels:
 .. _Vertical interpolation:
 
 Vertical interpolation
@@ -562,6 +573,7 @@ The vertical interpolation currently supports the following schemes:
 Weighting
 =========
 
+.. _weighting_landsea_fraction:
 .. _land/sea fraction weighting:
 
 Land/sea fraction weighting
@@ -625,6 +637,7 @@ are used: although these are not model-specific, they represent a good
 approximation since they have a much higher resolution than most of the models
 and they are regularly updated with changing geographical features.
 
+.. _mask_landsea:
 .. _land/sea/ice masking:
 
 Land-sea masking
@@ -657,6 +670,7 @@ land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
+.. _mask_landseaice:
 .. _ice masking:
 
 Ice masking
@@ -681,6 +695,8 @@ described in :ref:`supplementary_variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
+.. _mask_glaciated:
+
 Glaciated masking
 -----------------
 
@@ -698,6 +714,7 @@ and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
+.. _mask_fillvalues:
 .. _masking of missing values:
 
 Missing values masks
@@ -737,6 +754,8 @@ is set to 19.0 (in units of the variable units).
 
 See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 
+.. _mask_multimodel:
+
 Common mask for multiple models
 -------------------------------
 
@@ -749,6 +768,10 @@ After ``mask_multimodel``, all involved datasets have an identical mask.
 
 See also :func:`esmvalcore.preprocessor.mask_multimodel`.
 
+.. _mask_above_threshold:
+.. _mask_below_threshold:
+.. _mask_inside_range:
+.. _mask_outside_range:
 .. _threshold_masking:
 
 Minimum, maximum and interval masking
@@ -767,6 +790,7 @@ See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
 
 
+.. _regrid:
 .. _Horizontal regridding:
 
 Horizontal regridding
@@ -1108,6 +1132,7 @@ and in the docstrings :ref:`here <regridding_schemes>`.
 See also :func:`esmvalcore.preprocessor.regrid`
 
 
+.. _ensemble_statistics:
 .. _ensemble statistics:
 
 Ensemble statistics
@@ -1180,6 +1205,7 @@ the preprocessor chains could be defined as:
 
 See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
+.. _multi_model_statistics:
 .. _multi-model statistics:
 
 Multi-model statistics
@@ -2526,6 +2552,7 @@ and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
 
+.. _rolling_window_statistics:
 .. _rolling window statistics:
 
 Rolling window statistics
