@@ -734,8 +734,12 @@ def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
     The project is often defined at another level of the recipe than the MIP,
     so a MIP without a project in the same mapping is checked against the
     tables of all projects.
+
+    Most mappings do not define a project or branding suffix, so the rules for
+    those are only checked if the mapping contains them. This makes
+    validating large recipes several times faster.
     """
-    rules = []
+    project_rules = []
     for project, project_tables in tables.items():
         if project_tables is None:
             continue
@@ -745,7 +749,7 @@ def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
                 " The variable will be looked up in all tables, because the "
                 "CMOR checks of this project are not strict."
             )
-        rules.append(
+        project_rules.append(
             {
                 "if": {
                     "properties": {
@@ -759,6 +763,14 @@ def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
                     hint,
                     strict=project_tables.strict,
                 ),
+            },
+        )
+    rules: list[JSONSchema] = []
+    if project_rules:
+        rules.append(
+            {
+                "if": {"required": ["project", "mip"]},
+                "then": {"allOf": project_rules},
             },
         )
     known = [t for t in tables.values() if t is not None]
@@ -776,7 +788,14 @@ def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
                 ),
             },
         )
-    return rules + _branding_suffix_rules(tables)
+    if suffix_rules := _branding_suffix_rules(tables):
+        rules.append(
+            {
+                "if": {"required": ["branding_suffix"]},
+                "then": {"allOf": suffix_rules},
+            },
+        )
+    return rules
 
 
 def _branding_suffix_rules(
