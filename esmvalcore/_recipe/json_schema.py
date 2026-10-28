@@ -666,6 +666,31 @@ class _Tables(typing.NamedTuple):
 
     Other projects look for the variable in all their tables.
     """
+    branding_suffixes: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    """The branding suffixes of the variables in each table."""
+
+
+def _branding_suffixes(
+    tables: dict[str, dict[str, typing.Any]],
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Get the branding suffixes of the variables in each table.
+
+    In a CMOR table with branded variables, the variable name is followed by
+    an underscore and the branding suffix, e.g. ``tas_tavg-h2m-hxy-u``.
+    """
+    suffixes = {
+        mip: tuple(
+            sorted(
+                {
+                    name.removeprefix(f"{vardef.short_name}_")
+                    for name, vardef in table.items()
+                    if name.startswith(f"{vardef.short_name}_")
+                },
+            ),
+        )
+        for mip, table in tables.items()
+    }
+    return tuple((mip, names) for mip, names in suffixes.items() if names)
 
 
 def _known_tables() -> dict[str, _Tables | None]:
@@ -682,6 +707,7 @@ def _known_tables() -> dict[str, _Tables | None]:
             _Tables(
                 tuple(sorted(name for name in names if name)),
                 getattr(info, "strict", True),
+                _branding_suffixes(names),
             )
             if names
             else None
@@ -748,6 +774,50 @@ def _project_rules(tables: dict[str, _Tables | None]) -> list[JSONSchema]:
                     "Not a CMOR table of any project.",
                     strict=all(t.strict for t in known),
                 ),
+            },
+        )
+    return rules + _branding_suffix_rules(tables)
+
+
+def _branding_suffix_rules(
+    tables: dict[str, _Tables | None],
+) -> list[JSONSchema]:
+    """Create rules that check the branding suffix against the MIP table.
+
+    The variable is often defined by the name of the variable group, so the
+    suffixes of all variables in the table are allowed.
+    """
+    suffixes: dict[str, set[str]] = {}
+    strict: dict[str, bool] = {}
+    for project_tables in tables.values():
+        if project_tables is None:
+            continue
+        for mip, names in project_tables.branding_suffixes:
+            suffixes.setdefault(mip, set()).update(names)
+            strict[mip] = strict.get(mip, True) and project_tables.strict
+    rules = []
+    for mip, mip_suffixes in sorted(suffixes.items()):
+        schema: JSONSchema = {
+            "enum": sorted(mip_suffixes),
+            "errorMessage": (
+                f"Not a branding suffix of a variable in CMOR table '{mip}'."
+            ),
+        }
+        if not strict[mip]:
+            schema[SEVERITY_KEYWORD] = "warning"
+        rules.append(
+            {
+                "if": {
+                    "properties": {
+                        "mip": {"const": mip},
+                        "branding_suffix": {
+                            "type": "string",
+                            **NOT_A_PATTERN,
+                        },
+                    },
+                    "required": ["mip"],
+                },
+                "then": {"properties": {"branding_suffix": schema}},
             },
         )
     return rules

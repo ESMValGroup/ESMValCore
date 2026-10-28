@@ -2511,7 +2511,7 @@ def test_wrong_branding_suffix(tmp_path, patched_datafinder, session):
                 preprocessor: preproc
                 project: CMIP7
                 mip: ocean
-                branding_suffix: wrong
+                branding_suffix: tavg-ol-hxy-sea
                 exp: historical
                 start_year: 2000
                 end_year: 2005
@@ -2520,7 +2520,12 @@ def test_wrong_branding_suffix(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = "Variable 'tos' with branding suffix 'wrong' not available in table 'ocean' of project 'CMIP7'"
+    msg = (
+        "Variable 'tos' with branding suffix 'tavg-ol-hxy-sea' not available "
+        "in table 'ocean' of project 'CMIP7'. Available branding suffixes are: "
+        "tavg-u-hm-sea, tavg-u-hxy-sea, tpt-u-hxy-sea. Did you mean "
+        "'tavg-u-hxy-sea'?"
+    )
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == msg

@@ -956,6 +956,61 @@ def test_validate_recipe_mip_pattern(mip: str) -> None:
     assert validate_recipe(recipe) == []
 
 
+@pytest.mark.parametrize(
+    ("mip", "branding_suffix"),
+    [
+        ("atmos", "tavg-h2m-hxy-u"),
+        ("atmos", "tavg-*"),
+        ("atmos", ["tavg-h2m-hxy-u", "tmax-h2m-hxy-u"]),
+        ("ocean", "tavg-u-hxy-sea"),
+        ("*", "anything"),
+    ],
+)
+def test_validate_recipe_branding_suffix(
+    mip: str,
+    branding_suffix: str | list[str],
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable["mip"] = mip
+    variable["branding_suffix"] = branding_suffix
+    assert validate_recipe(recipe) == []
+
+
+def test_validate_recipe_branding_suffix_invalid() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable["mip"] = "atmos"
+    variable["branding_suffix"] = "tavg-h2m-hxy-uu"
+    path = ("diagnostics", "example", "variables", "ta", "branding_suffix")
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            path,
+            "unknown value 'tavg-h2m-hxy-uu'. Not a branding suffix of a "
+            "variable in CMOR table 'atmos'. Did you mean 'tavg-h2m-hxy-u'?",
+        ),
+    ]
+
+
+def test_branding_suffix_rules_not_strict() -> None:
+    tables: dict[str, json_schema._Tables | None] = {
+        "A": json_schema._Tables(
+            ("atmos",),
+            strict=True,
+            branding_suffixes=(("atmos", ("tavg-u-hxy-u",)),),
+        ),
+        "B": json_schema._Tables(
+            ("atmos",),
+            strict=False,
+            branding_suffixes=(("atmos", ("tpt-u-hxy-u",)),),
+        ),
+    }
+    (rule,) = json_schema._branding_suffix_rules(tables)
+    schema = rule["then"]["properties"]["branding_suffix"]
+    assert schema["enum"] == ["tavg-u-hxy-u", "tpt-u-hxy-u"]
+    assert schema[json_schema.SEVERITY_KEYWORD] == "warning"
+
+
 def test_validate_recipe_mip_of_other_project() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][2]["mip"] = "atmos"

@@ -839,6 +839,11 @@ the tables of all projects.
 An unknown ``mip`` is a warning instead of an error for projects where the
 CMOR checks are not strict, because ESMValCore then looks for the variable in
 all tables of the project.
+A ``branding_suffix`` is checked against the branding suffixes of all
+variables in the CMOR table given by the ``mip``, because the variable is often
+defined by the name of the variable group.
+When running the recipe, ESMValCore checks that the branding suffix is
+available for the variable.
 The published schema uses the default configuration, so if you have configured
 additional projects or CMOR tables, use the schema written by
 ``esmvaltool recipes schema``.
