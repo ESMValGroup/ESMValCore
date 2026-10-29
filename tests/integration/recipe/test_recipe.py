@@ -3052,7 +3052,6 @@ def test_mm_stats_invalid_stats(
 @pytest.mark.parametrize(
     "statistics",
     [
-        {"invalid_value": 1},
         {"percent": 10, "invalid_value": 1},
         {"percent": 10, "weights": False},
     ],
@@ -3242,18 +3241,21 @@ def test_statistics_missing_operator_with_default(
 @pytest.mark.parametrize(
     ("preproc", "preproc_kwargs"),
     [
-        ("annual_statistics", {"invalid_value": 1}),
+        ("annual_statistics", {"percent": 10, "invalid_value": 1}),
         ("area_statistics", {"percent": 10, "invalid_value": 1}),
         ("axis_statistics", {"axis": "x", "percent": 10, "weights": False}),
-        ("climate_statistics", {"invalid_value": 1}),
+        ("climate_statistics", {"percent": 10, "invalid_value": 1}),
         ("daily_statistics", {"percent": 10, "invalid_value": 1}),
         ("decadal_statistics", {"percent": 10, "weights": False}),
-        ("hourly_statistics", {"invalid_value": 1, "hours": 2}),
+        (
+            "hourly_statistics",
+            {"percent": 10, "invalid_value": 1, "hours": 2},
+        ),
         ("meridional_statistics", {"percent": 10, "invalid_value": 1}),
         ("monthly_statistics", {"percent": 10, "weights": False}),
-        ("seasonal_statistics", {"invalid_value": 1}),
+        ("seasonal_statistics", {"percent": 10, "invalid_value": 1}),
         ("volume_statistics", {"percent": 10, "weights": False}),
-        ("zonal_statistics", {"invalid_value": 1}),
+        ("zonal_statistics", {"percent": 10, "invalid_value": 1}),
         (
             "rolling_window_statistics",
             {

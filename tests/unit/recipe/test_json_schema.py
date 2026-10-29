@@ -281,6 +281,16 @@ def test_step_schema_statistics_operators(schema: dict[str, Any]) -> None:
             "unknown value 'meen'.",
         ),
         ([{"percent": 5}], (0,), "missing required key 'operator'."),
+        (
+            [{"operator": "percentile"}],
+            (0,),
+            "missing required key 'percent'.",
+        ),
+        (
+            [{"operator": "percentile", "percent": 105}],
+            (0, "percent"),
+            "expected at most 100, got 105.",
+        ),
     ],
 )
 def test_validate_recipe_statistics_operators(
@@ -300,6 +310,27 @@ def test_validate_recipe_statistics_operators(
     assert issue.path == (*prefix, *path)
     assert issue.message.startswith(message)
     assert issue.severity == "error"
+
+
+@pytest.mark.parametrize(
+    ("settings", "issues"),
+    [
+        ({"operator": "mean"}, []),
+        ({"operator": "percentile", "percent": 95}, []),
+        ({"operator": "wpercentile", "percent": [5, 95]}, []),
+        ({"operator": "percentile"}, ["missing required argument 'percent'."]),
+    ],
+)
+def test_validate_recipe_percent(
+    settings: dict[str, Any],
+    issues: list[str],
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["pp"]["annual_statistics"] = settings
+    result = validate_recipe(recipe)
+    assert [issue.message for issue in result] == issues
+    path = ("preprocessors", "pp", "annual_statistics")
+    assert all(issue.path == path for issue in result)
 
 
 @pytest.mark.parametrize(

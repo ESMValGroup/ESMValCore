@@ -197,6 +197,16 @@ STATISTICS_OPERATORS = (
     "wpercentile",
 )
 _OPERATORS_TEXT = ", ".join(f"`{op}`" for op in STATISTICS_OPERATORS)
+# Operators that require the keyword argument ``percent``.
+PERCENT_OPERATORS = ("percentile", "wpercentile")
+_PERCENT = {"type": "number", "minimum": 0, "maximum": 100}
+PERCENT_SCHEMA: JSONSchema = {
+    "anyOf": [_PERCENT, {"type": "array", "items": _PERCENT, "minItems": 1}],
+    "description": (
+        "Percentile or list of percentiles to compute, between 0 and 100. "
+        "Required for the operators `percentile` and `wpercentile`."
+    ),
+}
 _OPERATOR_TABLE = re.compile(
     r"given in\s+:ref:`this table\s+<supported_stat_operator>`",
 )
@@ -595,6 +605,28 @@ def _add_operators(schema: JSONSchema) -> None:
         schema["properties"] = {"operator": {"type": "string"}}
         schema["required"] = ["operator"]
         _add_operators(schema["properties"]["operator"])
+        _add_percent(schema)
+
+
+def _add_percent(schema: JSONSchema) -> None:
+    """Add the argument ``percent`` of the percentile operators."""
+    schema["properties"]["percent"] = dict(PERCENT_SCHEMA)
+    schema.setdefault("allOf", []).append(
+        {
+            "if": {
+                "properties": {"operator": {"enum": list(PERCENT_OPERATORS)}},
+                "required": ["operator"],
+            },
+            "then": {"required": ["percent"]},
+        },
+    )
+
+
+def _add_operator_kwargs(settings: JSONSchema) -> None:
+    """Add the keyword arguments of the operators to the step settings."""
+    operator = settings["properties"].get("operator", {})
+    if settings["additionalProperties"] and "enum" in operator:
+        _add_percent(settings)
 
 
 def _preprocessor_step_schema(step: str) -> JSONSchema:
@@ -645,6 +677,7 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
     }
     if required:
         settings["required"] = required
+    _add_operator_kwargs(settings)
 
     options: list[JSONSchema] = [
         settings,
