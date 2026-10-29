@@ -16,9 +16,11 @@ from typing import TYPE_CHECKING, Any, Literal
 import dask.array as da
 import iris.analysis
 import numpy as np
+import shapely
+from iris.analysis.cartography import DEFAULT_SPHERICAL_EARTH_RADIUS
 from iris.coords import CellMeasure, DimCoord
 from iris.cube import Cube
-from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.exceptions import CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import (
@@ -530,14 +532,10 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
         logger.debug("Calculating grid cell areas for rotated pole grid")
         cell_areas = _compute_area_weights(cube_tmp)
 
-    # For all other cases, grid cell areas cannot be calculated
+    # Calculate cell areas for unstructured grid
     else:
-        logger.error(
-            "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular or unstructured grid of cube %s",
-            cube.summary(shorten=True),
-        )
-        raise CoordinateMultiDimError(cube.coord("latitude"))
+        logger.debug("Calculating grid cell areas for unstructured grid")
+        cell_areas = _compute_area_weights_unstructured(cube)
 
     # Add new cell measure
     cell_measure = CellMeasure(
@@ -570,6 +568,68 @@ def _compute_area_weights(cube):
                 cube,
             )
     return weights
+
+
+def _compute_area_weights_unstructured(cube):
+    lat_coord = cube.coord("latitude")
+    lon_coord = cube.coord("longitude")
+
+    lat_bnds = np.asarray(lat_coord.bounds)
+    lon_bnds = np.asarray(lon_coord.bounds)
+
+    orig_shape = lat_bnds.shape
+    num_vertices = orig_shape[-1]
+
+    # Flatten if curvilinear (n_cells, n_vertices)
+    if len(orig_shape) == 3:
+        lat_bnds = lat_bnds.reshape(-1, num_vertices)
+        lon_bnds = lon_bnds.reshape(-1, num_vertices)
+
+    # Deal with cells stretching across 180° meridian
+    lon_bnds = (lon_bnds + 180) % 360 - 180
+    lon_min = np.min(lon_bnds, axis=1)
+    lon_max = np.max(lon_bnds, axis=1)
+    cross_dateline = (lon_max - lon_min) > 180
+
+    if np.any(cross_dateline):
+        lon_bnds[cross_dateline] = np.where(
+            lon_bnds[cross_dateline] < 0,
+            lon_bnds[cross_dateline] + 360,
+            lon_bnds[cross_dateline],
+        )
+
+    # Sinusiodal projection
+    lon_rad = np.radians(lon_bnds)
+    lat_rad = np.radians(lat_bnds)
+    x_bnds = DEFAULT_SPHERICAL_EARTH_RADIUS * lon_rad * np.cos(lat_rad)
+    y_bnds = DEFAULT_SPHERICAL_EARTH_RADIUS * lat_rad
+
+    # Create polygons and calculate areas
+    coords = np.stack([x_bnds, y_bnds], axis=-1)
+    polygons = shapely.polygons(coords)
+    cell_areas = shapely.area(polygons)
+
+    # Un-flatten curvilinear grid
+    if len(orig_shape) == 3:
+        cell_areas = cell_areas.reshape(orig_shape[:-1])
+
+    # Broadcast to full cube dimensions
+    if cube.coord("latitude").core_points().ndim == 2:
+        cell_areas = broadcast_to_shape(
+            cell_areas,
+            cube.shape,
+            (-2, -1),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        )
+    else:
+        cell_areas = broadcast_to_shape(
+            cell_areas,
+            cube.shape,
+            (-1,),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        )
+
+    return da.from_array(cell_areas, chunks=cube.shape)
 
 
 def get_all_coords(
