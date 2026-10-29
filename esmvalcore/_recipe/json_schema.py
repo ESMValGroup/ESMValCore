@@ -1470,82 +1470,146 @@ def _describe(
     return describers.get(error.validator, _describe_other)(error)
 
 
+# Positions of aliases, by the id of the node that contains the alias and
+# the index of the alias in a sequence or the id of its key in a mapping.
+_Aliases = dict[tuple[int, int], yaml.Mark]
+
+
+class _AliasLoader(yaml.SafeLoader):
+    """Loader that records where aliases are used.
+
+    An alias composes to the node of its anchor, so the node itself does not
+    tell where the alias is.
+    """
+
+    def __init__(self, stream: str) -> None:
+        super().__init__(stream)
+        self.aliases: _Aliases = {}
+
+    def compose_node(
+        self,
+        parent: yaml.Node | None,
+        index: int,
+    ) -> yaml.Node | None:
+        # The index is the position in a sequence or, despite the type stubs
+        # of PyYAML, the key node in a mapping, or None for a key or the root
+        # node.
+        if (
+            parent is not None
+            and index is not None
+            and self.check_event(yaml.AliasEvent)
+        ):
+            child = index if isinstance(index, int) else id(index)
+            self.aliases[id(parent), child] = self.peek_event().start_mark
+        return super().compose_node(parent, index)
+
+
 def _mapping_items(
     node: yaml.MappingNode,
-) -> list[tuple[yaml.Node, yaml.Node]]:
+    aliases: _Aliases,
+) -> list[tuple[yaml.Node, yaml.Node, yaml.Mark | None]]:
     """Get the items of a mapping, including those from merge keys (``<<``).
 
     The items are in the order that PyYAML uses to construct the mapping, so
     if a key occurs more than once, the last item is the one that is used.
+    Each item comes with the position of the alias that merged it into the
+    mapping, if any.
     """
-    merged = []
+    merged: list[tuple[yaml.Node, yaml.Node, yaml.Mark | None]] = []
     items = []
     for key_node, value_node in node.value:
         if key_node.tag == "tag:yaml.org,2002:merge":
             sources = (
-                value_node.value
+                [
+                    (source, aliases.get((id(value_node), i)))
+                    for i, source in enumerate(value_node.value)
+                ]
                 if isinstance(value_node, yaml.SequenceNode)
-                else [value_node]
+                else [(value_node, aliases.get((id(node), id(key_node))))]
             )
             # In a sequence of mappings to merge, the first one has priority.
-            for source in reversed(sources):
+            for source, alias in reversed(sources):
                 if isinstance(source, yaml.MappingNode):
-                    merged.extend(_mapping_items(source))
+                    merged.extend(
+                        (key, value, alias or inner)
+                        for key, value, inner in _mapping_items(
+                            source,
+                            aliases,
+                        )
+                    )
         else:
-            items.append((key_node, value_node))
+            items.append((key_node, value_node, None))
     return merged + items
 
 
 def _find_child(
     node: yaml.Node,
     key: str | int,
-) -> tuple[yaml.Node, yaml.Node] | None:
-    """Find the key and value nodes of an item in a mapping or sequence.
+    aliases: _Aliases,
+) -> tuple[yaml.Mark, yaml.Node, yaml.Mark | None] | None:
+    """Find an item in a mapping or sequence.
 
-    Merge keys (``<<``) are followed, so an item that comes from an anchor is
-    found at the anchor.
+    Returns the position of the item, its value node, and the position of
+    the alias through which the value is reached, if any. Merge keys (``<<``)
+    are followed, so an item that comes from an anchor is found at the alias
+    that merges it.
     """
     found = None
     if isinstance(node, yaml.MappingNode):
-        for key_node, value_node in _mapping_items(node):
+        for key_node, value_node, merged in _mapping_items(node, aliases):
             if isinstance(key_node, yaml.ScalarNode) and (
                 key_node.value == str(key)
             ):
-                found = key_node, value_node
+                alias = merged or aliases.get((id(node), id(key_node)))
+                found = merged or key_node.start_mark, value_node, alias
     elif (
         isinstance(node, yaml.SequenceNode)
         and isinstance(key, int)
         and key < len(node.value)
     ):
-        found = node.value[key], node.value[key]
+        item = node.value[key]
+        alias = aliases.get((id(node), key))
+        found = alias or item.start_mark, item, alias
     return found
 
 
 def _find_position(
     root: yaml.Node,
+    aliases: _Aliases,
     path: tuple[str | int, ...],
 ) -> yaml.Mark | None:
     """Find the position of a path in a recipe.
 
-    For an item of a mapping, this is the position of its key.
+    For an item of a mapping, this is the position of its key. For an item
+    inside an anchored node, this is the position of the alias that leads to
+    it, so the problem is shown where the anchored node is used.
     """
     node = root
     position = root.start_mark
+    via_alias = None
     for key in path:
-        found = _find_child(node, key)
+        found = _find_child(node, key, aliases)
         if found is None:
             return None
-        key_node, node = found
-        position = key_node.start_mark
+        position, node, alias = found
+        position = via_alias or position
+        via_alias = via_alias or alias
     return position
 
 
-def _compose(text: str) -> yaml.Node | None:
-    """Parse YAML text into a tree of nodes, or None if that fails."""
+def _compose(text: str) -> tuple[yaml.Node, _Aliases] | None:
+    """Parse YAML text into a tree of nodes and the positions of aliases.
+
+    Returns None if that fails or the text is empty.
+    """
+    loader = _AliasLoader(text)
     try:
-        return yaml.compose(text, Loader=yaml.SafeLoader)
+        root = loader.get_single_node()
     except yaml.YAMLError:
         return None
+    finally:
+        loader.dispose()
+    return None if root is None else (root, loader.aliases)
 
 
 def _find_duplicate_keys(
@@ -1736,14 +1800,18 @@ def _find_unknown_ancestors(recipe: object) -> list[RecipeIssue]:
     return issues
 
 
-def _locate(issues: list[RecipeIssue], root: yaml.Node) -> list[RecipeIssue]:
+def _locate(
+    issues: list[RecipeIssue],
+    root: yaml.Node,
+    aliases: _Aliases,
+) -> list[RecipeIssue]:
     """Add line and column numbers to issues and sort them by position."""
     located = []
     for issue in issues:
         position = (
             None
             if issue.line is not None
-            else _find_position(root, issue.path)
+            else _find_position(root, aliases, issue.path)
         )
         located.append(
             issue
@@ -1796,8 +1864,9 @@ def validate_recipe(
                     issues.append(issue)
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))
-    root = None if text is None else _compose(text)
-    if root is not None:
+    composed = None if text is None else _compose(text)
+    if composed is not None:
+        root, aliases = composed
         issues.extend(_find_duplicate_keys(root))
-        issues = _locate(issues, root)
+        issues = _locate(issues, root, aliases)
     return issues

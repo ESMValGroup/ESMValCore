@@ -613,7 +613,8 @@ def test_validate_recipe_positions() -> None:
             line=5,
             column=22,
         ),
-        # Problems in an anchored mapping are found at the anchor.
+        # Problems in an anchored mapping are found at the anchor, and where
+        # an alias uses it.
         RecipeIssue(
             ("preprocessors", "base", "area_statistics", "operator"),
             "expected a string, got 1.",
@@ -623,8 +624,8 @@ def test_validate_recipe_positions() -> None:
         RecipeIssue(
             ("preprocessors", "derived", "area_statistics", "operator"),
             "expected a string, got 1.",
-            line=9,
-            column=7,
+            line=11,
+            column=9,
         ),
         RecipeIssue(
             ("preprocessors", "derived", "convert_units"),
@@ -662,20 +663,22 @@ preprocessors:
 
 
 @pytest.mark.parametrize(
-    ("preprocessor", "line"),
+    ("preprocessor", "scheme", "line", "column"),
     [
         # In a sequence of mappings to merge, the first one has priority.
-        ("sequence", 3),
+        ("sequence", "linear", 10, 12),
         # With repeated merge keys, the last one has priority.
-        ("repeated", 5),
+        ("repeated", "nearest", 14, 11),
     ],
 )
-def test_validate_recipe_positions_merge(preprocessor: str, line: int) -> None:
+def test_validate_recipe_positions_merge(
+    preprocessor: str,
+    scheme: str,
+    line: int,
+    column: int,
+) -> None:
     recipe = yaml.safe_load(MERGE_RECIPE)
-    expected = "linear" if line == 3 else "nearest"
-    assert (
-        recipe["preprocessors"][preprocessor]["regrid"]["scheme"] == expected
-    )
+    assert recipe["preprocessors"][preprocessor]["regrid"]["scheme"] == scheme
     recipe["preprocessors"][preprocessor]["regrid"]["scheme"] = "invalid"
     issues = [
         issue
@@ -684,7 +687,42 @@ def test_validate_recipe_positions_merge(preprocessor: str, line: int) -> None:
     ]
     assert len(issues) == 1
     assert issues[0].path[-1] == "scheme"
-    assert issues[0].line == line
+    # The problem is found at the alias that merges the anchored mapping.
+    assert (issues[0].line, issues[0].column) == (line, column)
+
+
+ALIAS_RECIPE = """
+datasets:
+  - &dataset {dataset: CanESM2, project: CMIP5, tier: 7}
+  - *dataset
+preprocessors:
+  base: &base
+    regrid: &regrid
+      scheme: invalid
+  derived:
+    <<: *base
+  value:
+    regrid: *regrid
+"""
+
+
+def test_validate_recipe_positions_alias() -> None:
+    issues = validate_recipe(yaml.safe_load(ALIAS_RECIPE), ALIAS_RECIPE)
+    positions = {
+        issue.path: (issue.line, issue.column)
+        for issue in issues
+        if issue.path[-1:] in {("tier",), ("scheme",)}
+    }
+    # The value of the item at the alias in a sequence, of the item merged
+    # in by an alias, and of the item with an alias as value are found at
+    # the alias. Only the outermost alias matters.
+    assert positions == {
+        ("datasets", 0, "tier"): (3, 49),
+        ("datasets", 1, "tier"): (4, 5),
+        ("preprocessors", "base", "regrid", "scheme"): (8, 7),
+        ("preprocessors", "derived", "regrid", "scheme"): (10, 9),
+        ("preprocessors", "value", "regrid", "scheme"): (12, 13),
+    }
 
 
 def test_validate_recipe_positions_not_found() -> None:
