@@ -3042,12 +3042,11 @@ def test_mm_stats_invalid_stats(
             scripts: null
         """)
     msg = (
-        "`statistic` given as dictionary, but missing required key `operator`"
+        f"preprocessors > test > {preproc} > statistics > 0: missing required "
+        "key 'operator'."
     )
-    with pytest.raises(RecipeError) as rec_err_exp:
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
 
 
 @pytest.mark.parametrize(

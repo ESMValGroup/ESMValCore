@@ -177,6 +177,29 @@ RECIPE_ARGUMENTS: dict[str, dict[str, JSONSchema]] = {
     },
 }
 
+# Operators of the statistics preprocessors that can be used in a recipe, see
+# the table ``supported_stat_operator`` in ``doc/recipe/preprocessor.rst``. The
+# other aggregators in :mod:`iris.analysis` require a Python function.
+STATISTICS_OPERATORS = (
+    "gmean",
+    "hmean",
+    "max",
+    "mean",
+    "median",
+    "min",
+    "peak",
+    "percentile",
+    "rms",
+    "std_dev",
+    "sum",
+    "variance",
+    "wpercentile",
+)
+_OPERATORS_TEXT = ", ".join(f"`{op}`" for op in STATISTICS_OPERATORS)
+_OPERATOR_TABLE = re.compile(
+    r"given in :ref:`this table\s+<supported_stat_operator>`",
+)
+
 # Preprocessor steps without a section in the recipe documentation. The
 # section of each other step can be found at the anchor with its name.
 UNDOCUMENTED_STEPS = {"clip_timerange", "concatenate", "load", "save"}
@@ -433,7 +456,10 @@ def _parse_docstring(docstring: str) -> tuple[str, dict[str, str]]:
 
     descriptions = {
         name: _clean_rst(
-            re.sub(r"(?<!\n)\n(?!\n)", " ", "\n".join(text).strip()),
+            _OPERATOR_TABLE.sub(
+                _OPERATORS_TEXT,
+                re.sub(r"(?<!\n)\n(?!\n)", " ", "\n".join(text).strip()),
+            ),
         )
         for name, text in parameters.items()
     }
@@ -451,12 +477,29 @@ def _parameter_schema(
     function = getattr(esmvalcore.preprocessor, step)
     annotation = _resolve_annotation(param.annotation, function)
     schema = _annotation_to_schema(annotation) or {}
+    if description and _OPERATORS_TEXT in description:
+        _add_operators(schema)
     if description:
         schema["description"] = description
     if param.default is not inspect.Parameter.empty:
         with contextlib.suppress(TypeError):
             schema["default"] = _to_json_value(param.default)
     return schema
+
+
+def _add_operators(schema: JSONSchema) -> None:
+    """Add the statistics operators to the schema of an argument."""
+    for option in schema.get("anyOf", []):
+        _add_operators(option)
+    if schema.get("type") == "array":
+        _add_operators(schema.get("items", {}))
+    elif schema.get("type") == "string":
+        schema["enum"] = list(STATISTICS_OPERATORS)
+        schema["errorMessage"] = f"Supported operators: {_OPERATORS_TEXT}."
+    elif schema.get("type") == "object":
+        schema["properties"] = {"operator": {"type": "string"}}
+        schema["required"] = ["operator"]
+        _add_operators(schema["properties"]["operator"])
 
 
 def _preprocessor_step_schema(step: str) -> JSONSchema:
@@ -1457,6 +1500,9 @@ def _describe(
 ) -> list[RecipeIssue]:
     """Describe a validation error in terms of the recipe."""
     if error.validator == "enum":
+        if not _allows_type(error.schema, error.instance):
+            # The value also has the wrong type, which is reported instead.
+            return []
         return _describe_invalid_value(error, alternatives)
     describers = {
         "additionalProperties": _describe_unknown_keys,

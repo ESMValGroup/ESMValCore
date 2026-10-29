@@ -192,6 +192,48 @@ def test_step_schema_recipe_arguments(schema: dict[str, Any]) -> None:
     assert "Dataset" not in target_grid["description"]
 
 
+def test_step_schema_statistics_operators(schema: dict[str, Any]) -> None:
+    steps = schema["definitions"]["steps"]
+    operator = steps["climate_statistics"]["anyOf"][0]["properties"][
+        "operator"
+    ]
+    assert operator["enum"] == list(json_schema.STATISTICS_OPERATORS)
+    assert operator["default"] == "mean"
+    assert "this table" not in operator["description"]
+    assert "Allowed options are `gmean`, `hmean`" in operator["description"]
+
+
+@pytest.mark.parametrize(
+    ("statistics", "path", "message"),
+    [
+        (["mean", "MEAN"], (1,), "unknown value 'MEAN'."),
+        (
+            [{"operator": "percentile", "percent": 5}, {"operator": "meen"}],
+            (1, "operator"),
+            "unknown value 'meen'.",
+        ),
+        ([{"percent": 5}], (0,), "missing required key 'operator'."),
+    ],
+)
+def test_validate_recipe_statistics_operators(
+    statistics: list[str | dict[str, Any]],
+    path: tuple[str | int, ...],
+    message: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["preprocessors"]["pp"]["multi_model_statistics"] = {
+        "span": "overlap",
+        "statistics": statistics,
+    }
+    issues = validate_recipe(recipe)
+    assert len(issues) == 1
+    issue = issues[0]
+    prefix = ("preprocessors", "pp", "multi_model_statistics", "statistics")
+    assert issue.path == (*prefix, *path)
+    assert issue.message.startswith(message)
+    assert issue.severity == "error"
+
+
 @pytest.mark.parametrize(
     ("step", "settings"),
     [
