@@ -888,3 +888,6 @@ preprocessor functions.
 Apart from the project and ``mip``, it does not check facet values, for
 example whether a dataset or variable exists, or the settings of diagnostic
 scripts.
+It also cannot check that the preprocessors used by variable groups and
+datasets and the ``ancestors`` of each script are defined in the recipe, but
+ESMValCore checks this before running a recipe.

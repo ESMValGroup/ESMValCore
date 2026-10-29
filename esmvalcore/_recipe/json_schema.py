@@ -15,6 +15,7 @@ import collections.abc
 import contextlib
 import dataclasses
 import difflib
+import fnmatch
 import functools
 import importlib
 import inspect
@@ -34,6 +35,7 @@ from esmvalcore import __version__
 from esmvalcore.cmor.table import get_tables
 from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -1609,6 +1611,131 @@ def _find_duplicate_keys_in_mapping(
     return issues
 
 
+def _mapping(data: object, key: str) -> dict:
+    """Get a mapping from a recipe, or an empty one if it is not there."""
+    value = data.get(key) if isinstance(data, dict) else None
+    return value if isinstance(value, dict) else {}
+
+
+def _list(data: object, key: str) -> list:
+    """Get a list from a recipe, or an empty one if it is not there."""
+    value = data.get(key) if isinstance(data, dict) else None
+    return value if isinstance(value, list) else []
+
+
+def _preprocessor_facets(
+    recipe: object,
+) -> collections.abc.Iterator[tuple[tuple[str | int, ...], object]]:
+    """Find the values of the ``preprocessor`` facet in a recipe.
+
+    Datasets can override the preprocessor of their variable group.
+    """
+    entries: list[tuple[tuple[str | int, ...], object]] = [
+        (("datasets", i), entry)
+        for i, entry in enumerate(_list(recipe, "datasets"))
+    ]
+    for diagnostic_name, diagnostic in _mapping(recipe, "diagnostics").items():
+        path: tuple[str | int, ...] = ("diagnostics", diagnostic_name)
+        entries.extend(
+            ((*path, "additional_datasets", i), entry)
+            for i, entry in enumerate(_list(diagnostic, "additional_datasets"))
+        )
+        for group, variable in _mapping(diagnostic, "variables").items():
+            group_path = (*path, "variables", group)
+            # The schema reports preprocessors of variable groups that are
+            # not a string.
+            name = (
+                variable.get("preprocessor")
+                if isinstance(variable, dict)
+                else None
+            )
+            if isinstance(name, str):
+                yield (*group_path, "preprocessor"), name
+            entries.extend(
+                ((*group_path, "additional_datasets", i), entry)
+                for i, entry in enumerate(
+                    _list(variable, "additional_datasets"),
+                )
+            )
+    for entry_path, entry in entries:
+        if isinstance(entry, dict) and "preprocessor" in entry:
+            yield (*entry_path, "preprocessor"), entry["preprocessor"]
+
+
+def _find_unknown_preprocessors(recipe: object) -> list[RecipeIssue]:
+    """Find datasets that use a preprocessor that is not defined."""
+    preprocessors = {"default", *map(str, _mapping(recipe, "preprocessors"))}
+    return [
+        RecipeIssue(
+            path,
+            f"unknown value {name!r}. Not defined in the `preprocessors` "
+            "section." + _suggest(str(name), preprocessors),
+        )
+        for path, name in _preprocessor_facets(recipe)
+        # The preprocessor is converted to a string when running the recipe.
+        if str(name) not in preprocessors
+    ]
+
+
+def _suggest_task(pattern: str, tasks: list[str]) -> str:
+    """Suggest a task of the same diagnostic with a similar name."""
+    if any(char in pattern for char in "*?["):
+        return ""
+    diagnostic, _, name = pattern.rpartition(TASKSEP)
+    names = {
+        task.rpartition(TASKSEP)[2]: task
+        for task in tasks
+        if task.rpartition(TASKSEP)[0] == diagnostic
+    }
+    close = difflib.get_close_matches(name, list(names), n=1)
+    return f" Did you mean '{names[close[0]]}'?" if close else ""
+
+
+def _find_unknown_ancestors(recipe: object) -> list[RecipeIssue]:
+    """Find ancestors of scripts that do not match any task."""
+    diagnostics = _mapping(recipe, "diagnostics")
+    tasks = [
+        f"{diagnostic_name}{TASKSEP}{task}"
+        for diagnostic_name, diagnostic in diagnostics.items()
+        for group in ("variables", "scripts")
+        for task in _mapping(diagnostic, group)
+    ]
+    issues = []
+    for diagnostic_name, diagnostic in diagnostics.items():
+        for script_name, script in _mapping(diagnostic, "scripts").items():
+            ancestors = (
+                script.get("ancestors") if isinstance(script, dict) else None
+            )
+            if not isinstance(ancestors, list):
+                continue
+            for i, ancestor in enumerate(ancestors):
+                if not isinstance(ancestor, str):
+                    continue
+                # The same rules as in Recipe._initialize_scripts.
+                pattern = (
+                    ancestor
+                    if TASKSEP in ancestor
+                    else f"{diagnostic_name}{TASKSEP}{ancestor}"
+                )
+                if not fnmatch.filter(tasks, pattern):
+                    issues.append(
+                        RecipeIssue(
+                            (
+                                "diagnostics",
+                                diagnostic_name,
+                                "scripts",
+                                script_name,
+                                "ancestors",
+                                i,
+                            ),
+                            f"unknown value {ancestor!r}. Does not match any "
+                            "variable group or script."
+                            + _suggest_task(pattern, tasks),
+                        ),
+                    )
+    return issues
+
+
 def _locate(issues: list[RecipeIssue], root: yaml.Node) -> list[RecipeIssue]:
     """Add line and column numbers to issues and sort them by position."""
     located = []
@@ -1644,6 +1771,9 @@ def validate_recipe(
 ) -> list[RecipeIssue]:
     """Validate a recipe against the JSON Schema.
 
+    Also checks that the preprocessors of variable groups and datasets and
+    the ancestors of scripts are defined in the recipe.
+
     Parameters
     ----------
     recipe:
@@ -1664,6 +1794,8 @@ def validate_recipe(
             for issue in _describe(relevant, alternatives):
                 if issue not in issues:
                     issues.append(issue)
+    issues.extend(_find_unknown_preprocessors(recipe))
+    issues.extend(_find_unknown_ancestors(recipe))
     root = None if text is None else _compose(text)
     if root is not None:
         issues.extend(_find_duplicate_keys(root))

@@ -1124,3 +1124,98 @@ def test_recipe_with_schema_duplicate_keys(
         "duplicate key, this definition is ignored because 'tas' is defined "
         "again on line 18."
     )
+
+
+def test_validate_recipe_unknown_preprocessor() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"]["preprocessor"] = "p"
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", "preprocessor"),
+            "unknown value 'p'. Not defined in the `preprocessors` section. "
+            "Did you mean 'pp'?",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("datasets", 0), "p"),
+        (("datasets", 1), None),
+        (
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                0,
+            ),
+            "p",
+        ),
+    ],
+)
+def test_validate_recipe_unknown_dataset_preprocessor(
+    path: tuple[str | int, ...],
+    value: str | None,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    node = recipe
+    for key in path:
+        node = node[key]
+    node["preprocessor"] = value
+    suggestion = " Did you mean 'pp'?" if value == "p" else ""
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            (*path, "preprocessor"),
+            f"unknown value {value!r}. Not defined in the `preprocessors` "
+            f"section.{suggestion}",
+        ),
+    ]
+
+
+def test_validate_recipe_default_preprocessor() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    del recipe["preprocessors"]["default"]
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable["preprocessor"] = "default"
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    "ancestors",
+    [["ta"], ["example/ta", "example/pr"], ["example/*"], ["*/p?"]],
+)
+def test_validate_recipe_ancestors(ancestors: list[str]) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["scripts"]["plot"]["ancestors"] = (
+        ancestors
+    )
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
+    ("ancestor", "suggestion"),
+    [
+        ("example/tas", " Did you mean 'example/ta'?"),
+        ("other/*", ""),
+    ],
+)
+def test_validate_recipe_unknown_ancestor(
+    ancestor: str,
+    suggestion: str,
+) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    script = recipe["diagnostics"]["example"]["scripts"]["plot"]
+    script["ancestors"] = ["ta", ancestor]
+    message = (
+        f"unknown value {ancestor!r}. Does not match any variable group or "
+        f"script.{suggestion}"
+    )
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "scripts", "plot", "ancestors", 1),
+            message,
+        ),
+    ]

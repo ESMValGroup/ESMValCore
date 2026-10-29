@@ -831,13 +831,8 @@ def _get_preprocessor_task(
     # First set up the preprocessor profile
     facets = datasets[0].facets
     session = datasets[0].session
+    # The preprocessor is checked when the recipe is validated.
     preprocessor = str(facets.get("preprocessor", "default"))
-    if preprocessor not in profiles:
-        msg = (
-            f"Unknown preprocessor '{preprocessor}' in variable "
-            f"{facets['variable_group']} of diagnostic {facets['diagnostic']}"
-        )
-        raise RecipeError(msg)
     logger.info(
         "Creating preprocessor '%s' task for variable '%s'",
         preprocessor,
@@ -1085,14 +1080,9 @@ class Recipe:
                         script_name,
                     )
                     ancestors: list[BaseTask] = []
+                    # The ancestors are checked when the recipe is validated.
                     for id_glob in script_cfg["ancestors"]:
                         ancestor_ids = fnmatch.filter(tasks, id_glob)
-                        if not ancestor_ids:
-                            msg = (
-                                "Could not find any ancestors matching "
-                                f"'{id_glob}'."
-                            )
-                            raise RecipeError(msg)
                         logger.debug(
                             "Pattern %s matches %s",
                             id_glob,

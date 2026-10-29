@@ -657,10 +657,13 @@ def test_invalid_preprocessor(
             scripts: null
         """)
 
-    with pytest.raises(RecipeError) as error:
+    msg = (
+        "diagnostics > diagnostic_name > variables > chl > preprocessor: "
+        "unknown value 'not_defined'. Not defined in the `preprocessors` "
+        "section."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
-    msg = "Unknown preprocessor 'not_defined' in .*"
-    assert re.match(msg, error.value.failed_tasks[0].message)
 
 
 def test_disable_preprocessor_function(
@@ -1720,8 +1723,12 @@ def test_invalid_diagnostic_ancestor(
         """,
     )
 
-    msg = r"Could not find any ancestors matching"
-    with pytest.raises(RecipeError, match=msg):
+    msg = (
+        "diagnostics > diagnostic_name > scripts > script_name2 > "
+        "ancestors > 0: unknown value 'invalid_*'. Does not match any "
+        "variable group or script."
+    )
+    with pytest.raises(RecipeError, match=re.escape(msg)):
         get_recipe(tmp_path, content, session)
 
 
