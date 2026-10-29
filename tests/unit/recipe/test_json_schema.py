@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 import typing
@@ -22,6 +23,7 @@ from esmvalcore._recipe.json_schema import (
     _clean_rst,
     _parse_docstring,
     _resolve_annotation,
+    _rst_to_text,
     generate_recipe_schema,
     validate_recipe,
     write_recipe_schema,
@@ -132,11 +134,37 @@ def test_parse_docstring() -> None:
     assert descriptions == {
         "cube": "Input cube.",
         "target": (
-            "Use esmvalcore.preprocessor.regrid for `details`.\n\n"
+            "Use :func:`esmvalcore.preprocessor.regrid` for\n``details``.\n\n"
             "Second paragraph."
         ),
         "kwargs": "Other arguments.",
     }
+    assert _rst_to_text(descriptions["target"]) == (
+        "Use esmvalcore.preprocessor.regrid for `details`.\n\n"
+        "Second paragraph."
+    )
+
+
+def test_rst_to_text_code_block() -> None:
+    text = (
+        "For example:\n\n"
+        ".. code-block:: python\n\n"
+        "    scheme = {\n"
+        '        "reference": "iris.analysis:Linear",\n'
+        "    }\n\n"
+        "Last\nparagraph."
+    )
+    code = '{\n    "reference": "iris.analysis:Linear",\n}'
+    assert _rst_to_text(text) == (
+        "For example:\n\n"
+        "    scheme = {\n"
+        '        "reference": "iris.analysis:Linear",\n'
+        "    }\n\n"
+        "Last paragraph."
+    )
+    assert _rst_to_text(text, markdown=True) == (
+        f"For example:\n\n```python\nscheme = {code}\n```\n\nLast paragraph."
+    )
 
 
 @pytest.mark.parametrize(
@@ -153,6 +181,46 @@ def test_parse_docstring() -> None:
 )
 def test_clean_rst(text: str, expected: str) -> None:
     assert _clean_rst(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            ":ref:`default regridding schemes`",
+            (
+                "[Default regridding schemes](https://docs.esmvaltool.org/"
+                "projects/ESMValCore/en/latest/recipe/preprocessor.html"
+                "#default-regridding-schemes)"
+            ),
+        ),
+        (
+            ":ref:`regrid preprocessor <Horizontal regridding>`",
+            (
+                "[regrid preprocessor](https://docs.esmvaltool.org/projects/"
+                "ESMValCore/en/latest/recipe/preprocessor.html"
+                "#horizontal-regridding)"
+            ),
+        ),
+        (":ref:`unknown_label`", "unknown_label"),
+        (":ref:`text <unknown_label>`", "text"),
+    ],
+)
+def test_clean_rst_markdown(text: str, expected: str) -> None:
+    assert _clean_rst(text, markdown=True) == expected
+
+
+def test_step_schema_markdown_description(schema: dict[str, Any]) -> None:
+    steps = schema["definitions"]["steps"]
+    scheme = steps["regrid"]["anyOf"][0]["properties"]["scheme"]
+    assert (
+        "[Generic regridding schemes](https://"
+        in (scheme["markdownDescription"])
+    )
+    assert "```python\n" in scheme["markdownDescription"]
+    assert "(described in Generic regridding schemes)" in scheme["description"]
+    target = steps["extract_levels"]["anyOf"][0]["properties"]["levels"]
+    assert "markdownDescription" not in target
 
 
 @pytest.fixture(scope="module")
@@ -369,6 +437,36 @@ def test_recipe_documentation_anchors() -> None:
         json_schema.UNDOCUMENTED_STEPS
     )
     assert documented - titles - labels == set()
+
+
+DOC_DIR = Path(__file__).parents[3] / "doc"
+
+
+@pytest.mark.skipif(not DOC_DIR.exists(), reason="documentation not available")
+def test_documentation_labels() -> None:
+    """Check that the labels referred to in the docstrings are known."""
+    docstrings = "\n".join(
+        inspect.getdoc(getattr(esmvalcore.preprocessor, step)) or ""
+        for step in esmvalcore.preprocessor.DEFAULT_ORDER
+    )
+    references = re.findall(
+        r":ref:`(?:[^`<]+?\s+<([^`>]+)>|([^`]+))`",
+        docstrings,
+    )
+    labels = {(a or b).lower() for a, b in references}
+    assert labels - set(json_schema.DOCUMENTATION_LABELS) == set()
+
+    for label, (document, title) in json_schema.DOCUMENTATION_LABELS.items():
+        text = (DOC_DIR / f"{document}.rst").read_text(encoding="utf-8")
+        match = re.search(
+            rf"^\.\. _{re.escape(label)}:\n\n(.*)\n(.*)$",
+            text,
+            re.MULTILINE | re.IGNORECASE,
+        )
+        assert match, label
+        if title is not None:
+            assert match[1] == title, label
+            assert re.fullmatch(r"([=\-~^*])\1+", match[2]), label
 
 
 def test_step_schema_literal_arguments(schema: dict[str, Any]) -> None:

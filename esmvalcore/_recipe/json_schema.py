@@ -22,6 +22,7 @@ import inspect
 import json
 import re
 import sys
+import textwrap
 import types
 import typing
 from pathlib import Path
@@ -197,12 +198,48 @@ STATISTICS_OPERATORS = (
 )
 _OPERATORS_TEXT = ", ".join(f"`{op}`" for op in STATISTICS_OPERATORS)
 _OPERATOR_TABLE = re.compile(
-    r"given in :ref:`this table\s+<supported_stat_operator>`",
+    r"given in\s+:ref:`this table\s+<supported_stat_operator>`",
 )
 
 # Preprocessor steps without a section in the recipe documentation. The
 # section of each other step can be found at the anchor with its name.
 UNDOCUMENTED_STEPS = {"clip_timerange", "concatenate", "load", "save"}
+
+# Labels that the docstrings of preprocessor functions refer to with :ref:,
+# with the document that defines them and the title of their section, which
+# is the text of a reference that does not specify one.
+DOCUMENTATION_LABELS: dict[str, tuple[str, str | None]] = {
+    "caching_regridding_weights": (
+        "recipe/preprocessor",
+        "Reusing regridding weights",
+    ),
+    "config-extra-facets": ("quickstart/configure", "Extra Facets"),
+    "default regridding schemes": (
+        "recipe/preprocessor",
+        "Default regridding schemes",
+    ),
+    "generic regridding schemes": (
+        "recipe/preprocessor",
+        "Generic regridding schemes",
+    ),
+    "horizontal regridding": ("recipe/preprocessor", "Horizontal regridding"),
+    "list_of_distance_metrics": ("recipe/preprocessor", None),
+    "stat_preprocs": ("recipe/preprocessor", "Statistical preprocessors"),
+    "supplementary_variables": (
+        "recipe/overview",
+        (
+            "Defining supplementary variables (ancillary variables and cell "
+            "measures)"
+        ),
+    ),
+    "supported_stat_operator": ("recipe/preprocessor", None),
+}
+
+_REF_ROLE = re.compile(r":ref:`(?:([^`<]+?)\s+<([^`>]+)>|([^`]+))`")
+_CODE_BLOCK = re.compile(
+    r"^\.\. code-block::[ \t]*(\w*)\n[ \t]*\n((?:[ \t]+\S.*\n?|[ \t]*\n)+)",
+    re.MULTILINE,
+)
 
 # Annotation types that map directly to a JSON Schema type.
 SIMPLE_TYPES: dict[Any, JSONSchema] = {
@@ -419,17 +456,74 @@ def _to_json_value(value: object) -> object:
     return value
 
 
-def _clean_rst(text: str) -> str:
-    """Remove reStructuredText markup that does not read well in an editor."""
-    # Roles with an explicit target, e.g. :ref:`text <target>`, are replaced
+def _replace_ref(match: re.Match[str], *, markdown: bool) -> str:
+    """Replace a :ref: role by its text, or by a link in Markdown."""
+    label = (match[2] or match[3]).lower()
+    document, title = DOCUMENTATION_LABELS.get(label, (None, None))
+    text = match[1] or title or label
+    if markdown and document is not None:
+        anchor = re.sub(r"[^a-z0-9]+", "-", label)
+        return f"[{text}]({_documentation_url(f'{document}.html#{anchor}')})"
+    return text
+
+
+def _clean_rst(text: str, *, markdown: bool = False) -> str:
+    """Remove reStructuredText markup that does not read well in an editor.
+
+    With ``markdown=True``, references to the documentation become links.
+    """
+    text = _REF_ROLE.sub(
+        functools.partial(_replace_ref, markdown=markdown),
+        text,
+    )
+    # Roles with an explicit target, e.g. :func:`text <target>`, are replaced
     # by their text, other roles, e.g. :math:`< 1`, by their content.
     text = re.sub(r":[\w:]+:`~?([^`<]+?)\s+<[^`>]+>`", r"\1", text)
     text = re.sub(r":[\w:]+:`~?([^`]*)`", r"\1", text)
     return text.replace("``", "`")
 
 
+def _join_lines(text: str, *, markdown: bool) -> str:
+    """Join the lines of each paragraph and clean up the markup."""
+    paragraphs = re.split(r"\n[ \t]*\n", text.strip())
+    return "\n\n".join(
+        _clean_rst(
+            " ".join(line.strip() for line in p.splitlines()),
+            markdown=markdown,
+        )
+        for p in paragraphs
+        if p.strip()
+    )
+
+
+def _rst_to_text(text: str, *, markdown: bool = False) -> str:
+    """Convert a description in reStructuredText for display in an editor.
+
+    Code blocks become fenced code blocks in Markdown and indented code
+    otherwise.
+    """
+    parts = []
+    position = 0
+    for match in _CODE_BLOCK.finditer(text):
+        parts.append(
+            _join_lines(text[position : match.start()], markdown=markdown),
+        )
+        code = textwrap.dedent(match[2]).strip("\n")
+        if markdown:
+            parts.append(f"```{match[1]}\n{code}\n```")
+        else:
+            parts.append(textwrap.indent(code, "    "))
+        position = match.end()
+    parts.append(_join_lines(text[position:], markdown=markdown))
+    return "\n\n".join(part for part in parts if part)
+
+
 def _parse_docstring(docstring: str) -> tuple[str, dict[str, str]]:
-    """Get the summary and parameter descriptions from a numpy docstring."""
+    """Get the summary and parameter descriptions from a numpy docstring.
+
+    These are returned in reStructuredText, use :func:`_rst_to_text` to
+    display them in an editor.
+    """
     lines = docstring.splitlines()
     summary = []
     for line in lines:
@@ -452,18 +546,16 @@ def _parse_docstring(docstring: str) -> tuple[str, dict[str, str]]:
             name = match.group(1)
             parameters[name] = []
         elif name is not None:
-            parameters[name].append(line.strip())
+            parameters[name].append(line.rstrip())
 
     descriptions = {
-        name: _clean_rst(
-            _OPERATOR_TABLE.sub(
-                _OPERATORS_TEXT,
-                re.sub(r"(?<!\n)\n(?!\n)", " ", "\n".join(text).strip()),
-            ),
+        name: _OPERATOR_TABLE.sub(
+            _OPERATORS_TEXT,
+            textwrap.dedent("\n".join(text)).strip(),
         )
         for name, text in parameters.items()
     }
-    return _clean_rst(" ".join(summary)), descriptions
+    return " ".join(summary), descriptions
 
 
 def _parameter_schema(
@@ -480,7 +572,10 @@ def _parameter_schema(
     if description and _OPERATORS_TEXT in description:
         _add_operators(schema)
     if description:
-        schema["description"] = description
+        schema["description"] = _rst_to_text(description)
+        markdown = _rst_to_text(description, markdown=True)
+        if markdown != schema["description"]:
+            schema["markdownDescription"] = markdown
     if param.default is not inspect.Parameter.empty:
         with contextlib.suppress(TypeError):
             schema["default"] = _to_json_value(param.default)
@@ -565,30 +660,38 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
                 "description": "Enable this step with its default settings.",
             },
         )
-    schema: JSONSchema = {"description": summary, "anyOf": options}
+    schema: JSONSchema = {
+        "description": _rst_to_text(summary),
+        "anyOf": options,
+    }
     if step not in UNDOCUMENTED_STEPS:
         # Editors show this instead of the description, with a link to the
         # documentation of using the step in a recipe.
         url = _recipe_documentation_url(step)
         schema["markdownDescription"] = (
-            f"{summary}\n\nSee the [recipe documentation]({url})."
+            f"{_rst_to_text(summary, markdown=True)}\n\n"
+            f"See the [recipe documentation]({url})."
         )
     return schema
 
 
-def _recipe_documentation_url(step: str) -> str:
-    """Get the URL of the recipe documentation of a preprocessor step."""
+def _documentation_url(path: str) -> str:
+    """Get the URL of a page of the documentation."""
     # Only releases have their own documentation.
     version = (
         f"v{__version__}"
         if re.fullmatch(r"\d+\.\d+\.\d+", __version__)
         else "latest"
     )
-    anchor = step.replace("_", "-")
     return (
-        f"https://docs.esmvaltool.org/projects/ESMValCore/en/{version}/"
-        f"recipe/preprocessor.html#{anchor}"
+        f"https://docs.esmvaltool.org/projects/ESMValCore/en/{version}/{path}"
     )
+
+
+def _recipe_documentation_url(step: str) -> str:
+    """Get the URL of the recipe documentation of a preprocessor step."""
+    anchor = step.replace("_", "-")
+    return _documentation_url(f"recipe/preprocessor.html#{anchor}")
 
 
 def _preprocessor_schema() -> JSONSchema:
