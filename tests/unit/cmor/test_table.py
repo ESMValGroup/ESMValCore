@@ -10,7 +10,7 @@ class TestVariableInfo(unittest.TestCase):
 
     def setUp(self):
         """Prepare for testing."""
-        self.info = VariableInfo("table_type")
+        self.info = VariableInfo(project="CMIP6")
         self.info.short_name = "var"
         self.value = "value"
         self.coords = {
@@ -26,7 +26,7 @@ class TestVariableInfo(unittest.TestCase):
 
     def test_constructor(self):
         """Test basic constructor."""
-        self.assertEqual("table_type", self.info.table_type)
+        self.assertEqual("CMIP6", self.info.project)
         self.assertEqual("var", self.info.short_name)
 
     def test_read_empty_dictionary(self):
