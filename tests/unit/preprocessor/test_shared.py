@@ -168,7 +168,10 @@ def test_get_iris_aggregator_invalid_kwarg():
 
 def test_get_iris_aggregator_missing_kwarg():
     """Test ``get_iris_aggregator``."""
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="mandatory keyword argument 'percent'",
+    ):
         get_iris_aggregator("percentile")
 
 

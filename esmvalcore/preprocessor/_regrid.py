@@ -907,12 +907,20 @@ def regrid(
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
     scheme:
-        The regridding scheme to perform. If the source grid is structured
-        (i.e., rectilinear or curvilinear), can be one of the built-in schemes
-        ``linear``, ``nearest``, ``area_weighted``. If the source grid is
-        unstructured, can be one of the built-in schemes ``linear``,
-        ``nearest``.  Alternatively, a `dict` that specifies generic regridding
-        can be given (see below).
+        The regridding scheme to perform. Can be one of the built-in schemes
+        ``linear``, ``nearest``, or ``area_weighted`` (described in
+        :ref:`default regridding schemes`), or a :obj:`dict` that specifies a
+        generic regridding scheme (described in
+        :ref:`generic regridding schemes`).
+        When calling this function from Python, the :obj:`dict` takes the same
+        form as in a recipe, for example:
+
+        .. code-block:: python
+
+            scheme = {
+                "reference": "iris.analysis:Linear",
+                "extrapolation_mode": "nanmask",
+            }
     lat_offset:
         Offset the grid centers of the latitude coordinate w.r.t. the pole by
         half a grid step. This argument is ignored if `target_grid` is a cube
@@ -941,44 +949,6 @@ def regrid(
     See Also
     --------
     extract_levels: Perform vertical regridding.
-
-    Notes
-    -----
-    This preprocessor allows for the use of arbitrary :doc:`Iris <iris:index>`
-    regridding schemes, that is anything that can be passed as a scheme to
-    :meth:`iris.cube.Cube.regrid` is possible. This enables the use of further
-    parameters for existing schemes, as well as the use of more advanced
-    schemes for example for unstructured grids.
-    To use this functionality, a dictionary must be passed for the scheme with
-    a mandatory entry of ``reference`` in the form specified for the object
-    reference of the `entry point data model <https://packaging.python.org/en/
-    latest/specifications/entry-points/#data-model>`_,
-    i.e. ``importable.module:object.attr``. This is used as a factory for the
-    scheme. Any further entries in the dictionary are passed as keyword
-    arguments to the factory.
-
-    For example, to use the familiar :class:`iris.analysis.Linear` regridding
-    scheme with a custom extrapolation mode, use
-
-    .. code-block:: yaml
-
-        my_preprocessor:
-          regrid:
-            target: 1x1
-            scheme:
-              reference: iris.analysis:Linear
-              extrapolation_mode: nanmask
-
-    To use the area weighted regridder available in
-    :class:`esmf_regrid.schemes.ESMFAreaWeighted` use
-
-    .. code-block:: yaml
-
-        my_preprocessor:
-          regrid:
-            target: 1x1
-            scheme:
-              reference: esmf_regrid.schemes:ESMFAreaWeighted
     """
     # Remove unwanted coordinates from the source cube.
     cube = cube.copy()

@@ -1140,9 +1140,14 @@ References configuration file
 =============================
 
 The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
-references and projects. Each author, project and reference referred to in the
-documentation section of a recipe needs to be in this file in the relevant
-section.
+projects, and other tags used to record provenance, such as realms and themes.
+Each author, maintainer, and project referred to in the documentation section
+of a recipe should be in the relevant section of this file.
+Each reference should have a bibtex file with the same name in the
+`esmvaltool/references <https://github.com/ESMValGroup/ESMValTool/tree/main/esmvaltool/references>`__
+directory.
+If one is missing, ESMValCore logs a warning and the provenance information
+will be incomplete.
 
 For instance, the recipe ``recipe_ocean_example.yml`` file contains the
 following documentation section:
@@ -1163,5 +1168,6 @@ following documentation section:
       - ukesm
 
 
-These four items here are named people, references and projects listed in the
-``config-references.yml`` file.
+The authors, maintainer, and projects are listed in the
+``config-references.yml`` file and the reference is the file
+``esmvaltool/references/demora2018gmd.bibtex``.
