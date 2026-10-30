@@ -1105,6 +1105,10 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
                 "maximum": 3,
                 "description": "Tier of an observational dataset.",
             },
+            "type": _facet_value(
+                "Type of an observational dataset, for example reanaly or "
+                "sat.",
+            ),
             "derive": {
                 "type": "boolean",
                 "description": "Derive the variable from other variables.",
@@ -1908,6 +1912,65 @@ def _preprocessor_facets(
             yield (*entry_path, "preprocessor"), entry["preprocessor"]
 
 
+# Facets that are required to find the data of a project, in addition to
+# dataset, mip, and short_name.
+_REQUIRED_FACETS = {
+    "OBS": ("tier", "type"),
+    "OBS6": ("tier", "type"),
+}
+
+
+def _datasets(
+    recipe: object,
+) -> collections.abc.Iterator[tuple[tuple[str | int, ...], dict]]:
+    """Find the datasets of each variable group with their facets.
+
+    The facets of a dataset override those of its variable group.
+    """
+    datasets = [
+        (("datasets", i), entry)
+        for i, entry in enumerate(_list(recipe, "datasets"))
+    ]
+    for diagnostic_name, diagnostic in _mapping(recipe, "diagnostics").items():
+        path: tuple[str | int, ...] = ("diagnostics", diagnostic_name)
+        diagnostic_datasets = datasets + [
+            ((*path, "additional_datasets", i), entry)
+            for i, entry in enumerate(_list(diagnostic, "additional_datasets"))
+        ]
+        for group, variable in _mapping(diagnostic, "variables").items():
+            group_path = (*path, "variables", group)
+            additional = _list(variable, "additional_datasets")
+            group_datasets = diagnostic_datasets + [
+                ((*group_path, "additional_datasets", i), entry)
+                for i, entry in enumerate(additional)
+            ]
+            facets = variable if isinstance(variable, dict) else {}
+            for dataset_path, entry in group_datasets:
+                if isinstance(entry, dict):
+                    yield dataset_path, {**facets, **entry}
+
+
+def _find_missing_facets(recipe: object) -> list[RecipeIssue]:
+    """Find datasets without the facets that their project requires."""
+    issues = []
+    for path, facets in _datasets(recipe):
+        project = facets.get("project")
+        if not isinstance(project, str):
+            continue
+        required = _REQUIRED_FACETS.get(project, ())
+        if missing := [f for f in required if f not in facets]:
+            keys = "key" if len(missing) == 1 else "keys"
+            names = ", ".join(repr(f) for f in missing)
+            issue = RecipeIssue(
+                path,
+                f"missing required {keys} {names}. Needed to find the data "
+                f"of project '{project}'.",
+            )
+            if issue not in issues:
+                issues.append(issue)
+    return issues
+
+
 def _find_unknown_preprocessors(recipe: object) -> list[RecipeIssue]:
     """Find datasets that use a preprocessor that is not defined."""
     preprocessors = {"default", *map(str, _mapping(recipe, "preprocessors"))}
@@ -2021,8 +2084,9 @@ def validate_recipe(
 ) -> list[RecipeIssue]:
     """Validate a recipe against the JSON Schema.
 
-    Also checks that the preprocessors of variable groups and datasets and
-    the ancestors of scripts are defined in the recipe.
+    Also checks that datasets have the facets that their project requires,
+    and that the preprocessors of variable groups and datasets and the
+    ancestors of scripts are defined in the recipe.
 
     Parameters
     ----------
@@ -2044,6 +2108,7 @@ def validate_recipe(
             for issue in _describe(relevant, alternatives):
                 if issue not in issues:
                     issues.append(issue)
+    issues.extend(_find_missing_facets(recipe))
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))
     composed = None if text is None else _compose(text)

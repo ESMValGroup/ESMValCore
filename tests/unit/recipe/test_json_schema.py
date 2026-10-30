@@ -1392,6 +1392,53 @@ def test_validate_recipe_default_preprocessor() -> None:
     assert validate_recipe(recipe) == []
 
 
+@pytest.mark.parametrize("project", ["OBS", "OBS6"])
+def test_validate_recipe_missing_facets(project: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    # The dataset is used by both variable groups, but reported once.
+    recipe["datasets"][1] = {"dataset": "ERA5", "project": project}
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 1),
+            "missing required keys 'tier', 'type'. Needed to find the data "
+            f"of project '{project}'.",
+        ),
+    ]
+
+
+def test_validate_recipe_facets_of_variable_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable.update(project="OBS", tier=2)
+    variable["additional_datasets"] = [
+        {"dataset": "HadISST", "type": "reanaly"},
+        {"dataset": "CRU"},
+        {"dataset": "CanESM5", "project": "CMIP6", "exp": "historical"},
+    ]
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                1,
+            ),
+            "missing required key 'type'. Needed to find the data of "
+            "project 'OBS'.",
+        ),
+    ]
+
+
+def test_validate_recipe_missing_facets_unknown_project() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1]["project"] = ["OBS"]
+    assert not [
+        i for i in validate_recipe(recipe) if "Needed to find" in i.message
+    ]
+
+
 @pytest.mark.parametrize(
     "ancestors",
     [["ta"], ["example/ta", "example/pr"], ["example/*"], ["*/p?"]],
