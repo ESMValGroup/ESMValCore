@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest import mock
@@ -1037,7 +1038,6 @@ def test_read_recipe_file(
     """Test that a recipe is read with and without ``yaml.CSafeLoader``."""
     if not has_csafeloader:
         monkeypatch.delattr(yaml, "CSafeLoader", raising=False)
-    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
     mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     session = mocker.sentinel.session
     recipe_file = tmp_path / "recipe_test.yml"
@@ -1046,7 +1046,6 @@ def test_read_recipe_file(
     result = _recipe.read_recipe_file(recipe_file, session)
 
     raw_recipe: dict[str, dict[str, dict]] = {"diagnostics": {"diag": {}}}
-    mock_check.assert_called_once_with(raw_recipe, path=recipe_file)
     mock_recipe.assert_called_once_with(
         raw_recipe,
         session,
@@ -1055,13 +1054,28 @@ def test_read_recipe_file(
     assert result == mock_recipe.return_value
 
 
+def test_recipe_is_validated(
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    """Test that the recipe is validated, also when not read from a file."""
+    recipe_file = tmp_path / "recipe_test.yml"
+    msg = "recipe: missing required key 'documentation'."
+    with pytest.raises(RecipeError, match=re.escape(msg)):
+        _recipe.Recipe(
+            {"diagnostics": {}},
+            mocker.sentinel.session,
+            recipe_file=recipe_file,
+        )
+
+
 def test_read_recipe_file_invalid_yaml(
     mocker: MockerFixture,
     tmp_path: Path,
 ) -> None:
     """Test that invalid YAML is re-parsed with ``yaml.safe_load``."""
     safe_load = mocker.spy(_recipe.yaml, "safe_load")
-    mock_check = mocker.patch.object(_recipe.check, "recipe_with_schema")
+    mock_recipe = mocker.patch.object(_recipe, "Recipe", autospec=True)
     recipe_file = tmp_path / "recipe_test.yml"
     recipe_text = "diagnostics: [\n"
     recipe_file.write_text(recipe_text, encoding="utf-8")
@@ -1070,4 +1084,4 @@ def test_read_recipe_file_invalid_yaml(
         _recipe.read_recipe_file(recipe_file, mocker.sentinel.session)
 
     safe_load.assert_called_once_with(recipe_text)
-    mock_check.assert_not_called()
+    mock_recipe.assert_not_called()

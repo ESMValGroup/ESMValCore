@@ -7,6 +7,7 @@ easily available for the other components of ESMValTool
 from __future__ import annotations
 
 import copy
+import difflib
 import glob
 import importlib
 import json
@@ -91,14 +92,11 @@ def _update_cmor_facets(facets: Facets) -> None:
     else:
         table_entry = None
     if table_entry is None:
-        msg = (
-            f"Variable '{short_name}' "
-            + (
-                f"with branding suffix '{branding_suffix}' "
-                if branding_suffix
-                else ""
-            )
-            + f"not available in table '{mip}' of project '{project}'"
+        msg = _describe_unavailable_variable(
+            project,
+            mip,
+            short_name,
+            branding_suffix,
         )
         raise RecipeError(msg)
     facets["original_short_name"] = table_entry.short_name
@@ -132,6 +130,34 @@ def _get_mips(project: str, short_name: str) -> list[str]:
         if short_name in table
         or any(short_name == vardef.short_name for vardef in table.values())
     ]
+
+
+def _describe_unavailable_variable(
+    project: str,
+    mip: str,
+    short_name: str,
+    branding_suffix: str | None,
+) -> str:
+    """Describe that a variable is not available in a CMOR table."""
+    if not branding_suffix:
+        return (
+            f"Variable '{short_name}' not available in table '{mip}' of "
+            f"project '{project}'"
+        )
+    text = (
+        f"Variable '{short_name}' with branding suffix '{branding_suffix}' "
+        f"not available in table '{mip}' of project '{project}'"
+    )
+    table = CMOR_TABLES.get(project)
+    if mip not in getattr(table, "tables", {}):
+        return text
+    available = sorted(_get_branding_suffixes(project, mip, short_name))
+    if available:
+        text += f". Available branding suffixes are: {', '.join(available)}."
+        close = difflib.get_close_matches(branding_suffix, available, n=1)
+        if close:
+            text += f" Did you mean '{close[0]}'?"
+    return text
 
 
 def _get_branding_suffixes(

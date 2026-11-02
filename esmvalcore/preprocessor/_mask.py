@@ -424,7 +424,7 @@ def count_spells(
     return array_module.sum(full_windows, axis=axis, dtype=int)
 
 
-def mask_above_threshold(cube, threshold):
+def mask_above_threshold(cube: Cube, threshold: float) -> Cube:
     """Mask above a specific threshold value.
 
     Takes a value 'threshold' and masks off anything that is above
@@ -450,7 +450,7 @@ def mask_above_threshold(cube, threshold):
     return cube
 
 
-def mask_below_threshold(cube, threshold):
+def mask_below_threshold(cube: Cube, threshold: float) -> Cube:
     """Mask below a specific threshold value.
 
     Takes a value 'threshold' and masks off anything that is below
@@ -475,7 +475,7 @@ def mask_below_threshold(cube, threshold):
     return cube
 
 
-def mask_inside_range(cube, minimum, maximum):
+def mask_inside_range(cube: Cube, minimum: float, maximum: float) -> Cube:
     """Mask inside a specific threshold range.
 
     Takes a MINIMUM and a MAXIMUM value for the range, and masks off anything
@@ -499,7 +499,11 @@ def mask_inside_range(cube, minimum, maximum):
     return cube
 
 
-def mask_outside_range(cube, minimum, maximum):
+def mask_outside_range(
+    cube: Cube,
+    minimum: float,
+    maximum: float,
+) -> Cube:
     """Mask outside a specific threshold range.
 
     Takes a MINIMUM and a MAXIMUM value for the range, and masks off anything

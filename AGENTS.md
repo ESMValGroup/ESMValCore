@@ -103,6 +103,9 @@ Useful pytest options:
 - Update the documentation in `doc/` when behavior visible to users changes.
 - In `.rst` files, keep lines at most 80 characters long and start each
   sentence on a new line.
+- Use inclusive language in documentation, docstrings, and comments. For
+  example, write "refer to" instead of "see" and "allowlist" instead of
+  "whitelist".
 - Public Python API only appears in the documentation if it is listed in
   `doc/api/`.
 - For functions that compute scientific results, add comments with references

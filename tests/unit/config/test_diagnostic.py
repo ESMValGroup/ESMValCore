@@ -70,9 +70,17 @@ def test_tags_manager_fails():
     with pytest.raises(ValueError):
         tags.get_tag_value(section="section", tag="undefined")
 
+
+@pytest.mark.parametrize("warn", [True, False])
+def test_tags_manager_undefined_tags(caplog, warn):
+    """Test that undefined tags are kept."""
+    tags = TagsManager({"section": {"tag1": 123}})
+
     dict_with_undefined_tags = {"section": ["tag1", "undefined"]}
-    with pytest.raises(ValueError):
-        tags.replace_tags_in_dict(dict_with_undefined_tags)
+    tags.replace_tags_in_dict(dict_with_undefined_tags, warn=warn)
+
+    assert dict_with_undefined_tags == {"section": (123, "undefined")}
+    assert ("'undefined' is not defined" in caplog.text) is warn
 
 
 def test_load_tags_from_non_existent_file():

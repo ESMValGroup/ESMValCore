@@ -16,6 +16,10 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -506,3 +510,20 @@ extlinks = {
 }
 
 # -- Custom Document processing ----------------------------------------------
+
+
+def _write_recipe_schema(
+    app: "Sphinx",
+    exception: Exception | None,
+) -> None:
+    """Publish the recipe JSON Schema alongside the HTML documentation."""
+    if exception is not None or app.builder.format != "html":
+        return
+    from esmvalcore.recipe import write_recipe_schema
+
+    write_recipe_schema(Path(app.outdir, "recipe_schema.json"))
+
+
+def setup(app: "Sphinx") -> None:
+    """Configure Sphinx."""
+    app.connect("build-finished", _write_recipe_schema)

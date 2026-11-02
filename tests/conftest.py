@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import pickle
 import warnings
 from functools import lru_cache
@@ -19,8 +20,10 @@ from iris.cube import Cube
 
 import esmvalcore.cmor.table
 from esmvalcore.config import CFG, Config
+from esmvalcore.config._diagnostics import TAGS
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from esmvalcore.config import Session
@@ -66,6 +69,19 @@ def ignore_existing_user_config(
             for project in cfg_default["projects"]
         },
     )
+
+
+@pytest.fixture(autouse=True)
+def restore_tags() -> Iterator[None]:
+    """Undo changes that tests make to the global tags.
+
+    Recipes are validated against the tags, so a tag added by one test
+    should not affect other tests.
+    """
+    original = copy.deepcopy(dict(TAGS))
+    yield
+    TAGS.clear()
+    TAGS.update(original)
 
 
 @pytest.fixture
