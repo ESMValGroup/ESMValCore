@@ -320,6 +320,24 @@ def test_path2facets_no_timerange():
     }
 
 
+def test_searchable_facets():
+    """Test that the facets in the templates can be searched for."""
+    data_source = LocalDataSource(
+        name="test-source",
+        project="test-project",
+        priority=1,
+        rootpath=Path("/climate_data"),
+        dirname_template="Tier{tier}/{dataset.lower}",
+        filename_template="{project}_{dataset}_{short_name.upper}[_.]*nc",
+    )
+    assert data_source.searchable_facets == {
+        "dataset",
+        "project",
+        "short_name",
+        "tier",
+    }
+
+
 def test_localfile():
     file = LocalFile("/a/b.nc")
     file.facets = {"a": "A"}
