@@ -891,3 +891,22 @@ scripts.
 It also cannot check that the preprocessors used by variable groups and
 datasets and the ``ancestors`` of each script are defined in the recipe, but
 ESMValCore checks this before running a recipe.
+
+To write a recipe in a standard format, use
+:func:`esmvalcore.recipe.format_recipe`.
+It puts the sections of the recipe and the facets of the datasets and variables
+in a standard order and makes the style of the YAML consistent, while keeping
+the order of the datasets, preprocessor steps, diagnostics, variable groups,
+and scripts.
+Anchors and aliases are kept, but comments are removed.
+For example, to format the recipe ``recipe_example.yml``, run
+
+.. code-block:: python
+
+    from pathlib import Path
+
+    from esmvalcore.recipe import format_recipe
+
+    path = Path("recipe_example.yml")
+    text = path.read_text(encoding="utf-8")
+    path.write_text(format_recipe(text), encoding="utf-8")
