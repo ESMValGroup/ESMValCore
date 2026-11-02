@@ -420,8 +420,8 @@ def test_validate_recipe_arguments_invalid(
 def test_step_schema_documentation_link(schema: dict[str, Any]) -> None:
     steps = schema["definitions"]["steps"]
     assert steps["regrid"]["markdownDescription"].endswith(
-        "See the [recipe documentation](https://docs.esmvaltool.org/projects/"
-        "ESMValCore/en/latest/recipe/preprocessor.html#regrid).",
+        "Refer to [how to use `regrid` in a recipe](https://docs.esmvaltool."
+        "org/projects/ESMValCore/en/latest/recipe/preprocessor.html#regrid).",
     )
     assert "markdownDescription" not in steps["save"]
 
@@ -1429,6 +1429,69 @@ def test_validate_recipe_facets_of_variable_group() -> None:
             "project 'OBS'.",
         ),
     ]
+
+
+@pytest.mark.parametrize("project", ["OBS", "OBS6"])
+@pytest.mark.parametrize("value", ["sat", ["reanaly", "ground"]])
+def test_validate_recipe_known_type(project: str, value: object) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1].update(project=project, type=value)
+    assert validate_recipe(recipe) == []
+
+
+def test_validate_recipe_unknown_type() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1].update(project="OBS6", type="reanalysis")
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 1, "type"),
+            "unknown value 'reanalysis'. Not a type of project 'OBS6', "
+            "choose from 'sat', 'reanaly', 'ground', 'clim', or 'campaign'. "
+            "Did you mean 'reanaly'?",
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_unknown_type_of_variable_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variable = recipe["diagnostics"]["example"]["variables"]["ta"]
+    variable.update(project="OBS", tier=2, type="atmos")
+    variable["additional_datasets"] = [
+        {"dataset": "HadISST"},
+        {"dataset": "CRU"},
+        {"dataset": "GPCP-SG", "type": "sat"},
+    ]
+    # The type of the variable group is reported once.
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", "type"),
+            "unknown value 'atmos'. Not a type of project 'OBS', choose "
+            "from 'sat', 'reanaly', 'ground', 'clim', or 'campaign'.",
+            severity="warning",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("facet", "text", "anchor"),
+    [
+        ("tier", "3 for restricted", "#tiers"),
+        ("type", "`reanaly`", "#observation-types"),
+    ],
+)
+def test_obs_facet_documentation(
+    schema: dict[str, Any],
+    facet: str,
+    text: str,
+    anchor: str,
+) -> None:
+    facets = schema["definitions"]["facets"]["properties"]
+    description = facets[facet]["markdownDescription"]
+    assert text in description
+    assert f"(https://docs.esmvaltool.org/en/latest/input.html{anchor})" in (
+        description
+    )
 
 
 def test_validate_recipe_missing_facets_unknown_project() -> None:

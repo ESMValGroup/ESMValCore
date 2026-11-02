@@ -703,7 +703,7 @@ def _preprocessor_step_schema(step: str) -> JSONSchema:
         url = _recipe_documentation_url(step)
         schema["markdownDescription"] = (
             f"{_rst_to_text(summary, markdown=True)}\n\n"
-            f"See the [recipe documentation]({url})."
+            f"Refer to [how to use `{step}` in a recipe]({url})."
         )
     return schema
 
@@ -1023,6 +1023,43 @@ def _branding_suffix_rules(
     return rules
 
 
+# Observational datasets are described in the ESMValTool documentation.
+_OBS_URL = "https://docs.esmvaltool.org/en/latest/input.html"
+_OBS_TYPES = ("sat", "reanaly", "ground", "clim", "campaign")
+_TYPES = {"OBS": _OBS_TYPES, "OBS6": _OBS_TYPES}
+
+
+def _tier_schema() -> JSONSchema:
+    """Create a JSON Schema for the tier of an observational dataset."""
+    description = "Tier of an observational dataset"
+    return {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3,
+        "description": f"{description}.",
+        "markdownDescription": (
+            f"{description}: 2 for freely available datasets and 3 for "
+            "restricted datasets. Refer to the "
+            f"[tiers of observational datasets]({_OBS_URL}#tiers)."
+        ),
+    }
+
+
+def _type_schema() -> JSONSchema:
+    """Create a JSON Schema for the type of an observational dataset."""
+    schema = _facet_value(
+        "Type of an observational dataset: "
+        f"{_join_or(list(_OBS_TYPES))} for the OBS and OBS6 projects.",
+    )
+    types = ", ".join(f"`{t}`" for t in _OBS_TYPES)
+    schema["markdownDescription"] = (
+        f"Type of an observational dataset: {types} for the OBS and OBS6 "
+        "projects. Refer to the [types of observational datasets]"
+        f"({_OBS_URL}#observation-types)."
+    )
+    return schema
+
+
 def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
     """Create a JSON Schema for the facets of a dataset or variable.
 
@@ -1099,16 +1136,8 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
                 "type": "string",
                 "description": "Name of the dataset to use in diagnostics.",
             },
-            "tier": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 3,
-                "description": "Tier of an observational dataset.",
-            },
-            "type": _facet_value(
-                "Type of an observational dataset, for example reanaly or "
-                "sat.",
-            ),
+            "tier": _tier_schema(),
+            "type": _type_schema(),
             "derive": {
                 "type": "boolean",
                 "description": "Derive the variable from other variables.",
@@ -1922,10 +1951,13 @@ _REQUIRED_FACETS = {
 
 def _datasets(
     recipe: object,
-) -> collections.abc.Iterator[tuple[tuple[str | int, ...], dict]]:
+) -> collections.abc.Iterator[
+    tuple[tuple[str | int, ...], dict, dict[str, tuple[str | int, ...]]]
+]:
     """Find the datasets of each variable group with their facets.
 
-    The facets of a dataset override those of its variable group.
+    The facets of a dataset override those of its variable group. Also
+    yields the path of the dataset or variable group that defines each facet.
     """
     datasets = [
         (("datasets", i), entry)
@@ -1947,13 +1979,17 @@ def _datasets(
             facets = variable if isinstance(variable, dict) else {}
             for dataset_path, entry in group_datasets:
                 if isinstance(entry, dict):
-                    yield dataset_path, {**facets, **entry}
+                    origin = {
+                        **dict.fromkeys(facets, group_path),
+                        **dict.fromkeys(entry, dataset_path),
+                    }
+                    yield dataset_path, {**facets, **entry}, origin
 
 
 def _find_missing_facets(recipe: object) -> list[RecipeIssue]:
     """Find datasets without the facets that their project requires."""
     issues = []
-    for path, facets in _datasets(recipe):
+    for path, facets, _ in _datasets(recipe):
         project = facets.get("project")
         if not isinstance(project, str):
             continue
@@ -1965,6 +2001,32 @@ def _find_missing_facets(recipe: object) -> list[RecipeIssue]:
                 path,
                 f"missing required {keys} {names}. Needed to find the data "
                 f"of project '{project}'.",
+            )
+            if issue not in issues:
+                issues.append(issue)
+    return issues
+
+
+def _find_unknown_types(recipe: object) -> list[RecipeIssue]:
+    """Find datasets with a type that their project does not use."""
+    issues = []
+    for _, facets, origin in _datasets(recipe):
+        project = facets.get("project")
+        if not isinstance(project, str) or project not in _TYPES:
+            continue
+        values = facets.get("type")
+        values = values if isinstance(values, list) else [values]
+        choices = _TYPES[project]
+        listed = _join_or([repr(c) for c in choices])
+        for value in values:
+            if not isinstance(value, str) or value in choices:
+                continue
+            issue = RecipeIssue(
+                (*origin["type"], "type"),
+                f"unknown value {value!r}. Not a type of project "
+                f"'{project}', choose from {listed}."
+                + _suggest(value, choices),
+                severity="warning",
             )
             if issue not in issues:
                 issues.append(issue)
@@ -2109,6 +2171,7 @@ def validate_recipe(
                 if issue not in issues:
                     issues.append(issue)
     issues.extend(_find_missing_facets(recipe))
+    issues.extend(_find_unknown_types(recipe))
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))
     composed = None if text is None else _compose(text)
