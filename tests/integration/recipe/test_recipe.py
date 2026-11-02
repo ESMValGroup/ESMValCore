@@ -2582,6 +2582,9 @@ def test_wrong_branding_suffix(
                 project: CMIP7
                 mip: ocean
                 branding_suffix: tavg-ol-hxy-sea
+                frequency: mon
+                region: glb
+                grid: gn
                 exp: historical
                 start_year: 2000
                 end_year: 2005

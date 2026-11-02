@@ -1,0 +1,27 @@
+# Facets that recipes must specify to find the data of a project, in addition
+# to dataset, mip, and short_name.
+#
+# For projects hosted on ESGF, these are the facets that are used to search
+# ESGF, except those that are derived from other facets, such as institute
+# and activity, or from the CMOR tables, such as frequency.
+projects:
+  # Projects hosted on ESGF.
+  CMIP7:
+    required_facets: [branding_suffix, ensemble, exp, frequency, grid, region]
+  CMIP6:
+    required_facets: [ensemble, exp, grid]
+  CMIP6Plus:
+    required_facets: [ensemble, exp, grid]
+  CMIP5:
+    required_facets: [ensemble, exp]
+  CMIP3:
+    required_facets: [ensemble, exp]
+  CORDEX-CMIP6:
+    required_facets: [domain, driver, ensemble, exp, rcm_version]
+  CORDEX:
+    required_facets: [domain, driver, ensemble, exp, institute]
+  # Observational and reanalysis data that has been CMORized by ESMValTool.
+  OBS6:
+    required_facets: [tier, type]
+  OBS:
+    required_facets: [tier, type]

@@ -15,6 +15,7 @@ import pytest
 import yaml
 from iris.cube import Cube
 
+import esmvalcore.io.esgf.facets
 import esmvalcore.preprocessor
 from esmvalcore._recipe import check, json_schema
 from esmvalcore._recipe.json_schema import (
@@ -28,6 +29,7 @@ from esmvalcore._recipe.json_schema import (
     validate_recipe,
     write_recipe_schema,
 )
+from esmvalcore.config import CFG
 from esmvalcore.config._diagnostics import Diagnostics, TagsManager
 from esmvalcore.exceptions import RecipeError
 
@@ -543,7 +545,12 @@ documentation:
 datasets:
   - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1}
   - {dataset: ERA5, project: native6, tier: 3, type: reanaly, version: 1}
-  - {dataset: ACCESS-CM2, project: CMIP6, grid: gn, activity: [CMIP, DCPP]}
+  - dataset: ACCESS-CM2
+    project: CMIP6
+    exp: historical
+    ensemble: r1i1p1f1
+    grid: gn
+    activity: [CMIP, DCPP]
 
 preprocessors:
   default: {}
@@ -577,7 +584,11 @@ diagnostics:
         timerange: 2000/2002
         reference_dataset: ERA5
         additional_datasets:
-          - {dataset: CanESM5, project: CMIP6, exp: historical}
+          - dataset: CanESM5
+            project: CMIP6
+            exp: historical
+            ensemble: r1i1p1f1
+            grid: gn
       pr:
     scripts:
       plot:
@@ -753,8 +764,8 @@ def test_validate_recipe_multiple_problems() -> None:
 INVALID_RECIPE = """
 documentation: {title: Test, description: Test., authors: [andela_bouwe]}
 datasets:
-  - {dataset: CanESM2, project: CMIP5}
-  - {project: CMIP5, tier: 7}
+  - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1}
+  - {project: CMIP5, tier: 7, exp: historical, ensemble: r1i1p1}
 preprocessors:
   base: &base
     area_statistics:
@@ -1224,6 +1235,11 @@ def test_validate_recipe_mip_of_other_project() -> None:
     recipe = yaml.safe_load(RECIPE)
     recipe["datasets"][2]["mip"] = "atmos"
     recipe["datasets"][2]["project"] = "CMIP7"
+    recipe["datasets"][2].update(
+        branding_suffix="*",
+        frequency="mon",
+        region="glb",
+    )
     assert validate_recipe(recipe) == []
 
 
@@ -1413,7 +1429,13 @@ def test_validate_recipe_facets_of_variable_group() -> None:
     variable["additional_datasets"] = [
         {"dataset": "HadISST", "type": "reanaly"},
         {"dataset": "CRU"},
-        {"dataset": "CanESM5", "project": "CMIP6", "exp": "historical"},
+        {
+            "dataset": "CanESM5",
+            "project": "CMIP6",
+            "exp": "historical",
+            "ensemble": "r1i1p1f1",
+            "grid": "gn",
+        },
     ]
     assert validate_recipe(recipe) == [
         RecipeIssue(
@@ -1500,6 +1522,103 @@ def test_validate_recipe_missing_facets_unknown_project() -> None:
     assert not [
         i for i in validate_recipe(recipe) if "Needed to find" in i.message
     ]
+
+
+def test_validate_recipe_missing_facets_esgf_project() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    del recipe["datasets"][2]["grid"]
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("datasets", 2),
+            "missing required key 'grid'. Needed to find the data of "
+            "project 'CMIP6'.",
+        ),
+    ]
+
+
+def test_validate_recipe_required_facets_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(
+        CFG["projects"]["CMIP6"],
+        "required_facets",
+        ["institute"],
+    )
+    recipe = yaml.safe_load(RECIPE)
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            path,
+            "missing required key 'institute'. Needed to find the data of "
+            "project 'CMIP6'.",
+        )
+        for path in [
+            ("datasets", 2),
+            (
+                "diagnostics",
+                "example",
+                "variables",
+                "ta",
+                "additional_datasets",
+                0,
+            ),
+        ]
+    ]
+
+
+@pytest.mark.parametrize(
+    ("dataset", "mip", "missing"),
+    [
+        ("ERA5", "Amon", []),
+        ("ERA5", "Omon", ["type"]),
+        ("ERA-Interim", "Amon", ["type"]),
+    ],
+)
+def test_validate_recipe_required_facets_from_extra_facets(
+    monkeypatch: pytest.MonkeyPatch,
+    dataset: str,
+    mip: str,
+    missing: list[str],
+) -> None:
+    monkeypatch.setitem(
+        CFG["projects"]["OBS6"],
+        "extra_facets",
+        {"ERA5": {"A*": {"*": {"type": "reanaly"}}}},
+    )
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][1] = {
+        "dataset": dataset,
+        "project": "OBS6",
+        "tier": 3,
+        "mip": mip,
+    }
+    issues = [
+        i for i in validate_recipe(recipe) if "Needed to find" in i.message
+    ]
+    assert [i.path for i in issues] == [("datasets", 1)] * len(missing)
+
+
+def test_required_facets_of_esgf_projects() -> None:
+    """Check that the required facets are used to search ESGF."""
+    path = (
+        Path(esmvalcore.__file__).parent
+        / "config"
+        / "configurations"
+        / "data-intake-esgf.yml"
+    )
+    config = yaml.safe_load(path.read_text(encoding="utf-8"))["projects"]
+    esgf_facets = {
+        project: set(facets)
+        for project, facets in esmvalcore.io.esgf.facets.FACETS.items()
+    }
+    for project, settings in config.items():
+        esgf_facets[project] = {
+            facet
+            for source in settings["data"].values()
+            for facet in source["facets"]
+        }
+    for project, facets in esgf_facets.items():
+        required = CFG["projects"][project].get("required_facets", [])
+        assert set(required) <= facets, project
 
 
 @pytest.mark.parametrize(
