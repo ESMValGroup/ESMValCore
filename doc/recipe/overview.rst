@@ -895,6 +895,25 @@ ESMValCore also warns if the ``reference_dataset`` or ``alternative_dataset``
 of a variable group is not the name or ``alias`` of one of the datasets of the
 group.
 
+Before running a recipe, ESMValCore also warns about YAML that is ignored or
+that other YAML parsers, for example those in editors, read differently:
+
+- Keys that are defined more than once in a mapping: only the last
+  definition is used.
+- Merge keys (``<<``) that are used more than once in a mapping, or aliases
+  that refer to the anchor of a mapping that contains them.
+  Other YAML parsers do not accept these, so they are deprecated and will
+  not work in ESMValCore v2.18.0.
+  Use a single merge key with a list of mappings instead, for example
+  ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
+  Note that the first mapping in the list has priority.
+- Values that YAML 1.1, which ESMValCore uses, and YAML 1.2 read as
+  different types or numbers, for example ``1e-2``, which is text in YAML 1.1
+  and a number in YAML 1.2, and ``yes``, which is a boolean in YAML 1.1 and
+  text in YAML 1.2.
+  Write ``1.0e-2`` or ``0.01`` for the number, ``true`` for the boolean, or
+  quote the value if it is text.
+
 To write a recipe in a standard format, use
 :func:`esmvalcore.recipe.format_recipe`.
 It puts the sections of the recipe and the facets of the datasets and variables
