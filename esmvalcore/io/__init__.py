@@ -129,34 +129,30 @@ def load_data_sources(
                 priority=priority,
                 **kwargs,
             )
-            # TODO: Remove in v2.18.0
-            if isinstance(
-                data_source,
-                _DataSourceWithoutSearchableFacets,
-            ) and not isinstance(
-                data_source,
-                esmvalcore.io.protocol.DataSource,
-            ):
-                msg = (
-                    f"Data source '{name}' of type '{type(data_source)}' for "
-                    f"project '{project_}' does not have the attribute "
-                    "`searchable_facets`. Data sources without this attribute "
-                    "are deprecated in ESMValCore v2.16.0 and will no longer "
-                    "be supported in ESMValCore v2.18.0. Add this attribute to "
-                    "the data source as described in "
-                    "`esmvalcore.io.protocol.DataSource`."
-                )
-                warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
-            elif not isinstance(
-                data_source,
-                esmvalcore.io.protocol.DataSource,
-            ):
-                msg = (
-                    "Expected a data source of type `esmvalcore.io.protocol.DataSource`, "
-                    f"but your configuration for project '{project_}' contains "
-                    f"'{data_source}' of type '{type(data_source)}'."
-                )
-                raise TypeError(msg)
+            if not isinstance(data_source, esmvalcore.io.protocol.DataSource):
+                # TODO: Remove in v2.18.0
+                if isinstance(data_source, _DataSourceWithoutSearchableFacets):
+                    msg = (
+                        f"Data source '{name}' of type '{type(data_source)}' "
+                        f"for project '{project_}' does not have the "
+                        "attribute `searchable_facets`. Data sources without "
+                        "this attribute are deprecated in ESMValCore v2.16.0 "
+                        "and will no longer be supported in ESMValCore "
+                        "v2.18.0. Add this attribute to the data source as "
+                        "described in `esmvalcore.io.protocol.DataSource`."
+                    )
+                    warnings.warn(
+                        msg,
+                        ESMValCoreDeprecationWarning,
+                        stacklevel=2,
+                    )
+                else:
+                    msg = (
+                        "Expected a data source of type `esmvalcore.io.protocol.DataSource`, "
+                        f"but your configuration for project '{project_}' contains "
+                        f"'{data_source}' of type '{type(data_source)}'."
+                    )
+                    raise TypeError(msg)
             data_sources.append(data_source)
 
     if not data_sources:
