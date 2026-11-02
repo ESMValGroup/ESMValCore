@@ -2010,9 +2010,9 @@ def _yaml_issue(
 # https://yaml.org/spec/1.2.2/#1032-tag-resolution.
 _YAML_12_TYPES = {
     "null": re.compile(r"null|Null|NULL|~|"),
-    "boolean": re.compile(r"true|True|TRUE|false|False|FALSE"),
-    "integer": re.compile(r"[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+"),
-    "number": re.compile(
+    "a boolean": re.compile(r"true|True|TRUE|false|False|FALSE"),
+    "an integer": re.compile(r"[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+"),
+    "a number": re.compile(
         r"[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?"
         r"|[-+]?\.(inf|Inf|INF)|\.nan|\.NaN|\.NAN",
     ),
@@ -2022,18 +2022,10 @@ _YAML_12_TYPES = {
 # included, because YAML 1.2 has no other way to write them.
 _YAML_11_TYPES = {
     "tag:yaml.org,2002:null": "null",
-    "tag:yaml.org,2002:bool": "boolean",
-    "tag:yaml.org,2002:int": "integer",
-    "tag:yaml.org,2002:float": "number",
+    "tag:yaml.org,2002:bool": "a boolean",
+    "tag:yaml.org,2002:int": "an integer",
+    "tag:yaml.org,2002:float": "a number",
     "tag:yaml.org,2002:str": "text",
-}
-
-_TYPE_NAMES = {
-    "null": "null",
-    "boolean": "a boolean",
-    "integer": "an integer",
-    "number": "a number",
-    "text": "text",
 }
 
 
@@ -2059,7 +2051,7 @@ def _ambiguous_scalar(value: str, tag: str) -> str | None:
     if old is None or (
         old == new
         and (
-            old != "integer"
+            old != "an integer"
             or yaml.safe_load(value) == _yaml_12_integer(value)
         )
     ):
@@ -2067,19 +2059,19 @@ def _ambiguous_scalar(value: str, tag: str) -> str | None:
     if old == "text":
         hint = "Quote it if it is text, or write " + (
             f"{_dump(float(value))} for the number"
-            if new == "number"
+            if new == "a number"
             else f"{_yaml_12_integer(value)} for the integer"
         )
     else:
         hint = (
-            f"Write {_dump(yaml.safe_load(value))} for {_TYPE_NAMES[old]}, "
+            f"Write {_dump(yaml.safe_load(value))} for {old}, "
             "or quote it if it is text"
         )
     if old == new:
         # Octal integers are written differently in YAML 1.2.
         read = f"{yaml.safe_load(value)}", f"{_yaml_12_integer(value)}"
     else:
-        read = _TYPE_NAMES[old], _TYPE_NAMES[new]
+        read = old, new
     return (
         f"ambiguous value '{value}', read as {read[0]} by ESMValCore but as "
         f"{read[1]} by YAML 1.2 parsers, for example in editors. {hint}."
