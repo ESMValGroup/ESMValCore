@@ -900,11 +900,12 @@ the order of the datasets, preprocessor steps, diagnostics, variable groups,
 and scripts.
 Anchors and aliases are kept, but comments are removed.
 The lines of each paragraph of the ``description`` in the documentation
-section are joined into one line.
-Blank lines between paragraphs, list items, and lines that are more indented
-than the paragraph text stay on their own lines.
-The description is written as a folded block scalar (``>-``) wrapped at 79
-characters, so a blank line between paragraphs is written as two blank lines.
+section are joined and wrapped at 79 characters.
+List items and lines that are more indented than the paragraph text stay on
+their own lines, and blank lines between paragraphs are kept.
+The continuation lines of a list item are indented under its text.
+The description is written as a literal block scalar (``|-``), so the loaded
+text contains the line breaks added by wrapping.
 For example, to format the recipe ``recipe_example.yml``, run
 
 .. code-block:: python
