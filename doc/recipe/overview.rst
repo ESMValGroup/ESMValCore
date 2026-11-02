@@ -891,6 +891,9 @@ scripts.
 It also cannot check that the preprocessors used by variable groups and
 datasets and the ``ancestors`` of each script are defined in the recipe, but
 ESMValCore checks this before running a recipe.
+ESMValCore also warns if the ``reference_dataset`` or ``alternative_dataset``
+of a variable group is not the name or ``alias`` of one of the datasets of the
+group.
 
 To write a recipe in a standard format, use
 :func:`esmvalcore.recipe.format_recipe`.
