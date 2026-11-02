@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import re
+import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -48,45 +49,12 @@ _DIAGNOSTIC: _Order = (
 _SCRIPT: _Order = ({"ancestors": 0, "script": 1}, 2)
 
 
-_FOLD_WIDTH = 79
-# Descriptions that are a single line of at most this length are not folded.
+# Width available for the text of the description (79 minus the indentation
+# of the text of a block scalar in the documentation section).
+_DESCRIPTION_WIDTH = 75
+# Descriptions that are a single line of at most this length are not a block.
 _SHORT_DESCRIPTION = 64
 _LIST_ITEM = re.compile(r"[-*+]\s|\d+[.)]\s")
-
-
-def _wrap(line: str, width: int) -> list[str]:
-    """Split a line at single spaces into lines of at most ``width``."""
-    lines = [""]
-    for word in re.split(r"(?<! ) (?! )", line):
-        if lines[-1] and len(lines[-1]) + 1 + len(word) > width:
-            lines.append(word)
-        elif lines[-1]:
-            lines[-1] += f" {word}"
-        else:
-            lines[-1] = word
-    return lines
-
-
-def _fold(text: str, width: int) -> list[str]:
-    """Convert text to the lines of a folded block scalar.
-
-    A line break between two lines that do not start with a space is
-    folded into a space when the scalar is loaded, so it is written as a
-    blank line. Lines that start with a space are not folded.
-    """
-    lines = text.split("\n")
-    normal = [bool(line) and not line.startswith(" ") for line in lines]
-    result: list[str] = []
-    for number, line in enumerate(lines):
-        if number:
-            # Index of the last non-empty line before this one.
-            previous = number - 1
-            while previous > 0 and not lines[previous]:
-                previous -= 1
-            if normal[number] and normal[previous]:
-                result.append("")
-        result.extend(_wrap(line, width) if normal[number] else [line])
-    return result
 
 
 class RecipeDumper(yaml.SafeDumper):
@@ -95,27 +63,6 @@ class RecipeDumper(yaml.SafeDumper):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.anchor_names: dict[yaml.Node, str] = {}
-
-    def write_folded(self, text: str) -> None:
-        """Write a folded block scalar, wrapped at ``_FOLD_WIDTH``.
-
-        PyYAML's implementation wraps lines that start with a space, which
-        changes the text when the scalar is loaded.
-        """
-        if text.startswith("\n") or text.endswith("\n"):
-            super().write_folded(text)
-            return
-        hints = self.determine_block_hints(text)
-        self.write_indicator(">" + hints, True)
-        self.write_line_break()
-        width = _FOLD_WIDTH - (self.indent or 0)
-        for number, line in enumerate(_fold(text, width)):
-            if number:
-                self.write_line_break()
-            if line:
-                self.write_indent()
-                self.stream.write(line)
-                self.column += len(line)
 
     def increase_indent(
         self,
@@ -214,6 +161,43 @@ def _normalize_description(text: str) -> str:
             kind = "text" if indent == 0 else "other"
     while result and not result[-1]:
         result.pop()
+    return "\n".join(result)
+
+
+def _wrap_description(text: str) -> str:
+    """Wrap the lines of a normalized description.
+
+    Paragraphs and list items are wrapped to ``_DESCRIPTION_WIDTH``, and
+    the continuation lines of a list item are indented under its text. Lines
+    that are more indented than the paragraph text and are not list items
+    are not wrapped. A word that would start a continuation line and looks
+    like a list item stays on the previous line, so that the result is
+    normalized again to the same text.
+    """
+    result = []
+    for line in text.split("\n"):
+        content = line.lstrip()
+        indent = line[: len(line) - len(content)]
+        marker = _LIST_ITEM.match(content + " ")
+        if marker:
+            hanging = indent + " " * len(marker.group())
+        elif indent or not content:
+            result.append(line)
+            continue
+        else:
+            hanging = ""
+        wrapped = textwrap.wrap(
+            line,
+            width=_DESCRIPTION_WIDTH,
+            subsequent_indent=hanging,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+        for number, part in enumerate(wrapped):
+            if number and _LIST_ITEM.match(part.lstrip() + " "):
+                result[-1] += f" {part}"
+            else:
+                result.append(part)
     return "\n".join(result)
 
 
@@ -318,12 +302,13 @@ class _Formatter:
 
     def _documentation(self, key: str, node: yaml.Node) -> None:
         if key == "description" and isinstance(node, yaml.ScalarNode):
-            node.value = _normalize_description(node.value)
+            text = _normalize_description(node.value)
+            node.value = _wrap_description(text)
             node.style = (
                 None
                 if "\n" not in node.value
                 and len(node.value) <= _SHORT_DESCRIPTION
-                else ">"
+                else "|"
             )
             return
         self.generic(node)
@@ -474,7 +459,8 @@ def to_yaml(
     are put in a standard order, the lists of datasets are sorted, and the
     keys of other mappings are sorted by name, except the preprocessor
     steps. The lines of each paragraph of the description of the recipe are
-    joined, except list items and indented lines.
+    joined and wrapped at 79 characters, keeping list items and indented
+    lines on their own lines.
 
     Parameters
     ----------
@@ -508,9 +494,9 @@ def format_recipe(text: str) -> str:
     are put in a standard order, and the style of the YAML is made
     consistent. Anchors and aliases are kept, but comments are removed.
     The order of the datasets, preprocessors, preprocessor steps,
-    diagnostics, variable groups, and scripts is kept. The lines of each paragraph
-    of the description of the recipe are joined, except list items and
-    indented lines, and the description is wrapped at 79 characters.
+    diagnostics, variable groups, and scripts is kept. The lines of each
+    paragraph of the description of the recipe are joined and wrapped at 79
+    characters, keeping list items and indented lines on their own lines.
 
     Parameters
     ----------
