@@ -48,14 +48,36 @@ from __future__ import annotations
 
 import importlib
 import logging
-from typing import TYPE_CHECKING
+import warnings
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 import esmvalcore.io.protocol
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from esmvalcore.config import Session
+    from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
+
+
+# TODO: Remove in v2.18.0
+@runtime_checkable
+class _DataSourceWithoutSearchableFacets(Protocol):
+    """A data source without the ``searchable_facets`` attribute."""
+
+    name: str
+    project: str
+    priority: int
+    debug_info: str
+
+    def find_data(
+        self,
+        **facets: FacetValue,
+    ) -> Iterable[esmvalcore.io.protocol.DataElement]:
+        """Find data."""
 
 
 def load_data_sources(
@@ -107,7 +129,28 @@ def load_data_sources(
                 priority=priority,
                 **kwargs,
             )
-            if not isinstance(data_source, esmvalcore.io.protocol.DataSource):
+            # TODO: Remove in v2.18.0
+            if isinstance(
+                data_source,
+                _DataSourceWithoutSearchableFacets,
+            ) and not isinstance(
+                data_source,
+                esmvalcore.io.protocol.DataSource,
+            ):
+                msg = (
+                    f"Data source '{name}' of type '{type(data_source)}' for "
+                    f"project '{project_}' does not have the attribute "
+                    "`searchable_facets`. Data sources without this attribute "
+                    "are deprecated in ESMValCore v2.16.0 and will no longer "
+                    "be supported in ESMValCore v2.18.0. Add this attribute to "
+                    "the data source as described in "
+                    "`esmvalcore.io.protocol.DataSource`."
+                )
+                warnings.warn(msg, ESMValCoreDeprecationWarning, stacklevel=2)
+            elif not isinstance(
+                data_source,
+                esmvalcore.io.protocol.DataSource,
+            ):
                 msg = (
                     "Expected a data source of type `esmvalcore.io.protocol.DataSource`, "
                     f"but your configuration for project '{project_}' contains "
