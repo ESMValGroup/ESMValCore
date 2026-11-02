@@ -118,7 +118,7 @@ def test_format_recipe_strips_description() -> None:
     """Test that trailing whitespace is removed from the description."""
     text = "documentation:\n  description: |\n    Line 1. \n\n    Line 2.\n\n"
     expected = (
-        "documentation:\n  description: >-\n    Line 1.\n\n\n    Line 2.\n"
+        "documentation:\n  description: |-\n    Line 1.\n\n    Line 2.\n"
     )
     assert format_recipe(text) == expected
 
@@ -182,28 +182,65 @@ def test_format_recipe_description_keeps_lists_and_paragraphs() -> None:
     """Test that list items, indented lines and paragraphs are kept."""
     formatted = format_recipe(DESCRIPTION)
     assert _description(formatted) == NORMALIZED
-    assert "  description: >-\n" in formatted
+    assert "  description: |-\n" in formatted
+
+
+WORDS = " ".join(["word"] * 30)
+LONG = f"{WORDS}\n\n{WORDS}\n  indented {WORDS}\n- item {WORDS}\n1. {WORDS}"
+
+
+def _wrap(text: str, indent: str = "") -> str:
+    """Wrap text at 75 characters."""
+    return textwrap.fill(text, 75, subsequent_indent=indent)
 
 
 @pytest.mark.parametrize("use_to_yaml", [True, False])
 def test_description_idempotent_and_wrapped(*, use_to_yaml: bool) -> None:
     """Test that formatting twice gives the same text, wrapped at 79."""
-    words = " ".join(["word"] * 60)
-    description = f"{words}\n\n{words}\n  indented {words}\n- item {words}"
     if use_to_yaml:
-        formatted = to_yaml({"documentation": {"description": description}})
+        formatted = to_yaml({"documentation": {"description": LONG}})
         again = to_yaml(yaml.safe_load(formatted))
     else:
-        indented = textwrap.indent(description, "    ")
+        indented = textwrap.indent(LONG, "    ")
         formatted = format_recipe(
             f"documentation:\n  description: |\n{indented}\n",
         )
         again = format_recipe(formatted)
     assert again == formatted
     lines = formatted.splitlines()
-    assert lines[1] == "  description: >-"
-    assert max(len(line) for line in lines[2:4]) <= 79
-    assert _description(formatted) == description
+    assert lines[1] == "  description: |-"
+    assert max(len(line) for line in lines if "indented" not in line) <= 79
+    description = _description(formatted)
+    assert description == "\n".join(
+        [
+            _wrap(WORDS),
+            "",
+            _wrap(WORDS),
+            f"  indented {WORDS}",
+            _wrap(f"- item {WORDS}", "  "),
+            _wrap(f"1. {WORDS}", "   "),
+        ],
+    )
+    assert "\n  indented word word" in description
+
+
+def test_description_list_item_is_wrapped_with_hanging_indent() -> None:
+    """Test that continuation lines of a list item are indented."""
+    recipe = {"documentation": {"description": f"- {WORDS}"}}
+    lines = _description(to_yaml(recipe)).splitlines()
+    assert len(lines) > 1
+    assert lines[1].startswith("  word")
+
+
+def test_description_wrapping_does_not_create_list_items() -> None:
+    """Test that a wrapped line does not start with a list marker."""
+    text = " ".join(["word"] * 18) + " - " + "word " * 5
+    recipe = {"documentation": {"description": text.strip()}}
+    formatted = to_yaml(recipe)
+    assert to_yaml(yaml.safe_load(formatted)) == formatted
+    assert not any(
+        line.lstrip().startswith("- ") for line in formatted.splitlines()[2:]
+    )
 
 
 def test_to_yaml_description_normalized() -> None:
