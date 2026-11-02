@@ -1949,16 +1949,16 @@ _REQUIRED_FACETS = {
 }
 
 
-def _datasets(
+def _variable_groups(
     recipe: object,
 ) -> collections.abc.Iterator[
-    tuple[tuple[str | int, ...], dict, dict[str, tuple[str | int, ...]]]
+    tuple[
+        tuple[str | int, ...],
+        dict,
+        list[tuple[tuple[str | int, ...], dict]],
+    ]
 ]:
-    """Find the datasets of each variable group with their facets.
-
-    The facets of a dataset override those of its variable group. Also
-    yields the path of the dataset or variable group that defines each facet.
-    """
+    """Find the variable groups with the datasets that they use."""
     datasets = [
         (("datasets", i), entry)
         for i, entry in enumerate(_list(recipe, "datasets"))
@@ -1976,14 +1976,64 @@ def _datasets(
                 ((*group_path, "additional_datasets", i), entry)
                 for i, entry in enumerate(additional)
             ]
-            facets = variable if isinstance(variable, dict) else {}
-            for dataset_path, entry in group_datasets:
-                if isinstance(entry, dict):
-                    origin = {
-                        **dict.fromkeys(facets, group_path),
-                        **dict.fromkeys(entry, dataset_path),
-                    }
-                    yield dataset_path, {**facets, **entry}, origin
+            yield (
+                group_path,
+                variable if isinstance(variable, dict) else {},
+                [(p, e) for p, e in group_datasets if isinstance(e, dict)],
+            )
+
+
+def _datasets(
+    recipe: object,
+) -> collections.abc.Iterator[
+    tuple[tuple[str | int, ...], dict, dict[str, tuple[str | int, ...]]]
+]:
+    """Find the datasets of each variable group with their facets.
+
+    The facets of a dataset override those of its variable group. Also
+    yields the path of the dataset or variable group that defines each facet.
+    """
+    for group_path, facets, group_datasets in _variable_groups(recipe):
+        for dataset_path, entry in group_datasets:
+            origin = {
+                **dict.fromkeys(facets, group_path),
+                **dict.fromkeys(entry, dataset_path),
+            }
+            yield dataset_path, {**facets, **entry}, origin
+
+
+def _find_unknown_reference_datasets(recipe: object) -> list[RecipeIssue]:
+    """Find reference and alternative datasets that are not in the group.
+
+    Datasets can be referred to by their name or alias. An empty value means
+    that there is no such dataset, and some diagnostic scripts accept several
+    datasets separated by ``|``.
+    """
+    issues = []
+    for group_path, variable, group_datasets in _variable_groups(recipe):
+        values = [entry.get("dataset") for _, entry in group_datasets]
+        datasets = [v for v in values if isinstance(v, str)]
+        if len(datasets) < len(values) or any(
+            char in name for name in datasets for char in "*?["
+        ):
+            # Patterns and lists of datasets may match the dataset.
+            continue
+        aliases = [entry.get("alias") for _, entry in group_datasets]
+        names = {*datasets, *(a for a in aliases if isinstance(a, str))}
+        for key in ("reference_dataset", "alternative_dataset"):
+            value = variable.get(key)
+            if not isinstance(value, str) or not value:
+                continue
+            for name in value.split("|"):
+                if name not in names:
+                    issue = RecipeIssue(
+                        (*group_path, key),
+                        f"unknown value '{name}'. Not a dataset of this "
+                        "variable group." + _suggest(name, datasets),
+                        severity="warning",
+                    )
+                    issues.append(issue)
+    return issues
 
 
 def _find_missing_facets(recipe: object) -> list[RecipeIssue]:
@@ -2147,8 +2197,9 @@ def validate_recipe(
     """Validate a recipe against the JSON Schema.
 
     Also checks that datasets have the facets that their project requires,
-    and that the preprocessors of variable groups and datasets and the
-    ancestors of scripts are defined in the recipe.
+    that the reference and alternative datasets of variable groups are
+    datasets of the group, and that the preprocessors of variable groups and
+    datasets and the ancestors of scripts are defined in the recipe.
 
     Parameters
     ----------
@@ -2172,6 +2223,7 @@ def validate_recipe(
                     issues.append(issue)
     issues.extend(_find_missing_facets(recipe))
     issues.extend(_find_unknown_types(recipe))
+    issues.extend(_find_unknown_reference_datasets(recipe))
     issues.extend(_find_unknown_preprocessors(recipe))
     issues.extend(_find_unknown_ancestors(recipe))
     composed = None if text is None else _compose(text)

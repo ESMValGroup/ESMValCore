@@ -1503,6 +1503,50 @@ def test_validate_recipe_missing_facets_unknown_project() -> None:
 
 
 @pytest.mark.parametrize(
+    "value",
+    ["ERA5", "CanESM5", "ERA5|CanESM5", "my-alias", ""],
+)
+@pytest.mark.parametrize("key", ["reference_dataset", "alternative_dataset"])
+def test_validate_recipe_known_reference_dataset(key: str, value: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][0]["alias"] = "my-alias"
+    recipe["diagnostics"]["example"]["variables"]["ta"][key] = value
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize("key", ["reference_dataset", "alternative_dataset"])
+def test_validate_recipe_unknown_reference_dataset(key: str) -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["diagnostics"]["example"]["variables"]["ta"][key] = "ERA5|ERA4"
+    assert validate_recipe(recipe) == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "ta", key),
+            "unknown value 'ERA4'. Not a dataset of this variable group. "
+            "Did you mean 'ERA5'?",
+            severity="warning",
+        ),
+    ]
+
+
+def test_validate_recipe_reference_dataset_of_other_group() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    variables = recipe["diagnostics"]["example"]["variables"]
+    variables["pr"] = {"reference_dataset": "CanESM5"}
+    assert [i.path[-2:] for i in validate_recipe(recipe)] == [
+        ("pr", "reference_dataset"),
+    ]
+
+
+def test_validate_recipe_reference_dataset_pattern() -> None:
+    recipe = yaml.safe_load(RECIPE)
+    recipe["datasets"][0]["dataset"] = "*"
+    recipe["diagnostics"]["example"]["variables"]["ta"][
+        "reference_dataset"
+    ] = "X"
+    assert validate_recipe(recipe) == []
+
+
+@pytest.mark.parametrize(
     "ancestors",
     [["ta"], ["example/ta", "example/pr"], ["example/*"], ["*/p?"]],
 )
