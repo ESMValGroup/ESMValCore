@@ -1941,12 +1941,27 @@ def _preprocessor_facets(
             yield (*entry_path, "preprocessor"), entry["preprocessor"]
 
 
-# Facets that are required to find the data of a project, in addition to
-# dataset, mip, and short_name.
-_REQUIRED_FACETS = {
-    "OBS": ("tier", "type"),
-    "OBS6": ("tier", "type"),
-}
+def _matches(pattern: str, value: object) -> bool:
+    """Check if a facet value matches a pattern of the extra facets.
+
+    Values that are not given or not a string may match any pattern.
+    """
+    return not isinstance(value, str) or fnmatch.fnmatchcase(value, pattern)
+
+
+def _extra_facet_names(project: str, facets: dict) -> set[str]:
+    """Get the names of the extra facets that may apply to a dataset."""
+    extra_facets = CFG["projects"].get(project, {}).get("extra_facets", {})
+    return {
+        name
+        for dataset, mips in extra_facets.items()
+        if _matches(dataset, facets.get("dataset"))
+        for mip, variables in mips.items()
+        if _matches(mip, facets.get("mip"))
+        for short_name, values in variables.items()
+        if _matches(short_name, facets.get("short_name"))
+        for name in values
+    }
 
 
 def _datasets(
@@ -1987,14 +2002,24 @@ def _datasets(
 
 
 def _find_missing_facets(recipe: object) -> list[RecipeIssue]:
-    """Find datasets without the facets that their project requires."""
+    """Find datasets without the facets that their project requires.
+
+    The required facets are configured with the ``required_facets`` option
+    of the project. Facets that may come from the extra facets of the
+    project are not required in the recipe.
+    """
     issues = []
     for path, facets, _ in _datasets(recipe):
         project = facets.get("project")
         if not isinstance(project, str):
             continue
-        required = _REQUIRED_FACETS.get(project, ())
-        if missing := [f for f in required if f not in facets]:
+        settings = CFG["projects"].get(project, {})
+        required = settings.get("required_facets", [])
+        missing = [f for f in required if f not in facets]
+        if missing:
+            extra = _extra_facet_names(project, facets)
+            missing = [f for f in missing if f not in extra]
+        if missing:
             keys = "key" if len(missing) == 1 else "keys"
             names = ", ".join(repr(f) for f in missing)
             issue = RecipeIssue(

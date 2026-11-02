@@ -686,6 +686,10 @@ The following project-specific options are available:
      - A template defining the filenames to use for :ref:`preprocessed data <preprocessed_datasets>` when running a :ref:`recipe <recipe>`. Refer to  :ref:`config-preprocessor-filename-template` for details.
      - :obj:`str`
      - Refer to :ref:`config-preprocessor-filename-template`.
+   * - ``required_facets``
+     - Facets that recipes must specify for datasets of the project, in addition to ``dataset``, ``mip``, and ``short_name``. Refer to :ref:`config-required-facets` for details.
+     - :obj:`list` of :obj:`str`
+     - Refer to :ref:`config-required-facets`.
 
 .. _cmor_table_configuration:
 
@@ -1008,6 +1012,31 @@ and end time) will automatically be appended to the filename.
 If no ``preprocessor_filename_template`` is configured for a project, the facets
 describing the dataset in the recipe, as stored in
 :attr:`esmvalcore.dataset.Dataset.minimal_facets`, are used.
+
+.. _config-required-facets:
+
+Required facets
+---------------
+
+The facets that a recipe must specify for each dataset of a project, in
+addition to ``dataset``, ``mip``, and ``short_name``, are configured using
+``required_facets``.
+Recipes are checked for these facets before running, and also while editing
+them if the editor supports this (refer to :ref:`recipe_editor_support`).
+Facets that can be added from the :ref:`extra facets <config-extra-facets>`
+of the project do not have to be specified in the recipe.
+
+Default values are provided in ``defaults/required_facets.yml``, for example:
+
+.. literalinclude:: ../configurations/defaults/required_facets.yml
+    :language: yaml
+    :caption: First few lines of ``defaults/required_facets.yml``
+    :end-before: # Observational
+
+For projects hosted on ESGF, these are the facets that are used to search
+ESGF, except those that can be derived from other facets, such as
+``institute`` and ``activity``, or from the CMOR tables, such as
+``frequency``.
 
 .. _config-esgf:
 
