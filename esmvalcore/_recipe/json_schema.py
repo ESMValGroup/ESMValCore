@@ -1690,6 +1690,15 @@ def _describe(
 _Aliases = dict[tuple[int, int], yaml.Mark]
 
 
+@dataclasses.dataclass
+class _Composed:
+    """A tree of nodes with the positions and anchor names of aliases."""
+
+    root: yaml.Node
+    aliases: _Aliases
+    anchors: dict[tuple[int, int], str]
+
+
 class _AliasLoader(yaml.SafeLoader):
     """Loader that records where aliases are used.
 
@@ -1700,6 +1709,7 @@ class _AliasLoader(yaml.SafeLoader):
     def __init__(self, stream: str) -> None:
         super().__init__(stream)
         self.aliases: _Aliases = {}
+        self.anchor_names: dict[tuple[int, int], str] = {}
 
     def compose_node(
         self,
@@ -1715,7 +1725,9 @@ class _AliasLoader(yaml.SafeLoader):
             and self.check_event(yaml.AliasEvent)
         ):
             child = index if isinstance(index, int) else id(index)
-            self.aliases[id(parent), child] = self.peek_event().start_mark
+            event = self.peek_event()
+            self.aliases[id(parent), child] = event.start_mark
+            self.anchor_names[id(parent), child] = event.anchor
         return super().compose_node(parent, index)
 
 
@@ -1812,7 +1824,7 @@ def _find_position(
     return position
 
 
-def _compose(text: str) -> tuple[yaml.Node, _Aliases] | None:
+def _compose(text: str) -> _Composed | None:
     """Parse YAML text into a tree of nodes and the positions of aliases.
 
     Returns None if that fails or the text is empty.
@@ -1824,70 +1836,252 @@ def _compose(text: str) -> tuple[yaml.Node, _Aliases] | None:
         return None
     finally:
         loader.dispose()
-    return None if root is None else (root, loader.aliases)
+    if root is None:
+        return None
+    return _Composed(root, loader.aliases, loader.anchor_names)
 
 
-def _find_duplicate_keys(
-    node: yaml.Node,
-    path: tuple[str | int, ...] = (),
-    visited: set[int] | None = None,
-) -> list[RecipeIssue]:
-    """Find keys that occur more than once in a mapping.
-
-    PyYAML silently uses the last definition of such a key, so the earlier
-    definitions are reported. Merge keys (``<<``) may occur more than once,
-    because the mappings they refer to are all merged.
-    """
-    if visited is None:
-        visited = set()
-    if id(node) in visited:
-        # Report problems in an anchored node only once.
-        return []
-    visited.add(id(node))
-    if isinstance(node, yaml.MappingNode):
-        return _find_duplicate_keys_in_mapping(node, path, visited)
-    issues = []
-    if isinstance(node, yaml.SequenceNode):
-        for i, item in enumerate(node.value):
-            issues.extend(_find_duplicate_keys(item, (*path, i), visited))
-    return issues
+_MERGE_TAG = "tag:yaml.org,2002:merge"
 
 
-def _find_duplicate_keys_in_mapping(
-    node: yaml.MappingNode,
-    path: tuple[str | int, ...],
-    visited: set[int],
-) -> list[RecipeIssue]:
-    """Find duplicate keys in a mapping and in the values it contains."""
-    items = [
-        (key_node, value_node)
-        for key_node, value_node in node.value
-        if isinstance(key_node, yaml.ScalarNode)
-        and key_node.tag != "tag:yaml.org,2002:merge"
-    ]
-    last = {key_node.value: key_node for key_node, _ in items}
-    issues = []
-    for key_node, value_node in items:
-        key = key_node.value
-        used = last[key]
-        if used is key_node:
-            issues.extend(
-                _find_duplicate_keys(value_node, (*path, key), visited),
-            )
+@dataclasses.dataclass
+class _YAMLChecker:
+    """Find YAML that is ignored, deprecated, or ambiguous in a recipe."""
+
+    composed: _Composed
+    issues: list[RecipeIssue] = dataclasses.field(default_factory=list)
+    visited: set[int] = dataclasses.field(default_factory=set)
+    ancestors: list[int] = dataclasses.field(default_factory=list)
+
+    def check(self, node: yaml.Node, path: tuple[str | int, ...]) -> None:
+        """Check a node and the nodes it contains."""
+        if id(node) in self.visited:
+            # Report problems in an anchored node only once.
+            return
+        self.visited.add(id(node))
+        self.ancestors.append(id(node))
+        if isinstance(node, yaml.MappingNode):
+            self._check_mapping(node, path)
+        elif isinstance(node, yaml.SequenceNode):
+            for i, item in enumerate(node.value):
+                self._check_child(node, i, item, (*path, i))
+        elif isinstance(node, yaml.ScalarNode):
+            self._check_scalar(node, path)
+        self.ancestors.pop()
+
+    def _check_child(
+        self,
+        parent: yaml.Node,
+        child: int,
+        node: yaml.Node,
+        path: tuple[str | int, ...],
+    ) -> None:
+        """Check a child node, unless it is an alias to one of its parents."""
+        if id(node) not in self.ancestors:
+            self.check(node, path)
+            return
+        mark = self.composed.aliases[id(parent), child]
+        name = self.composed.anchors[id(parent), child]
+        self.issues.append(
+            _yaml_issue(
+                path,
+                f"alias '*{name}' refers to the anchor '&{name}' that "
+                "contains it, which other YAML parsers do not accept. This "
+                "is deprecated: remove the alias.",
+                mark,
+            ),
+        )
+
+    def _check_mapping(
+        self,
+        node: yaml.MappingNode,
+        path: tuple[str | int, ...],
+    ) -> None:
+        """Check the keys and values of a mapping."""
+        merges = [(k, v) for k, v in node.value if k.tag == _MERGE_TAG]
+        if len(merges) > 1:
+            self._report_merge_keys(node, merges, path)
+        for key_node, value_node in merges:
+            self._check_merged(node, key_node, value_node, path)
+        items = [
+            (key_node, value_node)
+            for key_node, value_node in node.value
+            if isinstance(key_node, yaml.ScalarNode)
+            and key_node.tag != _MERGE_TAG
+        ]
+        last = {key_node.value: key_node for key_node, _ in items}
+        for key_node, value_node in items:
+            key = key_node.value
+            self._check_scalar(key_node, (*path, key))
+            used = last[key]
+            if used is key_node:
+                self._check_child(node, id(key_node), value_node, (*path, key))
+            else:
+                # The ignored value is not checked any further.
+                self.issues.append(
+                    _yaml_issue(
+                        (*path, key),
+                        f"duplicate key, this definition is ignored because "
+                        f"'{key}' is defined again on line "
+                        f"{used.start_mark.line + 1}.",
+                        key_node.start_mark,
+                    ),
+                )
+
+    def _check_merged(
+        self,
+        node: yaml.MappingNode,
+        key_node: yaml.Node,
+        value_node: yaml.Node,
+        path: tuple[str | int, ...],
+    ) -> None:
+        """Check the mappings that a merge key merges."""
+        if isinstance(value_node, yaml.SequenceNode):
+            if id(value_node) not in self.visited:
+                self.visited.add(id(value_node))
+                for i, item in enumerate(value_node.value):
+                    self._check_child(value_node, i, item, path)
         else:
-            # The ignored value is not checked any further.
-            issues.append(
-                RecipeIssue(
-                    (*path, key),
-                    f"duplicate key, this definition is ignored because "
-                    f"'{key}' is defined again on line "
-                    f"{used.start_mark.line + 1}.",
-                    line=key_node.start_mark.line + 1,
-                    column=key_node.start_mark.column + 1,
-                    severity="warning",
-                ),
-            )
-    return issues
+            self._check_child(node, id(key_node), value_node, path)
+
+    def _report_merge_keys(
+        self,
+        node: yaml.MappingNode,
+        merges: list[tuple[yaml.Node, yaml.Node]],
+        path: tuple[str | int, ...],
+    ) -> None:
+        """Report merge keys that occur more than once in a mapping."""
+        # The mappings of later merge keys have priority, while the first
+        # mapping in a sequence of mappings to merge has priority.
+        sources: list[str] = []
+        for key_node, value_node in reversed(merges):
+            if isinstance(value_node, yaml.SequenceNode):
+                sources.extend(
+                    self._source(value_node, i)
+                    for i in range(len(value_node.value))
+                )
+            else:
+                sources.append(self._source(node, id(key_node)))
+        self.issues.append(
+            _yaml_issue(
+                path,
+                "duplicate merge key '<<', which other YAML parsers do not "
+                "accept. This is deprecated: use one merge key with the "
+                f"mappings in this order: <<: [{', '.join(sources)}]",
+                merges[1][0].start_mark,
+            ),
+        )
+
+    def _source(self, parent: yaml.Node, child: int) -> str:
+        """Describe a mapping to merge by its alias."""
+        name = self.composed.anchors.get((id(parent), child))
+        return "{...}" if name is None else f"*{name}"
+
+    def _check_scalar(
+        self,
+        node: yaml.ScalarNode,
+        path: tuple[str | int, ...],
+    ) -> None:
+        """Report values that YAML 1.1 and 1.2 parsers read differently."""
+        if node.style is not None:
+            return
+        message = _ambiguous_scalar(node.value, node.tag)
+        if message is not None:
+            self.issues.append(_yaml_issue(path, message, node.start_mark))
+
+
+def _yaml_issue(
+    path: tuple[str | int, ...],
+    message: str,
+    mark: yaml.Mark,
+) -> RecipeIssue:
+    return RecipeIssue(
+        path,
+        message,
+        line=mark.line + 1,
+        column=mark.column + 1,
+        severity="warning",
+    )
+
+
+# The types of plain scalars in the core schema of YAML 1.2, see
+# https://yaml.org/spec/1.2.2/#1032-tag-resolution.
+_YAML_12_TYPES = {
+    "null": re.compile(r"null|Null|NULL|~|"),
+    "boolean": re.compile(r"true|True|TRUE|false|False|FALSE"),
+    "integer": re.compile(r"[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+"),
+    "number": re.compile(
+        r"[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?"
+        r"|[-+]?\.(inf|Inf|INF)|\.nan|\.NaN|\.NAN",
+    ),
+}
+
+# The types of plain scalars in YAML 1.1, as read by PyYAML. Dates are not
+# included, because YAML 1.2 has no other way to write them.
+_YAML_11_TYPES = {
+    "tag:yaml.org,2002:null": "null",
+    "tag:yaml.org,2002:bool": "boolean",
+    "tag:yaml.org,2002:int": "integer",
+    "tag:yaml.org,2002:float": "number",
+    "tag:yaml.org,2002:str": "text",
+}
+
+_TYPE_NAMES = {
+    "null": "null",
+    "boolean": "a boolean",
+    "integer": "an integer",
+    "number": "a number",
+    "text": "text",
+}
+
+
+def _yaml_12_integer(value: str) -> int:
+    """Read an integer as YAML 1.2 does."""
+    if value.startswith(("0o", "0x")):
+        return int(value[2:], 8 if value[1] == "o" else 16)
+    return int(value)
+
+
+def _dump(value: object) -> str:
+    """Write a value in a way that YAML 1.1 and 1.2 read the same."""
+    return yaml.safe_dump(value).split("\n")[0]
+
+
+def _ambiguous_scalar(value: str, tag: str) -> str | None:
+    """Describe a plain scalar that YAML 1.1 and 1.2 read differently."""
+    old = _YAML_11_TYPES.get(tag)
+    new = next(
+        (t for t, regex in _YAML_12_TYPES.items() if regex.fullmatch(value)),
+        "text",
+    )
+    if old is None or (
+        old == new
+        and (
+            old != "integer"
+            or yaml.safe_load(value) == _yaml_12_integer(value)
+        )
+    ):
+        return None
+    if old == "text":
+        hint = "Quote it if it is text, or write " + (
+            f"{_dump(float(value))} for the number"
+            if new == "number"
+            else f"{_yaml_12_integer(value)} for the integer"
+        )
+    else:
+        hint = (
+            f"Write {_dump(yaml.safe_load(value))} for {_TYPE_NAMES[old]}, "
+            "or quote it if it is text"
+        )
+    if old == new:
+        # Octal integers are written differently in YAML 1.2.
+        read = f"{yaml.safe_load(value)}", f"{_yaml_12_integer(value)}"
+    else:
+        read = _TYPE_NAMES[old], _TYPE_NAMES[new]
+    return (
+        f"ambiguous value '{value}', read as {read[0]} by ESMValCore but as "
+        f"{read[1]} by YAML 1.2 parsers, for example in editors. {hint}."
+    )
 
 
 def _mapping(data: object, key: str) -> dict:
@@ -2157,7 +2351,10 @@ def validate_recipe(
     text:
         The YAML text of the recipe. If given, the issues include line and
         column numbers and are sorted by their position in the text, and
-        keys that are defined more than once are reported as warnings.
+        keys that are defined more than once, merge keys (``<<``) that are
+        used more than once or merge the mapping that contains them, and
+        values that parsers of YAML 1.2 read differently are reported as
+        warnings.
 
     Returns
     -------
@@ -2176,7 +2373,8 @@ def validate_recipe(
     issues.extend(_find_unknown_ancestors(recipe))
     composed = None if text is None else _compose(text)
     if composed is not None:
-        root, aliases = composed
-        issues.extend(_find_duplicate_keys(root))
-        issues = _locate(issues, root, aliases)
+        checker = _YAMLChecker(composed)
+        checker.check(composed.root, ())
+        issues.extend(checker.issues)
+        issues = _locate(issues, composed.root, composed.aliases)
     return issues

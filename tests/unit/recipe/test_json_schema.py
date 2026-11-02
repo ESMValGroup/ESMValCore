@@ -855,11 +855,154 @@ def test_validate_recipe_positions_merge(
         issue
         for issue in validate_recipe(recipe, MERGE_RECIPE)
         if issue.path[:2] == ("preprocessors", preprocessor)
+        and issue.severity == "error"
     ]
     assert len(issues) == 1
     assert issues[0].path[-1] == "scheme"
     # The problem is found at the alias that merges the anchored mapping.
     assert (issues[0].line, issues[0].column) == (line, column)
+
+
+def test_validate_recipe_duplicate_merge_keys() -> None:
+    issues = [
+        issue
+        for issue in validate_recipe(
+            yaml.safe_load(MERGE_RECIPE),
+            MERGE_RECIPE,
+        )
+        if "merge key" in issue.message
+    ]
+    assert issues == [
+        RecipeIssue(
+            ("preprocessors", "repeated", "regrid"),
+            "duplicate merge key '<<', which other YAML parsers do not "
+            "accept. This is deprecated: use one merge key with the mappings "
+            "in this order: <<: [*b, *a]",
+            line=14,
+            column=7,
+            severity="warning",
+        ),
+    ]
+
+
+SELF_MERGE_RECIPE = """
+defaults: &defaults {mip: Amon}
+diagnostics:
+  example:
+    variables:
+      tas: &tas
+        <<: [*defaults, *tas]
+        short_name: tas
+    scripts: null
+"""
+
+
+def test_validate_recipe_self_merge() -> None:
+    issues = validate_recipe(
+        yaml.safe_load(SELF_MERGE_RECIPE),
+        SELF_MERGE_RECIPE,
+    )
+    assert [i for i in issues if "alias" in i.message] == [
+        RecipeIssue(
+            ("diagnostics", "example", "variables", "tas"),
+            "alias '*tas' refers to the anchor '&tas' that contains it, "
+            "which other YAML parsers do not accept. This is deprecated: "
+            "remove the alias.",
+            line=7,
+            column=25,
+            severity="warning",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        (
+            "1e-2",
+            (
+                "read as text by ESMValCore but as a number by YAML 1.2 parsers, "
+                "for example in editors. Quote it if it is text, or write 0.01 "
+                "for the number."
+            ),
+        ),
+        (
+            "0o12",
+            (
+                "read as text by ESMValCore but as an integer by YAML 1.2 "
+                "parsers, for example in editors. Quote it if it is text, or "
+                "write 10 for the integer."
+            ),
+        ),
+        (
+            "yes",
+            (
+                "read as a boolean by ESMValCore but as text by YAML 1.2 parsers, "
+                "for example in editors. Write true for a boolean, or quote it "
+                "if it is text."
+            ),
+        ),
+        (
+            "012",
+            (
+                "read as 10 by ESMValCore but as 12 by YAML 1.2 parsers, for "
+                "example in editors. Write 10 for an integer, or quote it if "
+                "it is text."
+            ),
+        ),
+        (
+            "1_000",
+            (
+                "read as an integer by ESMValCore but as text by YAML 1.2 "
+                "parsers, for example in editors. Write 1000 for an integer, or "
+                "quote it if it is text."
+            ),
+        ),
+        (
+            "1:30",
+            (
+                "read as an integer by ESMValCore but as text by YAML 1.2 "
+                "parsers, for example in editors. Write 90 for an integer, or "
+                "quote it if it is text."
+            ),
+        ),
+    ],
+)
+def test_validate_recipe_ambiguous_value(value: str, message: str) -> None:
+    text = f"{RECIPE}\n        threshold: {value}\n"
+    issues = [
+        issue
+        for issue in validate_recipe(yaml.safe_load(text), text)
+        if "ambiguous" in issue.message
+    ]
+    assert [(i.path, i.message, i.severity) for i in issues] == [
+        (
+            ("diagnostics", "example", "scripts", "plot", "threshold"),
+            f"ambiguous value '{value}', {message}",
+            "warning",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "'1e-2'",
+        "1.0e-2",
+        "1.0e+2",
+        "0.01",
+        "10",
+        "0x1F",
+        "true",
+        "~",
+        "2000-01-01",
+        "text",
+    ],
+)
+def test_validate_recipe_unambiguous_value(value: str) -> None:
+    text = f"{RECIPE}\n        threshold: {value}\n"
+    issues = validate_recipe(yaml.safe_load(text), text)
+    assert not [i for i in issues if "ambiguous" in i.message]
 
 
 ALIAS_RECIPE = """
