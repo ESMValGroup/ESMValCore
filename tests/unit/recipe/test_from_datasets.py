@@ -325,6 +325,83 @@ def test_group_ensembles_cmip6():
     assert groups == expected
 
 
+@pytest.mark.parametrize(
+    ("names", "expected"),
+    [
+        (["r1i1p1", "r1i1p1f1"], ["r1i1p1", "r1i1p1f1"]),
+        (["r01i1p1", "r02i1p1"], ["r01i1p1", "r02i1p1"]),
+        (["r(1:2)i1p1", "r3i1p1"], ["r3i1p1", "r(1:2)i1p1"]),
+        (["r1i1p1f1-a", "r2i1p1f1-a"], ["r(1:2)i1p1f1-a"]),
+        (["member1", "member2", "other"], ["member(1:2)", "other"]),
+        (["s1960", "s1961", "s1962", "s1965"], ["s(1960:1962)", "s1965"]),
+    ],
+)
+def test_group_ensemble_names(names, expected):
+    assert _group_ensemble_names(names) == expected
+
+
+def _expand(facets: list[dict]) -> list[dict]:
+    """Expand the ranges in facets."""
+    return [ds.facets for f in facets for ds in Dataset(**f).from_ranges()]
+
+
+def test_group_ensemble_members_and_sub_experiments():
+    datasets = [
+        {
+            "dataset": "dataset1",
+            "ensemble": f"r{r}i1p{p}f1",
+            "sub_experiment": f"s{year}",
+        }
+        for r in range(1, 11)
+        for p in (1, 2)
+        for year in range(1960, 1971)
+    ]
+    datasets.append(
+        {
+            "dataset": "dataset1",
+            "ensemble": "r1i1p1f1",
+            "sub_experiment": "s1980",
+        },
+    )
+
+    result = _group_ensemble_members(datasets)
+
+    assert result == [
+        {
+            "dataset": "dataset1",
+            "ensemble": "r(1:10)i1p(1:2)f1",
+            "sub_experiment": "s(1960:1970)",
+        },
+        {
+            "dataset": "dataset1",
+            "ensemble": "r1i1p1f1",
+            "sub_experiment": "s1980",
+        },
+    ]
+    assert sorted(map(str, _expand(result))) == sorted(map(str, datasets))
+
+
+def test_group_ensemble_members_round_trip():
+    datasets = [
+        {"dataset": "dataset1", "ensemble": ensemble}
+        for ensemble in (
+            "r1i1p1f1",
+            "r2i1p1f1",
+            "r4i1p1f1",
+            "r2i1p2f1",
+            "r3i1p2f1",
+            "r1i1p1f2",
+        )
+    ]
+    datasets.append({"dataset": "dataset2", "ensemble": ["r1i1p1", "r2i1p1"]})
+    datasets.append({"dataset": "dataset3"})
+
+    result = _group_ensemble_members(datasets)
+
+    assert len(result) < len(datasets)
+    assert sorted(map(str, _expand(result))) == sorted(map(str, datasets))
+
+
 def test_move_one_level_up_diagnostic():
     diagnostic = {
         "variables": {
