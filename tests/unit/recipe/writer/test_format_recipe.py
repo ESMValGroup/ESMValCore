@@ -116,8 +116,10 @@ def test_format_recipe_multiline_string() -> None:
 
 def test_format_recipe_strips_description() -> None:
     """Test that trailing whitespace is removed from the description."""
-    text = "documentation:\n  description: |\n    Line 1. \n    Line 2.\n\n"
-    expected = "documentation:\n  description: |-\n    Line 1.\n    Line 2.\n"
+    text = "documentation:\n  description: |\n    Line 1. \n\n    Line 2.\n\n"
+    expected = (
+        "documentation:\n  description: >-\n    Line 1.\n\n\n    Line 2.\n"
+    )
     assert format_recipe(text) == expected
 
 
@@ -144,3 +146,73 @@ def test_to_yaml_sorts_numbers() -> None:
     """Test that numbers are sorted before names and by their value."""
     recipe = {"settings": {"b": 0, 10: 0, 2: 0, "a": 0}}
     assert to_yaml(recipe) == "settings:\n  2: 0\n  10: 0\n  a: 0\n  b: 0"
+
+
+def _description(text: str) -> str:
+    """Load the description of a formatted recipe."""
+    return yaml.safe_load(text)["documentation"]["description"]
+
+
+DESCRIPTION = (
+    "documentation:\n  description: |\n"
+    "    This sentence is split\n    over two lines.\n\n"
+    "    Second paragraph, which is\n    also split.\n"
+    "    - item one\n      continues here\n"
+    "    - item two\n"
+    "        - nested item\n"
+    "    Text after the list.\n"
+)
+NORMALIZED = (
+    "This sentence is split over two lines.\n\n"
+    "Second paragraph, which is also split.\n"
+    "- item one continues here\n"
+    "- item two\n"
+    "    - nested item\n"
+    "Text after the list."
+)
+
+
+def test_format_recipe_description_joins_lines() -> None:
+    """Test that the lines of a paragraph are joined."""
+    text = "documentation:\n  description: |\n    One\n    sentence.\n"
+    assert _description(format_recipe(text)) == "One sentence."
+
+
+def test_format_recipe_description_keeps_lists_and_paragraphs() -> None:
+    """Test that list items, indented lines and paragraphs are kept."""
+    formatted = format_recipe(DESCRIPTION)
+    assert _description(formatted) == NORMALIZED
+    assert "  description: >-\n" in formatted
+
+
+@pytest.mark.parametrize("use_to_yaml", [True, False])
+def test_description_idempotent_and_wrapped(*, use_to_yaml: bool) -> None:
+    """Test that formatting twice gives the same text, wrapped at 79."""
+    words = " ".join(["word"] * 60)
+    description = f"{words}\n\n{words}\n  indented {words}\n- item {words}"
+    if use_to_yaml:
+        formatted = to_yaml({"documentation": {"description": description}})
+        again = to_yaml(yaml.safe_load(formatted))
+    else:
+        indented = textwrap.indent(description, "    ")
+        formatted = format_recipe(
+            f"documentation:\n  description: |\n{indented}\n",
+        )
+        again = format_recipe(formatted)
+    assert again == formatted
+    lines = formatted.splitlines()
+    assert lines[1] == "  description: >-"
+    assert max(len(line) for line in lines[2:4]) <= 79
+    assert _description(formatted) == description
+
+
+def test_to_yaml_description_normalized() -> None:
+    """Test that to_yaml normalizes the description."""
+    recipe = {"documentation": {"description": "a\nb\n\n  - c\n    d\n"}}
+    assert _description(to_yaml(recipe)) == "a b\n\n  - c d"
+
+
+def test_description_short_stays_plain() -> None:
+    """Test that a short description without line breaks is not a block."""
+    text = "documentation:\n  description: Short.\n"
+    assert format_recipe(text) == text

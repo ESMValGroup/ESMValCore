@@ -48,12 +48,74 @@ _DIAGNOSTIC: _Order = (
 _SCRIPT: _Order = ({"ancestors": 0, "script": 1}, 2)
 
 
+_FOLD_WIDTH = 79
+# Descriptions that are a single line of at most this length are not folded.
+_SHORT_DESCRIPTION = 64
+_LIST_ITEM = re.compile(r"[-*+]\s|\d+[.)]\s")
+
+
+def _wrap(line: str, width: int) -> list[str]:
+    """Split a line at single spaces into lines of at most ``width``."""
+    lines = [""]
+    for word in re.split(r"(?<! ) (?! )", line):
+        if lines[-1] and len(lines[-1]) + 1 + len(word) > width:
+            lines.append(word)
+        elif lines[-1]:
+            lines[-1] += f" {word}"
+        else:
+            lines[-1] = word
+    return lines
+
+
+def _fold(text: str, width: int) -> list[str]:
+    """Convert text to the lines of a folded block scalar.
+
+    A line break between two lines that do not start with a space is
+    folded into a space when the scalar is loaded, so it is written as a
+    blank line. Lines that start with a space are not folded.
+    """
+    lines = text.split("\n")
+    normal = [bool(line) and not line.startswith(" ") for line in lines]
+    result: list[str] = []
+    for number, line in enumerate(lines):
+        if number:
+            # Index of the last non-empty line before this one.
+            previous = number - 1
+            while previous > 0 and not lines[previous]:
+                previous -= 1
+            if normal[number] and normal[previous]:
+                result.append("")
+        result.extend(_wrap(line, width) if normal[number] else [line])
+    return result
+
+
 class RecipeDumper(yaml.SafeDumper):
     """YAML dumper for recipes that keeps the names of anchors."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.anchor_names: dict[yaml.Node, str] = {}
+
+    def write_folded(self, text: str) -> None:
+        """Write a folded block scalar, wrapped at ``_FOLD_WIDTH``.
+
+        PyYAML's implementation wraps lines that start with a space, which
+        changes the text when the scalar is loaded.
+        """
+        if text.startswith("\n") or text.endswith("\n"):
+            super().write_folded(text)
+            return
+        hints = self.determine_block_hints(text)
+        self.write_indicator(">" + hints, True)
+        self.write_line_break()
+        width = _FOLD_WIDTH - (self.indent or 0)
+        for number, line in enumerate(_fold(text, width)):
+            if number:
+                self.write_line_break()
+            if line:
+                self.write_indent()
+                self.stream.write(line)
+                self.column += len(line)
 
     def increase_indent(
         self,
@@ -113,9 +175,46 @@ def _name_order(item: tuple[yaml.Node, yaml.Node]) -> tuple[float, str]:
     return float("inf"), _key(item)
 
 
-def _strip(text: str) -> str:
-    """Remove trailing whitespace and blank lines at the start and end."""
-    return "\n".join(line.rstrip() for line in text.splitlines()).strip("\n")
+def _normalize_description(text: str) -> str:
+    """Join the lines of each paragraph of a description.
+
+    Trailing whitespace, the indentation common to all lines, and blank lines
+    at the start and end are removed, and runs of blank lines become one
+    blank line. The lines of a paragraph are joined with single spaces.
+    List items (starting with ``-``, ``*``, ``+``, ``1.`` or ``1)``) and
+    lines that are more indented than the paragraph text stay on their own
+    lines, keeping their relative indentation. A line that is more indented
+    than the list item above it, and is not a list item itself, is joined
+    to that item.
+    """
+    lines = [line.rstrip() for line in text.expandtabs().splitlines()]
+    indents = [len(line) - len(line.lstrip()) for line in lines if line]
+    base = min(indents, default=0)
+    result: list[str] = []
+    kind = ""  # Kind of the last output line: "", "text", "item" or "other".
+    item_indent = 0
+    for raw in lines:
+        if not raw:
+            if result and result[-1]:
+                result.append("")
+            kind = ""
+            continue
+        line = raw[base:]
+        indent = len(line) - len(line.lstrip())
+        content = line.lstrip()
+        if _LIST_ITEM.match(content + " "):
+            result.append(line)
+            kind, item_indent = "item", indent
+        elif (kind == "item" and indent > item_indent) or (
+            kind == "text" and indent == 0
+        ):
+            result[-1] += f" {content}"
+        else:
+            result.append(line)
+            kind = "text" if indent == 0 else "other"
+    while result and not result[-1]:
+        result.pop()
+    return "\n".join(result)
 
 
 class _Formatter:
@@ -219,7 +318,14 @@ class _Formatter:
 
     def _documentation(self, key: str, node: yaml.Node) -> None:
         if key == "description" and isinstance(node, yaml.ScalarNode):
-            node.value = _strip(node.value)
+            node.value = _normalize_description(node.value)
+            node.style = (
+                None
+                if "\n" not in node.value
+                and len(node.value) <= _SHORT_DESCRIPTION
+                else ">"
+            )
+            return
         self.generic(node)
 
     def _preprocessor(self, node: yaml.Node) -> None:
@@ -367,8 +473,8 @@ def to_yaml(
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, the lists of datasets are sorted, and the
     keys of other mappings are sorted by name, except the preprocessor
-    steps. Trailing whitespace is removed from the description of the
-    recipe.
+    steps. The lines of each paragraph of the description of the recipe are
+    joined, except list items and indented lines.
 
     Parameters
     ----------
@@ -402,8 +508,9 @@ def format_recipe(text: str) -> str:
     are put in a standard order, and the style of the YAML is made
     consistent. Anchors and aliases are kept, but comments are removed.
     The order of the datasets, preprocessors, preprocessor steps,
-    diagnostics, variable groups, and scripts is kept. Trailing whitespace
-    is removed from the description of the recipe.
+    diagnostics, variable groups, and scripts is kept. The lines of each paragraph
+    of the description of the recipe are joined, except list items and
+    indented lines, and the description is wrapped at 79 characters.
 
     Parameters
     ----------
