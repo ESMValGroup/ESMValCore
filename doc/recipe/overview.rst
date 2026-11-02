@@ -942,6 +942,12 @@ in a standard order and makes the style of the YAML consistent, while keeping
 the order of the datasets, preprocessor steps, diagnostics, variable groups,
 and scripts.
 Anchors and aliases are kept, but comments are removed.
+The lines of each paragraph of the ``description`` in the documentation
+section are joined into one line.
+Blank lines between paragraphs, list items, and lines that are more indented
+than the paragraph text stay on their own lines.
+The description is written as a folded block scalar (``>-``) wrapped at 79
+characters, so a blank line between paragraphs is written as two blank lines.
 For example, to format the recipe ``recipe_example.yml``, run
 
 .. code-block:: python
