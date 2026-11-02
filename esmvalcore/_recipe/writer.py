@@ -315,12 +315,7 @@ class _Formatter:
 
     def _preprocessor(self, node: yaml.Node) -> None:
         # The order of the preprocessor steps may matter, so keep it.
-        self._mapping(
-            node,
-            None,
-            lambda _, value: self.generic(value),
-            sort=False,
-        )
+        self._mapping(node, None, sort=False)
 
     def _datasets(self, node: yaml.Node) -> None:
         if not isinstance(node, yaml.SequenceNode):
