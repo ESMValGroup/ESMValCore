@@ -1887,7 +1887,8 @@ class _YAMLChecker:
                 path,
                 f"alias '*{name}' refers to the anchor '&{name}' that "
                 "contains it, which other YAML parsers do not accept. This "
-                "is deprecated: remove the alias.",
+                "is deprecated and will not work in v2.18.0: remove the "
+                "alias.",
                 mark,
             ),
         )
@@ -1966,8 +1967,9 @@ class _YAMLChecker:
             _yaml_issue(
                 path,
                 "duplicate merge key '<<', which other YAML parsers do not "
-                "accept. This is deprecated: use one merge key with the "
-                f"mappings in this order: <<: [{', '.join(sources)}]",
+                "accept. This is deprecated and will not work in v2.18.0: use "
+                "one merge key with the mappings in this order: "
+                f"<<: [{', '.join(sources)}]",
                 merges[1][0].start_mark,
             ),
         )

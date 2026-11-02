@@ -876,8 +876,8 @@ def test_validate_recipe_duplicate_merge_keys() -> None:
         RecipeIssue(
             ("preprocessors", "repeated", "regrid"),
             "duplicate merge key '<<', which other YAML parsers do not "
-            "accept. This is deprecated: use one merge key with the mappings "
-            "in this order: <<: [*b, *a]",
+            "accept. This is deprecated and will not work in v2.18.0: use "
+            "one merge key with the mappings in this order: <<: [*b, *a]",
             line=14,
             column=7,
             severity="warning",
@@ -906,8 +906,8 @@ def test_validate_recipe_self_merge() -> None:
         RecipeIssue(
             ("diagnostics", "example", "variables", "tas"),
             "alias '*tas' refers to the anchor '&tas' that contains it, "
-            "which other YAML parsers do not accept. This is deprecated: "
-            "remove the alias.",
+            "which other YAML parsers do not accept. This is deprecated and "
+            "will not work in v2.18.0: remove the alias.",
             line=7,
             column=25,
             severity="warning",

@@ -899,7 +899,8 @@ that other YAML parsers, for example those in editors, read differently:
   definition is used.
 - Merge keys (``<<``) that are used more than once in a mapping, or aliases
   that refer to the anchor of a mapping that contains them.
-  Other YAML parsers do not accept these, so they are deprecated.
+  Other YAML parsers do not accept these, so they are deprecated and will
+  not work in ESMValCore v2.18.0.
   Use a single merge key with a list of mappings instead, for example
   ``<<: [*b, *a]`` instead of ``<<: *a`` followed by ``<<: *b``.
   Note that the first mapping in the list has priority.
