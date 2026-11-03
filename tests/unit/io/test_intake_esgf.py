@@ -234,6 +234,11 @@ def test_find_data(mocker: MockerFixture, monkeypatch: MonkeyPatch) -> None:
         == "CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p1f1.Amon.tas.gn"
     )
     assert hash(dataset) == hash((dataset.name, "v20190429"))
+    # The indices, which remember all search results, are shared with the
+    # catalog of the data source.
+    assert dataset.catalog.indices is cat.indices
+    assert dataset.catalog.last_search is not cat.last_search
+    assert len(dataset.catalog.df) == 1
 
     assert dataset.facets == {
         "activity": "CMIP",

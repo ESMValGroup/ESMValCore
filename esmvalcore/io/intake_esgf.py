@@ -244,9 +244,12 @@ class IntakeESGFDataSource(DataSource):
         }
         for _, row in self.catalog.df.iterrows():
             dataset_id = row["key"]
-            # Subset the catalog to a single dataset.
-            cat = copy.deepcopy(self.catalog)
+            # Subset the catalog to a single dataset. The indices are shared
+            # with the catalog of the data source instead of copied, because
+            # they remember the search results of all previous searches.
+            cat = copy.copy(self.catalog)
             cat.df = self.catalog.df[self.catalog.df.key == dataset_id]
+            cat.last_search = copy.deepcopy(self.catalog.last_search)
             # Ensure only the requested variable is included in the dataset.
             # https://github.com/esgf2-us/intake-esgf/blob/18437bff5ee75acaaceef63093101223b4692259/intake_esgf/catalog.py#L544-L552
             if "short_name" in normalized_facets:
