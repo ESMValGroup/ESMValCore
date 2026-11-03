@@ -32,12 +32,17 @@ import intake_esgf.exceptions
 import isodate
 
 from esmvalcore.dataset import _isglob, _ismatch
-from esmvalcore.io.local import _parse_period
+from esmvalcore.io.local import (
+    _dates_to_timerange,
+    _get_start_end_date_from_filename,
+    _parse_period,
+)
 from esmvalcore.io.protocol import DataElement, DataSource
 from esmvalcore.iris_helpers import dataset_to_iris
 
 if TYPE_CHECKING:
     import iris.cube
+    import pandas as pd
 
     from esmvalcore.typing import Facets, FacetValue
 
@@ -204,7 +209,9 @@ class IntakeESGFDataSource(DataSource):
             query["file_end"] = isodate.date_isoformat(
                 isodate.parse_date(end.split("T")[0]),
             )
-        # Search ESGF.
+        # Search ESGF. The catalog keeps the time range of the previous search
+        # if it is not given, so remove it first.
+        self.catalog.file_start = self.catalog.file_end = None
         if "project" in query and not isinstance(query["project"], str):
             # Needed because of https://github.com/esgf2-us/intake-esgf/pull/188
             query["project"] = query["project"][0]  # type: ignore[assignment]
@@ -235,6 +242,7 @@ class IntakeESGFDataSource(DataSource):
             ),
             axis=1,
         )
+        timeranges = self._timeranges()
         inverse_values = {
             our_facet: {
                 their_value: our_value
@@ -257,20 +265,9 @@ class IntakeESGFDataSource(DataSource):
                     self.values.get("short_name", {}).get(v, v)
                     for v in normalized_facets["short_name"]
                 ]
-            # Retrieve "our" facets associated with the dataset_id.
-            dataset_facets = (
-                {"version": [f"v{row['version']}"]} if "version" in row else {}
-            )
-            for our_facet, esgf_facet in self.facets.items():
-                if esgf_facet in row:
-                    esgf_values = row[esgf_facet]
-                    if isinstance(esgf_values, str):
-                        esgf_values = [esgf_values]
-                    our_values = [
-                        inverse_values.get(our_facet, {}).get(v, v)
-                        for v in esgf_values
-                    ]
-                    dataset_facets[our_facet] = our_values
+            dataset_facets = self._dataset_facets(row, inverse_values)
+            if dataset_id in timeranges:
+                dataset_facets["timerange"] = [timeranges[dataset_id]]
             # Only return datasets that match the glob patterns.
             if all(
                 any(
@@ -291,3 +288,48 @@ class IntakeESGFDataSource(DataSource):
                 )
                 result.append(dataset)
         return result
+
+    def _dataset_facets(
+        self,
+        row: pd.Series,
+        inverse_values: dict[str, dict[str, str]],
+    ) -> dict[str, list[str]]:
+        """Retrieve "our" facets associated with a dataset in the catalog."""
+        dataset_facets = (
+            {"version": [f"v{row['version']}"]} if "version" in row else {}
+        )
+        for our_facet, esgf_facet in self.facets.items():
+            if esgf_facet in row:
+                esgf_values = row[esgf_facet]
+                if isinstance(esgf_values, str):
+                    esgf_values = [esgf_values]
+                dataset_facets[our_facet] = [
+                    inverse_values.get(our_facet, {}).get(v, v)
+                    for v in esgf_values
+                ]
+        return dataset_facets
+
+    def _timeranges(self) -> dict[str, str]:
+        """Get the time range of the files of each dataset in the catalog.
+
+        The time range is read from the file names, like for local files.
+        Datasets with files without a time range in the name, e.g. fixed
+        fields, have no time range.
+        """
+        dates: dict[str, list[tuple[str | None, str | None]]] = {}
+        # There is no public method that gets the file information without
+        # downloading the files.
+        for info in self.catalog._get_file_info(quiet=True):  # noqa: SLF001
+            try:
+                found = _get_start_end_date_from_filename(info["path"])
+            except ValueError:
+                found = (None, None)
+            dates.setdefault(info["key"], []).append(found)
+        return {
+            key: _dates_to_timerange(
+                min(str(start) for start, _ in found),
+                max(str(end) for _, end in found),
+            )
+            for key, found in dates.items()
+            if all(start and end for start, end in found)
+        }
