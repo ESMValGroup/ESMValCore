@@ -827,6 +827,14 @@ def _string_list(description: str, min_items: int = 0) -> JSONSchema:
     return schema
 
 
+def _markdown_description(markdown: str) -> JSONSchema:
+    """Describe a schema, without markup for editors that do not show it."""
+    description = markdown.replace("`", "")
+    if description == markdown:
+        return {"description": description}
+    return {"description": description, "markdownDescription": markdown}
+
+
 def _facet_value(description: str) -> JSONSchema:
     """Create a JSON Schema for :obj:`esmvalcore.typing.FacetValue`."""
     return {
@@ -834,7 +842,7 @@ def _facet_value(description: str) -> JSONSchema:
             {"type": ["string", "number"]},
             {"type": "array", "items": {"type": "string"}},
         ],
-        "description": description,
+        **_markdown_description(description),
     }
 
 
@@ -1068,7 +1076,7 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
     year = {"type": "integer", "minimum": 0, "maximum": 10000}
     project: JSONSchema = {
         "type": "string",
-        "description": "Project, for example CMIP6.",
+        **_markdown_description("Project, for example `CMIP6`."),
     }
     if tables:
         # Without a project in the configuration, ESMValCore cannot find the
@@ -1092,36 +1100,39 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
             },
             "mip": {
                 "type": "string",
-                "description": "MIP table, for example Amon.",
+                **_markdown_description(
+                    "MIP table, for example `Amon` for CMIP6 or `atmos` for "
+                    "CMIP7.",
+                ),
             },
             "exp": _string_or_list(
                 "Experiment, or a list of experiments to concatenate.",
             ),
             "ensemble": _string_or_list("Ensemble member(s)."),
             "activity": _facet_value(
-                "Activity, for example CMIP or ScenarioMIP.",
+                "Activity, for example `CMIP` or `ScenarioMIP`.",
             ),
             "branding_suffix": _facet_value(
                 "Variable branding suffix (CMIP7).",
             ),
-            "domain": _facet_value("CORDEX domain, for example EUR-11."),
+            "domain": _facet_value("CORDEX domain, for example `EUR-11`."),
             "driver": _facet_value(
                 "Driving global model of a CORDEX dataset.",
             ),
-            "frequency": _facet_value("Frequency, for example mon."),
-            "grid": _facet_value("Grid label, for example gn."),
+            "frequency": _facet_value("Frequency, for example `mon`."),
+            "grid": _facet_value("Grid label, for example `gn`."),
             "institute": _facet_value("Institute that produced the data."),
             "product": _facet_value("Product (CMIP5)."),
             "rcm_version": _facet_value(
                 "Version of the regional climate model (CORDEX).",
             ),
-            "realm": _facet_value("Realm, for example atmos."),
+            "realm": _facet_value("Realm, for example `atmos`."),
             "region": _facet_value("Region (CMIP7)."),
             "version": _facet_value("Version of the dataset."),
             "timerange": {
                 "type": ["string", "integer"],
-                "description": (
-                    "Time range in ISO 8601 format, for example 1990/2000."
+                **_markdown_description(
+                    "Time range in ISO 8601 format, for example `1990/2000`.",
                 ),
             },
             "start_year": {

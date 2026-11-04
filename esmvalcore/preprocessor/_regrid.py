@@ -1456,10 +1456,10 @@ def extract_levels(
     coordinate:
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using
-        the US standard atmosphere. E.g. 'coordinate = altitude' will convert
-        existing pressure levels (air_pressure) to height levels (altitude);
-        'coordinate = air_pressure' will convert existing height levels
-        (altitude) to pressure levels (air_pressure).
+        the US standard atmosphere. E.g. ``coordinate = altitude`` will
+        convert existing pressure levels (air_pressure) to height levels
+        (altitude); ``coordinate = air_pressure`` will convert existing height
+        levels (altitude) to pressure levels (air_pressure).
     rtol:
         Relative tolerance for comparing the levels in `cube` to the requested
         levels. If the levels are sufficiently close, the requested levels

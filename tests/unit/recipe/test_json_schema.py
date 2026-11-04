@@ -212,6 +212,14 @@ def test_clean_rst_markdown(text: str, expected: str) -> None:
     assert _clean_rst(text, markdown=True) == expected
 
 
+def test_facet_markdown_description(schema: dict[str, Any]) -> None:
+    mip = schema["definitions"]["facets"]["properties"]["mip"]
+    assert mip["markdownDescription"] == (
+        "MIP table, for example `Amon` for CMIP6 or `atmos` for CMIP7."
+    )
+    assert "`" not in mip["description"]
+
+
 def test_step_schema_markdown_description(schema: dict[str, Any]) -> None:
     steps = schema["definitions"]["steps"]
     scheme = steps["regrid"]["anyOf"][0]["properties"]["scheme"]
