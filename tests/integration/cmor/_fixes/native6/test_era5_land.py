@@ -1,6 +1,5 @@
 """Tests for the fixes of ERA5-Land."""
 
-import dask.array as da
 import numpy as np
 import pytest
 from cf_units import Unit
