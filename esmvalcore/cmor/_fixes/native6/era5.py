@@ -608,6 +608,10 @@ class AllVars(Fix):
         fixed_cubes = CubeList()
         for orig_cube in cubes:
             cube = orig_cube.copy()
+            # remove scalar string coordinate written by the CDS
+            # grib to netCDF converter
+            for coord in cube.coords("expver"):
+                cube.remove_coord(coord)
             cube.var_name = self.vardef.short_name
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
