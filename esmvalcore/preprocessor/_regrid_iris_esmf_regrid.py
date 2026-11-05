@@ -119,12 +119,12 @@ class IrisESMFRegrid:
         Keyword arguments that will be provided to the regridder.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         method: Literal["bilinear", "conservative", "nearest"],
         mdtol: float | None = None,
-        use_src_mask: None | bool | np.ndarray = None,
-        use_tgt_mask: None | bool | np.ndarray = None,
+        use_src_mask: bool | np.ndarray | None = None,
+        use_tgt_mask: bool | np.ndarray | None = None,
         collapse_src_mask_along: Iterable[str] = ("Z",),
         collapse_tgt_mask_along: Iterable[str] = ("Z",),
         src_resolution: int | None = None,

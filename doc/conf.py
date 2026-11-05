@@ -46,6 +46,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx_llm.txt",
 ]
 
 autodoc_default_options = {
@@ -58,6 +59,23 @@ autodoc_default_options = {
 
 # Don't execute notebooks
 nb_execution_mode = "off"
+
+# Generate llms.txt and Markdown pages for LLMs, see
+# https://sphinx-llm.readthedocs.io
+llms_txt_description = (
+    "ESMValCore is the core of ESMValTool: it finds, fixes, and preprocesses "
+    "Earth system model data according to a YAML recipe and runs diagnostic "
+    "scripts."
+)
+# These nodes are not supported by the Markdown builder and are left out of
+# the Markdown output.
+llms_txt_suppress_unknown_node_warnings = [
+    "abbreviation",
+    "admonition",
+    "caption",
+    "classifier",
+    "desc_optional",
+]
 
 # Show type hints in function signature AND docstring
 autodoc_typehints = "both"

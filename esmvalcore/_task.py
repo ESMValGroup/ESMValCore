@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import abc
 import contextlib
-import datetime
+import datetime as dt
 import importlib
 import logging
 import multiprocessing
@@ -114,7 +114,7 @@ def _get_resource_usage(process, start_time, children=True):
             round(entry, p)
             for entry, p in zip(entries, precision, strict=False)
         ]
-        entries.insert(0, datetime.datetime.now(datetime.UTC))
+        entries.insert(0, dt.datetime.now(dt.UTC))
         max_memory = max(max_memory, entries[4])
         yield (fmt.format(*entries), max_memory)
 
@@ -291,9 +291,9 @@ class BaseTask:
                 self.name,
                 os.getpid(),
             )
-            start = datetime.datetime.now()
+            start = dt.datetime.now()
             self.output_files = self._run(input_files, session=session)
-            runtime = datetime.datetime.now() - start
+            runtime = dt.datetime.now() - start
             logger.info(
                 "Successfully completed task %s (priority %s) in %s",
                 self.name,

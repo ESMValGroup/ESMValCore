@@ -459,8 +459,8 @@ def depth_integration(cube: Cube) -> Cube:
 
 def extract_transect(
     cube: Cube,
-    latitude: None | float | Iterable[float] = None,
-    longitude: None | float | Iterable[float] = None,
+    latitude: float | Iterable[float] | None = None,
+    longitude: float | Iterable[float] | None = None,
 ) -> Cube:
     """Extract data along a line of constant latitude or longitude.
 
@@ -508,7 +508,7 @@ def extract_transect(
     """
     # ###
     coord_dim2 = False
-    second_coord_range: None | list = None
+    second_coord_range: list | None = None
     lats = cube.coord("latitude")
     lons = cube.coord("longitude")
 

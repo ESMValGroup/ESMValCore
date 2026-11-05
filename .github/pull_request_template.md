@@ -39,6 +39,7 @@ It is the responsibility of the author to make sure the pull request is ready to
 
 - [ ] [🧪][2] The new functionality is [relevant and scientifically sound](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#scientific-relevance)
 - [ ] [🛠][1] This pull request has a [descriptive title and labels](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#pull-request-title-and-label)
+- [ ] [🛠][1] The [AI policy](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/ai_policy.html) has been followed and any AI usage has been disclosed
 - [ ] [🛠][1] Code is written according to the [code quality guidelines](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#code-quality)
 - [ ] [🧪][2] and [🛠][1] [Documentation](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#documentation) is available
 - [ ] [🛠][1] [Unit tests](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#tests) have been added

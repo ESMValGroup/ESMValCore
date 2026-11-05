@@ -84,7 +84,7 @@ def parse_resume(resume, recipe):
 
 def process_recipe(recipe_file: Path, session: Session) -> None:
     """Process recipe."""
-    import datetime
+    import datetime as dt
     import shutil
 
     import yaml
@@ -100,7 +100,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
             recipe_file,
         )
 
-    timestamp1 = datetime.datetime.now(datetime.UTC)
+    timestamp1 = dt.datetime.now(dt.UTC)
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
@@ -152,7 +152,7 @@ def process_recipe(recipe_file: Path, session: Session) -> None:
     # run
     recipe.run()
     # End time timing
-    timestamp2 = datetime.datetime.now(datetime.UTC)
+    timestamp2 = dt.datetime.now(dt.UTC)
     logger.info(
         "Ending the Earth System Model Evaluation Tool at time: %s UTC",
         timestamp2.strftime(timestamp_format),

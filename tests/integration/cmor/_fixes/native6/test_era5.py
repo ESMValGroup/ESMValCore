@@ -1,6 +1,6 @@
 """Tests for the fixes of ERA5."""
 
-import datetime
+import datetime as dt
 
 import dask.array as da
 import numpy as np
@@ -24,7 +24,7 @@ from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = (
     "Contains modified Copernicus Climate Change Service Information "
-    f"{datetime.datetime.now().year}"
+    f"{dt.datetime.now().year}"
 )
 
 CMOR_TABLES = {

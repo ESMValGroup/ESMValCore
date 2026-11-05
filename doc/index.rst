@@ -64,6 +64,7 @@ Contact information is available :ref:`here <Support-and-Contact>`.
     Diagnostic script interfaces <interfaces>
     Development <develop/index>
     Contributing <contributing>
+    AI policy <ai_policy>
     How-to guides <how-to/index>
     Reference guides <reference/index>
     ESMValCore API Reference <api/esmvalcore>

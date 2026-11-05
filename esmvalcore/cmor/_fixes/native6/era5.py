@@ -1,6 +1,6 @@
 """Fixes for ERA5."""
 
-import datetime
+import datetime as dt
 import logging
 
 import numpy as np
@@ -615,7 +615,7 @@ class AllVars(Fix):
             cube = self._fix_coordinates(cube)
             cube = safe_convert_units(cube, self.vardef.units)
             cube.data = cube.core_data().astype("float32")
-            year = datetime.datetime.now().year
+            year = dt.datetime.now().year
             cube.attributes["comment"] = (
                 "Contains modified Copernicus Climate Change "
                 f"Service Information {year}"

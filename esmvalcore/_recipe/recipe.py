@@ -26,9 +26,9 @@ from esmvalcore._recipe.to_datasets import (
 )
 from esmvalcore._recipe.writer import to_yaml
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
-from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._dask import validate_dask_config
 from esmvalcore.config._diagnostics import TAGS
+from esmvalcore.config._tasksep import TASKSEP
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import (
@@ -86,9 +86,14 @@ USED_DATASETS: list[Dataset] = []
 
 def read_recipe_file(filename: Path, session: Session) -> Recipe:
     """Read a recipe from file."""
-    check.recipe_with_schema(filename)
-    with open(filename, encoding="utf-8") as file:
-        raw_recipe = yaml.safe_load(file)
+    recipe_text = filename.read_text(encoding="utf-8")
+    try:
+        # Use CSafeLoader for speed, but fall back to SafeLoader for better
+        # error messages if parsing fails or if CSafeLoader is not available.
+        raw_recipe = yaml.load(recipe_text, Loader=yaml.CSafeLoader)
+    except (yaml.YAMLError, AttributeError):
+        raw_recipe = yaml.safe_load(recipe_text)
+    check.recipe_with_schema(raw_recipe, path=filename)
 
     return Recipe(raw_recipe, session, recipe_file=filename)
 

@@ -232,34 +232,44 @@ def test_valid_time_selection(timerange):
 BAD_TIMERANGES = [
     (
         "randomnonsense",
-        "Invalid value encountered for `timerange`. Valid values must be "
-        "separated by `/`. Got ['randomnonsense'] instead.",
+        (
+            "Invalid value encountered for `timerange`. Valid values must be "
+            "separated by `/`. Got ['randomnonsense'] instead."
+        ),
     ),
     (
         "199035345/19923463164526",
-        "Invalid value encountered for `timerange`. Valid value must follow "
-        "ISO 8601 standard for dates and duration periods, or be set to '*' "
-        "to load available years. Got ['199035345', '19923463164526'] instead.\n"
-        "Unrecognised ISO 8601 date format: '199035345'",
+        (
+            "Invalid value encountered for `timerange`. Valid value must follow "
+            "ISO 8601 standard for dates and duration periods, or be set to '*' "
+            "to load available years. Got ['199035345', '19923463164526'] instead.\n"
+            "Unrecognised ISO 8601 date format: '199035345'"
+        ),
     ),
     (
         "P11Y/P42Y",
-        "Invalid value encountered for `timerange`. Cannot set both "
-        "the beginning and the end as duration periods.",
+        (
+            "Invalid value encountered for `timerange`. Cannot set both "
+            "the beginning and the end as duration periods."
+        ),
     ),
     (
         "P11X/19923463164526",
-        "Invalid value encountered for `timerange`. "
-        "P11X is not valid duration according to ISO 8601.\n"
-        "ISO 8601 time designator 'T' missing. "
-        "Unable to parse datetime string '11X'",
+        (
+            "Invalid value encountered for `timerange`. "
+            "P11X is not valid duration according to ISO 8601.\n"
+            "ISO 8601 time designator 'T' missing. "
+            "Unable to parse datetime string '11X'"
+        ),
     ),
     (
         "19923463164526/P11X",
-        "Invalid value encountered for `timerange`. "
-        "P11X is not valid duration according to ISO 8601.\n"
-        "ISO 8601 time designator 'T' missing. "
-        "Unable to parse datetime string '11X'",
+        (
+            "Invalid value encountered for `timerange`. "
+            "P11X is not valid duration according to ISO 8601.\n"
+            "ISO 8601 time designator 'T' missing. "
+            "Unable to parse datetime string '11X'"
+        ),
     ),
 ]
 
