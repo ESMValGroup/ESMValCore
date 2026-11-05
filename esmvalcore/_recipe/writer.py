@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Callable
 
+# The document start marker and the comments and empty lines before it.
+_HEADER = re.compile(r"(?:[ \t]*(?:#.*)?\r?\n)*---[ \t]*\r?\n")
+_NULL_TAG = "tag:yaml.org,2002:null"
 # The order of the keys in the sections of a recipe. Keys that are not
 # listed get the default order of the section and are sorted by name.
 _Order = tuple[dict[str, int], int]
@@ -503,7 +506,8 @@ def format_recipe(text: str) -> str:
 
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, and the style of the YAML is made
-    consistent. Anchors and aliases are kept, but comments are removed.
+    consistent. Anchors and aliases are kept, and so are the document start
+    marker ``---`` and the comments before it, but other comments are removed.
     The order of the datasets, preprocessors, preprocessor steps,
     diagnostics, variable groups, and scripts is kept. The lines of each
     paragraph of the description of the recipe are joined and wrapped at 79
@@ -524,12 +528,15 @@ def format_recipe(text: str) -> str:
     yaml.YAMLError
         If the text is not valid YAML.
     """
+    match = _HEADER.match(text)
+    header = match.group() if match else ""
     loader = _AnchorLoader(text)
     try:
         node = loader.get_single_node()
     finally:
         loader.dispose()
-    if node is None:
-        return "{}\n"
+    # A document with only a document start marker contains an empty null.
+    if node is None or (node.tag == _NULL_TAG and not node.value):
+        return f"{header}{{}}\n"
     _Formatter(sort=False, text=text).recipe(node)
-    return f"{_serialize(node, loader.anchor_names)}\n"
+    return f"{header}{_serialize(node, loader.anchor_names)}\n"
