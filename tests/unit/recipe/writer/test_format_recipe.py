@@ -325,9 +325,24 @@ def test_description_wrapping_does_not_create_list_items() -> None:
 
 
 def test_to_yaml_description_normalized() -> None:
-    """Test that to_yaml normalizes the description."""
-    recipe = {"documentation": {"description": "a\nb\n\n  - c\n    d\n"}}
-    assert _description(to_yaml(recipe)) == "a b\n\n  - c d"
+    """Test that to_yaml normalizes the description without joining lines."""
+    recipe = {
+        "documentation": {"description": " a \n b\n\n\n   - c\n     d\n"},
+    }
+    assert _description(to_yaml(recipe)) == "a\nb\n\n  - c\n    d"
+
+
+def test_to_yaml_loaded_folded_description() -> None:
+    """Test that the paragraphs of a loaded folded block are kept."""
+    text = f"documentation:\n  description: >\n{FOLDED}"
+    formatted = to_yaml(yaml.safe_load(text))
+    assert _description(formatted) == (
+        "First paragraph, split over two lines.\n"
+        "Second paragraph.\n"
+        "Notes:\n"
+        "- item one - item two"
+    )
+    assert to_yaml(yaml.safe_load(formatted)) == formatted
 
 
 def test_description_short_stays_plain() -> None:

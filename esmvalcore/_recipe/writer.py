@@ -127,12 +127,13 @@ def _name_order(item: tuple[yaml.Node, yaml.Node]) -> tuple[float, str]:
     return float("inf"), _key(item)
 
 
-def _normalize_description(text: str) -> str:
-    """Join the lines of each paragraph of a description.
+def _normalize_description(text: str, *, join: bool) -> str:
+    """Normalize a description, optionally joining the lines of paragraphs.
 
     Trailing whitespace, the indentation common to all lines, and blank lines
     at the start and end are removed, and runs of blank lines become one
-    blank line. The lines of a paragraph are joined with single spaces.
+    blank line. If ``join`` is :obj:`True`, the lines of a paragraph are
+    joined with single spaces.
     List items (starting with ``-``, ``*``, ``+``, ``1.`` or ``1)``) and
     lines that are more indented than the paragraph text stay on their own
     lines, keeping their relative indentation. A line that is more indented
@@ -157,8 +158,9 @@ def _normalize_description(text: str) -> str:
         if _LIST_ITEM.match(content + " "):
             result.append(line)
             kind, item_indent = "item", indent
-        elif (kind == "item" and indent > item_indent) or (
-            kind == "text" and indent == 0
+        elif join and (
+            (kind == "item" and indent > item_indent)
+            or (kind == "text" and indent == 0)
         ):
             result[-1] += f" {content}"
         else:
@@ -321,7 +323,12 @@ class _Formatter:
 
     def _documentation(self, key: str, node: yaml.Node) -> None:
         if key == "description" and isinstance(node, yaml.ScalarNode):
-            text = _normalize_description(self._description(node))
+            # The line breaks of a loaded folded block scalar are the breaks
+            # between its paragraphs, so they can only be joined in the text.
+            text = _normalize_description(
+                self._description(node),
+                join=self.text is not None,
+            )
             node.value = _wrap_description(text)
             node.style = (
                 None
@@ -472,9 +479,10 @@ def to_yaml(
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, the lists of datasets are sorted, and the
     keys of other mappings are sorted by name, except the preprocessor
-    steps. The lines of each paragraph of the description of the recipe are
-    joined and wrapped at 79 characters, keeping list items and indented
-    lines on their own lines.
+    steps. The lines of the description of the recipe are wrapped at 79
+    characters, except indented lines. Unlike :func:`format_recipe`, this does
+    not join lines, because a loaded recipe does not show which line breaks
+    separate paragraphs.
 
     Parameters
     ----------
