@@ -185,6 +185,47 @@ def test_format_recipe_description_keeps_lists_and_paragraphs() -> None:
     assert "  description: |-\n" in formatted
 
 
+FOLDED = """\
+    First paragraph,
+    split over two lines.
+
+    Second paragraph.
+
+    Notes:
+
+    - item one
+    - item two
+"""
+FOLDED_NORMALIZED = (
+    "First paragraph, split over two lines.\n\n"
+    "Second paragraph.\n\n"
+    "Notes:\n\n"
+    "- item one\n"
+    "- item two"
+)
+
+
+@pytest.mark.parametrize(
+    "header",
+    [">", ">-", ">+", "> # comment", "&anchor >", "!!str >", "&anchor\n    >"],
+)
+def test_format_recipe_folded_description(header: str) -> None:
+    """Test that the paragraphs and lists of a folded block are kept."""
+    text = (
+        f"documentation:\n  description: {header}\n{FOLDED}  title: Example\n"
+    )
+    formatted = format_recipe(text)
+    assert _description(formatted) == FOLDED_NORMALIZED
+    assert yaml.safe_load(formatted)["documentation"]["title"] == "Example"
+    assert format_recipe(formatted) == formatted
+
+
+def test_format_recipe_folded_description_at_end() -> None:
+    """Test a folded block at the end of a recipe without a final newline."""
+    text = "documentation:\n  description: >\n    One\n    sentence."
+    assert _description(format_recipe(text)) == "One sentence."
+
+
 WORDS = " ".join(["word"] * 30)
 LONG = f"{WORDS}\n\n{WORDS}\n  indented {WORDS}\n- item {WORDS}\n1. {WORDS}"
 
