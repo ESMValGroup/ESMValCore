@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import copy
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.io.local import (
     LocalDataSource,
     LocalFile,
@@ -14,7 +17,70 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+    from pytest_mock import MockerFixture
+
     from esmvalcore.typing import Facets, FacetValue
+
+TAGS_FOR_TESTING: dict[str, dict[str, Any]] = {
+    "authors": {
+        "andela_bouwe": {
+            "name": "Bouwe, Andela",
+        },
+    },
+    "projects": {
+        "c3s-magic": "C3S MAGIC project",
+    },
+    "themes": {
+        "phys": "physics",
+    },
+    "realms": {
+        "atmos": "atmosphere",
+    },
+    "statistics": {
+        "mean": "mean",
+        "var": "variability",
+    },
+    "domains": {
+        "et": "extra tropics",
+        "trop": "tropics",
+    },
+    "plot_types": {
+        "zonal": "zonal",
+    },
+}
+"""Tags available in tests that use the :func:`tags` fixture."""
+
+
+@pytest.fixture
+def tags(mocker: MockerFixture) -> dict[str, dict[str, Any]]:
+    """Make :data:`TAGS_FOR_TESTING` the only available tags.
+
+    The global :data:`esmvalcore.config._diagnostics.TAGS` object is restored
+    after the test.
+    """
+    tags = copy.deepcopy(TAGS_FOR_TESTING)
+    mocker.patch.dict(TAGS, tags, clear=True)
+    return tags
+
+
+@pytest.fixture
+def recipe_documentation(tags: dict[str, dict[str, Any]]) -> str:
+    """Return a valid documentation section for a recipe.
+
+    The tags used in the documentation are available during the test.
+    """
+    return dedent("""
+        documentation:
+          title: Test recipe
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+        """)
 
 
 def _get_files(  # noqa: C901,PLR0912
