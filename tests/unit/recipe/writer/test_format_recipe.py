@@ -12,7 +12,6 @@ from esmvalcore.recipe import format_recipe, to_yaml
 RECIPE = textwrap.dedent("""
     # A comment that is removed.
     # Quotes are only kept where they are needed.
-    ---
     diagnostics:
       diag1:
         variables:
@@ -126,6 +125,47 @@ def test_format_recipe_strips_description() -> None:
 def test_format_recipe_empty() -> None:
     """Test that an empty recipe can be formatted."""
     assert format_recipe("") == "{}\n"
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "---\n",
+        "--- \n",
+        "# ESMValTool\n# recipe.yml\n---\n",
+        "\n  # Indented\n\n---\n",
+        "# Windows\r\n---\r\n",
+    ],
+)
+def test_format_recipe_keeps_header(header: str) -> None:
+    """Test that the document start and the comments before it are kept."""
+    formatted = format_recipe(f"{header}a: 1  # comment\n# comment\nb: 2\n")
+    assert formatted == f"{header}a: 1\nb: 2\n"
+    assert format_recipe(formatted) == formatted
+
+
+def test_format_recipe_removes_comments_without_document_start() -> None:
+    """Test that comments are removed if there is no document start."""
+    assert format_recipe("# comment\na: 1\n") == "a: 1\n"
+
+
+@pytest.mark.parametrize("body", ["", "# comment\n"])
+def test_format_recipe_only_header(body: str) -> None:
+    """Test that a recipe with only a header can be formatted."""
+    text = f"# comment\n---\n{body}"
+    assert format_recipe(text) == "# comment\n---\n{}\n"
+
+
+def test_format_recipe_header_folded_description() -> None:
+    """Test that a folded description is read after a header."""
+    text = f"# comment\n---\ndocumentation:\n  description: >\n{FOLDED}"
+    assert _description(format_recipe(text)) == FOLDED_NORMALIZED
+
+
+def test_format_recipe_invalid_line_number() -> None:
+    """Test that errors are reported at their line in the original text."""
+    with pytest.raises(yaml.YAMLError, match="line 4"):
+        format_recipe("# comment\n---\na: [\n")
 
 
 def test_format_recipe_invalid() -> None:
