@@ -41,30 +41,31 @@ def _get_fx_mask(
     fx_data: np.ndarray | da.Array,
     fx_option: Literal["land", "sea", "landsea", "ice"],
     mask_type: Literal["sftlf", "sftof", "sftgif"],
+    threshold: float = 50.0,
 ) -> np.ndarray | da.Array:
     """Build a percentage-thresholded mask from an fx file."""
     inmask = np.zeros_like(fx_data, bool)  # respects dask through dispatch
     if mask_type == "sftlf":
         if fx_option == "land":
             # Mask land out
-            inmask[fx_data > 50.0] = True
+            inmask[fx_data >= threshold] = True
         elif fx_option == "sea":
             # Mask sea out
-            inmask[fx_data <= 50.0] = True
+            inmask[fx_data <= (100.0 - threshold)] = True
     elif mask_type == "sftof":
         if fx_option == "land":
             # Mask land out
-            inmask[fx_data < 50.0] = True
+            inmask[fx_data <= (100.0 - threshold)] = True
         elif fx_option == "sea":
             # Mask sea out
-            inmask[fx_data >= 50.0] = True
+            inmask[fx_data >= threshold] = True
     elif mask_type == "sftgif":
         if fx_option == "ice":
             # Mask ice out
-            inmask[fx_data > 50.0] = True
+            inmask[fx_data > threshold] = True
         elif fx_option == "landsea":
             # Mask landsea out
-            inmask[fx_data <= 50.0] = True
+            inmask[fx_data <= (100.0 - threshold)] = True
 
     return inmask
 
@@ -73,7 +74,11 @@ def _get_fx_mask(
     variables=["sftlf", "sftof"],
     required="prefer_at_least_one",
 )
-def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
+def mask_landsea(
+    cube: Cube,
+    mask_out: Literal["land", "sea"],
+    threshold: float = 50.0,
+) -> Cube:
     """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
@@ -95,6 +100,11 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
         Natural Earth shapefiles.
     mask_out:
         Either ``'land'`` to mask out land mass or ``'sea'`` to mask out seas.
+        Either ``'land'`` to mask out land mass or ``'sea'`` to mask out seas.
+    threshold: float, optional (default: 50.)
+        Threshold for masking with respect to the mask_out variable. If
+        mask_out: sea and threshold: 100 then only gricells with full
+        ocean and no land are masked.
 
     Returns
     -------
@@ -136,6 +146,7 @@ def mask_landsea(cube: Cube, mask_out: Literal["land", "sea"]) -> Cube:
             ancillary_var.core_data(),
             mask_out,
             ancillary_var.var_name,
+            threshold,
         )
         cube.data = apply_mask(
             landsea_mask,
