@@ -55,6 +55,8 @@ _DESCRIPTION_WIDTH = 75
 # Descriptions that are a single line of at most this length are not a block.
 _SHORT_DESCRIPTION = 64
 _LIST_ITEM = re.compile(r"[-*+]\s|\d+[.)]\s")
+# The anchor, tag, and header of a folded block scalar.
+_FOLDED_HEADER = re.compile(r"(?:[&!]\S*\s+)*>[^\n]*\n?")
 
 
 class RecipeDumper(yaml.SafeDumper):
@@ -211,10 +213,13 @@ class _Formatter:
         :obj:`False`, these keys stay in the same order, so that, for
         example, diagnostics and variable groups stay in the order in which
         they were written.
+    text:
+        The text that the nodes were composed from, if any.
     """
 
-    def __init__(self, *, sort: bool) -> None:
+    def __init__(self, *, sort: bool, text: str | None = None) -> None:
         self.sort = sort
+        self.text = text
         self._done: set[int] = set()
 
     def _first_visit(self, node: yaml.Node) -> bool:
@@ -300,9 +305,20 @@ class _Formatter:
         else:
             self.generic(node)
 
+    def _description(self, node: yaml.ScalarNode) -> str:
+        """Get the text of a description as it was written in the recipe.
+
+        Folding a block scalar joins the lines of a list and removes the
+        blank lines between paragraphs, so read it from the text instead.
+        """
+        if self.text is None or node.style != ">":
+            return node.value
+        source = self.text[node.start_mark.index : node.end_mark.index]
+        return _FOLDED_HEADER.sub("", source, count=1)
+
     def _documentation(self, key: str, node: yaml.Node) -> None:
         if key == "description" and isinstance(node, yaml.ScalarNode):
-            text = _normalize_description(node.value)
+            text = _normalize_description(self._description(node))
             node.value = _wrap_description(text)
             node.style = (
                 None
@@ -515,5 +531,5 @@ def format_recipe(text: str) -> str:
         loader.dispose()
     if node is None:
         return "{}\n"
-    _Formatter(sort=False).recipe(node)
+    _Formatter(sort=False, text=text).recipe(node)
     return f"{_serialize(node, loader.anchor_names)}\n"
