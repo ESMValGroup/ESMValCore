@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Callable
 
+# The document start marker and the comments and empty lines before it.
+_HEADER = re.compile(r"(?:[ \t]*(?:#.*)?\r?\n)*---[ \t]*\r?\n")
+_NULL_TAG = "tag:yaml.org,2002:null"
 # The order of the keys in the sections of a recipe. Keys that are not
 # listed get the default order of the section and are sorted by name.
 _Order = tuple[dict[str, int], int]
@@ -55,6 +58,8 @@ _DESCRIPTION_WIDTH = 75
 # Descriptions that are a single line of at most this length are not a block.
 _SHORT_DESCRIPTION = 64
 _LIST_ITEM = re.compile(r"[-*+]\s|\d+[.)]\s")
+# The anchor, tag, and header of a folded block scalar.
+_FOLDED_HEADER = re.compile(r"(?:[&!]\S*\s+)*>[^\n]*\n?")
 
 
 class RecipeDumper(yaml.SafeDumper):
@@ -122,12 +127,13 @@ def _name_order(item: tuple[yaml.Node, yaml.Node]) -> tuple[float, str]:
     return float("inf"), _key(item)
 
 
-def _normalize_description(text: str) -> str:
-    """Join the lines of each paragraph of a description.
+def _normalize_description(text: str, *, join: bool) -> str:
+    """Normalize a description, optionally joining the lines of paragraphs.
 
     Trailing whitespace, the indentation common to all lines, and blank lines
     at the start and end are removed, and runs of blank lines become one
-    blank line. The lines of a paragraph are joined with single spaces.
+    blank line. If ``join`` is :obj:`True`, the lines of a paragraph are
+    joined with single spaces.
     List items (starting with ``-``, ``*``, ``+``, ``1.`` or ``1)``) and
     lines that are more indented than the paragraph text stay on their own
     lines, keeping their relative indentation. A line that is more indented
@@ -152,8 +158,9 @@ def _normalize_description(text: str) -> str:
         if _LIST_ITEM.match(content + " "):
             result.append(line)
             kind, item_indent = "item", indent
-        elif (kind == "item" and indent > item_indent) or (
-            kind == "text" and indent == 0
+        elif join and (
+            (kind == "item" and indent > item_indent)
+            or (kind == "text" and indent == 0)
         ):
             result[-1] += f" {content}"
         else:
@@ -211,10 +218,13 @@ class _Formatter:
         :obj:`False`, these keys stay in the same order, so that, for
         example, diagnostics and variable groups stay in the order in which
         they were written.
+    text:
+        The text that the nodes were composed from, if any.
     """
 
-    def __init__(self, *, sort: bool) -> None:
+    def __init__(self, *, sort: bool, text: str | None = None) -> None:
         self.sort = sort
+        self.text = text
         self._done: set[int] = set()
 
     def _first_visit(self, node: yaml.Node) -> bool:
@@ -300,9 +310,25 @@ class _Formatter:
         else:
             self.generic(node)
 
+    def _description(self, node: yaml.ScalarNode) -> str:
+        """Get the text of a description as it was written in the recipe.
+
+        Folding a block scalar joins the lines of a list and removes the
+        blank lines between paragraphs, so read it from the text instead.
+        """
+        if self.text is None or node.style != ">":
+            return node.value
+        source = self.text[node.start_mark.index : node.end_mark.index]
+        return _FOLDED_HEADER.sub("", source, count=1)
+
     def _documentation(self, key: str, node: yaml.Node) -> None:
         if key == "description" and isinstance(node, yaml.ScalarNode):
-            text = _normalize_description(node.value)
+            # The line breaks of a loaded folded block scalar are the breaks
+            # between its paragraphs, so they can only be joined in the text.
+            text = _normalize_description(
+                self._description(node),
+                join=self.text is not None,
+            )
             node.value = _wrap_description(text)
             node.style = (
                 None
@@ -453,9 +479,10 @@ def to_yaml(
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, the lists of datasets are sorted, and the
     keys of other mappings are sorted by name, except the preprocessor
-    steps. The lines of each paragraph of the description of the recipe are
-    joined and wrapped at 79 characters, keeping list items and indented
-    lines on their own lines.
+    steps. The lines of the description of the recipe are wrapped at 79
+    characters, except indented lines. Unlike :func:`format_recipe`, this does
+    not join lines, because a loaded recipe does not show which line breaks
+    separate paragraphs.
 
     Parameters
     ----------
@@ -487,7 +514,8 @@ def format_recipe(text: str) -> str:
 
     The sections of the recipe and the facets of the datasets and variables
     are put in a standard order, and the style of the YAML is made
-    consistent. Anchors and aliases are kept, but comments are removed.
+    consistent. Anchors and aliases are kept, and so are the document start
+    marker ``---`` and the comments before it, but other comments are removed.
     The order of the datasets, preprocessors, preprocessor steps,
     diagnostics, variable groups, and scripts is kept. The lines of each
     paragraph of the description of the recipe are joined and wrapped at 79
@@ -508,12 +536,15 @@ def format_recipe(text: str) -> str:
     yaml.YAMLError
         If the text is not valid YAML.
     """
+    match = _HEADER.match(text)
+    header = match.group() if match else ""
     loader = _AnchorLoader(text)
     try:
         node = loader.get_single_node()
     finally:
         loader.dispose()
-    if node is None:
-        return "{}\n"
-    _Formatter(sort=False).recipe(node)
-    return f"{_serialize(node, loader.anchor_names)}\n"
+    # A document with only a document start marker contains an empty null.
+    if node is None or (node.tag == _NULL_TAG and not node.value):
+        return f"{header}{{}}\n"
+    _Formatter(sort=False, text=text).recipe(node)
+    return f"{header}{_serialize(node, loader.anchor_names)}\n"

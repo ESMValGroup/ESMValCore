@@ -12,7 +12,6 @@ from esmvalcore.recipe import format_recipe, to_yaml
 RECIPE = textwrap.dedent("""
     # A comment that is removed.
     # Quotes are only kept where they are needed.
-    ---
     diagnostics:
       diag1:
         variables:
@@ -128,6 +127,47 @@ def test_format_recipe_empty() -> None:
     assert format_recipe("") == "{}\n"
 
 
+@pytest.mark.parametrize(
+    "header",
+    [
+        "---\n",
+        "--- \n",
+        "# ESMValTool\n# recipe.yml\n---\n",
+        "\n  # Indented\n\n---\n",
+        "# Windows\r\n---\r\n",
+    ],
+)
+def test_format_recipe_keeps_header(header: str) -> None:
+    """Test that the document start and the comments before it are kept."""
+    formatted = format_recipe(f"{header}a: 1  # comment\n# comment\nb: 2\n")
+    assert formatted == f"{header}a: 1\nb: 2\n"
+    assert format_recipe(formatted) == formatted
+
+
+def test_format_recipe_removes_comments_without_document_start() -> None:
+    """Test that comments are removed if there is no document start."""
+    assert format_recipe("# comment\na: 1\n") == "a: 1\n"
+
+
+@pytest.mark.parametrize("body", ["", "# comment\n"])
+def test_format_recipe_only_header(body: str) -> None:
+    """Test that a recipe with only a header can be formatted."""
+    text = f"# comment\n---\n{body}"
+    assert format_recipe(text) == "# comment\n---\n{}\n"
+
+
+def test_format_recipe_header_folded_description() -> None:
+    """Test that a folded description is read after a header."""
+    text = f"# comment\n---\ndocumentation:\n  description: >\n{FOLDED}"
+    assert _description(format_recipe(text)) == FOLDED_NORMALIZED
+
+
+def test_format_recipe_invalid_line_number() -> None:
+    """Test that errors are reported at their line in the original text."""
+    with pytest.raises(yaml.YAMLError, match="line 4"):
+        format_recipe("# comment\n---\na: [\n")
+
+
 def test_format_recipe_invalid() -> None:
     """Test that invalid YAML is reported."""
     with pytest.raises(yaml.YAMLError):
@@ -183,6 +223,47 @@ def test_format_recipe_description_keeps_lists_and_paragraphs() -> None:
     formatted = format_recipe(DESCRIPTION)
     assert _description(formatted) == NORMALIZED
     assert "  description: |-\n" in formatted
+
+
+FOLDED = """\
+    First paragraph,
+    split over two lines.
+
+    Second paragraph.
+
+    Notes:
+
+    - item one
+    - item two
+"""
+FOLDED_NORMALIZED = (
+    "First paragraph, split over two lines.\n\n"
+    "Second paragraph.\n\n"
+    "Notes:\n\n"
+    "- item one\n"
+    "- item two"
+)
+
+
+@pytest.mark.parametrize(
+    "header",
+    [">", ">-", ">+", "> # comment", "&anchor >", "!!str >", "&anchor\n    >"],
+)
+def test_format_recipe_folded_description(header: str) -> None:
+    """Test that the paragraphs and lists of a folded block are kept."""
+    text = (
+        f"documentation:\n  description: {header}\n{FOLDED}  title: Example\n"
+    )
+    formatted = format_recipe(text)
+    assert _description(formatted) == FOLDED_NORMALIZED
+    assert yaml.safe_load(formatted)["documentation"]["title"] == "Example"
+    assert format_recipe(formatted) == formatted
+
+
+def test_format_recipe_folded_description_at_end() -> None:
+    """Test a folded block at the end of a recipe without a final newline."""
+    text = "documentation:\n  description: >\n    One\n    sentence."
+    assert _description(format_recipe(text)) == "One sentence."
 
 
 WORDS = " ".join(["word"] * 30)
@@ -244,9 +325,24 @@ def test_description_wrapping_does_not_create_list_items() -> None:
 
 
 def test_to_yaml_description_normalized() -> None:
-    """Test that to_yaml normalizes the description."""
-    recipe = {"documentation": {"description": "a\nb\n\n  - c\n    d\n"}}
-    assert _description(to_yaml(recipe)) == "a b\n\n  - c d"
+    """Test that to_yaml normalizes the description without joining lines."""
+    recipe = {
+        "documentation": {"description": " a \n b\n\n\n   - c\n     d\n"},
+    }
+    assert _description(to_yaml(recipe)) == "a\nb\n\n  - c\n    d"
+
+
+def test_to_yaml_loaded_folded_description() -> None:
+    """Test that the paragraphs of a loaded folded block are kept."""
+    text = f"documentation:\n  description: >\n{FOLDED}"
+    formatted = to_yaml(yaml.safe_load(text))
+    assert _description(formatted) == (
+        "First paragraph, split over two lines.\n"
+        "Second paragraph.\n"
+        "Notes:\n"
+        "- item one - item two"
+    )
+    assert to_yaml(yaml.safe_load(formatted)) == formatted
 
 
 def test_description_short_stays_plain() -> None:
