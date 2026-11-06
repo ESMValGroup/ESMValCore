@@ -184,6 +184,40 @@ def test_run(mocker, session, search_data):
     )
 
 
+@pytest.mark.parametrize(
+    ("max_parallel_tasks", "expected"),
+    [(None, 8), (4, 4)],
+)
+def test_process_recipe_logs_n_processes(
+    mocker,
+    tmp_path,
+    caplog,
+    session,
+    max_parallel_tasks,
+    expected,
+):
+    """Test that the log message uses the CPUs available to the process."""
+    recipe = tmp_path / "recipe_test.yml"
+    recipe.touch()
+    session.run_dir.mkdir(parents=True)
+    session["max_parallel_tasks"] = max_parallel_tasks
+    session["compress_netcdf"] = False
+    mocker.patch.object(esmvalcore._main.os, "cpu_count", return_value=256)
+    mocker.patch.object(
+        esmvalcore._task,
+        "available_cpu_count",
+        return_value=8,
+    )
+    mocker.patch("esmvalcore._recipe.recipe.read_recipe_file")
+
+    with caplog.at_level(logging.INFO, logger="esmvalcore._main"):
+        esmvalcore._main.process_recipe(recipe, session)
+
+    assert (
+        f"Running tasks using at most {expected} processes" in caplog.messages
+    )
+
+
 def test_run_session_dir_exists(session):
     program = ESMValTool()
     session.session_dir.mkdir(parents=True)
