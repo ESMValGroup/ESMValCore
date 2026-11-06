@@ -427,6 +427,42 @@ def test_validate_recipe_arguments_invalid(
     assert message in [str(issue) for issue in validate_recipe(recipe)]
 
 
+@pytest.mark.parametrize(
+    ("definition", "keys", "anchor"),
+    [
+        ("documentation", (), "recipe-documentation"),
+        (None, ("datasets",), "datasets"),
+        (None, ("preprocessors",), "preprocessors"),
+        (None, ("diagnostics",), "diagnostics"),
+        (
+            "diagnostic",
+            ("additional_datasets",),
+            "diagnostic-and-variable-specific-datasets",
+        ),
+        (
+            "variable",
+            ("additional_datasets",),
+            "diagnostic-and-variable-specific-datasets",
+        ),
+    ],
+)
+def test_recipe_item_documentation_link(
+    schema: dict[str, Any],
+    definition: str | None,
+    keys: tuple[str, ...],
+    anchor: str,
+) -> None:
+    item = schema if definition is None else schema["definitions"][definition]
+    for key in keys:
+        item = item["properties"][key]
+    assert item["description"]
+    assert item["markdownDescription"].startswith(item["description"])
+    assert item["markdownDescription"].endswith(
+        "(https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/"
+        f"overview.html#{anchor}).",
+    )
+
+
 def test_step_schema_documentation_link(schema: dict[str, Any]) -> None:
     steps = schema["definitions"]["steps"]
     assert steps["regrid"]["markdownDescription"].endswith(

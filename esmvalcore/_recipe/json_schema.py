@@ -727,6 +727,31 @@ def _recipe_documentation_url(step: str) -> str:
     return _documentation_url(f"recipe/preprocessor.html#{anchor}")
 
 
+def _described(description: str, topic: str, anchor: str) -> JSONSchema:
+    """Describe a recipe item, with a link to the recipe documentation.
+
+    Editors show the ``markdownDescription`` instead of the ``description``.
+    """
+    url = _documentation_url(f"recipe/overview.html#{anchor}")
+    return {
+        "description": description,
+        "markdownDescription": f"{description}\n\nRefer to [{topic}]({url}).",
+    }
+
+
+def _additional_datasets_schema(description: str) -> JSONSchema:
+    """Create a JSON Schema for the ``additional_datasets`` of a recipe item."""
+    return {
+        "type": "array",
+        "items": {"$ref": "#/definitions/dataset"},
+        **_described(
+            description,
+            "how to use `additional_datasets` in a recipe",
+            "diagnostic-and-variable-specific-datasets",
+        ),
+    }
+
+
 def _preprocessor_schema() -> JSONSchema:
     """Create a JSON Schema for a preprocessor."""
     properties: JSONSchema = {
@@ -1203,11 +1228,9 @@ def _variable_schema() -> JSONSchema:
                 "type": "string",
                 "description": "Alternative dataset for this variable.",
             },
-            "additional_datasets": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/dataset"},
-                "description": "Datasets to use for this variable only.",
-            },
+            "additional_datasets": _additional_datasets_schema(
+                "Datasets to use for this variable only.",
+            ),
         },
     }
 
@@ -1259,11 +1282,9 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
                 "additionalProperties": {"$ref": "#/definitions/script"},
                 "description": "Diagnostic scripts to run.",
             },
-            "additional_datasets": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/dataset"},
-                "description": "Datasets to use for this diagnostic only.",
-            },
+            "additional_datasets": _additional_datasets_schema(
+                "Datasets to use for this diagnostic only.",
+            ),
         },
         "required": ["scripts"],
         "additionalProperties": False,
@@ -1273,6 +1294,12 @@ def _diagnostic_schema(names: dict[str, _Names]) -> JSONSchema:
 def _documentation_schema(names: dict[str, _Names]) -> JSONSchema:
     return {
         "type": "object",
+        # This is here because a draft-07 $ref ignores the keys next to it.
+        **_described(
+            "Title, description, authors, and other details of the recipe.",
+            "the `documentation` section of a recipe",
+            "recipe-documentation",
+        ),
         "properties": {
             "title": {"type": "string", "description": "Recipe title."},
             "description": {
@@ -1339,19 +1366,31 @@ def _recipe_schema(
             "datasets": {
                 "type": "array",
                 "items": {"$ref": "#/definitions/dataset"},
-                "description": "Datasets to use in all diagnostics.",
+                **_described(
+                    "Datasets to use in all diagnostics.",
+                    "the `datasets` section of a recipe",
+                    "datasets",
+                ),
             },
             "preprocessors": {
                 "type": "object",
                 "additionalProperties": {
                     "$ref": "#/definitions/preprocessor",
                 },
-                "description": "Preprocessors that variables can refer to.",
+                **_described(
+                    "Preprocessors that variables can refer to.",
+                    "the `preprocessors` section of a recipe",
+                    "preprocessors",
+                ),
             },
             "diagnostics": {
                 "type": ["object", "null"],
                 "additionalProperties": {"$ref": "#/definitions/diagnostic"},
-                "description": "Diagnostics to run.",
+                **_described(
+                    "Diagnostics to run.",
+                    "the `diagnostics` section of a recipe",
+                    "diagnostics",
+                ),
             },
         },
         "required": ["documentation", "diagnostics"],
