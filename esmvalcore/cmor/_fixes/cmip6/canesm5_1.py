@@ -5,7 +5,6 @@ from esmvalcore.cmor._fixes.cmip6.canesm5 import Cli as BaseCli
 from esmvalcore.cmor._fixes.cmip6.canesm5 import Clw as BaseClw
 from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2 as BaseCo2
 from esmvalcore.cmor._fixes.cmip6.canesm5 import Gpp as BaseGpp
-from esmvalcore.cmor._fixes.cmip6.canesm5 import Ps as BasePs
 
 
 class Cl(BaseCl):
@@ -18,10 +17,6 @@ class Cli(BaseCli):
 
 class Clw(BaseClw):
     """Fixes for clw."""
-
-
-class Ps(BasePs):
-    """Fixes for ps."""
 
 
 class Co2(BaseCo2):
