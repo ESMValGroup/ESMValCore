@@ -1170,7 +1170,11 @@ def _facets_schema(tables: dict[str, _Tables | None]) -> JSONSchema:
             },
             "alias": {
                 "type": "string",
-                "description": "Name of the dataset to use in diagnostics.",
+                **_described(
+                    "Name of the dataset to use in diagnostics.",
+                    "how to use `alias` in a recipe",
+                    "dataset-alias",
+                ),
             },
             "tier": _tier_schema(),
             "type": _type_schema(),

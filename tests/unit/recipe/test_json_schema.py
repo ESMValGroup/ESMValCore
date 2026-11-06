@@ -432,6 +432,7 @@ def test_validate_recipe_arguments_invalid(
     [
         ("documentation", (), "recipe-documentation"),
         (None, ("datasets",), "datasets"),
+        ("facets", ("alias",), "dataset-alias"),
         (None, ("preprocessors",), "preprocessors"),
         (None, ("diagnostics",), "diagnostics"),
         (

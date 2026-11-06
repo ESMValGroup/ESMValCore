@@ -384,6 +384,27 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
 
+.. _dataset_alias:
+
+Dataset aliases
+---------------
+
+Each dataset has an alias: a short name that diagnostic scripts can use, for
+example in the legend of a plot.
+By default, ESMValCore creates the alias from the facets that differ between
+the datasets of a diagnostic, such as ``project``, ``exp``, ``dataset``, and
+``ensemble``.
+Use the ``alias`` key to choose the alias of a dataset yourself.
+For example, the aliases of the following datasets are ``my_model``,
+``MPI-ESM1-2-LR_r1i1p1f1``, and ``MPI-ESM1-2-LR_r2i1p1f1``:
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM5, alias: my_model, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r1i1p1f1, grid: gn}
+      - {dataset: MPI-ESM1-2-LR, project: CMIP6, exp: historical, ensemble: r2i1p1f1, grid: gn}
+
 .. _cordex_datasets:
 
 CORDEX datasets
