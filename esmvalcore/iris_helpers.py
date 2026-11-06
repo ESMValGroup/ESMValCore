@@ -627,6 +627,13 @@ def dataset_to_iris(
     if isinstance(dataset, xr.Dataset):
         ds = ncdata.xarray.from_xarray(dataset)
         ds_coords = dataset.coords
+        dataset = dataset.copy(deep=False)
+        # xarray uses a "coordinates" attribute to store the names of
+        # non-dimensional coordinates, but this is not compatible with iris.
+        non_index_coord_vars = tuple(
+            name for name in dataset.coords if name not in dataset.xindexes
+        )
+        dataset = dataset.reset_coords(non_index_coord_vars)
     elif isinstance(dataset, ncdata.NcData):
         ds = dataset
         ds_coords = dataset.variables
