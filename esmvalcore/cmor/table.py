@@ -246,7 +246,7 @@ def get_tables(
             f"Current configuration is:\n{yaml.safe_dump(kwargs)}"
         )
         raise ValueError(msg)
-    cache_key = str(kwargs)
+    cache_key = str((project, kwargs))
     if cache_key not in _TABLE_CACHE:
         import_error_messsage = (
             "Please check your configuration. "
@@ -277,15 +277,14 @@ def get_tables(
                 f"{import_error_messsage}"
             )
             raise InvalidConfigParameter(msg) from exc
-        tables = cls(**kwargs)
-        if not isinstance(tables, InfoBase):
+        if not (isinstance(cls, type) and issubclass(cls, InfoBase)):
             msg = (
                 "`type` should be a subclass `esmvalcore.cmor.table.InfoBase`, "
                 f"but your configuration for project '{project}' contains "
-                f"'{tables}' of type: '{type(tables)}'. {import_error_messsage}"
+                f"'{cls}'. {import_error_messsage}"
             )
             raise TypeError(msg)
-        _TABLE_CACHE[cache_key] = tables
+        _TABLE_CACHE[cache_key] = cls(project=project, **kwargs)
 
     return _TABLE_CACHE[cache_key]
 
@@ -301,6 +300,10 @@ class InfoBase:
         `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_
         directory, or any other path. The built-in tables will be used if the
         path is relative and exists in the built-in tables directory.
+
+    project:
+        The project that the tables are used for. This is set automatically
+        when the tables are loaded with :func:`get_tables`.
 
     alt_names:
         List of known alternative names for variables. If no value is provided,
@@ -318,6 +321,7 @@ class InfoBase:
         self,
         *,
         paths: Iterable[Path] = (),
+        project: str = "",
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
     ) -> None:
@@ -331,6 +335,8 @@ class InfoBase:
             for p in paths
         )
         """A list of paths to CMOR tables."""
+        self.project = project
+        """The project that the tables are used for."""
         for path in self.paths:
             if not path.is_dir():
                 raise NotADirectoryError(path)
@@ -506,6 +512,10 @@ class CMIP6Info(InfoBase):
         with the extension ``.json`` in the specified paths will be read as a
         CMOR tables, any other files will be ignored.
 
+    project:
+        The project that the tables are used for. This is set automatically
+        when the tables are loaded with :func:`get_tables`.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -523,10 +533,16 @@ class CMIP6Info(InfoBase):
         self,
         *,
         paths: Iterable[Path] = (),
+        project: str = "",
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
     ) -> None:
-        super().__init__(alt_names=alt_names, strict=strict, paths=paths)
+        super().__init__(
+            paths=paths,
+            project=project,
+            alt_names=alt_names,
+            strict=strict,
+        )
 
         self.var_to_freq: dict[str, dict[str, str]] = {}
         self.activities: dict[str, list[str]] = {}
@@ -574,7 +590,7 @@ class CMIP6Info(InfoBase):
             self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data["variable_entry"].items():
-                var = VariableInfo("CMIP6")
+                var = VariableInfo(project=self.project)
                 var.read_json(var_data, table.frequency)
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
@@ -679,6 +695,10 @@ class Obs4MIPsInfo(CMIP6Info):
         directory, or any other path. The built-in tables will be used if the
         path is relative and exists in the built-in tables directory.
 
+    project:
+        The project that the tables are used for. This is set automatically
+        when the tables are loaded with :func:`get_tables`.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -695,13 +715,15 @@ class Obs4MIPsInfo(CMIP6Info):
         self,
         *,
         paths: Iterable[Path] = (),
+        project: str = "",
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
     ) -> None:
         super().__init__(
+            paths=paths,
+            project=project,
             alt_names=alt_names,
             strict=strict,
-            paths=paths,
         )
         # Remove the prefix from the table_id.
         table_id_prefix = "obs4MIPs_"
@@ -814,22 +836,19 @@ class VariableInfo(JsonInfo):
 
     def __init__(
         self,
-        table_type: str = "",
+        *,
+        project: str = "",
     ) -> None:
         """Class to read and store variable information.
 
         Parameters
         ----------
-        table_type:
-            Type of table (e.g., CMIP5, CMIP6).
-
-            .. deprecated:: 2.14.0
-
-                The ``table_type`` parameter is deprecated and will be removed
-                in ESMValCore v2.16.0.
+        project:
+            The project that the variable information belongs to.
         """
         super().__init__()
-        self.table_type = table_type
+        self.project = project
+        """The project that the variable information belongs to."""
         self.modeling_realm: list[str] = []
         """Modeling realm"""
         self.short_name = ""
@@ -1024,6 +1043,10 @@ class CMIP5Info(InfoBase):
         path is relative and exists in the built-in tables directory. Any file
         in the specified paths will be read as a CMOR table.
 
+    project:
+        The project that the tables are used for. This is set automatically
+        when the tables are loaded with :func:`get_tables`.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -1041,10 +1064,16 @@ class CMIP5Info(InfoBase):
         self,
         *,
         paths: Iterable[Path] = (),
+        project: str = "",
         alt_names: list[list[str]] | None = None,
         strict: bool = True,
     ) -> None:
-        super().__init__(alt_names=alt_names, strict=strict, paths=paths)
+        super().__init__(
+            paths=paths,
+            project=project,
+            alt_names=alt_names,
+            strict=strict,
+        )
 
         self._current_table: TextIOWrapper | None = None
         self._last_line_read = ("", "")
@@ -1138,7 +1167,7 @@ class CMIP5Info(InfoBase):
         return coord
 
     def _read_variable(self, entry_name, frequency):
-        var = VariableInfo(table_type="CMIP5")
+        var = VariableInfo(project=self.project)
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read
@@ -1188,6 +1217,10 @@ class CMIP3Info(CMIP5Info):
         path is relative and exists in the built-in tables directory. Any file
         in the specified paths will be read as a CMOR table.
 
+    project:
+        The project that the tables are used for. This is set automatically
+        when the tables are loaded with :func:`get_tables`.
+
     alt_names:
         List of known alternative names for variables. If no value is provided,
         the default values from the installed copy of
@@ -1226,8 +1259,8 @@ class CMIP3Info(CMIP5Info):
 class NoInfo(InfoBase):
     """Table that can be used for projects that do not provide a CMOR table."""
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, *, project: str = "") -> None:
+        super().__init__(project=project)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
@@ -1269,6 +1302,6 @@ class NoInfo(InfoBase):
             otherwise.
 
         """
-        vardef = VariableInfo()
+        vardef = VariableInfo(project=self.project)
         vardef.short_name = short_name
         return vardef
