@@ -18,6 +18,10 @@ import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.io.local import _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._area import (
+    _get_cordex_domains,
+    _is_cordex_shapefile,
+)
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._other import _get_var_info
 from esmvalcore.preprocessor._regrid import (
@@ -335,7 +339,20 @@ def check_for_temporal_preprocs(profile: dict[str, Any]) -> None:
 def extract_shape(settings: dict[str, Any]) -> None:
     """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get("shapefile", "")
-    if not os.path.exists(shapefile):
+    if _is_cordex_shapefile(shapefile):
+        if settings.get("method", "contains") != "contains":
+            msg = (
+                "In preprocessor function `extract_shape`: Invalid value "
+                f"'{settings['method']}' for argument 'method', only "
+                "'contains' is supported for 'shapefile: cordex'"
+            )
+            raise RecipeError(msg)
+        try:
+            _get_cordex_domains(settings.get("ids"))
+        except ValueError as exc:
+            msg = f"In preprocessor function `extract_shape`: {exc}"
+            raise RecipeError(msg) from exc
+    elif not os.path.exists(shapefile):
         msg = (
             f"In preprocessor function `extract_shape`: Unable to find "
             f"'shapefile: {shapefile}'"

@@ -1951,6 +1951,79 @@ def test_extract_shape_raises(
     assert invalid_arg in exc.value.failed_tasks[0].message
 
 
+CORDEX_SHAPE_RECIPE = """
+    preprocessors:
+      test:
+        extract_shape:
+          shapefile: cordex
+
+    diagnostics:
+      test:
+        variables:
+          ta:
+            preprocessor: test
+            project: CMIP5
+            mip: Amon
+            exp: historical
+            start_year: 2000
+            end_year: 2005
+            ensemble: r1i1p1
+            additional_datasets:
+              - {dataset: GFDL-CM3}
+        scripts: null
+    """
+
+
+def test_extract_shape_cordex(tmp_path, patched_datafinder, session):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    recipe = yaml.safe_load(dedent(CORDEX_SHAPE_RECIPE))
+    recipe["preprocessors"]["test"]["extract_shape"]["ids"] = ["EUR-12"]
+    content = yaml.safe_dump(recipe)
+
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.settings["extract_shape"] == {
+        "shapefile": "cordex",
+        "ids": ["EUR-12"],
+    }
+
+
+@pytest.mark.parametrize(
+    ("settings", "msg"),
+    [
+        ({}, "`ids` should be a list of CORDEX domain names"),
+        ({"ids": ["XYZ-11"]}, "Unknown CORDEX domain(s) ['XYZ-11']"),
+        (
+            {"ids": ["EUR-12"], "method": "representative"},
+            "only 'contains' is supported",
+        ),
+    ],
+)
+def test_extract_shape_cordex_raises(
+    tmp_path,
+    patched_datafinder,
+    session,
+    settings,
+    msg,
+):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    recipe = yaml.safe_load(dedent(CORDEX_SHAPE_RECIPE))
+    recipe["preprocessors"]["test"]["extract_shape"].update(settings)
+    content = yaml.safe_dump(recipe)
+
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+
+
 def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
